@@ -186,7 +186,7 @@ var sw := StopWatch.new() # sw.cost_seconds()
 # Run once after 1000 ms
 SchedulerBus.schedule(func() -> void: do_something(), 1000)
 
-# Run every 2000 ms (optional timer name, optional sub-thread)
+# Repeating timers instead of manually creating a `Timer`.
 SchedulerBus.schedule_at_fixed_rate(func() -> void: poll_status(), 2000)
 ```
 
