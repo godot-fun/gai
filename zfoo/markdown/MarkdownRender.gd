@@ -40,7 +40,7 @@ static func append_markdown_image(label: RichTextLabel, markdown_image: Markdown
 	if is_video:
 		return
 	if HttpUtils.is_valid_http_url(image_url):
-		var cache_path := StringUtils.format("{}.{}", IMAGE_CACHE_DIR.path_join(image_url.sha256_text()), ImageHelper.get_image_format(image_url))
+		var cache_path := StringUtils.format("http_{}.{}", IMAGE_CACHE_DIR.path_join(image_url.sha256_text()), ImageHelper.get_image_format(image_url))
 		if FileAccess.file_exists(cache_path):
 			load_image_into_label(label, image_url, cache_path)
 			return
