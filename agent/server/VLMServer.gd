@@ -29,6 +29,7 @@ static var last_access_millis: int = 0
 ## initialization can run before the GodotFramework autoload has entered `_ready()`.
 static func _static_init() -> void:
 	await Engine.get_main_loop().process_frame
+	gdf.events.application_end.connect(stop)
 	SchedulerBus.schedule_at_fixed_rate(check_idle_timeout, IDLE_CHECK_MILLIS, "vlm_idle")
 	pass
 
@@ -128,9 +129,7 @@ static func ensure_server_running() -> int:
 			Log.error("vision language model server exited during startup")
 			process_id = PROCESS_ID_STOPPED
 			return FAILED
-		var health_response := await HttpHelper.async_get(server_url() + "/health", TimeUtils.MILLIS_PER_SECOND)
-		var health: Variant = health_response.get_body_json() if health_response.code == 200 else null
-		if typeof(health) == TYPE_DICTIONARY and health.get("status", "") == "ok":
+		if await health():
 			Log.info("vision language model server started pid:[{}] url:[{}]", process_id, server_url())
 			return OK
 		await ThreadUtils.async_sleep(100)
@@ -153,6 +152,13 @@ static func stop() -> void:
 ## Returns whether the recorded llama-server child process still exists.
 static func is_running() -> bool:
 	return process_id > 0 and OS.is_process_running(process_id)
+
+
+## Returns whether the llama-server health endpoint reports a ready status.
+static func health() -> bool:
+	var response := await HttpHelper.async_get(server_url() + "/health", TimeUtils.MILLIS_PER_SECOND)
+	var data: Variant = response.get_body_json() if response.code == 200 else null
+	return typeof(data) == TYPE_DICTIONARY and data.get("status", "") == "ok"
 
 
 ## Returns the actual endpoint selected at runtime, including a dynamically advanced port.

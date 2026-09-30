@@ -61,7 +61,7 @@ func _process(_delta: float) -> void:
 	var scene_path := test_scenes[0] if !test_scenes.is_empty() else ""
 	Log.error("❌ FAIL | IntegrationTest | scene:[{}]", scene_path)
 	error_occurred = false
-	gdf.quit(1)
+	gdf.shutdown(1)
 	pass
 
 
@@ -96,14 +96,14 @@ func next_integration_test() -> void:
 		child.free()
 	if test_scenes.is_empty():
 		Log.info("🎉 DONE | IntegrationTest")
-		await gdf.quit()
+		await gdf.shutdown()
 		return
 	var scene_path := test_scenes[0]
 	Log.info("🧪 TEST | IntegrationTest | remaining:[{}] | scene:[{}]", test_scenes.size() - 1, scene_path)
 	var packed := load(scene_path) as PackedScene
 	if packed == null:
 		Log.error("❌ FAIL | IntegrationTest | scene:[{}]", scene_path)
-		await gdf.quit(1)
+		await gdf.shutdown(1)
 		return
 	add_child(packed.instantiate())
 	pass

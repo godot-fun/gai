@@ -58,7 +58,7 @@ func _ready() -> void:
 	if IntegrationTest.is_integration_test:
 		gdf.events.test_passed.emit()
 	else:
-		gdf.quit()
+		gdf.shutdown()
 	pass
 
 
@@ -73,7 +73,7 @@ func unit_test(script: Script) -> void:
 			continue
 		if !method.args.is_empty():
 			Log.error("❌ FAIL | [{}] | method:[{}] args is not empty", script.resource_path, method_name)
-			gdf.quit(1)
+			gdf.shutdown(1)
 			return
 		var is_static: int = method.flags & METHOD_FLAG_STATIC
 		if is_static:
@@ -88,7 +88,7 @@ func unit_test(script: Script) -> void:
 	if ArrayUtils.is_not_empty(test_methods):
 		if !script.can_instantiate():
 			Log.error("❌ FAIL | [{}] | can not instantiate this script", script.resource_path)
-			gdf.quit(1)
+			gdf.shutdown(1)
 			return
 		var obj: Object= script.new()
 		for method in test_methods:
@@ -102,7 +102,7 @@ func unit_test(script: Script) -> void:
 func check_unit(script: Script, method: String) -> void:
 	if error_occurred:
 		Log.error("❌ FAIL | [{}] | {}", script.resource_path, method)
-		await gdf.quit(1)
+		await gdf.shutdown(1)
 		return
 	if enable_test_logging:
 		Log.info("🟢 PASS | [{}] | {}", script.resource_path, method)
