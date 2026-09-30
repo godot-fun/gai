@@ -5,9 +5,7 @@ const NAME := "image_to_text"
 const ARG_PATH := "path"
 const ARG_PROMPT := "prompt"
 
-const COMMAND := ".dependency/python/python.exe .ai/image-to-text/image_to_text.py --images {} --prompt '{}'"
 const MAX_PROMPT_LENGTH := 4000
-const TIMEOUT_MILLIS := TimeUtils.MILLIS_PER_MINUTE * 10
 
 
 func _init() -> void:
@@ -34,20 +32,10 @@ func async_execute(args: Dictionary[String, Variant]) -> AgentToolResult:
 		return AgentToolResult.error(StringUtils.format("error: unsupported image format: {}", path))
 
 	var prompt := StringUtils.truncate(str(args.get(ARG_PROMPT, "")).strip_edges(), MAX_PROMPT_LENGTH)
-
-	var command := StringUtils.format(COMMAND, path, prompt)
-	var argv := BashTool.build_argv_from_command(command)
-	var exec_result := await OSUtils.async_execute(argv, false, TIMEOUT_MILLIS)
-	var output := exec_result.output.build_string().strip_edges()
-	if exec_result.exit_code != 0:
-		var error_text := StringUtils.format("error: image-to-text failed with exit code {}", exec_result.exit_code)
-		if StringUtils.is_not_blank(output):
-			error_text += FileUtils.NEWLINE_LF + StringUtils.truncate_last(output, MAX_OUTPUT, TRUNCATED_SUFFIX)
-		return AgentToolResult.error(error_text)
+	var output := await VLMServer.async_image_to_text(path, prompt)
 	if StringUtils.is_blank(output):
 		return AgentToolResult.error("error: image-to-text returned no text", AgentToolResult.ui_file_details_message(path, "no text returned"))
 
-	var exit_code := StringUtils.format("exit_code: {}", exec_result.exit_code)
 	var text := StringUtils.truncate(output, MAX_OUTPUT, TRUNCATED_SUFFIX)
-	return AgentToolResult.ok(text, AgentToolResult.ui_details(exit_code, text))
+	return AgentToolResult.ok(text)
 # AgentTool-Interface-Implement-End

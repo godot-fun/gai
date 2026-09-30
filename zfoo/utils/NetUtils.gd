@@ -9,6 +9,17 @@ static func local_host() -> String:
 	return IP.resolve_hostname(OS.get_environment("COMPUTERNAME"), IP.Type.TYPE_IPV4)
 
 
+## Finds the first bindable loopback TCP port at or above start_port, then releases the probe.
+static func find_available_port(start_port: int) -> int:
+	for port in range(maxi(start_port, PORT_RANGE_MIN), PORT_RANGE_MAX + 1):
+		var probe := TCPServer.new()
+		var error := probe.listen(port, LOCAL_LOOPBACK_IP)
+		probe.stop()
+		if error == OK:
+			return port
+	return -1
+
+
 ## TCP connect probe (like `telnet host port`). Returns true when the port accepts within timeout_millis.
 static func telnet(host: String, port: int, timeout_millis: int = 3000) -> bool:
 	if StringUtils.is_blank(host) or port < 1 or port > 65535:
