@@ -52,7 +52,7 @@ static func async_image_to_text(image_path: String, prompt: String) -> String:
 		Log.error("vision language model image format is unsupported path:[{}]", image_path)
 		return StringUtils.EMPTY
 	last_access_millis = Time.get_ticks_msec()
-	var error: int = await ensure_server_running()
+	var error: int = await async_ensure_server_running()
 	if error != OK:
 		return StringUtils.EMPTY
 
@@ -92,7 +92,7 @@ static func async_image_to_text(image_path: String, prompt: String) -> String:
 
 ## Starts one server and waits for its TCP endpoint. Concurrent callers share the same cold start
 ## through the PROCESS_ID_STARTING sentinel instead of spawning duplicate model processes.
-static func ensure_server_running() -> int:
+static func async_ensure_server_running() -> int:
 	if is_running():
 		return OK
 	while process_id == PROCESS_ID_STARTING:
@@ -129,7 +129,7 @@ static func ensure_server_running() -> int:
 			Log.error("vision language model server exited during startup")
 			process_id = PROCESS_ID_STOPPED
 			return FAILED
-		if await health():
+		if await async_health():
 			Log.info("vision language model server started pid:[{}] url:[{}]", process_id, server_url())
 			return OK
 		await ThreadUtils.async_sleep(100)
@@ -155,7 +155,7 @@ static func is_running() -> bool:
 
 
 ## Returns whether the llama-server health endpoint reports a ready status.
-static func health() -> bool:
+static func async_health() -> bool:
 	var response := await HttpHelper.async_get(server_url() + "/health", TimeUtils.MILLIS_PER_SECOND)
 	var data: Variant = response.get_body_json() if response.code == 200 else null
 	return typeof(data) == TYPE_DICTIONARY and data.get("status", "") == "ok"
