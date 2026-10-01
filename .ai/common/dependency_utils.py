@@ -65,3 +65,13 @@ def resolve_tool_bin(repo_root: Path, tool_name: str) -> Path:
             file=sys.stderr,
         )
         sys.exit(1)
+
+
+def resolve_tool_model_dir(repo_root: Path, tool_name: str) -> Path:
+    """Resolve a populated manifest tool entry's existing model directory."""
+    entry = resolve_tool_entry(repo_root, tool_name)
+    model_path = repo_root / entry["model"]
+    if not model_path.is_dir():
+        print(f"Model directory for '{tool_name}' not found at {model_path}.", file=sys.stderr)
+        sys.exit(1)
+    return model_path

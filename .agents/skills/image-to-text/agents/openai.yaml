@@ -1,4 +1,0 @@
-interface:
-  display_name: "Image to Text"
-  short_description: "Describe images with automatic GPU or CPU"
-  default_prompt: "Use $image-to-text to describe or extract visible text from these images locally, automatically preferring GPU acceleration."
