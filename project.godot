@@ -14,6 +14,10 @@ config/name="gai"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="uid://bddrqa1wcj241"
 
+[audio]
+
+driver/enable_input=true
+
 [autoload]
 
 GodotFramework="*uid://ctmudwtl4fvnr"

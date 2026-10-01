@@ -2,11 +2,14 @@ extends Node
 
 @onready var playMusicButton: Button = $PlayMusic
 @onready var playSoundButton: Button = $PlaySound
+@onready var startRecordButton: Button = $StartRecord
+@onready var stopRecordButton: Button = $StopRecord
 
 func _ready() -> void:
 	playMusicButton.pressed.connect(pressedPlayMusicButton)
 	playSoundButton.pressed.connect(pressedPlaySoundButton)
-	
+	startRecordButton.pressed.connect(pressedStartRecordButton)
+	stopRecordButton.pressed.connect(pressedStopRecordButton)
 	Linear_test()
 	pass
 
@@ -27,4 +30,19 @@ func pressedPlaySoundButton():
 #	Audio.play_sound("test/asset/cheer.mp3")
 	Audios.play("test/asset/cheer.mp3")
 	Audios.set_bus_volume_linear(0.9)
+	pass
+
+func pressedStartRecordButton() -> void:
+	AudioRecorder.start()
+	Log.info("AudioRecorder started")
+	pass
+
+func pressedStopRecordButton() -> void:
+	AudioRecorder.stop()
+	var path := OS.get_user_data_dir().path_join("manual_recording.wav")
+	var err := AudioRecorder.save(path)
+	if err == OK:
+		Log.info("AudioRecorder saved:[{}]", path)
+	else:
+		Log.error("AudioRecorder save failed err:[{}] path:[{}]", err, path)
 	pass

@@ -44,6 +44,22 @@ offset_bottom = 58.0
 text = "PlaySound"
 metadata/_edit_use_anchors_ = true
 
+[node name="StartRecord" type="Button" parent="AudioTest"]
+offset_left = 671.0
+offset_top = 27.0
+offset_right = 906.0
+offset_bottom = 58.0
+text = "StartRecord"
+metadata/_edit_use_anchors_ = true
+
+[node name="StopRecord" type="Button" parent="AudioTest"]
+offset_left = 977.0
+offset_top = 27.0
+offset_right = 1212.0
+offset_bottom = 58.0
+text = "StopRecord"
+metadata/_edit_use_anchors_ = true
+
 [node name="HttpTest" type="Node" parent="." unique_id=243363440]
 script = ExtResource("4_bs2af")
 

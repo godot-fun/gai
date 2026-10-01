@@ -12,6 +12,7 @@ func _ready() -> void:
 		init_async_timer()
 		Audio.init()
 		Audios.init()
+		AudioRecorder.init()
 		LoggerHelper.init()
 		ThemeColor.init()
 		events.application_start.emit()
