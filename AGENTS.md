@@ -290,6 +290,9 @@ Run commands from the repository root. Replace `godot` with the path to the Godo
 ```powershell
 # Example: run one unit test scene.
 godot --headless --path . res://test/common/CommonTest.tscn
+
+# GDExtension (godot-cpp) tests — requires cpp/ binaries and .godot/extension_list.cfg.
+godot --headless --path . res://test/cpp/CppTest.tscn
 ```
 
 ## Unit tests
