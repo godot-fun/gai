@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://bcpp_gai_test001"]
+
+[ext_resource type="Script" path="res://zfoo/gdtest/UnitTest.gd" id="1_unittest"]
+
+[node name="CppTest" type="Node"]
+script = ExtResource("1_unittest")

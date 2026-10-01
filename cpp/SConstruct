@@ -1,0 +1,52 @@
+#!/usr/bin/env python
+import os
+import sys
+
+from methods import print_error
+
+libname = "gai_cpp"
+godot_cpp_path = os.path.normpath(os.path.join("..", ".dependency", "godot-cpp"))
+
+localEnv = Environment(tools=["default"], PLATFORM="")
+
+customs = ["custom.py"]
+customs = [os.path.abspath(path) for path in customs]
+
+opts = Variables(customs, ARGUMENTS)
+opts.Update(localEnv)
+
+Help(opts.GenerateHelpText(localEnv))
+
+env = localEnv.Clone()
+
+if not (os.path.isdir(godot_cpp_path) and os.listdir(godot_cpp_path)):
+	print_error(
+		f"godot-cpp is not available at {godot_cpp_path}.\n"
+		"Clone it first:\n"
+		"  git clone --depth 1 https://github.com/godotengine/godot-cpp.git .dependency/godot-cpp"
+	)
+	sys.exit(1)
+
+env = SConscript(
+	os.path.join(godot_cpp_path, "SConstruct"),
+	{"api_version": "4.6", "env": env, "customs": customs},
+)
+
+env.Append(CPPPATH=["src/"])
+sources = Glob("src/*.cpp")
+
+if env["platform"] == "windows":
+	env.Append(LIBS=["user32"])
+
+# .dev doesn't inhibit compatibility, so we don't need to key it.
+# .universal just means "compatible with all relevant arches" so we don't need to key it.
+suffix = env["suffix"].replace(".dev", "").replace(".universal", "")
+
+lib_filename = "{}{}{}{}".format(env.subst("$SHLIBPREFIX"), libname, suffix, env.subst("$SHLIBSUFFIX"))
+
+library = env.SharedLibrary(
+	"bin/{}/{}".format(env["platform"], lib_filename),
+	source=sources,
+)
+
+Default(library)

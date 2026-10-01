@@ -55,6 +55,7 @@ Input folder
 | Video | Audio-track processing, 60 FPS interpolation, 4K upscaling and normalization, merging, compression, and OGV export |
 | Storyboard | Bilingual storyboards, HTML animation previews, narration, audio/video mixing, and multi-platform publishing copy |
 | Godot Framework | AI, networking, resource loading, audio, scenes, logging, settings, localization, testing, and shared utilities |
+| C++ (godot-cpp) | GDExtension support via godot-cpp for native classes usable from GDScript |
 
 See [`.agents/skills/README.md`](.agents/skills/README.md) for the complete skill catalog and usage details.
 
@@ -136,12 +137,15 @@ The Autoload exposes the global class name `gdf`.
 gai/
 ├── agent/           # Desktop coding agent and visual workflow editor
 ├── cli/             # Command-line examples for individual skills
+├── cpp/             # godot-cpp GDExtension (C++ native classes)
 ├── .agents/skills/  # Agent skill definitions and instructions
 ├── .ai/             # Skill implementation scripts
 ├── .dependency/     # Isolated runtimes, models, and external tools
 ├── zfoo/            # Reusable Godot framework
 └── test/            # Unit and integration tests
 ```
+
+See [`cpp/README.md`](cpp/README.md) for build and usage details.
 
 ## License
 

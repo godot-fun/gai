@@ -1,0 +1,16 @@
+[configuration]
+
+entry_symbol = "gai_cpp_library_init"
+compatibility_minimum = "4.6"
+reloadable = true
+
+[libraries]
+
+windows.x86_64.single.debug = "./bin/windows/gai_cpp.windows.template_debug.x86_64.dll"
+windows.x86_64.single.release = "./bin/windows/gai_cpp.windows.template_release.x86_64.dll"
+
+linux.x86_64.single.debug = "./bin/linux/libgai_cpp.linux.template_debug.x86_64.so"
+linux.x86_64.single.release = "./bin/linux/libgai_cpp.linux.template_release.x86_64.so"
+
+macos.single.debug = "./bin/macos/libgai_cpp.macos.template_debug.dylib"
+macos.single.release = "./bin/macos/libgai_cpp.macos.template_release.dylib"

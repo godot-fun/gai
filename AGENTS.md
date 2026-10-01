@@ -3,6 +3,7 @@
 - `zfoo/`: Reusable Godot framework.
 - `agent/`: Desktop agent application.
 - `cli/`: Command-line application.
+- `cpp/`: godot-cpp GDExtension (C++ bindings for the Godot script API).
 - `test/`: Unit and integration tests.
 - `.agents/skills/`: Reusable AI agent skills.
 - `.ai/`: Scripts used by skills.
