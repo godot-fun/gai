@@ -3,8 +3,7 @@
 .dependency/
 
 # Skills
-.cursor/skills/humanizer
-.cursor/skills/humanizer-zh
+.cursor/
 
 # Godot 4+ specific ignores
 .godot/
