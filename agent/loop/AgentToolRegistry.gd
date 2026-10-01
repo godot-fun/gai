@@ -13,6 +13,7 @@ static func _static_init() -> void:
 	register(WriteTool.new())
 	register(EditTool.new())
 	register(ImageToTextTool.new())
+	register(AudioToTextTool.new())
 	
 	# enhance tools
 	register(DeleteTool.new())
