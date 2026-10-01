@@ -28,7 +28,7 @@ static var last_access_millis: int = 0
 ## Registers the idle monitor once per script class. Registration is deferred because static
 ## initialization can run before the GodotFramework autoload has entered `_ready()`.
 static func _static_init() -> void:
-	await Engine.get_main_loop().process_frame
+	await ThreadUtils.async_sleep()
 	gdf.events.application_end.connect(stop)
 	SchedulerBus.schedule_at_fixed_rate(check_idle_timeout, IDLE_CHECK_MILLIS, "vlm_idle")
 	pass
