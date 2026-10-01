@@ -7,8 +7,6 @@ const SERVER_HOST: String = "127.0.0.1"
 const IDLE_TIMEOUT_SECONDS: int = 5 * 60
 const IDLE_TIMEOUT_MILLIS: int = IDLE_TIMEOUT_SECONDS * TimeUtils.MILLIS_PER_SECOND
 const START_TIMEOUT_MILLIS: int = 2 * TimeUtils.MILLIS_PER_MINUTE
-const REQUEST_TIMEOUT_MILLIS: int = 10 * TimeUtils.MILLIS_PER_MINUTE
-const IDLE_CHECK_MILLIS: int = TimeUtils.MILLIS_PER_SECOND
 const MIN_GPU_FREE_MEMORY_MIB: int = 3072
 const MODEL_NAME: String = "MiniCPM-V-4_6-Q4_K_M.gguf"
 const PROCESS_ID_STOPPED: int = -1
@@ -30,7 +28,7 @@ static var last_access_millis: int = 0
 static func _static_init() -> void:
 	await ThreadUtils.async_sleep()
 	gdf.events.application_end.connect(stop)
-	SchedulerBus.schedule_at_fixed_rate(check_idle_timeout, IDLE_CHECK_MILLIS, "vlm_idle")
+	SchedulerBus.schedule_at_fixed_rate(check_idle_timeout, TimeUtils.MILLIS_PER_SECOND, "vlm_idle")
 	pass
 
 ## Releases the model after five minutes without an image request renewing the idle lease.
@@ -71,8 +69,7 @@ static func async_image_to_text(image_path: String, prompt: String) -> String:
 		"max_tokens": 1024,
 		"stream": false,
 	}
-	var response := await HttpHelper.async_post(server_url() + "/v1/chat/completions", JSON.stringify(payload),
-		PackedStringArray(), REQUEST_TIMEOUT_MILLIS)
+	var response := await HttpHelper.async_post(server_url() + "/v1/chat/completions", JSON.stringify(payload),PackedStringArray())
 	if not response.success:
 		Log.error("vision language model request failed code:[{}] body:[{}]", response.code, response.get_body_string())
 		return StringUtils.EMPTY
@@ -93,10 +90,10 @@ static func async_image_to_text(image_path: String, prompt: String) -> String:
 ## Starts one server and waits for its TCP endpoint. Concurrent callers share the same cold start
 ## through the PROCESS_ID_STARTING sentinel instead of spawning duplicate model processes.
 static func async_ensure_server_running() -> int:
-	if is_running():
+	if await async_health():
 		return OK
 	while process_id == PROCESS_ID_STARTING:
-		await Engine.get_main_loop().process_frame
+		await ThreadUtils.async_sleep()
 		if is_running():
 			return OK
 	process_id = PROCESS_ID_STARTING
@@ -132,7 +129,7 @@ static func async_ensure_server_running() -> int:
 		if await async_health():
 			Log.info("vision language model server started pid:[{}] url:[{}]", process_id, server_url())
 			return OK
-		await ThreadUtils.async_sleep(100)
+		await ThreadUtils.async_sleep(500)
 	Log.error("vision language model server startup timed out")
 	stop()
 	return ERR_TIMEOUT
