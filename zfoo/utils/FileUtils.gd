@@ -58,6 +58,19 @@ static func get_project_root_path() -> String:
 # File read / write / delete
 # ---------------------------------------------------------------------------
 
+## Converts `user://` / `res://` to an absolute path and creates the parent directory.
+## Returns the absolute path, or empty string if the parent directory cannot be created.
+static func globalize_writable_path(path: String) -> String:
+	var absolute := path
+	if path.begins_with("user://") or path.begins_with("res://"):
+		absolute = ProjectSettings.globalize_path(path)
+	var dir := absolute.get_base_dir()
+	if not dir.is_empty() and not DirAccess.dir_exists_absolute(dir):
+		if DirAccess.make_dir_recursive_absolute(dir) != OK:
+			return StringUtils.EMPTY
+	return absolute
+
+
 ## Opens a file or directory with the operating system's default application.
 ## If a file has no associated application, opens its containing folder instead.
 static func open_file(path: String) -> int:
@@ -75,10 +88,10 @@ static func open_file(path: String) -> int:
 
 # Append content to the file.
 static func write_string_to_file(path: String, content: String) -> bool:
-	var dir := path.get_base_dir()
-	if not DirAccess.dir_exists_absolute(dir):
-		DirAccess.make_dir_recursive_absolute(dir)
-	var file := FileAccess.open(path, FileAccess.WRITE)
+	var absolute := globalize_writable_path(path)
+	if absolute.is_empty():
+		return false
+	var file := FileAccess.open(absolute, FileAccess.WRITE)
 	if file == null:
 		return false
 	file.store_string(content)

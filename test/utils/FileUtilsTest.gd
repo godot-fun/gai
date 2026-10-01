@@ -1,6 +1,22 @@
 ## FileUtils — file read, write, and directory helpers.
 
 
+func FileUtils_globalize_writable_path_test() -> void:
+	var abs_user := FileUtils.globalize_writable_path("user://fileutils_abs_test.txt")
+	assert(not abs_user.begins_with("user://"))
+	assert(abs_user == ProjectSettings.globalize_path("user://fileutils_abs_test.txt"))
+	assert(FileUtils.globalize_writable_path("C:/tmp/a.wav") == "C:/tmp/a.wav")
+
+	var root := ProjectSettings.globalize_path("user://fileutils_parent_" + str(TimeUtils.now()) + "_" + str(randi()))
+	var file_path := root.path_join("nested/out.txt")
+	assert(not DirAccess.dir_exists_absolute(file_path.get_base_dir()))
+	var prepared := FileUtils.globalize_writable_path(file_path)
+	assert(prepared == file_path)
+	assert(DirAccess.dir_exists_absolute(file_path.get_base_dir()))
+	FileUtils.delete_file_or_directory(root)
+	pass
+
+
 func FileUtils_read_write_test() -> void:
 	var path: String = "./zfoo_test_temp.txt"
 	var content: String = "hello godot!"

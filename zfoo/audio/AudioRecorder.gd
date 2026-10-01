@@ -58,10 +58,6 @@ static func stop() -> AudioStreamWAV:
 	return recording
 
 
-static func get_recording() -> AudioStreamWAV:
-	return recording
-
-
 ## Stops if still recording, then writes the last capture to a local WAV file.
 ## Returns a Godot engine error code (`OK` / `ERR_*`).
 static func save(path: String) -> int:
@@ -74,16 +70,10 @@ static func save(path: String) -> int:
 		Log.error("AudioRecorder save path is empty")
 		return ERR_INVALID_PARAMETER
 
-	var save_path := path
-	if path.begins_with("user://") or path.begins_with("res://"):
-		save_path = ProjectSettings.globalize_path(path)
-
-	var dir := save_path.get_base_dir()
-	if not dir.is_empty() and not DirAccess.dir_exists_absolute(dir):
-		var make_err := DirAccess.make_dir_recursive_absolute(dir)
-		if make_err != OK:
-			Log.error("AudioRecorder failed to create dir:[{}] err:[{}]", dir, make_err)
-			return make_err
+	var save_path := FileUtils.globalize_writable_path(path)
+	if save_path.is_empty():
+		Log.error("AudioRecorder failed to prepare path:[{}]", path)
+		return ERR_CANT_CREATE
 
 	var err := recording.save_to_wav(save_path)
 	if err != OK:
