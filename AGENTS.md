@@ -83,7 +83,7 @@ var streamed := stream_completion.content
 ```
 
 
-## Audio — music, voice, and sound effects
+## Audio — music, voice, sound effects, and recording
 
 ```gdscript
 # Single track or playlist (auto cross-fade near end of track)
@@ -95,6 +95,11 @@ await Audio.play_voice("res://audio/narration.mp3")
 
 # Multi-channel SFX (overlapping sounds on SoundEffect bus)
 Audios.play("res://audio/click.mp3", 0.8)
+
+# Microphone recording, then save a WAV
+AudioRecorder.start()
+var wav := AudioRecorder.stop() # AudioStreamWAV, null when nothing captured
+AudioRecorder.save(wav, "user://mic.wav")
 ```
 
 

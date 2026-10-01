@@ -38,9 +38,9 @@ func pressedStartRecordButton() -> void:
 	pass
 
 func pressedStopRecordButton() -> void:
-	AudioRecorder.stop()
+	var wav := AudioRecorder.stop()
 	var path := OS.get_user_data_dir().path_join("manual_recording.wav")
-	var err := AudioRecorder.save(path)
+	var err := AudioRecorder.save(wav, path)
 	if err == OK:
 		Log.info("AudioRecorder saved:[{}]", path)
 	else:

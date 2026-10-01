@@ -7,7 +7,6 @@ const RECORD_BUS_NAME: String = "Record"
 
 static var effect: AudioEffectRecord
 static var player: AudioStreamPlayer
-static var recording: AudioStreamWAV
 
 
 static func init() -> void:
@@ -39,31 +38,30 @@ static func start() -> void:
 	if effect.is_recording_active():
 		Log.error("AudioRecorder already recording")
 		return
-	recording = null
 	if not player.playing:
 		player.play()
 	effect.set_recording_active(true)
 	pass
 
 
+## Stops the capture and returns the recorded audio, or `null` when nothing was recording.
 static func stop() -> AudioStreamWAV:
 	if effect == null:
 		Log.error("AudioRecorder not initialized")
 		return null
-	if effect.is_recording_active():
-		recording = effect.get_recording()
-		effect.set_recording_active(false)
+	if not effect.is_recording_active():
+		return null
+	var wav := effect.get_recording()
+	effect.set_recording_active(false)
 	if player != null and player.playing:
 		player.stop()
-	return recording
+	return wav
 
 
-## Stops if still recording, then writes the last capture to a local WAV file.
+## Writes a recorded `AudioStreamWAV` to a local WAV file, creating missing parent folders.
 ## Returns a Godot engine error code (`OK` / `ERR_*`).
-static func save(path: String) -> int:
-	if is_recording():
-		stop()
-	if recording == null:
+static func save(wav: AudioStreamWAV, path: String) -> int:
+	if wav == null:
 		Log.error("AudioRecorder has no recording to save path:[{}]", path)
 		return ERR_DOES_NOT_EXIST
 	if path.is_empty():
@@ -75,7 +73,7 @@ static func save(path: String) -> int:
 		Log.error("AudioRecorder failed to prepare path:[{}]", path)
 		return ERR_CANT_CREATE
 
-	var err := recording.save_to_wav(save_path)
+	var err := wav.save_to_wav(save_path)
 	if err != OK:
 		Log.error("AudioRecorder save failed path:[{}] err:[{}]", save_path, err)
 	return err
