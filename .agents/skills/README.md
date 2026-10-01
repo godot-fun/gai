@@ -7,7 +7,7 @@ Batch asset tools — run from repo root; use each skill's script; never overwri
 | Category | Pipeline | Skills |
 |----------|----------|--------|
 | [AI](#ai) | Text-to-speech | 1 skill |
-| [Audio](#audio) | to-wav → trim → loudness → export | 9 skills |
+| [Audio](#audio) | to-wav → trim → loudness → export / transcription | 10 skills |
 | [Image](#image) | to-png → watermark → split → background → trim / resize | 8 skills |
 | [Video](#video) | mute / wav → 60fps → 4K → merge → compress / OGV | 10 skills |
 | [Storyboard](#storyboard) | Storyboard → HTML preview / video → VO → AV mix → merge → publish | 4 skills |
@@ -54,6 +54,7 @@ Source audio
 | [audio-volume-adjust](audio-volume-adjust/SKILL.md) | Fixed dB gain (alternative) |
 | [audio-sample-rate-standardize](audio-sample-rate-standardize/SKILL.md) | Standardize to 44100 / 48000 Hz WAV |
 | [audio-to-ogg](audio-to-ogg/SKILL.md) | Audio → OGG (BGM) |
+| [audio-to-text](audio-to-text/SKILL.md) | Local PCM16 WAV transcription with SenseVoice Small; prefers Vulkan GPU and automatically falls back to CPU |
 
 ## Image
 
