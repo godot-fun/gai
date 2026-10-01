@@ -36,7 +36,7 @@ env.Append(CPPPATH=["src/"])
 sources = Glob("src/*.cpp")
 
 if env["platform"] == "windows":
-	env.Append(LIBS=["user32"])
+	env.Append(LIBS=["user32", "gdi32", "ole32", "oleaut32", "uiautomationcore"])
 
 # .dev doesn't inhibit compatibility, so we don't need to key it.
 # .universal just means "compatible with all relevant arches" so we don't need to key it.

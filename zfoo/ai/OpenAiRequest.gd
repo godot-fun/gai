@@ -3,11 +3,21 @@ extends RefCounted
 
 ## Chat completion request body for OpenAI-compatible APIs.
 
+## DeepSeek V4 OpenAI-format thinking toggle (`thinking.type`). Empty omits the field (API default = enabled).
+const THINKING_ENABLED := "enabled"
+const THINKING_DISABLED := "disabled"
+## Chat Completions `response_format.type`. Empty omits the field (API default = text).
+const RESPONSE_FORMAT_JSON_OBJECT := "json_object"
+
 var model: String = ""
 var messages: Array[ChatMessage] = []
 var stream: bool = false
 var tools: Array[OpenAiToolDef] = []
 var max_tokens: int = 0
+## `enabled` / `disabled`, or empty to omit (provider default).
+var thinking: String = ""
+## `json_object`, or empty to omit (provider default text).
+var response_format: String = ""
 
 
 func _init(_model: String = "", _messages: Array[ChatMessage] = [], _stream: bool = false) -> void:
@@ -36,4 +46,8 @@ func to_api_dict() -> Dictionary:
 	if not tools.is_empty():
 		body["tools"] = tools
 		body["tool_choice"] = "auto"
+	if StringUtils.is_not_blank(thinking):
+		body["thinking"] = {"type": thinking}
+	if StringUtils.is_not_blank(response_format):
+		body["response_format"] = {"type": response_format}
 	return body

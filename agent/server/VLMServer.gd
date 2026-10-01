@@ -1,7 +1,7 @@
 class_name VLMServer
 extends Object
 
-## Manages the local llama.cpp Vision Language Model HTTP server.
+## Manages the local llama.cpp MiniCPM-V HTTP server for vision and text chat.
 
 const SERVER_HOST: String = "127.0.0.1"
 const IDLE_TIMEOUT_SECONDS: int = 5 * 60
@@ -31,11 +31,21 @@ static func _static_init() -> void:
 	SchedulerBus.schedule_at_fixed_rate(check_idle_timeout, TimeUtils.MILLIS_PER_SECOND, "vlm_idle")
 	pass
 
-## Releases the model after five minutes without an image request renewing the idle lease.
+## Releases the model after five minutes without a chat request renewing the idle lease.
 static func check_idle_timeout() -> void:
 	if is_running() and last_access_millis > 0 and Time.get_ticks_msec() - last_access_millis >= IDLE_TIMEOUT_MILLIS:
 		stop()
 	pass
+
+
+## Text-only chat through the same OpenAI-compatible endpoint (MiniCPM-V works as a local LLM).
+## Returns an empty string when startup fails or inference fails.
+static func async_chat(prompt: String, system_prompt: String = "", max_tokens: int = 2048) -> String:
+	var messages: Array = []
+	if StringUtils.is_not_blank(system_prompt):
+		messages.append({"role": "system", "content": system_prompt})
+	messages.append({"role": "user", "content": prompt})
+	return await async_chat_completion(messages, max_tokens)
 
 
 ## Sends one image and prompt to the managed OpenAI-compatible vision endpoint.
@@ -49,27 +59,35 @@ static func async_image_to_text(image_path: String, prompt: String) -> String:
 	if image_format.is_empty():
 		Log.error("vision language model image format is unsupported path:[{}]", image_path)
 		return StringUtils.EMPTY
+	var mime_subtype := "jpeg" if image_format == ImageHelper.jpg else image_format
+	var image_data_url := "data:image/{};base64,{}".format([mime_subtype, Marshalls.raw_to_base64(image_bytes)], "{}")
+	var messages: Array = [{
+		"role": "user",
+		"content": [
+			{"type": "text", "text": prompt},
+			{"type": "image_url", "image_url": {"url": image_data_url}},
+		],
+	}]
+	return await async_chat_completion(messages)
+
+
+## Posts a non-streaming chat completion after ensuring the local server is ready.
+static func async_chat_completion(messages: Array, max_tokens: int = 2048) -> String:
+	if messages.is_empty():
+		Log.error("vision language model messages is empty")
+		return StringUtils.EMPTY
 	last_access_millis = Time.get_ticks_msec()
 	var error: int = await async_ensure_server_running()
 	if error != OK:
 		return StringUtils.EMPTY
-
-	var mime_subtype := "jpeg" if image_format == ImageHelper.jpg else image_format
-	var image_data_url := "data:image/{};base64,{}".format([mime_subtype, Marshalls.raw_to_base64(image_bytes)], "{}")
 	var payload: Dictionary = {
 		"model": MODEL_NAME,
-		"messages": [{
-			"role": "user",
-			"content": [
-				{"type": "text", "text": prompt},
-				{"type": "image_url", "image_url": {"url": image_data_url}},
-			],
-		}],
+		"messages": messages,
 		"temperature": 0,
-		"max_tokens": 1024,
+		"max_tokens": max_tokens,
 		"stream": false,
 	}
-	var response := await HttpHelper.async_post(server_url() + "/v1/chat/completions", JSON.stringify(payload),PackedStringArray())
+	var response := await HttpHelper.async_post(server_url() + "/v1/chat/completions", JSON.stringify(payload), PackedStringArray())
 	if not response.success:
 		Log.error("vision language model request failed code:[{}] body:[{}]", response.code, response.get_body_string())
 		return StringUtils.EMPTY
@@ -170,9 +188,10 @@ static func build_server_args(model: String, mmproj: String, use_gpu: bool) -> P
 		"--model", model,
 		"--mmproj", mmproj,
 		"--load-mode", "mmap",
-		"--ctx-size", "65536",
+		"--ctx-size", "8096",
 		"--parallel", "1",
-		# "--reasoning", "off",
+		# Sense compose / OCR need short answers; thinking burns the token budget with empty content.
+		"--reasoning", "off",
 		"--sleep-idle-seconds", str(IDLE_TIMEOUT_SECONDS),
 		"--host", SERVER_HOST,
 		"--port", str(server_port),

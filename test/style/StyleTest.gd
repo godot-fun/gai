@@ -1,6 +1,23 @@
-## Unit tests for [StyleBoxHelper], [ButtonStyle], [Margin] and the builders that go through them.
+## Unit tests for [StyleBoxHelper], [ButtonStyle], [Margin], [DisplayScale] and the builders that go through them.
 
 const GRAY := Color(0.5, 0.5, 0.5)
+
+
+## [method DisplayScale.compute_ui_scale] maps main-window pixels to viewport units, clamped to 0.5–4.0.
+func DisplayScale_compute_ui_scale_test() -> void:
+	var scale := DisplayScale.compute_ui_scale()
+	assert(scale >= 0.5 and scale <= 4.0)
+	pass
+
+
+## [method DisplayScale.compute_screen_scale] is usable width / 2K reference under the anchor.
+func DisplayScale_compute_screen_scale_test() -> void:
+	var anchor := Vector2i(200, 300)
+	var screen := DisplayServer.get_screen_from_rect(Rect2(Vector2(anchor), Vector2.ONE))
+	var usable: Rect2i = DisplayServer.screen_get_usable_rect(screen)
+	var expected := float(usable.size.x) / float(DisplayScale.REF_SCREEN_WIDTH) if usable.size.x > 0 else 1.0
+	assert(is_equal_approx(DisplayScale.compute_screen_scale(anchor), expected))
+	pass
 
 
 func ColorBase_follow_theme_test() -> void:
@@ -144,16 +161,16 @@ func card_components_test() -> void:
 	assert(snackbar.border_width_left == ControlSize.border_md)
 	assert(snackbar.shadow_size == Alert.shadow_size)
 
-	DesktopToast.ui_scale = 1.0
+	var scale := DisplayScale.compute_ui_scale()
 	var toast: DesktopToast = DesktopToast.new()
 	toast.accent = ColorBase.success
 	toast.build_card()
 	var toast_card: StyleBoxFlat = toast.card.get_theme_stylebox("panel") as StyleBoxFlat
 	assert(toast_card.bg_color == snackbar.bg_color)
 	assert(toast_card.border_color == snackbar.border_color)
-	assert(toast_card.border_width_left == snackbar.border_width_left)
+	assert(toast_card.border_width_left == roundi(ControlSize.border_md * scale))
 	assert(toast_card.border_width_right == 0)
-	assert(toast_card.get_margin(SIDE_RIGHT) == Margin.ma_5)
+	assert(toast_card.get_margin(SIDE_RIGHT) == Margin.ma_5 * scale)
 	toast.free()
 	pass
 

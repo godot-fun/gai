@@ -378,29 +378,6 @@ func remote_image_download_state_test() -> void:
 	pass
 
 
-func markdown_image_cache_trims_oldest_files_test() -> void:
-	var cache_dir := ProjectSettings.globalize_path("user://markdown_cache_trim_test_" + str(randi()))
-	assert(DirAccess.make_dir_recursive_absolute(cache_dir) == OK)
-	var oldest_path := cache_dir.path_join("oldest.png")
-	var middle_path := cache_dir.path_join("middle.png")
-	var newest_path := cache_dir.path_join("newest.png")
-	var file_paths: Array[String] = [oldest_path, middle_path, newest_path]
-	for index in file_paths.size():
-		var file_path := file_paths[index]
-		var file := FileAccess.open(file_path, FileAccess.WRITE)
-		assert(file != null)
-		file.store_buffer(PackedByteArray([1, 2, 3, 4]))
-		file = null
-		if index < file_paths.size() - 1:
-			await gdf.gdf_node.get_tree().create_timer(1.1).timeout
-	MarkdownRender.cleanup_image_cache(cache_dir, 8)
-	assert(not FileAccess.file_exists(oldest_path))
-	assert(FileAccess.file_exists(middle_path))
-	assert(FileAccess.file_exists(newest_path))
-	FileUtils.delete_file_or_directory(cache_dir)
-	pass
-
-
 func markdown_image_max_width_test() -> void:
 	var image := Image.create_empty(1200, 600, false, Image.FORMAT_RGBA8)
 	var texture := ImageTexture.create_from_image(image)

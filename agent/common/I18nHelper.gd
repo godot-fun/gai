@@ -13,19 +13,16 @@ class LocaleConfig:
 
 
 static var LOCALE_PATHS: Dictionary[String, LocaleConfig] = {
-	"zh": LocaleConfig.new("res://agent/config/locale/zh.json", "简体中文"),
-	"en": LocaleConfig.new("res://agent/config/locale/en.json", "English"),
+	I18n.ZH: LocaleConfig.new("res://agent/config/locale/zh.json", "简体中文"),
+	I18n.EN: LocaleConfig.new("res://agent/config/locale/en.json", "English"),
 }
 
 static func init_i18n() -> void:
 	if I18n.is_initialized():
 		return
-	var locale := I18n.get_locale()
-	if locale.is_empty():
-		locale = TranslationServer.get_locale()
-	locale = locale.get_slice("_", 0).get_slice("-", 0).to_lower()
+	var locale := I18n.get_locale().get_slice("_", 0).get_slice("-", 0).to_lower()
 	if not LOCALE_PATHS.has(locale):
-		locale = "en"
-	var locale_config: LocaleConfig = LOCALE_PATHS.get(locale, LOCALE_PATHS["en"])
+		locale = I18n.EN
+	var locale_config: LocaleConfig = LOCALE_PATHS.get(locale, LOCALE_PATHS[I18n.EN])
 	I18n.set_locale(locale_config.locale_path)
 	pass

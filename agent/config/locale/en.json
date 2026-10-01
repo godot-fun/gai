@@ -49,6 +49,29 @@
       "stop": "Stop",
       "send": "Send (Enter)"
     },
+    "sense": {
+      "recording_title": "Sense input",
+      "recording_body": "Recording… release Ctrl+Alt+Z to stop",
+      "transcribing_title": "Sense input",
+      "transcribing_body": "Transcribing…",
+      "done_title": "Sense input",
+      "busy_title": "Sense input",
+      "busy_body": "Still working — please wait",
+      "error_title": "Sense input failed",
+      "start_failed": "Could not start the microphone",
+      "empty_recording": "No audio was captured",
+      "save_failed": "Could not save the recording",
+      "empty_text": "Transcription returned empty text",
+      "pick_title": "Pick",
+      "pick_cancel": "Cancel",
+      "pick_pending": "Generating…",
+      "pick_skipped": "No voice",
+      "label_voice": "Voice",
+      "label_correct": "Correct",
+      "label_optimize": "Optimize",
+      "label_expand": "Expand",
+      "label_diverge": "Diverge"
+    },
     "tokens": {
       "label": "{} tokens",
       "tooltip": "Context: {} ({}%) · Completion: {} · Total: {} (last request)"

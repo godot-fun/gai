@@ -1,6 +1,7 @@
 #include "register_types.h"
 
 #include "global_hotkey.h"
+#include "native_os.h"
 #include "summator.h"
 
 #include <gdextension_interface.h>
@@ -16,13 +17,16 @@ void initialize_gai_cpp_module(ModuleInitializationLevel p_level) {
 	}
 	GDREGISTER_CLASS(Summator);
 	GDREGISTER_CLASS(GlobalHotkey);
+	GDREGISTER_CLASS(NativeOS);
 	GlobalHotkey::create_singleton();
+	NativeOS::create_singleton();
 }
 
 void uninitialize_gai_cpp_module(ModuleInitializationLevel p_level) {
 	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
 		return;
 	}
+	NativeOS::destroy_singleton();
 	GlobalHotkey::destroy_singleton();
 }
 

@@ -45,13 +45,17 @@ func build_request_json(request: OpenAiRequest) -> String:
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-func async_chat(prompt: String, system_prompt: String = "", proxy: String = "") -> String:
-	return await async_chat_messages(build_messages(prompt, system_prompt), proxy)
+func async_chat(prompt: String, system_prompt: String = "", proxy: String = "", response_format: String = "") -> String:
+	return await async_chat_messages(build_messages(prompt, system_prompt), proxy, response_format)
 
-func async_chat_messages(messages: Array[ChatMessage], proxy: String = "") -> String:
+func async_chat_messages(messages: Array[ChatMessage], proxy: String = "", response_format: String = "") -> String:
 	if not validate_messages(messages):
 		return StringUtils.EMPTY
 	var request := OpenAiRequest.new(model, messages, false)
+	# DeepSeek V4 enables thinking by default; non-stream short replies (e.g. Sense) stay non-thinking.
+	request.thinking = OpenAiRequest.THINKING_DISABLED
+	if StringUtils.is_not_blank(response_format):
+		request.response_format = response_format
 	var response := await HttpHelper.async_post(base_url, build_request_json(request), build_headers(), REQUEST_TIMEOUT_MILLIS, proxy)
 	var body := response.get_body_string()
 	Log.info("OpenAI response body:[{}]", StringUtils.truncate(body, 512))

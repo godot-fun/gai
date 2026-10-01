@@ -34,7 +34,7 @@ text = "Vision Language Model Benchmark（视觉大模型耗时测试）"
 
 [node name="Description" type="Label" parent="Margin/Content"]
 layout_mode = 2
-text = "Compare end-to-end CLI and HTTP request times using the same model, image, and prompt. The first HTTP request includes server startup; subsequent requests reuse the resident model."
+text = "Compare end-to-end CLI vision, HTTP vision, and HTTP text-only LLM request times on the same MiniCPM-V server. The first HTTP request includes server startup; subsequent requests reuse the resident model."
 autowrap_mode = 3
 
 [node name="CliRow" type="HBoxContainer" parent="Margin/Content"]
@@ -62,6 +62,32 @@ text = "Full HTTP Image Request"
 [node name="HttpTime" type="Label" parent="Margin/Content/HttpRow"]
 layout_mode = 2
 text = "Not Run Yet"
+
+[node name="LlmRow" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LlmButton" type="Button" parent="Margin/Content/LlmRow"]
+custom_minimum_size = Vector2(260, 48)
+layout_mode = 2
+text = "Full HTTP LLM Request"
+
+[node name="LlmTime" type="Label" parent="Margin/Content/LlmRow"]
+layout_mode = 2
+text = "Not Run Yet"
+
+[node name="LlmZhRow" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LlmZhButton" type="Button" parent="Margin/Content/LlmZhRow"]
+custom_minimum_size = Vector2(260, 48)
+layout_mode = 2
+text = "完整 HTTP 中文 LLM 请求"
+
+[node name="LlmZhTime" type="Label" parent="Margin/Content/LlmZhRow"]
+layout_mode = 2
+text = "尚未运行"
 
 [node name="ResultTitle" type="Label" parent="Margin/Content"]
 layout_mode = 2

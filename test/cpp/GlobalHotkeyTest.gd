@@ -16,6 +16,15 @@ func global_hotkey_register_unregister_test() -> void:
 	pass
 
 
+func global_hotkey_held_false_when_idle_test() -> void:
+	const ID := 9004
+	GlobalHotkey.unregister_all()
+	assert(GlobalHotkey.register_hotkey(ID, KEY_F8, KEY_MASK_CTRL | KEY_MASK_ALT))
+	assert(not GlobalHotkey.is_hotkey_held(ID))
+	assert(GlobalHotkey.unregister_hotkey(ID))
+	pass
+
+
 func global_hotkey_replace_and_unregister_all_test() -> void:
 	const ID_A := 9002
 	const ID_B := 9003

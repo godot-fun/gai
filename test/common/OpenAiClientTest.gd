@@ -130,6 +130,27 @@ func build_request_json_test() -> void:
 	assert(json.contains("\"max_tokens\": 8192"))
 	assert(json.contains("\"content\": \"hello\""))
 	assert(json.contains("\"name\": \"read\""))
+	assert(not json.contains("\"thinking\""))
+	pass
+
+
+func build_request_json_thinking_disabled_test() -> void:
+	var messages: Array[ChatMessage] = []
+	messages.append(ChatMessage.user("hello"))
+	var request := OpenAiRequest.new("test-model", messages, false)
+	request.thinking = OpenAiRequest.THINKING_DISABLED
+	var json := client.build_request_json(request)
+	assert(json.contains("\"thinking\": {\"type\": \"disabled\"}"))
+	pass
+
+
+func build_request_json_response_format_json_object_test() -> void:
+	var messages: Array[ChatMessage] = []
+	messages.append(ChatMessage.user("hello"))
+	var request := OpenAiRequest.new("test-model", messages, false)
+	request.response_format = OpenAiRequest.RESPONSE_FORMAT_JSON_OBJECT
+	var json := client.build_request_json(request)
+	assert(json.contains("\"response_format\": {\"type\": \"json_object\"}"))
 	pass
 
 

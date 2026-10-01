@@ -6,6 +6,7 @@
 
 #include <atomic>
 #include <mutex>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -36,7 +37,9 @@ using namespace godot;
 ///    `pressed_queue` (mutex-protected). It must not touch Godot APIs there.
 /// 5. The singleton is hooked to `SceneTree.process_frame`. Each frame,
 ///    `flush_pressed` drains the queue on the main thread and emits
-///    `hotkey_pressed(id)` so GDScript can run safely.
+///    `hotkey_pressed(id)`. Held combos are then polled with `GetAsyncKeyState`;
+///    when the primary key or a required modifier is up, `hotkey_released(id)` fires.
+///    (`RegisterHotKey` itself has no key-up notification.)
 ///
 /// Dynamic register / cancel
 /// -------------------------
@@ -62,10 +65,9 @@ using namespace godot;
 /// GDScript example
 /// ----------------
 /// ```gdscript
-/// GlobalHotkey.hotkey_pressed.connect(func(id: int): print(id))
-/// GlobalHotkey.register_hotkey(1, KEY_F8, KEY_MASK_CTRL)
-/// GlobalHotkey.unregister_hotkey(1)
-/// GlobalHotkey.unregister_all()
+/// GlobalHotkey.hotkey_pressed.connect(func(id: int): print("down", id))
+/// GlobalHotkey.hotkey_released.connect(func(id: int): print("up", id))
+/// GlobalHotkey.register_hotkey(1, KEY_Z, KEY_MASK_CTRL | KEY_MASK_ALT)
 /// ```
 class GlobalHotkey : public Object {
 	GDCLASS(GlobalHotkey, Object)
@@ -78,7 +80,7 @@ public:
 	static void destroy_singleton();
 
 	/// Register or replace a hotkey.
-	/// @param p_id Caller-chosen id (must be >= 0); delivered again in `hotkey_pressed`.
+	/// @param p_id Caller-chosen id (must be >= 0); delivered again in `hotkey_pressed` / `hotkey_released`.
 	/// @param p_key Godot `Key` enum value.
 	/// @param p_modifiers Bitwise OR of `KEY_MASK_CTRL` / `SHIFT` / `ALT` / `META`.
 	/// @return false if the key cannot be mapped or the OS rejects the combo (often already taken).
@@ -91,6 +93,8 @@ public:
 	PackedInt32Array get_registered_ids() const;
 	/// True when `p_key` has a Windows VK mapping (same set as Godot's KeyMappingWindows).
 	bool is_key_supported(Key p_key) const;
+	/// True while this id is between `hotkey_pressed` and `hotkey_released` (combo still held).
+	bool is_hotkey_held(int32_t p_id) const;
 
 	/// Tear down worker thread, OS registrations, and the process_frame connection.
 	void shutdown();
@@ -101,11 +105,18 @@ protected:
 private:
 	static GlobalHotkey *singleton;
 
+#ifdef _WIN32
+	struct Binding {
+		uint32_t modifiers = 0;
+		uint32_t vk = 0;
+	};
+#endif
+
 	/// Start the Win32 worker (once) and attach the main-thread frame flush hook.
 	void ensure_runtime();
 	/// Connect `flush_pressed` to `SceneTree.process_frame` when the tree exists.
 	void ensure_frame_hook();
-	/// Main thread: drain `pressed_queue` and emit `hotkey_pressed`.
+	/// Main thread: drain press queue, emit pressed, poll held combos, emit released.
 	void flush_pressed();
 	/// Worker thread: enqueue a pressed id for the next frame flush.
 	void push_pressed(int32_t p_id);
@@ -114,6 +125,10 @@ private:
 	bool map_key(Key p_key, uint32_t &r_vk) const;
 	/// Godot KEY_MASK_* -> Win32 MOD_* (always includes MOD_NOREPEAT).
 	uint32_t map_modifiers(int64_t p_modifiers) const;
+#ifdef _WIN32
+	/// True while the primary VK and every required modifier are down (`GetAsyncKeyState`).
+	bool is_binding_down(const Binding &binding) const;
+#endif
 
 	/// Protects `pressed_queue` between worker and main threads.
 	std::mutex pressed_mutex;
@@ -121,6 +136,12 @@ private:
 	std::vector<int32_t> pressed_queue;
 	/// Ids currently registered from the GDScript / main-thread API perspective.
 	std::unordered_set<int32_t> registered_ids;
+#ifdef _WIN32
+	/// Main-thread copy of each id's Win32 combo (for hold / release polling).
+	std::unordered_map<int32_t, Binding> bindings;
+#endif
+	/// Ids that have emitted pressed and are waiting for release.
+	std::unordered_set<int32_t> held_ids;
 	/// Whether we already connected to SceneTree.process_frame.
 	bool frame_hooked = false;
 

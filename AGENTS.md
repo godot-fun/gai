@@ -251,6 +251,7 @@ label.text = I18n.t("settings.title")
 
 - `Margin`: Provides spacing tokens in 4-pixel increments.
 - `ControlSize`: Provides standard control heights, corner radii, border widths, and square sizes.
+- `DisplayScale`: App UI scale (`compute_ui_scale`) and 2K screen design scale (`compute_screen_scale`).
 - `StyleBoxHelper`: Creates `StyleBoxFlat` instances and applies their content margins.
 - `ButtonStyle`: Builds and applies theme-aware button state boxes and font colors.
 - `ScrollBarStyle`: Applies standard or custom scrollbar thickness, colors, and rounding.

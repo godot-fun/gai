@@ -222,6 +222,31 @@ static func get_newest_file_in_folder(folder_path: String) -> String:
 	return newest_path
 
 
+## Deletes the oldest files until [param folder_path] is no larger than [param max_bytes].
+## Non-recursive. Safe to run on a worker thread (file IO only).
+static func cleanup_cache_folder(folder_path: String, max_bytes: int) -> void:
+	if max_bytes < 0 or not DirAccess.dir_exists_absolute(folder_path):
+		return
+	var cache_files := get_all_files_in_folder(folder_path)
+	var total_bytes := 0
+	for file_path in cache_files:
+		total_bytes += FileAccess.get_size(file_path)
+	if total_bytes <= max_bytes:
+		return
+	cache_files.sort_custom(func(left: String, right: String) -> bool:
+		var left_modified := FileAccess.get_modified_time(left)
+		var right_modified := FileAccess.get_modified_time(right)
+		return left_modified < right_modified if left_modified != right_modified else left < right
+	)
+	for file_path in cache_files:
+		var file_size := FileAccess.get_size(file_path)
+		if DirAccess.remove_absolute(file_path) == OK:
+			total_bytes -= file_size
+		if total_bytes <= max_bytes:
+			break
+	pass
+
+
 # ---------------------------------------------------------------------------
 # Filename sanitization
 # ---------------------------------------------------------------------------

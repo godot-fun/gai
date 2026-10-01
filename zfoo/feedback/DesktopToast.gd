@@ -18,8 +18,6 @@ const TOPMOST_MILLIS: int = 900
 
 ## Live toasts, oldest first — the newest one hugs the screen corner.
 static var toasts: Array[DesktopToast] = []
-## Main-window pixels per viewport unit, so the toast matches the app's UI scale.
-static var ui_scale: float = 1.0
 
 var card: PanelContainer
 var body_label: Label
@@ -55,7 +53,6 @@ func _init() -> void:
 static func show_toast(i18n_title: String, i18n_body: String, color: Color, corner: Corner = Corner.CORNER_BOTTOM_RIGHT) -> void:
 	if gdf.gdf_node == null or not gdf.gdf_node.is_inside_tree():
 		return
-	ui_scale = compute_ui_scale()
 	var toast: DesktopToast = DesktopToast.new()
 	toast.title_text = I18n.t(i18n_title)
 	toast.body_text = I18n.t(i18n_body).strip_edges()
@@ -66,23 +63,11 @@ static func show_toast(i18n_title: String, i18n_body: String, color: Color, corn
 	pass
 
 
-## App UI scale, i.e. how many screen pixels one viewport unit takes on the main window.
-static func compute_ui_scale() -> float:
-	var viewport: Viewport = gdf.gdf_node.get_viewport()
-	if viewport == null:
-		return 1.0
-	var unit: Vector2 = viewport.get_visible_rect().size
-	if unit.x <= 0.0 or unit.y <= 0.0:
-		return 1.0
-	var pixels: Vector2 = Vector2(DisplayServer.window_get_size())
-	return clampf(minf(pixels.x / unit.x, pixels.y / unit.y), 0.5, 4.0)
-
-
 ## Anchor in the requested corner of the usable screen area (taskbar excluded).
 static func corner_position(window_size: Vector2i, corner: Corner = Corner.CORNER_BOTTOM_RIGHT) -> Vector2i:
 	var screen: int = DisplayServer.window_get_current_screen(DisplayServer.MAIN_WINDOW_ID)
 	var usable: Rect2i = DisplayServer.screen_get_usable_rect(screen)
-	var margin: int = roundi(Margin.ma_6 * ui_scale)
+	var margin: int = roundi(Margin.ma_6 * DisplayScale.compute_ui_scale())
 	var on_left: bool = corner == Corner.CORNER_TOP_LEFT or corner == Corner.CORNER_BOTTOM_LEFT
 	var on_top: bool = corner == Corner.CORNER_TOP_LEFT or corner == Corner.CORNER_TOP_RIGHT
 	var x: int = usable.position.x + margin if on_left else usable.end.x - window_size.x - margin
@@ -131,7 +116,7 @@ static func relayout() -> void:
 	var top_right_offset: int = 0
 	var bottom_left_offset: int = 0
 	var bottom_right_offset: int = 0
-	var gap: int = roundi(Margin.ma_3 * ui_scale)
+	var gap: int = roundi(Margin.ma_3 * DisplayScale.compute_ui_scale())
 	for i in range(toasts.size() - 1, -1, -1):
 		var toast: DesktopToast = toasts[i]
 		if not is_instance_valid(toast):
@@ -183,7 +168,7 @@ func fit_window_size() -> void:
 
 
 func build_card() -> void:
-	var unit: float = ui_scale
+	var unit: float = DisplayScale.compute_ui_scale()
 	var pad: float = Margin.ma_5 * unit
 	var card_width: float = CARD_WIDTH * unit
 	var text_width: float = card_width - pad * 2.0

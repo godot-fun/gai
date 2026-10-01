@@ -54,6 +54,7 @@ var agent_setting_dialog: AgentSettingDialog = AgentSettingDialog.new()
 var session_sidebar: AgentSessionSidebar = AgentSessionSidebar.new()
 var chat_view: AgentChatView = AgentChatView.new()
 var notification: AgentNotification = AgentNotification.new()
+var sense_input: SenseInput = SenseInput.new()
 
 
 func _ready() -> void:
@@ -82,10 +83,16 @@ func _ready() -> void:
 	workflow_button_ctrl.setup(workflow_button, project_button)
 	search_button_ctrl.setup(search_button)
 	log_button_ctrl.setup(log_button)
+	sense_input.setup()
 	apply_locale()
 
 	# session
 	session_sidebar.reload_sessions()
+	pass
+
+
+func _exit_tree() -> void:
+	sense_input.shutdown()
 	pass
 
 

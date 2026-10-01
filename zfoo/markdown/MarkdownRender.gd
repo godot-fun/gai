@@ -7,7 +7,7 @@ const MAX_REMOTE_IMAGE_BYTES := 20 * FileUtils.BYTES_PER_MB
 
 
 static func _static_init() -> void:
-	WorkerThreadPool.add_task(func() -> void: cleanup_image_cache(IMAGE_CACHE_DIR, MAX_IMAGE_CACHE_BYTES))
+	WorkerThreadPool.add_task(func() -> void: FileUtils.cleanup_cache_folder(IMAGE_CACHE_DIR, MAX_IMAGE_CACHE_BYTES))
 	pass
 
 
@@ -129,29 +129,3 @@ static func set_image_downloading(label: RichTextLabel, image_url: String, downl
 static func image_download_meta_key(image_url: String) -> StringName:
 	return StringName("image_" + image_url.sha256_text())
 
-
-# ----------------------------------------------------------------------------------------------------------------------
-# Image cache cleanup
-## Deletes the oldest files until [param cache_dir] is no larger than [param max_bytes].
-## This method only performs file IO and is safe to run on a worker thread.
-static func cleanup_image_cache(cache_dir: String, max_bytes: int) -> void:
-	if max_bytes < 0 or not DirAccess.dir_exists_absolute(cache_dir):
-		return
-	var cache_files := FileUtils.get_all_files_in_folder(cache_dir)
-	var total_bytes := 0
-	for file_path in cache_files:
-		total_bytes += FileAccess.get_size(file_path)
-	if total_bytes <= max_bytes:
-		return
-	cache_files.sort_custom(func(left: String, right: String) -> bool:
-		var left_modified := FileAccess.get_modified_time(left)
-		var right_modified := FileAccess.get_modified_time(right)
-		return left_modified < right_modified if left_modified != right_modified else left < right
-	)
-	for file_path in cache_files:
-		var file_size := FileAccess.get_size(file_path)
-		if DirAccess.remove_absolute(file_path) == OK:
-			total_bytes -= file_size
-		if total_bytes <= max_bytes:
-			break
-	pass

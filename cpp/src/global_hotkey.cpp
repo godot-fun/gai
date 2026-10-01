@@ -46,8 +46,10 @@ void GlobalHotkey::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_registered", "id"), &GlobalHotkey::is_registered);
 	ClassDB::bind_method(D_METHOD("get_registered_ids"), &GlobalHotkey::get_registered_ids);
 	ClassDB::bind_method(D_METHOD("is_key_supported", "key"), &GlobalHotkey::is_key_supported);
+	ClassDB::bind_method(D_METHOD("is_hotkey_held", "id"), &GlobalHotkey::is_hotkey_held);
 
 	ADD_SIGNAL(MethodInfo("hotkey_pressed", PropertyInfo(Variant::INT, "id")));
+	ADD_SIGNAL(MethodInfo("hotkey_released", PropertyInfo(Variant::INT, "id")));
 }
 
 bool GlobalHotkey::is_key_supported(Key p_key) const {
@@ -427,6 +429,31 @@ uint32_t GlobalHotkey::map_modifiers(int64_t p_modifiers) const {
 #endif
 }
 
+#ifdef _WIN32
+bool GlobalHotkey::is_binding_down(const Binding &binding) const {
+	auto vk_down = [](uint32_t vk) -> bool {
+		return (GetAsyncKeyState(static_cast<int>(vk)) & 0x8000) != 0;
+	};
+	if (!vk_down(binding.vk)) {
+		return false;
+	}
+	const uint32_t mods = binding.modifiers & ~static_cast<uint32_t>(MOD_NOREPEAT);
+	if ((mods & MOD_CONTROL) && !vk_down(VK_CONTROL)) {
+		return false;
+	}
+	if ((mods & MOD_SHIFT) && !vk_down(VK_SHIFT)) {
+		return false;
+	}
+	if ((mods & MOD_ALT) && !vk_down(VK_MENU)) {
+		return false;
+	}
+	if ((mods & MOD_WIN) && !vk_down(VK_LWIN) && !vk_down(VK_RWIN)) {
+		return false;
+	}
+	return true;
+}
+#endif
+
 void GlobalHotkey::ensure_frame_hook() {
 	if (frame_hooked) {
 		return;
@@ -453,7 +480,23 @@ void GlobalHotkey::flush_pressed() {
 		pending.swap(pressed_queue);
 	}
 	for (const int32_t id : pending) {
+		held_ids.insert(id);
 		emit_signal("hotkey_pressed", id);
+	}
+	std::vector<int32_t> released;
+	for (const int32_t id : held_ids) {
+#ifdef _WIN32
+		const auto it = bindings.find(id);
+		if (it == bindings.end() || !is_binding_down(it->second)) {
+			released.push_back(id);
+		}
+#else
+		released.push_back(id);
+#endif
+	}
+	for (const int32_t id : released) {
+		held_ids.erase(id);
+		emit_signal("hotkey_released", id);
 	}
 }
 
@@ -499,6 +542,7 @@ bool GlobalHotkey::register_hotkey(int32_t p_id, Key p_key, int64_t p_modifiers)
 		return false;
 	}
 	registered_ids.insert(p_id);
+	bindings[p_id] = Binding{ mods, vk };
 	return true;
 #else
 	(void)p_modifiers;
@@ -516,8 +560,10 @@ bool GlobalHotkey::unregister_hotkey(int32_t p_id) {
 	if (!run_command_sync(Command::Type::UNREGISTER, p_id)) {
 		return false;
 	}
+	bindings.erase(p_id);
 #endif
 	registered_ids.erase(p_id);
+	held_ids.erase(p_id);
 	return true;
 }
 
@@ -526,12 +572,18 @@ void GlobalHotkey::unregister_all() {
 	if (worker_thread != nullptr) {
 		run_command_sync(Command::Type::UNREGISTER_ALL);
 	}
+	bindings.clear();
 #endif
 	registered_ids.clear();
+	held_ids.clear();
 }
 
 bool GlobalHotkey::is_registered(int32_t p_id) const {
 	return registered_ids.find(p_id) != registered_ids.end();
+}
+
+bool GlobalHotkey::is_hotkey_held(int32_t p_id) const {
+	return held_ids.find(p_id) != held_ids.end();
 }
 
 PackedInt32Array GlobalHotkey::get_registered_ids() const {
@@ -567,6 +619,7 @@ void GlobalHotkey::shutdown() {
 	}
 	std::lock_guard<std::mutex> lock(pressed_mutex);
 	pressed_queue.clear();
+	held_ids.clear();
 }
 
 #ifdef _WIN32
