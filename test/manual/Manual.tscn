@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://dhwft2mh0eyu1" path="res://test/manual/HttpTest.gd" id="4_bs2af"]
 [ext_resource type="Script" path="res://test/manual/OpenAiTest.gd" id="5_openai"]
 [ext_resource type="Script" path="res://test/manual/LogTest.gd" id="6_log"]
+[ext_resource type="Script" path="res://test/manual/DesktopToastTest.gd" id="7_toast"]
 
 [node name="Test" type="Node" unique_id=1622393824]
 
@@ -124,3 +125,6 @@ offset_right = 289.0
 offset_bottom = 513.0
 text = "ShowLog"
 metadata/_edit_use_anchors_ = true
+
+[node name="DesktopToastTest" type="Node" parent="."]
+script = ExtResource("7_toast")
