@@ -384,14 +384,15 @@ func markdown_image_cache_trims_oldest_files_test() -> void:
 	var oldest_path := cache_dir.path_join("oldest.png")
 	var middle_path := cache_dir.path_join("middle.png")
 	var newest_path := cache_dir.path_join("newest.png")
-	for file_path in [oldest_path, middle_path, newest_path]:
+	var file_paths: Array[String] = [oldest_path, middle_path, newest_path]
+	for index in file_paths.size():
+		var file_path := file_paths[index]
 		var file := FileAccess.open(file_path, FileAccess.WRITE)
 		assert(file != null)
 		file.store_buffer(PackedByteArray([1, 2, 3, 4]))
 		file = null
-	assert(FileAccess.set_modified_time(oldest_path, 100) == OK)
-	assert(FileAccess.set_modified_time(middle_path, 200) == OK)
-	assert(FileAccess.set_modified_time(newest_path, 300) == OK)
+		if index < file_paths.size() - 1:
+			await gdf.gdf_node.get_tree().create_timer(1.1).timeout
 	MarkdownRender.cleanup_image_cache(cache_dir, 8)
 	assert(not FileAccess.file_exists(oldest_path))
 	assert(FileAccess.file_exists(middle_path))
