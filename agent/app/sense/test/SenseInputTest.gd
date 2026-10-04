@@ -340,6 +340,27 @@ func sense_custom_system_prompt_test() -> void:
 	pass
 
 
+## The leading library templates fill the results list before the user searches; typing searches the whole library.
+func sense_prompt_default_template_test() -> void:
+	var previous_locale := Setting.get_string(I18n.LOCALE_SETTING_KEY)
+	var sense_button := SenseButton.new()
+	sense_button.setup(Button.new(), null)
+	for locale: String in [I18n.ZH, I18n.EN]:
+		Setting.set_string(I18n.LOCALE_SETTING_KEY, locale)
+		sense_button.load_prompt_entries()
+		assert(sense_button.prompt_entries.size() > SenseButton.DEFAULT_TEMPLATE_COUNT)
+		sense_button.refresh_results("")
+		assert(sense_button.results.item_count == SenseButton.DEFAULT_TEMPLATE_COUNT)
+		var template_title := sense_button.results.get_item_text(0)
+		assert(not template_title.is_empty())
+		assert(str(sense_button.results.get_item_metadata(0)) == sense_button.prompt_entries.get_value(template_title))
+		sense_button.refresh_results(template_title)
+		assert(sense_button.results.item_count > 0 and sense_button.results.item_count <= SenseButton.MAX_RESULTS)
+	sense_button.button.free()
+	Setting.set_string(I18n.LOCALE_SETTING_KEY, previous_locale)
+	pass
+
+
 func sense_hotkey_text_test() -> void:
 	assert(SenseSetting.hotkey_text(SenseSetting.DEFAULT_HOTKEY_KEY, SenseSetting.DEFAULT_HOTKEY_MODIFIERS) == "Alt+Z")
 	assert(SenseSetting.hotkey_text(KEY_Z, KEY_MASK_CTRL | KEY_MASK_ALT) == "Ctrl+Alt+Z")

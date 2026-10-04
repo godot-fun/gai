@@ -6,6 +6,8 @@ extends RefCounted
 const DIALOG_SIZE := Vector2i(880, 1000)
 const PROMPT_FILES := {I18n.ZH: "res://agent/config/prompts/zh.json", I18n.EN: "res://agent/config/prompts/en.json"}
 const MAX_RESULTS := 30
+## Templates leading the library file are shown before the user searches; keep in sync with the library head size.
+const DEFAULT_TEMPLATE_COUNT := 124
 
 var button: Button
 var sense_input: SenseInput
@@ -236,18 +238,20 @@ func load_prompt_entries() -> void:
 	pass
 
 
+## Empty search lists the leading default templates; typing searches the whole library.
 func refresh_results(query: String) -> void:
 	results.clear()
 	var needle := query.strip_edges()
+	var limit := DEFAULT_TEMPLATE_COUNT if needle.is_empty() else MAX_RESULTS
 	for index in prompt_entries.size():
+		if results.item_count >= limit:
+			break
 		var title := prompt_entries.key_at(index)
 		var prompt := prompt_entries.value_at(index)
 		if not needle.is_empty() and title.findn(needle) < 0 and prompt.findn(needle) < 0:
 			continue
 		results.add_item(title)
 		results.set_item_metadata(results.item_count - 1, prompt)
-		if results.item_count >= MAX_RESULTS:
-			break
 	pass
 
 
