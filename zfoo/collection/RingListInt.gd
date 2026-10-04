@@ -1,4 +1,4 @@
-class_name RingIntList
+class_name RingListInt
 extends RefCounted
 
 ## Fixed-capacity ring buffer of [int] values kept in insertion order (oldest first).

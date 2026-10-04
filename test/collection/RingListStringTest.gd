@@ -1,8 +1,8 @@
-## Unit tests for [RingStringList]. Loaded with other scripts in this folder by [code]test/collection/CollectionTest.tscn[/code] ([UnitTest]).
+## Unit tests for [RingListString]. Loaded with other scripts in this folder by [code]test/collection/CollectionTest.tscn[/code] ([UnitTest]).
 
-## Fill, overwrite oldest when full, [method RingStringList.remove_latest], and [method RingStringList.clear].
-func RingStringList_add_test() -> void:
-	var ring := RingStringList.new(3)
+## Fill, overwrite oldest when full, [method RingListString.remove_latest], and [method RingListString.clear].
+func RingListString_add_test() -> void:
+	var ring := RingListString.new(3)
 	ring.add("a")
 	ring.add("b")
 	ring.add("c")
@@ -22,9 +22,9 @@ func RingStringList_add_test() -> void:
 	assert(ring.to_array() == [])
 	pass
 
-## [method RingStringList.remove_value] compacts order; missing values are ignored.
-func RingStringList_remove_value_test() -> void:
-	var ring := RingStringList.new(8)
+## [method RingListString.remove_value] compacts order; missing values are ignored.
+func RingListString_remove_value_test() -> void:
+	var ring := RingListString.new(8)
 	ring.add("one")
 	ring.add("two")
 	ring.add("three")

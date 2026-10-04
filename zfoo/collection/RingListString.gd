@@ -1,9 +1,9 @@
-class_name RingStringList
+class_name RingListString
 extends RefCounted
 
 ## Fixed-capacity ring buffer of [String] values kept in insertion order (oldest first).
 ##
-## Same semantics as [RingIntList]; storage uses [PackedStringArray].
+## Same semantics as [RingListInt]; storage uses [PackedStringArray].
 ## [method latest] returns an empty string when the buffer is empty.
 
 var capacity: int = 0

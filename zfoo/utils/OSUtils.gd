@@ -10,7 +10,7 @@ extends Object
 const EXIT_CODE_NOT_STARTED: int = -1
 const EXIT_CODE_TIMEOUT: int = -2
 
-static var process_pids: RingIntList = RingIntList.new(32)
+static var process_pids: RingListInt = RingListInt.new(32)
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Execution result

@@ -25,7 +25,7 @@ const LOG_BODY_MAX := 120
 ## True while transcription / candidate compose / picker is in flight.
 var busy: bool = false
 ## In-memory corrected-voice history (oldest → newest), appended when compose returns `correct`.
-var voice_history: RingStringList = RingStringList.new(VOICE_HISTORY_SIZE)
+var voice_history: RingListString = RingListString.new(VOICE_HISTORY_SIZE)
 
 ## Parallel screenshot → VLM / diverge state for the current press.
 ## A new press replaces this instance; stale async work may still finish into the old session and is ignored.
