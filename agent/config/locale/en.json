@@ -72,8 +72,8 @@
       "hotkey_invalid": "Include a modifier and use a supported primary key",
       "system_prompt": "System prompt",
       "system_prompt_placeholder": "Appended to the system prompt of every Sense model request.",
-      "prompt_search": "Prompt search",
-      "prompt_search_placeholder": "Search titles or prompt text",
+      "prompt_search": "Prompt template search",
+      "prompt_search_placeholder": "Enter keywords",
       "prompt_search_tooltip": "Double-click a result to insert it into the system prompt"
     },
     "tokens": {

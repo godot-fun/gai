@@ -72,8 +72,8 @@
       "hotkey_invalid": "快捷键需包含修饰键，且主键必须受系统支持",
       "system_prompt": "系统提示词",
       "system_prompt_placeholder": "此内容会附加到每次 Sense 模型请求的系统提示词。",
-      "prompt_search": "提示词搜索",
-      "prompt_search_placeholder": "输入标题或提示词关键词",
+      "prompt_search": "提示词模板搜索",
+      "prompt_search_placeholder": "输入关键字",
       "prompt_search_tooltip": "双击搜索结果插入系统提示词"
     },
     "tokens": {

@@ -3,11 +3,9 @@ extends RefCounted
 
 ## Sense input-method settings, including prompt-library search and live hotkey rebinding.
 
-const DIALOG_SIZE := Vector2i(760, 1000)
+const DIALOG_SIZE := Vector2i(880, 1000)
 const PROMPT_FILES := {I18n.ZH: "res://agent/config/prompts/zh.json", I18n.EN: "res://agent/config/prompts/en.json"}
 const MAX_RESULTS := 30
-const FIELD_LABEL_RATIO := 0.2
-const FIELD_CONTROL_RATIO := 0.8
 
 var button: Button
 var sense_input: SenseInput
@@ -73,11 +71,19 @@ func build_dialog() -> void:
 	title_label.text = I18n.t("agent.sense.settings_title")
 	title_label.add_theme_font_size_override("font_size", Typography.title_large_size)
 	fields.add_child(title_label)
-	var enabled_row := make_field_row(fields, I18n.t("agent.sense.input_method"))
+	var quick_settings := HBoxContainer.new()
+	quick_settings.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	quick_settings.add_theme_constant_override("separation", Margin.ma_3)
+	fields.add_child(quick_settings)
+	var left_settings := HBoxContainer.new()
+	left_settings.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left_settings.add_theme_constant_override("separation", Margin.ma_3)
+	quick_settings.add_child(left_settings)
+	var enabled_field := make_inline_field(left_settings, I18n.t("agent.sense.input_method"))
+	enabled_field.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	var enabled_control := HBoxContainer.new()
-	enabled_control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	enabled_control.size_flags_stretch_ratio = FIELD_CONTROL_RATIO
-	enabled_row.add_child(enabled_control)
+	enabled_control.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	enabled_field.add_child(enabled_control)
 	enabled_check = CheckButton.new()
 	enabled_check.text = ""
 	enabled_check.tooltip_text = I18n.t("agent.sense.enabled_tooltip")
@@ -85,27 +91,23 @@ func build_dialog() -> void:
 	enabled_check.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	enabled_check.toggled.connect(on_enabled_toggled)
 	enabled_control.add_child(enabled_check)
-	add_separator(fields)
-	var model_row := make_field_row(fields, I18n.t("agent.sense.model"))
+	var model_field := make_inline_field(left_settings, I18n.t("agent.sense.model"))
 	backend_select = OptionButton.new()
 	backend_select.custom_minimum_size = Vector2(0, 38)
 	backend_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	backend_select.size_flags_stretch_ratio = FIELD_CONTROL_RATIO
 	backend_select.add_item(I18n.t("agent.sense.local_model"))
 	backend_select.add_item(I18n.t("agent.sense.remote_model"))
 	backend_select.item_selected.connect(on_backend_selected)
 	backend_select.get_popup().popup_hide.connect(on_option_popup_hide)
-	model_row.add_child(backend_select)
-	add_separator(fields)
-	var hotkey_row := make_field_row(fields, I18n.t("agent.sense.hotkey"))
+	model_field.add_child(backend_select)
+	var hotkey_field := make_inline_field(quick_settings, I18n.t("agent.sense.hotkey"))
 	hotkey_button = Button.new()
 	hotkey_button.custom_minimum_size.y = ControlSize.lg
 	hotkey_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	hotkey_button.size_flags_stretch_ratio = FIELD_CONTROL_RATIO
 	hotkey_button.tooltip_text = I18n.t("agent.sense.hotkey_tooltip")
 	hotkey_button.pressed.connect(on_hotkey_capture_started)
 	hotkey_button.gui_input.connect(on_hotkey_input)
-	hotkey_row.add_child(hotkey_button)
+	hotkey_field.add_child(hotkey_button)
 	add_separator(fields)
 	fields.add_child(make_label(I18n.t("agent.sense.system_prompt")))
 	prompt_edit = TextEdit.new()
@@ -129,7 +131,7 @@ func build_dialog() -> void:
 	search_edit.text_changed.connect(refresh_results)
 	search_column.add_child(search_edit)
 	results = ItemList.new()
-	results.custom_minimum_size.y = 180
+	results.custom_minimum_size.y = 260
 	results.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	results.item_activated.connect(insert_prompt)
 	search_column.add_child(results)
@@ -151,17 +153,15 @@ func make_label(text: String) -> Label:
 	return label
 
 
-func make_field_row(parent: Container, label_text: String) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", Margin.ma_3)
-	parent.add_child(row)
+func make_inline_field(parent: Container, label_text: String) -> HBoxContainer:
+	var field := HBoxContainer.new()
+	field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	field.add_theme_constant_override("separation", Margin.ma_2)
+	parent.add_child(field)
 	var label := make_label(label_text)
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label.size_flags_stretch_ratio = FIELD_LABEL_RATIO
-	label.vertical_alignment = VERTICAL_ALIGNMENT_TOP
-	row.add_child(label)
-	return row
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	field.add_child(label)
+	return field
 
 
 func on_button_pressed() -> void:
