@@ -17,6 +17,13 @@ class TokenizeResult extends RefCounted:
 	var total_tokens: int = 0
 
 
+## Returns whether the llama-server health endpoint reports a ready status.
+static func async_health(server_url: String) -> bool:
+	var response := await HttpHelper.async_get(server_url.trim_suffix("/") + "/health", TimeUtils.MILLIS_PER_SECOND)
+	var data: Variant = response.get_body_json() if response.code == 200 else null
+	return typeof(data) == TYPE_DICTIONARY and data.get("status", "") == "ok"
+
+
 ## Returns each token's strongly typed ID and piece, plus the total token count.
 static func async_tokenize(server_url: String, prompt: String) -> TokenizeResult:
 	var result := TokenizeResult.new()

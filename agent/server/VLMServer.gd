@@ -111,7 +111,7 @@ static func async_chat_completion(messages: Array, max_tokens: int = 2048) -> St
 ## Starts one server and waits for its TCP endpoint. Concurrent callers share the same cold start
 ## through the PROCESS_ID_STARTING sentinel instead of spawning duplicate model processes.
 static func async_ensure_server_running() -> int:
-	if await async_health():
+	if await LlamaHelper.async_health(server_url()):
 		return OK
 	while process_id == PROCESS_ID_STARTING:
 		await ThreadUtils.async_sleep(TimeUtils.MILLIS_PER_SECOND)
@@ -147,7 +147,7 @@ static func async_ensure_server_running() -> int:
 			Log.error("vision language model server exited during startup")
 			process_id = PROCESS_ID_STOPPED
 			return FAILED
-		if await async_health():
+		if await LlamaHelper.async_health(server_url()):
 			Log.info("vision language model server started pid:[{}] url:[{}]", process_id, server_url())
 			return OK
 		await ThreadUtils.async_sleep(500)
@@ -170,13 +170,6 @@ static func stop() -> void:
 ## Returns whether the recorded llama-server child process still exists.
 static func is_running() -> bool:
 	return process_id > 0 and OS.is_process_running(process_id)
-
-
-## Returns whether the llama-server health endpoint reports a ready status.
-static func async_health() -> bool:
-	var response := await HttpHelper.async_get(server_url() + "/health", TimeUtils.MILLIS_PER_SECOND)
-	var data: Variant = response.get_body_json() if response.code == 200 else null
-	return typeof(data) == TYPE_DICTIONARY and data.get("status", "") == "ok"
 
 
 ## Returns the actual endpoint selected at runtime, including a dynamically advanced port.

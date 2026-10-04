@@ -115,6 +115,19 @@ text = "Tokenize Chinese Prompt"
 layout_mode = 2
 text = "Not Run Yet"
 
+[node name="HealthRow" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="HealthButton" type="Button" parent="Margin/Content/HealthRow"]
+custom_minimum_size = Vector2(260, 48)
+layout_mode = 2
+text = "Check Llama Server Health"
+
+[node name="HealthTime" type="Label" parent="Margin/Content/HealthRow"]
+layout_mode = 2
+text = "Not Run Yet"
+
 [node name="ResultTitle" type="Label" parent="Margin/Content"]
 layout_mode = 2
 text = "Model Response"

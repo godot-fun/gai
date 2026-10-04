@@ -45,6 +45,8 @@ const REQUEST_TIMEOUT_MILLIS: int = 10 * TimeUtils.MILLIS_PER_MINUTE
 @onready var english_tokenize_time_label: Label = $Margin/Content/EnglishTokenizeRow/EnglishTokenizeTime
 @onready var chinese_tokenize_button: Button = $Margin/Content/ChineseTokenizeRow/ChineseTokenizeButton
 @onready var chinese_tokenize_time_label: Label = $Margin/Content/ChineseTokenizeRow/ChineseTokenizeTime
+@onready var health_button: Button = $Margin/Content/HealthRow/HealthButton
+@onready var health_time_label: Label = $Margin/Content/HealthRow/HealthTime
 @onready var result_text: TextEdit = $Margin/Content/Result
 
 
@@ -55,6 +57,7 @@ func _ready() -> void:
 	llm_zh_button.pressed.connect(on_llm_zh_pressed)
 	english_tokenize_button.pressed.connect(on_english_tokenize_pressed)
 	chinese_tokenize_button.pressed.connect(on_chinese_tokenize_pressed)
+	health_button.pressed.connect(on_health_pressed)
 	pass
 
 
@@ -158,6 +161,23 @@ func on_chinese_tokenize_pressed() -> void:
 	pass
 
 
+## Starts the managed server when needed, then verifies its llama-server health endpoint.
+func on_health_pressed() -> void:
+	set_running(true)
+	health_time_label.text = "Running..."
+	result_text.text = StringUtils.EMPTY
+	var watch := StopWatch.new()
+	var url := VLM_SERVER.server_url()
+	var healthy := false
+	if await VLM_SERVER.async_ensure_server_running() == OK:
+		url = VLM_SERVER.server_url()
+		healthy = await LlamaHelper.async_health(url)
+	health_time_label.text = format_elapsed(watch.cost(), healthy)
+	result_text.text = "Server URL: {}\nHealthy: {}".format([url, healthy], "{}")
+	set_running(false)
+	pass
+
+
 ## Formats whitespace and byte-based pieces safely so token boundaries remain visible.
 func format_tokenize_result(result: LlamaHelper.TokenizeResult) -> String:
 	var builder := StringBuilder.new()
@@ -184,4 +204,5 @@ func set_running(running: bool) -> void:
 	llm_zh_button.disabled = running
 	english_tokenize_button.disabled = running
 	chinese_tokenize_button.disabled = running
+	health_button.disabled = running
 	pass
