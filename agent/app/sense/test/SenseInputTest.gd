@@ -318,15 +318,6 @@ func sense_prompt_local_parse_step_reply_test() -> void:
 	pass
 
 
-## [member SenseInput.use_local_llm] defaults to the local sequential path.
-func use_local_llm_default_test() -> void:
-	var sense := SenseInput.new()
-	assert(sense.use_local_llm)
-	sense.use_local_llm = false
-	assert(not sense.use_local_llm)
-	pass
-
-
 func sense_custom_system_prompt_test() -> void:
 	var previous := SenseSetting.get_system_prompt()
 	SenseSetting.set_system_prompt("")

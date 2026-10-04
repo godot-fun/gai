@@ -6,7 +6,7 @@ extends RefCounted
 ## screenshot → VLM context (up to 3 s), build five candidates (voice / correct / optimize / expand / diverge),
 ## then let [SensePicker] choose (↑↓ / Enter / click); it restores the target app before
 ## clipboard + Ctrl+V via [method NativeOS.paste_clipboard].
-## Two LLM backends ([member use_local_llm]):
+## Two LLM backends (selected by [method SenseSetting.use_local_model]):
 ## - Local: [VLMServer] + [SensePromptLocal] — sequential correct → optimize → expand → diverge.
 ## - Remote: [OpenAiClient] + [SensePrompt] — one-shot compose JSON; diverge early from screen alone.
 ## Screen OCR always uses local [VLMServer] (vision).
@@ -24,8 +24,6 @@ const LOG_BODY_MAX := 120
 
 ## True while transcription / candidate compose / picker is in flight.
 var busy: bool = false
-## Local MiniCPM path when true; remote OpenAI-compatible path when false.
-var use_local_llm: bool = true
 ## In-memory corrected-voice history (oldest → newest), appended when compose returns `correct`.
 var voice_history: RingStringList = RingStringList.new(VOICE_HISTORY_SIZE)
 
@@ -50,7 +48,6 @@ func setup() -> void:
 
 
 func apply_settings() -> void:
-	use_local_llm = SenseSetting.use_local_model()
 	unregister_hotkey()
 	if not SenseSetting.is_enabled():
 		return
@@ -72,10 +69,6 @@ func apply_settings() -> void:
 		return
 	Log.info("SenseInput: registered push-to-talk {}", SenseSetting.hotkey_text())
 	pass
-
-
-static func with_custom_system(base_prompt: String) -> String:
-	return SenseSetting.append_system_prompt(base_prompt)
 
 
 func unregister_hotkey() -> void:
@@ -191,7 +184,7 @@ func async_transcribe_recording() -> String:
 
 ## Dispatch compose to local (sequential) or remote (one-shot JSON).
 func async_fill_compose(picker: SensePicker, voice_text: String) -> void:
-	if use_local_llm:
+	if SenseSetting.use_local_model():
 		await async_fill_compose_local(picker, voice_text)
 	else:
 		await async_fill_compose_remote(picker, voice_text)
@@ -205,7 +198,7 @@ func async_fill_compose_remote(picker: SensePicker, voice_text: String) -> void:
 	if not is_picker_alive(picker):
 		return
 	var prompt := SensePrompt.compose_user_prompt(voice_text, screen_context, voice_history.to_array())
-	var raw := await async_remote_chat(prompt, with_custom_system(SensePrompt.compose_system()))
+	var raw := await async_remote_chat(prompt, SenseSetting.append_system_prompt(SensePrompt.compose_system()))
 	if not is_picker_alive(picker):
 		return
 	var parsed := parse_compose_json(raw)
@@ -329,21 +322,22 @@ func async_ocr_screen_and_diverge(session: SenseSession) -> void:
 		session.screen_ready = true
 		session.diverge_ready = true
 		return
-	var screen_prompt := with_custom_system(SensePromptLocal.screen_prompt() if use_local_llm else SensePrompt.screen_prompt())
+	var use_local_model := SenseSetting.use_local_model()
+	var screen_prompt := SenseSetting.append_system_prompt(SensePromptLocal.screen_prompt() if use_local_model else SensePrompt.screen_prompt())
 	var text := (await VLMServer.async_image_to_text(absolute, screen_prompt)).strip_edges()
 	session.screen_text = text
 	session.screen_ready = true
 	if session != sense_session:
 		return
 	# Local: compose chain runs diverge after expand. Mark ready so [method async_fill_diverge] can fall back to OCR.
-	if use_local_llm:
+	if use_local_model:
 		session.diverge_ready = true
 		return
 	if StringUtils.is_blank(text):
 		session.diverge_ready = true
 		return
 	var prompt := SensePrompt.diverge_user_prompt(text)
-	var raw := await async_remote_chat(prompt, with_custom_system(SensePrompt.diverge_system()))
+	var raw := await async_remote_chat(prompt, SenseSetting.append_system_prompt(SensePrompt.diverge_system()))
 	session.diverge_text = strip_guess_text(raw)
 	session.diverge_ready = true
 	pass
@@ -366,13 +360,13 @@ func async_fill_compose_local(picker: SensePicker, voice_text: String) -> void:
 	var screen_context := await async_wait_screen_context()
 	if not is_picker_alive(picker):
 		return
-	var correct_raw := await VLMServer.async_chat(SensePromptLocal.correct_user_prompt(voice_text), with_custom_system(SensePromptLocal.correct_screen_system(screen_context)), SensePromptLocal.MAX_TOKENS_CORRECT)
+	var correct_raw := await VLMServer.async_chat(SensePromptLocal.correct_user_prompt(voice_text), SenseSetting.append_system_prompt(SensePromptLocal.correct_screen_system(screen_context)), SensePromptLocal.MAX_TOKENS_CORRECT)
 	if not is_picker_alive(picker):
 		return
 	var correct := SensePromptLocal.parse_step_reply(correct_raw, SensePromptLocal.KEY_CORRECT)
 	if SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_CORRECT, voice_text, correct):
 		Log.info("SenseInput: correct output drift; retry with ASR only source:[{}] result:[{}]", voice_text.length(), correct.length())
-		correct_raw = await VLMServer.async_chat(SensePromptLocal.correct_user_prompt(voice_text), with_custom_system(SensePromptLocal.correct_system()), SensePromptLocal.MAX_TOKENS_CORRECT)
+		correct_raw = await VLMServer.async_chat(SensePromptLocal.correct_user_prompt(voice_text), SenseSetting.append_system_prompt(SensePromptLocal.correct_system()), SensePromptLocal.MAX_TOKENS_CORRECT)
 		if not is_picker_alive(picker):
 			return
 		correct = SensePromptLocal.parse_step_reply(correct_raw, SensePromptLocal.KEY_CORRECT)
@@ -381,13 +375,13 @@ func async_fill_compose_local(picker: SensePicker, voice_text: String) -> void:
 		correct = voice_text
 	voice_history.add(correct)
 	picker.set_entry(SensePicker.SLOT_CORRECT, correct)
-	var optimize_raw := await VLMServer.async_chat(SensePromptLocal.optimize_user_prompt(correct), with_custom_system(SensePromptLocal.optimize_screen_system(screen_context)), SensePromptLocal.MAX_TOKENS_OPTIMIZE)
+	var optimize_raw := await VLMServer.async_chat(SensePromptLocal.optimize_user_prompt(correct), SenseSetting.append_system_prompt(SensePromptLocal.optimize_screen_system(screen_context)), SensePromptLocal.MAX_TOKENS_OPTIMIZE)
 	if not is_picker_alive(picker):
 		return
 	var optimize := SensePromptLocal.parse_step_reply(optimize_raw, SensePromptLocal.KEY_OPTIMIZE)
 	if SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_OPTIMIZE, correct, optimize):
 		Log.info("SenseInput: optimize output drift; retry without screen source:[{}] result:[{}]", correct.length(), optimize.length())
-		optimize_raw = await VLMServer.async_chat(SensePromptLocal.optimize_user_prompt(correct), with_custom_system(SensePromptLocal.optimize_system()), SensePromptLocal.MAX_TOKENS_OPTIMIZE)
+		optimize_raw = await VLMServer.async_chat(SensePromptLocal.optimize_user_prompt(correct), SenseSetting.append_system_prompt(SensePromptLocal.optimize_system()), SensePromptLocal.MAX_TOKENS_OPTIMIZE)
 		if not is_picker_alive(picker):
 			return
 		optimize = SensePromptLocal.parse_step_reply(optimize_raw, SensePromptLocal.KEY_OPTIMIZE)
@@ -395,13 +389,13 @@ func async_fill_compose_local(picker: SensePicker, voice_text: String) -> void:
 		Log.info("SenseInput: optimize output drift after retry; use correct source:[{}] result:[{}]", correct.length(), optimize.length())
 		optimize = correct
 	picker.set_entry(SensePicker.SLOT_OPTIMIZE, optimize)
-	var expand_raw := await VLMServer.async_chat(SensePromptLocal.expand_user_prompt(optimize), with_custom_system(SensePromptLocal.expand_screen_system(screen_context)), SensePromptLocal.MAX_TOKENS_EXPAND)
+	var expand_raw := await VLMServer.async_chat(SensePromptLocal.expand_user_prompt(optimize), SenseSetting.append_system_prompt(SensePromptLocal.expand_screen_system(screen_context)), SensePromptLocal.MAX_TOKENS_EXPAND)
 	if not is_picker_alive(picker):
 		return
 	var expand := SensePromptLocal.parse_step_reply(expand_raw, SensePromptLocal.KEY_EXPAND)
 	if SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_EXPAND, optimize, expand):
 		Log.info("SenseInput: expand output drift; retry without screen source:[{}] result:[{}]", optimize.length(), expand.length())
-		expand_raw = await VLMServer.async_chat(SensePromptLocal.expand_user_prompt(optimize), with_custom_system(SensePromptLocal.expand_system()), SensePromptLocal.MAX_TOKENS_EXPAND)
+		expand_raw = await VLMServer.async_chat(SensePromptLocal.expand_user_prompt(optimize), SenseSetting.append_system_prompt(SensePromptLocal.expand_system()), SensePromptLocal.MAX_TOKENS_EXPAND)
 		if not is_picker_alive(picker):
 			return
 		expand = SensePromptLocal.parse_step_reply(expand_raw, SensePromptLocal.KEY_EXPAND)
@@ -409,13 +403,13 @@ func async_fill_compose_local(picker: SensePicker, voice_text: String) -> void:
 		Log.info("SenseInput: expand output drift after retry; use optimize source:[{}] result:[{}]", optimize.length(), expand.length())
 		expand = optimize
 	picker.set_entry(SensePicker.SLOT_EXPAND, expand)
-	var diverge_raw := await VLMServer.async_chat(SensePromptLocal.diverge_simple_user_prompt(expand), with_custom_system(SensePromptLocal.diverge_system(screen_context)), SensePromptLocal.MAX_TOKENS_DIVERGE)
+	var diverge_raw := await VLMServer.async_chat(SensePromptLocal.diverge_simple_user_prompt(expand), SenseSetting.append_system_prompt(SensePromptLocal.diverge_system(screen_context)), SensePromptLocal.MAX_TOKENS_DIVERGE)
 	if not is_picker_alive(picker):
 		return
 	var diverge := SensePromptLocal.parse_step_reply(diverge_raw, SensePromptLocal.KEY_DIVERGE)
 	if SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_DIVERGE, expand, diverge):
 		Log.info("SenseInput: diverge output drift; retry without screen source:[{}] result:[{}]", expand.length(), diverge.length())
-		diverge_raw = await VLMServer.async_chat(SensePromptLocal.diverge_simple_user_prompt(expand), with_custom_system(SensePromptLocal.diverge_simple_system()), SensePromptLocal.MAX_TOKENS_DIVERGE)
+		diverge_raw = await VLMServer.async_chat(SensePromptLocal.diverge_simple_user_prompt(expand), SenseSetting.append_system_prompt(SensePromptLocal.diverge_simple_system()), SensePromptLocal.MAX_TOKENS_DIVERGE)
 		if not is_picker_alive(picker):
 			return
 		diverge = SensePromptLocal.parse_step_reply(diverge_raw, SensePromptLocal.KEY_DIVERGE)
