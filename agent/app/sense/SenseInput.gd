@@ -144,7 +144,8 @@ func on_hotkey_released(id: int) -> void:
 	else:
 		picker.skip_voice_slot()
 		async_fill_compose_from_screen(picker)
-	async_fill_diverge(picker)
+	if not SenseSetting.use_local_model():
+		async_fill_diverge(picker)
 	var chosen := str(await picker.finished)
 	busy = false
 	if StringUtils.is_blank(chosen):
@@ -271,9 +272,7 @@ func async_remote_chat(prompt: String, system_prompt: String) -> String:
 	return await ApiSetting.get_client().async_chat(prompt, system_prompt, ApiSetting.get_proxy_address())
 
 
-## Fill diverge into the open picker when the early guess finishes. Waits while the sheet
-## stays open — model latency often exceeds the short screen-OCR wait used for compose.
-## Falls back to screen OCR text so the picker always gets a pasteable prediction row.
+## Fill the remote diverge result into the open picker when the early guess finishes.
 func async_fill_diverge(picker: SensePicker) -> void:
 	var session := sense_session
 	while not session.diverge_ready and is_picker_alive(picker):
@@ -282,9 +281,8 @@ func async_fill_diverge(picker: SensePicker) -> void:
 		return
 	var text := session.diverge_text.strip_edges()
 	if StringUtils.is_blank(text):
-		text = session.screen_text.strip_edges()
-	if StringUtils.is_blank(text):
-		Log.info("SenseInput: diverge empty after screen wait")
+		picker.skip_entry(SensePicker.SLOT_DIVERGE)
+		Log.info("SenseInput: remote diverge returned empty")
 		return
 	picker.set_entry(SensePicker.SLOT_DIVERGE, text)
 	pass
@@ -368,9 +366,8 @@ func async_ocr_screen_and_diverge(session: SenseSession) -> void:
 	session.screen_ready = true
 	if session != sense_session:
 		return
-	# Local: compose chain runs diverge after expand. Mark ready so [method async_fill_diverge] can fall back to OCR.
+	# Local compose fills diverge after expand; only the remote path uses the early result.
 	if use_local_model:
-		session.diverge_ready = true
 		return
 	if StringUtils.is_blank(text):
 		session.diverge_ready = true
