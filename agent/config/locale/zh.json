@@ -50,18 +50,6 @@
       "send": "发送（Enter）"
     },
     "sense": {
-      "recording_title": "感知输入法",
-      "recording_body": "正在录音…松开快捷键结束",
-      "transcribing_title": "感知输入法",
-      "transcribing_body": "正在转写…",
-      "done_title": "感知输入法",
-      "busy_title": "感知输入法",
-      "busy_body": "仍在处理，请稍候",
-      "error_title": "感知输入法失败",
-      "start_failed": "无法启动麦克风",
-      "empty_recording": "没有录到声音",
-      "save_failed": "无法保存录音",
-      "empty_text": "转写结果为空",
       "pick_title": "选文",
       "pick_cancel": "取消",
       "pick_pending": "生成中…",

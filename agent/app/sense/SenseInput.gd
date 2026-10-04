@@ -20,7 +20,7 @@ const SCREEN_INPUT_FILE := "screen_input_{}.png"
 
 const SCREEN_WAIT_MILLIS := 3 * TimeUtils.MILLIS_PER_SECOND
 const VOICE_HISTORY_SIZE := 6
-const TOAST_BODY_MAX := 120
+const LOG_BODY_MAX := 120
 
 ## True while transcription / candidate compose / picker is in flight.
 var busy: bool = false
@@ -106,10 +106,10 @@ func on_hotkey_pressed(id: int) -> void:
 	if busy or AudioRecorder.is_active():
 		return
 	if SenseWave.instance != null and is_instance_valid(SenseWave.instance):
-		show_toast("agent.sense.busy_title", "agent.sense.busy_body", ColorBase.warning)
+		Log.info("SenseInput: busy — recording indicator already open")
 		return
 	if SensePicker.is_open():
-		show_toast("agent.sense.busy_title", "agent.sense.busy_body", ColorBase.warning)
+		Log.info("SenseInput: busy — picker already open")
 		return
 	# Capture before the beacon: capture_screen is sync and would stall the main thread
 	# while a newly visible transparent Window still has no frame → gray rectangle flash.
@@ -155,7 +155,7 @@ func on_hotkey_released(id: int) -> void:
 	DisplayServer.clipboard_set(chosen)
 	if Engine.has_singleton("NativeOS"):
 		NativeOS.paste_clipboard()
-	show_toast("agent.sense.done_title", StringUtils.truncate(chosen, TOAST_BODY_MAX), ColorBase.success)
+	Log.info("SenseInput: completed text:[{}]", StringUtils.truncate(chosen, LOG_BODY_MAX))
 	pass
 
 
@@ -179,7 +179,7 @@ func async_transcribe_recording() -> String:
 		return StringUtils.EMPTY
 	var result := await AudioToTextTool.async_audio_to_text(absolute)
 	if result.is_error:
-		Log.info("SenseInput: ASR soft-fail:[{}] — diverge-only picker", StringUtils.truncate(result.content, TOAST_BODY_MAX))
+		Log.info("SenseInput: ASR soft-fail:[{}] — diverge-only picker", StringUtils.truncate(result.content, LOG_BODY_MAX))
 		return StringUtils.EMPTY
 	var voice_text := result.content.strip_edges()
 	if StringUtils.is_blank(voice_text):
@@ -274,7 +274,7 @@ static func parse_compose_json(raw: String) -> Dictionary:
 	}
 	if StringUtils.is_blank(parsed.correct) and StringUtils.is_blank(parsed.optimize) and StringUtils.is_blank(parsed.expand):
 		if StringUtils.is_not_blank(text):
-			Log.info("SenseInput: compose fields missing raw:[{}]", StringUtils.truncate(text, TOAST_BODY_MAX))
+			Log.info("SenseInput: compose fields missing raw:[{}]", StringUtils.truncate(text, LOG_BODY_MAX))
 		return empty
 	return parsed
 
@@ -298,12 +298,6 @@ static func strip_guess_text(raw: String) -> String:
 		if (first == "\"" and last == "\"") or (first == "'" and last == "'") or (first == "“" and last == "”"):
 			text = text.substr(1, text.length() - 2).strip_edges()
 	return text
-
-
-func show_toast(title_key: String, body: String, color: Color) -> void:
-	var corner := Corner.CORNER_TOP_RIGHT if DisplayServer.window_is_focused(DisplayServer.MAIN_WINDOW_ID) else Corner.CORNER_BOTTOM_RIGHT
-	DesktopToast.show_toast(title_key, body, color, corner)
-	pass
 
 
 func cleanup_caches() -> void:
