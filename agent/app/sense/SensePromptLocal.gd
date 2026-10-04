@@ -51,14 +51,14 @@ const SCREEN_SEED_SYSTEM_ZH := "根据屏幕内容预测焦点控件中最保守
 const SCREEN_SEED_USER_EN := "Predict the next input."
 const SCREEN_SEED_USER_ZH := "预测下一条输入。"
 
-const CORRECT_SYSTEM_SCREEN_EN := """Fix ASR errors only. Use the screen only to disambiguate words. Keep the ASR meaning and length; never copy or summarize the screen.
+const CORRECT_SYSTEM_SCREEN_EN := """Fix ASR mistakes and basic language errors: grammar, word order, missing or repeated words, collocation, and punctuation. Produce complete, natural text without grammatical errors. Preserve the ASR meaning, tone, and amount of information; do not polish or expand. Use the screen only to disambiguate words; never copy or summarize it.
 Use the same language as the ASR text; never translate it. Reply with the corrected text only, without labels, quotes, commentary, or Markdown."""
-const CORRECT_SYSTEM_SCREEN_ZH := """只修正语音识别错误。屏幕信息仅用于消除词语歧义。保持语音原意和长度，禁止复制或总结屏幕。
+const CORRECT_SYSTEM_SCREEN_ZH := """修正语音识别错误和基础语言错误，包括语法、语序、漏词、重复、搭配及标点。输出完整、自然、无语病的文本；严格保留语音原意、语气和信息量，不润色、不扩写。屏幕信息仅用于消除词语歧义，禁止复制或总结屏幕。
 必须保持语音文本的语言；中文输入只输出中文，禁止翻译成英文。只回复修正后的正文，不要标签、引号、解释或 Markdown。"""
 
-const CORRECT_SYSTEM_EN := """Fix ASR errors only. The ASR text is the only context. Keep its meaning and length; do not add information.
+const CORRECT_SYSTEM_EN := """Fix ASR mistakes and basic language errors: grammar, word order, missing or repeated words, collocation, and punctuation. Produce complete, natural text without grammatical errors. The ASR text is the only context. Preserve its meaning, tone, and amount of information; do not polish or expand.
 Use the same language as the ASR text; never translate it. Reply with the corrected text only, without labels, quotes, commentary, or Markdown."""
-const CORRECT_SYSTEM_ZH := """只修正语音识别错误。仅以上一条语音文本为依据。保持原意和长度，不添加信息。
+const CORRECT_SYSTEM_ZH := """修正语音识别错误和基础语言错误，包括语法、语序、漏词、重复、搭配及标点。输出完整、自然、无语病的文本。仅以上一条语音文本为依据；严格保留原意、语气和信息量，不润色、不扩写。
 必须保持语音文本的语言；中文输入只输出中文，禁止翻译成英文。只回复修正后的正文，不要标签、引号、解释或 Markdown。"""
 
 const OPTIMIZE_SYSTEM_EN := """Polish wording of the draft. Same intent; do not add facts.
