@@ -35,7 +35,7 @@ static func async_tokenize(server_url: String, prompt: String) -> TokenizeResult
 		"parse_special": true,
 		"with_pieces": true,
 	}
-	var response := await HttpHelper.async_post(server_url.trim_suffix("/") + "/tokenize", JSON.stringify(payload), PackedStringArray())
+	var response := await HttpHelper.async_post(server_url.trim_suffix("/") + "/tokenize", JSON.stringify(payload))
 	if not response.success:
 		Log.error("llama tokenize failed code:[{}] body:[{}]", response.code, response.get_body_string())
 		return result
