@@ -336,11 +336,13 @@ func make_input_style() -> StyleBoxFlat:
 
 
 func style_line_edit(edit: LineEdit) -> void:
-	edit.add_theme_color_override("font_color", ColorBase.primary_text)
-	edit.add_theme_color_override("font_placeholder_color", ColorBase.secondary_text.darkened(0.08))
+	edit.add_theme_color_override("font_color", ThemeColor.title_color)
+	edit.add_theme_color_override("font_placeholder_color", Color(ThemeColor.body_color, 0.78))
 	edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
+	edit.add_theme_color_override("font_selected_color", ThemeColor.title_color)
+	edit.add_theme_color_override("selection_color", ThemeColor.selection_color)
 	edit.caret_blink = true
-	var normal := make_input_style()
+	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 7, Margin.ma_3, Margin.ma_0, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
 	var focus := normal.duplicate() as StyleBoxFlat
 	focus.border_color = ThemeColor.accent_theme_color()
 	focus.set_border_width_all(ControlSize.border_sm)
@@ -419,12 +421,15 @@ func style_button(control: Button) -> void:
 
 
 func style_results() -> void:
-	results.add_theme_color_override("font_color", ColorBase.primary_text)
-	results.add_theme_color_override("font_hovered_color", ColorBase.primary_text)
-	results.add_theme_color_override("font_selected_color", ColorBase.primary_text)
-	results.add_theme_stylebox_override("panel", make_input_style())
-	results.add_theme_stylebox_override("hovered", StyleBoxHelper.create_style_box_flat(ColorBase.hover_surface, 5))
-	results.add_theme_stylebox_override("selected", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, 5))
-	results.add_theme_stylebox_override("selected_focus", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, 5, 0, 0, ThemeColor.accent_theme_color(), ControlSize.border_xs))
-	ScrollBarStyle.apply_custom(results.get_v_scroll_bar(), ScrollBarStyle.thickness_md, ThemeColor.body_color, ThemeColor.accent_theme_color(), true)
+	results.add_theme_color_override("font_color", ThemeColor.title_color)
+	results.add_theme_color_override("font_hovered_color", ThemeColor.title_color)
+	results.add_theme_color_override("font_selected_color", ThemeColor.title_color)
+	results.add_theme_color_override("guide_color", Color(ThemeColor.body_color, 0.18))
+	results.add_theme_constant_override("line_separation", Margin.ma_2)
+	results.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 7, Margin.ma_2, Margin.ma_2, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs))
+	results.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+	results.add_theme_stylebox_override("hovered", StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 6))
+	results.add_theme_stylebox_override("selected", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, 6))
+	results.add_theme_stylebox_override("selected_focus", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, 6, 0, 0, Color(ThemeColor.accent_theme_color(), 0.72), ControlSize.border_xs))
+	ScrollBarStyle.apply_custom(results.get_v_scroll_bar(), ScrollBarStyle.thickness_md, Color(ThemeColor.body_color, 0.45), ThemeColor.accent_theme_color(), true)
 	pass
