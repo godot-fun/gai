@@ -120,14 +120,18 @@ func on_hotkey_pressed(id: int) -> void:
 func on_hotkey_released(id: int) -> void:
 	if id != HOTKEY_ID:
 		return
+	if busy:
+		return
 	# Wave marks the press session (mic may be off); ignore stray releases.
-	if SenseWave.instance == null or not is_instance_valid(SenseWave.instance):
+	var wave := SenseWave.instance
+	if wave == null or not is_instance_valid(wave):
 		return
 	busy = true
+	# Capture before awaiting ASR: shutdown or another lifecycle path may free the wave meanwhile.
+	var picker_anchor := wave.fixed_anchor
 	SenseWave.show_transcribing()
 	var voice_text := await async_transcribe_recording()
 	# Reuse the wave pin so the picker opens on the same screen point / width band.
-	var picker_anchor := SenseWave.instance.fixed_anchor
 	SenseWave.dismiss()
 	var picker := SensePicker.open(picker_anchor)
 	if picker == null:
