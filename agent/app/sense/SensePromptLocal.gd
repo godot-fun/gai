@@ -221,6 +221,11 @@ static func is_length_deviated(step: String, source_text: String, result_text: S
 	return result_length < min_length or result_length > source_length + growth_allowance
 
 
+## Rejects local-model output that violates either the step length policy or source language.
+static func is_output_deviated(step: String, source_text: String, result_text: String) -> bool:
+	return is_length_deviated(step, source_text, result_text) or is_language_deviated(source_text, result_text)
+
+
 ## Reads a plain-text local reply, while accepting the former JSON format during upgrades.
 static func parse_step_reply(raw: String, key: String) -> String:
 	if StringUtils.is_blank(raw) or StringUtils.is_blank(key):
@@ -238,8 +243,3 @@ static func parse_step_reply(raw: String, key: String) -> String:
 		if text.begins_with("text\n"):
 			text = text.trim_prefix("text\n").strip_edges()
 	return text
-
-
-## Backward-compatible alias for callers still using the former JSON-only API.
-static func parse_step_json(raw: String, key: String) -> String:
-	return parse_step_reply(raw, key)

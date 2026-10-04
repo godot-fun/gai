@@ -266,6 +266,14 @@ func sense_prompt_local_language_deviation_test() -> void:
 	pass
 
 
+## Combined output validation rejects either length drift or a full language change.
+func sense_prompt_local_output_deviation_test() -> void:
+	assert(SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_CORRECT, "帮我打开设置", "Please open Settings"))
+	assert(SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_CORRECT, "abcdefghij", "abcd"))
+	assert(not SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_CORRECT, "帮我打开设置", "请帮我打开设置"))
+	pass
+
+
 ## OPTIMIZE permits more length change than CORRECT, then rejects clear screen-driven drift.
 func sense_prompt_local_optimize_length_deviation_test() -> void:
 	var source := "abcdefghij"
@@ -307,7 +315,6 @@ func sense_prompt_local_parse_step_reply_test() -> void:
 	assert(SensePromptLocal.parse_step_reply('Here: {"optimize":"polished"} ok', SensePromptLocal.KEY_OPTIMIZE) == "polished")
 	assert(SensePromptLocal.parse_step_reply('{"other":"x"}', SensePromptLocal.KEY_CORRECT) == "")
 	assert(SensePromptLocal.parse_step_reply("保留 {name} 占位符", SensePromptLocal.KEY_CORRECT) == "保留 {name} 占位符")
-	assert(SensePromptLocal.parse_step_json('{"expand":"legacy"}', SensePromptLocal.KEY_EXPAND) == "legacy")
 	pass
 
 
