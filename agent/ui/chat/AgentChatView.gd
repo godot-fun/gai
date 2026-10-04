@@ -500,6 +500,9 @@ func on_chat_scroll_bar_scrolling() -> void:
 ## Page keys belong to the focused TextEdit by default; route Godot's native page
 ## actions to the transcript so they work while composing a message.
 func on_chat_window_input(event: InputEvent) -> void:
+	# Window input can still arrive while the chat scene is being removed from the tree.
+	if not is_instance_valid(chat_scroll) or not chat_scroll.is_inside_tree():
+		return
 	# Embedded windows do not clear the host window's focus flag, so check them explicitly.
 	for window: Window in chat_scroll.get_tree().root.get_embedded_subwindows():
 		if window.visible:
