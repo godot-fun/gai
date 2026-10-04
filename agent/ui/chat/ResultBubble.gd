@@ -30,7 +30,7 @@ static func append(
 	header.add_child(title_label)
 
 	var view_button: Button = Button.new()
-	view_button.text = "···"
+	view_button.text = "…"
 	style_view_button(view_button)
 	view_button.pressed.connect(entry.open_full_view)
 	header.add_child(view_button)

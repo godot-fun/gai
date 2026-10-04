@@ -61,14 +61,10 @@ var sense_input: SenseInput = SenseInput.new()
 
 func _ready() -> void:
 	I18nHelper.init_i18n()
-	var app_theme := Theme.new()
-	app_theme.default_font = Fonts.regular()
-	theme = app_theme
-	workspace_dialog.add_theme_font_override("title_font", Fonts.regular())
 	apply_layout()
+	apply_theme()
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(apply_locale)
-	apply_theme()
 	
 	toolbar.setup(toolbar_panel, toolbar_logo, project_button)
 	notification.setup()
@@ -127,6 +123,11 @@ func apply_locale() -> void:
 
 
 func apply_theme() -> void:
+	var app_theme := Theme.new()
+	app_theme.default_font = Fonts.medium()
+	theme = app_theme
+	
+	workspace_dialog.add_theme_font_override("title_font", Fonts.regular())	
 	chat_area_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ColorBase.app_background))
 	chat_area_panel.queue_redraw()
 	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ColorBase.app_background))
