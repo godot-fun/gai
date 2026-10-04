@@ -366,14 +366,12 @@ func style_check_button(check: CheckButton) -> void:
 	# the same on every state, otherwise hovering would shift the row.
 	var empty := StyleBoxEmpty.new()
 	StyleBoxHelper.apply_style_box_margin(empty, Margin.ma_0, Margin.ma_1, Margin.ma_2, Margin.ma_1)
-	var hover := StyleBoxHelper.create_style_box_flat(ColorBase.hover_surface, 6)
-	StyleBoxHelper.apply_style_box_margin(hover, Margin.ma_0, Margin.ma_1, Margin.ma_2, Margin.ma_1)
 	check.add_theme_stylebox_override("normal", empty)
 	check.add_theme_stylebox_override("disabled", empty.duplicate())
 	check.add_theme_stylebox_override("focus", empty.duplicate())
-	check.add_theme_stylebox_override("hover", hover)
-	check.add_theme_stylebox_override("pressed", hover.duplicate())
-	check.add_theme_stylebox_override("hover_pressed", hover.duplicate())
+	check.add_theme_stylebox_override("hover", empty.duplicate())
+	check.add_theme_stylebox_override("pressed", empty.duplicate())
+	check.add_theme_stylebox_override("hover_pressed", empty.duplicate())
 	pass
 
 
@@ -561,7 +559,7 @@ func apply_theme() -> void:
 func style_dialog() -> void:
 	if dialog == null:
 		return
-	var dialog_style := StyleBoxHelper.create_style_box_flat(ColorBase.surface)
+	var dialog_style := StyleBoxHelper.create_style_box_flat(ThemeColor.accent_surface)
 	dialog_style.expand_margin_right = Margin.ma_1
 	dialog_style.expand_margin_bottom = Margin.ma_1
 	dialog_style.content_margin_bottom = Margin.ma_4
@@ -645,7 +643,7 @@ func style_line_edit(edit: LineEdit) -> void:
 
 ## Field look shared by the line edits and the spin box buttons.
 func make_input_style() -> StyleBoxFlat:
-	return StyleBoxHelper.create_style_box_flat(ColorBase.surface, 7, Margin.ma_3, Margin.ma_0, ColorBase.border, ControlSize.border_xs)
+	return StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 7, Margin.ma_3, Margin.ma_0, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
 
 
 ## Spin box: theme-color arrows on the shared field background.
