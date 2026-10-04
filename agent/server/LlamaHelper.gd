@@ -10,11 +10,13 @@ class Token extends RefCounted:
 		id = token_id
 		piece = token_piece
 		pass
+	pass
 
 
 class TokenizeResult extends RefCounted:
 	var tokens: Array[Token] = []
 	var total_tokens: int = 0
+	pass
 
 
 ## Returns whether the llama-server health endpoint reports a ready status.
