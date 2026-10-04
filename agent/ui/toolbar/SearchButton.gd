@@ -393,7 +393,7 @@ func style_query_edit() -> void:
 
 
 func style_result_button(result: Button) -> void:
-	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 8, Margin.ma_3, Margin.ma_1, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
+	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 8, Margin.ma_3, Margin.ma_1, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
 	ButtonStyle.apply(result, normal,
 		ButtonStyle.filled(normal, ThemeColor.selected_surface, Color(ThemeColor.accent_theme_color(), 0.55)),
 		ButtonStyle.filled(normal, ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), 0.08)))

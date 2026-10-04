@@ -271,7 +271,7 @@ func insert_prompt(index: int) -> void:
 func apply_theme() -> void:
 	AgentToolbarButton.style(button, I18n.t("agent.sense.settings_tooltip"))
 	button.text = "Sense"
-	var dialog_style := StyleBoxHelper.create_style_box_flat(ColorBase.surface)
+	var dialog_style := StyleBoxHelper.create_style_box_flat(ThemeColor.accent_surface)
 	dialog_style.expand_margin_right = Margin.ma_1
 	dialog_style.expand_margin_bottom = Margin.ma_1
 	dialog.add_theme_stylebox_override("panel", dialog_style)
@@ -337,7 +337,7 @@ func apply_locale() -> void:
 
 
 func make_input_style() -> StyleBoxFlat:
-	return StyleBoxHelper.create_style_box_flat(ColorBase.surface, 7, Margin.ma_3, Margin.ma_0, ColorBase.border, ControlSize.border_xs)
+	return StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 7, Margin.ma_3, Margin.ma_0, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
 
 
 func style_line_edit(edit: LineEdit) -> void:
@@ -409,12 +409,11 @@ func style_check_button(check: CheckButton) -> void:
 	check.add_theme_color_override("font_hover_color", ColorBase.primary_text)
 	check.add_theme_color_override("button_checked_color", ThemeColor.accent_theme_color())
 	var normal := StyleBoxEmpty.new()
-	var hover := StyleBoxHelper.create_style_box_flat(ColorBase.hover_surface, 6)
 	check.add_theme_stylebox_override("normal", normal)
 	check.add_theme_stylebox_override("focus", normal.duplicate())
-	check.add_theme_stylebox_override("hover", hover)
-	check.add_theme_stylebox_override("pressed", hover.duplicate())
-	check.add_theme_stylebox_override("hover_pressed", hover.duplicate())
+	check.add_theme_stylebox_override("hover", normal.duplicate())
+	check.add_theme_stylebox_override("pressed", normal.duplicate())
+	check.add_theme_stylebox_override("hover_pressed", normal.duplicate())
 	pass
 
 
