@@ -22,8 +22,6 @@ const SCREEN_WAIT_MILLIS := 3 * TimeUtils.MILLIS_PER_SECOND
 const VOICE_HISTORY_SIZE := 6
 const TOAST_BODY_MAX := 120
 
-## True after a successful OS hotkey registration.
-var enabled: bool = false
 ## True while transcription / candidate compose / picker is in flight.
 var busy: bool = false
 ## Local MiniCPM path when true; remote OpenAI-compatible path when false.
@@ -68,8 +66,8 @@ func apply_settings() -> void:
 		GlobalHotkey.hotkey_pressed.connect(on_hotkey_pressed)
 	if not GlobalHotkey.hotkey_released.is_connected(on_hotkey_released):
 		GlobalHotkey.hotkey_released.connect(on_hotkey_released)
-	enabled = GlobalHotkey.register_hotkey(HOTKEY_ID, hotkey_key, modifiers)
-	if not enabled:
+	var registered := GlobalHotkey.register_hotkey(HOTKEY_ID, hotkey_key, modifiers)
+	if not registered:
 		Log.error("SenseInput: failed to register {} (combo may already be taken)", SenseSetting.hotkey_text())
 		return
 	Log.info("SenseInput: registered push-to-talk {}", SenseSetting.hotkey_text())
@@ -81,7 +79,6 @@ static func with_custom_system(base_prompt: String) -> String:
 
 
 func unregister_hotkey() -> void:
-	enabled = false
 	if Engine.has_singleton("GlobalHotkey") and GlobalHotkey.is_registered(HOTKEY_ID):
 		GlobalHotkey.unregister_hotkey(HOTKEY_ID)
 	pass
