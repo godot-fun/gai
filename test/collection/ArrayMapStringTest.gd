@@ -9,6 +9,10 @@ func ArrayMapString_put_and_get_test() -> void:
 	assert(map.has("title"))
 	assert(map.get_value("title") == "Hello")
 	assert(map.get_value("missing", "fallback") == "fallback")
+	assert(map.key_at(0) == "title")
+	assert(map.value_at(0) == "Hello")
+	assert(map.key_at(1) == "prompt")
+	assert(map.value_at(1) == "Explain this")
 	assert(map.keys() == PackedStringArray(["title", "prompt"]))
 	assert(map.values() == PackedStringArray(["Hello", "Explain this"]))
 	pass

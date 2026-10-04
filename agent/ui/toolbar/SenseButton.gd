@@ -18,7 +18,7 @@ var hotkey_button: Button
 var prompt_edit: TextEdit
 var search_edit: LineEdit
 var results: ItemList
-var prompt_entries: Array[Dictionary] = []
+var prompt_entries: ArrayMapString = ArrayMapString.new()
 var separators: Array[HSeparator] = []
 var field_labels: Array[Label] = []
 var recording_hotkey: bool = false
@@ -225,17 +225,19 @@ func load_prompt_entries() -> void:
 	if not parsed is Array:
 		return
 	for value: Variant in parsed:
-		if value is Dictionary:
-			prompt_entries.append(value as Dictionary)
+		if not value is Dictionary:
+			continue
+		var source: Dictionary = value
+		prompt_entries.put(str(source.get("title", "")), str(source.get("prompt", "")))
 	pass
 
 
 func refresh_results(query: String) -> void:
 	results.clear()
 	var needle := query.strip_edges().to_lower()
-	for entry in prompt_entries:
-		var title := str(entry.get("title", ""))
-		var prompt := str(entry.get("prompt", ""))
+	for index in prompt_entries.size():
+		var title := prompt_entries.key_at(index)
+		var prompt := prompt_entries.value_at(index)
 		if not needle.is_empty() and not title.to_lower().contains(needle) and not prompt.to_lower().contains(needle):
 			continue
 		results.add_item(title)

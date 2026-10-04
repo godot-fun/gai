@@ -60,6 +60,14 @@ func size() -> int:
 	return key_array.size()
 
 
+func key_at(index: int) -> String:
+	return key_array[index]
+
+
+func value_at(index: int) -> String:
+	return value_array[index]
+
+
 func keys() -> PackedStringArray:
 	return key_array.duplicate()
 
