@@ -102,6 +102,9 @@ static func async_chat_completion(messages: Array, max_tokens: int = 2048) -> St
 	var content := str(choices[0].get("message", {}).get("content", "")).strip_edges()
 	if content.is_empty():
 		Log.error("vision language model response has no content body:[{}]", response.get_body_string())
+	# Log.info("------------------------------------------------------------------------------------------------------")
+	# Log.info(content)
+	# Log.info("------------------------------------------------------------------------------------------------------")
 	return content
 
 
