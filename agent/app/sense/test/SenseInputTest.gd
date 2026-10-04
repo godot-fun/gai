@@ -320,6 +320,25 @@ func use_local_llm_default_test() -> void:
 	pass
 
 
+func sense_custom_system_prompt_test() -> void:
+	var previous := SenseSetting.get_system_prompt()
+	SenseSetting.set_system_prompt("")
+	assert(SenseSetting.append_system_prompt("base") == "base")
+	SenseSetting.set_system_prompt("Write concise answers.")
+	var combined := SenseSetting.append_system_prompt("base")
+	assert(combined.begins_with("base\n\n<user_system_prompt>"))
+	assert(combined.contains("Write concise answers."))
+	SenseSetting.set_system_prompt(previous)
+	pass
+
+
+func sense_hotkey_text_test() -> void:
+	assert(SenseSetting.hotkey_text(SenseSetting.DEFAULT_HOTKEY_KEY, SenseSetting.DEFAULT_HOTKEY_MODIFIERS) == "Alt+Z")
+	assert(SenseSetting.hotkey_text(KEY_Z, KEY_MASK_CTRL | KEY_MASK_ALT) == "Ctrl+Alt+Z")
+	assert(SenseSetting.hotkey_text(KEY_F9, KEY_MASK_CTRL | KEY_MASK_SHIFT) == "Ctrl+Shift+F9")
+	pass
+
+
 ## Voice history keeps at most six corrected (or ASR fallback) strings in memory (oldest dropped first).
 func voice_history_capacity_test() -> void:
 	var sense := SenseInput.new()

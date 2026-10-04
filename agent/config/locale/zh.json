@@ -51,7 +51,7 @@
     },
     "sense": {
       "recording_title": "感知输入法",
-      "recording_body": "正在录音…松开 Ctrl+Alt+Z 结束",
+      "recording_body": "正在录音…松开快捷键结束",
       "transcribing_title": "感知输入法",
       "transcribing_body": "正在转写…",
       "done_title": "感知输入法",
@@ -70,7 +70,23 @@
       "label_correct": "纠错",
       "label_optimize": "优化",
       "label_expand": "扩写",
-      "label_diverge": "发散"
+      "label_diverge": "发散",
+      "settings_title": "Sense 输入法",
+      "settings_tooltip": "Sense 输入法设置",
+      "input_method": "输入法",
+      "enabled_tooltip": "启用或关闭 Sense 输入法",
+      "model": "模型",
+      "local_model": "本地模型",
+      "remote_model": "远程模型",
+      "hotkey": "唤起快捷键",
+      "hotkey_tooltip": "点击后按下新的组合键",
+      "hotkey_capture": "请按快捷键…",
+      "hotkey_invalid": "快捷键需包含修饰键，且主键必须受系统支持",
+      "system_prompt": "系统提示词",
+      "system_prompt_placeholder": "此内容会附加到每次 Sense 模型请求的系统提示词。",
+      "prompt_search": "提示词搜索",
+      "prompt_search_placeholder": "输入标题或提示词关键词",
+      "prompt_search_tooltip": "双击搜索结果插入系统提示词"
     },
     "tokens": {
       "label": "{} 个令牌",

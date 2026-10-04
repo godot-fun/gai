@@ -51,7 +51,7 @@
     },
     "sense": {
       "recording_title": "Sense input",
-      "recording_body": "Recording… release Ctrl+Alt+Z to stop",
+      "recording_body": "Recording… release the shortcut to stop",
       "transcribing_title": "Sense input",
       "transcribing_body": "Transcribing…",
       "done_title": "Sense input",
@@ -70,7 +70,23 @@
       "label_correct": "Correct",
       "label_optimize": "Optimize",
       "label_expand": "Expand",
-      "label_diverge": "Diverge"
+      "label_diverge": "Diverge",
+      "settings_title": "Sense input",
+      "settings_tooltip": "Sense input settings",
+      "input_method": "Input method",
+      "enabled_tooltip": "Enable or disable Sense input",
+      "model": "Model",
+      "local_model": "Local model",
+      "remote_model": "Remote model",
+      "hotkey": "Shortcut",
+      "hotkey_tooltip": "Click, then press a new shortcut",
+      "hotkey_capture": "Press a shortcut…",
+      "hotkey_invalid": "Include a modifier and use a supported primary key",
+      "system_prompt": "System prompt",
+      "system_prompt_placeholder": "Appended to the system prompt of every Sense model request.",
+      "prompt_search": "Prompt search",
+      "prompt_search_placeholder": "Search titles or prompt text",
+      "prompt_search_tooltip": "Double-click a result to insert it into the system prompt"
     },
     "tokens": {
       "label": "{} tokens",

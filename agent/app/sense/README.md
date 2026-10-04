@@ -1,10 +1,10 @@
 # Sense input method
 
-Global push-to-talk sense input for the agent app. **Hold Ctrl+Alt+Z** to record — works even when the Godot window is in the background. **Release** to stop, transcribe, and pick a refined candidate.
+Global push-to-talk sense input for the agent app. **Hold Alt+Z** to record — works even when the Godot window is in the background. **Release** to stop, transcribe, and pick a refined candidate.
 
 ## Flow
 
-1. **Hold Ctrl+Alt+Z** → start microphone capture (`AudioRecorder`), show the volume sine wave (`SenseWave`), and quietly kick off a monitor screenshot (`NativeOS.capture_screen`) + VLM OCR (`VLMServer.async_image_to_text`) in parallel
+1. **Hold Alt+Z** → start microphone capture (`AudioRecorder`), show the volume sine wave (`SenseWave`), and quietly kick off a monitor screenshot (`NativeOS.capture_screen`) + VLM OCR (`VLMServer.async_image_to_text`) in parallel
 2. As soon as screen OCR is ready: **remote** fires an early diverge chat from the UI alone; **local** marks OCR ready (compose later overwrites diverge after expand; empty ASR falls back to OCR text)
 3. **Release** → keep the wave fixed, stop capture (if mic started), soft-fail ASR into logs only — **no error toasts**
 4. Always dismiss the wave and open `SensePicker` on the **same pin** as the wave (`fixed_anchor`), with the **same logical width** (`SenseWave.WAVE_WIDTH`) and the same top-left (picker grows downward). Voice fills immediately; compose + diverge fill in parallel. Compose waits up to **3 s** for screen context.
@@ -35,7 +35,7 @@ Clicks pass through (`mouse_passthrough`). During transcription / compose the wa
 
 | Piece | Role |
 |-------|------|
-| `GlobalHotkey` (GDExtension) | OS-level Ctrl+Alt+Z press + release while unfocused — see [`cpp/README.md`](../../../cpp/README.md) |
+| `GlobalHotkey` (GDExtension) | OS-level Alt+Z press + release while unfocused — see [`cpp/README.md`](../../../cpp/README.md) |
 | `NativeOS` (GDExtension) | Foreground remember/restore, Ctrl+V paste, caret screen position, monitor screenshot — see [`cpp/README.md`](../../../cpp/README.md) |
 | `SenseCaretLocator` | Locate pin point (Godot caret / OS caret / screen center) |
 | `SenseWave` | Volume sine wave, pinned once via `SenseCaretLocator.resolve_anchor` |
