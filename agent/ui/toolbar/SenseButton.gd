@@ -3,7 +3,7 @@ extends RefCounted
 
 ## Sense input-method settings, including prompt-library search and live hotkey rebinding.
 
-const DIALOG_SIZE := Vector2i(760, 820)
+const DIALOG_SIZE := Vector2i(760, 1000)
 const PROMPT_FILES := {I18n.ZH: "res://agent/config/prompts/zh.json", I18n.EN: "res://agent/config/prompts/en.json"}
 const MAX_RESULTS := 30
 const FIELD_LABEL_RATIO := 0.2
