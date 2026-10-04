@@ -234,11 +234,11 @@ func load_prompt_entries() -> void:
 
 func refresh_results(query: String) -> void:
 	results.clear()
-	var needle := query.strip_edges().to_lower()
+	var needle := query.strip_edges()
 	for index in prompt_entries.size():
 		var title := prompt_entries.key_at(index)
 		var prompt := prompt_entries.value_at(index)
-		if not needle.is_empty() and not title.to_lower().contains(needle) and not prompt.to_lower().contains(needle):
+		if not needle.is_empty() and title.findn(needle) < 0 and prompt.findn(needle) < 0:
 			continue
 		results.add_item(title)
 		results.set_item_metadata(results.item_count - 1, prompt)
