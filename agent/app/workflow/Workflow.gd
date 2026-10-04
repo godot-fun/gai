@@ -33,6 +33,11 @@ var running_pipeline: bool = false
 
 func _ready() -> void:
 	I18nHelper.init_i18n()
+	var app_theme := Theme.new()
+	app_theme.default_font = Fonts.regular()
+	theme = app_theme
+	save_dialog.add_theme_font_override("title_font", Fonts.regular())
+	load_dialog.add_theme_font_override("title_font", Fonts.regular())
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
 	configure_sidebar_layout()

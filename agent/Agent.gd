@@ -61,6 +61,10 @@ var sense_input: SenseInput = SenseInput.new()
 
 func _ready() -> void:
 	I18nHelper.init_i18n()
+	var app_theme := Theme.new()
+	app_theme.default_font = Fonts.regular()
+	theme = app_theme
+	workspace_dialog.add_theme_font_override("title_font", Fonts.regular())
 	apply_layout()
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(apply_locale)
