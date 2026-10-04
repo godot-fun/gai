@@ -1,5 +1,5 @@
-func lru_string_cache_evicts_least_recently_used_test() -> void:
-	var cache := LruStringCache.new(2)
+func lru_cache_string_evicts_least_recently_used_test() -> void:
+	var cache := LruCacheString.new(2)
 	cache.put("a", 1)
 	cache.put("b", 2)
 	assert(cache.get_value("a") == 1)
@@ -11,8 +11,8 @@ func lru_string_cache_evicts_least_recently_used_test() -> void:
 	pass
 
 
-func lru_string_cache_replace_remove_clear_test() -> void:
-	var cache := LruStringCache.new(2)
+func lru_cache_string_replace_remove_clear_test() -> void:
+	var cache := LruCacheString.new(2)
 	assert(cache.put("a", "first") == null)
 	assert(cache.put("a", "second") == "first")
 	assert(cache.get_value("missing", "fallback") == "fallback")
@@ -29,8 +29,8 @@ func lru_string_cache_replace_remove_clear_test() -> void:
 	pass
 
 
-func lru_string_cache_capacity_one_test() -> void:
-	var cache := LruStringCache.new(1)
+func lru_cache_string_capacity_one_test() -> void:
+	var cache := LruCacheString.new(1)
 	cache.put("first", 1)
 	assert(cache.size() == 1)
 	cache.put("second", 2)
@@ -40,8 +40,8 @@ func lru_string_cache_capacity_one_test() -> void:
 	pass
 
 
-func lru_string_cache_exact_capacity_does_not_evict_test() -> void:
-	var cache := LruStringCache.new(3)
+func lru_cache_string_exact_capacity_does_not_evict_test() -> void:
+	var cache := LruCacheString.new(3)
 	cache.put("a", 1)
 	cache.put("b", 2)
 	cache.put("c", 3)
@@ -52,8 +52,8 @@ func lru_string_cache_exact_capacity_does_not_evict_test() -> void:
 	pass
 
 
-func lru_string_cache_replace_refreshes_recency_test() -> void:
-	var cache := LruStringCache.new(2)
+func lru_cache_string_replace_refreshes_recency_test() -> void:
+	var cache := LruCacheString.new(2)
 	cache.put("a", 1)
 	cache.put("b", 2)
 	assert(cache.put("a", 10) == 1)
@@ -64,8 +64,8 @@ func lru_string_cache_replace_refreshes_recency_test() -> void:
 	pass
 
 
-func lru_string_cache_missing_get_does_not_change_recency_test() -> void:
-	var cache := LruStringCache.new(2)
+func lru_cache_string_missing_get_does_not_change_recency_test() -> void:
+	var cache := LruCacheString.new(2)
 	cache.put("a", 1)
 	cache.put("b", 2)
 	assert(cache.get_value("missing") == null)
@@ -76,8 +76,8 @@ func lru_string_cache_missing_get_does_not_change_recency_test() -> void:
 	pass
 
 
-func lru_string_cache_remove_releases_capacity_test() -> void:
-	var cache := LruStringCache.new(2)
+func lru_cache_string_remove_releases_capacity_test() -> void:
+	var cache := LruCacheString.new(2)
 	cache.put("a", 1)
 	cache.put("b", 2)
 	assert(cache.remove("a") == 1)
@@ -88,8 +88,8 @@ func lru_string_cache_remove_releases_capacity_test() -> void:
 	pass
 
 
-func lru_string_cache_supports_empty_key_and_null_value_test() -> void:
-	var cache := LruStringCache.new(2)
+func lru_cache_string_supports_empty_key_and_null_value_test() -> void:
+	var cache := LruCacheString.new(2)
 	cache.put("", null)
 	assert(cache.has(""))
 	assert(cache.get_value("", "fallback") == null)

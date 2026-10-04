@@ -1,7 +1,7 @@
 ## A bounded least-recently-used cache with String keys and Variant values.
 ## Intended for small caches: recency updates use an array and are O(capacity).
 ## This container is not thread-safe; synchronize externally when shared by workers.
-class_name LruStringCache
+class_name LruCacheString
 extends RefCounted
 
 var maximum_size: int

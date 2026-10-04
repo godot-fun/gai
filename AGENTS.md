@@ -220,7 +220,7 @@ label.text = I18n.t("settings.title")
 
 ## Collection — collection utilities
 
-`ConcurrentArrayList`, `ConcurrentMapInt`, `LazyCache`, `LruStringCache`, `ReadyQueue`, `RingIntList`, `RingStringList`
+`ConcurrentArrayList`, `ConcurrentMapInt`, `LazyCache`, `LruCacheString`, `ReadyQueue`, `RingIntList`, `RingStringList`
 
 
 ## Common — common utilities

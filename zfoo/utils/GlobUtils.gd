@@ -6,7 +6,7 @@ extends Object
 ## Keeps repeated ignore rules cheap without allowing unbounded process-lifetime growth.
 const REGEX_CACHE_MAX_SIZE: int = 256
 
-static var regex_cache := LruStringCache.new(REGEX_CACHE_MAX_SIZE)
+static var regex_cache := LruCacheString.new(REGEX_CACHE_MAX_SIZE)
 
 
 ## Finds files under [param search_root] whose relative path matches [param glob_pattern].
