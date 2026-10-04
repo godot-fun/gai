@@ -47,6 +47,10 @@ func build_dialog() -> void:
 	dialog.unresizable = true
 	dialog.exclusive = false
 	dialog.visible = false
+	var dialog_theme := Theme.new()
+	dialog_theme.default_font = Fonts.regular()
+	dialog.theme = dialog_theme
+	dialog.add_theme_font_override("title_font", Fonts.regular())
 	dialog.close_requested.connect(dialog.hide)
 	dialog.focus_exited.connect(on_dialog_focus_exited)
 	button.add_child(dialog)
@@ -375,6 +379,7 @@ func style_option_button(select: OptionButton) -> void:
 
 
 func style_option_popup(popup: PopupMenu) -> void:
+	popup.add_theme_font_override("font", Fonts.regular())
 	popup.add_theme_color_override("font_color", ColorBase.primary_text)
 	popup.add_theme_color_override("font_hover_color", ColorBase.primary_text)
 	popup.add_theme_color_override("font_accelerator_color", ColorBase.secondary_text)
