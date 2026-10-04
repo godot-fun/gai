@@ -124,7 +124,7 @@ func apply_locale() -> void:
 
 func apply_theme() -> void:
 	var app_theme := Theme.new()
-	app_theme.default_font = Fonts.medium()
+	app_theme.default_font = Fonts.regular()
 	theme = app_theme
 	
 	workspace_dialog.add_theme_font_override("title_font", Fonts.regular())	
