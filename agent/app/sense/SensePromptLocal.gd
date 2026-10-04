@@ -46,6 +46,9 @@ FOCUS：焦点或选中文字原文，没有则写 none
 CONTEXT：最多 4 条邻近文字或主内容短句
 排除导航、侧边栏、页面框架、页眉、页脚、状态文字、时间、徽标、标签页、历史、重复文字和小字。不要前言、解释或 Markdown。"""
 
+const SCREEN_SEED_SYSTEM_EN := "Predict the safest, most likely text for the focused control from the screen. Stay close to visible context. No invention or explanation. Reply with pasteable text only."
+const SCREEN_SEED_SYSTEM_ZH := "根据屏幕内容预测焦点控件中最保守、最可能的输入。紧贴可见上下文，不要编造或解释。只回复可粘贴正文。"
+
 const CORRECT_SYSTEM_SCREEN_EN := """Fix ASR errors only. Use the screen only to disambiguate words. Keep the ASR meaning and length; never copy or summarize the screen.
 Use the same language as the ASR text; never translate it. Reply with the corrected text only, without labels, quotes, commentary, or Markdown."""
 const CORRECT_SYSTEM_SCREEN_ZH := """只修正语音识别错误。屏幕信息仅用于消除词语歧义。保持语音原意和长度，禁止复制或总结屏幕。
@@ -114,6 +117,10 @@ static func clamp_text(text: String, max_chars: int) -> String:
 
 static func screen_prompt() -> String:
 	return SCREEN_PROMPT_ZH if use_chinese() else SCREEN_PROMPT_EN
+
+
+static func screen_seed_system() -> String:
+	return SCREEN_SEED_SYSTEM_ZH if use_chinese() else SCREEN_SEED_SYSTEM_EN
 
 
 static func correct_screen_system(screen_context: String = "") -> String:

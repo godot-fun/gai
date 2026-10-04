@@ -18,6 +18,9 @@ const SCREEN_PROMPT_ZH := """提取此截图中的全部可见信息。
 仅用纯文本回复。
 """
 
+const SCREEN_SEED_SYSTEM_EN := """Predict the most conservative and likely text the user would enter in the focused control from the screen context. Stay close to visible labels, nearby content, and the apparent task. Do not be creative, add unrelated details, or explain the prediction. Reply with only one directly pasteable draft."""
+const SCREEN_SEED_SYSTEM_ZH := """根据屏幕上下文，预测用户最可能在焦点控件中输入的保守内容。紧贴可见标签、附近内容和当前任务，不要发挥创意、添加无关细节或解释预测过程。只回复一条可直接粘贴的正文。"""
+
 const COMPOSE_SYSTEM_EN := """From the ASR transcript, optional screen context, and recent history, produce three candidates of the same intent.
 Keep a clear length / information ladder: correct <= optimize << expand.
 
@@ -104,6 +107,10 @@ static func use_chinese() -> bool:
 
 static func screen_prompt() -> String:
 	return SCREEN_PROMPT_ZH if use_chinese() else SCREEN_PROMPT_EN
+
+
+static func screen_seed_system() -> String:
+	return SCREEN_SEED_SYSTEM_ZH if use_chinese() else SCREEN_SEED_SYSTEM_EN
 
 
 static func compose_system() -> String:

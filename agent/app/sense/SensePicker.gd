@@ -156,12 +156,9 @@ func skip_entry(index: int) -> void:
 	pass
 
 
-## Voice + compose rows when ASR produced nothing — diverge remains the guaranteed candidate.
-func skip_voice_slots() -> void:
+## Voice row when ASR produced nothing; screen-driven compose can still fill the remaining rows.
+func skip_voice_slot() -> void:
 	skip_entry(SLOT_VOICE)
-	skip_entry(SLOT_CORRECT)
-	skip_entry(SLOT_OPTIMIZE)
-	skip_entry(SLOT_EXPAND)
 	pass
 
 

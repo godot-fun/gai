@@ -10,7 +10,7 @@ extends RefCounted
 ## - Local: [VLMServer] + [SensePromptLocal] — sequential correct → optimize → expand → diverge.
 ## - Remote: [OpenAiClient] + [SensePrompt] — one-shot compose JSON; diverge early from screen alone.
 ## Screen OCR always uses local [VLMServer] (vision).
-## Never shows error toasts: every press opens the picker; ASR soft-fails fall through to diverge.
+## Never shows error toasts: every press opens the picker; ASR soft-fails use screen-driven candidates.
 
 const HOTKEY_ID := 1
 const CACHE_DIR := "user://sense"
@@ -114,7 +114,7 @@ func on_hotkey_pressed(id: int) -> void:
 	pass
 
 
-## Stop mic (if any), soft-fail ASR into voice slots, always open the picker for diverge.
+## Stop mic (if any), then fill candidates from speech or fall back to the focused screen context.
 ## Do not gate on [method DisplayServer.window_is_focused]: after async work the agent can still
 ## report focused while another app owns the caret, which would skip the paste.
 func on_hotkey_released(id: int) -> void:
@@ -142,8 +142,8 @@ func on_hotkey_released(id: int) -> void:
 		# Separate coroutines so compose and diverge fill the picker in parallel.
 		async_fill_compose(picker, voice_text)
 	else:
-		# Short press / empty ASR: do not leave voice+compose on "生成中…".
-		picker.skip_voice_slots()
+		picker.skip_voice_slot()
+		async_fill_compose_from_screen(picker)
 	async_fill_diverge(picker)
 	var chosen := str(await picker.finished)
 	busy = false
@@ -187,21 +187,55 @@ func async_transcribe_recording() -> String:
 
 
 ## Dispatch compose to local (sequential) or remote (one-shot JSON).
-func async_fill_compose(picker: SensePicker, voice_text: String) -> void:
+func async_fill_compose(picker: SensePicker, voice_text: String, remember_correct: bool = true) -> void:
 	if SenseSetting.use_local_model():
-		await async_fill_compose_local(picker, voice_text)
+		await async_fill_compose_local(picker, voice_text, remember_correct)
 	else:
-		await async_fill_compose_remote(picker, voice_text)
+		await async_fill_compose_remote(picker, voice_text, remember_correct)
+	pass
+
+
+## With no speech, derive a conservative draft from the focused screen context, then reuse the compose ladder.
+func async_fill_compose_from_screen(picker: SensePicker) -> void:
+	var screen_context := await async_wait_screen_context()
+	if not is_picker_alive(picker):
+		return
+	if StringUtils.is_blank(screen_context):
+		picker.skip_entry(SensePicker.SLOT_CORRECT)
+		picker.skip_entry(SensePicker.SLOT_OPTIMIZE)
+		picker.skip_entry(SensePicker.SLOT_EXPAND)
+		return
+	var use_local_model := SenseSetting.use_local_model()
+	var seed: String
+	if use_local_model:
+		seed = await VLMServer.async_chat(screen_context, SenseSetting.append_system_prompt(SensePromptLocal.screen_seed_system()), SensePromptLocal.MAX_TOKENS_CORRECT)
+	else:
+		seed = await async_remote_chat(screen_context, SenseSetting.append_system_prompt(SensePrompt.screen_seed_system()))
+	seed = strip_guess_text(seed)
+	if not is_picker_alive(picker):
+		return
+	if StringUtils.is_blank(seed):
+		picker.skip_entry(SensePicker.SLOT_CORRECT)
+		picker.skip_entry(SensePicker.SLOT_OPTIMIZE)
+		picker.skip_entry(SensePicker.SLOT_EXPAND)
+		return
+	if use_local_model:
+		await async_fill_compose_local(picker, seed, false)
+	else:
+		await async_fill_compose_remote(picker, seed, false)
 	pass
 
 
 
 ## Remote compose: one [OpenAiClient] chat returns correct + optimize + expand as JSON via [SensePrompt].
-func async_fill_compose_remote(picker: SensePicker, voice_text: String) -> void:
+func async_fill_compose_remote(picker: SensePicker, voice_text: String, remember_correct: bool = true) -> void:
 	var screen_context := await async_wait_screen_context()
 	if not is_picker_alive(picker):
 		return
-	var prompt := SensePrompt.compose_user_prompt(voice_text, screen_context, voice_history.to_array())
+	var history_lines: Array[String] = []
+	if remember_correct:
+		history_lines = voice_history.to_array()
+	var prompt := SensePrompt.compose_user_prompt(voice_text, screen_context, history_lines)
 	var raw := await async_remote_chat(prompt, SenseSetting.append_system_prompt(SensePrompt.compose_system()))
 	if not is_picker_alive(picker):
 		return
@@ -215,7 +249,8 @@ func async_fill_compose_remote(picker: SensePicker, voice_text: String) -> void:
 		optimize = correct
 	if StringUtils.is_blank(expand):
 		expand = optimize
-	voice_history.add(correct)
+	if remember_correct:
+		voice_history.add(correct)
 	picker.set_entry(SensePicker.SLOT_CORRECT, correct)
 	picker.set_entry(SensePicker.SLOT_OPTIMIZE, optimize)
 	picker.set_entry(SensePicker.SLOT_EXPAND, expand)
@@ -349,13 +384,14 @@ func async_ocr_screen_and_diverge(session: SenseSession) -> void:
 
 ## Local compose: sequential [VLMServer] plain-text chats — correct → optimize → expand → screen-grounded expansion.
 ## Each step fills its picker slot as soon as it finishes; later steps continue from the prior draft.
-func async_fill_compose_local(picker: SensePicker, voice_text: String) -> void:
+func async_fill_compose_local(picker: SensePicker, voice_text: String, remember_correct: bool = true) -> void:
 	if not is_picker_alive(picker):
 		return
 	var trimmed_voice := voice_text.strip_edges()
 	if trimmed_voice.length() > SensePromptLocal.MAX_ASR_CHARS:
 		Log.info("SenseInput: ASR source exceeds local compose limit; preserve source length:[{}]", trimmed_voice.length())
-		voice_history.add(trimmed_voice)
+		if remember_correct:
+			voice_history.add(trimmed_voice)
 		picker.set_entry(SensePicker.SLOT_CORRECT, trimmed_voice)
 		picker.set_entry(SensePicker.SLOT_OPTIMIZE, trimmed_voice)
 		picker.set_entry(SensePicker.SLOT_EXPAND, trimmed_voice)
@@ -377,7 +413,8 @@ func async_fill_compose_local(picker: SensePicker, voice_text: String) -> void:
 	if SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_CORRECT, voice_text, correct):
 		Log.info("SenseInput: correct output drift after retry; use ASR source:[{}] result:[{}]", voice_text.length(), correct.length())
 		correct = voice_text
-	voice_history.add(correct)
+	if remember_correct:
+		voice_history.add(correct)
 	picker.set_entry(SensePicker.SLOT_CORRECT, correct)
 	var optimize_raw := await VLMServer.async_chat(SensePromptLocal.optimize_user_prompt(correct), SenseSetting.append_system_prompt(SensePromptLocal.optimize_screen_system(screen_context)), SensePromptLocal.MAX_TOKENS_OPTIMIZE)
 	if not is_picker_alive(picker):
