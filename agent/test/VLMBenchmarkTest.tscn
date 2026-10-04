@@ -89,6 +89,32 @@ text = "完整 HTTP 中文 LLM 请求"
 layout_mode = 2
 text = "尚未运行"
 
+[node name="EnglishTokenizeRow" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="EnglishTokenizeButton" type="Button" parent="Margin/Content/EnglishTokenizeRow"]
+custom_minimum_size = Vector2(260, 48)
+layout_mode = 2
+text = "Tokenize English Prompt"
+
+[node name="EnglishTokenizeTime" type="Label" parent="Margin/Content/EnglishTokenizeRow"]
+layout_mode = 2
+text = "Not Run Yet"
+
+[node name="ChineseTokenizeRow" type="HBoxContainer" parent="Margin/Content"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ChineseTokenizeButton" type="Button" parent="Margin/Content/ChineseTokenizeRow"]
+custom_minimum_size = Vector2(260, 48)
+layout_mode = 2
+text = "Tokenize Chinese Prompt"
+
+[node name="ChineseTokenizeTime" type="Label" parent="Margin/Content/ChineseTokenizeRow"]
+layout_mode = 2
+text = "Not Run Yet"
+
 [node name="ResultTitle" type="Label" parent="Margin/Content"]
 layout_mode = 2
 text = "Model Response"

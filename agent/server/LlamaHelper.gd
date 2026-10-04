@@ -1,0 +1,42 @@
+class_name LlamaHelper
+extends Object
+
+class Token extends RefCounted:
+	var id: int
+	var piece: String
+
+
+	func _init(token_id: int, token_piece: String) -> void:
+		id = token_id
+		piece = token_piece
+		pass
+
+
+class TokenizeResult extends RefCounted:
+	var tokens: Array[Token] = []
+	var total_tokens: int = 0
+
+
+## Returns each token's strongly typed ID and piece, plus the total token count.
+static func async_tokenize(server_url: String, prompt: String) -> TokenizeResult:
+	var result := TokenizeResult.new()
+	var payload := {
+		"content": prompt,
+		"add_special": false,
+		"parse_special": true,
+		"with_pieces": true,
+	}
+	var response := await HttpHelper.async_post(server_url.trim_suffix("/") + "/tokenize", JSON.stringify(payload), PackedStringArray())
+	if not response.success:
+		Log.error("llama tokenize failed code:[{}] body:[{}]", response.code, response.get_body_string())
+		return result
+	var data: Variant = response.get_body_json()
+	if typeof(data) != TYPE_DICTIONARY or typeof(data.get("tokens", null)) != TYPE_ARRAY:
+		Log.error("llama tokenize returned invalid JSON")
+		return result
+	for raw_token: Dictionary in data.get("tokens", []):
+		var raw_piece: Variant = raw_token.get("piece", "")
+		var piece: String = raw_piece if raw_piece is String else JSON.stringify(raw_piece)
+		result.tokens.append(Token.new(int(raw_token.get("id", -1)), piece))
+	result.total_tokens = result.tokens.size()
+	return result

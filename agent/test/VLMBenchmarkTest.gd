@@ -41,6 +41,10 @@ const REQUEST_TIMEOUT_MILLIS: int = 10 * TimeUtils.MILLIS_PER_MINUTE
 @onready var llm_time_label: Label = $Margin/Content/LlmRow/LlmTime
 @onready var llm_zh_button: Button = $Margin/Content/LlmZhRow/LlmZhButton
 @onready var llm_zh_time_label: Label = $Margin/Content/LlmZhRow/LlmZhTime
+@onready var english_tokenize_button: Button = $Margin/Content/EnglishTokenizeRow/EnglishTokenizeButton
+@onready var english_tokenize_time_label: Label = $Margin/Content/EnglishTokenizeRow/EnglishTokenizeTime
+@onready var chinese_tokenize_button: Button = $Margin/Content/ChineseTokenizeRow/ChineseTokenizeButton
+@onready var chinese_tokenize_time_label: Label = $Margin/Content/ChineseTokenizeRow/ChineseTokenizeTime
 @onready var result_text: TextEdit = $Margin/Content/Result
 
 
@@ -49,6 +53,8 @@ func _ready() -> void:
 	http_button.pressed.connect(on_http_pressed)
 	llm_button.pressed.connect(on_llm_pressed)
 	llm_zh_button.pressed.connect(on_llm_zh_pressed)
+	english_tokenize_button.pressed.connect(on_english_tokenize_pressed)
+	chinese_tokenize_button.pressed.connect(on_chinese_tokenize_pressed)
 	pass
 
 
@@ -120,6 +126,50 @@ func on_llm_zh_pressed() -> void:
 	pass
 
 
+## Displays token pieces and IDs for the English benchmark prompt.
+func on_english_tokenize_pressed() -> void:
+	set_running(true)
+	english_tokenize_time_label.text = "Running..."
+	result_text.text = StringUtils.EMPTY
+	var watch := StopWatch.new()
+	var result := LlamaHelper.TokenizeResult.new()
+	if await VLM_SERVER.async_ensure_server_running() == OK:
+		result = await LlamaHelper.async_tokenize(VLM_SERVER.server_url(), LLM_PROMPT)
+	var success := result.total_tokens > 0
+	english_tokenize_time_label.text = format_elapsed(watch.cost(), success)
+	result_text.text = format_tokenize_result(result) if success else "English prompt tokenization failed. Check the application log for details."
+	set_running(false)
+	pass
+
+
+## Displays token pieces and IDs for the Chinese benchmark prompt.
+func on_chinese_tokenize_pressed() -> void:
+	set_running(true)
+	chinese_tokenize_time_label.text = "Running..."
+	result_text.text = StringUtils.EMPTY
+	var watch := StopWatch.new()
+	var result := LlamaHelper.TokenizeResult.new()
+	if await VLM_SERVER.async_ensure_server_running() == OK:
+		result = await LlamaHelper.async_tokenize(VLM_SERVER.server_url(), LLM_ZH_PROMPT)
+	var success := result.total_tokens > 0
+	chinese_tokenize_time_label.text = format_elapsed(watch.cost(), success)
+	result_text.text = format_tokenize_result(result) if success else "Chinese prompt tokenization failed. Check the application log for details."
+	set_running(false)
+	pass
+
+
+## Formats whitespace and byte-based pieces safely so token boundaries remain visible.
+func format_tokenize_result(result: LlamaHelper.TokenizeResult) -> String:
+	var builder := StringBuilder.new()
+	builder.append_line("Total tokens: {}".format([result.total_tokens], "{}"))
+	builder.append_line()
+	for index in result.tokens.size():
+		var token: LlamaHelper.Token = result.tokens[index]
+		builder.append_line("[{}] id={} piece={}".format([
+			index, token.id, JSON.stringify(token.piece)], "{}"))
+	return builder.build_string().strip_edges()
+
+
 ## Formats wall-clock milliseconds for the result label beside each benchmark button.
 func format_elapsed(millis: int, success: bool) -> String:
 	var seconds := "%.2f" % (millis / 1000.0)
@@ -132,4 +182,6 @@ func set_running(running: bool) -> void:
 	http_button.disabled = running
 	llm_button.disabled = running
 	llm_zh_button.disabled = running
+	english_tokenize_button.disabled = running
+	chinese_tokenize_button.disabled = running
 	pass
