@@ -208,7 +208,7 @@ func async_fill_compose_from_screen(picker: SensePicker) -> void:
 	var use_local_model := SenseSetting.use_local_model()
 	var seed: String
 	if use_local_model:
-		seed = await VLMServer.async_chat(screen_context, SenseSetting.append_system_prompt(SensePromptLocal.screen_seed_system()), SensePromptLocal.MAX_TOKENS_CORRECT)
+		seed = await VLMServer.async_chat(SensePromptLocal.screen_seed_user_prompt(), SenseSetting.append_system_prompt(SensePromptLocal.screen_seed_system(screen_context)), SensePromptLocal.MAX_TOKENS_CORRECT)
 	else:
 		seed = await async_remote_chat(screen_context, SenseSetting.append_system_prompt(SensePrompt.screen_seed_system()))
 	seed = strip_guess_text(seed)
