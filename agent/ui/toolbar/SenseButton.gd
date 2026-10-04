@@ -132,6 +132,7 @@ func build_dialog() -> void:
 	fields.add_child(search_column)
 	search_edit = LineEdit.new()
 	search_edit.clear_button_enabled = true
+	search_edit.keep_editing_on_text_submit = true
 	search_edit.placeholder_text = I18n.t("agent.sense.prompt_search_placeholder")
 	search_edit.tooltip_text = I18n.t("agent.sense.prompt_search_tooltip")
 	search_edit.text_changed.connect(refresh_results)

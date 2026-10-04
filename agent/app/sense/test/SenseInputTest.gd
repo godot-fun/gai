@@ -345,6 +345,7 @@ func sense_prompt_default_template_test() -> void:
 	var previous_locale := Setting.get_string(I18n.LOCALE_SETTING_KEY)
 	var sense_button := SenseButton.new()
 	sense_button.setup(Button.new(), null)
+	assert(sense_button.search_edit.keep_editing_on_text_submit)
 	for locale: String in [I18n.ZH, I18n.EN]:
 		Setting.set_string(I18n.LOCALE_SETTING_KEY, locale)
 		sense_button.load_prompt_entries()

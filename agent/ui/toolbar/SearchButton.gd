@@ -98,6 +98,7 @@ func build_popup() -> void:
 	query_edit = LineEdit.new()
 	query_edit.custom_minimum_size = Vector2(0, 42)
 	query_edit.clear_button_enabled = true
+	query_edit.keep_editing_on_text_submit = true
 	query_edit.text_changed.connect(on_query_changed)
 	query_edit.text_submitted.connect(on_query_submitted)
 	content.add_child(query_edit)
@@ -274,10 +275,13 @@ func search(raw_query: String) -> void:
 	var session_ids := session_indexes.collect_session_ids()
 	# Returns at once on a warm cache; while it decodes, the read-only box keeps this the only search in
 	# flight, and clearing afterwards drops rows an older search may have left behind.
+	var restore_query_focus := query_edit.has_focus()
 	query_edit.editable = false
 	status_label.text = I18n.t("agent.search.loading")
 	await AgentSessionStore.async_load_sessions()
 	query_edit.editable = true
+	if restore_query_focus and popup.visible:
+		query_edit.grab_focus()
 	clear_results()
 	var match_count := 0
 	for session_id: int in session_ids:
