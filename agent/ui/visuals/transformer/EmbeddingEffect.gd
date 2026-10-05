@@ -315,6 +315,7 @@ func create_square_mesh(size: float) -> QuadMesh:
 
 func prepare_starfield() -> void:
 	stop_animation()
+	galaxy_root.scale = Vector3.ONE
 	clear_layer_children(flight_layer)
 	clear_layer_children(trail_layer)
 	clear_layer_children(label_layer)
@@ -573,6 +574,8 @@ func clear_layer_children(layer: Node3D) -> void:
 
 func clear_runtime() -> void:
 	stop_animation()
+	if galaxy_root != null and is_instance_valid(galaxy_root):
+		galaxy_root.scale = Vector3.ONE
 	clear_layer_children(flight_layer)
 	clear_layer_children(trail_layer)
 	clear_layer_children(label_layer)

@@ -2,7 +2,8 @@ extends Control
 
 ## Standalone TRANSFORMER animation preview. Space / Enter replays the fixed token sample.
 ## Full sample is 200 unique tokens; TokenizerEffect uses the first complete sentence (~12),
-## then EmbeddingEffect flies every token into the RGB starfield.
+## then EmbeddingEffect flies every token into the RGB starfield. The final stage uses
+## the first two thirds as continuously emitted low logits and the remainder as high logits.
 
 ## First 12 form one sentence ending in "？"; remaining pieces are unique fillers for EmbeddingEffect.
 const SAMPLE_PIECES: Array[String] = [

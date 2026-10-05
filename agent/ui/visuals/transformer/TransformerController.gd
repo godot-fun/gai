@@ -3,8 +3,9 @@ extends VisualEffect
 
 ## Orchestrates tokenizer, embedding, and attention transformer-stage animations.
 
-const TRANSFORMER_BLOCK_EFFECT := preload("res://agent/ui/visuals/transformer/TransformerBlockEffect.gd")
-const LOGITS_BURST_EFFECT := preload("res://agent/ui/visuals/transformer/LogitsBurstEffect.gd")
+const TransformerBlockEffect := preload("res://agent/ui/visuals/transformer/TransformerBlockEffect.gd")
+const LogitsBurstEffect := preload("res://agent/ui/visuals/transformer/LogitsBurstEffect.gd")
+const PREVIEW_HIGH_TOKEN_LIMIT := 24
 
 signal end_animation_finished
 
@@ -35,11 +36,11 @@ func _ready() -> void:
 	attention.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	attention.set_embedding_effect(embedding)
 	add_child(attention)
-	transformer_block = TRANSFORMER_BLOCK_EFFECT.new()
+	transformer_block = TransformerBlockEffect.new()
 	transformer_block.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	transformer_block.set_embedding_effect(embedding)
 	add_child(transformer_block)
-	logits_burst = LOGITS_BURST_EFFECT.new()
+	logits_burst = LogitsBurstEffect.new()
 	logits_burst.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	logits_burst.set_embedding_effect(embedding)
 	add_child(logits_burst)
@@ -154,6 +155,8 @@ func run_transformer(prompt: String, generation: int) -> void:
 	thinking_text = StringUtils.truncate(thinking_text, 1024)
 	var low_tokens := await tokenize_text(thinking_text)
 	if generation == request_generation and is_inside_tree():
+		await logits_burst.collapse_galaxy()
+	if generation == request_generation and is_inside_tree():
 		logits_burst.play_low_probability(low_tokens)
 	pipeline_running = false
 	pass
@@ -210,7 +213,7 @@ func tokenize_text(text: String) -> Array[LlamaHelper.Token]:
 
 
 ## Plays supplied tokens without a server request; intended for the visual preview scene.
-## TokenizerEffect animates a sentence slice; EmbeddingEffect and AttentionEffect use the full list.
+## The tail demonstrates sustained low-logit emission followed by the final high-logit burst.
 func play_preview(tokens: Array[LlamaHelper.Token]) -> void:
 	reset_visual()
 	visible = true
@@ -230,7 +233,29 @@ func play_preview(tokens: Array[LlamaHelper.Token]) -> void:
 	if generation != request_generation or not is_inside_tree():
 		return
 	await transformer_block.play(tokens)
+	if generation != request_generation or not is_inside_tree():
+		return
+	var split_index := maxi(1, tokens.size() * 2 / 3)
+	var low_tokens := token_range(tokens, 0, split_index)
+	var high_tokens := token_range(tokens, split_index, tokens.size())
+	if high_tokens.is_empty():
+		high_tokens = token_range(tokens, 0, mini(tokens.size(), PREVIEW_HIGH_TOKEN_LIMIT))
+	await logits_burst.collapse_galaxy()
+	if generation != request_generation or not is_inside_tree():
+		return
+	logits_burst.play_low_probability(low_tokens)
+	await get_tree().create_timer(3.2).timeout
+	if generation != request_generation or not is_inside_tree():
+		return
+	await logits_burst.play_high_probability(high_tokens)
 	pass
+
+
+static func token_range(tokens: Array[LlamaHelper.Token], begin: int, end: int) -> Array[LlamaHelper.Token]:
+	var selected: Array[LlamaHelper.Token] = []
+	for index in range(maxi(0, begin), mini(tokens.size(), end)):
+		selected.append(tokens[index])
+	return selected
 
 
 func latest_user_prompt(value: int) -> String:

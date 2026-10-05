@@ -70,3 +70,23 @@ func token_color_fills_rgb_cube_not_hue_ring_test() -> void:
 	assert(saturations.size() > 1)
 	assert(values.size() > 1)
 	pass
+
+
+func preview_token_range_preserves_typed_order_test() -> void:
+	var tokens: Array[LlamaHelper.Token] = []
+	for index in 6:
+		tokens.append(LlamaHelper.Token.new(index, str(index)))
+	var selected := TransformerController.token_range(tokens, 2, 5)
+	assert(selected.size() == 3)
+	assert(selected[0].id == 2)
+	assert(selected[2].id == 4)
+	pass
+
+
+func low_probability_label_is_stable_and_visible_test() -> void:
+	var token := LlamaHelper.Token.new(97571, "token")
+	var first := LogitsBurstEffect.low_probability_label(token, 3)
+	assert(first == LogitsBurstEffect.low_probability_label(token, 3))
+	assert(first.begins_with("token"))
+	assert(first.ends_with("%"))
+	pass
