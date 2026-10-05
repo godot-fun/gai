@@ -372,7 +372,7 @@ func make_token_label(text: String, color: Color) -> Label3D:
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	# Critical: false keeps true perspective (near large / far small).
 	label.fixed_size = false
-	label.font = Fonts.regular()
+	label.font = Fonts.light()
 	label.font_size = LABEL_FONT_SIZE
 	label.pixel_size = LABEL_PIXEL_SIZE
 	label.modulate = Color(0.97, 0.98, 1.0, 1.0)
