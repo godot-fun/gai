@@ -1,12 +1,13 @@
 class_name ProcedureController
 extends VisualEffect
 
-## Orchestrates procedure-stage animations (tokenizer ? embedding; more stages later).
+## Orchestrates tokenizer, embedding, and attention procedure-stage animations.
 
 var session_id: int = 0
 var request_generation: int = 0
 var tokenizer: TokenizerEffect
 var embedding: EmbeddingEffect
+var attention: AttentionEffect
 var active_tween: Tween
 
 
@@ -20,6 +21,10 @@ func _ready() -> void:
 	embedding = EmbeddingEffect.new()
 	embedding.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(embedding)
+	attention = AttentionEffect.new()
+	attention.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	attention.set_embedding_effect(embedding)
+	add_child(attention)
 	pass
 
 
@@ -32,6 +37,8 @@ func on_theme_changed() -> void:
 		tokenizer.on_theme_changed()
 	if embedding != null:
 		embedding.on_theme_changed()
+	if attention != null:
+		attention.on_theme_changed()
 	pass
 
 
@@ -94,11 +101,14 @@ func run_procedure(prompt: String, generation: int) -> void:
 	if generation != request_generation or not is_inside_tree():
 		return
 	await embedding.play(result.tokens)
+	if generation != request_generation or not is_inside_tree():
+		return
+	await attention.play(result.tokens)
 	pass
 
 
 ## Plays supplied tokens without a server request; intended for the visual preview scene.
-## TokenizerEffect only animates a complete sentence slice (~12); EmbeddingEffect uses the full list.
+## TokenizerEffect animates a sentence slice; EmbeddingEffect and AttentionEffect use the full list.
 func play_preview(tokens: Array[LlamaHelper.Token]) -> void:
 	reset_visual()
 	visible = true
@@ -112,6 +122,9 @@ func play_preview(tokens: Array[LlamaHelper.Token]) -> void:
 	if generation != request_generation or not is_inside_tree():
 		return
 	await embedding.play(tokens)
+	if generation != request_generation or not is_inside_tree():
+		return
+	await attention.play(tokens)
 	pass
 
 
@@ -134,4 +147,6 @@ func cancel_stages() -> void:
 		tokenizer.cancel()
 	if embedding != null:
 		embedding.cancel()
+	if attention != null:
+		attention.cancel()
 	pass

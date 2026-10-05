@@ -61,8 +61,6 @@ void fragment() {
 var token_fly_stagger := 0.2
 var token_fly_duration := 1.2
 var frame_expand_duration := 0.48
-var connection_duration := 0.28
-var connection_width := 0.003
 var galaxy_angular_speed := 0.12
 ## Camera dolly far→near duration at intro.
 var camera_approach_duration := 5.0
@@ -135,9 +133,6 @@ func play(tokens: Array[LlamaHelper.Token]) -> void:
 	# Start camera without blocking token flights.
 	animate_camera_approach(generation)
 	await animate_token_flights(tokens, generation)
-	if not is_current(generation):
-		return
-	await animate_token_connections(tokens, generation)
 	if not is_current(generation):
 		return
 	if hold_after_settle > 0.0:
@@ -377,68 +372,6 @@ func animate_token_flights(tokens: Array[LlamaHelper.Token], generation: int) ->
 		return
 	await get_tree().create_timer(token_fly_duration + frame_expand_duration + FLY_TRAIL_FADE).timeout
 	pass
-
-
-## Once every token has settled, draw persistent rays through them in sequence.
-func animate_token_connections(tokens: Array[LlamaHelper.Token], generation: int) -> void:
-	if tokens.size() < 2 or connection_layer == null or not is_instance_valid(connection_layer):
-		return
-	for token_index in tokens.size() - 1:
-		if not is_current(generation):
-			return
-		var from_color := ProcedureTokenNode.color_from_token_id(tokens[token_index].id)
-		var to_color := ProcedureTokenNode.color_from_token_id(tokens[token_index + 1].id)
-		var from_display_color := ProcedureTokenNode.neon_display_color(from_color)
-		var to_display_color := ProcedureTokenNode.neon_display_color(to_color)
-		var ray_color := average_color(from_display_color, to_display_color)
-		await animate_connection_ray(position_from_color(from_color), position_from_color(to_color), ray_color, generation)
-	pass
-
-
-static func average_color(first: Color, second: Color) -> Color:
-	return Color((first.r + second.r) * 0.5, (first.g + second.g) * 0.5, (first.b + second.b) * 0.5, (first.a + second.a) * 0.5)
-
-
-func animate_connection_ray(from_position: Vector3, to_position: Vector3, color: Color, generation: int) -> void:
-	var offset := to_position - from_position
-	var distance := offset.length()
-	if distance < 0.0001:
-		return
-	var ray := create_connection_ray(distance, color)
-	connection_layer.add_child(ray)
-	var direction := offset / distance
-	ray.basis = Basis(Quaternion(Vector3.UP, direction))
-	ray.position = from_position
-	ray.scale = Vector3(1.0, 0.001, 1.0)
-	var beam := remember_tween(create_tween())
-	beam.tween_method(func(progress: float) -> void:
-		if not is_current(generation) or not is_instance_valid(ray):
-			return
-		ray.position = from_position + offset * progress * 0.5
-		ray.scale = Vector3(1.0, maxf(0.001, progress), 1.0)
-	, 0.0, 1.0, maxf(0.01, connection_duration)).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	await beam.finished
-	pass
-
-
-func create_connection_ray(distance: float, color: Color) -> MeshInstance3D:
-	var ray := MeshInstance3D.new()
-	ray.name = "TokenConnection"
-	var cylinder := CylinderMesh.new()
-	cylinder.height = distance
-	cylinder.top_radius = connection_width
-	cylinder.bottom_radius = connection_width
-	cylinder.radial_segments = 8
-	ray.mesh = cylinder
-	var material := StandardMaterial3D.new()
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	material.albedo_color = Color(color, 0.82)
-	material.emission_enabled = true
-	material.emission = color
-	material.emission_energy_multiplier = 2.2
-	ray.material_override = material
-	return ray
 
 
 ## Same easing / arc / neon afterimages as [TokenizerEffect.launch_token_flight], flying bottom → RGB seat.

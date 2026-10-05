@@ -2,6 +2,7 @@ extends Node
 
 const TOKENIZER := preload("res://agent/ui/visuals/procedure/TokenizerEffect.gd")
 const EMBEDDING := preload("res://agent/ui/visuals/procedure/EmbeddingEffect.gd")
+const ATTENTION := preload("res://agent/ui/visuals/procedure/AttentionEffect.gd")
 
 
 func complete_sentence_after_minimum_test() -> void:
@@ -53,8 +54,8 @@ func embedding_position_matches_token_color_rgb_test() -> void:
 	pass
 
 
-func embedding_connection_color_is_endpoint_average_test() -> void:
-	var average: Color = EMBEDDING.average_color(Color(0.2, 0.4, 0.8, 0.6), Color(0.8, 0.2, 0.4, 1.0))
+func attention_connection_color_is_endpoint_average_test() -> void:
+	var average: Color = ATTENTION.average_color(Color(0.2, 0.4, 0.8, 0.6), Color(0.8, 0.2, 0.4, 1.0))
 	assert(average.is_equal_approx(Color(0.5, 0.3, 0.6, 0.8)))
 	pass
 
