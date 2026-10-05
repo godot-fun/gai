@@ -30,7 +30,7 @@ func mount_selected_effect() -> void:
 func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 	match visual_type:
 		VisualType.Type.JARVIS:
-			return AgentOrbController.new()
+			return JarvisControl.new()
 		VisualType.Type.TRANSFORMER:
 			return TransformerController.new()
 		VisualType.Type.REASONING_TREE:

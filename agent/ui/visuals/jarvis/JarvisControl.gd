@@ -1,4 +1,4 @@
-class_name AgentOrbController
+class_name JarvisControl
 extends VisualEffect
 
 ## Event-driven Jarvis orb overlay — shows while the active session agent runs.
