@@ -1,7 +1,7 @@
 class_name TokenizerEffect
 extends Control
 
-## Staged tokenizer animation: sentence train-in → boundary cuts → vocabulary ID reveal.
+## Staged tokenizer animation: train-in → boundary cuts → ID reveal → fly-away with trails.
 ## Hosted by [ProcedureController]; sibling stages (e.g. EmbeddingEffect) can follow.
 
 const MIN_TOKEN_COUNT := 12
@@ -14,6 +14,9 @@ const ROW_SCREEN_MARGIN := 48.0
 const CUTTER_WIDTH := 44.0
 const CUTTER_HEIGHT := TOKEN_HEIGHT + 36.0
 const CUT_SHAKE_AMPLITUDE := 7.5
+const FLY_VANISH_SCALE := 0.05
+const FLY_TRAIL_INTERVAL := 0.065
+const FLY_TRAIL_FADE := 0.34
 const HAZE_SHADER := """
 shader_type canvas_item;
 render_mode blend_add, unshaded;
@@ -55,15 +58,19 @@ void fragment() {
 var train_arrival_duration := 1.35
 var token_cut_duration := 2.6
 var token_reveal_duration := 2.8
+var token_fly_duration := 1.2
+var token_fly_stagger := 0.13
 
 var play_generation: int = 0
 var row: Control
 var token_nodes: Array[ProcedureTokenNode] = []
+var trail_ghosts: Array[Control] = []
 var cutter: ColorRect
 var cutter_material: ShaderMaterial
 var row_haze: ColorRect
 var haze_material: ShaderMaterial
 var active_tween: Tween
+var stage_tweens: Array[Tween] = []
 
 
 func _ready() -> void:
@@ -198,14 +205,143 @@ func animate_procedure(generation: int) -> void:
 		reveal_tween.tween_interval(step_duration)
 	active_tween = reveal_tween
 	await reveal_tween.finished
-	# Let the last scramble finish before the procedure ends.
+	# Let the last scramble finish before tokens launch into the distance.
 	await get_tree().create_timer(step_duration * 0.7).timeout
+	if generation != play_generation:
+		return
+
+	await animate_fly_away(generation)
 	pass
 
 
 func reveal_token(token_node: ProcedureTokenNode, duration: float) -> void:
 	token_node.play_reveal(duration)
 	pass
+
+
+## One-by-one launch toward a vanishing point; each token leaves neon afterimage trails.
+func animate_fly_away(generation: int) -> void:
+	if token_nodes.is_empty():
+		return
+	reparent_tokens_for_flight()
+	if generation != play_generation:
+		return
+
+	# Vanishing point sits upper-left so the path matches the cinematic receding arc.
+	var vanish := Vector2(size.x * 0.22, size.y * 0.16)
+	var stagger := maxf(0.08, token_fly_stagger)
+	var launch_tween := create_tween()
+	for token_index in token_nodes.size():
+		var token_node := token_nodes[token_index]
+		var lateral := (float(token_index) / float(maxi(1, token_nodes.size() - 1)) - 0.5) * size.x * 0.08
+		var target := vanish + Vector2(lateral, float(token_index) * -4.0)
+		launch_tween.tween_callback(launch_token_flight.bind(token_node, target, token_fly_duration, generation))
+		launch_tween.tween_interval(stagger)
+	active_tween = launch_tween
+	await launch_tween.finished
+	if generation != play_generation:
+		return
+	await get_tree().create_timer(token_fly_duration).timeout
+	if generation != play_generation:
+		return
+	clear_tokens()
+	pass
+
+
+func reparent_tokens_for_flight() -> void:
+	if row == null or not is_instance_valid(row):
+		return
+	for token_node in token_nodes:
+		if token_node == null or not is_instance_valid(token_node):
+			continue
+		# keep_global_transform preserves on-screen pose after leaving the fitted row.
+		token_node.reparent(self)
+		token_node.z_index = 20
+	if row != null and is_instance_valid(row):
+		row.queue_free()
+	row = null
+	cutter = null
+	cutter_material = null
+	row_haze = null
+	haze_material = null
+	pass
+
+
+func launch_token_flight(token_node: ProcedureTokenNode, target: Vector2, duration: float, generation: int) -> void:
+	if generation != play_generation or token_node == null or not is_instance_valid(token_node):
+		return
+	var token_ref: WeakRef = weakref(token_node)
+	var start_pos := token_node.position
+	var start_scale := token_node.scale
+	var start_mod := token_node.modulate
+	var last_trail := [-FLY_TRAIL_INTERVAL]
+	var flight := remember_tween(create_tween())
+	flight.tween_method(func(t: float) -> void:
+		var node: ProcedureTokenNode = token_ref.get_ref() as ProcedureTokenNode
+		if generation != play_generation or node == null:
+			return
+		# Ease-in so tokens accelerate into depth like the reference arc.
+		var e := t * t
+		var arc := Vector2(0.0, -size.y * 0.08 * sin(t * PI))
+		node.position = start_pos.lerp(target, e) + arc
+		node.scale = start_scale * lerpf(1.0, FLY_VANISH_SCALE, e)
+		node.modulate = Color(start_mod.r, start_mod.g, start_mod.b, lerpf(start_mod.a, 0.0, pow(e, 1.25)))
+		node.rotation = lerpf(0.0, -0.12, e)
+		if t - last_trail[0] >= FLY_TRAIL_INTERVAL and e < 0.92:
+			last_trail[0] = t
+			spawn_trail_ghost(node, start_pos.direction_to(target))
+	, 0.0, 1.0, duration).set_trans(Tween.TRANS_LINEAR)
+	flight.tween_callback(hide_flight_token.bind(token_ref))
+	pass
+
+
+func hide_flight_token(token_ref: WeakRef) -> void:
+	var node: ProcedureTokenNode = token_ref.get_ref() as ProcedureTokenNode
+	if node != null:
+		node.visible = false
+	pass
+
+
+func spawn_trail_ghost(source: ProcedureTokenNode, direction: Vector2) -> void:
+	if source == null or not is_instance_valid(source):
+		return
+	var ghost: ProcedureTokenNode = source.duplicate() as ProcedureTokenNode
+	if ghost == null:
+		return
+	ghost.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ghost.stop_reveal_tween()
+	add_child(ghost)
+	# Control has no global_rotation; source and ghost share this parent after reparent.
+	ghost.position = source.position
+	ghost.rotation = source.rotation
+	ghost.scale = source.scale
+	ghost.modulate = Color(source.modulate.r, source.modulate.g, source.modulate.b, source.modulate.a * 0.62)
+	ghost.z_index = source.z_index - 1
+	trail_ghosts.append(ghost)
+
+	var drift := -direction.normalized() * 18.0 if direction.length_squared() > 0.0001 else Vector2(0.0, 14.0)
+	var streak_scale := ghost.scale * Vector2(0.78, 1.35)
+	var ghost_ref: WeakRef = weakref(ghost)
+	var fade := remember_tween(create_tween().set_parallel(true))
+	fade.tween_property(ghost, "modulate:a", 0.0, FLY_TRAIL_FADE).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	fade.tween_property(ghost, "position", ghost.position + drift, FLY_TRAIL_FADE).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	fade.tween_property(ghost, "scale", streak_scale, FLY_TRAIL_FADE).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	fade.chain().tween_callback(finish_trail_ghost.bind(ghost_ref))
+	pass
+
+
+func finish_trail_ghost(ghost_ref: WeakRef) -> void:
+	var ghost: Control = ghost_ref.get_ref() as Control
+	if ghost == null:
+		return
+	trail_ghosts.erase(ghost)
+	ghost.queue_free()
+	pass
+
+
+func remember_tween(tween: Tween) -> Tween:
+	stage_tweens.append(tween)
+	return tween
 
 
 func animate_cut_stage(generation: int) -> void:
@@ -414,10 +550,23 @@ func stop_animation() -> void:
 	if active_tween != null and active_tween.is_valid():
 		active_tween.kill()
 	active_tween = null
+	for tween in stage_tweens:
+		if tween != null and tween.is_valid():
+			tween.kill()
+	stage_tweens.clear()
 	pass
 
 
 func clear_tokens() -> void:
+	# Kill flight/trail tweens before freeing captured nodes.
+	stop_animation()
+	for ghost in trail_ghosts:
+		if ghost != null and is_instance_valid(ghost):
+			ghost.queue_free()
+	trail_ghosts.clear()
+	for token_node in token_nodes:
+		if token_node != null and is_instance_valid(token_node) and token_node.get_parent() != row:
+			token_node.queue_free()
 	token_nodes.clear()
 	if row != null and is_instance_valid(row):
 		row.queue_free()
