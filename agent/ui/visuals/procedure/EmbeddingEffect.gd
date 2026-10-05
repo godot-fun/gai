@@ -5,7 +5,7 @@ extends Control
 ## On arrival the rectangle expands away and the label stays in the rotating galaxy.
 ## Hosted by [ProcedureController]; plays after [TokenizerEffect].
 
-const SPACE_SCALE := 2.85
+const SPACE_SCALE := 5.0
 const STAR_SIZE := 0.055
 const AMBIENT_STAR_COUNT := 520
 const AMBIENT_SPACE_SCALE := 4.2
