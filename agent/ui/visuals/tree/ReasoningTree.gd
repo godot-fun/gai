@@ -13,6 +13,12 @@ const GOLDEN_ANGLE := 2.399963
 const MIN_BRANCH_LENGTH := 180.0
 const MIN_COMPLETION_LENGTH := 64.0
 const COMPLETION_PARTICLE_COUNT := 96
+const TRUNK_ALPHA_MIN := 0.16
+const TRUNK_ALPHA_MAX := 0.34
+const BRANCH_ALPHA_RUNNING := 0.28
+const BRANCH_ALPHA_SUCCESS := 0.34
+const BRANCH_ALPHA_FAILED := 0.20
+const COMPLETION_BRANCH_ALPHA := 0.34
 
 enum BranchState { RUNNING, SUCCESS, FAILED }
 
@@ -276,7 +282,7 @@ func draw_trunk(base: Vector2, segment_height: float, accent: Color) -> void:
 		var amount := clampf(trunk_growth - index, 0.0, 1.0)
 		var from := trunk_point(base, segment_height, float(index))
 		var to := from.lerp(trunk_point(base, segment_height, float(index + 1)), amount)
-		draw_line(from, to, Color(accent, 0.38 + amount * 0.42), 3.0 + amount * 2.0, true)
+		draw_line(from, to, Color(accent, lerpf(TRUNK_ALPHA_MIN, TRUNK_ALPHA_MAX, amount)), 3.0 + amount * 2.0, true)
 		draw_circle(to, 3.0 + amount * 2.0, Color(accent, 0.75))
 	pass
 
@@ -295,7 +301,7 @@ func draw_branch(branch: Dictionary, base: Vector2, segment_height: float) -> vo
 	# The tool's parent branch keeps one identity color throughout execution. Completion state is
 	# communicated by the child twig and its tip instead of repainting the whole branch.
 	var parent_color := ColorBase.secondary_text if state == BranchState.FAILED else accent
-	var parent_alpha := 0.46 if state == BranchState.FAILED else (0.82 if state == BranchState.SUCCESS else 0.72)
+	var parent_alpha := BRANCH_ALPHA_FAILED if state == BranchState.FAILED else (BRANCH_ALPHA_SUCCESS if state == BranchState.SUCCESS else BRANCH_ALPHA_RUNNING)
 	draw_line(anchor, elbow, Color(parent_color, parent_alpha), 2.5 if state == BranchState.FAILED else 3.0, true)
 	if state == BranchState.RUNNING:
 		if growth > 0.72:
@@ -309,7 +315,7 @@ func draw_branch(branch: Dictionary, base: Vector2, segment_height: float) -> vo
 	if state == BranchState.FAILED:
 		draw_failed_twig(elbow, tip, completion_growth, color)
 	else:
-		draw_line(elbow, tip, Color(color, 0.82), 3.0, true)
+		draw_line(elbow, tip, Color(color, COMPLETION_BRANCH_ALPHA), 3.0, true)
 	if completion_growth > 0.72:
 		draw_branch_tip(tip, direction, state, color)
 		draw_branch_label(tip, direction, String(branch["label"]), color)
@@ -324,7 +330,7 @@ func draw_failed_twig(elbow: Vector2, tip: Vector2, completion_growth: float, co
 	var first_break := elbow.lerp(tip, 0.58)
 	var second_break := elbow.lerp(tip, 0.70)
 	var fracture := PackedVector2Array([elbow, first_break, first_break + perpendicular, second_break - perpendicular, second_break, tip])
-	draw_polyline(fracture, Color(color, 0.68), 2.5, true)
+	draw_polyline(fracture, Color(color, BRANCH_ALPHA_FAILED), 2.5, true)
 	pass
 
 
