@@ -54,3 +54,23 @@ func fast_tools_play_in_order_test() -> void:
 	assert(effect.nodes[1]["state"] == ToolConstellation.ExecutionState.SUCCESS)
 	effect.free()
 	pass
+
+
+func full_constellation_replaces_oldest_slot_test() -> void:
+	var effect := ToolConstellation.new()
+	for index in range(ToolConstellation.MAX_NODES):
+		var call_id := "call-%d" % index
+		effect.on_tool_execution_start(call_id, "read", {})
+		effect.on_tool_execution_end(call_id, "read", AgentToolResult.ok("done"))
+		effect.advance_tool_queue(ToolConstellation.MIN_TOOL_PLAY_SECONDS)
+		effect.advance_tool_queue(ToolConstellation.RESULT_HOLD_SECONDS)
+	assert(effect.nodes.size() == ToolConstellation.MAX_NODES)
+	var preserved_id := String(effect.nodes[1]["id"])
+	effect.on_tool_execution_start("call-new", "write", {})
+	assert(effect.nodes.size() == ToolConstellation.MAX_NODES)
+	assert(String(effect.nodes[0]["id"]) == "call-new")
+	assert(int(effect.nodes[0]["state"]) == ToolConstellation.ExecutionState.RUNNING)
+	assert(String(effect.nodes[1]["id"]) == preserved_id)
+	assert(effect.active_calls["call-new"] == 0)
+	effect.free()
+	pass

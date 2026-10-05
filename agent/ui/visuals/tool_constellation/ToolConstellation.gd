@@ -22,6 +22,7 @@ var playing_call: Dictionary = {}
 var playing_seconds: float = 0.0
 var result_hold_seconds: float = 0.0
 var turn_index: int = 0
+var spawn_sequence: int = 0
 var elapsed: float = 0.0
 var core_pulse: float = 0.0
 var fade_tween: Tween
@@ -70,6 +71,7 @@ func reset_visual() -> void:
 	playing_seconds = 0.0
 	result_hold_seconds = 0.0
 	turn_index = 0
+	spawn_sequence = 0
 	elapsed = 0.0
 	core_pulse = 0.0
 	queue_redraw()
@@ -178,11 +180,16 @@ func start_next_queued_call() -> void:
 	var tool_call_id := String(playing_call["id"])
 	var tool_name := String(playing_call["name"])
 	var args: Dictionary[String, Variant] = playing_call["args"]
+	var node := make_node(tool_call_id, tool_name, args, spawn_sequence, int(playing_call["turn"]))
+	spawn_sequence += 1
+	var slot_index := nodes.size()
 	if nodes.size() >= MAX_NODES:
-		remove_oldest_settled_node()
-	var node := make_node(tool_call_id, tool_name, args, nodes.size(), int(playing_call["turn"]))
-	nodes.append(node)
-	active_calls[tool_call_id] = nodes.size() - 1
+		# Replace in place so orbital slots keep their screen positions.
+		slot_index = oldest_settled_node_index()
+		nodes[slot_index] = node
+	else:
+		nodes.append(node)
+	active_calls[tool_call_id] = slot_index
 	core_pulse = 1.0
 	queue_redraw()
 	pass
@@ -385,23 +392,19 @@ static func hexagon_points(center: Vector2, radius: float) -> PackedVector2Array
 	return points
 
 
-func remove_oldest_settled_node() -> void:
-	var remove_index := 0
-	for index in range(nodes.size()):
-		if int(nodes[index]["state"]) != ExecutionState.RUNNING:
-			remove_index = index
-			break
-	nodes.remove_at(remove_index)
-	remap_active_calls()
-	pass
-
-
-func remap_active_calls() -> void:
-	active_calls.clear()
+func oldest_settled_node_index() -> int:
+	var replace_index := 0
+	var oldest_sequence := 0
+	var found := false
 	for index in range(nodes.size()):
 		if int(nodes[index]["state"]) == ExecutionState.RUNNING:
-			active_calls[String(nodes[index]["id"])] = index
-	pass
+			continue
+		var sequence: int = nodes[index]["sequence"]
+		if not found or sequence < oldest_sequence:
+			replace_index = index
+			oldest_sequence = sequence
+			found = true
+	return replace_index
 
 
 static func make_node(tool_call_id: String, tool_name: String, args: Dictionary[String, Variant], sequence: int, turn: int) -> Dictionary:
