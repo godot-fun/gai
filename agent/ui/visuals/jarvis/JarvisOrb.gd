@@ -53,7 +53,7 @@ func _process(delta: float) -> void:
 	pass
 
 
-func set_phase(new_phase: OrbPhase.Phase, tool_name: String = "") -> void:
+func set_phase(new_phase: OrbPhase.Phase) -> void:
 	phase = new_phase
 	color_controller.set_target(OrbPhase.color_for(new_phase))
 	char_overlay.set_phase(new_phase)

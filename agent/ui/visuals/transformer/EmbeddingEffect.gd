@@ -140,10 +140,6 @@ func play(tokens: Array[LlamaHelper.Token]) -> void:
 	pass
 
 
-static func position_from_token_id(value: int) -> Vector3:
-	return position_from_color(TransformerTokenNode.color_from_token_id(value))
-
-
 static func position_from_color(color: Color) -> Vector3:
 	return Vector3((color.r - 0.5) * SPACE_SCALE, (color.g - 0.5) * SPACE_SCALE, (color.b - 0.5) * SPACE_SCALE)
 

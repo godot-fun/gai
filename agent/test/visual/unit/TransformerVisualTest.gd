@@ -37,12 +37,11 @@ func token_color_is_stable_and_id_specific_test() -> void:
 
 func EmbeddingEffect_position_matches_token_color_rgb_test() -> void:
 	var color := TransformerTokenNode.color_from_token_id(97571)
-	var position: Vector3 = EmbeddingEffect.position_from_token_id(97571)
-	assert(position == EmbeddingEffect.position_from_color(color))
+	var position: Vector3 = EmbeddingEffect.position_from_color(color)
 	assert(is_equal_approx(position.x, (color.r - 0.5) * EmbeddingEffect.SPACE_SCALE))
 	assert(is_equal_approx(position.y, (color.g - 0.5) * EmbeddingEffect.SPACE_SCALE))
 	assert(is_equal_approx(position.z, (color.b - 0.5) * EmbeddingEffect.SPACE_SCALE))
-	assert(position != EmbeddingEffect.position_from_token_id(14594))
+	assert(position != EmbeddingEffect.position_from_color(TransformerTokenNode.color_from_token_id(14594)))
 	var roundtrip := EmbeddingEffect.color_from_position(position)
 	assert(is_equal_approx(roundtrip.r, color.r))
 	assert(is_equal_approx(roundtrip.g, color.g))

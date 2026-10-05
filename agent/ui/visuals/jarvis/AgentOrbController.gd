@@ -9,7 +9,6 @@ const HIDE_DURATION_S := 0.68
 const ORB_ALPHA := 0.88
 
 var phase: OrbPhase.Phase = OrbPhase.Phase.IDLE
-var current_tool_name: String = ""
 
 var viewport_container: SubViewportContainer
 var sub_viewport: SubViewport
@@ -139,9 +138,8 @@ func on_message_complete(_usage: OpenAiUsage) -> void:
 	pass
 
 
-func on_tool_execution_start(_tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
-	current_tool_name = tool_name
-	transition_to(OrbPhase.Phase.TOOL_EXEC, tool_name)
+func on_tool_execution_start(_tool_call_id: String, _tool_name: String, _args: Dictionary[String, Variant]) -> void:
+	transition_to(OrbPhase.Phase.TOOL_EXEC)
 	pass
 
 
@@ -163,10 +161,10 @@ func on_chat_entry_add(entry: ChatEntry) -> void:
 	pass
 
 
-func transition_to(new_phase: OrbPhase.Phase, tool_name: String = "") -> void:
+func transition_to(new_phase: OrbPhase.Phase) -> void:
 	phase = new_phase
 	if jarvis_orb != null:
-		jarvis_orb.set_phase(new_phase, tool_name if not tool_name.is_empty() else current_tool_name)
+		jarvis_orb.set_phase(new_phase)
 	pass
 
 

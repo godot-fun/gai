@@ -68,31 +68,3 @@ static func phase_color_from_theme(
 		clampf(base.v * val_mul, 0.0, 1.0),
 	)
 	return Color(rgb.r, rgb.g, rgb.b, alpha)
-
-
-static func keywords_for(phase: Phase, tool_name: String = "") -> Array[String]:
-	if phase == Phase.TOOL_EXEC and not tool_name.is_empty():
-		if AgentHelper.is_file_tool(tool_name):
-			return ["SOURCE", "PATCH", "FILE"]
-		if tool_name == BashTool.NAME:
-			return ["EXECUTE", "PIPELINE", "SHELL"]
-		if (
-			tool_name == WebSearchToolProxy.NAME
-			or tool_name == WebSearchToolBing.NAME
-			or tool_name == WebFetchTool.NAME
-		):
-			return ["DATASTREAM", "RETRIEVE", "SEARCH"]
-		return ["PROCESS", "TOOL", "RUN"]
-	match phase:
-		Phase.REASONING:
-			return ["INFERENCE", "COGNITION", "REASON"]
-		Phase.GENERATING:
-			return ["SYNTHESIS", "OUTPUT", "STREAM"]
-		Phase.AWAKE:
-			return ["NETWORK", "ONLINE", "READY"]
-		Phase.SUCCESS:
-			return ["COMPLETE", "DONE"]
-		Phase.ERROR:
-			return ["FAULT", "ABORT"]
-		_:
-			return ["THINK", "PROCESS"]
