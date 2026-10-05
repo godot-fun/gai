@@ -290,9 +290,12 @@ func draw_branch(branch: Dictionary, base: Vector2, segment_height: float) -> vo
 	var branch_vector := Vector2.from_angle(float(branch["angle"])) * branch_length
 	var elbow := anchor + branch_vector * growth
 	var state: int = branch["state"]
-	var color := ColorBase.warning if state == BranchState.RUNNING else (ColorBase.success if state == BranchState.SUCCESS else ColorBase.error)
-	var parent_color := ColorBase.secondary_text if state == BranchState.FAILED else color
-	var parent_alpha := 0.46 if state == BranchState.FAILED else 0.78
+	var accent := ThemeColor.accent_theme_color()
+	var color := accent if state == BranchState.RUNNING else (ColorBase.success if state == BranchState.SUCCESS else ColorBase.error)
+	# The tool's parent branch keeps one identity color throughout execution. Completion state is
+	# communicated by the child twig and its tip instead of repainting the whole branch.
+	var parent_color := ColorBase.secondary_text if state == BranchState.FAILED else accent
+	var parent_alpha := 0.46 if state == BranchState.FAILED else (0.82 if state == BranchState.SUCCESS else 0.72)
 	draw_line(anchor, elbow, Color(parent_color, parent_alpha), 2.5 if state == BranchState.FAILED else 3.0, true)
 	if state == BranchState.RUNNING:
 		if growth > 0.72:
