@@ -9,8 +9,11 @@ const SPACE_SCALE := 2.85
 const STAR_SIZE := 0.055
 const AMBIENT_STAR_COUNT := 520
 const AMBIENT_SPACE_SCALE := 4.2
-const CAMERA_DISTANCE := 6.4
+const CAMERA_DISTANCE_NEAR := 6.4
+const CAMERA_DISTANCE_FAR := 20.0
 const CAMERA_FOV := 42.0
+const CAMERA_NEAR_POS := Vector3(0.35, 0.55, CAMERA_DISTANCE_NEAR)
+const CAMERA_FAR_POS := Vector3(1.0, 1.6, CAMERA_DISTANCE_FAR)
 ## Matched to [TokenizerEffect] fly-away afterimage timing.
 const FLY_TRAIL_INTERVAL := 0.065
 const FLY_TRAIL_FADE := 0.34
@@ -57,13 +60,15 @@ var token_fly_stagger := 0.2
 var token_fly_duration := 1.2
 var frame_expand_duration := 0.48
 var galaxy_angular_speed := 0.12
-var starfield_intro_hold := 0.55
+## Camera dolly far→near duration at intro.
+var camera_approach_duration := 5.0
 var hold_after_settle := 0.35
 
 var play_generation: int = 0
 var rotating: bool = false
 var viewport_container: SubViewportContainer
 var sub_viewport: SubViewport
+var camera: Camera3D
 var galaxy_root: Node3D
 var label_layer: Node3D
 var ambient_stars: MultiMeshInstance3D
@@ -105,7 +110,7 @@ func is_current(generation: int) -> bool:
 	return generation == play_generation
 
 
-## Shows the ambient starfield first, then flies every token up from screen-bottom (Tokenizer-style).
+## Dolly camera far→near while tokens fly in (Tokenizer-style); flights do not wait on the camera.
 func play(tokens: Array[LlamaHelper.Token]) -> void:
 	play_generation += 1
 	var generation := play_generation
@@ -114,10 +119,8 @@ func play(tokens: Array[LlamaHelper.Token]) -> void:
 	visible = true
 	modulate = Color.WHITE
 	rotating = true
-	if starfield_intro_hold > 0.0:
-		await get_tree().create_timer(starfield_intro_hold).timeout
-	if not is_current(generation):
-		return
+	# Start camera without blocking token flights.
+	animate_camera_approach(generation)
 	await animate_token_flights(tokens, generation)
 	if not is_current(generation):
 		return
@@ -165,12 +168,11 @@ func ensure_scene() -> void:
 	env_node.environment = environment
 	sub_viewport.add_child(env_node)
 
-	var camera := Camera3D.new()
-	camera.position = Vector3(0.35, 0.55, CAMERA_DISTANCE)
+	camera = Camera3D.new()
 	camera.fov = CAMERA_FOV
 	camera.keep_aspect = Camera3D.KEEP_HEIGHT
 	sub_viewport.add_child(camera)
-	camera.look_at(Vector3.ZERO)
+	reset_camera_to_far()
 
 	galaxy_root = Node3D.new()
 	galaxy_root.name = "GalaxyRoot"
@@ -227,6 +229,7 @@ func build_ambient_stars() -> MultiMeshInstance3D:
 		multi.set_instance_transform(index, transform)
 		var dim := randf_range(0.28, 0.72)
 		multi.set_instance_color(index, Color(0.62 * dim, 0.72 * dim, 1.0 * dim, dim))
+	multi.visible_instance_count = AMBIENT_STAR_COUNT
 	var instance := MultiMeshInstance3D.new()
 	instance.name = "AmbientStars"
 	instance.multimesh = multi
@@ -245,6 +248,42 @@ func prepare_starfield() -> void:
 	clear_layer_children(flight_layer)
 	clear_layer_children(trail_layer)
 	clear_layer_children(label_layer)
+	show_ambient_stars()
+	reset_camera_to_far()
+	pass
+
+
+func show_ambient_stars() -> void:
+	if ambient_stars == null or not is_instance_valid(ambient_stars) or ambient_stars.multimesh == null:
+		return
+	ambient_stars.multimesh.visible_instance_count = ambient_stars.multimesh.instance_count
+	pass
+
+
+func reset_camera_to_far() -> void:
+	if camera == null or not is_instance_valid(camera):
+		return
+	camera.position = CAMERA_FAR_POS
+	camera.look_at(Vector3.ZERO)
+	pass
+
+
+## Dolly the camera from far to near; ambient stars stay fully lit.
+func animate_camera_approach(generation: int) -> void:
+	reset_camera_to_far()
+	show_ambient_stars()
+	var duration := maxf(0.01, camera_approach_duration)
+	var approach := remember_tween(create_tween())
+	approach.tween_method(func(t: float) -> void:
+		if not is_current(generation) or camera == null or not is_instance_valid(camera):
+			return
+		camera.position = CAMERA_FAR_POS.lerp(CAMERA_NEAR_POS, t)
+		camera.look_at(Vector3.ZERO)
+	, 0.0, 1.0, duration).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	await approach.finished
+	if is_current(generation) and camera != null and is_instance_valid(camera):
+		camera.position = CAMERA_NEAR_POS
+		camera.look_at(Vector3.ZERO)
 	pass
 
 
@@ -465,4 +504,6 @@ func clear_runtime() -> void:
 	clear_layer_children(flight_layer)
 	clear_layer_children(trail_layer)
 	clear_layer_children(label_layer)
+	show_ambient_stars()
+	reset_camera_to_far()
 	pass
