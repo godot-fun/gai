@@ -78,12 +78,17 @@ func run_procedure(prompt: String, generation: int) -> void:
 
 
 ## Plays supplied tokens without a server request; intended for the visual preview scene.
+## TokenizerEffect only animates a complete sentence slice (~12); full list is kept for later stages.
 func play_preview(tokens: Array[LlamaHelper.Token]) -> void:
 	reset_visual()
 	visible = true
 	modulate = Color.WHITE
 	request_generation += 1
-	await tokenizer.play(tokens)
+	var selected := TokenizerEffect.select_complete_sentence(tokens)
+	if selected.is_empty():
+		return
+	await tokenizer.play(selected)
+	# Later stages (e.g. EmbeddingEffect) can use the full `tokens` list here.
 	pass
 
 
