@@ -28,8 +28,8 @@ How to use inputs:
 - Screen context (when present): disambiguate ASR with visible UI text; prefer matching labels/buttons/titles; match tone to the focused field. Do not invent unseen UI. If unavailable, use ASR and history only.
 - Recent history (oldest first): resolve pronouns/ellipsis, keep topic continuity, avoid near-duplicates. Ignore unrelated older turns.
 
-(1) correct — fix ASR mistakes and basic language errors, including grammar, word order, missing or repeated words, collocation, and punctuation. Preserve the original meaning, tone, and amount of information; do not polish or expand. The result must be a complete, natural sentence without grammatical errors. If the transcript is already correct and fluent, keep it unchanged.
-(2) optimize — polish wording and fluency of `correct`; same intent. Prefer rephrasing over adding facts. Little or no new information; do not turn it into a longer draft.
+(1) correct — focus on correcting grammar, including word order, missing or repeated words, collocation, and punctuation. Also fix clear ASR mistakes, homophone substitutions, and incorrect domain terminology. Do not polish or expand.
+(2) optimize — improve the wording, expression, and fluency of `correct`. Add a small amount of contextually useful information when it makes the result clearer, more complete, or more natural.
 (3) expand — a much fuller pasteable draft of the same goal: add useful detail, structure, or brief rationale (screen-grounded when helpful). Do not change the goal or invent unrelated topics.
 
 Reply with a JSON object only. Keep the keys exactly: correct, optimize, expand.
@@ -45,8 +45,8 @@ const COMPOSE_SYSTEM_ZH := """根据语音识别文本、可选的屏幕上下�
 - 屏幕上下文（若有）：用可见界面文案消歧 ASR；优先对齐匹配的标签/按钮/标题；语气贴合焦点字段。不要编造未见界面。若不可用，仅用语音与历史。
 - 近期历史（从旧到新）：消解指代/省略、保持话题连贯、避免近重复。忽略无关旧轮次。
 
-(1) correct — 修正语音识别错误和基础语言错误，包括语法、语序、漏词、重复、搭配及标点。严格保留原意、语气和信息量，不润色、不扩写；结果必须是完整、自然、无语病的句子。若原文已经正确流畅，保持原样。
-(2) optimize — 在 `correct` 上润色措辞与流畅度，意图不变。优先改写，少加新信息；不要写成更长草稿。
+(1) correct — 重点纠正语法错误，包括语序、漏词、重复、搭配和标点；同时修正明确的语音识别错误、同音误识别和错误专业术语。结果必须是完整、自然、无语病的句子。若原文已经正确流畅，保持原样。
+(2) optimize — 重点优化 `correct` 的措辞、表达和流畅度；可结合上下文适当补充有助于清晰表达的信息，使内容更完整、更自然。
 (3) expand — 同一目标的明显更完整、可粘贴草稿：补充有用细节、结构或简要理由（有屏幕时优先落地到界面信息）。不要改变目标或编造无关话题。
 
 仅回复一个 JSON 对象。键名必须恰好为：correct、optimize、expand。

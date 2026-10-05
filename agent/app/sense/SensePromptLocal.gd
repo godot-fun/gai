@@ -51,24 +51,24 @@ const SCREEN_SEED_SYSTEM_ZH := "根据屏幕内容预测焦点控件中最保守
 const SCREEN_SEED_USER_EN := "Predict the next input."
 const SCREEN_SEED_USER_ZH := "预测下一条输入。"
 
-const CORRECT_SYSTEM_SCREEN_EN := """Fix ASR mistakes and basic language errors: grammar, word order, missing or repeated words, collocation, and punctuation. Produce complete, natural text without grammatical errors. Preserve the ASR meaning, tone, and amount of information; do not polish or expand. Use the screen only to disambiguate words; never copy or summarize it.
+const CORRECT_SYSTEM_SCREEN_EN := """Focus on correcting grammar, including word order, missing or repeated words, collocation, and punctuation. Also fix clear ASR mistakes, homophones, and incorrect terminology. Do not polish or expand. Use the screen only to disambiguate words; never copy or summarize it.
 Use the same language as the ASR text; never translate it. Reply with the corrected text only, without labels, quotes, commentary, or Markdown."""
-const CORRECT_SYSTEM_SCREEN_ZH := """修正语音识别错误和基础语言错误，包括语法、语序、漏词、重复、搭配及标点。输出完整、自然、无语病的文本；严格保留语音原意、语气和信息量，不润色、不扩写。屏幕信息仅用于消除词语歧义，禁止复制或总结屏幕。
+const CORRECT_SYSTEM_SCREEN_ZH := """重点纠正语法错误，包括语序、漏词、重复、搭配和标点；同时修正明确的语音识别错误、同音误识别和错误术语。不润色、不扩写。屏幕信息仅用于消歧，禁止复制或总结屏幕。
 必须保持语音文本的语言；中文输入只输出中文，禁止翻译成英文。只回复修正后的正文，不要标签、引号、解释或 Markdown。"""
 
-const CORRECT_SYSTEM_EN := """Fix ASR mistakes and basic language errors: grammar, word order, missing or repeated words, collocation, and punctuation. Produce complete, natural text without grammatical errors. The ASR text is the only context. Preserve its meaning, tone, and amount of information; do not polish or expand.
+const CORRECT_SYSTEM_EN := """Focus on correcting grammar, including word order, missing or repeated words, collocation, and punctuation. Also fix clear ASR mistakes, homophones, and incorrect terminology. Do not polish or expand.
 Use the same language as the ASR text; never translate it. Reply with the corrected text only, without labels, quotes, commentary, or Markdown."""
-const CORRECT_SYSTEM_ZH := """修正语音识别错误和基础语言错误，包括语法、语序、漏词、重复、搭配及标点。输出完整、自然、无语病的文本。仅以上一条语音文本为依据；严格保留原意、语气和信息量，不润色、不扩写。
+const CORRECT_SYSTEM_ZH := """重点纠正语法错误，包括语序、漏词、重复、搭配和标点；同时修正明确的语音识别错误、同音误识别和错误术语。不润色、不扩写。
 必须保持语音文本的语言；中文输入只输出中文，禁止翻译成英文。只回复修正后的正文，不要标签、引号、解释或 Markdown。"""
 
-const OPTIMIZE_SYSTEM_EN := """Polish wording of the draft. Same intent; do not add facts.
+const OPTIMIZE_SYSTEM_EN := """Improve the wording, expression, and fluency of the Correct text. Add a small amount of useful information when it makes the result clearer, more complete, or more natural.
 Use the same language as the draft; never translate it. Reply with the polished text only, without labels, quotes, commentary, or Markdown."""
-const OPTIMIZE_SYSTEM_ZH := """润色草稿措辞。意图不变，不增新事实。
+const OPTIMIZE_SYSTEM_ZH := """重点优化 Correct 文本的措辞、表达和流畅度；可适当补充有助于清晰表达的信息，使内容更完整、更自然。
 必须保持草稿的语言；中文输入只输出中文，禁止翻译成英文。只回复润色后的正文，不要标签、引号、解释或 Markdown。"""
 
-const OPTIMIZE_SYSTEM_SCREEN_EN := """Polish the Correct text. Use the screen only to improve wording or resolve UI names. Keep the same intent and similar length; do not add unrelated facts.
+const OPTIMIZE_SYSTEM_SCREEN_EN := """Improve the wording, expression, and fluency of the Correct text. Use the screen context when helpful and add a small amount of useful information to make the result clearer, more complete, or more natural.
 Use the same language as the text; never translate it. Reply with the polished text only, without labels, quotes, commentary, or Markdown."""
-const OPTIMIZE_SYSTEM_SCREEN_ZH := """润色已修正文本。屏幕信息仅用于改善措辞或确认界面名称。保持原意和相近长度，不添加无关事实。
+const OPTIMIZE_SYSTEM_SCREEN_ZH := """重点优化 Correct 文本的措辞、表达和流畅度；可结合屏幕上下文适当补充有助于清晰表达的信息，使内容更完整、更自然。
 必须保持文本的语言；中文输入只输出中文，禁止翻译成英文。只回复润色后的正文，不要标签、引号、解释或 Markdown。"""
 
 const EXPAND_SYSTEM_EN := """Expand the draft into a fuller pasteable text of the same goal.
