@@ -48,7 +48,7 @@ const TOOL_CATALOG: Array[Dictionary] = [
 var theme_toggle: ThemeToggle = ThemeToggle.new()
 var theme_color_select_ctrl: ThemeColorSelect = ThemeColorSelect.new()
 
-var demo_session_id: int = 0
+var demo_session_id: int = 1_0000
 var demo_generation: int = 0
 var demo_running: bool = false
 var tool_serial: int = 0
