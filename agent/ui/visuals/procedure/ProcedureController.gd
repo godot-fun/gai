@@ -3,11 +3,14 @@ extends VisualEffect
 
 ## Orchestrates tokenizer, embedding, and attention procedure-stage animations.
 
+const TRANSFERFORM_EFFECT := preload("res://agent/ui/visuals/procedure/TransferformEffect.gd")
+
 var session_id: int = 0
 var request_generation: int = 0
 var tokenizer: TokenizerEffect
 var embedding: EmbeddingEffect
 var attention: AttentionEffect
+var transferform: Control
 var active_tween: Tween
 
 
@@ -25,6 +28,10 @@ func _ready() -> void:
 	attention.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	attention.set_embedding_effect(embedding)
 	add_child(attention)
+	transferform = TRANSFERFORM_EFFECT.new()
+	transferform.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	transferform.set_embedding_effect(embedding)
+	add_child(transferform)
 	pass
 
 
@@ -39,6 +46,8 @@ func on_theme_changed() -> void:
 		embedding.on_theme_changed()
 	if attention != null:
 		attention.on_theme_changed()
+	if transferform != null:
+		transferform.on_theme_changed()
 	pass
 
 
@@ -104,6 +113,9 @@ func run_procedure(prompt: String, generation: int) -> void:
 	if generation != request_generation or not is_inside_tree():
 		return
 	await attention.play(result.tokens)
+	if generation != request_generation or not is_inside_tree():
+		return
+	await transferform.play(result.tokens)
 	pass
 
 
@@ -125,6 +137,9 @@ func play_preview(tokens: Array[LlamaHelper.Token]) -> void:
 	if generation != request_generation or not is_inside_tree():
 		return
 	await attention.play(tokens)
+	if generation != request_generation or not is_inside_tree():
+		return
+	await transferform.play(tokens)
 	pass
 
 
@@ -149,4 +164,6 @@ func cancel_stages() -> void:
 		embedding.cancel()
 	if attention != null:
 		attention.cancel()
+	if transferform != null:
+		transferform.cancel()
 	pass
