@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dmyulwuwu1hd5"]
 
 [ext_resource type="Script" uid="uid://dwsh1esychpp5" path="res://agent/Agent.gd" id="1_fwn8y"]
-[ext_resource type="Script" path="res://agent/ui/visuals/jarvis/AgentOrbController.gd" id="2_orb"]
+[ext_resource type="Script" path="res://agent/ui/visuals/VisualControl.gd" id="2_visual"]
 
 [node name="Agent" type="Control" unique_id=1107421514]
 layout_mode = 3
@@ -309,10 +309,10 @@ grow_horizontal = 0
 grow_vertical = 0
 focus_mode = 0
 
-[node name="OrbOverlay" type="CanvasLayer" parent="."]
+[node name="VisualOverlay" type="CanvasLayer" parent="."]
 layer = 10
 
-[node name="AgentOrbController" type="Control" parent="OrbOverlay"]
+[node name="VisualControl" type="Control" parent="VisualOverlay"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -320,7 +320,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-script = ExtResource("2_orb")
+script = ExtResource("2_visual")
 
 [node name="WorkspaceDialog" type="FileDialog" parent="." unique_id=1482164299]
 title = "Open a Directory"

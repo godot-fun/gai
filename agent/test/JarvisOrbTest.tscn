@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cjarvisorbtest01"]
 
 [ext_resource type="Script" path="res://agent/test/JarvisOrbTest.gd" id="1_jot"]
-[ext_resource type="Script" path="res://agent/ui/visuals/jarvis/AgentOrbController.gd" id="2_orb"]
+[ext_resource type="Script" path="res://agent/ui/visuals/VisualControl.gd" id="2_visual"]
 
 [node name="JarvisOrbTest" type="Control"]
 layout_mode = 3
@@ -22,10 +22,10 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.02, 0.04, 0.07, 1)
 
-[node name="OrbLayer" type="CanvasLayer" parent="."]
+[node name="VisualOverlay" type="CanvasLayer" parent="."]
 layer = 10
 
-[node name="AgentOrbController" type="Control" parent="OrbLayer"]
+[node name="VisualControl" type="Control" parent="VisualOverlay"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -33,7 +33,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-script = ExtResource("2_orb")
+script = ExtResource("2_visual")
 
 [node name="Ui" type="VBoxContainer" parent="."]
 layout_mode = 0

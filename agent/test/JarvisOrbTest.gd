@@ -10,7 +10,8 @@ var demo_running: bool = false
 var demo_generation: int = 0
 
 @onready var background: ColorRect = $Background
-@onready var orb_controller: AgentOrbController = $OrbLayer/AgentOrbController
+@onready var visual_control: VisualControl = $VisualOverlay/VisualControl
+var orb_controller: AgentOrbController
 @onready var title_label: Label = $Ui/Title
 @onready var hint_label: Label = $Ui/Hint
 @onready var status_label: Label = $Ui/StatusLabel
@@ -29,6 +30,9 @@ var theme_color_select_ctrl: ThemeColorSelect = ThemeColorSelect.new()
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	AgentSetting.set_visual_type(VisualType.Type.JARVIS)
+	orb_controller = visual_control.current_effect as AgentOrbController
+	assert(orb_controller != null)
 	setup_demo_session()
 	theme_color_select_ctrl.setup(theme_color_select)
 	theme_toggle.setup(theme_toggle_button)
