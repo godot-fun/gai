@@ -1,7 +1,7 @@
 class_name EmbeddingEffect
 extends Control
 
-## Semantic starfield: token text chips fly up from screen-bottom (same flight feel as TokenizerEffect).
+## Semantic starfield: token text chips fly from the origin into RGB seats (Tokenizer-style trail).
 ## On arrival the rectangle expands away and the label stays in the rotating galaxy.
 ## Hosted by [ProcedureController]; plays after [TokenizerEffect].
 
@@ -10,14 +10,14 @@ const STAR_SIZE := 0.055
 const AMBIENT_STAR_COUNT := 520
 const AMBIENT_SPACE_SCALE := 4.2
 const CAMERA_DISTANCE_NEAR := 6.4
-const CAMERA_DISTANCE_FAR := 20.0
+const CAMERA_DISTANCE_FAR := 32.0
 const CAMERA_FOV := 42.0
 const CAMERA_NEAR_POS := Vector3(0.35, 0.55, CAMERA_DISTANCE_NEAR)
-const CAMERA_FAR_POS := Vector3(1.0, 1.6, CAMERA_DISTANCE_FAR)
-## Matched to [TokenizerEffect] fly-away afterimage timing.
-const FLY_TRAIL_INTERVAL := 0.065
-const FLY_TRAIL_FADE := 0.34
-const FLY_BOTTOM_Y := -3.6
+const CAMERA_FAR_POS := Vector3(1.6, 2.5, CAMERA_DISTANCE_FAR)
+## Longer denser afterimage than [TokenizerEffect] so origin→seat flights read as streaks.
+const FLY_TRAIL_INTERVAL := 0.038
+const FLY_TRAIL_FADE := 0.72
+const FLY_TRAIL_DRIFT := 0.48
 const FLY_ARC_HEIGHT := 0.45
 ## World-space glyph size (not screen-fixed) so distance yields near-large / far-small.
 const LABEL_PIXEL_SIZE := 0.00135
@@ -188,7 +188,7 @@ func ensure_scene() -> void:
 	label_layer.name = "LabelLayer"
 	galaxy_root.add_child(label_layer)
 
-	# Flight / trails stay in world space so "from screen bottom" stays stable while the galaxy rotates.
+	# Flight / trails stay in world space so origin→seat stays stable while the galaxy rotates.
 	flight_layer = Node3D.new()
 	flight_layer.name = "FlightLayer"
 	sub_viewport.add_child(flight_layer)
@@ -302,8 +302,8 @@ func animate_token_flights(tokens: Array[LlamaHelper.Token], generation: int) ->
 	pass
 
 
-## Same easing / arc / neon afterimages as [TokenizerEffect.launch_token_flight], flying bottom → RGB seat.
-func launch_token_flight(token_index: int, token: LlamaHelper.Token, generation: int) -> void:
+## Same easing / arc / neon afterimages as [TokenizerEffect.launch_token_flight], flying origin → RGB seat.
+func launch_token_flight(_token_index: int, token: LlamaHelper.Token, generation: int) -> void:
 	if not is_current(generation) or flight_layer == null or not is_instance_valid(flight_layer):
 		return
 	if galaxy_root == null or not is_instance_valid(galaxy_root):
@@ -311,8 +311,7 @@ func launch_token_flight(token_index: int, token: LlamaHelper.Token, generation:
 	var color := ProcedureTokenNode.neon_display_color(ProcedureTokenNode.color_from_token_id(token.id))
 	var display := ProcedureTokenNode.display_piece(token.piece)
 	var target_local := position_from_color(ProcedureTokenNode.color_from_token_id(token.id))
-	var target_world := galaxy_root.to_global(target_local)
-	var start := flight_start_position(token_index, target_world)
+	var start := Vector3.ZERO
 
 	var chip := create_token_chip(display, color)
 	chip.position = start
@@ -391,14 +390,7 @@ func estimate_frame_size(text: String) -> Vector2:
 	return Vector2(width, height)
 
 
-func flight_start_position(token_index: int, target_world: Vector3) -> Vector3:
-	# Farther from the camera (deeper Z) so perspective also starts smaller.
-	var spread := fposmod(float(token_index) * 0.61803398875, 1.0)
-	var bottom_x := lerpf(-SPACE_SCALE * 1.25, SPACE_SCALE * 1.25, spread)
-	return Vector3(bottom_x, FLY_BOTTOM_Y, lerpf(target_world.z, -SPACE_SCALE * 1.1, 0.75))
-
-
-## Neon afterimage trail — same idea as [TokenizerEffect.spawn_trail_ghost].
+## Neon afterimage trail — same idea as [TokenizerEffect.spawn_trail_ghost], stretched longer.
 func spawn_trail_ghost(source: Node3D, direction: Vector3, generation: int) -> void:
 	if not is_current(generation) or trail_layer == null or not is_instance_valid(trail_layer):
 		return
@@ -424,7 +416,7 @@ func spawn_trail_ghost(source: Node3D, direction: Vector3, generation: int) -> v
 	if ghost_material != null:
 		ghost_material.set_shader_parameter("intensity", 0.55)
 
-	var drift := -direction.normalized() * 0.22 if direction.length_squared() > 0.0001 else Vector3(0.0, -0.16, 0.0)
+	var drift := -direction.normalized() * FLY_TRAIL_DRIFT if direction.length_squared() > 0.0001 else Vector3(0.0, -FLY_TRAIL_DRIFT * 0.7, 0.0)
 	var fade := remember_tween(create_tween().set_parallel(true))
 	fade.tween_property(ghost, "position", ghost.position + drift, FLY_TRAIL_FADE).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	fade.tween_property(ghost, "scale", ghost.scale * Vector3(0.78, 1.35, 1.0), FLY_TRAIL_FADE).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
