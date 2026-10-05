@@ -3,7 +3,7 @@ extends Control
 
 ## Semantic starfield: token text chips fly up from screen-bottom (same flight feel as TokenizerEffect).
 ## On arrival the rectangle expands away and the label stays in the rotating galaxy.
-## Hosted by [ProcedureController]; plays after [TokenizerEffect].
+## Hosted by [TransformerController]; plays after [TokenizerEffect].
 
 const SPACE_SCALE := 5.0
 const STAR_SIZE := 0.055
@@ -141,7 +141,7 @@ func play(tokens: Array[LlamaHelper.Token]) -> void:
 
 
 static func position_from_token_id(value: int) -> Vector3:
-	return position_from_color(ProcedureTokenNode.color_from_token_id(value))
+	return position_from_color(TransformerTokenNode.color_from_token_id(value))
 
 
 static func position_from_color(color: Color) -> Vector3:
@@ -276,7 +276,7 @@ func build_rgb_stars() -> MultiMeshInstance3D:
 		var transform := Transform3D.IDENTITY.scaled(Vector3.ONE * scale)
 		transform.origin = origin
 		multi.set_instance_transform(index, transform)
-		var color := ProcedureTokenNode.neon_display_color(color_from_position(origin))
+		var color := TransformerTokenNode.neon_display_color(color_from_position(origin))
 		rgb_star_base_colors[index] = color
 		rgb_star_base_scales[index] = scale
 		rgb_star_phases[index] = randf_range(0.0, TAU)
@@ -380,9 +380,9 @@ func launch_token_flight(token_index: int, token: LlamaHelper.Token, generation:
 		return
 	if galaxy_root == null or not is_instance_valid(galaxy_root):
 		return
-	var color := ProcedureTokenNode.neon_display_color(ProcedureTokenNode.color_from_token_id(token.id))
-	var display := ProcedureTokenNode.display_piece(token.piece)
-	var target_local := position_from_color(ProcedureTokenNode.color_from_token_id(token.id))
+	var color := TransformerTokenNode.neon_display_color(TransformerTokenNode.color_from_token_id(token.id))
+	var display := TransformerTokenNode.display_piece(token.piece)
+	var target_local := position_from_color(TransformerTokenNode.color_from_token_id(token.id))
 	var target_world := galaxy_root.to_global(target_local)
 	var start := flight_start_position(token_index, target_world)
 

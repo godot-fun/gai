@@ -1,4 +1,4 @@
-class_name TransferformEffect
+class_name TransformerBlockEffect
 extends Control
 
 ## Sixteen accelerated matrix gates suggest the repeated transformations of a deep network.
@@ -193,7 +193,7 @@ func set_gate_world_transform(gate: Node3D, position: Vector3, roll: float) -> v
 
 func gate_color(layer_index: int) -> Color:
 	var phase := float(layer_index) / float(maxi(1, layer_count - 1))
-	return ProcedureTokenNode.neon_display_color(Color.from_hsv(lerpf(0.52, 0.86, phase), 0.62, 1.0))
+	return TransformerTokenNode.neon_display_color(Color.from_hsv(lerpf(0.52, 0.86, phase), 0.62, 1.0))
 
 
 func create_matrix_gate(color: Color, layer_index: int) -> Node3D:
@@ -273,7 +273,7 @@ func transform_token(label: Label3D, token: LlamaHelper.Token, layer_index: int)
 	if label == null or not is_instance_valid(label):
 		return
 	var transformed_id := token.id + (layer_index + 1) * 7919
-	var color := ProcedureTokenNode.neon_display_color(ProcedureTokenNode.color_from_token_id(transformed_id))
+	var color := TransformerTokenNode.neon_display_color(TransformerTokenNode.color_from_token_id(transformed_id))
 	label.outline_modulate = Color(color, 0.94)
 	label.modulate = Color.WHITE.lerp(color, 0.18)
 	var angle := float((token.id * 31 + layer_index * 47) % 360) * PI / 180.0

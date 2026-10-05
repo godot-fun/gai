@@ -1,16 +1,16 @@
-class_name ProcedureController
+class_name TransformerController
 extends VisualEffect
 
-## Orchestrates tokenizer, embedding, and attention procedure-stage animations.
+## Orchestrates tokenizer, embedding, and attention transformer-stage animations.
 
-const TRANSFERFORM_EFFECT := preload("res://agent/ui/visuals/procedure/TransferformEffect.gd")
+const TRANSFORMER_BLOCK_EFFECT := preload("res://agent/ui/visuals/transformer/TransformerBlockEffect.gd")
 
 var session_id: int = 0
 var request_generation: int = 0
 var tokenizer: TokenizerEffect
 var embedding: EmbeddingEffect
 var attention: AttentionEffect
-var transferform: Control
+var transformer_block: Control
 var active_tween: Tween
 
 
@@ -28,15 +28,15 @@ func _ready() -> void:
 	attention.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	attention.set_embedding_effect(embedding)
 	add_child(attention)
-	transferform = TRANSFERFORM_EFFECT.new()
-	transferform.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	transferform.set_embedding_effect(embedding)
-	add_child(transferform)
+	transformer_block = TRANSFORMER_BLOCK_EFFECT.new()
+	transformer_block.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	transformer_block.set_embedding_effect(embedding)
+	add_child(transformer_block)
 	pass
 
 
 func get_visual_type() -> VisualType.Type:
-	return VisualType.Type.PROCEDURE
+	return VisualType.Type.TRANSFORMER
 
 
 func on_theme_changed() -> void:
@@ -46,8 +46,8 @@ func on_theme_changed() -> void:
 		embedding.on_theme_changed()
 	if attention != null:
 		attention.on_theme_changed()
-	if transferform != null:
-		transferform.on_theme_changed()
+	if transformer_block != null:
+		transformer_block.on_theme_changed()
 	pass
 
 
@@ -87,7 +87,7 @@ func on_agent_start(value: int) -> void:
 		return
 	request_generation += 1
 	var generation := request_generation
-	run_procedure(prompt, generation)
+	run_transformer(prompt, generation)
 	pass
 
 
@@ -97,7 +97,7 @@ func on_agent_end(_error_message: String) -> float:
 	return 0.0
 
 
-func run_procedure(prompt: String, generation: int) -> void:
+func run_transformer(prompt: String, generation: int) -> void:
 	var result := LlamaHelper.TokenizeResult.new()
 	if await VLMServer.async_ensure_server_running() == OK:
 		result = await LlamaHelper.async_tokenize(VLMServer.server_url(), prompt)
@@ -115,7 +115,7 @@ func run_procedure(prompt: String, generation: int) -> void:
 	await attention.play(result.tokens)
 	if generation != request_generation or not is_inside_tree():
 		return
-	await transferform.play(result.tokens)
+	await transformer_block.play(result.tokens)
 	pass
 
 
@@ -139,7 +139,7 @@ func play_preview(tokens: Array[LlamaHelper.Token]) -> void:
 	await attention.play(tokens)
 	if generation != request_generation or not is_inside_tree():
 		return
-	await transferform.play(tokens)
+	await transformer_block.play(tokens)
 	pass
 
 
@@ -164,6 +164,6 @@ func cancel_stages() -> void:
 		embedding.cancel()
 	if attention != null:
 		attention.cancel()
-	if transferform != null:
-		transferform.cancel()
+	if transformer_block != null:
+		transformer_block.cancel()
 	pass

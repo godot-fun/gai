@@ -1,8 +1,8 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://agent/test/procedure/ProcedureVisualShortPreview.gd" id="1_preview"]
+[ext_resource type="Script" path="res://agent/test/transformer/TransformerVisualPreview.gd" id="1_preview"]
 
-[node name="ProcedureVisualShortPreview" type="Control"]
+[node name="TransformerVisualPreview" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

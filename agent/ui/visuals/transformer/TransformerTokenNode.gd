@@ -1,4 +1,4 @@
-class_name ProcedureTokenNode
+class_name TransformerTokenNode
 extends Control
 
 ## One independently animated tokenizer piece and its numeric vocabulary ID.

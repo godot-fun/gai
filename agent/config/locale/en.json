@@ -24,7 +24,7 @@
       "visuals": "Choose run visual",
       "visual_none": "No visual",
       "visual_jarvis": "Jarvis",
-      "visual_procedure": "Procedure",
+      "visual_transformer": "Transformer",
       "visual_reasoning_tree": "Reasoning Tree"
     },
     "sidebar": {

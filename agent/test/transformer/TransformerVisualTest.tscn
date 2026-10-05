@@ -2,5 +2,5 @@
 
 [ext_resource path="res://zfoo/gdtest/UnitTest.gd" type="Script" id="1"]
 
-[node name="ProcedureVisualTest" type="Node"]
+[node name="TransformerVisualTest" type="Node"]
 script = ExtResource("1")

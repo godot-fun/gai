@@ -1,6 +1,6 @@
 extends Control
 
-## Standalone PROCEDURE animation preview. Space / Enter replays the fixed token sample.
+## Standalone TRANSFORMER animation preview. Space / Enter replays the fixed token sample.
 ## Full sample is 200 unique tokens; TokenizerEffect uses the first complete sentence (~12),
 ## then EmbeddingEffect flies every token into the RGB starfield.
 
@@ -50,7 +50,7 @@ const SAMPLE_IDS: Array[int] = [
 	10181, 10182, 10183, 10184, 10185, 10186, 10187, 10188,
 ]
 
-var procedure: ProcedureController
+var transformer: TransformerController
 var replaying: bool = false
 
 
@@ -67,12 +67,12 @@ func build_preview_ui() -> void:
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(background)
 
-	procedure = ProcedureController.new()
-	procedure.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(procedure)
+	transformer = TransformerController.new()
+	transformer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(transformer)
 
 	var hint := Label.new()
-	hint.text = "PROCEDURE · Space / Enter 重播"
+	hint.text = "TRANSFORMER · Space / Enter 重播"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_font_override("font", Fonts.regular())
 	hint.add_theme_font_size_override("font_size", Typography.label_medium_size)
@@ -110,6 +110,6 @@ func replay() -> void:
 	if replaying:
 		return
 	replaying = true
-	await procedure.play_preview(build_sample_tokens())
+	await transformer.play_preview(build_sample_tokens())
 	replaying = false
 	pass

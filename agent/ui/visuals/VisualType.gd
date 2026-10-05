@@ -6,7 +6,7 @@ extends RefCounted
 enum Type {
 	NONE,
 	JARVIS,
-	PROCEDURE,
+	TRANSFORMER,
 	REASONING_TREE,
 }
 

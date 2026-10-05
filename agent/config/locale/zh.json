@@ -24,7 +24,7 @@
       "visuals": "选择运行视觉效果",
       "visual_none": "无特效",
       "visual_jarvis": "Jarvis 特效",
-      "visual_procedure": "Procedure 特效",
+      "visual_transformer": "Transformer 特效",
       "visual_reasoning_tree": "Reasoning Tree 推理树"
     },
     "sidebar": {

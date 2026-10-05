@@ -1,8 +1,8 @@
 extends Node
 
-const TOKENIZER := preload("res://agent/ui/visuals/procedure/TokenizerEffect.gd")
-const EMBEDDING := preload("res://agent/ui/visuals/procedure/EmbeddingEffect.gd")
-const ATTENTION := preload("res://agent/ui/visuals/procedure/AttentionEffect.gd")
+const TOKENIZER := preload("res://agent/ui/visuals/transformer/TokenizerEffect.gd")
+const EMBEDDING := preload("res://agent/ui/visuals/transformer/EmbeddingEffect.gd")
+const ATTENTION := preload("res://agent/ui/visuals/transformer/AttentionEffect.gd")
 
 
 func complete_sentence_after_minimum_test() -> void:
@@ -33,14 +33,14 @@ func incomplete_sentence_uses_all_tokens_test() -> void:
 
 
 func token_color_is_stable_and_id_specific_test() -> void:
-	var first := ProcedureTokenNode.color_from_token_id(97571)
-	assert(first == ProcedureTokenNode.color_from_token_id(97571))
-	assert(first != ProcedureTokenNode.color_from_token_id(14594))
+	var first := TransformerTokenNode.color_from_token_id(97571)
+	assert(first == TransformerTokenNode.color_from_token_id(97571))
+	assert(first != TransformerTokenNode.color_from_token_id(14594))
 	pass
 
 
 func embedding_position_matches_token_color_rgb_test() -> void:
-	var color := ProcedureTokenNode.color_from_token_id(97571)
+	var color := TransformerTokenNode.color_from_token_id(97571)
 	var position: Vector3 = EMBEDDING.position_from_token_id(97571)
 	assert(position == EMBEDDING.position_from_color(color))
 	assert(is_equal_approx(position.x, (color.r - 0.5) * EMBEDDING.SPACE_SCALE))
@@ -64,7 +64,7 @@ func token_color_fills_rgb_cube_not_hue_ring_test() -> void:
 	var saturations: Dictionary = {}
 	var values: Dictionary = {}
 	for token_id in [10001, 10002, 48113, 73642, 97571]:
-		var color := ProcedureTokenNode.color_from_token_id(token_id)
+		var color := TransformerTokenNode.color_from_token_id(token_id)
 		assert(color.r >= 0.0 and color.r <= 1.0)
 		assert(color.g >= 0.0 and color.g <= 1.0)
 		assert(color.b >= 0.0 and color.b <= 1.0)

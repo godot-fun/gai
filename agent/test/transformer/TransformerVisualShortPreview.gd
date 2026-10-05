@@ -1,6 +1,6 @@
-extends "res://agent/test/procedure/ProcedureVisualPreview.gd"
+extends "res://agent/test/transformer/TransformerVisualPreview.gd"
 
-## Short PROCEDURE preview for quickly reviewing every animation stage.
+## Short TRANSFORMER preview for quickly reviewing every animation stage.
 
 const SHORT_PIECES: Array[String] = [
 	"每次", "我", "向你", "提问", "，", "你的", "脑子", "里", "发生", "了", "什么", "？",

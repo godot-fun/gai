@@ -114,7 +114,7 @@ static func average_color(first: Color, second: Color) -> Color:
 
 
 static func token_color(token: LlamaHelper.Token) -> Color:
-	return ProcedureTokenNode.neon_display_color(ProcedureTokenNode.color_from_token_id(token.id))
+	return TransformerTokenNode.neon_display_color(TransformerTokenNode.color_from_token_id(token.id))
 
 
 func animate_flow(from_position: Vector3, to_position: Vector3, color: Color, generation: int) -> void:

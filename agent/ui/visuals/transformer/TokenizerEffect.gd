@@ -2,7 +2,7 @@ class_name TokenizerEffect
 extends Control
 
 ## Staged tokenizer animation: train-in → boundary cuts → ID reveal → fly-away with trails.
-## Hosted by [ProcedureController]; sibling stages (e.g. EmbeddingEffect) can follow.
+## Hosted by [TransformerController]; sibling stages (e.g. EmbeddingEffect) can follow.
 
 const MIN_TOKEN_COUNT := 12
 const TOKEN_FONT_SIZE := 34
@@ -63,7 +63,7 @@ var token_fly_stagger := 0.13
 var play_generation: int = 0
 var row: Control
 var trail_layer: Control
-var token_nodes: Array[ProcedureTokenNode] = []
+var token_nodes: Array[TransformerTokenNode] = []
 var cutter: ColorRect
 var cutter_material: ShaderMaterial
 var row_haze: ColorRect
@@ -108,7 +108,7 @@ func play(tokens: Array[LlamaHelper.Token]) -> void:
 	play_generation += 1
 	var generation := play_generation
 	build_tokens(tokens)
-	await animate_procedure(generation)
+	await animate_transformer(generation)
 	pass
 
 
@@ -129,9 +129,9 @@ func build_tokens(tokens: Array[LlamaHelper.Token]) -> void:
 	var font := Fonts.regular()
 	var x := 0.0
 	for token in tokens:
-		var display := ProcedureTokenNode.display_piece(token.piece)
+		var display := TransformerTokenNode.display_piece(token.piece)
 		var width := maxf(TOKEN_MIN_WIDTH, font.get_string_size(display, HORIZONTAL_ALIGNMENT_LEFT, -1, TOKEN_FONT_SIZE).x)
-		var token_node := ProcedureTokenNode.new()
+		var token_node := TransformerTokenNode.new()
 		token_node.setup(token, Vector2(width, TOKEN_HEIGHT))
 		token_node.position = Vector2(x, 0.0)
 		token_node.pivot_offset = Vector2(width * 0.5, TOKEN_HEIGHT * 0.42)
@@ -177,7 +177,7 @@ static func create_shader_material(code: String) -> ShaderMaterial:
 	return shader_material
 
 
-func animate_procedure(generation: int) -> void:
+func animate_transformer(generation: int) -> void:
 	var scaled_width := row.size.x * row.scale.x
 	var centered_x := (size.x - scaled_width) * 0.5
 	var arrive := remember_tween(create_tween())
@@ -283,10 +283,10 @@ func launch_token_flight(token_index: int, target: Vector2, duration: float, gen
 	pass
 
 
-func spawn_trail_ghost(source: ProcedureTokenNode, direction: Vector2) -> void:
+func spawn_trail_ghost(source: TransformerTokenNode, direction: Vector2) -> void:
 	if trail_layer == null or not is_instance_valid(trail_layer) or source == null or not is_instance_valid(source):
 		return
-	var ghost: ProcedureTokenNode = source.duplicate() as ProcedureTokenNode
+	var ghost: TransformerTokenNode = source.duplicate() as TransformerTokenNode
 	if ghost == null:
 		return
 	ghost.mouse_filter = Control.MOUSE_FILTER_IGNORE
