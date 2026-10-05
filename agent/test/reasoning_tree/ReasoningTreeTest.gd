@@ -1,0 +1,141 @@
+extends Node
+
+
+func visual_type_is_registered_test() -> void:
+	assert(VisualType.is_valid(VisualType.Type.REASONING_TREE))
+	var effect := ReasoningTree.new()
+	assert(effect.get_visual_type() == VisualType.Type.REASONING_TREE)
+	effect.free()
+	pass
+
+
+func branch_defaults_to_running_test() -> void:
+	var branch := ReasoningTree.make_branch("call-1", "read_file", 0, 2.8)
+	assert(branch["state"] == ReasoningTree.BranchState.RUNNING)
+	assert(branch["anchor"] == 2)
+	assert(branch["direction"] == -1.0)
+	assert(branch["label"] == "Read File")
+	pass
+
+
+func branches_alternate_direction_test() -> void:
+	var left := ReasoningTree.make_branch("a", "read", 0, 1.0)
+	var right := ReasoningTree.make_branch("b", "write", 1, 1.0)
+	assert(left["direction"] == -1.0)
+	assert(right["direction"] == 1.0)
+	assert(left["angle"] != right["angle"])
+	pass
+
+
+func visible_branch_angles_are_unique_test() -> void:
+	var angles: Dictionary[float, bool] = {}
+	for index in range(ReasoningTree.MAX_BRANCHES):
+		var angle := ReasoningTree.branch_angle(index + 20)
+		assert(not angles.has(angle))
+		angles[angle] = true
+	pass
+
+
+func completion_branch_has_distinct_angle_and_minimum_length_test() -> void:
+	for index in range(ReasoningTree.MAX_BRANCHES):
+		var branch := ReasoningTree.make_branch("call-%d" % index, "tool", index, 2.0)
+		assert(not is_equal_approx(float(branch["angle"]), float(branch["completion_angle"])))
+	assert(ReasoningTree.MIN_BRANCH_LENGTH >= 160.0)
+	assert(ReasoningTree.MIN_COMPLETION_LENGTH >= 56.0)
+	pass
+
+
+func failed_completion_droops_and_stays_full_length_test() -> void:
+	var branch := ReasoningTree.make_branch("failed", "read", 3, 2.0)
+	var vector := ReasoningTree.get_completion_vector(branch, ReasoningTree.BranchState.FAILED, 80.0)
+	assert(vector.y > 0.0)
+	assert(is_equal_approx(vector.length(), 80.0))
+	pass
+
+
+func nearby_branch_anchors_are_staggered_test() -> void:
+	var offsets: Dictionary[float, bool] = {}
+	for index in range(6):
+		var offset := ReasoningTree.branch_anchor_offset(index)
+		assert(not offsets.has(offset))
+		offsets[offset] = true
+	pass
+
+
+func branch_waits_until_trunk_reaches_anchor_test() -> void:
+	var branch := ReasoningTree.make_branch("waiting", "read", 1, 3.0)
+	var anchor := ReasoningTree.branch_anchor_segment(branch)
+	assert(not ReasoningTree.can_branch_grow(anchor - 0.01, branch))
+	assert(ReasoningTree.can_branch_grow(anchor, branch))
+	assert(ReasoningTree.can_branch_grow(anchor + 0.01, branch))
+	pass
+
+
+func staggered_anchor_never_exceeds_turn_endpoint_test() -> void:
+	for index in range(24):
+		assert(ReasoningTree.branch_anchor_offset(index) <= 0.0)
+	pass
+
+
+func branch_anchor_stays_on_visible_trunk_test() -> void:
+	assert(ReasoningTree.make_branch("low", "read", 0, -2.0)["anchor"] == 1)
+	assert(ReasoningTree.make_branch("high", "read", 0, 99.0)["anchor"] == ReasoningTree.MAX_TRUNK_SEGMENTS - 1)
+	pass
+
+
+func public_tool_name_does_not_expose_arguments_test() -> void:
+	assert(ReasoningTree.public_tool_name("web_search") == "Web Search")
+	assert(ReasoningTree.public_tool_name("") == "工具")
+	pass
+
+
+func tall_viewport_uses_nearly_full_height_test() -> void:
+	var tree := ReasoningTree.new()
+	tree.size = Vector2(1920.0, 1080.0)
+	var radius := tree.get_crown_radius()
+	var base_y := tree.size.y - Margin.ma_8
+	var crown_center_y := Margin.ma_8 + radius
+	var segment_height := (base_y - crown_center_y) / float(ReasoningTree.MAX_TRUNK_SEGMENTS)
+	assert(segment_height > 90.0)
+	assert(is_equal_approx(base_y - segment_height * ReasoningTree.MAX_TRUNK_SEGMENTS, crown_center_y))
+	tree.free()
+	pass
+
+
+func crown_uses_many_small_bubbles_test() -> void:
+	assert(ReasoningTree.CROWN_BUBBLE_COUNT >= 24)
+	var largest_radius_ratio := 0.13 + 3.0 * 0.012
+	assert(largest_radius_ratio < 0.18)
+	pass
+
+
+func reasoning_chunks_do_not_accumulate_tree_height_test() -> void:
+	var tree := ReasoningTree.new()
+	tree.on_agent_start(1)
+	tree.on_turn_start()
+	var turn_height := tree.target_trunk_growth
+	for index in range(100):
+		tree.on_message_update("chunk %d" % index, OpenAiClient.STREAM_KIND_REASONING)
+	assert(tree.target_trunk_growth == turn_height)
+	assert(tree.target_trunk_growth == 1.0)
+	tree.free()
+	pass
+
+
+func each_turn_adds_at_most_one_segment_test() -> void:
+	var tree := ReasoningTree.new()
+	tree.on_agent_start(1)
+	for expected_turn in range(1, 5):
+		tree.on_turn_start()
+		assert(tree.target_trunk_growth == float(expected_turn))
+	tree.free()
+	pass
+
+
+func completion_particle_texture_has_soft_center_test() -> void:
+	var texture := ReasoningTree.make_particle_texture()
+	var image := texture.get_image()
+	assert(image.get_width() == 16)
+	assert(image.get_pixel(8, 8).a > 0.8)
+	assert(image.get_pixel(0, 0).a == 0.0)
+	pass

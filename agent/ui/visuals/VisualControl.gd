@@ -33,6 +33,8 @@ func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 			return AgentOrbController.new()
 		VisualType.Type.PROCEDURE:
 			return ProcedureController.new()
+		VisualType.Type.REASONING_TREE:
+			return ReasoningTree.new()
 	return null
 
 

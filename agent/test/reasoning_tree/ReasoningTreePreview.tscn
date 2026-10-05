@@ -1,0 +1,96 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://agent/test/reasoning_tree/ReasoningTreePreview.gd" id="1_preview"]
+
+[node name="ReasoningTreePreview" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_preview")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="VisualLayer" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Ui" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 920.0
+offset_bottom = 230.0
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Ui"]
+layout_mode = 2
+text = "Reasoning Tree 推理树 · Preview"
+
+[node name="Hint" type="Label" parent="Ui"]
+layout_mode = 2
+autowrap_mode = 3
+text = "F6 运行本场景。无需启动 Agent 或连接 API；可自动播放，也可逐步检查每种状态。"
+
+[node name="Status" type="Label" parent="Ui"]
+layout_mode = 2
+autowrap_mode = 3
+text = "..."
+
+[node name="PrimaryButtons" type="HBoxContainer" parent="Ui"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PlayDemo" type="Button" parent="Ui/PrimaryButtons"]
+layout_mode = 2
+text = "Play Demo"
+
+[node name="Reset" type="Button" parent="Ui/PrimaryButtons"]
+layout_mode = 2
+text = "Reset"
+
+[node name="StepButtons" type="HBoxContainer" parent="Ui"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Think" type="Button" parent="Ui/StepButtons"]
+layout_mode = 2
+text = "Reasoning"
+
+[node name="Tool" type="Button" parent="Ui/StepButtons"]
+layout_mode = 2
+text = "Start Tool"
+
+[node name="Success" type="Button" parent="Ui/StepButtons"]
+layout_mode = 2
+text = "Tool Success"
+
+[node name="Failure" type="Button" parent="Ui/StepButtons"]
+layout_mode = 2
+text = "Tool Failure"
+
+[node name="NextTurn" type="Button" parent="Ui/StepButtons"]
+layout_mode = 2
+text = "Next Turn"
+
+[node name="Answer" type="Button" parent="Ui/StepButtons"]
+layout_mode = 2
+text = "Final Answer"
+
+[node name="Finish" type="Button" parent="Ui/StepButtons"]
+layout_mode = 2
+text = "Finish"

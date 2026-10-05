@@ -7,8 +7,9 @@ enum Type {
 	NONE,
 	JARVIS,
 	PROCEDURE,
+	REASONING_TREE,
 }
 
 
 static func is_valid(value: int) -> bool:
-	return value >= Type.NONE and value <= Type.PROCEDURE
+	return value >= Type.NONE and value <= Type.REASONING_TREE
