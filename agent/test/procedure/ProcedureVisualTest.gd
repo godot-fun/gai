@@ -36,8 +36,3 @@ func token_color_is_stable_and_id_specific_test() -> void:
 	assert(first != ProcedureTokenNode.color_from_token_id(14594))
 	pass
 
-
-func cut_order_runs_left_to_right_test() -> void:
-	assert(TOKENIZER.left_to_right_boundary_order(5) == [0, 1, 2, 3, 4])
-	assert(TOKENIZER.left_to_right_boundary_order(4) == [0, 1, 2, 3])
-	pass

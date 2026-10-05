@@ -22,6 +22,14 @@ func trim_test() -> void:
 	assert(StringUtils.trim("") == StringUtils.EMPTY)
 	pass
 
+func is_sentence_end_test() -> void:
+	assert(StringUtils.is_sentence_end("done。"))
+	assert(StringUtils.is_sentence_end("完成。”"))
+	assert(StringUtils.is_sentence_end("Really?"))
+	assert(not StringUtils.is_sentence_end("继续"))
+	assert(not StringUtils.is_sentence_end(""))
+	pass
+
 func enum_to_string_test() -> void:
 	assert(StringUtils.enum_to_string(State, State.IDLE), "IDLE")
 	pass

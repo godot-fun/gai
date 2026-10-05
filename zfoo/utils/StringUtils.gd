@@ -44,6 +44,11 @@ const SHARP_REGEX: String = "\\#"
 
 const DOLLAR: String = "$" # dollar sign
 
+## Terminal punctuation used to detect a complete sentence (ASCII + CJK).
+const SENTENCE_ENDINGS: String = ".!?。！？"
+## Closing quotes / brackets stripped before checking [member SENTENCE_ENDINGS].
+const CLOSING_QUOTES: String = "\"'”’」』）)]}"
+
 ## Example: is_empty("") -> true; is_empty("a") -> false
 static func is_empty(s: String) -> bool:
 	return s == null or s.length() == 0
@@ -65,6 +70,16 @@ static func is_blank(s: String) -> bool:
 ## Example: is_not_blank("a") -> true; is_not_blank("  ") -> false
 static func is_not_blank(s: String) -> bool:
 	return !is_blank(s)
+
+## True when s ends with sentence punctuation, ignoring trailing closing quotes/brackets.
+## Example: is_sentence_end("done。") -> true; is_sentence_end("完成。”") -> true; is_sentence_end("继续") -> false
+static func is_sentence_end(s: String) -> bool:
+	var trimmed := trim(s)
+	if is_empty(trimmed):
+		return false
+	while not is_empty(trimmed) and CLOSING_QUOTES.contains(trimmed.right(1)):
+		trimmed = trim(trimmed.left(-1))
+	return not is_empty(trimmed) and SENTENCE_ENDINGS.contains(trimmed.right(1))
 
 ## Removes whitespace from both ends of s; preserves whitespace inside the string.
 ## Example: trim("  hello world  ") -> "hello world"
