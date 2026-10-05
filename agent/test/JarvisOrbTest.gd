@@ -157,7 +157,7 @@ func run_full_demo(gen: int) -> void:
 	var reply_chunks: PackedStringArray = [
 		"我会创建 agent/test/JarvisOrbTest.tscn，",
 		"通过按钮触发 reasoning、tool、生成等阶段。",
-		"先读取 agent/ui/effects/AgentOrbController.gd…",
+		"先读取 agent/ui/visuals/jarvis/AgentOrbController.gd…",
 	]
 	for chunk: String in reply_chunks:
 		if gen != demo_generation:
@@ -177,7 +177,7 @@ func run_full_demo(gen: int) -> void:
 	if gen != demo_generation:
 		return
 	var args: Dictionary[String, String] = {}
-	args[ReadTool.ARG_PATH] = "agent/ui/effects/AgentOrbController.gd"
+	args[ReadTool.ARG_PATH] = "agent/ui/visuals/jarvis/AgentOrbController.gd"
 	AgentEvents.events.tool_execution_start.emit(demo_session_id, "demo-tool-1", ReadTool.NAME, args)
 	await wait_demo(1.2, gen)
 
@@ -256,7 +256,7 @@ func on_generate_pressed() -> void:
 func on_tool_pressed() -> void:
 	ensure_orb_visible()
 	var args: Dictionary[String, String] = {}
-	args[ReadTool.ARG_PATH] = "agent/ui/effects/JarvisOrb.gd"
+	args[ReadTool.ARG_PATH] = "agent/ui/visuals/jarvis/JarvisOrb.gd"
 	AgentEvents.events.tool_execution_start.emit(
 		demo_session_id,
 		"demo-tool-manual",

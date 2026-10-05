@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cjarvisorbtest01"]
 
 [ext_resource type="Script" path="res://agent/test/JarvisOrbTest.gd" id="1_jot"]
-[ext_resource type="Script" path="res://agent/ui/effects/AgentOrbController.gd" id="2_orb"]
+[ext_resource type="Script" path="res://agent/ui/visuals/jarvis/AgentOrbController.gd" id="2_orb"]
 
 [node name="JarvisOrbTest" type="Control"]
 layout_mode = 3

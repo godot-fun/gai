@@ -7,7 +7,7 @@ extends Object
 ## the entry has one). Both hand the message body back to the chat input for re-editing.
 ## The body follows the shared Markdown toolbar setting, matching agent replies.
 
-const BeamLayer: GDScript = preload("res://agent/ui/effects/AccentBorderBeamLayer.gd")
+const BeamLayer: GDScript = preload("res://agent/ui/shaders/AccentBorderBeamLayer.gd")
 const BUBBLE_CORNER_RADIUS: float = 8.0
 const BEAM_STRENGTH: float = 1.0
 

@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dmyulwuwu1hd5"]
 
 [ext_resource type="Script" uid="uid://dwsh1esychpp5" path="res://agent/Agent.gd" id="1_fwn8y"]
-[ext_resource type="Script" path="res://agent/ui/effects/AgentOrbController.gd" id="2_orb"]
+[ext_resource type="Script" path="res://agent/ui/visuals/jarvis/AgentOrbController.gd" id="2_orb"]
 
 [node name="Agent" type="Control" unique_id=1107421514]
 layout_mode = 3
