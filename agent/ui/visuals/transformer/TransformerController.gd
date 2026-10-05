@@ -3,8 +3,6 @@ extends VisualEffect
 
 ## Orchestrates tokenizer, embedding, and attention transformer-stage animations.
 
-const PREVIEW_HIGH_TOKEN_LIMIT := 24
-
 signal end_animation_finished
 
 var session_id: int = 0
@@ -208,52 +206,6 @@ func tokenize_text(text: String) -> Array[LlamaHelper.Token]:
 		return []
 	var result := await LlamaHelper.async_tokenize(VLMServer.server_url(), text)
 	return result.tokens
-
-
-## Plays supplied tokens without a server request; intended for the visual preview scene.
-## The tail demonstrates sustained low-logit emission followed by the final high-logit burst.
-func play_preview(tokens: Array[LlamaHelper.Token]) -> void:
-	reset_visual()
-	visible = true
-	modulate = Color.WHITE
-	request_generation += 1
-	var generation := request_generation
-	var selected := TokenizerEffect.select_complete_sentence(tokens)
-	if selected.is_empty():
-		return
-	await tokenizer.play(selected)
-	if generation != request_generation or not is_inside_tree():
-		return
-	await embedding.play(tokens)
-	if generation != request_generation or not is_inside_tree():
-		return
-	await attention.play(tokens)
-	if generation != request_generation or not is_inside_tree():
-		return
-	await transformer_block.play(tokens)
-	if generation != request_generation or not is_inside_tree():
-		return
-	var split_index := maxi(1, tokens.size() * 2 / 3)
-	var low_tokens := token_range(tokens, 0, split_index)
-	var high_tokens := token_range(tokens, split_index, tokens.size())
-	if high_tokens.is_empty():
-		high_tokens = token_range(tokens, 0, mini(tokens.size(), PREVIEW_HIGH_TOKEN_LIMIT))
-	await logits_burst.collapse_galaxy()
-	if generation != request_generation or not is_inside_tree():
-		return
-	logits_burst.play_low_probability(low_tokens)
-	await get_tree().create_timer(3.2).timeout
-	if generation != request_generation or not is_inside_tree():
-		return
-	await logits_burst.play_high_probability(high_tokens)
-	pass
-
-
-static func token_range(tokens: Array[LlamaHelper.Token], begin: int, end: int) -> Array[LlamaHelper.Token]:
-	var selected: Array[LlamaHelper.Token] = []
-	for index in range(maxi(0, begin), mini(tokens.size(), end)):
-		selected.append(tokens[index])
-	return selected
 
 
 func latest_user_prompt(value: int) -> String:

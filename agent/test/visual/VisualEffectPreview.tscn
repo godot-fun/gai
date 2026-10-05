@@ -1,0 +1,102 @@
+[gd_scene load_steps=3 format=3 uid="uid://cvisualeffectprev01"]
+
+[ext_resource type="Script" path="res://agent/test/visual/VisualEffectPreview.gd" id="1_preview"]
+[ext_resource type="Script" path="res://agent/ui/visuals/VisualControl.gd" id="2_visual"]
+
+[node name="VisualEffectPreview" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_preview")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.02, 0.04, 0.07, 1)
+
+[node name="VisualOverlay" type="CanvasLayer" parent="."]
+layer = 10
+
+[node name="VisualControl" type="Control" parent="VisualOverlay"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_visual")
+
+[node name="UiLayer" type="CanvasLayer" parent="."]
+layer = 20
+
+[node name="Ui" type="VBoxContainer" parent="UiLayer"]
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 920.0
+offset_bottom = 320.0
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="UiLayer/Ui"]
+layout_mode = 2
+text = "Visual Effect Preview · 统一特效场景"
+
+[node name="Hint" type="Label" parent="UiLayer/Ui"]
+layout_mode = 2
+autowrap_mode = 3
+text = "F6 运行。通过真实 AgentEvents 驱动 VisualControl。上行小数据 16 轮；下行大数据 64 轮。每排按钮对应一种特效。"
+
+[node name="Status" type="Label" parent="UiLayer/Ui"]
+layout_mode = 2
+autowrap_mode = 3
+text = "..."
+
+[node name="Controls" type="HBoxContainer" parent="UiLayer/Ui"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Stop" type="Button" parent="UiLayer/Ui/Controls"]
+layout_mode = 2
+text = "Stop"
+
+[node name="ThemeColorSelect" type="Button" parent="UiLayer/Ui/Controls"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+
+[node name="ThemeToggle" type="Button" parent="UiLayer/Ui/Controls"]
+layout_mode = 2
+tooltip_text = "Switch theme"
+
+[node name="SmallRow" type="VBoxContainer" parent="UiLayer/Ui"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Label" type="Label" parent="UiLayer/Ui/SmallRow"]
+layout_mode = 2
+text = "小数据 · 16 轮 · 短用户信息 / 短 thinking · 覆盖各 tool"
+
+[node name="Buttons" type="HBoxContainer" parent="UiLayer/Ui/SmallRow"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LargeRow" type="VBoxContainer" parent="UiLayer/Ui"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="Label" type="Label" parent="UiLayer/Ui/LargeRow"]
+layout_mode = 2
+text = "大数据 · 64 轮 · 更长流式内容 · 更高 tool 密度"
+
+[node name="Buttons" type="HBoxContainer" parent="UiLayer/Ui/LargeRow"]
+layout_mode = 2
+theme_override_constants/separation = 8
