@@ -12,7 +12,7 @@ func visual_type_is_registered_test() -> void:
 func branch_defaults_to_running_test() -> void:
 	var branch := ReasoningTree.make_branch("call-1", "read_file", 0, 2.8)
 	assert(branch["state"] == ReasoningTree.BranchState.RUNNING)
-	assert(branch["anchor"] == 2)
+	assert(is_equal_approx(float(branch["anchor"]), 2.8))
 	assert(branch["direction"] == -1.0)
 	assert(branch["label"] == "Read File")
 	pass
@@ -88,8 +88,8 @@ func staggered_anchor_never_exceeds_turn_endpoint_test() -> void:
 
 
 func branch_anchor_stays_on_visible_trunk_test() -> void:
-	assert(ReasoningTree.make_branch("low", "read", 0, -2.0)["anchor"] == 1)
-	assert(ReasoningTree.make_branch("high", "read", 0, 99.0)["anchor"] == ReasoningTree.MAX_TRUNK_SEGMENTS - 1)
+	assert(is_equal_approx(float(ReasoningTree.make_branch("low", "read", 0, -2.0)["anchor"]), ReasoningTree.ANCHOR_MIN))
+	assert(is_equal_approx(float(ReasoningTree.make_branch("high", "read", 0, 99.0)["anchor"]), ReasoningTree.ANCHOR_MAX))
 	pass
 
 
@@ -127,18 +127,33 @@ func reasoning_chunks_do_not_accumulate_tree_height_test() -> void:
 	for index in range(100):
 		tree.on_message_update("chunk %d" % index, OpenAiClient.STREAM_KIND_REASONING)
 	assert(tree.target_trunk_growth == turn_height)
-	assert(tree.target_trunk_growth == 1.0)
+	assert(is_equal_approx(tree.target_trunk_growth, ReasoningTree.trunk_growth_for_turn(1)))
 	tree.free()
 	pass
 
 
-func each_turn_adds_at_most_one_segment_test() -> void:
+func turns_map_evenly_across_trunk_test() -> void:
+	assert(is_equal_approx(ReasoningTree.trunk_growth_for_turn(0), 0.0))
+	assert(is_equal_approx(ReasoningTree.trunk_growth_for_turn(AgentLoop.MAX_TURNS), float(ReasoningTree.MAX_TRUNK_SEGMENTS)))
+	assert(is_equal_approx(ReasoningTree.trunk_growth_for_turn(AgentLoop.MAX_TURNS / 2), float(ReasoningTree.MAX_TRUNK_SEGMENTS) * 0.5))
 	var tree := ReasoningTree.new()
 	tree.on_agent_start(1)
 	for expected_turn in range(1, 5):
 		tree.on_turn_start()
-		assert(tree.target_trunk_growth == float(expected_turn))
+		assert(is_equal_approx(tree.target_trunk_growth, ReasoningTree.trunk_growth_for_turn(expected_turn)))
+		assert(tree.target_trunk_growth < float(expected_turn))
 	tree.free()
+	pass
+
+
+func late_turn_branches_stay_below_tip_until_max_turns_test() -> void:
+	var mid := ReasoningTree.trunk_growth_for_turn(AgentLoop.MAX_TURNS / 2)
+	var late := ReasoningTree.trunk_growth_for_turn(AgentLoop.MAX_TURNS - 1)
+	assert(mid < float(ReasoningTree.MAX_TRUNK_SEGMENTS) * 0.6)
+	assert(late < float(ReasoningTree.MAX_TRUNK_SEGMENTS))
+	assert(late > mid)
+	var branch := ReasoningTree.make_branch("mid", "read", 0, mid)
+	assert(is_equal_approx(float(branch["anchor"]), mid))
 	pass
 
 

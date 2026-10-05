@@ -5,6 +5,8 @@ extends VisualEffect
 
 const MAX_TRUNK_SEGMENTS := 9
 const MAX_BRANCHES := 12
+const ANCHOR_MIN := 0.2
+const ANCHOR_MAX := float(MAX_TRUNK_SEGMENTS) - 0.25
 const CROWN_HEIGHT_RATIO := 0.13
 const CROWN_WIDTH_RATIO := 0.12
 const MAX_CROWN_RADIUS := 180.0
@@ -88,7 +90,8 @@ func reset_visual() -> void:
 
 func on_agent_start(_session_id: int) -> void:
 	phase_label = "理解任务"
-	target_trunk_growth = 0.35
+	# Stay below the first turn tip so the trunk only grows forward once turns begin.
+	target_trunk_growth = trunk_growth_for_turn(1) * 0.5
 	queue_redraw()
 	pass
 
@@ -107,9 +110,8 @@ func on_agent_end(error_message: String) -> float:
 func on_turn_start() -> void:
 	turn_index += 1
 	phase_label = "第 %d 轮 · 分析任务" % turn_index
-	# Streaming reasoning can contain hundreds of arbitrary chunks. Height follows semantic turns
-	# instead, so one turn can grow at most one stable trunk segment.
-	target_trunk_growth = minf(float(MAX_TRUNK_SEGMENTS), float(turn_index))
+	# Map turns across the full trunk using AgentLoop.MAX_TURNS so late tools do not pile at the tip.
+	target_trunk_growth = trunk_growth_for_turn(turn_index)
 	queue_redraw()
 	pass
 
@@ -154,8 +156,7 @@ func on_tool_execution_end(tool_call_id: String, tool_name: String, result: Agen
 	branches[index]["label"] = "%s · %s" % [public_tool_name(tool_name), "失败" if result.is_error else "已完成"]
 	active_tool_indices.erase(tool_call_id)
 	if not result.is_error:
-		# A successful tool completes the current stage visually; the next turn owns the next segment.
-		target_trunk_growth = minf(float(MAX_TRUNK_SEGMENTS), maxf(target_trunk_growth, float(turn_index)))
+		target_trunk_growth = maxf(target_trunk_growth, trunk_growth_for_turn(turn_index))
 	phase_label = "工具失败 · 调整方案" if result.is_error else "工具完成 · 继续任务"
 	queue_redraw()
 	pass
@@ -390,7 +391,7 @@ static func make_branch(tool_call_id: String, tool_name: String, branch_index: i
 		"id": tool_call_id,
 		"label": public_tool_name(tool_name),
 		"state": BranchState.RUNNING,
-		"anchor": clampi(int(floor(growth)), 1, MAX_TRUNK_SEGMENTS - 1),
+		"anchor": clampf(growth, ANCHOR_MIN, ANCHOR_MAX),
 		"anchor_offset": branch_anchor_offset(branch_index),
 		"direction": direction,
 		"angle": branch_angle(branch_index),
@@ -398,6 +399,11 @@ static func make_branch(tool_call_id: String, tool_name: String, branch_index: i
 		"growth": 0.0,
 		"completion_growth": 0.0,
 	}
+
+
+## Spread turns evenly across the drawable trunk using the agent loop ceiling.
+static func trunk_growth_for_turn(turn: int) -> float:
+	return clampf(float(maxi(turn, 0)) / float(AgentLoop.MAX_TURNS) * float(MAX_TRUNK_SEGMENTS), 0.0, float(MAX_TRUNK_SEGMENTS))
 
 
 ## Alternates sides and advances through non-repeating elevations. Any 12 consecutive
