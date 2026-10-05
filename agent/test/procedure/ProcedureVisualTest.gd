@@ -53,6 +53,12 @@ func embedding_position_matches_token_color_rgb_test() -> void:
 	pass
 
 
+func embedding_connection_color_is_endpoint_average_test() -> void:
+	var average: Color = EMBEDDING.average_color(Color(0.2, 0.4, 0.8, 0.6), Color(0.8, 0.2, 0.4, 1.0))
+	assert(average.is_equal_approx(Color(0.5, 0.3, 0.6, 0.8)))
+	pass
+
+
 func token_color_fills_rgb_cube_not_hue_ring_test() -> void:
 	var saturations: Dictionary = {}
 	var values: Dictionary = {}
@@ -67,4 +73,3 @@ func token_color_fills_rgb_cube_not_hue_ring_test() -> void:
 	assert(saturations.size() > 1)
 	assert(values.size() > 1)
 	pass
-
