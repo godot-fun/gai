@@ -160,7 +160,7 @@ func play_reveal(duration: float) -> void:
 
 
 func apply_reveal_visuals(display_id: int) -> void:
-	var color := color_from_token_id(token_id)
+	var color := neon_display_color(color_from_token_id(token_id))
 	apply_neon_colors(color)
 	id_label.text = str(mini(maxi(display_id, 0), token_id))
 	id_label.add_theme_color_override("font_color", Color(color, 0.82))
@@ -211,6 +211,17 @@ static func display_piece(raw_piece: String) -> String:
 
 
 static func color_from_token_id(value: int) -> Color:
-	# The golden-ratio multiplier spreads adjacent IDs around the hue wheel.
-	var hue := fposmod(float(value) * 0.61803398875, 1.0)
-	return Color.from_hsv(hue, 0.58, 1.0)
+	# Low-discrepancy map into the full RGB cube [0,1]³ (not a fixed-S/V hue ring),
+	# so EmbeddingEffect positions from RGB can occupy the whole 3D volume.
+	var r := fposmod(float(value) * 0.618033988749895, 1.0)
+	var g := fposmod(float(value) * 0.414213562373095, 1.0)
+	var b := fposmod(float(value) * 0.732050807568877, 1.0)
+	return Color(r, g, b)
+
+
+## Brightens dark cube colors for neon UI while keeping hue/channel ratios.
+static func neon_display_color(color: Color, min_luminance: float = 0.42) -> Color:
+	var luminance := color.get_luminance()
+	if luminance >= min_luminance:
+		return color
+	return color.lightened(min_luminance - luminance)

@@ -1,9 +1,10 @@
 extends Control
 
 ## Standalone PROCEDURE animation preview. Space / Enter replays the fixed token sample.
-## Full sample is 200 unique tokens; TokenizerEffect only consumes the first complete sentence (~12).
+## Full sample is 200 unique tokens; TokenizerEffect uses the first complete sentence (~12),
+## then EmbeddingEffect flies every token into the RGB starfield.
 
-## First 12 form one sentence ending in "？"; remaining pieces are unique fillers for later stages.
+## First 12 form one sentence ending in "？"; remaining pieces are unique fillers for EmbeddingEffect.
 const SAMPLE_PIECES: Array[String] = [
 	"每次", "我", "向你", "提问", "，", "你的", "脑子", "里", "发生", "了", "什么", "？",
 	"模型", "先把", "输入", "拆成", "离散", "符号", "再映射", "到高维", "空间", "形成",

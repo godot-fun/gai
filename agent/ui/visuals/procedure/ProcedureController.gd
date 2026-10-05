@@ -1,11 +1,12 @@
 class_name ProcedureController
 extends VisualEffect
 
-## Orchestrates procedure-stage animations (tokenizer first; embedding and others later).
+## Orchestrates procedure-stage animations (tokenizer ? embedding; more stages later).
 
 var session_id: int = 0
 var request_generation: int = 0
 var tokenizer: TokenizerEffect
+var embedding: EmbeddingEffect
 var active_tween: Tween
 
 
@@ -16,6 +17,9 @@ func _ready() -> void:
 	tokenizer = TokenizerEffect.new()
 	tokenizer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(tokenizer)
+	embedding = EmbeddingEffect.new()
+	embedding.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(embedding)
 	pass
 
 
@@ -26,6 +30,8 @@ func get_visual_type() -> VisualType.Type:
 func on_theme_changed() -> void:
 	if tokenizer != null:
 		tokenizer.on_theme_changed()
+	if embedding != null:
+		embedding.on_theme_changed()
 	pass
 
 
@@ -73,22 +79,27 @@ func run_procedure(prompt: String, generation: int) -> void:
 	if selected.is_empty():
 		return
 	await tokenizer.play(selected)
-	# Later stages (e.g. EmbeddingEffect) chain here after tokenizer finishes.
+	if generation != request_generation or not is_inside_tree():
+		return
+	await embedding.play(result.tokens)
 	pass
 
 
 ## Plays supplied tokens without a server request; intended for the visual preview scene.
-## TokenizerEffect only animates a complete sentence slice (~12); full list is kept for later stages.
+## TokenizerEffect only animates a complete sentence slice (~12); EmbeddingEffect uses the full list.
 func play_preview(tokens: Array[LlamaHelper.Token]) -> void:
 	reset_visual()
 	visible = true
 	modulate = Color.WHITE
 	request_generation += 1
+	var generation := request_generation
 	var selected := TokenizerEffect.select_complete_sentence(tokens)
 	if selected.is_empty():
 		return
 	await tokenizer.play(selected)
-	# Later stages (e.g. EmbeddingEffect) can use the full `tokens` list here.
+	if generation != request_generation or not is_inside_tree():
+		return
+	await embedding.play(tokens)
 	pass
 
 
@@ -109,4 +120,6 @@ func cancel_stages() -> void:
 	active_tween = null
 	if tokenizer != null:
 		tokenizer.cancel()
+	if embedding != null:
+		embedding.cancel()
 	pass
