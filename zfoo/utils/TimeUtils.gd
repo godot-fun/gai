@@ -11,7 +11,7 @@ const MILLIS_PER_MINUTE: int = 1 * 60 * MILLIS_PER_SECOND
 const MILLIS_PER_HOUR: int = 1 * 60 * MILLIS_PER_MINUTE
 const MILLIS_PER_HOUR_8: int = 8 * 60 * MILLIS_PER_MINUTE
 const MILLIS_PER_DAY: int = 1 * 24 * MILLIS_PER_HOUR
-const MILLIS_PER_WEEK: int = 1 * 7 * MILLIS_PER_HOUR
+const MILLIS_PER_WEEK: int = 1 * 7 * MILLIS_PER_DAY
 
 static var offset_from_uts = Time.get_time_zone_from_system().bias * MILLIS_PER_MINUTE
 

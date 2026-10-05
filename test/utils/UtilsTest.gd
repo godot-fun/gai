@@ -36,6 +36,11 @@ func RandomUtils_test() -> void:
 
 
 func TimeUtils_test() -> void:
+	assert(TimeUtils.MILLIS_PER_MINUTE == 60 * TimeUtils.MILLIS_PER_SECOND)
+	assert(TimeUtils.MILLIS_PER_HOUR == 60 * TimeUtils.MILLIS_PER_MINUTE)
+	assert(TimeUtils.MILLIS_PER_DAY == 24 * TimeUtils.MILLIS_PER_HOUR)
+	assert(TimeUtils.MILLIS_PER_WEEK == 7 * TimeUtils.MILLIS_PER_DAY)
+
 	var timestamp := TimeUtils.current_time_millis()
 	# YYYY-MM-DD HH:MM:SS
 	var dateTimeStr := Time.get_datetime_string_from_system(false, true)
