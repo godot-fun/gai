@@ -111,6 +111,7 @@ static func async_chat_completion(messages: Array, max_tokens: int = 2048) -> St
 ## Starts one server and waits for its TCP endpoint. Concurrent callers share the same cold start
 ## through the PROCESS_ID_STARTING sentinel instead of spawning duplicate model processes.
 static func async_ensure_server_running() -> int:
+	last_access_millis = Time.get_ticks_msec()
 	if await LlamaHelper.async_health(server_url()):
 		return OK
 	while process_id == PROCESS_ID_STARTING:

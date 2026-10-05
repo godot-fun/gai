@@ -45,7 +45,19 @@ static func async_tokenize(server_url: String, prompt: String) -> TokenizeResult
 		return result
 	for raw_token: Dictionary in data.get("tokens", []):
 		var raw_piece: Variant = raw_token.get("piece", "")
-		var piece: String = raw_piece if raw_piece is String else JSON.stringify(raw_piece)
+		var piece := decode_piece(raw_piece)
 		result.tokens.append(Token.new(int(raw_token.get("id", -1)), piece))
 	result.total_tokens = result.tokens.size()
 	return result
+
+
+## llama.cpp returns invalid UTF-8 token fragments as byte arrays; preserve them as text when possible.
+static func decode_piece(raw_piece: Variant) -> String:
+	if raw_piece is String:
+		return raw_piece
+	if raw_piece is Array:
+		var bytes := PackedByteArray()
+		for value: Variant in raw_piece:
+			bytes.append(int(value))
+		return bytes.get_string_from_utf8()
+	return str(raw_piece)

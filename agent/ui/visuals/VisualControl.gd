@@ -3,7 +3,6 @@ extends Control
 
 ## Single event bridge that routes an agent run to the selected visual effect.
 
-const JARVIS_EFFECT_SCRIPT := preload("res://agent/ui/visuals/jarvis/AgentOrbController.gd")
 
 ## Session whose run is currently represented; 0 while no run is tracked.
 var running_session_id: int = 0
@@ -31,7 +30,9 @@ func mount_selected_effect() -> void:
 func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 	match visual_type:
 		VisualType.Type.JARVIS:
-			return JARVIS_EFFECT_SCRIPT.new()
+			return AgentOrbController.new()
+		VisualType.Type.PROCEDURE:
+			return ProcedureController.new()
 	return null
 
 
