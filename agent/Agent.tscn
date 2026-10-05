@@ -137,13 +137,13 @@ focus_mode = 0
 mouse_default_cursor_shape = 2
 text = "Log"
 
-[node name="JarvisToggleWrap" type="MarginContainer" parent="Root/Toolbar/ToolbarRow"]
+[node name="VisualsButtonWrap" type="MarginContainer" parent="Root/Toolbar/ToolbarRow"]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 theme_override_constants/margin_right = 8
 
-[node name="JarvisToggleButton" type="Button" parent="Root/Toolbar/ToolbarRow/JarvisToggleWrap"]
+[node name="VisualsButton" type="Button" parent="Root/Toolbar/ToolbarRow/VisualsButtonWrap"]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4

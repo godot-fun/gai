@@ -13,7 +13,7 @@ extends RefCounted
 # Toolbar toggles
 # ----------------------------------------------------------------------------------------------------------------------
 
-## [JarvisToggle] — show the 3D orb overlay while an agent run is working.
+## [VisualsButton] — show the 3D orb overlay while an agent run is working.
 const JARVIS_ORB_ENABLED_KEY := "agent_jarvis_orb_enabled"
 ## [MarkdownToggle] — render chat bubble bodies as BBCode instead of raw text.
 const MARKDOWN_ENABLED_KEY := "agent_markdown_enabled"

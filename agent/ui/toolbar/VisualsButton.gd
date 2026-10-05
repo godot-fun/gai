@@ -1,7 +1,7 @@
-class_name JarvisToggle
+class_name VisualsButton
 extends RefCounted
 
-## Toolbar toggle for the Jarvis 3D orb overlay during agent runs.
+## Toolbar button for enabling or disabling visuals during agent runs.
 
 const RING_COUNT: int = 3
 ## Radii on the 24 px ([constant Margin.ma_6]) canvas. An even-sized canvas has its centre on a half pixel
