@@ -36,18 +36,24 @@ func on_theme_changed() -> void:
 
 
 func set_visual_visible(show: bool, animated: bool) -> void:
+	if active_tween != null and active_tween.is_valid():
+		active_tween.kill()
+	active_tween = null
 	if show:
 		visible = true
 		modulate.a = 1.0
 		return
-	request_generation += 1
-	cancel_stages()
+	# Soft-hide only — switching chats must not cancel in-flight stages.
 	if not animated:
 		visible = false
+		modulate.a = 1.0
 		return
 	active_tween = create_tween()
 	active_tween.tween_property(self, "modulate:a", 0.0, 0.25)
-	active_tween.tween_callback(func() -> void: visible = false)
+	active_tween.tween_callback(func() -> void:
+		visible = false
+		modulate.a = 1.0
+	)
 	pass
 
 
@@ -67,6 +73,12 @@ func on_agent_start(value: int) -> void:
 	var generation := request_generation
 	run_procedure(prompt, generation)
 	pass
+
+
+func on_agent_end(_error_message: String) -> float:
+	request_generation += 1
+	cancel_stages()
+	return 0.0
 
 
 func run_procedure(prompt: String, generation: int) -> void:

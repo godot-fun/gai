@@ -51,7 +51,6 @@ func connect_visual_events() -> void:
 	AgentEvents.events.agent_start.connect(on_agent_start)
 	AgentEvents.events.agent_end.connect(on_agent_end)
 	AgentEvents.events.session_stop.connect(on_session_stop)
-	AgentEvents.events.session_selected.connect(on_session_selected)
 	AgentEvents.events.turn_start.connect(on_turn_start)
 	AgentEvents.events.turn_end.connect(on_turn_end)
 	AgentEvents.events.message_update.connect(on_message_update)
@@ -64,9 +63,10 @@ func connect_visual_events() -> void:
 
 
 func on_agent_start(session_id: int) -> void:
+	# Newest run always owns the effect and replaces any previous session's visual.
 	running_session_id = session_id
 	var effect := get_selected_effect()
-	if effect == null or not AgentSessionManager.is_active(session_id):
+	if effect == null:
 		return
 	effect.reset_visual()
 	effect.on_agent_start(session_id)
@@ -78,7 +78,7 @@ func on_agent_end(session_id: int, error_message: String) -> void:
 	if session_id != running_session_id:
 		return
 	var effect := get_selected_effect()
-	var delay := effect.on_agent_end(error_message) if effect != null and effect.visible else 0.0
+	var delay := effect.on_agent_end(error_message) if effect != null else 0.0
 	if delay > 0.0:
 		await get_tree().create_timer(delay).timeout
 	if running_session_id == session_id:
@@ -92,15 +92,6 @@ func on_session_stop(session_id: int) -> void:
 	if session_id != running_session_id or has_visible_effect():
 		return
 	running_session_id = 0
-	pass
-
-
-func on_session_selected(_session_id: int, _previous_session_id: int) -> void:
-	var effect := get_selected_effect()
-	if effect == null:
-		return
-	var running := AgentSessionManager.is_active(running_session_id) and AgentSessionManager.is_running(running_session_id)
-	effect.set_visual_visible(running, false)
 	pass
 
 
@@ -162,7 +153,7 @@ func on_theme_changed() -> void:
 func on_visual_type_changed(_visual_type: int) -> void:
 	mount_selected_effect()
 	var effect := get_selected_effect()
-	if effect == null or not AgentSessionManager.is_active(running_session_id) or not AgentSessionManager.is_running(running_session_id):
+	if effect == null or running_session_id == 0 or not AgentSessionManager.is_running(running_session_id):
 		return
 	effect.reset_visual()
 	effect.on_agent_start(running_session_id)
@@ -177,7 +168,8 @@ func get_selected_effect() -> VisualEffect:
 
 
 func get_running_effect(session_id: int) -> VisualEffect:
-	if session_id != running_session_id or not AgentSessionManager.is_active(session_id):
+	# Bound to the latest run only — chat selection must not interrupt playback or updates.
+	if session_id != running_session_id:
 		return null
 	var effect := get_selected_effect()
 	return effect if effect != null and effect.visible else null
