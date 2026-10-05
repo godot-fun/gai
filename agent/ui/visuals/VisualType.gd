@@ -8,8 +8,9 @@ enum Type {
 	JARVIS,
 	TRANSFORMER,
 	REASONING_TREE,
+	TOOL_CONSTELLATION,
 }
 
 
 static func is_valid(value: int) -> bool:
-	return value >= Type.NONE and value <= Type.REASONING_TREE
+	return value >= Type.NONE and value <= Type.TOOL_CONSTELLATION

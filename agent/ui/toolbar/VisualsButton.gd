@@ -58,6 +58,7 @@ func update_popup_items() -> void:
 	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_jarvis"), VisualType.Type.JARVIS)
 	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_transformer"), VisualType.Type.TRANSFORMER)
 	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_reasoning_tree"), VisualType.Type.REASONING_TREE)
+	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_tool_constellation"), VisualType.Type.TOOL_CONSTELLATION)
 	for visual_type: VisualType.Type in VisualType.Type.values():
 		popup.set_item_checked(popup.get_item_index(visual_type), selected_type == visual_type)
 	pass

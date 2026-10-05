@@ -35,6 +35,8 @@ func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 			return TransformerController.new()
 		VisualType.Type.REASONING_TREE:
 			return ReasoningTree.new()
+		VisualType.Type.TOOL_CONSTELLATION:
+			return ToolConstellation.new()
 	return null
 
 
