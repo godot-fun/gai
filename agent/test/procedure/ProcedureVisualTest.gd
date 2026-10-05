@@ -46,6 +46,10 @@ func embedding_position_matches_token_color_rgb_test() -> void:
 	assert(is_equal_approx(position.y, (color.g - 0.5) * EMBEDDING.SPACE_SCALE))
 	assert(is_equal_approx(position.z, (color.b - 0.5) * EMBEDDING.SPACE_SCALE))
 	assert(position != EMBEDDING.position_from_token_id(14594))
+	var roundtrip := EMBEDDING.color_from_position(position)
+	assert(is_equal_approx(roundtrip.r, color.r))
+	assert(is_equal_approx(roundtrip.g, color.g))
+	assert(is_equal_approx(roundtrip.b, color.b))
 	pass
 
 

@@ -9,6 +9,8 @@ const SPACE_SCALE := 5.0
 const STAR_SIZE := 0.055
 const AMBIENT_STAR_COUNT := 520
 const AMBIENT_SPACE_SCALE := 4.2
+## Sparse RGB-mapped sparkles inside the embedding cube; separate from ambient stars.
+const RGB_STAR_COUNT := 36
 const CAMERA_DISTANCE_NEAR := 6.4
 const CAMERA_DISTANCE_FAR := 32.0
 const CAMERA_FOV := 42.0
@@ -72,11 +74,17 @@ var camera: Camera3D
 var galaxy_root: Node3D
 var label_layer: Node3D
 var ambient_stars: MultiMeshInstance3D
+var rgb_stars: MultiMeshInstance3D
+var rgb_star_phases: PackedFloat32Array = PackedFloat32Array()
+var rgb_star_speeds: PackedFloat32Array = PackedFloat32Array()
+var rgb_star_base_colors: Array[Color] = []
+var rgb_star_base_scales: PackedFloat32Array = PackedFloat32Array()
 var flight_layer: Node3D
 var trail_layer: Node3D
 var star_material: StandardMaterial3D
 var frame_shader: Shader
 var stage_tweens: Array[Tween] = []
+var rgb_star_time: float = 0.0
 
 
 func _ready() -> void:
@@ -91,6 +99,8 @@ func _process(delta: float) -> void:
 		return
 	galaxy_root.rotate_y(galaxy_angular_speed * delta)
 	galaxy_root.rotate_x(galaxy_angular_speed * 0.22 * delta)
+	rgb_star_time += delta
+	update_rgb_star_twinkle()
 	pass
 
 
@@ -135,6 +145,10 @@ static func position_from_token_id(value: int) -> Vector3:
 
 static func position_from_color(color: Color) -> Vector3:
 	return Vector3((color.r - 0.5) * SPACE_SCALE, (color.g - 0.5) * SPACE_SCALE, (color.b - 0.5) * SPACE_SCALE)
+
+
+static func color_from_position(position: Vector3) -> Color:
+	return Color(clampf(position.x / SPACE_SCALE + 0.5, 0.0, 1.0), clampf(position.y / SPACE_SCALE + 0.5, 0.0, 1.0), clampf(position.z / SPACE_SCALE + 0.5, 0.0, 1.0))
 
 
 func ensure_scene() -> void:
@@ -183,6 +197,8 @@ func ensure_scene() -> void:
 	frame_shader.code = FRAME_SHADER
 	ambient_stars = build_ambient_stars()
 	galaxy_root.add_child(ambient_stars)
+	rgb_stars = build_rgb_stars()
+	galaxy_root.add_child(rgb_stars)
 
 	label_layer = Node3D.new()
 	label_layer.name = "LabelLayer"
@@ -237,6 +253,55 @@ func build_ambient_stars() -> MultiMeshInstance3D:
 	return instance
 
 
+## Small RGB-cube sparkles: seat color = neon(position→RGB); twinkle in [_process].
+func build_rgb_stars() -> MultiMeshInstance3D:
+	var multi := MultiMesh.new()
+	multi.transform_format = MultiMesh.TRANSFORM_3D
+	multi.use_colors = true
+	multi.mesh = create_square_mesh(STAR_SIZE * 0.85)
+	multi.instance_count = RGB_STAR_COUNT
+	rgb_star_phases.resize(RGB_STAR_COUNT)
+	rgb_star_speeds.resize(RGB_STAR_COUNT)
+	rgb_star_base_scales.resize(RGB_STAR_COUNT)
+	rgb_star_base_colors.clear()
+	rgb_star_base_colors.resize(RGB_STAR_COUNT)
+	for index in RGB_STAR_COUNT:
+		var origin := Vector3(randf_range(-0.5, 0.5), randf_range(-0.5, 0.5), randf_range(-0.5, 0.5)) * SPACE_SCALE * 0.92
+		var scale := randf_range(0.55, 1.25)
+		var transform := Transform3D.IDENTITY.scaled(Vector3.ONE * scale)
+		transform.origin = origin
+		multi.set_instance_transform(index, transform)
+		var color := ProcedureTokenNode.neon_display_color(color_from_position(origin))
+		rgb_star_base_colors[index] = color
+		rgb_star_base_scales[index] = scale
+		rgb_star_phases[index] = randf_range(0.0, TAU)
+		rgb_star_speeds[index] = randf_range(2.2, 4.8)
+		multi.set_instance_color(index, Color(color, 0.85))
+	multi.visible_instance_count = RGB_STAR_COUNT
+	var instance := MultiMeshInstance3D.new()
+	instance.name = "RgbStars"
+	instance.multimesh = multi
+	instance.material_override = star_material
+	return instance
+
+
+func update_rgb_star_twinkle() -> void:
+	if rgb_stars == null or not is_instance_valid(rgb_stars) or rgb_stars.multimesh == null:
+		return
+	var multi := rgb_stars.multimesh
+	for index in RGB_STAR_COUNT:
+		var pulse := 0.35 + 0.65 * (0.5 + 0.5 * sin(rgb_star_time * rgb_star_speeds[index] + rgb_star_phases[index]))
+		var flash := 0.15 + 0.85 * pow(0.5 + 0.5 * sin(rgb_star_time * rgb_star_speeds[index] * 1.7 + rgb_star_phases[index] * 1.3), 4.0)
+		var brightness := clampf(pulse * (0.55 + flash * 0.9), 0.2, 1.35)
+		var base := rgb_star_base_colors[index]
+		multi.set_instance_color(index, Color(base.r * brightness, base.g * brightness, base.b * brightness, clampf(0.35 + brightness * 0.65, 0.25, 1.0)))
+		var scale := rgb_star_base_scales[index] * (0.72 + flash * 0.55)
+		var transform := Transform3D.IDENTITY.scaled(Vector3.ONE * scale)
+		transform.origin = multi.get_instance_transform(index).origin
+		multi.set_instance_transform(index, transform)
+	pass
+
+
 func create_square_mesh(size: float) -> QuadMesh:
 	var mesh := QuadMesh.new()
 	mesh.size = Vector2(size, size)
@@ -249,6 +314,7 @@ func prepare_starfield() -> void:
 	clear_layer_children(trail_layer)
 	clear_layer_children(label_layer)
 	show_ambient_stars()
+	rgb_star_time = 0.0
 	reset_camera_to_far()
 	pass
 
