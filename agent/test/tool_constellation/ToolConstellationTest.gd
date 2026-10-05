@@ -29,7 +29,28 @@ func lifecycle_test() -> void:
 	assert(effect.nodes.size() == 1)
 	assert(effect.active_calls.has("read-1"))
 	effect.on_tool_execution_end("read-1", "read", AgentToolResult.ok("done"))
+	effect.advance_tool_queue(ToolConstellation.MIN_TOOL_PLAY_SECONDS)
 	assert(effect.nodes[0]["state"] == ToolConstellation.ExecutionState.SUCCESS)
 	assert(not effect.active_calls.has("read-1"))
+	effect.free()
+	pass
+
+
+func fast_tools_play_in_order_test() -> void:
+	var effect := ToolConstellation.new()
+	effect.on_tool_execution_start("first", "read", {})
+	effect.on_tool_execution_start("second", "write", {})
+	effect.on_tool_execution_end("first", "read", AgentToolResult.ok("done"))
+	effect.on_tool_execution_end("second", "write", AgentToolResult.ok("done"))
+	assert(effect.nodes.size() == 1)
+	assert(effect.pending_calls.size() == 1)
+	effect.advance_tool_queue(ToolConstellation.MIN_TOOL_PLAY_SECONDS)
+	assert(effect.nodes[0]["state"] == ToolConstellation.ExecutionState.SUCCESS)
+	assert(effect.nodes.size() == 1)
+	effect.advance_tool_queue(ToolConstellation.RESULT_HOLD_SECONDS)
+	assert(effect.nodes.size() == 2)
+	assert(effect.nodes[1]["state"] == ToolConstellation.ExecutionState.RUNNING)
+	effect.advance_tool_queue(ToolConstellation.MIN_TOOL_PLAY_SECONDS)
+	assert(effect.nodes[1]["state"] == ToolConstellation.ExecutionState.SUCCESS)
 	effect.free()
 	pass

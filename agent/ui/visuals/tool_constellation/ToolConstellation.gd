@@ -9,11 +9,18 @@ const CORE_RADIUS := 62.0
 const NODE_RADIUS := 31.0
 const STAR_COUNT := 72
 const CURVE_STEPS := 28
+const MIN_TOOL_PLAY_SECONDS := 1.35
+const RESULT_HOLD_SECONDS := 0.7
 
 enum ExecutionState { RUNNING, SUCCESS, FAILED }
 
 var nodes: Array[Dictionary] = []
 var active_calls: Dictionary[String, int] = {}
+var pending_calls: Array[Dictionary] = []
+var pending_results: Dictionary[String, AgentToolResult] = {}
+var playing_call: Dictionary = {}
+var playing_seconds: float = 0.0
+var result_hold_seconds: float = 0.0
 var turn_index: int = 0
 var elapsed: float = 0.0
 var core_pulse: float = 0.0
@@ -57,6 +64,11 @@ func set_visual_visible(show: bool, animated: bool) -> void:
 func reset_visual() -> void:
 	nodes.clear()
 	active_calls.clear()
+	pending_calls.clear()
+	pending_results.clear()
+	playing_call.clear()
+	playing_seconds = 0.0
+	result_hold_seconds = 0.0
 	turn_index = 0
 	elapsed = 0.0
 	core_pulse = 0.0
@@ -71,15 +83,26 @@ func on_agent_start(_session_id: int) -> void:
 
 
 func on_agent_end(error_message: String) -> float:
-	var final_state := ExecutionState.SUCCESS if StringUtils.is_blank(error_message) else ExecutionState.FAILED
-	for node: Dictionary in nodes:
-		if int(node["state"]) == ExecutionState.RUNNING:
-			node["state"] = final_state
-			node["settle"] = 0.0
-	active_calls.clear()
+	# Tool animation owns a separate timeline. VisualControl waits for the queued calls in
+	# wait_for_agent_end(), so fast real executions remain readable instead of collapsing.
+	var fallback_result := AgentToolResult.ok("completed") if StringUtils.is_blank(error_message) else AgentToolResult.error(error_message)
+	if not playing_call.is_empty():
+		var playing_id := String(playing_call["id"])
+		if not pending_results.has(playing_id):
+			pending_results[playing_id] = fallback_result
+	for call: Dictionary in pending_calls:
+		var pending_id := String(call["id"])
+		if not pending_results.has(pending_id):
+			pending_results[pending_id] = fallback_result
 	core_pulse = 1.0
 	queue_redraw()
-	return 0.8
+	return 0.0
+
+
+func wait_for_agent_end() -> void:
+	while not pending_calls.is_empty() or not playing_call.is_empty() or result_hold_seconds > 0.0:
+		await get_tree().process_frame
+	pass
 
 
 func on_turn_start() -> void:
@@ -100,28 +123,13 @@ func on_chat_entry_add(_entry: ChatEntry) -> void:
 
 
 func on_tool_execution_start(tool_call_id: String, tool_name: String, args: Dictionary[String, Variant]) -> void:
-	if nodes.size() >= MAX_NODES:
-		remove_oldest_settled_node()
-	var node := make_node(tool_call_id, tool_name, args, nodes.size(), turn_index)
-	nodes.append(node)
-	active_calls[tool_call_id] = nodes.size() - 1
-	core_pulse = 1.0
-	queue_redraw()
+	pending_calls.append({"id": tool_call_id, "name": tool_name, "args": args.duplicate(true), "turn": turn_index})
+	start_next_queued_call()
 	pass
 
 
 func on_tool_execution_end(tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
-	if not active_calls.has(tool_call_id):
-		return
-	var index: int = active_calls[tool_call_id]
-	if index < 0 or index >= nodes.size():
-		active_calls.erase(tool_call_id)
-		return
-	nodes[index]["state"] = ExecutionState.FAILED if result.is_error else ExecutionState.SUCCESS
-	nodes[index]["settle"] = 0.0
-	active_calls.erase(tool_call_id)
-	core_pulse = 1.0
-	queue_redraw()
+	pending_results[tool_call_id] = result
 	pass
 
 
@@ -135,10 +143,62 @@ func _process(delta: float) -> void:
 		return
 	elapsed += delta
 	core_pulse = move_toward(core_pulse, 0.0, delta * 1.8)
+	advance_tool_queue(delta)
 	for node: Dictionary in nodes:
 		node["growth"] = move_toward(float(node["growth"]), 1.0, delta * 3.2)
 		if int(node["state"]) != ExecutionState.RUNNING:
 			node["settle"] = move_toward(float(node["settle"]), 1.0, delta * 1.6)
+	queue_redraw()
+	pass
+
+
+func advance_tool_queue(delta: float) -> void:
+	if result_hold_seconds > 0.0:
+		result_hold_seconds = maxf(0.0, result_hold_seconds - delta)
+		if result_hold_seconds <= 0.0:
+			playing_call.clear()
+			start_next_queued_call()
+		return
+	if playing_call.is_empty():
+		start_next_queued_call()
+		return
+	playing_seconds += delta
+	var tool_call_id := String(playing_call["id"])
+	if playing_seconds < MIN_TOOL_PLAY_SECONDS or not pending_results.has(tool_call_id):
+		return
+	complete_playing_call(pending_results[tool_call_id])
+	pass
+
+
+func start_next_queued_call() -> void:
+	if not playing_call.is_empty() or result_hold_seconds > 0.0 or pending_calls.is_empty():
+		return
+	playing_call = pending_calls.pop_front()
+	playing_seconds = 0.0
+	var tool_call_id := String(playing_call["id"])
+	var tool_name := String(playing_call["name"])
+	var args: Dictionary[String, Variant] = playing_call["args"]
+	if nodes.size() >= MAX_NODES:
+		remove_oldest_settled_node()
+	var node := make_node(tool_call_id, tool_name, args, nodes.size(), int(playing_call["turn"]))
+	nodes.append(node)
+	active_calls[tool_call_id] = nodes.size() - 1
+	core_pulse = 1.0
+	queue_redraw()
+	pass
+
+
+func complete_playing_call(result: AgentToolResult) -> void:
+	var tool_call_id := String(playing_call["id"])
+	if active_calls.has(tool_call_id):
+		var index: int = active_calls[tool_call_id]
+		if index >= 0 and index < nodes.size():
+			nodes[index]["state"] = ExecutionState.FAILED if result.is_error else ExecutionState.SUCCESS
+			nodes[index]["settle"] = 0.0
+	active_calls.erase(tool_call_id)
+	pending_results.erase(tool_call_id)
+	result_hold_seconds = RESULT_HOLD_SECONDS
+	core_pulse = 1.0
 	queue_redraw()
 	pass
 

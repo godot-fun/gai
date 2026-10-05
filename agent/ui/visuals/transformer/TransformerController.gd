@@ -3,8 +3,6 @@ extends VisualEffect
 
 ## Orchestrates tokenizer, embedding, and attention transformer-stage animations.
 
-const TransformerBlockEffect := preload("res://agent/ui/visuals/transformer/TransformerBlockEffect.gd")
-const LogitsBurstEffect := preload("res://agent/ui/visuals/transformer/LogitsBurstEffect.gd")
 const PREVIEW_HIGH_TOKEN_LIMIT := 24
 
 signal end_animation_finished
