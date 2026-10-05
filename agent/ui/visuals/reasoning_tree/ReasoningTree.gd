@@ -138,9 +138,6 @@ func on_message_complete(_usage: OpenAiUsage) -> void:
 
 
 func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
-	if branches.size() >= MAX_BRANCHES:
-		branches.pop_front()
-		remap_active_tool_indices()
 	branches.append(make_branch(tool_call_id, tool_name, branch_sequence, target_trunk_growth))
 	branch_sequence += 1
 	active_tool_indices[tool_call_id] = branches.size() - 1
@@ -403,8 +400,8 @@ static func make_branch(tool_call_id: String, tool_name: String, branch_index: i
 	}
 
 
-## Alternates sides and advances through non-repeating elevations. Any 12 visible consecutive
-## branches have distinct angles, including after older branches are discarded.
+## Alternates sides and advances through non-repeating elevations. Any 12 consecutive
+## branch indices have distinct angles.
 static func branch_angle(branch_index: int) -> float:
 	var elevation_degrees := 24.0 + float(branch_index * 17 % 55)
 	return deg_to_rad(180.0 + elevation_degrees) if branch_index % 2 == 0 else deg_to_rad(-elevation_degrees)
@@ -445,12 +442,3 @@ static func get_completion_vector(branch: Dictionary, state: int, length: float)
 static func public_tool_name(tool_name: String) -> String:
 	var readable := tool_name.replace("_", " ").replace("-", " ").strip_edges()
 	return readable.capitalize() if not readable.is_empty() else "工具"
-
-
-func remap_active_tool_indices() -> void:
-	active_tool_indices.clear()
-	for index in range(branches.size()):
-		var branch: Dictionary = branches[index]
-		if int(branch["state"]) == BranchState.RUNNING:
-			active_tool_indices[String(branch["id"])] = index
-	pass

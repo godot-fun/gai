@@ -36,6 +36,16 @@ func visible_branch_angles_are_unique_test() -> void:
 	pass
 
 
+func branches_are_never_discarded_test() -> void:
+	var tree := ReasoningTree.new()
+	for index in range(ReasoningTree.MAX_BRANCHES + 3):
+		tree.on_tool_execution_start("call-%d" % index, "read", {})
+	assert(tree.branches.size() == ReasoningTree.MAX_BRANCHES + 3)
+	assert(String(tree.branches[0]["id"]) == "call-0")
+	tree.free()
+	pass
+
+
 func completion_branch_has_distinct_angle_and_minimum_length_test() -> void:
 	for index in range(ReasoningTree.MAX_BRANCHES):
 		var branch := ReasoningTree.make_branch("call-%d" % index, "tool", index, 2.0)
