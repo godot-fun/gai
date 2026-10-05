@@ -148,7 +148,6 @@ layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 focus_mode = 0
-toggle_mode = true
 mouse_default_cursor_shape = 2
 
 [node name="ThemeColorSelectWrap" type="MarginContainer" parent="Root/Toolbar/ToolbarRow"]

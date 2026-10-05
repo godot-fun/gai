@@ -59,8 +59,8 @@ class Events:
 	signal chat_input_prefill(text: String)
 	## Markdown bubble rendering switched (see [method AgentSetting.set_markdown_enabled]).
 	signal markdown_changed(enabled: bool)
-	## Jarvis orb overlay switched on / off (see [method AgentSetting.set_jarvis_orb_enabled]).
-	signal jarvis_orb_changed(enabled: bool)
+	## Active run visual changed (see [method AgentSetting.set_visual_type]).
+	signal visual_type_changed(visual_type: int)
 	signal skill_context_changed(session_id: int)
 	## AGENTS.md project prompt added to / removed from a session (see AgentPromptToggle).
 	signal agent_context_changed(session_id: int)

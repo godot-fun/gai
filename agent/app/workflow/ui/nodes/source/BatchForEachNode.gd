@@ -20,6 +20,10 @@ func build_node() -> void:
 		output_port_id = node_def.outputs[0].id
 
 	output_slot_indices[output_port_id] = get_child_count() - 1
+	if not gdf.events.theme_changed.is_connected(on_visual_theme_changed):
+		gdf.events.theme_changed.connect(on_visual_theme_changed)
+	if not gdf.events.theme_color_changed.is_connected(on_visual_theme_changed):
+		gdf.events.theme_color_changed.connect(on_visual_theme_changed)
 	call_deferred("refresh_output_slot", get_batch_item_type())
 	pass
 
@@ -46,6 +50,7 @@ func create_item_type_row() -> HBoxContainer:
 	item_type_option.set_item_metadata(2, PortDef.TYPE_NAME_VIDEO)
 	item_type_option.add_item(tr("port_type." + PortDef.TYPE_NAME_TEXT), 3)
 	item_type_option.set_item_metadata(3, PortDef.TYPE_NAME_TEXT)
+	PopupMenuStyle.apply(item_type_option.get_popup())
 	item_type_option.item_selected.connect(on_batch_item_type_selected)
 	row.add_child(item_type_option)
 
@@ -55,6 +60,12 @@ func create_item_type_row() -> HBoxContainer:
 func on_batch_item_type_selected(index: int) -> void:
 	var type_name: String = str(item_type_option.get_item_metadata(index))
 	refresh_output_slot(type_name)
+	pass
+
+
+func on_visual_theme_changed() -> void:
+	if item_type_option != null:
+		PopupMenuStyle.apply(item_type_option.get_popup())
 	pass
 
 

@@ -13,7 +13,9 @@ extends RefCounted
 # Toolbar toggles
 # ----------------------------------------------------------------------------------------------------------------------
 
-## [VisualsButton] — show the 3D orb overlay while an agent run is working.
+## [VisualsButton] — visual presentation shown while an agent run is working.
+const VISUAL_TYPE_KEY := "agent_visual_type"
+## Legacy toggle retained so existing preferences can be migrated to [constant VISUAL_TYPE_KEY].
 const JARVIS_ORB_ENABLED_KEY := "agent_jarvis_orb_enabled"
 ## [MarkdownToggle] — render chat bubble bodies as BBCode instead of raw text.
 const MARKDOWN_ENABLED_KEY := "agent_markdown_enabled"
@@ -23,18 +25,22 @@ const SKILL_IN_PROMPT_ENABLED_KEY := "agent_skill_in_prompt_enabled"
 const AGENT_PROMPT_IN_PROMPT_ENABLED_KEY := "agent_agents_md_in_prompt_enabled"
 
 
-static func get_jarvis_orb_enabled() -> bool:
-	return Setting.get_bool(JARVIS_ORB_ENABLED_KEY, true)
+static func get_visual_type() -> VisualType.Type:
+	var stored_value := Setting.get_string(VISUAL_TYPE_KEY)
+	if stored_value.is_empty():
+		return VisualType.Type.JARVIS if Setting.get_bool(JARVIS_ORB_ENABLED_KEY, true) else VisualType.Type.NONE
+	var visual_type: VisualType.Type = int(stored_value)
+	return visual_type if VisualType.is_valid(visual_type) else VisualType.Type.JARVIS
 
 
-## Announces the switch on [signal AgentEvents.events.jarvis_orb_changed] so the orb overlay can
-## show / hide itself.
-static func set_jarvis_orb_enabled(enabled: bool) -> void:
-	if get_jarvis_orb_enabled() == enabled:
+## Announces a selection on [signal AgentEvents.events.visual_type_changed] so visual controllers
+## can show or hide their presentation.
+static func set_visual_type(visual_type: VisualType.Type) -> void:
+	if not VisualType.is_valid(visual_type) or get_visual_type() == visual_type:
 		return
-	Setting.set_bool(JARVIS_ORB_ENABLED_KEY, enabled)
+	Setting.set_int(VISUAL_TYPE_KEY, visual_type)
 	Setting.save()
-	AgentEvents.events.jarvis_orb_changed.emit(enabled)
+	AgentEvents.events.visual_type_changed.emit(visual_type)
 	pass
 
 

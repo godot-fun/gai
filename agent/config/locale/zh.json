@@ -20,7 +20,11 @@
       "add_agents": "将 AGENTS.md 加入当前对话",
       "remove_agents": "从当前对话移除 AGENTS.md",
       "hide_animation": "隐藏运行动画",
-      "show_animation": "智能体工作时显示运行动画"
+      "show_animation": "智能体工作时显示运行动画",
+      "visuals": "选择运行视觉效果",
+      "visual_none": "无特效",
+      "visual_jarvis": "Jarvis 特效",
+      "visual_procedure": "Procedure 特效"
     },
     "sidebar": {
       "new_session": "+ 新建智能体",

@@ -1,7 +1,7 @@
 class_name VisualsButton
 extends RefCounted
 
-## Toolbar button for enabling or disabling visuals during agent runs.
+## Toolbar button for selecting the visual presentation used during agent runs.
 
 const RING_COUNT: int = 3
 ## Radii on the 24 px ([constant Margin.ma_6]) canvas. An even-sized canvas has its centre on a half pixel
@@ -10,12 +10,15 @@ const RING_COUNT: int = 3
 const RING_RADII: Array[float] = [2.5, 7.5, 11.5]
 
 var button: Button
+var popup: PopupMenu
 
 
 func setup(p_button: Button) -> void:
 	button = p_button
+	build_popup()
 	button.text = ""
-	button.toggled.connect(on_toggled)
+	button.toggle_mode = false
+	button.pressed.connect(on_pressed)
 	button.mouse_entered.connect(on_mouse_entered)
 	button.mouse_exited.connect(on_mouse_exited)
 	gdf.events.theme_changed.connect(apply_theme)
@@ -25,14 +28,15 @@ func setup(p_button: Button) -> void:
 	pass
 
 
+func build_popup() -> void:
+	popup = PopupMenu.new()
+	popup.id_pressed.connect(on_visual_selected)
+	button.add_child(popup)
+	pass
+
+
 func apply_theme() -> void:
-	var jarvis_orb_enabled: bool = AgentSetting.get_jarvis_orb_enabled()
-	var tooltip: String = (
-		I18n.t("agent.toolbar.hide_animation")
-		if jarvis_orb_enabled
-		else I18n.t("agent.toolbar.show_animation")
-	)
-	AgentToolbarButton.style_round(button, tooltip)
+	AgentToolbarButton.style_round(button, I18n.t("agent.toolbar.visuals"))
 	apply_equal_icon_margins(Margin.ma_1)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -41,10 +45,25 @@ func apply_theme() -> void:
 	button.add_theme_constant_override("icon_max_height", Margin.ma_6)
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	update_popup_items()
+	style_popup()
 	update_icon(button.is_hovered())
-	button.set_block_signals(true)
-	button.button_pressed = jarvis_orb_enabled
-	button.set_block_signals(false)
+	pass
+
+
+func update_popup_items() -> void:
+	var selected_type := AgentSetting.get_visual_type()
+	popup.clear()
+	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_none"), VisualType.Type.NONE)
+	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_jarvis"), VisualType.Type.JARVIS)
+	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_procedure"), VisualType.Type.PROCEDURE)
+	for visual_type: VisualType.Type in VisualType.Type.values():
+		popup.set_item_checked(popup.get_item_index(visual_type), selected_type == visual_type)
+	pass
+
+
+func style_popup() -> void:
+	PopupMenuStyle.apply(popup)
 	pass
 
 
@@ -71,9 +90,9 @@ func on_mouse_exited() -> void:
 
 
 func update_icon(hovered: bool) -> void:
-	var jarvis_orb_enabled: bool = AgentSetting.get_jarvis_orb_enabled()
+	var visual_type := AgentSetting.get_visual_type()
 	var icon_color: Color = ColorBase.secondary_text
-	if jarvis_orb_enabled:
+	if visual_type != VisualType.Type.NONE:
 		var theme_color: Color = ThemeColor.accent_theme_color()
 		icon_color = theme_color if ThemeColor.is_dark_theme() else theme_color.darkened(0.15)
 		if hovered:
@@ -81,6 +100,26 @@ func update_icon(hovered: bool) -> void:
 	elif hovered:
 		icon_color = ColorBase.primary_text
 	button.icon = make_concentric_rings_icon(Margin.ma_6, icon_color)
+	pass
+
+
+func on_pressed() -> void:
+	update_popup_items()
+	var content_size := popup.get_contents_minimum_size()
+	var popup_size := Vector2i(maxi(int(content_size.x), Margin.ma_16 * 3), int(content_size.y))
+	var button_center_x := int(button.global_position.x + button.size.x * 0.5)
+	var popup_position := Vector2i(button_center_x - int(popup_size.x * 0.5), int(button.global_position.y + button.size.y + Margin.ma_1))
+	popup.popup(Rect2i(popup_position, popup_size))
+	pass
+
+
+func on_visual_selected(id: int) -> void:
+	if not VisualType.is_valid(id):
+		return
+	var visual_type: VisualType.Type = id
+	AgentSetting.set_visual_type(visual_type)
+	update_popup_items()
+	update_icon(button.is_hovered())
 	pass
 
 
@@ -104,10 +143,4 @@ func draw_circle_outline(img: Image, center: float, radius: float, col: Color) -
 			var dy: float = y - center
 			if absf(sqrt(dx * dx + dy * dy) - radius) <= 0.5:
 				img.set_pixel(x, y, col)
-	pass
-
-
-func on_toggled(enabled: bool) -> void:
-	AgentSetting.set_jarvis_orb_enabled(enabled)
-	apply_theme()
 	pass

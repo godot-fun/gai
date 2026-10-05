@@ -90,7 +90,7 @@ func connect_events() -> void:
 	AgentEvents.events.tool_execution_start.connect(on_tool_execution_start)
 	AgentEvents.events.tool_execution_end.connect(on_tool_execution_end)
 	AgentEvents.events.chat_entry_add.connect(on_chat_entry_add)
-	AgentEvents.events.jarvis_orb_changed.connect(on_jarvis_orb_changed)
+	AgentEvents.events.visual_type_changed.connect(on_visual_type_changed)
 	pass
 
 
@@ -98,8 +98,7 @@ func on_agent_start(session_id: int) -> void:
 	running_session_id = session_id
 	if jarvis_orb != null:
 		jarvis_orb.reset_growth()
-	var jarvis_orb_enabled := AgentSetting.get_jarvis_orb_enabled()
-	if not jarvis_orb_enabled:
+	if AgentSetting.get_visual_type() != VisualType.Type.JARVIS:
 		set_orb_visible(false, false)
 		return
 	if not AgentSessionManager.is_active(session_id):
@@ -224,8 +223,8 @@ func on_theme_changed() -> void:
 	pass
 
 
-func on_jarvis_orb_changed(enabled: bool) -> void:
-	if not enabled:
+func on_visual_type_changed(visual_type: int) -> void:
+	if visual_type != VisualType.Type.JARVIS:
 		set_orb_visible(false, false)
 		return
 	if not AgentSessionManager.is_active(running_session_id):
@@ -253,8 +252,8 @@ func stop_orb_tween() -> void:
 
 
 func set_orb_visible(show: bool, animated: bool) -> void:
-	var jarvis_orb_enabled := AgentSetting.get_jarvis_orb_enabled()
-	if show and not jarvis_orb_enabled:
+	var jarvis_selected := AgentSetting.get_visual_type() == VisualType.Type.JARVIS
+	if show and not jarvis_selected:
 		show = false
 	if not show:
 		if not visible:
@@ -323,8 +322,7 @@ func ensure_center_pivot() -> void:
 
 
 func _should_handle(session_id: int) -> bool:
-	var jarvis_orb_enabled := AgentSetting.get_jarvis_orb_enabled()
-	if not jarvis_orb_enabled:
+	if AgentSetting.get_visual_type() != VisualType.Type.JARVIS:
 		return false
 	if session_id != running_session_id:
 		return false

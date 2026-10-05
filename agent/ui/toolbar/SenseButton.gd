@@ -386,21 +386,7 @@ func style_option_button(select: OptionButton) -> void:
 
 
 func style_option_popup(popup: PopupMenu) -> void:
-	popup.add_theme_font_override("font", Fonts.regular())
-	popup.add_theme_color_override("font_color", ColorBase.primary_text)
-	popup.add_theme_color_override("font_hover_color", ColorBase.primary_text)
-	popup.add_theme_color_override("font_accelerator_color", ColorBase.secondary_text)
-	popup.add_theme_color_override("font_disabled_color", ColorBase.secondary_text)
-	popup.add_theme_color_override("font_separator_color", ColorBase.secondary_text)
-	popup.add_theme_font_size_override("font_size", Typography.label_large_size)
-	popup.add_theme_constant_override("v_separation", Margin.ma_2)
-	popup.add_theme_constant_override("item_start_padding", Margin.ma_3)
-	popup.add_theme_constant_override("item_end_padding", Margin.ma_3)
-	popup.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 7, Margin.ma_1, Margin.ma_1, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs))
-	popup.add_theme_stylebox_override("hover", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, 5, Margin.ma_2, 0))
-	var empty_icon := ImageTexture.new()
-	for state: String in ["radio_checked", "radio_unchecked", "checked", "unchecked"]:
-		popup.add_theme_icon_override(state, empty_icon)
+	PopupMenuStyle.apply(popup)
 	pass
 
 
