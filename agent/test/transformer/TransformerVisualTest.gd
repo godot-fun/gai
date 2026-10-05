@@ -1,16 +1,12 @@
 extends Node
 
-const TOKENIZER := preload("res://agent/ui/visuals/transformer/TokenizerEffect.gd")
-const EMBEDDING := preload("res://agent/ui/visuals/transformer/EmbeddingEffect.gd")
-const ATTENTION := preload("res://agent/ui/visuals/transformer/AttentionEffect.gd")
-
 
 func complete_sentence_after_minimum_test() -> void:
 	var tokens: Array[LlamaHelper.Token] = []
 	for index in 14:
 		var piece := "early." if index == 5 else ("done。" if index == 12 else str(index))
 		tokens.append(LlamaHelper.Token.new(index, piece))
-	var selected: Array[LlamaHelper.Token] = TOKENIZER.select_complete_sentence(tokens)
+	var selected: Array[LlamaHelper.Token] = TokenizerEffect.select_complete_sentence(tokens)
 	assert(selected.size() == 13)
 	assert(selected[-1].piece == "done。")
 	pass
@@ -20,7 +16,7 @@ func complete_sentence_with_closing_quote_test() -> void:
 	var tokens: Array[LlamaHelper.Token] = []
 	for index in 12:
 		tokens.append(LlamaHelper.Token.new(index, "完成。”" if index == 11 else str(index)))
-	assert(TOKENIZER.select_complete_sentence(tokens).size() == 12)
+	assert(TokenizerEffect.select_complete_sentence(tokens).size() == 12)
 	pass
 
 
@@ -28,7 +24,7 @@ func incomplete_sentence_uses_all_tokens_test() -> void:
 	var tokens: Array[LlamaHelper.Token] = []
 	for index in 15:
 		tokens.append(LlamaHelper.Token.new(index, str(index)))
-	assert(TOKENIZER.select_complete_sentence(tokens).size() == 15)
+	assert(TokenizerEffect.select_complete_sentence(tokens).size() == 15)
 	pass
 
 
@@ -39,23 +35,23 @@ func token_color_is_stable_and_id_specific_test() -> void:
 	pass
 
 
-func embedding_position_matches_token_color_rgb_test() -> void:
+func EmbeddingEffect_position_matches_token_color_rgb_test() -> void:
 	var color := TransformerTokenNode.color_from_token_id(97571)
-	var position: Vector3 = EMBEDDING.position_from_token_id(97571)
-	assert(position == EMBEDDING.position_from_color(color))
-	assert(is_equal_approx(position.x, (color.r - 0.5) * EMBEDDING.SPACE_SCALE))
-	assert(is_equal_approx(position.y, (color.g - 0.5) * EMBEDDING.SPACE_SCALE))
-	assert(is_equal_approx(position.z, (color.b - 0.5) * EMBEDDING.SPACE_SCALE))
-	assert(position != EMBEDDING.position_from_token_id(14594))
-	var roundtrip := EMBEDDING.color_from_position(position)
+	var position: Vector3 = EmbeddingEffect.position_from_token_id(97571)
+	assert(position == EmbeddingEffect.position_from_color(color))
+	assert(is_equal_approx(position.x, (color.r - 0.5) * EmbeddingEffect.SPACE_SCALE))
+	assert(is_equal_approx(position.y, (color.g - 0.5) * EmbeddingEffect.SPACE_SCALE))
+	assert(is_equal_approx(position.z, (color.b - 0.5) * EmbeddingEffect.SPACE_SCALE))
+	assert(position != EmbeddingEffect.position_from_token_id(14594))
+	var roundtrip := EmbeddingEffect.color_from_position(position)
 	assert(is_equal_approx(roundtrip.r, color.r))
 	assert(is_equal_approx(roundtrip.g, color.g))
 	assert(is_equal_approx(roundtrip.b, color.b))
 	pass
 
 
-func attention_connection_color_is_endpoint_average_test() -> void:
-	var average: Color = ATTENTION.average_color(Color(0.2, 0.4, 0.8, 0.6), Color(0.8, 0.2, 0.4, 1.0))
+func AttentionEffect_connection_color_is_endpoint_average_test() -> void:
+	var average: Color = AttentionEffect.average_color(Color(0.2, 0.4, 0.8, 0.6), Color(0.8, 0.2, 0.4, 1.0))
 	assert(average.is_equal_approx(Color(0.5, 0.3, 0.6, 0.8)))
 	pass
 

@@ -25,6 +25,11 @@ func on_agent_end(_error_message: String) -> float:
 	return 0.0
 
 
+## Optional asynchronous tail. VisualControl keeps the effect visible until this returns.
+func wait_for_agent_end() -> void:
+	pass
+
+
 func on_turn_start() -> void:
 	pass
 

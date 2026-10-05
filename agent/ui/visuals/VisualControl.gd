@@ -83,6 +83,8 @@ func on_agent_end(session_id: int, error_message: String) -> void:
 	var delay := effect.on_agent_end(error_message) if effect != null else 0.0
 	if delay > 0.0:
 		await get_tree().create_timer(delay).timeout
+	if is_instance_valid(effect):
+		await effect.wait_for_agent_end()
 	if running_session_id == session_id:
 		if is_instance_valid(effect):
 			effect.set_visual_visible(false, true)

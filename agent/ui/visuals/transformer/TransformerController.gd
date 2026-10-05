@@ -4,6 +4,9 @@ extends VisualEffect
 ## Orchestrates tokenizer, embedding, and attention transformer-stage animations.
 
 const TRANSFORMER_BLOCK_EFFECT := preload("res://agent/ui/visuals/transformer/TransformerBlockEffect.gd")
+const LOGITS_BURST_EFFECT := preload("res://agent/ui/visuals/transformer/LogitsBurstEffect.gd")
+
+signal end_animation_finished
 
 var session_id: int = 0
 var request_generation: int = 0
@@ -11,7 +14,11 @@ var tokenizer: TokenizerEffect
 var embedding: EmbeddingEffect
 var attention: AttentionEffect
 var transformer_block: Control
+var logits_burst: Control
 var active_tween: Tween
+var run_entry_start: int = 0
+var pipeline_running: bool = false
+var waiting_for_end_animation: bool = false
 
 
 func _ready() -> void:
@@ -32,6 +39,10 @@ func _ready() -> void:
 	transformer_block.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	transformer_block.set_embedding_effect(embedding)
 	add_child(transformer_block)
+	logits_burst = LOGITS_BURST_EFFECT.new()
+	logits_burst.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	logits_burst.set_embedding_effect(embedding)
+	add_child(logits_burst)
 	pass
 
 
@@ -48,6 +59,8 @@ func on_theme_changed() -> void:
 		attention.on_theme_changed()
 	if transformer_block != null:
 		transformer_block.on_theme_changed()
+	if logits_burst != null:
+		logits_burst.on_theme_changed()
 	pass
 
 
@@ -82,6 +95,8 @@ func reset_visual() -> void:
 
 func on_agent_start(value: int) -> void:
 	session_id = value
+	var session := AgentSessionStore.load_session(value)
+	run_entry_start = session.chat_entries.size() if session != null else 0
 	var prompt := latest_user_prompt(value)
 	if prompt.is_empty():
 		return
@@ -91,32 +106,107 @@ func on_agent_start(value: int) -> void:
 	pass
 
 
-func on_agent_end(_error_message: String) -> float:
-	request_generation += 1
-	cancel_stages()
+func on_agent_end(error_message: String) -> float:
+	if StringUtils.is_not_blank(error_message):
+		request_generation += 1
+		cancel_stages()
+		return 0.0
+	waiting_for_end_animation = true
+	finish_logits_animation(request_generation)
 	return 0.0
 
 
+func wait_for_agent_end() -> void:
+	if waiting_for_end_animation:
+		await end_animation_finished
+	pass
+
+
 func run_transformer(prompt: String, generation: int) -> void:
+	pipeline_running = true
 	var result := LlamaHelper.TokenizeResult.new()
 	if await VLMServer.async_ensure_server_running() == OK:
 		result = await LlamaHelper.async_tokenize(VLMServer.server_url(), prompt)
 	if generation != request_generation or not is_inside_tree():
+		pipeline_running = false
 		return
 	var selected := TokenizerEffect.select_complete_sentence(result.tokens)
 	if selected.is_empty():
+		pipeline_running = false
 		return
 	await tokenizer.play(selected)
 	if generation != request_generation or not is_inside_tree():
+		pipeline_running = false
 		return
 	await embedding.play(result.tokens)
 	if generation != request_generation or not is_inside_tree():
+		pipeline_running = false
 		return
 	await attention.play(result.tokens)
 	if generation != request_generation or not is_inside_tree():
+		pipeline_running = false
 		return
 	await transformer_block.play(result.tokens)
+	if generation != request_generation or not is_inside_tree():
+		pipeline_running = false
+		return
+	var thinking_text := collect_run_text(ChatEntry.KIND_THINKING)
+	thinking_text = StringUtils.truncate(thinking_text, 1024)
+	var low_tokens := await tokenize_text(thinking_text)
+	if generation == request_generation and is_inside_tree():
+		logits_burst.play_low_probability(low_tokens)
+	pipeline_running = false
 	pass
+
+
+func finish_logits_animation(generation: int) -> void:
+	while pipeline_running and generation == request_generation and is_inside_tree():
+		await get_tree().process_frame
+	if generation != request_generation or not is_inside_tree():
+		complete_end_animation()
+		return
+	var final_text := StringUtils.truncate(latest_run_text(ChatEntry.KIND_AGENT), 1024)
+	var high_tokens := await tokenize_text(final_text)
+	if generation == request_generation and is_inside_tree():
+		await logits_burst.play_high_probability(high_tokens)
+	complete_end_animation()
+	pass
+
+
+func complete_end_animation() -> void:
+	waiting_for_end_animation = false
+	end_animation_finished.emit()
+	pass
+
+
+func collect_run_text(kind: String) -> String:
+	var session := AgentSessionStore.load_session(session_id)
+	if session == null:
+		return ""
+	var builder := StringBuilder.new()
+	for index in range(run_entry_start, session.chat_entries.size()):
+		var entry: ChatEntry = session.chat_entries[index]
+		if entry.kind == kind and StringUtils.is_not_blank(entry.body):
+			builder.append_line(entry.body)
+	return builder.build_string()
+
+
+func latest_run_text(kind: String) -> String:
+	var session := AgentSessionStore.load_session(session_id)
+	if session == null:
+		return ""
+	for index in range(session.chat_entries.size() - 1, run_entry_start - 1, -1):
+		var entry: ChatEntry = session.chat_entries[index]
+		if entry.kind == kind and StringUtils.is_not_blank(entry.body):
+			return entry.body
+	return ""
+
+
+func tokenize_text(text: String) -> Array[LlamaHelper.Token]:
+	if StringUtils.is_blank(text) or await VLMServer.async_ensure_server_running() != OK:
+		return []
+	var result := await LlamaHelper.async_tokenize(VLMServer.server_url(), text)
+	return result.tokens
 
 
 ## Plays supplied tokens without a server request; intended for the visual preview scene.
@@ -166,4 +256,9 @@ func cancel_stages() -> void:
 		attention.cancel()
 	if transformer_block != null:
 		transformer_block.cancel()
+	if logits_burst != null:
+		logits_burst.cancel()
+	pipeline_running = false
+	if waiting_for_end_animation:
+		complete_end_animation()
 	pass
