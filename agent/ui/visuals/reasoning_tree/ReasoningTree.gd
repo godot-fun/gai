@@ -21,6 +21,7 @@ const BRANCH_ALPHA_RUNNING := 0.28
 const BRANCH_ALPHA_SUCCESS := 0.34
 const BRANCH_ALPHA_FAILED := 0.20
 const COMPLETION_BRANCH_ALPHA := 0.34
+const TRUNK_GROWTH_EASE_POWER := 1.25
 
 enum BranchState { RUNNING, SUCCESS, FAILED }
 
@@ -401,9 +402,11 @@ static func make_branch(tool_call_id: String, tool_name: String, branch_index: i
 	}
 
 
-## Spread turns evenly across the drawable trunk using the agent loop ceiling.
+## Grow more of the trunk in early turns, then ease gently toward the crown.
 static func trunk_growth_for_turn(turn: int) -> float:
-	return clampf(float(maxi(turn, 0)) / float(AgentLoop.MAX_TURNS) * float(MAX_TRUNK_SEGMENTS), 0.0, float(MAX_TRUNK_SEGMENTS))
+	var turn_progress := clampf(float(turn) / float(AgentLoop.MAX_TURNS), 0.0, 1.0)
+	var eased_progress := 1.0 - pow(1.0 - turn_progress, TRUNK_GROWTH_EASE_POWER)
+	return eased_progress * float(MAX_TRUNK_SEGMENTS)
 
 
 ## Alternates sides and advances through non-repeating elevations. Any 12 consecutive

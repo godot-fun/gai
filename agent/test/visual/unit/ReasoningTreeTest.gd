@@ -132,10 +132,15 @@ func reasoning_chunks_do_not_accumulate_tree_height_test() -> void:
 	pass
 
 
-func turns_map_evenly_across_trunk_test() -> void:
+func turns_ease_out_across_trunk_test() -> void:
 	assert(is_equal_approx(ReasoningTree.trunk_growth_for_turn(0), 0.0))
 	assert(is_equal_approx(ReasoningTree.trunk_growth_for_turn(AgentLoop.MAX_TURNS), float(ReasoningTree.MAX_TRUNK_SEGMENTS)))
-	assert(is_equal_approx(ReasoningTree.trunk_growth_for_turn(AgentLoop.MAX_TURNS / 2), float(ReasoningTree.MAX_TRUNK_SEGMENTS) * 0.5))
+	var midpoint := ReasoningTree.trunk_growth_for_turn(AgentLoop.MAX_TURNS / 2)
+	assert(midpoint > float(ReasoningTree.MAX_TRUNK_SEGMENTS) * 0.5)
+	assert(midpoint < float(ReasoningTree.MAX_TRUNK_SEGMENTS) * 0.65)
+	var early_step := ReasoningTree.trunk_growth_for_turn(2) - ReasoningTree.trunk_growth_for_turn(1)
+	var late_step := ReasoningTree.trunk_growth_for_turn(AgentLoop.MAX_TURNS) - ReasoningTree.trunk_growth_for_turn(AgentLoop.MAX_TURNS - 1)
+	assert(early_step > late_step)
 	var tree := ReasoningTree.new()
 	tree.on_agent_start(1)
 	for expected_turn in range(1, 5):
@@ -149,7 +154,7 @@ func turns_map_evenly_across_trunk_test() -> void:
 func late_turn_branches_stay_below_tip_until_max_turns_test() -> void:
 	var mid := ReasoningTree.trunk_growth_for_turn(AgentLoop.MAX_TURNS / 2)
 	var late := ReasoningTree.trunk_growth_for_turn(AgentLoop.MAX_TURNS - 1)
-	assert(mid < float(ReasoningTree.MAX_TRUNK_SEGMENTS) * 0.6)
+	assert(mid < float(ReasoningTree.MAX_TRUNK_SEGMENTS) * 0.65)
 	assert(late < float(ReasoningTree.MAX_TRUNK_SEGMENTS))
 	assert(late > mid)
 	var branch := ReasoningTree.make_branch("mid", "read", 0, mid)
