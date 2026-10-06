@@ -47,6 +47,8 @@ func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 			return CyberCommandDeck.new()
 		VisualType.Type.QUANTUM_CIRCUIT:
 			return QuantumCircuit.new()
+		VisualType.Type.DESKTOP_CAT:
+			return DesktopCat.new()
 	return null
 
 
