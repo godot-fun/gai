@@ -10,8 +10,9 @@ enum Type {
 	REASONING_TREE,
 	TOOL_CONSTELLATION,
 	CONTEXT_MEMORY_RIVER,
+	NEURAL_AURORA,
 }
 
 
 static func is_valid(value: int) -> bool:
-	return value >= Type.NONE and value <= Type.CONTEXT_MEMORY_RIVER
+	return value >= Type.NONE and value <= Type.NEURAL_AURORA

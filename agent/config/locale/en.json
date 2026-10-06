@@ -27,7 +27,8 @@
       "visual_transformer": "Transformer",
       "visual_reasoning_tree": "Reasoning Tree",
       "visual_tool_constellation": "Tool Constellation",
-      "visual_context_memory_river": "Context Memory River"
+      "visual_context_memory_river": "Context Memory River",
+      "visual_neural_aurora": "Neural Aurora"
     },
     "sidebar": {
       "new_session": "+ New Agent",

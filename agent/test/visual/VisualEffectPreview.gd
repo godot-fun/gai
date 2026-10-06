@@ -16,6 +16,7 @@ const EFFECT_SPECS: Array[Dictionary] = [
 	{"type": VisualType.Type.REASONING_TREE, "label": "Reasoning Tree"},
 	{"type": VisualType.Type.TOOL_CONSTELLATION, "label": "Tool Constellation"},
 	{"type": VisualType.Type.CONTEXT_MEMORY_RIVER, "label": "Context Memory River"},
+	{"type": VisualType.Type.NEURAL_AURORA, "label": "Neural Aurora"},
 ]
 
 const TOOL_CATALOG: Array[Dictionary] = [
@@ -346,6 +347,8 @@ func visual_label() -> String:
 			return "Tool Constellation"
 		VisualType.Type.CONTEXT_MEMORY_RIVER:
 			return "Context Memory River"
+		VisualType.Type.NEURAL_AURORA:
+			return "Neural Aurora"
 	return "None"
 
 

@@ -39,6 +39,8 @@ func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 			return ToolConstellation.new()
 		VisualType.Type.CONTEXT_MEMORY_RIVER:
 			return ContextMemoryRiver.new()
+		VisualType.Type.NEURAL_AURORA:
+			return NeuralAurora.new()
 	return null
 
 
