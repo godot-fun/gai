@@ -46,7 +46,11 @@ State falls into three categories:
 2. One-shot envelopes: `output_pulse`, `success_pulse`, and `failure_pulse`. An event sets the value to `1`, after which it decays at a rate measured per second.
 3. Monotonic timelines: `tool_pulse` travels from the center to the edge; `completion` advances from `0` to `1` and never reverses.
 
-`COMPLETE_SECONDS` is both the controller's completion duration and the time returned to `VisualControl`. Keep these values aligned when changing the ending animation speed; otherwise the effect may be hidden before its shader animation finishes.
+`COMPLETE_SECONDS` controls the shader completion duration. `wait_for_agent_end()` waits for that timeline after draining queued tool visuals, so changing the duration must keep the controller and shader composition aligned.
+
+Tool events use a visual queue because real tools may finish in only a few frames. Each call owns at least `MIN_TOOL_PLAY_SECONDS`, allowing its arc head to reach the edge, followed by `TOOL_RESULT_HOLD_SECONDS` for the green return or red crack result. Tool labels remain visible throughout the call and result hold, using the accent color while running and semantic success/error colors for the result. `wait_for_agent_end()` drains this queue before starting completion so the final tool is never cut off.
+
+Failure is deliberately staged rather than switched on as a full-screen mask. `failure_progress` first creates a localized impact at the tool arc endpoint, expands a short shock ring, and then reveals radial cracks from the outer field toward the core over `FAILURE_REVEAL_SECONDS`. Keep failure intensity and reveal progress separate so timing changes do not reintroduce an abrupt full-screen pop.
 
 ## Shader Composition
 

@@ -13,6 +13,7 @@ uniform float tool_pulse = 0.0;
 uniform float tool_angle = 0.0;
 uniform float success_pulse = 0.0;
 uniform float failure_pulse = 0.0;
+uniform float failure_progress = 0.0;
 uniform float direction = 1.0;
 uniform float completion = 0.0;
 uniform float aspect = 1.777;
@@ -79,12 +80,18 @@ void fragment() {
 	float arc_head = exp(-abs(radius - tool_pulse * 0.9) * 55.0);
 	color += vec3(0.72, 0.92, 1.0) * arc * (0.28 + arc_head * 2.6) * smoothstep(0.0, 0.08, tool_pulse);
 
-	// Tool result: success contracts inward; failure reveals several noisy radial cracks.
+	// Tool result: success contracts inward. Failure begins as a local impact at the tool arc
+	// endpoint, then reveals noisy radial cracks from the outer field toward the core.
 	float return_ring = exp(-abs(radius - (0.82 - success_pulse * 0.72)) * 38.0) * success_pulse;
 	color += success_color.rgb * return_ring * 1.25;
 	float crack_shape = abs(sin(angle * 7.0 + noise(vec2(angle * 3.0, floor(radius * 15.0))) * 3.0));
-	float cracks = smoothstep(0.095, 0.0, crack_shape) * smoothstep(0.08, 0.55, radius) * smoothstep(0.76, 0.18, radius);
-	color += error_color.rgb * cracks * failure_pulse * 1.8;
+	float cracks = (1.0 - smoothstep(0.0, 0.095, crack_shape)) * smoothstep(0.08, 0.55, radius) * (1.0 - smoothstep(0.18, 0.76, radius));
+	float fracture_front = mix(0.76, 0.08, smoothstep(0.0, 1.0, failure_progress));
+	float fracture_reveal = smoothstep(fracture_front - 0.035, fracture_front + 0.045, radius);
+	vec2 failure_origin = vec2(cos(tool_angle), sin(tool_angle)) * 0.76;
+	float impact = exp(-length(p - failure_origin) / mix(0.018, 0.065, failure_progress));
+	float shock = exp(-abs(length(p - failure_origin) - failure_progress * 0.18) * 48.0) * (1.0 - failure_progress * 0.55);
+	color += error_color.rgb * failure_pulse * (impact * (1.5 - failure_progress) + shock * 0.8 + cracks * fracture_reveal * smoothstep(0.08, 0.34, failure_progress) * 1.65);
 
 	// Completion owns the final composition: compress the field into a luminous ring, break its
 	// edge into quantized noise "dust", then reach zero alpha before the Control fades out.
