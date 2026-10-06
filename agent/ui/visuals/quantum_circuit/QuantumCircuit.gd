@@ -195,7 +195,8 @@ func _draw() -> void:
 
 
 func draw_background() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Color(VOID, 0.62), true)
+	# Keep the desktop/chat surface optically clear. A full-screen dark wash makes the
+	# content below look blurred even though no blur shader is involved.
 	for x in range(0, int(size.x), 48):
 		draw_line(Vector2(x, 0.0), Vector2(x, size.y), Color(CYAN, 0.035), 1.0)
 	for y in range(0, int(size.y), 48):

@@ -329,7 +329,8 @@ func draw_data_rain(center: Vector2) -> void:
 
 
 func draw_backplane(center: Vector2) -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Color(DECK_VOID, 0.28), true)
+	# The deck is an overlay, so do not tint the entire desktop surface. The previous
+	# translucent black wash visually softened the UI underneath like a blur layer.
 	# Horizon and perspective floor turn the overlay into a room rather than graph paper.
 	var horizon := center.y + minf(size.y * 0.16, 150.0)
 	for ray in range(-12, 13):
