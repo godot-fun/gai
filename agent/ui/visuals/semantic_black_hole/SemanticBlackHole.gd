@@ -29,8 +29,6 @@ var disk_energy: float = 0.0
 var target_disk_energy: float = 0.0
 var reasoning_density: float = 0.0
 var target_reasoning_density: float = 0.0
-var rotation_direction: float = 1.0
-var target_rotation_direction: float = 1.0
 
 ## Event envelopes are normalized. Tool openness holds while a tool runs; all others decay.
 var jet_energy: float = 0.0
@@ -106,8 +104,6 @@ func reset_visual() -> void:
 	target_disk_energy = 0.0
 	reasoning_density = 0.0
 	target_reasoning_density = 0.0
-	rotation_direction = 1.0
-	target_rotation_direction = 1.0
 	jet_energy = 0.0
 	wormhole_open = 0.0
 	target_wormhole_open = 0.0
@@ -147,8 +143,7 @@ func on_agent_end(error_message: String) -> float:
 
 
 func on_turn_start() -> void:
-	# Passing smoothly through zero gives the disk an intentional deceleration and reversal.
-	target_rotation_direction *= -1.0
+	# Deepen the well each turn; the whirlpool always spins the same way and pulls inward.
 	target_gravity = 0.9
 	target_disk_energy = 0.72
 	pass
@@ -218,7 +213,6 @@ func _process(delta: float) -> void:
 	gravity = follow(gravity, target_gravity, delta, 2.4)
 	disk_energy = follow(disk_energy, target_disk_energy, delta, 3.0)
 	reasoning_density = follow(reasoning_density, target_reasoning_density, delta, 3.8)
-	rotation_direction = follow(rotation_direction, target_rotation_direction, delta, 3.2)
 	wormhole_open = follow(wormhole_open, target_wormhole_open, delta, 7.0)
 	jet_energy = move_toward(jet_energy, 0.0, delta * 0.48)
 	advance_success_return(delta)
@@ -328,7 +322,6 @@ func set_shader_parameters() -> void:
 	shader_material.set_shader_parameter("success_return_progress", success_return_progress)
 	shader_material.set_shader_parameter("failure_shock", failure_shock)
 	shader_material.set_shader_parameter("context_density", context_density)
-	shader_material.set_shader_parameter("rotation_direction", rotation_direction)
 	shader_material.set_shader_parameter("completion", completion)
 	shader_material.set_shader_parameter("error_completion", 1.0 if ended_with_error else 0.0)
 	shader_material.set_shader_parameter("aspect", size.x / maxf(size.y, 1.0))

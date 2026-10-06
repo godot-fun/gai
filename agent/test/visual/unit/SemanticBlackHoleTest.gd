@@ -27,6 +27,21 @@ static func semantic_black_hole_follower_test() -> void:
 	pass
 
 
+static func turn_start_deepens_whirlpool_without_reversal_test() -> void:
+	var effect := SemanticBlackHole.new()
+	effect.on_agent_start(1)
+	var gravity_before := effect.target_gravity
+	var disk_before := effect.target_disk_energy
+	effect.on_turn_start()
+	assert(effect.target_gravity > gravity_before)
+	assert(effect.target_disk_energy > disk_before)
+	effect.on_turn_start()
+	assert(effect.target_gravity >= 0.9)
+	assert(effect.target_disk_energy >= 0.72)
+	effect.free()
+	pass
+
+
 static func success_return_reaches_horizon_before_fading_test() -> void:
 	var effect := SemanticBlackHole.new()
 	effect.success_return = 1.0

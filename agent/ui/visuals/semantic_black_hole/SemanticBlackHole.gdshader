@@ -15,7 +15,6 @@ uniform float success_return = 0.0;
 uniform float success_return_progress = 0.0;
 uniform float failure_shock = 0.0;
 uniform float context_density = 0.3;
-uniform float rotation_direction = 1.0;
 uniform float completion = 0.0;
 uniform float error_completion = 0.0;
 uniform float aspect = 1.777;
@@ -49,12 +48,16 @@ void fragment() {
 	p.x *= aspect;
 	float radius = length(p);
 	float angle = atan(p.y, p.x);
-	float t = TIME * rotation_direction;
+	float t = TIME;
+	// Wrap angle to a continuous sector id so floor(angle) does not crack along atan’s -X branch cut.
+	float tau = 6.28318530718;
+	float sector_count = 38.0 * tau;
 
-	// Semantic dust follows logarithmic spiral bands. Faster angular motion near the center
-	// suggests differential orbital speed without maintaining real particles on the CPU.
+	// Same ion look as the original dust field; only the advection changes so cells orbit
+	// inward in one direction instead of sitting on fixed angular sectors.
 	float spiral_phase = angle * 7.0 + log(max(radius, 0.025)) * 19.0 - t * (2.0 + 1.8 / max(radius * 8.0, 0.8));
-	float dust_cells = noise(vec2(floor(angle * 38.0), floor(radius * 92.0 - t * 8.0)));
+	float sector = floor(fract(angle / tau + 0.5 - t * 14.0 / sector_count) * sector_count);
+	float dust_cells = noise(vec2(sector, floor(radius * 92.0 + t * 8.0)));
 	float dust = smoothstep(0.82 - context_density * 0.22, 0.98, dust_cells) * smoothstep(0.78, 0.11, radius);
 	dust *= 0.3 + 0.7 * pow(abs(sin(spiral_phase)), 9.0);
 	vec3 color = accent_color.rgb * dust * (0.24 + gravity * 0.72);
@@ -62,25 +65,33 @@ void fragment() {
 	// The disk is an aspect-correct ellipse. Splitting at local y lets the back half be drawn
 	// dimly before the horizon and the front half brightly after it, creating a 3D silhouette.
 	float disk_radius = length(vec2(p.x, p.y / 0.27));
-	float disk_noise = noise(vec2(angle * 12.0 - t * (2.4 + 1.2 / max(disk_radius, 0.2)), disk_radius * 36.0));
+	float disk_spin = t * (2.4 + 1.2 / max(disk_radius, 0.2));
+	// Cos/sin basis stays continuous around the circle; raw angle noise seams on the -X axis.
+	vec2 disk_dir = vec2(cos(angle - disk_spin), sin(angle - disk_spin));
+	float disk_noise = noise(disk_dir * 12.0 + vec2(disk_radius * 36.0, disk_radius * 8.0));
 	float disk_band = ring(disk_radius, 0.33, 0.035 + disk_noise * 0.022) * smoothstep(0.05, 0.5, disk_energy);
 	float hot_inner = ring(disk_radius, 0.245, 0.018) * disk_energy;
-	float back_mask = smoothstep(0.025, -0.045, p.y);
+	// Wider, overlapping masks so the equator does not read as a hard horizontal cut.
+	float back_mask = smoothstep(0.06, -0.08, p.y);
 	vec3 disk_color = mix(accent_color.rgb, vec3(1.0, 0.68, 0.28), 0.42 + disk_noise * 0.28);
 	color += disk_color * (disk_band + hot_inner * 1.4) * back_mask * 0.48;
 
 	// The photon ring approximates gravitational lensing without sampling the actual chat UI.
 	float horizon_radius = mix(0.015, 0.112, smoothstep(0.0, 0.75, gravity));
 	float lens = ring(radius, horizon_radius + 0.026, 0.006 + reasoning_density * 0.005);
-	float upper_lens = ring(length(vec2(p.x, (p.y + 0.105) / 0.42)), 0.27, 0.013) * smoothstep(-0.02, 0.08, p.y);
+	float upper_lens = ring(length(vec2(p.x, (p.y + 0.105) / 0.42)), 0.27, 0.013) * smoothstep(-0.06, 0.1, p.y);
 	color += disk_color * upper_lens * disk_energy * 0.65;
-	color += mix(accent_color.rgb, vec3(1.0), 0.68) * lens * (0.55 + disk_energy * 1.15);
+	vec3 lens_color = mix(accent_color.rgb, vec3(1.0), 0.68);
+	color += lens_color * lens * (0.55 + disk_energy * 1.15);
 
 	// The event horizon remains nearly silent and opaque while activity accumulates around it.
 	float horizon = 1.0 - smoothstep(horizon_radius - 0.006, horizon_radius + 0.005, radius);
 	color = mix(color, vec3(0.0), horizon * 0.98);
-	float front_mask = smoothstep(-0.035, 0.035, p.y);
-	color += disk_color * (disk_band + hot_inner * 1.55) * front_mask * 0.92;
+	float front_mask = smoothstep(-0.08, 0.06, p.y);
+	// Keep the photon ring from being cracked by the front disk pass.
+	float disk_over_lens = 1.0 - lens * 0.85;
+	color += disk_color * (disk_band + hot_inner * 1.55) * front_mask * 0.92 * disk_over_lens;
+	color += lens_color * lens * (0.22 + disk_energy * 0.4);
 
 	// Reasoning broadens a subtle interference halo around the photon ring.
 	float reasoning_halo = ring(radius, horizon_radius + 0.055 + sin(TIME * 3.0) * 0.006, 0.012);
