@@ -50,7 +50,7 @@ State falls into three categories:
 
 Tool events use a visual queue because real tools may finish in only a few frames. Each call owns at least `MIN_TOOL_PLAY_SECONDS`, allowing its arc head to reach the edge, followed by `TOOL_RESULT_HOLD_SECONDS` for the green return or red crack result. Tool labels remain visible throughout the call and result hold, using the accent color while running and semantic success/error colors for the result. `wait_for_agent_end()` drains this queue before starting completion so the final tool is never cut off.
 
-Failure is deliberately staged rather than switched on as a full-screen mask. `failure_progress` first creates a localized impact at the tool arc endpoint, expands a short shock ring, and then reveals radial cracks from the outer field toward the core over `FAILURE_REVEAL_SECONDS`. Keep failure intensity and reveal progress separate so timing changes do not reintroduce an abrupt full-screen pop.
+Failure is a one-way explosion rather than a persistent full-screen mask. `failure_progress` triggers a brief compressed core flash and launches many narrow streak segments with bright heads and fading tails. Their wavefront travels beyond the viewport over `FAILURE_REVEAL_SECONDS`; pixels behind each tail immediately return to the aurora, so red lines never remain parked on screen. Per-ray variation changes width, brightness, and tail length to create an irregular burst. Keep failure intensity and travel progress separate so label hold time cannot freeze the explosion.
 
 ## Shader Composition
 

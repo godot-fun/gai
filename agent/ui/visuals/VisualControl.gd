@@ -43,6 +43,8 @@ func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 			return NeuralAurora.new()
 		VisualType.Type.SEMANTIC_BLACK_HOLE:
 			return SemanticBlackHole.new()
+		VisualType.Type.CYBER_COMMAND_DECK:
+			return CyberCommandDeck.new()
 	return null
 
 

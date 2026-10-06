@@ -29,7 +29,8 @@
       "visual_tool_constellation": "Tool Constellation 工具星图",
       "visual_context_memory_river": "Context Memory River 上下文记忆河",
       "visual_neural_aurora": "Neural Aurora 神经极光",
-      "visual_semantic_black_hole": "Semantic Black Hole 语义黑洞"
+      "visual_semantic_black_hole": "Semantic Black Hole 语义黑洞",
+      "visual_cyber_command_deck": "Cyber Command Deck 赛博指挥舱"
     },
     "sidebar": {
       "new_session": "+ 新建智能体",
