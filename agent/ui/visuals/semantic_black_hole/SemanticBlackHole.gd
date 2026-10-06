@@ -11,9 +11,15 @@ const SHADER_PATH := "res://agent/ui/visuals/semantic_black_hole/SemanticBlackHo
 const COMPLETE_SECONDS := 2.3
 const SUCCESS_RETURN_SECONDS := 1.15
 const SUCCESS_ABSORB_SECONDS := 0.22
+const COMPLETE_LABEL_SECONDS := 0.55
+const FAILED_LABEL_SECONDS := 1.0
+
+enum ToolBadgeState { CONNECTING, RETURNING, COMPLETE, FAILED }
 
 var field: ColorRect
-var tool_label: Label
+var tool_badge: PanelContainer
+var tool_name_label: Label
+var tool_status_label: Label
 var shader_material: ShaderMaterial
 var fade_tween: Tween
 
@@ -42,6 +48,10 @@ var context_density: float = 0.0
 var completion: float = 0.0
 var completing: bool = false
 var ended_with_error: bool = false
+var tool_badge_state: ToolBadgeState = ToolBadgeState.CONNECTING
+var tool_badge_alpha: float = 0.0
+var target_tool_badge_alpha: float = 0.0
+var tool_badge_hold_seconds: float = 0.0
 
 
 func _ready() -> void:
@@ -53,12 +63,20 @@ func _ready() -> void:
 	shader_material = ShaderMaterial.new()
 	field.material = shader_material
 	add_child(field)
-	tool_label = Label.new()
-	tool_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tool_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	tool_label.size = Vector2(280.0, ControlSize.md)
-	tool_label.modulate.a = 0.0
-	add_child(tool_label)
+	tool_badge = PanelContainer.new()
+	tool_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tool_badge.custom_minimum_size = Vector2(220.0, 0.0)
+	tool_badge.modulate.a = 0.0
+	var labels := VBoxContainer.new()
+	labels.add_theme_constant_override("separation", Margin.ma_1)
+	tool_name_label = Label.new()
+	tool_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	tool_status_label = Label.new()
+	tool_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	labels.add_child(tool_name_label)
+	labels.add_child(tool_status_label)
+	tool_badge.add_child(labels)
+	add_child(tool_badge)
 	visible = false
 	# Loading asynchronously prevents a first-use hitch. State can safely accumulate before the
 	# shader arrives because every current value is uploaded from one place on each visible frame.
@@ -117,8 +135,12 @@ func reset_visual() -> void:
 	completion = 0.0
 	completing = false
 	ended_with_error = false
-	if tool_label != null:
-		tool_label.modulate.a = 0.0
+	tool_badge_state = ToolBadgeState.CONNECTING
+	tool_badge_alpha = 0.0
+	target_tool_badge_alpha = 0.0
+	tool_badge_hold_seconds = 0.0
+	if tool_badge != null:
+		tool_badge.modulate.a = 0.0
 	pass
 
 
@@ -136,7 +158,7 @@ func on_agent_end(error_message: String) -> float:
 		failure_shock = 1.0
 	completing = true
 	target_wormhole_open = 0.0
-	tool_label.modulate.a = 0.0
+	target_tool_badge_alpha = 0.0
 	return COMPLETE_SECONDS
 
 
@@ -179,8 +201,10 @@ func on_message_complete(_usage: OpenAiUsage) -> void:
 func on_tool_execution_start(_tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	wormhole_angle = angle_for_tool(tool_name)
 	target_wormhole_open = 1.0
-	tool_label.text = public_tool_name(tool_name)
-	tool_label.modulate.a = 1.0
+	tool_name_label.text = public_tool_name(tool_name)
+	set_tool_badge_state(ToolBadgeState.CONNECTING)
+	target_tool_badge_alpha = 1.0
+	tool_badge_hold_seconds = 0.0
 	target_disk_energy = 1.0
 	pass
 
@@ -189,11 +213,13 @@ func on_tool_execution_end(_tool_call_id: String, _tool_name: String, result: Ag
 	target_wormhole_open = 0.0
 	if result.is_error:
 		failure_shock = 1.0
+		set_tool_badge_state(ToolBadgeState.FAILED)
+		tool_badge_hold_seconds = FAILED_LABEL_SECONDS
 	else:
 		success_return = 1.0
 		success_return_progress = 0.0
 		success_absorb_time = 0.0
-	tool_label.modulate.a = 0.0
+		set_tool_badge_state(ToolBadgeState.RETURNING)
 	pass
 
 
@@ -214,10 +240,22 @@ func _process(delta: float) -> void:
 	advance_success_return(delta)
 	failure_shock = move_toward(failure_shock, 0.0, delta * 1.45)
 	context_density = move_toward(context_density, 0.28, delta * 0.04)
+	advance_tool_badge(delta)
 	if completing:
 		completion = minf(completion + delta / COMPLETE_SECONDS, 1.0)
 	layout_tool_label()
 	set_shader_parameters()
+	pass
+
+
+func advance_tool_badge(delta: float) -> void:
+	if tool_badge_hold_seconds > 0.0:
+		tool_badge_hold_seconds = maxf(0.0, tool_badge_hold_seconds - delta)
+		if tool_badge_hold_seconds <= 0.0 and tool_badge_state in [ToolBadgeState.COMPLETE, ToolBadgeState.FAILED]:
+			target_tool_badge_alpha = 0.0
+	var fade_speed := 9.0 if target_tool_badge_alpha > tool_badge_alpha else 6.0
+	tool_badge_alpha = follow(tool_badge_alpha, target_tool_badge_alpha, delta, fade_speed)
+	tool_badge.modulate.a = tool_badge_alpha
 	pass
 
 
@@ -231,6 +269,9 @@ func advance_success_return(delta: float) -> void:
 	success_absorb_time += delta
 	if success_absorb_time >= SUCCESS_ABSORB_SECONDS:
 		success_return = move_toward(success_return, 0.0, delta * 6.0)
+		if success_return <= 0.0 and tool_badge_state == ToolBadgeState.RETURNING:
+			set_tool_badge_state(ToolBadgeState.COMPLETE)
+			tool_badge_hold_seconds = COMPLETE_LABEL_SECONDS
 	pass
 
 
@@ -240,10 +281,47 @@ func apply_theme() -> void:
 	shader_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
 	shader_material.set_shader_parameter("success_color", ColorBase.success)
 	shader_material.set_shader_parameter("error_color", ColorBase.error)
-	tool_label.add_theme_font_override("font", Fonts.semibold())
-	tool_label.add_theme_font_size_override("font_size", Typography.label_large_size)
-	tool_label.add_theme_color_override("font_color", ColorBase.primary_text)
+	tool_name_label.add_theme_font_override("font", Fonts.semibold())
+	tool_name_label.add_theme_font_size_override("font_size", Typography.label_large_size)
+	tool_status_label.add_theme_font_override("font", Fonts.medium())
+	tool_status_label.add_theme_font_size_override("font_size", Typography.label_small_size)
+	apply_tool_badge_style()
 	pass
+
+
+func set_tool_badge_state(state: ToolBadgeState) -> void:
+	tool_badge_state = state
+	match state:
+		ToolBadgeState.CONNECTING:
+			tool_status_label.text = "CONNECTING"
+		ToolBadgeState.RETURNING:
+			tool_status_label.text = "RETURNING"
+		ToolBadgeState.COMPLETE:
+			tool_status_label.text = "COMPLETE"
+		ToolBadgeState.FAILED:
+			tool_status_label.text = "FAILED"
+	apply_tool_badge_style()
+	pass
+
+
+func apply_tool_badge_style() -> void:
+	if tool_badge == null:
+		return
+	var state_color := tool_badge_color()
+	var panel_style := StyleBoxHelper.create_style_box_flat(Color(ColorBase.deep_surface, 0.82), ControlSize.radius_md, Margin.ma_3, Margin.ma_2, Color(state_color, 0.52), ControlSize.border_xs)
+	tool_badge.add_theme_stylebox_override("panel", panel_style)
+	tool_name_label.add_theme_color_override("font_color", state_color)
+	tool_status_label.add_theme_color_override("font_color", Color(state_color, 0.78))
+	pass
+
+
+func tool_badge_color() -> Color:
+	match tool_badge_state:
+		ToolBadgeState.RETURNING, ToolBadgeState.COMPLETE:
+			return ColorBase.success
+		ToolBadgeState.FAILED:
+			return ColorBase.error
+	return ThemeColor.accent_theme_color()
 
 
 func layout_tool_label() -> void:
@@ -251,7 +329,7 @@ func layout_tool_label() -> void:
 	var radius := minf(size.x, size.y) * 0.36
 	var center := size * 0.5
 	var anchor := center + Vector2.from_angle(wormhole_angle) * radius
-	tool_label.position = Vector2(clampf(anchor.x - tool_label.size.x * 0.5, Margin.ma_4, size.x - tool_label.size.x - Margin.ma_4), clampf(anchor.y + Margin.ma_6, Margin.ma_4, size.y - tool_label.size.y - Margin.ma_4))
+	tool_badge.position = Vector2(clampf(anchor.x - tool_badge.size.x * 0.5, Margin.ma_4, size.x - tool_badge.size.x - Margin.ma_4), clampf(anchor.y + Margin.ma_6, Margin.ma_4, size.y - tool_badge.size.y - Margin.ma_4))
 	pass
 
 

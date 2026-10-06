@@ -53,6 +53,8 @@ Successful tool return keeps travel progress separate from brightness. The packe
 
 Tool placement comes from a stable hash of the tool name. This creates spatial memory across runs; do not replace it with random placement unless the design language changes deliberately.
 
+The tool annotation is a themed two-line badge rather than bare text. Its lifecycle follows the visual story instead of raw tool latency: `CONNECTING` uses the active accent color, `RETURNING` and `COMPLETE` use the semantic success color, and `FAILED` uses the semantic error color. A successful badge remains visible until the return packet reaches the horizon; a failure badge has a minimum one-second hold.
+
 ## Performance
 
 - Keep the effect to one full-screen shader pass.
