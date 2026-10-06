@@ -1,25 +1,43 @@
 class_name NeuralAurora
 extends VisualEffect
 
-## Full-screen shader-driven aurora. CPU state only follows agent lifecycle events.
+## Full-screen shader-driven aurora that visualizes an agent as a digital sky waking up.
+##
+## Design boundary: this controller translates discrete [AgentEvents] into a small set of
+## continuous shader parameters. Keep the flowing field, waves, arcs, cracks, and completion
+## particles in the shader; do not replace them with large CPU-side node or particle graphs.
+## See `DESIGN.md` beside this file for the event vocabulary and extension guidelines.
 
-const SHADER := preload("res://agent/ui/visuals/neural_aurora/NeuralAurora.gdshader")
+const SHADER_PATH := "res://agent/ui/visuals/neural_aurora/NeuralAurora.gdshader"
+## Must match the completion timeline used by the shader. [VisualControl] keeps this effect
+## visible for the returned duration before starting its ordinary fade-out.
 const COMPLETE_SECONDS := 1.35
 
 var field: ColorRect
 var tool_label: Label
 var shader_material: ShaderMaterial
 var elapsed: float = 0.0
+
+## Long-lived field controls use a current/target pair. Events change targets abruptly while
+## `_process()` applies exponential smoothing, preventing visible jumps between agent phases.
 var energy: float = 0.0
 var target_energy: float = 0.0
 var detail: float = 0.0
 var target_detail: float = 0.0
+
+## One-shot controls are normalized envelopes. They begin at 1 (or just above 0 for the
+## travelling tool head), then `_process()` advances or decays them back to rest.
 var output_pulse: float = 0.0
 var tool_pulse: float = 0.0
 var success_pulse: float = 0.0
 var failure_pulse: float = 0.0
+
+## A turn reverses the signed time direction. Interpolating the sign makes the fluid slow,
+## stop, and reverse instead of snapping to the opposite direction.
 var direction: float = 1.0
 var target_direction: float = 1.0
+
+## Completion is monotonic: aurora -> bright ring -> sparse dust -> transparent.
 var completion: float = 0.0
 var completing: bool = false
 var fade_tween: Tween
@@ -32,9 +50,10 @@ func _ready() -> void:
 	field.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	field.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	shader_material = ShaderMaterial.new()
-	shader_material.shader = SHADER
 	field.material = shader_material
 	add_child(field)
+	# Text remains a normal Label so tool names stay crisp and accessible at every resolution;
+	# all atmospheric imagery is still rendered by the single full-screen shader draw call.
 	tool_label = Label.new()
 	tool_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tool_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -43,8 +62,14 @@ func _ready() -> void:
 	tool_label.size = Vector2(360.0, ControlSize.md)
 	tool_label.modulate.a = 0.0
 	add_child(tool_label)
-	apply_theme()
 	visible = false
+	# Load the GPU program without blocking the UI thread. Lifecycle events may arrive while the
+	# resource is loading; their CPU state is retained and sent on the next `_process()` frame.
+	var loaded_shader: Shader = await ResourceHelper.async_load(SHADER_PATH)
+	if loaded_shader == null or not is_instance_valid(shader_material):
+		return
+	shader_material.shader = loaded_shader
+	apply_theme()
 	pass
 
 
@@ -94,12 +119,15 @@ func reset_visual() -> void:
 
 
 func on_agent_start(_session_id: int) -> void:
+	# Wake the center first. Low detail lets the curtains unfold before reasoning begins.
 	target_energy = 0.72
 	target_detail = 0.18
 	pass
 
 
 func on_agent_end(error_message: String) -> float:
+	# Failure gets one final crack flash, but both outcomes share the same closing ritual so
+	# completion always reads clearly and VisualControl has one deterministic wait duration.
 	if StringUtils.is_not_blank(error_message):
 		failure_pulse = 1.0
 	completing = true
@@ -108,6 +136,7 @@ func on_agent_end(error_message: String) -> float:
 
 
 func on_turn_start() -> void:
+	# Direction reversal is the visual punctuation between independent model turns.
 	target_direction *= -1.0
 	target_energy = 0.82
 	pass
@@ -119,6 +148,8 @@ func on_turn_end() -> void:
 
 
 func on_message_update(_chunk: String, stream_kind: String) -> void:
+	# Reasoning energizes the persistent fine structure. Content uses a short warm wave so a
+	# user can distinguish "thinking" from "speaking" without reading additional UI.
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
 		target_energy = 1.0
 		target_detail = 1.0
@@ -134,6 +165,7 @@ func on_message_complete(_usage: OpenAiUsage) -> void:
 
 
 func on_tool_execution_start(_tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
+	# A stable name hash gives each tool a repeatable direction without storing per-tool state.
 	tool_pulse = 0.01
 	shader_material.set_shader_parameter("tool_angle", angle_for_text(tool_name))
 	tool_label.text = public_tool_name(tool_name)
@@ -161,6 +193,7 @@ func _process(delta: float) -> void:
 	if not visible:
 		return
 	elapsed += delta
+	# Exponential followers are frame-rate independent and preserve the same feel at 30/60/120 Hz.
 	energy = lerpf(energy, target_energy, 1.0 - exp(-delta * 2.5))
 	detail = lerpf(detail, target_detail, 1.0 - exp(-delta * 3.5))
 	direction = lerpf(direction, target_direction, 1.0 - exp(-delta * 4.0))
@@ -188,6 +221,8 @@ func apply_theme() -> void:
 
 
 func set_shader_parameters() -> void:
+	# Keep this as the only CPU -> GPU synchronization point. Adding a new visual channel should
+	# normally mean adding one controller envelope and one uniform, not another render node.
 	shader_material.set_shader_parameter("energy", energy)
 	shader_material.set_shader_parameter("detail", detail)
 	shader_material.set_shader_parameter("output_pulse", output_pulse)
