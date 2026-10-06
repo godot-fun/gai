@@ -14,7 +14,7 @@ const SHADER_PATH := "res://agent/ui/visuals/neural_aurora/NeuralAurora.gdshader
 const COMPLETE_SECONDS := 1.35
 const MIN_TOOL_PLAY_SECONDS := 1.05
 const TOOL_RESULT_HOLD_SECONDS := 0.75
-const FAILURE_REVEAL_SECONDS := 0.58
+const FAILURE_REVEAL_SECONDS := 0.78
 
 var field: ColorRect
 var tool_label: Label
@@ -35,7 +35,7 @@ var tool_pulse: float = 0.0
 var tool_angle: float = 0.0
 var success_pulse: float = 0.0
 var failure_pulse: float = 0.0
-## Failure grows from the tool endpoint toward the core instead of revealing all cracks at once.
+## Failure drives a one-way explosion: streaks launch at the core and leave the viewport.
 var failure_progress: float = 0.0
 
 ## Tool events are often faster than their animation. Calls and results are queued so every arc

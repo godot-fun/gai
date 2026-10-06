@@ -80,18 +80,26 @@ void fragment() {
 	float arc_head = exp(-abs(radius - tool_pulse * 0.9) * 55.0);
 	color += vec3(0.72, 0.92, 1.0) * arc * (0.28 + arc_head * 2.6) * smoothstep(0.0, 0.08, tool_pulse);
 
-	// Tool result: success contracts inward. Failure begins as a local impact at the tool arc
-	// endpoint, then reveals noisy radial cracks from the outer field toward the core.
+	// Tool result: success contracts inward. Failure is a one-way explosion: moving streak
+	// segments launch at the core, carry their own fading tails, and continue beyond the viewport.
 	float return_ring = exp(-abs(radius - (0.82 - success_pulse * 0.72)) * 38.0) * success_pulse;
 	color += success_color.rgb * return_ring * 1.25;
-	float crack_shape = abs(sin(angle * 7.0 + noise(vec2(angle * 3.0, floor(radius * 15.0))) * 3.0));
-	float cracks = (1.0 - smoothstep(0.0, 0.095, crack_shape)) * smoothstep(0.08, 0.55, radius) * (1.0 - smoothstep(0.18, 0.76, radius));
-	float fracture_front = mix(0.76, 0.08, smoothstep(0.0, 1.0, failure_progress));
-	float fracture_reveal = smoothstep(fracture_front - 0.035, fracture_front + 0.045, radius);
-	vec2 failure_origin = vec2(cos(tool_angle), sin(tool_angle)) * 0.76;
-	float impact = exp(-length(p - failure_origin) / mix(0.018, 0.065, failure_progress));
-	float shock = exp(-abs(length(p - failure_origin) - failure_progress * 0.18) * 48.0) * (1.0 - failure_progress * 0.55);
-	color += error_color.rgb * failure_pulse * (impact * (1.5 - failure_progress) + shock * 0.8 + cracks * fracture_reveal * smoothstep(0.08, 0.34, failure_progress) * 1.65);
+	float ray_index = floor((angle + PI) / TAU * 38.0);
+	float ray_seed = hash21(vec2(ray_index, 17.0));
+	float ray_shape = abs(sin(angle * (17.0 + floor(ray_seed * 5.0)) + ray_seed * 8.0));
+	float ray_body = 1.0 - smoothstep(0.0, mix(0.018, 0.034, ray_seed), ray_shape);
+	float ray_core = 1.0 - smoothstep(0.0, mix(0.004, 0.009, ray_seed), ray_shape);
+	float ray_brightness = mix(0.38, 1.0, ray_seed);
+	// A fast ease-out launch reads as an explosion; 1.45 carries every ray beyond the short edge.
+	float burst_front = mix(0.015, 1.45, pow(failure_progress, 0.58));
+	float tail_length = mix(0.18, 0.42, ray_seed);
+	float tail_start = burst_front - tail_length;
+	float moving_tail = smoothstep(tail_start, tail_start + 0.08, radius) * (1.0 - smoothstep(burst_front - 0.025, burst_front + 0.035, radius));
+	float hot_head = exp(-abs(radius - burst_front) * mix(55.0, 90.0, ray_seed));
+	float rays = (ray_body * 0.48 + ray_core * 1.05) * ray_brightness;
+	float core_flash = exp(-radius / 0.055) * (1.0 - smoothstep(0.0, 0.16, failure_progress));
+	float shock = exp(-abs(radius - burst_front * 0.62) * 48.0) * (1.0 - smoothstep(0.12, 0.82, failure_progress));
+	color += error_color.rgb * failure_pulse * (core_flash * 2.0 + shock * 0.62 + rays * moving_tail * 1.5 + rays * hot_head * 1.4);
 
 	// Completion owns the final composition: compress the field into a luminous ring, break its
 	// edge into quantized noise "dust", then reach zero alpha before the Control fades out.
