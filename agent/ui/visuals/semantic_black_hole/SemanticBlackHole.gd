@@ -1,0 +1,286 @@
+class_name SemanticBlackHole
+extends VisualEffect
+
+## Converts agent lifecycle events into a gravitational information field.
+##
+## The controller owns only smooth scalar envelopes, tool direction, and readable text. The
+## full-screen shader renders the horizon, accretion disk, semantic dust, lensing, jets,
+## wormhole, failure disturbance, and final evaporation. See DESIGN.md for the visual contract.
+
+const SHADER_PATH := "res://agent/ui/visuals/semantic_black_hole/SemanticBlackHole.gdshader"
+const COMPLETE_SECONDS := 2.3
+const SUCCESS_RETURN_SECONDS := 1.15
+const SUCCESS_ABSORB_SECONDS := 0.22
+
+var field: ColorRect
+var tool_label: Label
+var shader_material: ShaderMaterial
+var fade_tween: Tween
+
+## Persistent values use exponential followers so event boundaries never produce hard jumps.
+var gravity: float = 0.0
+var target_gravity: float = 0.0
+var disk_energy: float = 0.0
+var target_disk_energy: float = 0.0
+var reasoning_density: float = 0.0
+var target_reasoning_density: float = 0.0
+var rotation_direction: float = 1.0
+var target_rotation_direction: float = 1.0
+
+## Event envelopes are normalized. Tool openness holds while a tool runs; all others decay.
+var jet_energy: float = 0.0
+var wormhole_open: float = 0.0
+var target_wormhole_open: float = 0.0
+var wormhole_angle: float = -0.6
+## Success uses separate travel and brightness values. Coupling them would fade the packet as it
+## approaches the horizon, making it appear to vanish before reaching the black hole.
+var success_return: float = 0.0
+var success_return_progress: float = 0.0
+var success_absorb_time: float = 0.0
+var failure_shock: float = 0.0
+var context_density: float = 0.0
+var completion: float = 0.0
+var completing: bool = false
+var ended_with_error: bool = false
+
+
+func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	set_anchors_preset(Control.PRESET_FULL_RECT)
+	field = ColorRect.new()
+	field.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	field.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shader_material = ShaderMaterial.new()
+	field.material = shader_material
+	add_child(field)
+	tool_label = Label.new()
+	tool_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tool_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	tool_label.size = Vector2(280.0, ControlSize.md)
+	tool_label.modulate.a = 0.0
+	add_child(tool_label)
+	visible = false
+	# Loading asynchronously prevents a first-use hitch. State can safely accumulate before the
+	# shader arrives because every current value is uploaded from one place on each visible frame.
+	var loaded_shader: Shader = await ResourceHelper.async_load(SHADER_PATH)
+	if loaded_shader == null or not is_instance_valid(shader_material):
+		return
+	shader_material.shader = loaded_shader
+	apply_theme()
+	pass
+
+
+func get_visual_type() -> VisualType.Type:
+	return VisualType.Type.SEMANTIC_BLACK_HOLE
+
+
+func set_visual_visible(show: bool, animated: bool) -> void:
+	if fade_tween != null and fade_tween.is_valid():
+		fade_tween.kill()
+	if show:
+		visible = true
+		modulate.a = 0.0 if animated else 1.0
+		if animated:
+			fade_tween = create_tween()
+			fade_tween.tween_property(self, "modulate:a", 1.0, 0.45)
+		return
+	if not animated:
+		visible = false
+		modulate.a = 1.0
+		return
+	fade_tween = create_tween()
+	fade_tween.tween_property(self, "modulate:a", 0.0, 0.45)
+	fade_tween.tween_callback(func() -> void:
+		visible = false
+		modulate.a = 1.0
+	)
+	pass
+
+
+func reset_visual() -> void:
+	gravity = 0.0
+	target_gravity = 0.0
+	disk_energy = 0.0
+	target_disk_energy = 0.0
+	reasoning_density = 0.0
+	target_reasoning_density = 0.0
+	rotation_direction = 1.0
+	target_rotation_direction = 1.0
+	jet_energy = 0.0
+	wormhole_open = 0.0
+	target_wormhole_open = 0.0
+	success_return = 0.0
+	success_return_progress = 0.0
+	success_absorb_time = 0.0
+	failure_shock = 0.0
+	context_density = 0.0
+	completion = 0.0
+	completing = false
+	ended_with_error = false
+	if tool_label != null:
+		tool_label.modulate.a = 0.0
+	pass
+
+
+func on_agent_start(_session_id: int) -> void:
+	# Establish the gravity well before making the disk energetic.
+	target_gravity = 0.78
+	target_disk_energy = 0.52
+	context_density = 0.35
+	pass
+
+
+func on_agent_end(error_message: String) -> float:
+	ended_with_error = StringUtils.is_not_blank(error_message)
+	if ended_with_error:
+		failure_shock = 1.0
+	completing = true
+	target_wormhole_open = 0.0
+	tool_label.modulate.a = 0.0
+	return COMPLETE_SECONDS
+
+
+func on_turn_start() -> void:
+	# Passing smoothly through zero gives the disk an intentional deceleration and reversal.
+	target_rotation_direction *= -1.0
+	target_gravity = 0.9
+	target_disk_energy = 0.72
+	pass
+
+
+func on_turn_end() -> void:
+	target_reasoning_density = 0.24
+	pass
+
+
+func on_chat_entry_add(entry: ChatEntry) -> void:
+	# Text length affects density sublinearly so very large contexts cannot saturate the screen.
+	context_density = clampf(context_density + sqrt(float(entry.body.length())) / 80.0, 0.0, 1.0)
+	pass
+
+
+func on_message_update(_chunk: String, stream_kind: String) -> void:
+	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
+		target_reasoning_density = 1.0
+		target_disk_energy = 1.0
+		target_gravity = 1.0
+	else:
+		# Repeated chunks sustain the jet; the envelope decays naturally after streaming stops.
+		jet_energy = 1.0
+		target_disk_energy = maxf(target_disk_energy, 0.78)
+	pass
+
+
+func on_message_complete(_usage: OpenAiUsage) -> void:
+	target_reasoning_density = 0.2
+	pass
+
+
+func on_tool_execution_start(_tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
+	wormhole_angle = angle_for_tool(tool_name)
+	target_wormhole_open = 1.0
+	tool_label.text = public_tool_name(tool_name)
+	tool_label.modulate.a = 1.0
+	target_disk_energy = 1.0
+	pass
+
+
+func on_tool_execution_end(_tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
+	target_wormhole_open = 0.0
+	if result.is_error:
+		failure_shock = 1.0
+	else:
+		success_return = 1.0
+		success_return_progress = 0.0
+		success_absorb_time = 0.0
+	tool_label.modulate.a = 0.0
+	pass
+
+
+func on_theme_changed() -> void:
+	apply_theme()
+	pass
+
+
+func _process(delta: float) -> void:
+	if not visible:
+		return
+	gravity = follow(gravity, target_gravity, delta, 2.4)
+	disk_energy = follow(disk_energy, target_disk_energy, delta, 3.0)
+	reasoning_density = follow(reasoning_density, target_reasoning_density, delta, 3.8)
+	rotation_direction = follow(rotation_direction, target_rotation_direction, delta, 3.2)
+	wormhole_open = follow(wormhole_open, target_wormhole_open, delta, 7.0)
+	jet_energy = move_toward(jet_energy, 0.0, delta * 0.48)
+	advance_success_return(delta)
+	failure_shock = move_toward(failure_shock, 0.0, delta * 1.45)
+	context_density = move_toward(context_density, 0.28, delta * 0.04)
+	if completing:
+		completion = minf(completion + delta / COMPLETE_SECONDS, 1.0)
+	layout_tool_label()
+	set_shader_parameters()
+	pass
+
+
+func advance_success_return(delta: float) -> void:
+	if success_return <= 0.0:
+		return
+	if success_return_progress < 1.0:
+		success_return_progress = minf(success_return_progress + delta / SUCCESS_RETURN_SECONDS, 1.0)
+		return
+	# Hold a bright packet on the photon ring briefly so arrival reads as absorption, then fade.
+	success_absorb_time += delta
+	if success_absorb_time >= SUCCESS_ABSORB_SECONDS:
+		success_return = move_toward(success_return, 0.0, delta * 6.0)
+	pass
+
+
+func apply_theme() -> void:
+	if shader_material == null:
+		return
+	shader_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
+	shader_material.set_shader_parameter("success_color", ColorBase.success)
+	shader_material.set_shader_parameter("error_color", ColorBase.error)
+	tool_label.add_theme_font_override("font", Fonts.semibold())
+	tool_label.add_theme_font_size_override("font_size", Typography.label_large_size)
+	tool_label.add_theme_color_override("font_color", ColorBase.primary_text)
+	pass
+
+
+func layout_tool_label() -> void:
+	# Label position follows the wormhole but remains clamped inside the viewport.
+	var radius := minf(size.x, size.y) * 0.36
+	var center := size * 0.5
+	var anchor := center + Vector2.from_angle(wormhole_angle) * radius
+	tool_label.position = Vector2(clampf(anchor.x - tool_label.size.x * 0.5, Margin.ma_4, size.x - tool_label.size.x - Margin.ma_4), clampf(anchor.y + Margin.ma_6, Margin.ma_4, size.y - tool_label.size.y - Margin.ma_4))
+	pass
+
+
+func set_shader_parameters() -> void:
+	shader_material.set_shader_parameter("gravity", gravity)
+	shader_material.set_shader_parameter("disk_energy", disk_energy)
+	shader_material.set_shader_parameter("reasoning_density", reasoning_density)
+	shader_material.set_shader_parameter("jet_energy", jet_energy)
+	shader_material.set_shader_parameter("wormhole_open", wormhole_open)
+	shader_material.set_shader_parameter("wormhole_angle", wormhole_angle)
+	shader_material.set_shader_parameter("success_return", success_return)
+	shader_material.set_shader_parameter("success_return_progress", success_return_progress)
+	shader_material.set_shader_parameter("failure_shock", failure_shock)
+	shader_material.set_shader_parameter("context_density", context_density)
+	shader_material.set_shader_parameter("rotation_direction", rotation_direction)
+	shader_material.set_shader_parameter("completion", completion)
+	shader_material.set_shader_parameter("error_completion", 1.0 if ended_with_error else 0.0)
+	shader_material.set_shader_parameter("aspect", size.x / maxf(size.y, 1.0))
+	pass
+
+
+static func follow(current: float, target: float, delta: float, speed: float) -> float:
+	return lerpf(current, target, 1.0 - exp(-delta * speed))
+
+
+static func angle_for_tool(tool_name: String) -> float:
+	return lerpf(-PI * 0.9, PI * 0.9, float(abs(tool_name.hash()) % 1000) / 999.0)
+
+
+static func public_tool_name(tool_name: String) -> String:
+	var readable := tool_name.replace("_", " ").replace("-", " ").strip_edges()
+	return readable.to_upper() if not readable.is_empty() else "TOOL"

@@ -17,6 +17,7 @@ const EFFECT_SPECS: Array[Dictionary] = [
 	{"type": VisualType.Type.TOOL_CONSTELLATION, "label": "Tool Constellation"},
 	{"type": VisualType.Type.CONTEXT_MEMORY_RIVER, "label": "Context Memory River"},
 	{"type": VisualType.Type.NEURAL_AURORA, "label": "Neural Aurora"},
+	{"type": VisualType.Type.SEMANTIC_BLACK_HOLE, "label": "Semantic Black Hole"},
 ]
 
 const TOOL_CATALOG: Array[Dictionary] = [
@@ -349,6 +350,8 @@ func visual_label() -> String:
 			return "Context Memory River"
 		VisualType.Type.NEURAL_AURORA:
 			return "Neural Aurora"
+		VisualType.Type.SEMANTIC_BLACK_HOLE:
+			return "Semantic Black Hole"
 	return "None"
 
 

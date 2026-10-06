@@ -41,6 +41,8 @@ func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 			return ContextMemoryRiver.new()
 		VisualType.Type.NEURAL_AURORA:
 			return NeuralAurora.new()
+		VisualType.Type.SEMANTIC_BLACK_HOLE:
+			return SemanticBlackHole.new()
 	return null
 
 

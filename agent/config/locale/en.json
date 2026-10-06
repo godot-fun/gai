@@ -28,7 +28,8 @@
       "visual_reasoning_tree": "Reasoning Tree",
       "visual_tool_constellation": "Tool Constellation",
       "visual_context_memory_river": "Context Memory River",
-      "visual_neural_aurora": "Neural Aurora"
+      "visual_neural_aurora": "Neural Aurora",
+      "visual_semantic_black_hole": "Semantic Black Hole"
     },
     "sidebar": {
       "new_session": "+ New Agent",
