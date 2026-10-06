@@ -59,6 +59,41 @@ func fast_tools_play_in_order_test() -> void:
 	pass
 
 
+func field_spread_expands_then_collapses_test() -> void:
+	var effect := ToolConstellation.new()
+	effect.visible = true
+	effect.on_agent_start(1)
+	assert(is_equal_approx(effect.field_spread, 0.0))
+	effect._process(ToolConstellation.RING_EXPAND_SECONDS * 0.5)
+	assert(effect.field_spread > 0.4 and effect.field_spread < 0.7)
+	effect._process(ToolConstellation.RING_EXPAND_SECONDS)
+	assert(is_equal_approx(effect.field_spread, 1.0))
+	effect.completing = true
+	effect.completion = 0.0
+	effect._process(ToolConstellation.COMPLETE_SECONDS * 0.5)
+	assert(effect.field_spread > 0.4 and effect.field_spread < 0.7)
+	effect._process(ToolConstellation.COMPLETE_SECONDS)
+	assert(is_equal_approx(effect.field_spread, 0.0))
+	effect.free()
+	pass
+
+
+func rings_expand_one_layer_at_a_time_test() -> void:
+	var effect := ToolConstellation.new()
+	# Mid expand: an inner ring should already be open while an outer ring is still closed.
+	effect.field_spread = 0.28
+	effect.completing = false
+	assert(effect.layer_spread(1, ToolConstellation.RING_LAYER_COUNT) > 0.85)
+	assert(effect.layer_spread(ToolConstellation.RING_LAYER_COUNT, ToolConstellation.RING_LAYER_COUNT) < 0.05)
+	# Mid collapse: the outer ring retracts before the inner ring.
+	effect.completing = true
+	effect.field_spread = 0.72
+	assert(effect.layer_spread(ToolConstellation.RING_LAYER_COUNT, ToolConstellation.RING_LAYER_COUNT) < 0.2)
+	assert(effect.layer_spread(1, ToolConstellation.RING_LAYER_COUNT) > 0.85)
+	effect.free()
+	pass
+
+
 func full_constellation_replaces_oldest_slot_test() -> void:
 	var effect := ToolConstellation.new()
 	for index in range(ToolConstellation.MAX_NODES):

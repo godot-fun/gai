@@ -13,7 +13,9 @@ const CURVE_STEPS := 32
 const GOLDEN_ANGLE := 2.399963
 const MIN_TOOL_PLAY_SECONDS := 1.35
 const RESULT_HOLD_SECONDS := 0.7
-const COMPLETE_SECONDS := 1.25
+const COMPLETE_SECONDS := 2.8
+const RING_EXPAND_SECONDS := 3.6
+const RING_LAYER_COUNT := 7
 const DUST_COUNT := 48
 
 enum ExecutionState { RUNNING, SUCCESS, FAILED }
@@ -34,6 +36,8 @@ var absorb_flash: float = 0.0
 var completion: float = 0.0
 var completing: bool = false
 var ended_with_error: bool = false
+## 0 = rings collapsed at the core, 1 = fully expanded field.
+var field_spread: float = 0.0
 
 
 func _ready() -> void:
@@ -71,11 +75,13 @@ func reset_visual() -> void:
 	completion = 0.0
 	completing = false
 	ended_with_error = false
+	field_spread = 0.0
 	queue_redraw()
 	pass
 
 
 func on_agent_start(_session_id: int) -> void:
+	field_spread = 0.0
 	core_pulse = 1.0
 	queue_redraw()
 	pass
@@ -150,6 +156,9 @@ func _process(delta: float) -> void:
 	absorb_flash = move_toward(absorb_flash, 0.0, delta * 2.4)
 	if completing:
 		completion = minf(completion + delta / COMPLETE_SECONDS, 1.0)
+		field_spread = 1.0 - completion
+	else:
+		field_spread = move_toward(field_spread, 1.0, delta / RING_EXPAND_SECONDS)
 	advance_tool_queue(delta)
 	for node: Dictionary in nodes:
 		node["growth"] = move_toward(float(node["growth"]), 1.0, delta * 3.2)
@@ -248,39 +257,51 @@ func field_center() -> Vector2:
 
 func draw_deep_space(center: Vector2) -> void:
 	var accent := ThemeColor.accent_theme_color()
-	for layer in range(7, 0, -1):
-		var radius := minf(size.x, size.y) * (0.09 + float(layer) * 0.075)
-		draw_circle(center, radius, Color(accent, 0.006 + float(7 - layer) * 0.003))
+	for layer in range(RING_LAYER_COUNT, 0, -1):
+		var spread := layer_spread(layer, RING_LAYER_COUNT)
+		if spread <= 0.001:
+			continue
+		var radius := minf(size.x, size.y) * (0.09 + float(layer) * 0.075) * spread
+		draw_circle(center, radius, Color(accent, (0.006 + float(RING_LAYER_COUNT - layer) * 0.003) * spread))
 	pass
 
 
 func draw_orbits(center: Vector2) -> void:
 	var accent := ThemeColor.accent_theme_color()
-	var base_radius := orbit_radius(0.0)
+	var base_spread := layer_spread(2, RING_LAYER_COUNT)
+	if base_spread <= 0.001:
+		return
+	var base_radius := orbit_radius(0.0) * base_spread
 	for orbit_index in range(3):
-		var radius := orbit_radius(float(orbit_index))
+		var spread := layer_spread(orbit_index + 2, RING_LAYER_COUNT)
+		if spread <= 0.001:
+			continue
+		var radius := orbit_radius(float(orbit_index)) * spread
 		var rotation := elapsed * (0.04 + orbit_index * 0.016) * (-1.0 if orbit_index % 2 else 1.0)
 		for arc_index in range(3):
 			var start := rotation + float(arc_index) * TAU / 3.0 + orbit_index * 0.28
-			draw_arc(center, radius, start, start + 0.78, 30, Color(accent, 0.16 - orbit_index * 0.03), 1.6, true)
-			draw_circle(center + Vector2.from_angle(start + 0.78) * radius, 2.4, Color(accent, 0.42))
-	var tick_radius := base_radius + 28.0
+			draw_arc(center, radius, start, start + 0.78, 30, Color(accent, (0.16 - orbit_index * 0.03) * spread), 1.6, true)
+			draw_circle(center + Vector2.from_angle(start + 0.78) * radius, 2.4, Color(accent, 0.42 * spread))
+	var tick_radius := base_radius + 28.0 * base_spread
 	for tick in range(36):
 		var angle := float(tick) * TAU / 36.0 + elapsed * 0.02
-		var length := 7.0 if tick % 6 == 0 else 2.5
+		var length := (7.0 if tick % 6 == 0 else 2.5) * base_spread
 		var direction := Vector2.from_angle(angle)
-		draw_line(center + direction * tick_radius, center + direction * (tick_radius + length), Color(accent, 0.2 if tick % 6 == 0 else 0.07), 1.2, true)
+		draw_line(center + direction * tick_radius, center + direction * (tick_radius + length), Color(accent, (0.2 if tick % 6 == 0 else 0.07) * base_spread), 1.2, true)
 	pass
 
 
 func draw_radar_sweep(center: Vector2) -> void:
+	var spread := layer_spread(RING_LAYER_COUNT, RING_LAYER_COUNT)
+	if spread <= 0.001:
+		return
 	var accent := ThemeColor.accent_theme_color()
-	var radius := orbit_radius(2.0) + 36.0
+	var radius := (orbit_radius(2.0) + 36.0) * spread
 	var head := radar_head()
 	for trail in range(10, 0, -1):
 		var angle := head - float(trail) * 0.03
-		draw_line(center, center + Vector2.from_angle(angle) * radius, Color(accent, 0.006 + float(10 - trail) * 0.005), 1.0, true)
-	draw_line(center + Vector2.from_angle(head) * (CORE_RADIUS + 16.0), center + Vector2.from_angle(head) * radius, Color(accent, 0.2), 1.4, true)
+		draw_line(center, center + Vector2.from_angle(angle) * radius, Color(accent, (0.006 + float(10 - trail) * 0.005) * spread), 1.0, true)
+	draw_line(center + Vector2.from_angle(head) * (CORE_RADIUS + 16.0), center + Vector2.from_angle(head) * radius, Color(accent, 0.2 * spread), 1.4, true)
 	pass
 
 
@@ -557,6 +578,24 @@ func orbit_radius(orbit: float) -> float:
 	var inner := minf(minf(size.x, size.y) * 0.18, 190.0)
 	var step := minf(minf(size.x, size.y) * 0.125, 108.0)
 	return inner + orbit * step
+
+
+## One ring at a time: expand inside→out, collapse outside→in.
+func layer_spread(layer_from_inside: int, layer_count: int) -> float:
+	var index := clampi(layer_from_inside, 1, layer_count) - 1
+	var count := float(maxi(layer_count, 1))
+	var slot := 1.0 / count
+	# Tiny overlap keeps the handoff from reading as a hard cut.
+	var span := slot * 1.12
+	if completing:
+		var collapse := 1.0 - field_spread
+		var start := float(layer_count - 1 - index) * slot
+		var done := clampf((collapse - start) / span, 0.0, 1.0)
+		var remain := 1.0 - done
+		return remain * remain * (3.0 - 2.0 * remain)
+	var start := float(index) * slot
+	var local := clampf((field_spread - start) / span, 0.0, 1.0)
+	return local * local * (3.0 - 2.0 * local)
 
 
 func target_orbit_for(node: Dictionary) -> float:
