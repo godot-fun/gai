@@ -34,7 +34,7 @@ Do not sample or distort the real chat interface. The gravitational lens is draw
 | Tool start | Open a wormhole at a stable tool-derived angle | A satellite ring and bridge appear with the tool label |
 | Tool success | Start the return envelope | A green packet travels back toward the horizon |
 | Tool failure | Start the failure envelope | A red irregular shock crosses the disk |
-| Turn start | Reverse target rotation | The disk decelerates through zero and changes direction |
+| Turn start | Raise gravity and disk energy | The whirlpool deepens while keeping a constant inward spin |
 | Agent end | Advance completion for 2.3 seconds | Matter collapses, the singularity flashes, then sparse dust evaporates |
 
 ## Composition Order

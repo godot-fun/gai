@@ -4,10 +4,10 @@ extends VisualEffect
 ## Event-driven star map of the agent core, invoked tools, and their execution history.
 ## Inner orbit holds live calls; settled tools drift outward into turn-linked constellations.
 
-const MAX_NODES := 12
+const MAX_NODES := 32
 const PACKET_COUNT := 5
 const CORE_RADIUS := 62.0
-const NODE_RADIUS := 30.0
+const NODE_RADIUS := 24.0
 const STAR_COUNT := 96
 const CURVE_STEPS := 32
 const GOLDEN_ANGLE := 2.399963
@@ -554,8 +554,8 @@ func node_position(index: int, _count: int, center: Vector2) -> Vector2:
 
 
 func orbit_radius(orbit: float) -> float:
-	var inner := minf(minf(size.x, size.y) * 0.21, 205.0)
-	var step := minf(minf(size.x, size.y) * 0.105, 92.0)
+	var inner := minf(minf(size.x, size.y) * 0.18, 190.0)
+	var step := minf(minf(size.x, size.y) * 0.125, 108.0)
 	return inner + orbit * step
 
 
@@ -563,7 +563,7 @@ func target_orbit_for(node: Dictionary) -> float:
 	if int(node["state"]) == ExecutionState.RUNNING:
 		return 0.0
 	var age := spawn_sequence - int(node["sequence"])
-	return 2.0 if age > 4 else 1.0
+	return 2.0 if age > 10 else 1.0
 
 
 func radar_head() -> float:

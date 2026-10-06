@@ -53,6 +53,13 @@ void fragment() {
 	float tau = 6.28318530718;
 	float sector_count = 38.0 * tau;
 
+	// Horizon breath is computed early so dust can fade as the well swells over it.
+	float horizon_base = mix(0.015, 0.112, smoothstep(0.0, 0.75, gravity));
+	float breath_phase = fract(TIME * 0.42);
+	float breath = smoothstep(0.0, 0.38, breath_phase) * (1.0 - smoothstep(0.52, 0.92, breath_phase));
+	float breath_strength = 0.35 + gravity * 0.45;
+	float horizon_radius = horizon_base * (1.0 + breath * 0.28 * breath_strength);
+
 	// Same ion look as the original dust field; only the advection changes so cells orbit
 	// inward in one direction instead of sitting on fixed angular sectors.
 	float spiral_phase = angle * 7.0 + log(max(radius, 0.025)) * 19.0 - t * (2.0 + 1.8 / max(radius * 8.0, 0.8));
@@ -60,6 +67,8 @@ void fragment() {
 	float dust_cells = noise(vec2(sector, floor(radius * 92.0 + t * 8.0)));
 	float dust = smoothstep(0.82 - context_density * 0.22, 0.98, dust_cells) * smoothstep(0.78, 0.11, radius);
 	dust *= 0.3 + 0.7 * pow(abs(sin(spiral_phase)), 9.0);
+	// Ions soften as the breathing horizon reaches them so each swell reads as a swallow.
+	dust *= smoothstep(horizon_radius, horizon_radius + 0.08, radius);
 	vec3 color = accent_color.rgb * dust * (0.24 + gravity * 0.72);
 
 	// The disk is an aspect-correct ellipse. Splitting at local y lets the back half be drawn
@@ -77,15 +86,16 @@ void fragment() {
 	color += disk_color * (disk_band + hot_inner * 1.4) * back_mask * 0.48;
 
 	// The photon ring approximates gravitational lensing without sampling the actual chat UI.
-	float horizon_radius = mix(0.015, 0.112, smoothstep(0.0, 0.75, gravity));
 	float lens = ring(radius, horizon_radius + 0.026, 0.006 + reasoning_density * 0.005);
 	float upper_lens = ring(length(vec2(p.x, (p.y + 0.105) / 0.42)), 0.27, 0.013) * smoothstep(-0.06, 0.1, p.y);
 	color += disk_color * upper_lens * disk_energy * 0.65;
 	vec3 lens_color = mix(accent_color.rgb, vec3(1.0), 0.68);
-	color += lens_color * lens * (0.55 + disk_energy * 1.15);
+	float lens_pulse = 0.55 + disk_energy * 1.15 + breath * 0.35;
+	color += lens_color * lens * lens_pulse;
 
 	// The event horizon remains nearly silent and opaque while activity accumulates around it.
-	float horizon = 1.0 - smoothstep(horizon_radius - 0.006, horizon_radius + 0.005, radius);
+	// Soft outer lip so expanding breaths read as ions being engulfed rather than a hard punch.
+	float horizon = 1.0 - smoothstep(horizon_radius - 0.008, horizon_radius + 0.01, radius);
 	color = mix(color, vec3(0.0), horizon * 0.98);
 	float front_mask = smoothstep(-0.08, 0.06, p.y);
 	// Keep the photon ring from being cracked by the front disk pass.
