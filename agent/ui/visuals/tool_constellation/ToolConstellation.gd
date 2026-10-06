@@ -9,6 +9,7 @@ const CORE_RADIUS := 62.0
 const NODE_RADIUS := 31.0
 const STAR_COUNT := 72
 const CURVE_STEPS := 28
+const GRID_SIZE := 64.0
 const MIN_TOOL_PLAY_SECONDS := 1.35
 const RESULT_HOLD_SECONDS := 0.7
 
@@ -214,14 +215,32 @@ func _draw() -> void:
 	if size.x < 180.0 or size.y < 180.0:
 		return
 	var center := size * 0.5
+	draw_deep_space(center)
 	draw_star_field(center)
 	draw_orbits(center)
+	draw_radar_sweep(center)
 	draw_execution_graph(center)
 	for index in range(nodes.size()):
 		draw_connection(nodes[index], center, node_position(index, nodes.size(), center))
 	for index in range(nodes.size()):
 		draw_tool_node(nodes[index], node_position(index, nodes.size(), center))
 	draw_core(center)
+	pass
+
+
+func draw_deep_space(center: Vector2) -> void:
+	var accent := ThemeColor.accent_theme_color()
+	# A faint perspective grid anchors the constellation without competing with labels.
+	var grid_offset := Vector2(fmod(elapsed * 5.0, GRID_SIZE), fmod(elapsed * 2.0, GRID_SIZE))
+	for x in range(-1, int(ceil(size.x / GRID_SIZE)) + 1):
+		var x_position := float(x) * GRID_SIZE + grid_offset.x
+		draw_line(Vector2(x_position, 0.0), Vector2(x_position, size.y), Color(accent, 0.018), 1.0)
+	for y in range(-1, int(ceil(size.y / GRID_SIZE)) + 1):
+		var y_position := float(y) * GRID_SIZE + grid_offset.y
+		draw_line(Vector2(0.0, y_position), Vector2(size.x, y_position), Color(accent, 0.018), 1.0)
+	for layer in range(7, 0, -1):
+		var radius := minf(size.x, size.y) * (0.09 + float(layer) * 0.075)
+		draw_circle(center, radius, Color(accent, 0.006 + float(7 - layer) * 0.003))
 	pass
 
 
@@ -235,6 +254,24 @@ func draw_orbits(center: Vector2) -> void:
 			var start := rotation + float(arc_index) * TAU / 3.0 + orbit_index * 0.31
 			draw_arc(center, radius, start, start + 0.72, 28, Color(accent, 0.11 - orbit_index * 0.018), 1.3, true)
 			draw_circle(center + Vector2.from_angle(start + 0.72) * radius, 2.2, Color(accent, 0.34))
+	# Technical tick marks make the orbital field read as an instrument rather than decoration.
+	var tick_radius := base_radius + 46.0
+	for tick in range(48):
+		var angle := float(tick) * TAU / 48.0 + elapsed * 0.018
+		var length := 8.0 if tick % 6 == 0 else 3.0
+		var direction := Vector2.from_angle(angle)
+		draw_line(center + direction * tick_radius, center + direction * (tick_radius + length), Color(accent, 0.18 if tick % 6 == 0 else 0.07), 1.2, true)
+	pass
+
+
+func draw_radar_sweep(center: Vector2) -> void:
+	var accent := ThemeColor.accent_theme_color()
+	var radius := minf(minf(size.x, size.y) * 0.31, 330.0)
+	var head := elapsed * 0.34
+	for trail in range(7, 0, -1):
+		var angle := head - float(trail) * 0.035
+		draw_line(center, center + Vector2.from_angle(angle) * radius, Color(accent, 0.008 + float(7 - trail) * 0.006), 1.0, true)
+	draw_line(center + Vector2.from_angle(head) * (CORE_RADIUS + 18.0), center + Vector2.from_angle(head) * radius, Color(accent, 0.15), 1.2, true)
 	pass
 
 
@@ -272,9 +309,16 @@ func draw_core(center: Vector2) -> void:
 		var radius := CORE_RADIUS + 12.0 + ring_index * 9.0
 		var start := elapsed * (0.55 + ring_index * 0.18) * (-1.0 if ring_index % 2 else 1.0)
 		draw_arc(center, radius, start, start + PI * (0.75 + ring_index * 0.12), 42, Color(accent, 0.66 - ring_index * 0.13), 2.5 - ring_index * 0.4, true)
+	for spoke in range(8):
+		var angle := float(spoke) * TAU / 8.0 + elapsed * 0.08
+		var direction := Vector2.from_angle(angle)
+		draw_line(center + direction * (CORE_RADIUS + 5.0), center + direction * (CORE_RADIUS + 14.0 + (spoke % 2) * 5.0), Color(accent, 0.36), 1.4, true)
 	draw_circle(center, CORE_RADIUS, Color(ColorBase.deep_surface, 0.97))
 	draw_circle(center, CORE_RADIUS - 8.0, Color(accent, 0.15 + breath * 0.07))
+	draw_arc(center, CORE_RADIUS - 17.0, -PI * 0.82, -PI * 0.18, 30, Color(accent, 0.38), 2.0, true)
+	draw_arc(center, CORE_RADIUS - 17.0, PI * 0.18, PI * 0.82, 30, Color(accent, 0.16), 2.0, true)
 	draw_circle(center, 8.0 + breath * 2.0, Color(accent, 0.78))
+	draw_circle(center, 3.0 + breath, Color(Color.WHITE, 0.9))
 	draw_centered_text(center + Vector2(0.0, 28.0), "AGENT CORE", Fonts.semibold(), Typography.label_medium_size, ColorBase.primary_text)
 	draw_centered_text(center + Vector2(0.0, 45.0), "TURN %02d" % maxi(turn_index, 1), Fonts.regular(), Typography.label_small_size, Color(accent, 0.76))
 	pass
@@ -290,7 +334,8 @@ func draw_connection(node: Dictionary, center: Vector2, position: Vector2) -> vo
 	if state == ExecutionState.FAILED:
 		draw_broken_curve(visible_points, Color(color, 0.72))
 	else:
-		draw_polyline(visible_points, Color(color, 0.07), 11.0, true)
+		draw_polyline(visible_points, Color(color, 0.035), 20.0, true)
+		draw_polyline(visible_points, Color(color, 0.08), 9.0, true)
 		draw_polyline(visible_points, Color(color, 0.18 if state == ExecutionState.SUCCESS else 0.52), 3.0, true)
 	if state == ExecutionState.RUNNING and growth > 0.1:
 		for packet_index in range(PACKET_COUNT):
@@ -303,6 +348,9 @@ func draw_connection(node: Dictionary, center: Vector2, position: Vector2) -> vo
 		var result_position := path_point(points, 1.0 - return_progress)
 		draw_circle(result_position, 12.0 * (1.0 - return_progress * 0.4), Color(ColorBase.success, 0.08))
 		draw_circle(result_position, 5.0, Color(ColorBase.success, 0.95))
+		if return_progress >= 0.98:
+			var flash := (sin(elapsed * 5.0 + float(node["sequence"])) + 1.0) * 0.5
+			draw_arc(center, CORE_RADIUS + 24.0 + flash * 5.0, 0.0, TAU, 64, Color(ColorBase.success, 0.08 * (1.0 - flash)), 2.0, true)
 	pass
 
 
@@ -320,11 +368,18 @@ func draw_tool_node(node: Dictionary, position: Vector2) -> void:
 			var ripple_radius := node_radius + 9.0 + fmod(elapsed * 18.0 + ripple * 15.0, 42.0)
 			draw_arc(position, ripple_radius, 0.25, PI * 1.72, 28, Color(state_color, 0.24 - ripple * 0.045), 2.4, true)
 	draw_circle(position, node_radius + 13.0, Color(state_color, 0.13 if state == ExecutionState.RUNNING else 0.07))
+	draw_circle(position, node_radius + 5.0, Color(state_color, 0.055))
 	var hex := hexagon_points(position, node_radius)
 	draw_colored_polygon(hex, Color(ColorBase.deep_surface, 0.97))
 	var outline := PackedVector2Array(hex)
 	outline.append(hex[0])
 	draw_polyline(outline, Color(state_color, 0.84), 2.4, true)
+	# Small orbiting telemetry marks keep completed nodes alive and make active ones feel urgent.
+	var satellite_count := 3 if state == ExecutionState.RUNNING else 2
+	for satellite in range(satellite_count):
+		var satellite_angle := elapsed * (1.25 if state == ExecutionState.RUNNING else 0.3) + float(satellite) * TAU / satellite_count + float(node["sequence"])
+		var satellite_position := position + Vector2.from_angle(satellite_angle) * (node_radius + 15.0)
+		draw_circle(satellite_position, 2.7 if state == ExecutionState.RUNNING else 1.7, Color(state_color, 0.82 if state == ExecutionState.RUNNING else 0.34))
 	draw_centered_text(position + Vector2(0.0, 6.0), tool_glyph(String(node["name"])), Fonts.bold(), Typography.title_small_size, state_color)
 	var label_position := position + Vector2(0.0, node_radius + Margin.ma_6)
 	draw_centered_text(label_position, public_tool_name(String(node["name"])), Fonts.semibold(), Typography.label_medium_size, ColorBase.primary_text)

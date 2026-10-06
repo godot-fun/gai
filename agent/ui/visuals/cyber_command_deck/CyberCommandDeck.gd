@@ -192,9 +192,11 @@ func _draw() -> void:
 		return
 	var center := size * 0.5
 	draw_backplane(center)
+	draw_data_rain(center)
 	draw_ambient_energy(center)
 	draw_screen_fx()
 	draw_system_chrome(center)
+	draw_edge_telemetry(center)
 	draw_radar(center)
 	draw_live_telemetry(center)
 	draw_waveforms(center)
@@ -276,6 +278,54 @@ func draw_system_chrome(center: Vector2) -> void:
 	pass
 
 
+func draw_edge_telemetry(center: Vector2) -> void:
+	var rail_top := 104.0
+	var rail_bottom := size.y - 92.0
+	var rail_inset := 32.0
+	for side: float in [-1.0, 1.0]:
+		var x := rail_inset if side < 0.0 else size.x - rail_inset
+		var inward := -side
+		draw_line(Vector2(x, rail_top), Vector2(x, rail_bottom), Color(NEON_BLUE, 0.16), 1.0)
+		for index in range(7):
+			var y := lerpf(rail_top, rail_bottom, float(index) / 6.0)
+			var hot := index == (int(elapsed * 2.0) + (0 if side < 0.0 else 3)) % 7
+			var color := NEON_MAGENTA if hot else NEON_CYAN
+			var length := 24.0 if index % 3 == 0 else 13.0
+			draw_line(Vector2(x, y), Vector2(x + inward * length, y), Color(color, 0.78 if hot else 0.28), 2.0 if hot else 1.0)
+			if index % 2 == 0:
+				var code := "%02X" % int(fmod(index * 29.0 + elapsed * 7.0 + turn_index, 255.0))
+				var text_x := x + inward * (length + 7.0) - (28.0 if side < 0.0 else 0.0)
+				draw_string(Fonts.regular(), Vector2(text_x, y - 4.0), code, HORIZONTAL_ALIGNMENT_LEFT, 28.0, Typography.label_small_size, Color(color, 0.34))
+	# Phase marker deliberately sits off-axis like a cockpit warning label.
+	var phase_text: String = String(DeckPhase.keys()[phase])
+	draw_string(Fonts.semibold(), Vector2(rail_inset + 13.0, center.y - 9.0), "[ %s ]" % phase_text, HORIZONTAL_ALIGNMENT_LEFT, 110.0, Typography.label_small_size, Color(NEON_MAGENTA, 0.72))
+	draw_string(Fonts.regular(), Vector2(size.x - rail_inset - 132.0, center.y - 9.0), "ACT %03d%%" % int(activity * 100.0), HORIZONTAL_ALIGNMENT_RIGHT, 118.0, Typography.label_small_size, Color(NEON_CYAN, 0.68))
+	pass
+
+
+func draw_data_rain(center: Vector2) -> void:
+	var horizon := center.y + minf(size.y * 0.16, 150.0)
+	# Sparse deterministic columns imply a distant neon megacity without obscuring content.
+	for index in range(42):
+		var lane_x := fmod(float(index * 149 + 31), maxf(size.x, 1.0))
+		var speed := 18.0 + float(index % 7) * 8.0
+		var y := fmod(float(index * 83) + elapsed * speed, maxf(horizon - 54.0, 1.0)) + 54.0
+		var column_height := 12.0 + float(index % 5) * 9.0
+		var color := NEON_MAGENTA if index % 9 == 0 else NEON_CYAN
+		var alpha := 0.055 + float(index % 4) * 0.014
+		draw_line(Vector2(lane_x, y - column_height), Vector2(lane_x, y), Color(color, alpha), 1.0)
+		draw_rect(Rect2(Vector2(lane_x - 1.0, y), Vector2(3.0, 2.0)), Color(color, alpha * 2.2), true)
+	# Low skyline blocks anchor the horizon and add parallax against the floor grid.
+	for index in range(30):
+		var block_width := 18.0 + float((index * 7) % 23)
+		var x := float(index) * size.x / 29.0 - block_width * 0.5
+		var block_height := 8.0 + float((index * 17) % 52)
+		draw_rect(Rect2(Vector2(x, horizon - block_height), Vector2(block_width, block_height)), Color(NEON_BLUE, 0.018 + float(index % 3) * 0.008), true)
+		if index % 3 == 0:
+			draw_line(Vector2(x + block_width * 0.5, horizon - block_height), Vector2(x + block_width * 0.5, horizon - block_height - 11.0), Color(NEON_MAGENTA, 0.13), 1.0)
+	pass
+
+
 func draw_backplane(center: Vector2) -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color(DECK_VOID, 0.28), true)
 	# Horizon and perspective floor turn the overlay into a room rather than graph paper.
@@ -312,9 +362,16 @@ func draw_screen_fx() -> void:
 		var length := 4.0 + float(index % 5) * 3.0
 		draw_line(Vector2(px, py), Vector2(px + length, py), Color(NEON_CYAN if index % 3 else NEON_MAGENTA, 0.16), 1.0)
 	var glitch := fmod(elapsed * 3.7, 5.0)
-	if glitch < 0.08:
+	if glitch < 0.11:
 		var gy := fmod(elapsed * 431.0, size.y)
 		draw_rect(Rect2(Vector2(0.0, gy), Vector2(size.x, 2.0)), Color(NEON_MAGENTA, 0.2), true)
+		# A few displaced RGB fragments sell a digital signal fault without moving the UI.
+		for slice in range(4):
+			var slice_y := fmod(gy + slice * 43.0, size.y)
+			var slice_x := fmod(elapsed * 977.0 + slice * 271.0, maxf(size.x - 180.0, 1.0))
+			var slice_width := 46.0 + slice * 31.0
+			draw_rect(Rect2(Vector2(slice_x - 7.0, slice_y), Vector2(slice_width, 1.0)), Color(NEON_MAGENTA, 0.32), true)
+			draw_rect(Rect2(Vector2(slice_x + 7.0, slice_y + 2.0), Vector2(slice_width, 1.0)), Color(NEON_CYAN, 0.28), true)
 	pass
 
 
@@ -372,6 +429,25 @@ func draw_core(center: Vector2) -> void:
 	var core_scale := 1.0 - collapse * 0.82
 	var radius := CORE_RADIUS * core_scale
 	var pulse := (sin(elapsed * 4.0) + 1.0) * 0.5
+	# Broken targeting rings add the dense mechanical readout associated with cyberpunk HUDs.
+	for ring in range(3):
+		var lock_radius := radius + 112.0 + ring * 18.0
+		var rotation := elapsed * (0.22 + ring * 0.07) * (-1.0 if ring == 1 else 1.0)
+		for segment in range(8):
+			if (segment + ring) % 3 == 0:
+				continue
+			var start := rotation + float(segment) * TAU / 8.0
+			var span := 0.24 + float((segment + ring) % 3) * 0.07
+			var ring_color := NEON_MAGENTA if ring == 1 and segment % 2 == 0 else NEON_CYAN
+			draw_arc(center, lock_radius, start, start + span, 10, Color(ring_color, (0.2 + pulse * 0.08) * (1.0 - collapse)), 1.5 if ring == 1 else 1.0, true)
+	# Orthogonal lock brackets make the core read as a target rather than decoration.
+	var bracket_radius := radius + 58.0
+	for quarter in range(4):
+		var direction := Vector2.from_angle(float(quarter) * PI * 0.5)
+		var tangent := direction.rotated(PI * 0.5)
+		var anchor := center + direction * bracket_radius
+		draw_line(anchor - tangent * 12.0, anchor + tangent * 12.0, Color(NEON_CYAN, 0.66 * (1.0 - collapse)), 2.0)
+		draw_line(anchor, anchor + direction * 9.0, Color(NEON_MAGENTA, 0.52 * (1.0 - collapse)), 1.0)
 	# Wide fake bloom gives the core its own light source.
 	for glow in range(9, 0, -1):
 		draw_circle(center, radius + glow * 11.0 + pulse * 5.0, Color(NEON_CYAN, 0.0055 * float(10 - glow) * (1.0 - collapse)))
