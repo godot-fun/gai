@@ -12,7 +12,6 @@ var spin_speed: float = 0.7
 var stream_char_total: int = 0
 var color_controller: OrbColorController = OrbColorController.new()
 
-var stream_buffer: StringBuilder = StringBuilder.new()
 var growth_dirty: bool = false
 var growth_flush_timer: float = 0.0
 
@@ -72,24 +71,11 @@ func set_phase(new_phase: OrbPhase.Phase) -> void:
 	pass
 
 
-func add_step_text(text: String, split_by_lines: bool = false) -> void:
+func add_step_text(text: String) -> void:
 	if text.is_empty():
 		return
 	stream_char_total += text.length()
-	var cap := OrbGrowth.chunk_char_cap(stream_char_total)
-	var segments: Array[String] = (
-		CharStreamUtils.split_line_segments(text)
-		if split_by_lines
-		else CharStreamUtils.append_and_take(stream_buffer, text, cap)
-	)
-	offer_segments(segments)
-	pass
-
-
-func flush_stream_buffer() -> void:
-	var tail := CharStreamUtils.drain_remainder(stream_buffer)
-	if not tail.is_empty():
-		offer_segments([tail])
+	offer_segments([text])
 	pass
 
 
@@ -123,7 +109,6 @@ func reset_growth() -> void:
 		flush_growth()
 	color_controller.snap_to(OrbPhase.color_for(OrbPhase.Phase.IDLE))
 	stream_char_total = 0
-	stream_buffer.clear()
 	growth_dirty = false
 	growth_flush_timer = 0.0
 	neuron_net.reset_growth()
@@ -132,7 +117,6 @@ func reset_growth() -> void:
 
 
 func clear_stream_queue() -> void:
-	stream_buffer.clear()
 	if char_overlay != null:
 		char_overlay.clear_queue()
 	pass

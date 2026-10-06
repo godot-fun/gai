@@ -7,6 +7,8 @@ const POOL_SIZE := 320
 const KEYWORD_POOL := 48
 const SHARED_CURVE_COUNT := 20
 const CHAR_QUEUE_CAP := 900
+const MAX_PHRASE_LEN := 64
+const MIN_PHRASE_LEN := 2
 
 var neuron_net: JarvisOrbNeuronNet
 var char_queue: Array[String] = []
@@ -54,8 +56,8 @@ func commit_staged_segments() -> void:
 	var keywords: Array[String] = []
 	var seen: Dictionary = {}
 	for segment in staged_segments:
-		var display := CharStreamUtils.display_phrase(segment)
-		if display.is_empty() or display.length() < CharStreamUtils.MIN_PHRASE_LEN:
+		var display := display_phrase(segment)
+		if display.is_empty() or display.length() < MIN_PHRASE_LEN:
 			continue
 		if char_queue.size() >= CHAR_QUEUE_CAP:
 			char_queue.pop_front()
@@ -67,6 +69,25 @@ func commit_staged_segments() -> void:
 	if not keywords.is_empty():
 		spawn_keywords(keywords)
 	pass
+
+
+func display_phrase(raw: String) -> String:
+	var phrase := raw.strip_edges()
+	if phrase.length() <= MAX_PHRASE_LEN:
+		return phrase
+	var cut := find_last_sentence_end(phrase, MAX_PHRASE_LEN)
+	if cut >= MIN_PHRASE_LEN:
+		return phrase.substr(0, cut).strip_edges()
+	return phrase.substr(0, MAX_PHRASE_LEN).strip_edges() + "…"
+
+
+func find_last_sentence_end(text: String, before: int) -> int:
+	var limit := clampi(before, 0, text.length())
+	var last := -1
+	for i in limit:
+		if StringUtils.is_sentence_end(text.substr(0, i + 1)):
+			last = i
+	return last
 
 
 func apply_growth(char_total: int) -> void:

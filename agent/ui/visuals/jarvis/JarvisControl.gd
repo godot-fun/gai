@@ -7,6 +7,7 @@ const REVEAL_SCALE_MIN := 0.04
 const REVEAL_DURATION_S := 0.82
 const HIDE_DURATION_S := 0.68
 const ORB_ALPHA := 0.88
+const SENTENCE_INTERVAL_S := 0.2
 
 var phase: OrbPhase.Phase = OrbPhase.Phase.IDLE
 
@@ -14,6 +15,10 @@ var viewport_container: SubViewportContainer
 var sub_viewport: SubViewport
 var jarvis_orb: JarvisOrb
 var fade_tween: Tween
+var active_session_id: int = 0
+var chat_entry_index: int = 0
+var entry_char_index: int = 0
+var sentence_timer: float = 0.0
 
 
 func _ready() -> void:
@@ -21,6 +26,17 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	build_scene()
 	set_orb_visible(false, false)
+	pass
+
+
+func _process(delta: float) -> void:
+	if active_session_id == 0 or jarvis_orb == null:
+		return
+	sentence_timer += delta
+	if sentence_timer < SENTENCE_INTERVAL_S:
+		return
+	sentence_timer = 0.0
+	offer_next_sentence()
 	pass
 
 
@@ -86,19 +102,52 @@ func reset_visual() -> void:
 
 func on_agent_start(session_id: int) -> void:
 	transition_to(OrbPhase.Phase.AWAKE)
-	feed_latest_user_prompt(session_id)
+	active_session_id = session_id
+	chat_entry_index = find_latest_user_entry(session_id)
+	entry_char_index = 0
+	sentence_timer = 0.0
 	pass
 
 
-func feed_latest_user_prompt(session_id: int) -> void:
+func find_latest_user_entry(session_id: int) -> int:
 	var session := AgentSessionStore.load_session(session_id)
-	if session == null or jarvis_orb == null:
-		return
+	if session == null:
+		return 0
 	for i in range(session.chat_entries.size() - 1, -1, -1):
 		var entry: ChatEntry = session.chat_entries[i]
 		if entry.kind == ChatEntry.KIND_USER:
-			jarvis_orb.add_step_text(entry.body)
+			return i
+	return session.chat_entries.size()
+
+
+## Returns one complete sentence at [param start_index]. An unfinished tail is never returned.
+static func take_sentence(text: String, start_index: int) -> Dictionary:
+	var start := clampi(start_index, 0, text.length())
+	while start < text.length() and text.substr(start, 1).strip_edges().is_empty():
+		start += 1
+	for i in range(start, text.length()):
+		if not StringUtils.is_sentence_end(text.substr(start, i - start + 1)):
+			continue
+		return {"text": text.substr(start, i - start + 1).strip_edges(), "next_index": i + 1}
+	return {"text": "", "next_index": start}
+
+
+func offer_next_sentence() -> void:
+	var session := AgentSessionStore.load_session(active_session_id)
+	if session == null:
+		return
+	while chat_entry_index < session.chat_entries.size():
+		var entry: ChatEntry = session.chat_entries[chat_entry_index]
+		var sentence := take_sentence(entry.body, entry_char_index)
+		var text: String = sentence.text
+		entry_char_index = sentence.next_index
+		if not text.is_empty():
+			jarvis_orb.add_step_text(text)
 			return
+		if chat_entry_index == session.chat_entries.size() - 1:
+			return
+		chat_entry_index += 1
+		entry_char_index = 0
 	pass
 
 
@@ -122,17 +171,15 @@ func on_turn_end() -> void:
 	pass
 
 
-func on_message_update(chunk: String, stream_kind: String) -> void:
+func on_message_update(_chunk: String, stream_kind: String) -> void:
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
 		transition_to(OrbPhase.Phase.REASONING)
 	elif phase != OrbPhase.Phase.TOOL_EXEC:
 		transition_to(OrbPhase.Phase.GENERATING)
-	jarvis_orb.add_step_text(chunk)
 	pass
 
 
 func on_message_complete(_usage: OpenAiUsage) -> void:
-	jarvis_orb.flush_stream_buffer()
 	jarvis_orb.flush_growth()
 	jarvis_orb.neuron_net.pulse_random(1.0)
 	pass
@@ -143,21 +190,13 @@ func on_tool_execution_start(_tool_call_id: String, _tool_name: String, _args: D
 	pass
 
 
-func on_tool_execution_end(_tool_call_id: String, tool_name: String, agent_tool_result: AgentToolResult) -> void:
-	if tool_name == ReadTool.NAME and not agent_tool_result.is_error:
-		var ui_body: String = agent_tool_result.details.get(AgentToolResult.DETAIL_BODY, "")
-		var step_text := ui_body if StringUtils.is_not_blank(ui_body) else agent_tool_result.content
-		if StringUtils.is_not_empty(step_text):
-			jarvis_orb.add_step_text(CharStreamUtils.truncate_at_punctuation(step_text, 180))
+func on_tool_execution_end(_tool_call_id: String, _tool_name: String, _agent_tool_result: AgentToolResult) -> void:
 	if phase == OrbPhase.Phase.TOOL_EXEC:
 		transition_to(OrbPhase.Phase.AWAKE)
 	pass
 
 
-func on_chat_entry_add(entry: ChatEntry) -> void:
-	match entry.kind:
-		ChatEntry.KIND_ERROR, ChatEntry.KIND_TOOL, ChatEntry.KIND_RESULT:
-			jarvis_orb.add_step_text(entry.body, true)
+func on_chat_entry_add(_entry: ChatEntry) -> void:
 	pass
 
 
@@ -218,6 +257,7 @@ func finalize_orb_hidden() -> void:
 	modulate.a = 0.0
 	scale = Vector2.ONE
 	phase = OrbPhase.Phase.IDLE
+	active_session_id = 0
 	if jarvis_orb != null:
 		jarvis_orb.clear_stream_queue()
 		jarvis_orb.reset_growth()
