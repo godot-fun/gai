@@ -21,7 +21,6 @@ var tool_badge: PanelContainer
 var tool_name_label: Label
 var tool_status_label: Label
 var shader_material: ShaderMaterial
-var fade_tween: Tween
 
 ## Persistent values use exponential followers so event boundaries never produce hard jumps.
 var gravity: float = 0.0
@@ -92,27 +91,12 @@ func get_visual_type() -> VisualType.Type:
 	return VisualType.Type.SEMANTIC_BLACK_HOLE
 
 
-func set_visual_visible(show: bool, animated: bool) -> void:
-	if fade_tween != null and fade_tween.is_valid():
-		fade_tween.kill()
-	if show:
-		visible = true
-		modulate.a = 0.0 if animated else 1.0
-		if animated:
-			fade_tween = create_tween()
-			fade_tween.tween_property(self, "modulate:a", 1.0, 0.45)
-		return
-	if not animated:
-		visible = false
-		modulate.a = 1.0
-		return
-	fade_tween = create_tween()
-	fade_tween.tween_property(self, "modulate:a", 0.0, 0.45)
-	fade_tween.tween_callback(func() -> void:
-		visible = false
-		modulate.a = 1.0
-	)
-	pass
+func fade_in_seconds() -> float:
+	return 0.45
+
+
+func fade_out_seconds() -> float:
+	return 0.45
 
 
 func reset_visual() -> void:
@@ -201,7 +185,7 @@ func on_message_complete(_usage: OpenAiUsage) -> void:
 func on_tool_execution_start(_tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	wormhole_angle = angle_for_tool(tool_name)
 	target_wormhole_open = 1.0
-	tool_name_label.text = public_tool_name(tool_name)
+	tool_name_label.text = VisualToolFormatter.upper_name(tool_name)
 	set_tool_badge_state(ToolBadgeState.CONNECTING)
 	target_tool_badge_alpha = 1.0
 	tool_badge_hold_seconds = 0.0
@@ -357,8 +341,3 @@ static func follow(current: float, target: float, delta: float, speed: float) ->
 
 static func angle_for_tool(tool_name: String) -> float:
 	return lerpf(-PI * 0.9, PI * 0.9, float(abs(tool_name.hash()) % 1000) / 999.0)
-
-
-static func public_tool_name(tool_name: String) -> String:
-	var readable := tool_name.replace("_", " ").replace("-", " ").strip_edges()
-	return readable.to_upper() if not readable.is_empty() else "TOOL"

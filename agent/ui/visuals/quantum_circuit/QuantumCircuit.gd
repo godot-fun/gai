@@ -29,7 +29,6 @@ var ended_with_error: bool = false
 var turn_serial: int = 0
 var gate_serial: int = 0
 var next_replacement_slot: int = 0
-var fade_tween: Tween
 
 
 func _ready() -> void:
@@ -43,24 +42,12 @@ func get_visual_type() -> VisualType.Type:
 	return VisualType.Type.QUANTUM_CIRCUIT
 
 
-func set_visual_visible(show: bool, animated: bool) -> void:
-	if fade_tween != null and fade_tween.is_valid():
-		fade_tween.kill()
-	if show:
-		visible = true
-		modulate.a = 0.0 if animated else 1.0
-		if animated:
-			fade_tween = create_tween()
-			fade_tween.tween_property(self, "modulate:a", 1.0, 0.3)
-		return
-	if not animated:
-		visible = false
-		modulate.a = 1.0
-		return
-	fade_tween = create_tween()
-	fade_tween.tween_property(self, "modulate:a", 0.0, 0.38)
-	fade_tween.tween_callback(func() -> void: visible = false; modulate.a = 1.0)
-	pass
+func fade_in_seconds() -> float:
+	return 0.3
+
+
+func fade_out_seconds() -> float:
+	return 0.38
 
 
 func reset_visual() -> void:
@@ -133,7 +120,7 @@ func on_message_update(chunk: String, stream_kind: String) -> void:
 
 func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	ensure_wire()
-	var gate := append_gate(GateKind.TOOL, tool_call_id, public_tool_name(tool_name))
+	var gate := append_gate(GateKind.TOOL, tool_call_id, VisualToolFormatter.gate_name(tool_name))
 	gate["state"] = GateState.RUNNING
 	tool_gates[tool_call_id] = gate
 	pulse = 1.0
@@ -531,10 +518,6 @@ func ensure_wire() -> void:
 	pass
 
 
-static func gate_x(index: int, count: int, left: float, right: float) -> float:
-	return lerpf(left + 48.0, right - 42.0, float(index + 1) / float(maxi(count + 1, 2)))
-
-
 static func gate_label(kind: int) -> String:
 	match kind:
 		GateKind.HADAMARD:
@@ -544,16 +527,3 @@ static func gate_label(kind: int) -> String:
 		GateKind.ROTATION:
 			return "Ry"
 	return "U"
-
-
-static func public_tool_name(tool_name: String) -> String:
-	var readable := tool_name.replace("_", " ").replace("-", " ").strip_edges()
-	if readable.is_empty():
-		return "TOOL"
-	return String(readable.split(" ", false)[0]).left(7).to_upper()
-
-
-func draw_centered_text(position: Vector2, text: String, font: Font, font_size: int, color: Color) -> void:
-	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	draw_string(font, position - Vector2(width * 0.5, 0.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
-	pass

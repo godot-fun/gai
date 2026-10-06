@@ -108,8 +108,8 @@ func branch_anchor_stays_on_visible_trunk_test() -> void:
 
 
 func public_tool_name_does_not_expose_arguments_test() -> void:
-	assert(ReasoningTree.public_tool_name("web_search") == "Web Search")
-	assert(ReasoningTree.public_tool_name("") == "工具")
+	assert(VisualToolFormatter.title_name("web_search", "工具") == "Web Search")
+	assert(VisualToolFormatter.title_name("", "工具") == "工具")
 	pass
 
 

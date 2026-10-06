@@ -3,7 +3,6 @@ extends VisualEffect
 
 ## An event-driven desktop companion drawn without external assets.
 
-const TOOL_WAIT_SECONDS := 1.5
 const TOOL_REACH_MIN_SECONDS := 0.55
 const REACTION_SECONDS := 0.9
 const END_HOLD_SECONDS := 2.0
@@ -26,7 +25,6 @@ var animation_queue: Array[Dictionary] = []
 var animation_event_active: bool = false
 var active_tool_name: String = ""
 var card_text: String = ""
-var fade_tween: Tween
 var sit_blend: float = 0.0
 var paw_blend: float = 0.0
 var ear_blend: float = 0.0
@@ -57,24 +55,12 @@ func get_visual_type() -> VisualType.Type:
 	return VisualType.Type.DESKTOP_CAT
 
 
-func set_visual_visible(show: bool, animated: bool) -> void:
-	if fade_tween != null and fade_tween.is_valid():
-		fade_tween.kill()
-	if show:
-		visible = true
-		modulate.a = 0.0 if animated else 1.0
-		if animated:
-			fade_tween = create_tween()
-			fade_tween.tween_property(self, "modulate:a", 1.0, 0.25)
-		return
-	if not animated:
-		visible = false
-		modulate.a = 1.0
-		return
-	fade_tween = create_tween()
-	fade_tween.tween_property(self, "modulate:a", 0.0, 0.25)
-	fade_tween.tween_callback(func() -> void: visible = false)
-	pass
+func fade_in_seconds() -> float:
+	return 0.25
+
+
+func fade_out_seconds() -> float:
+	return 0.25
 
 
 func reset_visual() -> void:
@@ -224,7 +210,7 @@ func play_next_animation_event() -> void:
 	active_tool_name = String(event["tool_name"])
 	var next_state: CatState = event["state"]
 	if next_state in [CatState.TOOL_SUCCESS, CatState.TOOL_FAILED]:
-		card_text = public_tool_name(active_tool_name)
+		card_text = VisualToolFormatter.title_name(active_tool_name)
 	set_state(next_state)
 	pass
 
@@ -513,10 +499,10 @@ func draw_tool_button(loading: bool) -> void:
 	var center := Vector2(88.0, 173.0)
 	draw_paw_print(center + Vector2(2.0, 4.0), 1.05, Color(0.0, 0.0, 0.0, 0.2), Color.TRANSPARENT)
 	draw_paw_print(center, 1.0, Color(ColorBase.control_surface, 0.96), Color(accent, 0.86))
-	draw_centered_text(center + Vector2(0.0, 12.0), tool_glyph(active_tool_name), Fonts.semibold(), Typography.title_medium_size, ColorBase.primary_text)
+	draw_centered_text(center + Vector2(0.0, 12.0), VisualToolFormatter.glyph(active_tool_name), Fonts.semibold(), Typography.title_medium_size, ColorBase.primary_text)
 	if loading:
 		draw_yarn_loader(center, accent)
-	draw_centered_text(center + Vector2(0.0, 56.0), compact_label(public_tool_name(active_tool_name), 15), Fonts.medium(), Typography.label_small_size, ColorBase.secondary_text)
+	draw_centered_text(center + Vector2(0.0, 56.0), compact_label(VisualToolFormatter.title_name(active_tool_name), 15), Fonts.medium(), Typography.label_small_size, ColorBase.secondary_text)
 	pass
 
 
@@ -610,19 +596,6 @@ func draw_text(position: Vector2, text: String, font: Font, font_size: int, colo
 	pass
 
 
-func draw_centered_text(position: Vector2, text: String, font: Font, font_size: int, color: Color) -> void:
-	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	draw_string(font, position - Vector2(width * 0.5, 0.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
-	pass
-
-
-func longest_tool_seconds() -> float:
-	var longest := 0.0
-	for tool: Dictionary in active_tools.values():
-		longest = maxf(longest, float(tool["seconds"]))
-	return longest
-
-
 func first_active_tool_name() -> String:
 	for tool: Dictionary in active_tools.values():
 		return String(tool.get("name", ""))
@@ -705,26 +678,6 @@ static func reach_particle_alpha(reach_amount: float, phase: float) -> float:
 
 static func reach_particle_amount(reach_amount: float) -> float:
 	return clampf(inverse_lerp(REACH_PARTICLE_DELAY_PROGRESS, 1.0, reach_amount), 0.0, 1.0)
-
-
-static func public_tool_name(tool_name: String) -> String:
-	var readable := tool_name.replace("_", " ").replace("-", " ").strip_edges()
-	return readable.capitalize() if not readable.is_empty() else "Tool"
-
-
-static func tool_glyph(tool_name: String) -> String:
-	var normalized := tool_name.to_lower()
-	if "read" in normalized:
-		return "R"
-	if "write" in normalized or "edit" in normalized:
-		return "W"
-	if "shell" in normalized or "bash" in normalized or "exec" in normalized:
-		return ">_"
-	if "search" in normalized or "find" in normalized or "grep" in normalized:
-		return "?"
-	if "web" in normalized or "fetch" in normalized:
-		return "@"
-	return public_tool_name(tool_name).left(2).to_upper()
 
 
 static func compact_label(text: String, max_length: int) -> String:

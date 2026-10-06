@@ -11,12 +11,6 @@ const PARTICLE_CAP_MIN := 80
 const PARTICLE_CAP_MAX := 280
 const SPAWN_FRAME_MIN := 5
 const SPAWN_FRAME_MAX := 16
-const CHUNK_CHARS_MIN := 3
-const CHUNK_CHARS_MAX := 10
-
-const KEYWORD_POOL_MIN := 12
-const KEYWORD_POOL_MAX := 48
-
 ## Stream chars to reach maximum density (one long agent reply).
 const CHARS_FOR_FULL := 7000.0
 
@@ -41,10 +35,6 @@ static func particle_cap(char_count: int) -> int:
 
 static func spawn_per_frame(char_count: int) -> int:
 	return int(lerpf(float(SPAWN_FRAME_MIN), float(SPAWN_FRAME_MAX), level(char_count)))
-
-
-static func chunk_char_cap(char_count: int) -> int:
-	return int(lerpf(float(CHUNK_CHARS_MIN), float(CHUNK_CHARS_MAX), level(char_count)))
 
 
 static func keyword_burst(char_count: int) -> int:

@@ -14,7 +14,7 @@ var phase: OrbPhase.Phase = OrbPhase.Phase.IDLE
 var viewport_container: SubViewportContainer
 var sub_viewport: SubViewport
 var jarvis_orb: JarvisOrb
-var fade_tween: Tween
+var orb_tween: Tween
 var active_session_id: int = 0
 var chat_entry_index: int = 0
 var entry_char_index: int = 0
@@ -208,8 +208,8 @@ func transition_to(new_phase: OrbPhase.Phase) -> void:
 
 
 func stop_orb_tween() -> void:
-	if fade_tween != null and fade_tween.is_valid():
-		fade_tween.kill()
+	if orb_tween != null and orb_tween.is_valid():
+		orb_tween.kill()
 	pass
 
 
@@ -222,8 +222,8 @@ func set_orb_visible(show: bool, animated: bool) -> void:
 			finalize_orb_hidden()
 			return
 		ensure_center_pivot()
-		fade_tween = build_orb_tween(false)
-		fade_tween.chain().tween_callback(finalize_orb_hidden)
+		orb_tween = build_orb_tween(false)
+		orb_tween.chain().tween_callback(finalize_orb_hidden)
 		return
 
 	stop_orb_tween()
@@ -236,7 +236,7 @@ func set_orb_visible(show: bool, animated: bool) -> void:
 
 	scale = Vector2(REVEAL_SCALE_MIN, REVEAL_SCALE_MIN)
 	modulate.a = 0.0
-	fade_tween = build_orb_tween(true)
+	orb_tween = build_orb_tween(true)
 	pass
 
 

@@ -26,7 +26,6 @@ var turn_index: int = 0
 var spawn_sequence: int = 0
 var elapsed: float = 0.0
 var core_pulse: float = 0.0
-var fade_tween: Tween
 
 
 func _ready() -> void:
@@ -40,27 +39,12 @@ func get_visual_type() -> VisualType.Type:
 	return VisualType.Type.TOOL_CONSTELLATION
 
 
-func set_visual_visible(show: bool, animated: bool) -> void:
-	if fade_tween != null and fade_tween.is_valid():
-		fade_tween.kill()
-	if show:
-		visible = true
-		modulate.a = 0.0 if animated else 1.0
-		if animated:
-			fade_tween = create_tween()
-			fade_tween.tween_property(self, "modulate:a", 1.0, 0.3)
-		return
-	if not animated:
-		visible = false
-		modulate.a = 1.0
-		return
-	fade_tween = create_tween()
-	fade_tween.tween_property(self, "modulate:a", 0.0, 0.4)
-	fade_tween.tween_callback(func() -> void:
-		visible = false
-		modulate.a = 1.0
-	)
-	pass
+func fade_in_seconds() -> float:
+	return 0.3
+
+
+func fade_out_seconds() -> float:
+	return 0.4
 
 
 func reset_visual() -> void:
@@ -380,9 +364,9 @@ func draw_tool_node(node: Dictionary, position: Vector2) -> void:
 		var satellite_angle := elapsed * (1.25 if state == ExecutionState.RUNNING else 0.3) + float(satellite) * TAU / satellite_count + float(node["sequence"])
 		var satellite_position := position + Vector2.from_angle(satellite_angle) * (node_radius + 15.0)
 		draw_circle(satellite_position, 2.7 if state == ExecutionState.RUNNING else 1.7, Color(state_color, 0.82 if state == ExecutionState.RUNNING else 0.34))
-	draw_centered_text(position + Vector2(0.0, 6.0), tool_glyph(String(node["name"])), Fonts.bold(), Typography.title_small_size, state_color)
+	draw_centered_text(position + Vector2(0.0, 6.0), VisualToolFormatter.glyph(String(node["name"])), Fonts.bold(), Typography.title_small_size, state_color)
 	var label_position := position + Vector2(0.0, node_radius + Margin.ma_6)
-	draw_centered_text(label_position, public_tool_name(String(node["name"])), Fonts.semibold(), Typography.label_medium_size, ColorBase.primary_text)
+	draw_centered_text(label_position, VisualToolFormatter.title_name(String(node["name"])), Fonts.semibold(), Typography.label_medium_size, ColorBase.primary_text)
 	var status_text := "RUNNING" if state == ExecutionState.RUNNING else ("COMPLETE" if state == ExecutionState.SUCCESS else "FAILED")
 	draw_centered_text(label_position + Vector2(0.0, Margin.ma_4), status_text, Fonts.medium(), Typography.label_small_size, Color(state_color, 0.9))
 	if state == ExecutionState.RUNNING and int(node["arg_count"]) > 0:
@@ -400,12 +384,6 @@ func draw_broken_curve(points: PackedVector2Array, color: Color) -> void:
 		broken[index] += (points[index] - points[index - 1]).normalized().orthogonal() * (8.0 if index % 2 else -8.0)
 	draw_polyline(broken, Color(color, 0.08), 12.0, true)
 	draw_polyline(broken, color, 3.0, true)
-	pass
-
-
-func draw_centered_text(position: Vector2, text: String, font: Font, font_size: int, color: Color) -> void:
-	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	draw_string(font, position - Vector2(width * 0.5, 0.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 	pass
 
 
@@ -474,22 +452,3 @@ static func make_node(tool_call_id: String, tool_name: String, args: Dictionary[
 		"settle": 0.0,
 	}
 
-
-static func public_tool_name(tool_name: String) -> String:
-	var readable := tool_name.replace("_", " ").replace("-", " ").strip_edges()
-	return readable.capitalize() if not readable.is_empty() else "Tool"
-
-
-static func tool_glyph(tool_name: String) -> String:
-	var normalized := tool_name.to_lower()
-	if "read" in normalized:
-		return "R"
-	if "write" in normalized or "edit" in normalized:
-		return "W"
-	if "shell" in normalized or "bash" in normalized or "exec" in normalized:
-		return ">_"
-	if "search" in normalized or "grep" in normalized or "find" in normalized:
-		return "?"
-	if "web" in normalized or "fetch" in normalized:
-		return "@"
-	return public_tool_name(tool_name).left(2).to_upper()

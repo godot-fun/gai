@@ -4,12 +4,47 @@ extends Control
 
 ## Effect contract used by [VisualControl]. Override the hooks needed by an effect.
 
+var fade_tween: Tween
+
 
 func get_visual_type() -> VisualType.Type:
 	return VisualType.Type.NONE
 
 
-func set_visual_visible(_show: bool, _animated: bool) -> void:
+func fade_in_seconds() -> float:
+	return 0.3
+
+
+func fade_out_seconds() -> float:
+	return 0.4
+
+
+func set_visual_visible(show: bool, animated: bool) -> void:
+	if fade_tween != null and fade_tween.is_valid():
+		fade_tween.kill()
+	if show:
+		visible = true
+		modulate.a = 0.0 if animated else 1.0
+		if animated:
+			fade_tween = create_tween()
+			fade_tween.tween_property(self, "modulate:a", 1.0, fade_in_seconds())
+		return
+	if not animated:
+		visible = false
+		modulate.a = 1.0
+		return
+	fade_tween = create_tween()
+	fade_tween.tween_property(self, "modulate:a", 0.0, fade_out_seconds())
+	fade_tween.tween_callback(func() -> void:
+		visible = false
+		modulate.a = 1.0
+	)
+	pass
+
+
+func draw_centered_text(position: Vector2, text: String, font: Font, font_size: int, color: Color) -> void:
+	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	draw_string(font, position - Vector2(width * 0.5, 0.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 	pass
 
 

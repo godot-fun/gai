@@ -28,15 +28,16 @@ func lifecycle_state_test() -> void:
 
 func tool_state_test() -> void:
 	var cat := DesktopCat.new()
+	cat.visible = true
 	cat.on_tool_execution_start("read-1", "read_file", {})
 	assert(cat.state == DesktopCat.CatState.TOOL_START)
 	assert(cat.active_tools.has("read-1"))
 	cat._process(DesktopCat.TOOL_REACH_MIN_SECONDS + 0.01)
 	assert(cat.state == DesktopCat.CatState.TOOL_WAITING)
 	cat.on_tool_execution_end("read-1", "read_file", AgentToolResult.ok("done"))
-	assert(cat.state == DesktopCat.CatState.TOOL_START)
-	cat._process(DesktopCat.TOOL_REACH_MIN_SECONDS + 0.01)
 	assert(cat.state == DesktopCat.CatState.TOOL_SUCCESS)
+	cat._process(DesktopCat.REACTION_SECONDS + 0.01)
+	assert(cat.state == DesktopCat.CatState.IDLE)
 	assert(cat.active_tools.is_empty())
 	cat.free()
 	pass
@@ -55,7 +56,7 @@ func concurrent_tool_returns_to_active_name_test() -> void:
 	assert(cat.state == DesktopCat.CatState.TOOL_SUCCESS)
 	cat._process(DesktopCat.REACTION_SECONDS + 0.01)
 	assert(cat.active_tool_name == "read_file")
-	assert(cat.state == DesktopCat.CatState.TOOL_START)
+	assert(cat.state == DesktopCat.CatState.TOOL_WAITING)
 	cat.free()
 	pass
 

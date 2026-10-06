@@ -17,8 +17,8 @@ static func node_and_labels_test() -> void:
 	assert(node["id"] == "call-1")
 	assert(node["arg_count"] == 1)
 	assert(node["turn"] == 2)
-	assert(ToolConstellation.public_tool_name("web_search") == "Web Search")
-	assert(ToolConstellation.tool_glyph("shell") == ">_")
+	assert(VisualToolFormatter.title_name("web_search") == "Web Search")
+	assert(VisualToolFormatter.glyph("shell") == ">_")
 	pass
 
 

@@ -12,7 +12,6 @@ const CORE_RADIUS := 76.0
 const NEON_CYAN := Color("#00f5d4")
 const NEON_BLUE := Color("#16a8ff")
 const NEON_MAGENTA := Color("#ff2bd6")
-const DECK_VOID := Color("#050812")
 
 enum DeckPhase { IDLE, ACTIVE, REASONING, RESPONDING, ENDING }
 enum PodState { CONNECTING, EXECUTING, COMPLETE, FAILED }
@@ -30,7 +29,6 @@ var session_id: int = 0
 var next_replacement_slot: int = 0
 var end_requested: bool = false
 var end_error_message: String = ""
-var fade_tween: Tween
 
 
 func _ready() -> void:
@@ -44,24 +42,12 @@ func get_visual_type() -> VisualType.Type:
 	return VisualType.Type.CYBER_COMMAND_DECK
 
 
-func set_visual_visible(show: bool, animated: bool) -> void:
-	if fade_tween != null and fade_tween.is_valid():
-		fade_tween.kill()
-	if show:
-		visible = true
-		modulate.a = 0.0 if animated else 1.0
-		if animated:
-			fade_tween = create_tween()
-			fade_tween.tween_property(self, "modulate:a", 1.0, 0.28)
-		return
-	if not animated:
-		visible = false
-		modulate.a = 1.0
-		return
-	fade_tween = create_tween()
-	fade_tween.tween_property(self, "modulate:a", 0.0, 0.34)
-	fade_tween.tween_callback(func() -> void: visible = false; modulate.a = 1.0)
-	pass
+func fade_in_seconds() -> float:
+	return 0.28
+
+
+func fade_out_seconds() -> float:
+	return 0.34
 
 
 func reset_visual() -> void:
@@ -527,8 +513,8 @@ func draw_tool_pod(pod: Dictionary, rect: Rect2) -> void:
 	draw_polyline(outline, Color(color, 0.98 if is_executing else 0.8), 2.2 if is_executing else 1.4, true)
 	draw_line(shown.position + Vector2(cut + 8.0, 0.0), shown.position + Vector2(shown.size.x * 0.62, 0.0), Color(color, 0.98), 3.0)
 	draw_line(shown.position + Vector2(shown.size.x * 0.66, 0.0), shown.position + Vector2(shown.size.x * 0.84, 0.0), Color(NEON_MAGENTA, 0.72), 3.0)
-	var title := ToolConstellation.public_tool_name(String(pod["name"]))
-	var glyph := ToolConstellation.tool_glyph(String(pod["name"]))
+	var title := VisualToolFormatter.title_name(String(pod["name"]))
+	var glyph := VisualToolFormatter.glyph(String(pod["name"]))
 	draw_rect(Rect2(shown.position + Vector2(15.0, 17.0), Vector2(34.0, 34.0)), Color(color, 0.08), true)
 	draw_rect(Rect2(shown.position + Vector2(15.0, 17.0), Vector2(34.0, 34.0)), Color(color, 0.58), false, 1.0)
 	draw_centered_text(shown.position + Vector2(32.0, 40.0), glyph, Fonts.bold(), Typography.label_medium_size, color)
@@ -692,10 +678,4 @@ func draw_closed_polyline(points: PackedVector2Array, color: Color, width: float
 	var closed := PackedVector2Array(points)
 	closed.append(points[0])
 	draw_polyline(closed, color, width, true)
-	pass
-
-
-func draw_centered_text(position: Vector2, text: String, font: Font, font_size: int, color: Color) -> void:
-	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	draw_string(font, position - Vector2(width * 0.5, 0.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 	pass

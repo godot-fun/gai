@@ -1,5 +1,5 @@
 class_name EmbeddingEffect
-extends Control
+extends TransformerStageEffect
 
 ## Semantic starfield: token text chips fly up from screen-bottom (same flight feel as TokenizerEffect).
 ## On arrival the rectangle expands away and the label stays in the rotating galaxy.
@@ -66,7 +66,6 @@ var galaxy_angular_speed := 0.12
 var camera_approach_duration := 5.0
 var hold_after_settle := 0.35
 
-var play_generation: int = 0
 var rotating: bool = false
 var viewport_container: SubViewportContainer
 var sub_viewport: SubViewport
@@ -84,7 +83,6 @@ var flight_layer: Node3D
 var trail_layer: Node3D
 var star_material: StandardMaterial3D
 var frame_shader: Shader
-var stage_tweens: Array[Tween] = []
 var rgb_star_time: float = 0.0
 
 
@@ -110,21 +108,16 @@ func on_theme_changed() -> void:
 
 
 func cancel() -> void:
-	play_generation += 1
+	begin_play()
 	rotating = false
 	clear_runtime()
 	visible = false
 	pass
 
 
-func is_current(generation: int) -> bool:
-	return generation == play_generation
-
-
 ## Dolly camera far→near while tokens fly in (Tokenizer-style); flights do not wait on the camera.
 func play(tokens: Array[LlamaHelper.Token]) -> void:
-	play_generation += 1
-	var generation := play_generation
+	var generation := begin_play()
 	ensure_scene()
 	prepare_starfield()
 	visible = true
@@ -544,19 +537,6 @@ func arrive_token_chip(chip: Node3D, frame: MeshInstance3D, label: Label3D, targ
 		if is_instance_valid(chip):
 			chip.queue_free()
 	)
-	pass
-
-
-func remember_tween(tween: Tween) -> Tween:
-	stage_tweens.append(tween)
-	return tween
-
-
-func stop_animation() -> void:
-	for tween in stage_tweens:
-		if tween != null and tween.is_valid():
-			tween.kill()
-	stage_tweens.clear()
 	pass
 
 

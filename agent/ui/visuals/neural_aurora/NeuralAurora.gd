@@ -55,7 +55,6 @@ var target_direction: float = 1.0
 var completion: float = 0.0
 var completing: bool = false
 var ended_with_error: bool = false
-var fade_tween: Tween
 
 
 func _ready() -> void:
@@ -92,27 +91,12 @@ func get_visual_type() -> VisualType.Type:
 	return VisualType.Type.NEURAL_AURORA
 
 
-func set_visual_visible(show: bool, animated: bool) -> void:
-	if fade_tween != null and fade_tween.is_valid():
-		fade_tween.kill()
-	if show:
-		visible = true
-		modulate.a = 0.0 if animated else 1.0
-		if animated:
-			fade_tween = create_tween()
-			fade_tween.tween_property(self, "modulate:a", 1.0, 0.42)
-		return
-	if not animated:
-		visible = false
-		modulate.a = 1.0
-		return
-	fade_tween = create_tween()
-	fade_tween.tween_property(self, "modulate:a", 0.0, 0.5)
-	fade_tween.tween_callback(func() -> void:
-		visible = false
-		modulate.a = 1.0
-	)
-	pass
+func fade_in_seconds() -> float:
+	return 0.42
+
+
+func fade_out_seconds() -> float:
+	return 0.5
 
 
 func reset_visual() -> void:
@@ -275,7 +259,7 @@ func start_next_tool() -> void:
 	tool_play_seconds = 0.0
 	tool_pulse = 0.01
 	tool_angle = angle_for_text(String(playing_tool["name"]))
-	tool_label.text = public_tool_name(String(playing_tool["name"]))
+	tool_label.text = VisualToolFormatter.upper_name(String(playing_tool["name"]))
 	tool_label.add_theme_color_override("font_color", ThemeColor.accent_theme_color())
 	tool_label.modulate.a = 1.0
 	target_energy = 1.0
@@ -328,8 +312,3 @@ func set_shader_parameters() -> void:
 
 static func angle_for_text(text: String) -> float:
 	return lerpf(-PI * 0.82, PI * 0.82, float(abs(text.hash()) % 1000) / 999.0)
-
-
-static func public_tool_name(tool_name: String) -> String:
-	var readable := tool_name.replace("_", " ").replace("-", " ").strip_edges()
-	return readable.to_upper() if not readable.is_empty() else "TOOL"

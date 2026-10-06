@@ -34,7 +34,6 @@ var branch_sequence: int = 0
 var phase_label: String = ""
 var branches: Array[Dictionary] = []
 var active_tool_indices: Dictionary[String, int] = {}
-var fade_tween: Tween
 var completion_particles: GPUParticles2D
 
 
@@ -50,29 +49,12 @@ func get_visual_type() -> VisualType.Type:
 	return VisualType.Type.REASONING_TREE
 
 
-func set_visual_visible(show: bool, animated: bool) -> void:
-	if fade_tween != null and fade_tween.is_valid():
-		fade_tween.kill()
-	if show:
-		visible = true
-		if not animated:
-			modulate.a = 1.0
-			return
-		modulate.a = 0.0
-		fade_tween = create_tween()
-		fade_tween.tween_property(self, "modulate:a", 1.0, 0.35)
-		return
-	if not animated:
-		visible = false
-		modulate.a = 1.0
-		return
-	fade_tween = create_tween()
-	fade_tween.tween_property(self, "modulate:a", 0.0, 0.45)
-	fade_tween.tween_callback(func() -> void:
-		visible = false
-		modulate.a = 1.0
-	)
-	pass
+func fade_in_seconds() -> float:
+	return 0.35
+
+
+func fade_out_seconds() -> float:
+	return 0.45
 
 
 func reset_visual() -> void:
@@ -144,7 +126,7 @@ func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dic
 	branches.append(make_branch(tool_call_id, tool_name, branch_sequence, target_trunk_growth))
 	branch_sequence += 1
 	active_tool_indices[tool_call_id] = branches.size() - 1
-	phase_label = "调用工具 · %s" % public_tool_name(tool_name)
+	phase_label = "调用工具 · %s" % VisualToolFormatter.title_name(tool_name, "工具")
 	queue_redraw()
 	pass
 
@@ -154,7 +136,7 @@ func on_tool_execution_end(tool_call_id: String, tool_name: String, result: Agen
 		return
 	var index: int = active_tool_indices[tool_call_id]
 	branches[index]["state"] = BranchState.FAILED if result.is_error else BranchState.SUCCESS
-	branches[index]["label"] = "%s · %s" % [public_tool_name(tool_name), "失败" if result.is_error else "已完成"]
+	branches[index]["label"] = "%s · %s" % [VisualToolFormatter.title_name(tool_name, "工具"), "失败" if result.is_error else "已完成"]
 	active_tool_indices.erase(tool_call_id)
 	if not result.is_error:
 		target_trunk_growth = maxf(target_trunk_growth, trunk_growth_for_turn(turn_index))
@@ -404,7 +386,7 @@ static func make_branch(tool_call_id: String, tool_name: String, branch_index: i
 	var direction := -1.0 if branch_index % 2 == 0 else 1.0
 	return {
 		"id": tool_call_id,
-		"label": public_tool_name(tool_name),
+		"label": VisualToolFormatter.title_name(tool_name, "工具"),
 		"state": BranchState.RUNNING,
 		"anchor": clampf(growth, ANCHOR_MIN, ANCHOR_MAX),
 		"anchor_offset": branch_anchor_offset(branch_index),
@@ -460,8 +442,3 @@ static func get_completion_vector(branch: Dictionary, state: int, length: float)
 		return vector
 	vector.y = maxf(absf(vector.y) * 0.35, length * 0.18)
 	return vector.normalized() * length
-
-
-static func public_tool_name(tool_name: String) -> String:
-	var readable := tool_name.replace("_", " ").replace("-", " ").strip_edges()
-	return readable.capitalize() if not readable.is_empty() else "工具"

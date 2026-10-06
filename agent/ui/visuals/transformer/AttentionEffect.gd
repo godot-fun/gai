@@ -1,5 +1,5 @@
 class_name AttentionEffect
-extends Control
+extends TransformerStageEffect
 
 ## Sequential attention scan over tokens already settled by [EmbeddingEffect].
 ## A short energy trail travels token-to-token; every arrival pulses the target token.
@@ -42,9 +42,7 @@ var flow_line_segments := 14
 var pulse_scale := 1.65
 var hold_after_scan := 0.4
 
-var play_generation: int = 0
 var embedding: EmbeddingEffect
-var stage_tweens: Array[Tween] = []
 var pulse_shader: Shader
 var active_path: Path3D
 var active_line: MeshInstance3D
@@ -68,19 +66,14 @@ func set_embedding_effect(value: EmbeddingEffect) -> void:
 
 
 func cancel() -> void:
-	play_generation += 1
+	begin_play()
 	stop_animation()
 	clear_attention_nodes()
 	pass
 
 
-func is_current(generation: int) -> bool:
-	return generation == play_generation
-
-
 func play(tokens: Array[LlamaHelper.Token]) -> void:
-	play_generation += 1
-	var generation := play_generation
+	var generation := begin_play()
 	stop_animation()
 	clear_attention_nodes()
 	if embedding == null or not is_instance_valid(embedding) or tokens.size() < 2:
@@ -275,19 +268,6 @@ func create_pulse_halo(color: Color) -> MeshInstance3D:
 	material.set_shader_parameter("intensity", 1.0)
 	halo.material_override = material
 	return halo
-
-
-func remember_tween(tween: Tween) -> Tween:
-	stage_tweens.append(tween)
-	return tween
-
-
-func stop_animation() -> void:
-	for tween in stage_tweens:
-		if tween != null and tween.is_valid():
-			tween.kill()
-	stage_tweens.clear()
-	pass
 
 
 func clear_attention_nodes() -> void:

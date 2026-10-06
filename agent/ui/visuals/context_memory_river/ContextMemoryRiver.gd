@@ -19,7 +19,6 @@ var context_limit: int = DEFAULT_CONTEXT_LIMIT
 var activity: float = 0.0
 var visual_activity: float = 0.0
 var output_activity: float = 0.0
-var fade_tween: Tween
 
 
 func _ready() -> void:
@@ -33,27 +32,12 @@ func get_visual_type() -> VisualType.Type:
 	return VisualType.Type.CONTEXT_MEMORY_RIVER
 
 
-func set_visual_visible(show: bool, animated: bool) -> void:
-	if fade_tween != null and fade_tween.is_valid():
-		fade_tween.kill()
-	if show:
-		visible = true
-		modulate.a = 0.0 if animated else 1.0
-		if animated:
-			fade_tween = create_tween()
-			fade_tween.tween_property(self, "modulate:a", 1.0, 0.35)
-		return
-	if not animated:
-		visible = false
-		modulate.a = 1.0
-		return
-	fade_tween = create_tween()
-	fade_tween.tween_property(self, "modulate:a", 0.0, 0.45)
-	fade_tween.tween_callback(func() -> void:
-		visible = false
-		modulate.a = 1.0
-	)
-	pass
+func fade_in_seconds() -> float:
+	return 0.35
+
+
+func fade_out_seconds() -> float:
+	return 0.45
 
 
 func reset_visual() -> void:
@@ -373,11 +357,4 @@ static func color_for_type(stream_type: StreamType) -> Color:
 
 
 static func public_label(tool_name: String) -> String:
-	var words := tool_name.replace("_", " ").replace("-", " ").strip_edges()
-	return StringUtils.truncate(words.to_upper(), 14)
-
-
-func draw_centered_text(position: Vector2, text: String, font: Font, font_size: int, color: Color) -> void:
-	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	draw_string(font, position - Vector2(width * 0.5, 0.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
-	pass
+	return StringUtils.truncate(VisualToolFormatter.readable_name(tool_name).to_upper(), 14)

@@ -1,5 +1,5 @@
 class_name TokenizerEffect
-extends Control
+extends TransformerStageEffect
 
 ## Staged tokenizer animation: train-in → boundary cuts → ID reveal → fly-away with trails.
 ## Hosted by [TransformerController]; sibling stages (e.g. EmbeddingEffect) can follow.
@@ -60,7 +60,6 @@ var token_reveal_duration := 2.8
 var token_fly_duration := 1.2
 var token_fly_stagger := 0.13
 
-var play_generation: int = 0
 var row: Control
 var trail_layer: Control
 var token_nodes: Array[TransformerTokenNode] = []
@@ -68,7 +67,6 @@ var cutter: ColorRect
 var cutter_material: ShaderMaterial
 var row_haze: ColorRect
 var haze_material: ShaderMaterial
-var stage_tweens: Array[Tween] = []
 
 
 func _ready() -> void:
@@ -94,19 +92,14 @@ func sync_cutter_theme() -> void:
 
 
 func cancel() -> void:
-	play_generation += 1
+	begin_play()
 	clear_tokens()
 	pass
 
 
-func is_current(generation: int) -> bool:
-	return generation == play_generation
-
-
 ## Builds the token row and plays arrival → cut → reveal → fly-away. Cancels any prior play.
 func play(tokens: Array[LlamaHelper.Token]) -> void:
-	play_generation += 1
-	var generation := play_generation
+	var generation := begin_play()
 	build_tokens(tokens)
 	await animate_transformer(generation)
 	pass
@@ -488,19 +481,6 @@ func make_cut_particles(at_position: Vector2, amount: int, lifetime: float, spee
 	particles.scale_amount_max = scale_max
 	particles.finished.connect(particles.queue_free)
 	return particles
-
-
-func remember_tween(tween: Tween) -> Tween:
-	stage_tweens.append(tween)
-	return tween
-
-
-func stop_animation() -> void:
-	for tween in stage_tweens:
-		if tween != null and tween.is_valid():
-			tween.kill()
-	stage_tweens.clear()
-	pass
 
 
 func clear_tokens() -> void:

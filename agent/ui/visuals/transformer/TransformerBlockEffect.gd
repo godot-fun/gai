@@ -1,5 +1,5 @@
 class_name TransformerBlockEffect
-extends Control
+extends TransformerStageEffect
 
 ## Sixteen accelerated matrix gates suggest the repeated transformations of a deep network.
 ## The effect reuses tokens settled in [EmbeddingEffect] and mutates their color and position in place.
@@ -38,10 +38,8 @@ var gate_frame_width := 0.018
 var rearrange_distance := 0.035
 var hold_after_layers := 0.45
 
-var play_generation: int = 0
 var embedding: EmbeddingEffect
 var gate_shader: Shader
-var stage_tweens: Array[Tween] = []
 var active_gates: Array[Node3D] = []
 
 
@@ -63,19 +61,14 @@ func set_embedding_effect(value: EmbeddingEffect) -> void:
 
 
 func cancel() -> void:
-	play_generation += 1
+	begin_play()
 	stop_animation()
 	clear_gates()
 	pass
 
 
-func is_current(generation: int) -> bool:
-	return generation == play_generation
-
-
 func play(tokens: Array[LlamaHelper.Token]) -> void:
-	play_generation += 1
-	var generation := play_generation
+	var generation := begin_play()
 	stop_animation()
 	clear_gates()
 	if embedding == null or not is_instance_valid(embedding) or tokens.is_empty():
@@ -281,19 +274,6 @@ func transform_token(label: Label3D, token: LlamaHelper.Token, layer_index: int)
 	var offset := Vector3(cos(angle) * rearrange_distance, vertical, sin(angle) * rearrange_distance)
 	label.position += offset
 	label.position = label.position.clamp(Vector3.ONE * -EmbeddingEffect.SPACE_SCALE * 0.52, Vector3.ONE * EmbeddingEffect.SPACE_SCALE * 0.52)
-	pass
-
-
-func remember_tween(tween: Tween) -> Tween:
-	stage_tweens.append(tween)
-	return tween
-
-
-func stop_animation() -> void:
-	for tween in stage_tweens:
-		if tween != null and tween.is_valid():
-			tween.kill()
-	stage_tweens.clear()
 	pass
 
 

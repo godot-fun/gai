@@ -1,5 +1,5 @@
 class_name LogitsBurstEffect
-extends Control
+extends TransformerStageEffect
 
 ## Keeps low-probability thinking tokens streaming away from the output head, then
 ## replaces them with a short, brighter burst made from the final answer tokens.
@@ -13,14 +13,12 @@ const HIGH_TOKEN_LIMIT := 24
 const GALAXY_COLLAPSE_DURATION := 2.0
 const GALAXY_COLLAPSE_SCALE := 0.035
 
-var play_generation: int = 0
 var emitting_low: bool = false
 var low_tokens: Array[LlamaHelper.Token] = []
 var low_index: int = 0
 var low_elapsed: float = 0.0
 var embedding: EmbeddingEffect
 var burst_layer: Node3D
-var stage_tweens: Array[Tween] = []
 
 
 func _ready() -> void:
@@ -73,8 +71,7 @@ func collapse_galaxy() -> void:
 
 func play_high_probability(tokens: Array[LlamaHelper.Token]) -> void:
 	emitting_low = false
-	play_generation += 1
-	var generation := play_generation
+	var generation := begin_play()
 	if not ensure_layer():
 		return
 	# Low-token tweens own callbacks capturing their labels. Stop them before the
@@ -89,7 +86,7 @@ func play_high_probability(tokens: Array[LlamaHelper.Token]) -> void:
 		spawn_high_token(tokens[index], index, count, generation)
 		await get_tree().create_timer(0.045).timeout
 	await get_tree().create_timer(1.65).timeout
-	if generation == play_generation:
+	if is_current(generation):
 		stop_animation()
 		await collapse_to_center(0.72)
 		await get_tree().create_timer(0.32).timeout
@@ -98,7 +95,7 @@ func play_high_probability(tokens: Array[LlamaHelper.Token]) -> void:
 
 
 func cancel() -> void:
-	play_generation += 1
+	begin_play()
 	emitting_low = false
 	low_tokens.clear()
 	stop_animation()
@@ -144,7 +141,7 @@ static func low_probability_label(token: LlamaHelper.Token, sequence: int) -> St
 
 
 func spawn_high_token(token: LlamaHelper.Token, index: int, count: int, generation: int) -> void:
-	if generation != play_generation:
+	if not is_current(generation):
 		return
 	var color := TransformerTokenNode.neon_display_color(TransformerTokenNode.color_from_token_id(token.id))
 	var label := embedding.make_token_label(TransformerTokenNode.display_piece(token.piece), color)
@@ -204,19 +201,6 @@ func collapse_to_center(duration: float) -> void:
 		tween.tween_property(label, "scale", target_scale, duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
 		tween.tween_property(label, "modulate", target_color, duration)
 	await tween.finished
-	pass
-
-
-func remember_tween(tween: Tween) -> Tween:
-	stage_tweens.append(tween)
-	return tween
-
-
-func stop_animation() -> void:
-	for tween in stage_tweens:
-		if tween != null and tween.is_valid():
-			tween.kill()
-	stage_tweens.clear()
 	pass
 
 
