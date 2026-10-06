@@ -1,7 +1,7 @@
 class_name ContextMemoryRiver
 extends VisualEffect
 
-## A living context map: source material flows into the model, old items crystallize,
+## A living context map: source material flows into the model, older items recede,
 ## and generated content leaves through the output channel.
 
 const MAX_ITEMS := 28
@@ -17,6 +17,7 @@ var prompt_tokens: int = 0
 var completion_tokens: int = 0
 var context_limit: int = DEFAULT_CONTEXT_LIMIT
 var activity: float = 0.0
+var visual_activity: float = 0.0
 var output_activity: float = 0.0
 var fade_tween: Tween
 
@@ -62,6 +63,7 @@ func reset_visual() -> void:
 	prompt_tokens = 0
 	completion_tokens = 0
 	activity = 0.0
+	visual_activity = 0.0
 	output_activity = 0.0
 	queue_redraw()
 	pass
@@ -143,6 +145,9 @@ func _process(delta: float) -> void:
 		return
 	elapsed += delta
 	activity = move_toward(activity, 0.0, delta * 0.75)
+	# Event activity is discontinuous; use an exponential follower so drawing never jumps.
+	var activity_follow := 1.0 - exp(-delta * (5.0 if activity > visual_activity else 2.2))
+	visual_activity = lerpf(visual_activity, activity, activity_follow)
 	output_activity = move_toward(output_activity, 0.0, delta * 0.65)
 	for item: Dictionary in items:
 		item["progress"] = minf(float(item["progress"]) + delta * PARTICLE_SPEED * float(item["speed"]), 1.0)
@@ -192,6 +197,15 @@ func draw_river(center: Vector2) -> void:
 	var accent := ThemeColor.accent_theme_color()
 	var left := Vector2(-40.0, center.y)
 	var right := Vector2(size.x + 40.0, center.y)
+	# Soft banks give the stream a readable silhouette without turning it into a panel.
+	var bank_half_height := 82.0
+	for bank_offset in [-bank_half_height, bank_half_height]:
+		var bank_points := PackedVector2Array()
+		for step in range(41):
+			var x := float(step) / 40.0 * size.x
+			var wave := sin(x * 0.006 + elapsed * 0.35) * 9.0
+			bank_points.append(Vector2(x, center.y + bank_offset + wave))
+		draw_polyline(bank_points, Color(accent, 0.2), 1.2, true)
 	for band in range(7, 0, -1):
 		var alpha := 0.012 + float(7 - band) * 0.007
 		draw_line(left, right, Color(accent, alpha), 34.0 + band * 18.0, true)
@@ -202,7 +216,15 @@ func draw_river(center: Vector2) -> void:
 			var lane_distance := absf(float(lane))
 			var y: float = center.y + lane * 18.0 + sin(x * 0.008 + elapsed * (0.55 + lane_distance * 0.04) + lane) * (7.0 + lane_distance * 2.0)
 			wave_points.append(Vector2(x, y))
-		draw_polyline(wave_points, Color(accent, 0.1 + activity * 0.08), 1.4, true)
+		draw_polyline(wave_points, Color(accent, 0.1 + visual_activity * 0.08), 1.4, true)
+	# Converging guide lines make the context window read as an intake rather than an overlay.
+	for side in [-1.0, 1.0]:
+		var intake := PackedVector2Array([
+			Vector2(0.0, center.y + side * bank_half_height),
+			Vector2(center.x * 0.58, center.y + side * 54.0),
+			Vector2(center.x - 82.0, center.y + side * 22.0),
+		])
+		draw_polyline(intake, Color(accent, 0.12 + visual_activity * 0.08), 2.0, true)
 	pass
 
 
@@ -213,31 +235,58 @@ func draw_item(item: Dictionary, center: Vector2) -> void:
 	var local_progress := progress if not is_output else 1.0 - progress
 	var x := lerpf(-50.0, center.x, local_progress) if not is_output else lerpf(size.x + 50.0, center.x, local_progress)
 	var lane: int = item["lane"]
-	var y := center.y + lane * 19.0 + sin(progress * TAU * 1.5 + lane + elapsed) * 8.0
+	var lane_offset := lane * 19.0 + sin(progress * TAU * 1.5 + lane + elapsed) * 8.0
+	var convergence := smoothstep(0.48, 1.0, progress)
+	var y := center.y + lane_offset * (1.0 - convergence if not is_output else 0.42 + progress * 0.58)
 	var position := Vector2(x, y)
 	var color := color_for_type(stream_type)
 	var weight: float = item["weight"]
 	var radius := 5.0 + weight * 7.0
-	draw_circle(position, radius * 2.1, Color(color, 0.05 + float(item["pulse"]) * 0.08))
-	draw_circle(position, radius, Color(color, 0.82))
-	draw_circle(position - Vector2(radius * 0.28, radius * 0.28), radius * 0.32, Color.WHITE * Color(1.0, 1.0, 1.0, 0.62))
-	if radius > 9.0:
-		draw_centered_text(position + Vector2(0.0, radius + 14.0), String(item["label"]), Fonts.medium(), Typography.label_small_size, Color(color, 0.82))
+	var edge_fade := 1.0 - smoothstep(0.86, 1.0, progress)
+	for trail_index in range(3, 0, -1):
+		var trail_direction := 1.0 if is_output else -1.0
+		var trail_position := position + Vector2(trail_direction * trail_index * 9.0, 0.0)
+		draw_circle(trail_position, radius * (1.0 - trail_index * 0.18), Color(color, edge_fade * (0.13 - trail_index * 0.025)))
+	draw_circle(position, radius * 2.1, Color(color, edge_fade * (0.05 + float(item["pulse"]) * 0.08)))
+	draw_circle(position, radius, Color(color, edge_fade * 0.82))
+	draw_circle(position - Vector2(radius * 0.28, radius * 0.28), radius * 0.32, Color(1.0, 1.0, 1.0, edge_fade * 0.62))
+	var label_is_clear := progress > 0.12 and progress < 0.72 and x > 54.0 and x < size.x - 54.0
+	if radius > 9.0 and label_is_clear and float(item["pulse"]) > 0.15:
+		draw_centered_text(position + Vector2(0.0, radius + 14.0), String(item["label"]), Fonts.medium(), Typography.label_small_size, Color(color, edge_fade * 0.82))
 	pass
 
 
 func draw_context_window(center: Vector2) -> void:
 	var accent := ThemeColor.accent_theme_color()
-	var breath := 0.5 + sin(elapsed * 2.2) * 0.5
-	var radius := 72.0
+	# The body breathes slowly while the capacity gauge stays fixed and trustworthy.
+	var breath_phase := sin(elapsed * TAU / 2.8)
+	var breath := 0.5 + breath_phase * 0.5
+	var gauge_radius := 80.0
+	var body_radius := 72.0 + breath_phase * 1.8
+	var ratio := context_ratio()
+	var capacity_color := ColorBase.error if ratio >= 0.9 else (ColorBase.warning if ratio >= 0.72 else accent)
 	for glow in range(4):
-		draw_circle(center, radius + 12.0 + glow * 10.0, Color(accent, 0.035 - glow * 0.006 + activity * 0.012))
-	draw_circle(center, radius, Color(ColorBase.deep_surface, 0.96))
-	draw_arc(center, radius + 8.0, -PI * 0.5, -PI * 0.5 + TAU * context_ratio(), 64, Color(accent, 0.92), 6.0, true)
-	draw_arc(center, radius + 8.0, -PI * 0.5 + TAU * context_ratio(), PI * 1.5, 64, Color(ColorBase.subtle_border, 0.42), 3.0, true)
-	draw_circle(center, 11.0 + breath * 3.0 + activity * 4.0, Color(accent, 0.72))
+		var glow_radius := gauge_radius + 13.0 + glow * 11.0 + breath * (5.0 + glow * 1.5) + visual_activity * 5.0
+		var glow_alpha := 0.032 - glow * 0.005 + breath * 0.012 + visual_activity * 0.014
+		draw_circle(center, glow_radius, Color(capacity_color, glow_alpha))
+	# A thin secondary wave gives the pulse a visible leading edge.
+	var wave_radius := gauge_radius + 18.0 + breath * 24.0 + visual_activity * 7.0
+	draw_arc(center, wave_radius, 0.0, TAU, 72, Color(capacity_color, (1.0 - breath) * 0.08 + visual_activity * 0.05), 1.4, true)
+	draw_circle(center, body_radius + 3.0, Color(accent, 0.08 + breath * 0.035))
+	draw_circle(center, body_radius, Color(ColorBase.deep_surface, 0.96))
+	draw_arc(center, gauge_radius, -PI * 0.5, -PI * 0.5 + TAU * ratio, 64, Color(capacity_color, 0.92), 3.2, true)
+	draw_arc(center, gauge_radius, -PI * 0.5 + TAU * ratio, PI * 1.5, 64, Color(ColorBase.subtle_border, 0.38), 1.4, true)
+	for tick in range(8):
+		var angle := -PI * 0.5 + float(tick) * TAU / 8.0
+		var tick_start := center + Vector2.from_angle(angle) * (gauge_radius + 6.0)
+		var tick_end := center + Vector2.from_angle(angle) * (gauge_radius + 10.0)
+		draw_line(tick_start, tick_end, Color(ColorBase.secondary_text, 0.28), 0.8, true)
+	var core_radius := 10.5 + breath * 3.0 + visual_activity * 1.4
+	draw_circle(center, core_radius * 1.75, Color(accent, 0.035 + breath * 0.025))
+	draw_circle(center, core_radius, Color(accent, 0.62 + breath * 0.2))
+	draw_circle(center - Vector2(core_radius * 0.24, core_radius * 0.24), core_radius * 0.25, Color(1.0, 1.0, 1.0, 0.16 + breath * 0.12))
 	draw_centered_text(center + Vector2(0.0, 30.0), "CONTEXT", Fonts.semibold(), Typography.label_medium_size, ColorBase.primary_text)
-	draw_centered_text(center + Vector2(0.0, 48.0), token_label(), Fonts.regular(), Typography.label_small_size, Color(accent, 0.9))
+	draw_centered_text(center + Vector2(0.0, 48.0), token_label(), Fonts.regular(), Typography.label_small_size, Color(capacity_color, 0.9))
 	pass
 
 
