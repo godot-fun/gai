@@ -236,7 +236,10 @@ func draw_live_telemetry(center: Vector2) -> void:
 
 
 func draw_orbit_packets(center: Vector2) -> void:
-	var orbit_count := 18 if phase == DeckPhase.REASONING else 10
+	# Keep the orbital hardware independent from short-lived tool/phase changes so its
+	# spacing never pops when a fast tool starts or finishes.
+	var orbit_count := 14
+	var signal_strength := 0.58 + activity * 0.2
 	for index in range(orbit_count):
 		var lane := index % 3
 		var radius := CORE_RADIUS + 72.0 + lane * 25.0
@@ -245,9 +248,9 @@ func draw_orbit_packets(center: Vector2) -> void:
 		var position := center + Vector2.from_angle(angle) * radius
 		var tangent := Vector2.from_angle(angle + PI * 0.5)
 		var color := NEON_MAGENTA if index % 6 == 0 else NEON_CYAN
-		draw_line(position - tangent * 7.0, position + tangent * 7.0, Color(color, 0.68), 2.0, true)
+		draw_line(position - tangent * 7.0, position + tangent * 7.0, Color(color, signal_strength), 2.0, true)
 		if index % 3 == 0:
-			draw_circle(position, 4.5, Color(color, 0.09))
+			draw_circle(position, 4.5, Color(color, 0.07 + activity * 0.025))
 	pass
 
 
