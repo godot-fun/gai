@@ -15,6 +15,7 @@ const EFFECT_SPECS: Array[Dictionary] = [
 	{"type": VisualType.Type.TRANSFORMER, "label": "Transformer"},
 	{"type": VisualType.Type.REASONING_TREE, "label": "Reasoning Tree"},
 	{"type": VisualType.Type.TOOL_CONSTELLATION, "label": "Tool Constellation"},
+	{"type": VisualType.Type.CONTEXT_MEMORY_RIVER, "label": "Context Memory River"},
 ]
 
 const TOOL_CATALOG: Array[Dictionary] = [
@@ -199,7 +200,11 @@ func play_turn(turn_index: int, turn_count: int, large: bool, generation: int) -
 		if not await wait_step(pace(0.07, 0.025, large), generation):
 			return false
 
-	AgentEvents.events.message_complete.emit(demo_session_id, OpenAiUsage.new())
+	var usage := OpenAiUsage.new()
+	usage.prompt_tokens = mini(124_000, 4_000 + (turn_index + 1) * (1_750 if large else 900))
+	usage.completion_tokens = 180 + turn_index * (35 if large else 18)
+	usage.total_tokens = usage.prompt_tokens + usage.completion_tokens
+	AgentEvents.events.message_complete.emit(demo_session_id, usage)
 	if not await wait_step(pace(0.1, 0.04, large), generation):
 		return false
 	AgentEvents.events.turn_end.emit(demo_session_id)
@@ -339,6 +344,8 @@ func visual_label() -> String:
 			return "Reasoning Tree"
 		VisualType.Type.TOOL_CONSTELLATION:
 			return "Tool Constellation"
+		VisualType.Type.CONTEXT_MEMORY_RIVER:
+			return "Context Memory River"
 	return "None"
 
 

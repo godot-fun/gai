@@ -26,7 +26,8 @@
       "visual_jarvis": "Jarvis 特效",
       "visual_transformer": "Transformer 特效",
       "visual_reasoning_tree": "Reasoning Tree 推理树",
-      "visual_tool_constellation": "Tool Constellation 工具星图"
+      "visual_tool_constellation": "Tool Constellation 工具星图",
+      "visual_context_memory_river": "Context Memory River 上下文记忆河"
     },
     "sidebar": {
       "new_session": "+ 新建智能体",

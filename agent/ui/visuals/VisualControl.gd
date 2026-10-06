@@ -37,6 +37,8 @@ func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 			return ReasoningTree.new()
 		VisualType.Type.TOOL_CONSTELLATION:
 			return ToolConstellation.new()
+		VisualType.Type.CONTEXT_MEMORY_RIVER:
+			return ContextMemoryRiver.new()
 	return null
 
 

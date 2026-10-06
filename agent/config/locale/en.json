@@ -26,7 +26,8 @@
       "visual_jarvis": "Jarvis",
       "visual_transformer": "Transformer",
       "visual_reasoning_tree": "Reasoning Tree",
-      "visual_tool_constellation": "Tool Constellation"
+      "visual_tool_constellation": "Tool Constellation",
+      "visual_context_memory_river": "Context Memory River"
     },
     "sidebar": {
       "new_session": "+ New Agent",
