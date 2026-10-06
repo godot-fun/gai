@@ -19,6 +19,7 @@ const EFFECT_SPECS: Array[Dictionary] = [
 	{"type": VisualType.Type.NEURAL_AURORA, "label": "Neural Aurora"},
 	{"type": VisualType.Type.SEMANTIC_BLACK_HOLE, "label": "Semantic Black Hole"},
 	{"type": VisualType.Type.CYBER_COMMAND_DECK, "label": "Cyber Command Deck"},
+	{"type": VisualType.Type.QUANTUM_CIRCUIT, "label": "Quantum Circuit"},
 ]
 
 const TOOL_CATALOG: Array[Dictionary] = [
@@ -355,6 +356,8 @@ func visual_label() -> String:
 			return "Semantic Black Hole"
 		VisualType.Type.CYBER_COMMAND_DECK:
 			return "Cyber Command Deck"
+		VisualType.Type.QUANTUM_CIRCUIT:
+			return "Quantum Circuit"
 	return "None"
 
 

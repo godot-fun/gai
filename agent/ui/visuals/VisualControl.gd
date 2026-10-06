@@ -45,6 +45,8 @@ func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 			return SemanticBlackHole.new()
 		VisualType.Type.CYBER_COMMAND_DECK:
 			return CyberCommandDeck.new()
+		VisualType.Type.QUANTUM_CIRCUIT:
+			return QuantumCircuit.new()
 	return null
 
 
