@@ -81,6 +81,20 @@ func branch_waits_until_trunk_reaches_anchor_test() -> void:
 	pass
 
 
+func fractional_branch_anchor_lies_on_drawn_trunk_test() -> void:
+	var tree := ReasoningTree.new()
+	tree.size = Vector2(1920.0, 1080.0)
+	var base := Vector2(960.0, 1048.0)
+	var segment_height := 96.0
+	var fractional_segment := 2.4
+	var anchor := tree.trunk_point(base, segment_height, fractional_segment)
+	var segment_start := tree.trunk_point(base, segment_height, 2.0)
+	var segment_end := tree.trunk_point(base, segment_height, 3.0)
+	assert(anchor.is_equal_approx(segment_start.lerp(segment_end, 0.4)))
+	tree.free()
+	pass
+
+
 func staggered_anchor_never_exceeds_turn_endpoint_test() -> void:
 	for index in range(24):
 		assert(ReasoningTree.branch_anchor_offset(index) <= 0.0)
@@ -116,6 +130,14 @@ func crown_uses_many_small_bubbles_test() -> void:
 	assert(ReasoningTree.CROWN_BUBBLE_COUNT >= 24)
 	var largest_radius_ratio := 0.13 + 3.0 * 0.012
 	assert(largest_radius_ratio < 0.18)
+	pass
+
+
+func crown_opens_small_then_reaches_full_size_test() -> void:
+	assert(is_equal_approx(ReasoningTree.crown_visual_growth(0.0), 0.0))
+	assert(ReasoningTree.crown_visual_growth(0.25) < 0.25)
+	assert(ReasoningTree.crown_visual_growth(0.5) < ReasoningTree.crown_visual_growth(0.75))
+	assert(is_equal_approx(ReasoningTree.crown_visual_growth(1.0), 1.0))
 	pass
 
 

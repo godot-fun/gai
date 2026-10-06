@@ -359,14 +359,15 @@ func draw_crown(base: Vector2, segment_height: float, accent: Color) -> void:
 	# Short tasks keep a compact tree: the final crown belongs to the actual tip, not an artificial
 	# fully-grown endpoint at the top of the viewport.
 	var center := trunk_point(base, segment_height, maxf(trunk_growth, 0.35))
-	var radius := get_crown_radius() * crown_growth
+	var visual_growth := crown_visual_growth(crown_growth)
+	var radius := get_crown_radius() * visual_growth
 	for index in range(CROWN_BUBBLE_COUNT):
 		var distribution := sqrt((float(index) + 0.5) / float(CROWN_BUBBLE_COUNT))
 		var angle := float(index) * GOLDEN_ANGLE
 		var offset := Vector2(cos(angle) * radius * 0.76, sin(angle) * radius * 0.58) * distribution
 		var bubble_radius := radius * (0.13 + float(index % 4) * 0.012)
 		var bubble_color := accent.lerp(ColorBase.success, 0.22 + float(index % 3) * 0.09)
-		draw_circle(center + offset, bubble_radius, Color(bubble_color, 0.16 + crown_growth * 0.30))
+		draw_circle(center + offset, bubble_radius, Color(bubble_color, 0.16 + visual_growth * 0.30))
 	pass
 
 
@@ -379,11 +380,24 @@ func draw_status(base: Vector2) -> void:
 
 
 func trunk_point(base: Vector2, segment_height: float, segment: float) -> Vector2:
-	return base + Vector2(sin(segment * 1.35) * minf(28.0, size.x * 0.022), -segment * segment_height)
+	# The trunk is rendered as straight lines between integer segment points. Interpolate those
+	# same endpoints so fractional branch anchors sit exactly on the visible trunk.
+	var lower_segment := floorf(segment)
+	var segment_fraction := segment - lower_segment
+	var lower_sway := sin(lower_segment * 1.35)
+	var upper_sway := sin((lower_segment + 1.0) * 1.35)
+	var sway := lerpf(lower_sway, upper_sway, segment_fraction) * minf(28.0, size.x * 0.022)
+	return base + Vector2(sway, -segment * segment_height)
 
 
 func get_crown_radius() -> float:
 	return minf(minf(size.x * CROWN_WIDTH_RATIO, size.y * CROWN_HEIGHT_RATIO), MAX_CROWN_RADIUS)
+
+
+## Keep the first blooms compact, then let them open progressively toward full size.
+static func crown_visual_growth(growth: float) -> float:
+	var normalized_growth := clampf(growth, 0.0, 1.0)
+	return normalized_growth * normalized_growth
 
 
 static func make_branch(tool_call_id: String, tool_name: String, branch_index: int, growth: float) -> Dictionary:
