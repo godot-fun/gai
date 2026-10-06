@@ -24,12 +24,24 @@ static func context_usage_test() -> void:
 	pass
 
 
-static func old_context_expires_test() -> void:
+static func delivered_item_expires_test() -> void:
 	var effect := ContextMemoryRiver.new()
 	effect.add_item(ContextMemoryRiver.StreamType.USER, "USER", 0.5)
-	effect.on_turn_start()
-	effect.on_turn_start()
-	effect.on_turn_start()
+	effect.visible = true
+	effect._process(10.0)
 	assert(effect.items.is_empty())
+	assert(effect.activity == 1.0)
+	effect.free()
+	pass
+
+
+static func saturated_stream_preserves_in_flight_items_test() -> void:
+	var effect := ContextMemoryRiver.new()
+	for index in range(ContextMemoryRiver.MAX_ITEMS):
+		effect.add_item(ContextMemoryRiver.StreamType.REASONING, "THOUGHT", 0.5)
+	var oldest: Dictionary = effect.items[0]
+	effect.add_item(ContextMemoryRiver.StreamType.REASONING, "NEW", 0.5)
+	assert(effect.items.size() == ContextMemoryRiver.MAX_ITEMS)
+	assert(effect.items[0] == oldest)
 	effect.free()
 	pass

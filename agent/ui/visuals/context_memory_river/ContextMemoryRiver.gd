@@ -4,7 +4,7 @@ extends VisualEffect
 ## A living context map: source material flows into the model, older items recede,
 ## and generated content leaves through the output channel.
 
-const MAX_ITEMS := 28
+const MAX_ITEMS := 256
 const PARTICLE_SPEED := 0.19
 const DEFAULT_CONTEXT_LIMIT := 128_000
 
@@ -83,7 +83,6 @@ func on_agent_end(error_message: String) -> float:
 
 func on_turn_start() -> void:
 	turn_index += 1
-	age_context()
 	activity = 1.0
 	pass
 
@@ -149,14 +148,25 @@ func _process(delta: float) -> void:
 	var activity_follow := 1.0 - exp(-delta * (5.0 if activity > visual_activity else 2.2))
 	visual_activity = lerpf(visual_activity, activity, activity_follow)
 	output_activity = move_toward(output_activity, 0.0, delta * 0.65)
-	for item: Dictionary in items:
-		item["progress"] = minf(float(item["progress"]) + delta * PARTICLE_SPEED * float(item["speed"]), 1.0)
+	for index in range(items.size() - 1, -1, -1):
+		var item: Dictionary = items[index]
+		var next_progress := float(item["progress"]) + delta * PARTICLE_SPEED * float(item["speed"])
+		if next_progress >= 1.0:
+			if item["type"] as StreamType != StreamType.ANSWER:
+				activity = 1.0
+			items.remove_at(index)
+			continue
+		item["progress"] = next_progress
 		item["pulse"] = move_toward(float(item["pulse"]), 0.0, delta)
 	queue_redraw()
 	pass
 
 
 func add_item(stream_type: StreamType, label: String, weight: float) -> void:
+	# Never evict a packet that is visibly in transit. At saturation, wait for an
+	# existing packet to reach its destination before admitting another one.
+	if items.size() >= MAX_ITEMS:
+		return
 	items.append({
 		"type": stream_type,
 		"label": label,
@@ -167,17 +177,7 @@ func add_item(stream_type: StreamType, label: String, weight: float) -> void:
 		"turn": turn_index,
 		"pulse": 1.0,
 	})
-	if items.size() > MAX_ITEMS:
-		items.pop_front()
 	queue_redraw()
-	pass
-
-
-func age_context() -> void:
-	for index in range(items.size() - 1, -1, -1):
-		if turn_index - int(items[index]["turn"]) < 3:
-			continue
-		items.remove_at(index)
 	pass
 
 
