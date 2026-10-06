@@ -194,7 +194,6 @@ func _draw() -> void:
 	draw_backplane(center)
 	draw_data_rain(center)
 	draw_ambient_energy(center)
-	draw_screen_fx()
 	draw_system_chrome(center)
 	draw_edge_telemetry(center)
 	draw_radar(center)
@@ -349,32 +348,8 @@ func draw_backplane(center: Vector2) -> void:
 		draw_line(Vector2(px, 0.0), Vector2(px, horizon), Color(NEON_BLUE, 0.025), 1.0)
 	for y in range(0, int(horizon / grid_step) + 1):
 		draw_line(Vector2(0.0, y * grid_step), Vector2(size.x, y * grid_step), Color(NEON_BLUE, 0.025), 1.0)
-	draw_line(Vector2(0.0, center.y), Vector2(size.x, center.y), Color(NEON_CYAN, 0.13), 1.0)
 	draw_line(Vector2(center.x, 0.0), Vector2(center.x, size.y), Color(NEON_MAGENTA, 0.08), 1.0)
 	draw_hud_corners()
-	pass
-
-
-func draw_screen_fx() -> void:
-	# Fine scanlines, drifting data ticks, and a restrained magenta glitch channel.
-	for y in range(0, int(size.y), 5):
-		draw_line(Vector2(0.0, y), Vector2(size.x, y), Color(NEON_CYAN, 0.012), 1.0)
-	for index in range(28):
-		var px := fmod(float(index * 173) + elapsed * (9.0 + index % 4), maxf(size.x, 1.0))
-		var py := fmod(float(index * 97) + elapsed * (4.0 + index % 3), maxf(size.y, 1.0))
-		var length := 4.0 + float(index % 5) * 3.0
-		draw_line(Vector2(px, py), Vector2(px + length, py), Color(NEON_CYAN if index % 3 else NEON_MAGENTA, 0.16), 1.0)
-	var glitch := fmod(elapsed * 3.7, 5.0)
-	if glitch < 0.11:
-		var gy := fmod(elapsed * 431.0, size.y)
-		draw_rect(Rect2(Vector2(0.0, gy), Vector2(size.x, 2.0)), Color(NEON_MAGENTA, 0.2), true)
-		# A few displaced RGB fragments sell a digital signal fault without moving the UI.
-		for slice in range(4):
-			var slice_y := fmod(gy + slice * 43.0, size.y)
-			var slice_x := fmod(elapsed * 977.0 + slice * 271.0, maxf(size.x - 180.0, 1.0))
-			var slice_width := 46.0 + slice * 31.0
-			draw_rect(Rect2(Vector2(slice_x - 7.0, slice_y), Vector2(slice_width, 1.0)), Color(NEON_MAGENTA, 0.32), true)
-			draw_rect(Rect2(Vector2(slice_x + 7.0, slice_y + 2.0), Vector2(slice_width, 1.0)), Color(NEON_CYAN, 0.28), true)
 	pass
 
 
