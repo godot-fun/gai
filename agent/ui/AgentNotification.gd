@@ -79,7 +79,10 @@ func has_playlist(clips: Array[String]) -> bool:
 	if not Audio.is_playing_music() and not Audio.is_music_paused():
 		return false
 	var loaded := Audio.musics.duplicate()
-	return loaded == clips
+	var requested := clips.duplicate()
+	loaded.sort()
+	requested.sort()
+	return loaded == requested
 
 
 ## Fade the music out and pause it, so the next run picks the sound up where this one left it.
