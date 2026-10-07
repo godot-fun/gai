@@ -45,6 +45,13 @@ func sentences_share_one_wave_per_turn_test() -> void:
 	pass
 
 
+static func wave_glyph_density_is_bounded_test() -> void:
+	assert(MatrixRain.wave_glyph_count(1000, 100.0) == floori(TAU * 100.0 / MatrixRain.WAVE_GLYPH_SPACING))
+	assert(MatrixRain.wave_glyph_count(12, 100.0) == 12)
+	assert(MatrixRain.wave_glyph_count(1000, 0.0) == 0)
+	pass
+
+
 func reply_glyphs_keep_their_character_test() -> void:
 	var effect := MatrixRain.new()
 	effect.size = Vector2(1280.0, 720.0)

@@ -12,6 +12,7 @@ const GLYPH_REFRESH_SECONDS := 0.075
 const SENTENCE_INTERVAL_SECONDS := 0.2
 const MAX_REPLY_GLYPHS := 512
 const REPLY_COLUMN_LENGTH := 18
+const WAVE_GLYPH_SPACING := 11.0
 const GLYPHS := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ{}[]<>/\\|+-=*:#@$%&!?"
 
 enum ToolState { NONE, RUNNING, SUCCESS, FAILED }
@@ -396,13 +397,20 @@ func draw_output_wave(wave: Dictionary) -> void:
 	draw_arc(center, radius, 0.0, TAU, 96, Color(color, fade * 0.3), 1.8, true)
 	draw_arc(center, maxf(0.0, radius - 9.0), 0.0, TAU, 96, Color(color, fade * 0.1), 7.0, true)
 	var text := String(wave["text"])
-	var count := maxi(text.length(), 1)
-	for index in range(text.length()):
-		var angle := float(wave["phase"]) + float(index) / float(count) * TAU
+	var glyph_count := wave_glyph_count(text.length(), radius)
+	for index in range(glyph_count):
+		var text_index := floori(float(index) * float(text.length()) / float(glyph_count))
+		var angle := float(wave["phase"]) + float(index) / float(glyph_count) * TAU
 		var position := center + Vector2.from_angle(angle) * radius
-		var glyph := text.substr(index, 1)
+		var glyph := text.substr(text_index, 1)
 		draw_centered_text(position, glyph, Fonts.semibold(), Typography.label_medium_size, Color(color, reveal * fade * 0.92))
 	pass
+
+
+static func wave_glyph_count(text_length: int, radius: float) -> int:
+	return mini(text_length, floori(TAU * maxf(radius, 0.0) / WAVE_GLYPH_SPACING))
+
+
 func matrix_color() -> Color:
 	var classic_green := Color("42f58d")
 	return classic_green.lerp(ThemeColor.accent_theme_color(), 0.34)
