@@ -10,8 +10,7 @@ const ANCHOR_MAX := float(MAX_TRUNK_SEGMENTS) - 0.25
 const CROWN_HEIGHT_RATIO := 0.13
 const CROWN_WIDTH_RATIO := 0.12
 const MAX_CROWN_RADIUS := 180.0
-const CROWN_BUBBLE_COUNT := 26
-const GOLDEN_ANGLE := 2.399963
+const CROWN_LEAF_COUNT := 7
 const MIN_BRANCH_LENGTH := 180.0
 const MIN_COMPLETION_LENGTH := 64.0
 const COMPLETION_PARTICLE_COUNT := 96
@@ -281,7 +280,6 @@ func draw_trunk(base: Vector2, segment_height: float, accent: Color) -> void:
 		var from := trunk_point(base, segment_height, float(index))
 		var to := from.lerp(trunk_point(base, segment_height, float(index + 1)), amount)
 		draw_line(from, to, Color(accent, lerpf(TRUNK_ALPHA_MIN, TRUNK_ALPHA_MAX, amount)), 3.0 + amount * 2.0, true)
-		draw_circle(to, 3.0 + amount * 2.0, Color(accent, 0.75))
 	pass
 
 
@@ -303,9 +301,13 @@ func draw_branch(branch: Dictionary, base: Vector2, segment_height: float) -> vo
 	var parent_color := ColorBase.secondary_text if state == BranchState.FAILED else accent
 	var parent_alpha := BRANCH_ALPHA_FAILED if state == BranchState.FAILED else (BRANCH_ALPHA_SUCCESS if state == BranchState.SUCCESS else BRANCH_ALPHA_RUNNING)
 	var pulse := running_pulse(visual_time, float(branch["animation_phase"])) if state == BranchState.RUNNING else 1.0
+	var parent_width := (2.5 if state == BranchState.FAILED else 3.0) + (pulse - 1.0)
+	# Polyline ends use flat caps. A line-sized fill at the real junction seals the anti-aliased
+	# seam without bringing back the visible decorative trunk nodes.
+	draw_circle(anchor, parent_width * 0.62, Color(parent_color, parent_alpha * pulse))
 	if state == BranchState.RUNNING:
 		draw_polyline(parent_curve, Color(parent_color, parent_alpha * 0.22 * pulse), 8.0 + pulse * 2.0, true)
-	draw_polyline(parent_curve, Color(parent_color, parent_alpha * pulse), (2.5 if state == BranchState.FAILED else 3.0) + (pulse - 1.0), true)
+	draw_polyline(parent_curve, Color(parent_color, parent_alpha * pulse), parent_width, true)
 	if state == BranchState.RUNNING:
 		if growth > 0.72:
 			draw_branch_tip(elbow, direction, state, color, pulse)
@@ -388,6 +390,10 @@ func draw_success_leaves(tip: Vector2, direction: float, branch: Dictionary, com
 
 
 func draw_leaf(origin: Vector2, angle: float, length: float, width: float, color: Color, alpha: float) -> void:
+	# A leaf starts at zero scale. Skip the degenerate opening frames because Godot cannot
+	# triangulate a polygon whose vertices all collapse onto the same point.
+	if length < 0.5 or width < 0.25:
+		return
 	var polygon := make_leaf_polygon(origin, angle, length, width)
 	draw_colored_polygon(polygon, Color(color, clampf(alpha, 0.0, 1.0)))
 	var outline := polygon.duplicate()
@@ -504,14 +510,38 @@ func draw_crown(base: Vector2, segment_height: float, accent: Color) -> void:
 	var center := trunk_point(base, segment_height, maxf(trunk_growth, 0.35))
 	var visual_growth := crown_visual_growth(crown_growth)
 	var radius := get_crown_radius() * visual_growth
-	for index in range(CROWN_BUBBLE_COUNT):
-		var distribution := sqrt((float(index) + 0.5) / float(CROWN_BUBBLE_COUNT))
-		var angle := float(index) * GOLDEN_ANGLE
-		var offset := Vector2(cos(angle) * radius * 0.76, sin(angle) * radius * 0.58) * distribution
-		var bubble_radius := radius * (0.13 + float(index % 4) * 0.012)
-		var bubble_color := accent.lerp(ColorBase.success, 0.22 + float(index % 3) * 0.09)
-		draw_circle(center + offset, bubble_radius, Color(bubble_color, 0.16 + visual_growth * 0.30))
+	if radius < 1.5:
+		return
+	var pulse_glow := get_crown_pulse_intensity(segment_height)
+	var crown_color := ColorBase.success.lerp(accent, 0.18)
+	if pulse_glow > 0.0:
+		draw_circle(center, radius * 0.48 + pulse_glow * 14.0, Color(crown_color, pulse_glow * 0.07))
+	# A compact seven-leaf terminal bud replaces the old bubble cloud. Outer leaves establish the
+	# silhouette while alternating lengths keep the crown organic and readable at small sizes.
+	for index in range(CROWN_LEAF_COUNT):
+		var normalized := float(index) / float(CROWN_LEAF_COUNT - 1)
+		var angle := lerpf(-PI * 0.88, -PI * 0.12, normalized)
+		var sway := sin(visual_time * 0.72 + float(index) * 1.17) * 0.035
+		var length_scale := 0.78 + float(index % 3) * 0.10
+		var leaf_length := radius * 0.46 * length_scale
+		var leaf_width := radius * (0.105 + float((index + 1) % 2) * 0.018)
+		var stem_end := center + Vector2.from_angle(angle + sway) * radius * 0.13
+		draw_line(center, stem_end, Color(crown_color, 0.38 + visual_growth * 0.28), 1.5, true)
+		var leaf_color := crown_color.lerp(accent, float(index % 3) * 0.055)
+		draw_leaf(stem_end, angle + sway, leaf_length, leaf_width, leaf_color,
+			0.48 + visual_growth * 0.32 + pulse_glow * 0.18)
+	var core_radius := (3.0 + visual_growth * 4.0) * (1.0 + pulse_glow * 0.22)
+	draw_circle(center, core_radius * 2.2, Color(accent, 0.07 + pulse_glow * 0.08))
+	draw_circle(center, core_radius, Color(accent, 0.72 + pulse_glow * 0.24))
 	pass
+
+
+func get_crown_pulse_intensity(segment_height: float) -> float:
+	var crown_distance := trunk_growth * segment_height
+	var closest_distance := INF
+	for pulse_distance in pulse_travel_distances:
+		closest_distance = minf(closest_distance, absf(pulse_distance - crown_distance))
+	return clampf(1.0 - closest_distance / LEAF_PULSE_RADIUS, 0.0, 1.0)
 
 
 func draw_status(base: Vector2) -> void:

@@ -137,6 +137,13 @@ func leaf_polygon_has_pointed_base_and_tip_test() -> void:
 	pass
 
 
+func zero_scale_leaf_can_be_skipped_without_drawing_error_test() -> void:
+	var tree := ReasoningTree.new()
+	tree.draw_leaf(Vector2.ZERO, 0.0, 0.0, 0.0, Color.WHITE, 1.0)
+	tree.free()
+	pass
+
+
 func paired_leaves_have_a_wide_v_shaped_gap_test() -> void:
 	var left := ReasoningTree.leaf_fan_angle(0, 2)
 	var right := ReasoningTree.leaf_fan_angle(1, 2)
@@ -257,10 +264,10 @@ func tall_viewport_uses_nearly_full_height_test() -> void:
 	pass
 
 
-func crown_uses_many_small_bubbles_test() -> void:
-	assert(ReasoningTree.CROWN_BUBBLE_COUNT >= 24)
-	var largest_radius_ratio := 0.13 + 3.0 * 0.012
-	assert(largest_radius_ratio < 0.18)
+func crown_uses_a_compact_odd_leaf_cluster_test() -> void:
+	assert(ReasoningTree.CROWN_LEAF_COUNT >= 5)
+	assert(ReasoningTree.CROWN_LEAF_COUNT <= 7)
+	assert(ReasoningTree.CROWN_LEAF_COUNT % 2 == 1)
 	pass
 
 
