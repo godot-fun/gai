@@ -150,8 +150,7 @@ func _process(delta: float) -> void:
 		glyph_clock = fmod(glyph_clock, GLYPH_REFRESH_SECONDS)
 	reasoning_energy = move_toward(reasoning_energy, 0.12, delta * 0.48)
 	for column: Dictionary in columns:
-		var speed_scale := 0.72 + reasoning_energy * 2.15
-		column["head_y"] = float(column["head_y"]) + float(column["speed"]) * speed_scale * delta
+		column["head_y"] = float(column["head_y"]) + float(column["speed"]) * delta
 		var wrap_height := size.y + float(column["length"]) * float(column["step_y"])
 		if float(column["head_y"]) > wrap_height:
 			if bool(column["release_pending"]):
