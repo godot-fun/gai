@@ -26,6 +26,8 @@ const BRANCH_CURVE_SEGMENTS := 18
 const BRANCH_CURVE_RATIO := 0.10
 const TREE_PULSE_SPEED := 230.0
 const TREE_PULSE_INTERVAL := 2.0
+const LEAF_PULSE_RADIUS := 52.0
+const LEAF_PAIR_SPREAD := 0.72
 
 enum BranchState { RUNNING, SUCCESS, FAILED }
 
@@ -320,7 +322,11 @@ func draw_branch(branch: Dictionary, base: Vector2, segment_height: float) -> vo
 		var completion_curve := quadratic_curve_points(elbow, completion_control, elbow + completion_vector, completion_growth)
 		draw_polyline(completion_curve, Color(color, COMPLETION_BRANCH_ALPHA), 3.0, true)
 	if completion_growth > 0.72:
-		draw_branch_tip(tip, direction, state, color)
+		if state == BranchState.SUCCESS:
+			var leaf_glow := get_leaf_pulse_intensity(branch, segment_height, branch_length, completion_length)
+			draw_success_leaves(tip, direction, branch, completion_growth, leaf_glow)
+		else:
+			draw_branch_tip(tip, direction, state, color)
 		draw_branch_label(tip, direction, String(branch["label"]), color)
 	pass
 
@@ -338,15 +344,66 @@ func draw_failed_twig(elbow: Vector2, tip: Vector2, completion_growth: float, co
 
 
 func draw_branch_tip(tip: Vector2, direction: float, state: int, color: Color, pulse: float = 1.0) -> void:
-	if state == BranchState.SUCCESS:
-		draw_circle(tip, 7.0, Color(color, 0.82))
-	elif state == BranchState.RUNNING:
+	if state == BranchState.RUNNING:
 		draw_circle(tip, 11.0 * pulse, Color(color, 0.06 * pulse))
 		draw_arc(tip, 8.0 * pulse, 0.0, TAU * 0.78, 18, Color(color, 0.72 + pulse * 0.20), 2.0, true)
 	else:
 		draw_line(tip - Vector2(5.0, 5.0), tip + Vector2(5.0, 5.0), color, 2.0, true)
 		draw_line(tip + Vector2(-5.0, 5.0), tip + Vector2(5.0, -5.0), color, 2.0, true)
 	pass
+
+
+func draw_success_leaves(tip: Vector2, direction: float, branch: Dictionary, completion_growth: float, pulse_glow: float) -> void:
+	var growth := leaf_visual_growth(completion_growth)
+	if growth <= 0.0:
+		return
+	var variant: int = branch["leaf_variant"]
+	var phase: float = branch["animation_phase"]
+	var sway := sin(visual_time * 1.35 + phase * TAU) * 0.075
+	var accent := ThemeColor.accent_theme_color()
+	var leaf_color := ColorBase.success.lerp(accent, 0.08 + float(variant) * 0.055)
+	if pulse_glow > 0.0:
+		draw_circle(tip, 18.0 + pulse_glow * 9.0, Color(leaf_color, pulse_glow * 0.12))
+		draw_circle(tip, 9.0 + pulse_glow * 4.0, Color(leaf_color, pulse_glow * 0.20))
+	var leaf_length := (17.0 + float(variant) * 2.5) * growth
+	var leaf_width := (7.0 + float((variant + 1) % 3)) * growth
+	var leaf_count: int = branch["leaf_count"]
+	if leaf_count == 1:
+		var leaf_angle := -PI * 0.5 + direction * 0.58 + sway
+		draw_leaf(tip, leaf_angle, leaf_length, leaf_width, leaf_color, 0.72 + pulse_glow * 0.25)
+	else:
+		# Lift leaf clusters onto a short stem and fan them apart. Larger clusters use narrower
+		# leaves so three- and four-leaf variants stay readable instead of merging into one shape.
+		var stem_tip := tip + Vector2(0.0, -5.0 * growth)
+		draw_line(tip, stem_tip, Color(leaf_color, 0.72), 1.6, true)
+		var cluster_width := leaf_width * lerpf(0.72, 0.58, float(leaf_count - 2))
+		for leaf_index in range(leaf_count):
+			var fan_angle := leaf_fan_angle(leaf_index, leaf_count)
+			var leaf_sway := sway * (1.0 if leaf_index % 2 == 0 else -0.8)
+			var length_scale := 0.84 + float((leaf_index + variant) % 3) * 0.055
+			var variant_color := leaf_color.lerp(accent, float(leaf_index) * 0.035)
+			draw_leaf(stem_tip, -PI * 0.5 + fan_angle + leaf_sway, leaf_length * length_scale, cluster_width,
+				variant_color, 0.69 + pulse_glow * 0.26)
+	pass
+
+
+func draw_leaf(origin: Vector2, angle: float, length: float, width: float, color: Color, alpha: float) -> void:
+	var polygon := make_leaf_polygon(origin, angle, length, width)
+	draw_colored_polygon(polygon, Color(color, clampf(alpha, 0.0, 1.0)))
+	var outline := polygon.duplicate()
+	outline.append(polygon[0])
+	draw_polyline(outline, Color(color.lightened(0.22), clampf(alpha + 0.08, 0.0, 1.0)), 1.2, true)
+	var vein_end := origin + Vector2.from_angle(angle) * length * 0.82
+	draw_line(origin, vein_end, Color(color.lightened(0.30), clampf(alpha * 0.62, 0.0, 1.0)), 1.0, true)
+	pass
+
+
+func get_leaf_pulse_intensity(branch: Dictionary, segment_height: float, branch_length: float, completion_length: float) -> float:
+	var leaf_distance := branch_anchor_segment(branch) * segment_height + branch_length + completion_length
+	var closest_distance := INF
+	for pulse_distance in pulse_travel_distances:
+		closest_distance = minf(closest_distance, absf(pulse_distance - leaf_distance))
+	return clampf(1.0 - closest_distance / LEAF_PULSE_RADIUS, 0.0, 1.0)
 
 
 ## Emit one wavefront from the root. Once it passes an anchor, the same wave spreads through
@@ -498,6 +555,8 @@ static func make_branch(tool_call_id: String, tool_name: String, branch_index: i
 		"angle": branch_angle(branch_index),
 		"completion_angle": completion_angle(branch_index),
 		"animation_phase": fmod(float(branch_index) * 0.37, 1.0),
+		"leaf_variant": absi(tool_name.hash()) % 3,
+		"leaf_count": 1 + absi((tool_call_id + ":" + str(branch_index)).hash()) % 3,
 		"growth": 0.0,
 		"completion_growth": 0.0,
 	}
@@ -521,6 +580,32 @@ static func quadratic_curve_point(from: Vector2, control: Vector2, to: Vector2, 
 	var t := clampf(progress, 0.0, 1.0)
 	var inverse := 1.0 - t
 	return inverse * inverse * from + 2.0 * inverse * t * control + t * t * to
+
+
+static func leaf_visual_growth(completion_growth: float) -> float:
+	var growth := clampf((completion_growth - 0.58) / 0.42, 0.0, 1.0)
+	return 1.0 - pow(1.0 - growth, 3.0)
+
+
+static func make_leaf_polygon(origin: Vector2, angle: float, length: float, width: float) -> PackedVector2Array:
+	var forward := Vector2.from_angle(angle)
+	var normal := forward.orthogonal()
+	var points := PackedVector2Array()
+	const STEPS := 6
+	for index in range(STEPS + 1):
+		var t := float(index) / float(STEPS)
+		points.append(origin + forward * length * t + normal * sin(t * PI) * width)
+	for index in range(STEPS, -1, -1):
+		var t := float(index) / float(STEPS)
+		points.append(origin + forward * length * t - normal * sin(t * PI) * width)
+	return points
+
+
+static func leaf_fan_angle(leaf_index: int, leaf_count: int) -> float:
+	if leaf_count <= 1:
+		return 0.0
+	var half_span := LEAF_PAIR_SPREAD + float(leaf_count - 2) * 0.17
+	return lerpf(-half_span, half_span, float(leaf_index) / float(leaf_count - 1))
 
 
 static func running_pulse(time: float, phase: float) -> float:

@@ -15,6 +15,7 @@ func branch_defaults_to_running_test() -> void:
 	assert(is_equal_approx(float(branch["anchor"]), 2.8))
 	assert(branch["direction"] == -1.0)
 	assert(branch["label"] == "Read File")
+	assert(int(branch["leaf_count"]) >= 1 and int(branch["leaf_count"]) <= 3)
 	pass
 
 
@@ -115,6 +116,43 @@ func single_curve_point_matches_sampled_curve_test() -> void:
 	var to := Vector2(100.0, 40.0)
 	var points := ReasoningTree.quadratic_curve_points(from, control, to, 0.5)
 	assert(points[-1].is_equal_approx(ReasoningTree.quadratic_curve_point(from, control, to, 0.5)))
+	pass
+
+
+func success_leaf_opens_late_and_reaches_full_size_test() -> void:
+	assert(is_equal_approx(ReasoningTree.leaf_visual_growth(0.5), 0.0))
+	assert(ReasoningTree.leaf_visual_growth(0.75) > 0.0)
+	assert(ReasoningTree.leaf_visual_growth(0.75) < 1.0)
+	assert(is_equal_approx(ReasoningTree.leaf_visual_growth(1.0), 1.0))
+	pass
+
+
+func leaf_polygon_has_pointed_base_and_tip_test() -> void:
+	var origin := Vector2(30.0, 50.0)
+	var length := 20.0
+	var polygon := ReasoningTree.make_leaf_polygon(origin, 0.0, length, 8.0)
+	assert(polygon[0].is_equal_approx(origin))
+	assert(polygon[6].is_equal_approx(origin + Vector2(length, 0.0)))
+	assert(polygon.size() == 14)
+	pass
+
+
+func paired_leaves_have_a_wide_v_shaped_gap_test() -> void:
+	var left := ReasoningTree.leaf_fan_angle(0, 2)
+	var right := ReasoningTree.leaf_fan_angle(1, 2)
+	assert(right - left > 1.2)
+	assert(right - left < PI)
+	pass
+
+
+func one_to_three_leaf_clusters_are_evenly_fanned_test() -> void:
+	assert(is_equal_approx(ReasoningTree.leaf_fan_angle(0, 1), 0.0))
+	for leaf_count in range(2, 4):
+		var previous_angle := -INF
+		for leaf_index in range(leaf_count):
+			var angle := ReasoningTree.leaf_fan_angle(leaf_index, leaf_count)
+			assert(angle > previous_angle)
+			previous_angle = angle
 	pass
 
 
