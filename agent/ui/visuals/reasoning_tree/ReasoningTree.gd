@@ -22,6 +22,10 @@ const BRANCH_ALPHA_SUCCESS := 0.34
 const BRANCH_ALPHA_FAILED := 0.20
 const COMPLETION_BRANCH_ALPHA := 0.34
 const TRUNK_GROWTH_EASE_POWER := 1.25
+const BRANCH_CURVE_SEGMENTS := 18
+const BRANCH_CURVE_RATIO := 0.10
+const TREE_PULSE_SPEED := 230.0
+const TREE_PULSE_GAP := 120.0
 
 enum BranchState { RUNNING, SUCCESS, FAILED }
 
@@ -35,6 +39,8 @@ var phase_label: String = ""
 var branches: Array[Dictionary] = []
 var active_tool_indices: Dictionary[String, int] = {}
 var completion_particles: GPUParticles2D
+var visual_time: float = 0.0
+var pulse_travel_distance: float = 0.0
 
 
 func _ready() -> void:
@@ -64,6 +70,8 @@ func reset_visual() -> void:
 	target_crown_growth = 0.0
 	turn_index = 0
 	branch_sequence = 0
+	visual_time = 0.0
+	pulse_travel_distance = 0.0
 	phase_label = "准备任务"
 	branches.clear()
 	active_tool_indices.clear()
@@ -225,6 +233,10 @@ static func make_particle_texture() -> ImageTexture:
 
 func _process(delta: float) -> void:
 	var changed := not is_equal_approx(trunk_growth, target_trunk_growth) or not is_equal_approx(crown_growth, target_crown_growth)
+	if visible and trunk_growth > 0.0:
+		visual_time += delta
+		pulse_travel_distance = advance_tree_pulse_distance(pulse_travel_distance, delta, get_tree_pulse_cycle_length())
+		changed = true
 	trunk_growth = move_toward(trunk_growth, target_trunk_growth, delta * 2.3)
 	crown_growth = move_toward(crown_growth, target_crown_growth, delta * 1.4)
 	for branch: Dictionary in branches:
@@ -253,6 +265,7 @@ func _draw() -> void:
 	draw_trunk(base, segment_height, accent)
 	for branch: Dictionary in branches:
 		draw_branch(branch, base, segment_height)
+	draw_tree_pulse(base, segment_height, accent)
 	draw_crown(base, segment_height, accent)
 	draw_status(base)
 	pass
@@ -275,7 +288,9 @@ func draw_branch(branch: Dictionary, base: Vector2, segment_height: float) -> vo
 	var growth: float = branch["growth"]
 	var branch_length := minf(size.x * 0.20, maxf(MIN_BRANCH_LENGTH, segment_height * 2.5))
 	var branch_vector := Vector2.from_angle(float(branch["angle"])) * branch_length
-	var elbow := anchor + branch_vector * growth
+	var parent_control := branch_curve_control(anchor, anchor + branch_vector, branch_length)
+	var parent_curve := quadratic_curve_points(anchor, parent_control, anchor + branch_vector, growth)
+	var elbow := parent_curve[-1]
 	var state: int = branch["state"]
 	var accent := ThemeColor.accent_theme_color()
 	var color := accent if state == BranchState.RUNNING else (ColorBase.success if state == BranchState.SUCCESS else ColorBase.error)
@@ -283,11 +298,14 @@ func draw_branch(branch: Dictionary, base: Vector2, segment_height: float) -> vo
 	# communicated by the child twig and its tip instead of repainting the whole branch.
 	var parent_color := ColorBase.secondary_text if state == BranchState.FAILED else accent
 	var parent_alpha := BRANCH_ALPHA_FAILED if state == BranchState.FAILED else (BRANCH_ALPHA_SUCCESS if state == BranchState.SUCCESS else BRANCH_ALPHA_RUNNING)
-	draw_line(anchor, elbow, Color(parent_color, parent_alpha), 2.5 if state == BranchState.FAILED else 3.0, true)
+	var pulse := running_pulse(visual_time, float(branch["animation_phase"])) if state == BranchState.RUNNING else 1.0
+	if state == BranchState.RUNNING:
+		draw_polyline(parent_curve, Color(parent_color, parent_alpha * 0.22 * pulse), 8.0 + pulse * 2.0, true)
+	draw_polyline(parent_curve, Color(parent_color, parent_alpha * pulse), (2.5 if state == BranchState.FAILED else 3.0) + (pulse - 1.0), true)
 	if state == BranchState.RUNNING:
 		if growth > 0.72:
-			draw_branch_tip(elbow, direction, state, color)
-			draw_branch_label(elbow, direction, String(branch["label"]), color)
+			draw_branch_tip(elbow, direction, state, color, pulse)
+			draw_branch_label(elbow, direction, String(branch["label"]), Color(color, clampf(0.72 + pulse * 0.22, 0.0, 1.0)))
 		return
 	var completion_growth: float = branch["completion_growth"]
 	var completion_length := maxf(MIN_COMPLETION_LENGTH, branch_length * 0.38)
@@ -296,7 +314,9 @@ func draw_branch(branch: Dictionary, base: Vector2, segment_height: float) -> vo
 	if state == BranchState.FAILED:
 		draw_failed_twig(elbow, tip, completion_growth, color)
 	else:
-		draw_line(elbow, tip, Color(color, COMPLETION_BRANCH_ALPHA), 3.0, true)
+		var completion_control := branch_curve_control(elbow, elbow + completion_vector, completion_length * 0.45)
+		var completion_curve := quadratic_curve_points(elbow, completion_control, elbow + completion_vector, completion_growth)
+		draw_polyline(completion_curve, Color(color, COMPLETION_BRANCH_ALPHA), 3.0, true)
 	if completion_growth > 0.72:
 		draw_branch_tip(tip, direction, state, color)
 		draw_branch_label(tip, direction, String(branch["label"]), color)
@@ -315,14 +335,73 @@ func draw_failed_twig(elbow: Vector2, tip: Vector2, completion_growth: float, co
 	pass
 
 
-func draw_branch_tip(tip: Vector2, direction: float, state: int, color: Color) -> void:
+func draw_branch_tip(tip: Vector2, direction: float, state: int, color: Color, pulse: float = 1.0) -> void:
 	if state == BranchState.SUCCESS:
 		draw_circle(tip, 7.0, Color(color, 0.82))
 	elif state == BranchState.RUNNING:
-		draw_arc(tip, 8.0, 0.0, TAU * 0.78, 18, color, 2.0, true)
+		draw_circle(tip, 11.0 * pulse, Color(color, 0.06 * pulse))
+		draw_arc(tip, 8.0 * pulse, 0.0, TAU * 0.78, 18, Color(color, 0.72 + pulse * 0.20), 2.0, true)
 	else:
 		draw_line(tip - Vector2(5.0, 5.0), tip + Vector2(5.0, 5.0), color, 2.0, true)
 		draw_line(tip + Vector2(-5.0, 5.0), tip + Vector2(5.0, -5.0), color, 2.0, true)
+	pass
+
+
+## Emit one wavefront from the root. Once it passes an anchor, the same wave spreads through
+## that branch while the original continues climbing the trunk.
+func draw_tree_pulse(base: Vector2, segment_height: float, color: Color) -> void:
+	if trunk_growth <= 0.0:
+		return
+	var branch_length := minf(size.x * 0.20, maxf(MIN_BRANCH_LENGTH, segment_height * 2.5))
+	var completion_length := maxf(MIN_COMPLETION_LENGTH, branch_length * 0.38)
+	var trunk_length := trunk_growth * segment_height
+	var pulse_distance := pulse_travel_distance
+	if pulse_distance <= trunk_length:
+		var trunk_segment := pulse_distance / segment_height
+		draw_pulse_light(trunk_point(base, segment_height, trunk_segment), color)
+	for branch: Dictionary in branches:
+		var anchor_segment := branch_anchor_segment(branch)
+		var distance_after_anchor := pulse_distance - anchor_segment * segment_height
+		if distance_after_anchor < 0.0:
+			continue
+		var anchor := trunk_point(base, segment_height, anchor_segment)
+		var growth: float = branch["growth"]
+		var branch_vector := Vector2.from_angle(float(branch["angle"])) * branch_length
+		var parent_control := branch_curve_control(anchor, anchor + branch_vector, branch_length)
+		if distance_after_anchor <= branch_length * growth:
+			var parent_progress := distance_after_anchor / branch_length
+			draw_pulse_light(quadratic_curve_point(anchor, parent_control, anchor + branch_vector, parent_progress), color)
+			continue
+		var completion_growth: float = branch["completion_growth"]
+		if completion_growth <= 0.0:
+			continue
+		var completion_distance := distance_after_anchor - branch_length
+		if completion_distance < 0.0 or completion_distance > completion_length * completion_growth:
+			continue
+		var elbow := anchor + branch_vector
+		var state: int = branch["state"]
+		var completion_vector := get_completion_vector(branch, state, completion_length)
+		var completion_control := branch_curve_control(elbow, elbow + completion_vector, completion_length * 0.45)
+		var completion_progress := completion_distance / completion_length
+		var pulse_color := ColorBase.error if state == BranchState.FAILED else ColorBase.success
+		draw_pulse_light(quadratic_curve_point(elbow, completion_control, elbow + completion_vector, completion_progress), pulse_color)
+	pass
+
+
+func get_tree_pulse_cycle_length() -> float:
+	var base_y := size.y - Margin.ma_8
+	var crown_center_y := Margin.ma_8 + get_crown_radius()
+	var segment_height := maxf(12.0, (base_y - crown_center_y) / float(MAX_TRUNK_SEGMENTS))
+	var branch_length := minf(size.x * 0.20, maxf(MIN_BRANCH_LENGTH, segment_height * 2.5))
+	var completion_length := maxf(MIN_COMPLETION_LENGTH, branch_length * 0.38)
+	return trunk_growth * segment_height + branch_length + completion_length + TREE_PULSE_GAP
+
+
+func draw_pulse_light(point: Vector2, color: Color) -> void:
+	draw_circle(point, 15.0, Color(color, 0.045))
+	draw_circle(point, 8.0, Color(color, 0.12))
+	draw_circle(point, 4.0, Color(color, 0.34))
+	draw_circle(point, 2.0, Color(color, 0.96))
 	pass
 
 
@@ -393,9 +472,40 @@ static func make_branch(tool_call_id: String, tool_name: String, branch_index: i
 		"direction": direction,
 		"angle": branch_angle(branch_index),
 		"completion_angle": completion_angle(branch_index),
+		"animation_phase": fmod(float(branch_index) * 0.37, 1.0),
 		"growth": 0.0,
 		"completion_growth": 0.0,
 	}
+
+
+static func branch_curve_control(from: Vector2, to: Vector2, curve_length: float) -> Vector2:
+	return from.lerp(to, 0.5) + Vector2(0.0, -curve_length * BRANCH_CURVE_RATIO)
+
+
+static func quadratic_curve_points(from: Vector2, control: Vector2, to: Vector2, progress: float) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	var visible_progress := clampf(progress, 0.0, 1.0)
+	for index in range(BRANCH_CURVE_SEGMENTS + 1):
+		var t := visible_progress * float(index) / float(BRANCH_CURVE_SEGMENTS)
+		var inverse := 1.0 - t
+		points.append(inverse * inverse * from + 2.0 * inverse * t * control + t * t * to)
+	return points
+
+
+static func quadratic_curve_point(from: Vector2, control: Vector2, to: Vector2, progress: float) -> Vector2:
+	var t := clampf(progress, 0.0, 1.0)
+	var inverse := 1.0 - t
+	return inverse * inverse * from + 2.0 * inverse * t * control + t * t * to
+
+
+static func advance_tree_pulse_distance(current_distance: float, delta: float, cycle_length: float) -> float:
+	var next_distance := maxf(current_distance, 0.0) + maxf(delta, 0.0) * TREE_PULSE_SPEED
+	var safe_cycle_length := maxf(cycle_length, 1.0)
+	return fmod(next_distance, safe_cycle_length) if next_distance >= safe_cycle_length else next_distance
+
+
+static func running_pulse(time: float, phase: float) -> float:
+	return 0.92 + sin((time + phase) * TAU * 0.75) * 0.08
 
 
 ## Grow more of the trunk in early turns, then ease gently toward the crown.

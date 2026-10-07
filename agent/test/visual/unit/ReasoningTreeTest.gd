@@ -63,6 +63,52 @@ func branch_elevation_starts_shallow_and_opens_slowly_test() -> void:
 	pass
 
 
+func curved_branch_preserves_endpoints_and_bows_upward_test() -> void:
+	var from := Vector2(100.0, 300.0)
+	var to := Vector2(300.0, 180.0)
+	var control := ReasoningTree.branch_curve_control(from, to, 200.0)
+	var points := ReasoningTree.quadratic_curve_points(from, control, to, 1.0)
+	assert(points[0].is_equal_approx(from))
+	assert(points[-1].is_equal_approx(to))
+	assert(control.y < from.lerp(to, 0.5).y)
+	pass
+
+
+func running_pulse_is_subtle_and_changes_over_time_test() -> void:
+	var first := ReasoningTree.running_pulse(0.0, 0.0)
+	var second := ReasoningTree.running_pulse(0.25, 0.0)
+	assert(first >= 0.84 and first <= 1.0)
+	assert(second >= 0.84 and second <= 1.0)
+	assert(not is_equal_approx(first, second))
+	pass
+
+
+func tree_pulse_starts_at_root_and_repeats_after_full_spread_test() -> void:
+	const CYCLE_LENGTH := 1000.0
+	assert(is_equal_approx(ReasoningTree.advance_tree_pulse_distance(0.0, 0.0, CYCLE_LENGTH), 0.0))
+	var halfway_delta := CYCLE_LENGTH * 0.5 / ReasoningTree.TREE_PULSE_SPEED
+	assert(is_equal_approx(ReasoningTree.advance_tree_pulse_distance(0.0, halfway_delta, CYCLE_LENGTH), CYCLE_LENGTH * 0.5))
+	var remaining_delta := CYCLE_LENGTH * 0.5 / ReasoningTree.TREE_PULSE_SPEED
+	assert(is_equal_approx(ReasoningTree.advance_tree_pulse_distance(CYCLE_LENGTH * 0.5, remaining_delta, CYCLE_LENGTH), 0.0))
+	pass
+
+
+func growing_tree_does_not_move_pulse_backward_test() -> void:
+	var distance := ReasoningTree.advance_tree_pulse_distance(300.0, 0.1, 800.0)
+	var distance_after_growth := ReasoningTree.advance_tree_pulse_distance(distance, 0.1, 1200.0)
+	assert(distance_after_growth > distance)
+	pass
+
+
+func single_curve_point_matches_sampled_curve_test() -> void:
+	var from := Vector2(20.0, 80.0)
+	var control := Vector2(50.0, 20.0)
+	var to := Vector2(100.0, 40.0)
+	var points := ReasoningTree.quadratic_curve_points(from, control, to, 0.5)
+	assert(points[-1].is_equal_approx(ReasoningTree.quadratic_curve_point(from, control, to, 0.5)))
+	pass
+
+
 func branches_are_never_discarded_test() -> void:
 	var tree := ReasoningTree.new()
 	for index in range(ReasoningTree.MAX_BRANCHES + 3):
