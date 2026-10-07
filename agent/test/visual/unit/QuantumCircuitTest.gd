@@ -58,6 +58,11 @@ func palette_follows_accent_theme_color_test() -> void:
 	ThemeColor.theme_color = Color(0.18, 0.52, 0.96)
 	ThemeColor.refresh_derived_colors()
 	assert(QuantumCircuit.circuit_color() == ThemeColor.accent_theme_color())
+	var effect := QuantumCircuit.new()
+	effect.refresh_palette()
+	assert(effect.circuit_tint == QuantumCircuit.circuit_color())
+	assert(effect.phase_tint == QuantumCircuit.phase_color())
+	assert(effect.tool_tint == QuantumCircuit.tool_color())
 	var first_phase := QuantumCircuit.phase_color()
 	var first_tool := QuantumCircuit.tool_color()
 	assert(first_phase != QuantumCircuit.circuit_color())
@@ -67,8 +72,13 @@ func palette_follows_accent_theme_color_test() -> void:
 	assert(QuantumCircuit.circuit_color() == ThemeColor.accent_theme_color())
 	assert(QuantumCircuit.phase_color() != first_phase)
 	assert(QuantumCircuit.tool_color() != first_tool)
+	effect.on_theme_changed()
+	assert(effect.circuit_tint == QuantumCircuit.circuit_color())
+	assert(effect.phase_tint == QuantumCircuit.phase_color())
+	assert(effect.tool_tint == QuantumCircuit.tool_color())
 	ThemeColor.theme_color = original
 	ThemeColor.refresh_derived_colors()
+	effect.free()
 	pass
 
 
