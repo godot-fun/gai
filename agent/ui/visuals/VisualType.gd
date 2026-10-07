@@ -15,8 +15,9 @@ enum Type {
 	CYBER_COMMAND_DECK,
 	QUANTUM_CIRCUIT,
 	DESKTOP_CAT,
+	GEOMETRIC_GENESIS,
 }
 
 
 static func is_valid(value: int) -> bool:
-	return value >= Type.NONE and value <= Type.DESKTOP_CAT
+	return value >= Type.NONE and value <= Type.GEOMETRIC_GENESIS

@@ -7,6 +7,8 @@ extends Control
 ## Session whose run is currently represented; 0 while no run is tracked.
 var running_session_id: int = 0
 var current_effect: VisualEffect
+## Test previews can opt into playing an effect's complete ending after the agent stops.
+var wait_for_effect_completion_on_agent_end: bool = false
 
 
 func _ready() -> void:
@@ -49,6 +51,8 @@ func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 			return QuantumCircuit.new()
 		VisualType.Type.DESKTOP_CAT:
 			return DesktopCat.new()
+		VisualType.Type.GEOMETRIC_GENESIS:
+			return GeometricGenesis.new()
 	return null
 
 
@@ -94,6 +98,12 @@ func on_agent_end(session_id: int, error_message: String) -> void:
 	if session_id != running_session_id:
 		return
 	var effect := get_selected_effect()
+	if not wait_for_effect_completion_on_agent_end:
+		if is_instance_valid(effect):
+			effect.reset_visual()
+			effect.set_visual_visible(false, false)
+		running_session_id = 0
+		return
 	var delay := effect.on_agent_end(error_message) if effect != null else 0.0
 	if delay > 0.0:
 		await get_tree().create_timer(delay).timeout

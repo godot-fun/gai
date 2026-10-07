@@ -21,6 +21,7 @@ const EFFECT_SPECS: Array[Dictionary] = [
 	{"type": VisualType.Type.CYBER_COMMAND_DECK, "label": "Cyber Command Deck"},
 	{"type": VisualType.Type.QUANTUM_CIRCUIT, "label": "Quantum Circuit"},
 	{"type": VisualType.Type.DESKTOP_CAT, "label": "Desktop Cat"},
+	{"type": VisualType.Type.GEOMETRIC_GENESIS, "label": "Geometric Genesis"},
 ]
 
 const TOOL_CATALOG: Array[Dictionary] = [
@@ -63,6 +64,7 @@ var play_buttons: Array[Button] = []
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	visual_control.wait_for_effect_completion_on_agent_end = true
 	AgentSessionManager.load_from_disk()
 	demo_session_id = AgentSessionManager.active_session_id
 	theme_color_select_ctrl.setup(theme_color_select)
@@ -361,6 +363,8 @@ func visual_label() -> String:
 			return "Quantum Circuit"
 		VisualType.Type.DESKTOP_CAT:
 			return "Desktop Cat"
+		VisualType.Type.GEOMETRIC_GENESIS:
+			return "Geometric Genesis"
 	return "None"
 
 
