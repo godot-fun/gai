@@ -6,6 +6,8 @@ extends TransformerStageEffect
 
 const CAMERA_TRANSFER_POS := Vector3(2.4, 3.2, 12.8)
 const GATE_SIZE := 4.5
+## Turn the matrix gates away from the camera so their layered depth reads from the side.
+const GATE_VIEW_YAW := deg_to_rad(68.0)
 const GATE_SHADER := """
 shader_type spatial;
 render_mode unshaded, cull_disabled, blend_add, depth_draw_never;
@@ -179,7 +181,8 @@ func screen_edge_distance(center: Vector3) -> float:
 
 func set_gate_world_transform(gate: Node3D, position: Vector3, roll: float) -> void:
 	var camera_basis := embedding.camera.global_transform.basis.orthonormalized()
-	var rolled_basis := camera_basis.rotated(camera_basis.z.normalized(), roll)
+	var side_basis := camera_basis.rotated(camera_basis.y.normalized(), GATE_VIEW_YAW)
+	var rolled_basis := side_basis.rotated(side_basis.z.normalized(), roll)
 	gate.global_transform = Transform3D(rolled_basis, position)
 	pass
 
