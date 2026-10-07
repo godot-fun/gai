@@ -67,7 +67,13 @@ void fragment() {
 	float radial_cell = floor(radial_coordinate);
 	float cell_log_radius = (radial_cell + 0.5) * tau / sector_count - t * 0.12;
 	float cell_radius = exp(cell_log_radius);
-	float vortex_rotation = t * 0.055 + 0.012 * (1.0 - exp(-t * 0.12)) / (0.12 * max(cell_radius, 0.075));
+	// Cell width grows with radius, so use the inverse radius for the orbital gradient: the
+	// small inner squares turn quickly while the large outer squares drift slowly. Evaluating
+	// it once per radial cell keeps every square rigid instead of twisting across its width.
+	float orbit_radius = max(cell_radius, 0.055);
+	float inverse_radius_spin = 0.028 * (1.0 - exp(-t * 0.12)) / (0.12 * orbit_radius);
+	float inner_spin_boost = 0.003 * (1.0 - exp(-t * 0.24)) / (0.24 * orbit_radius * orbit_radius);
+	float vortex_rotation = t * 0.008 + inverse_radius_spin + inner_spin_boost;
 	float flow_angle = angle - vortex_rotation;
 	float angular_coordinate = fract(flow_angle / tau + 0.5) * sector_count;
 	float sector = floor(angular_coordinate);
