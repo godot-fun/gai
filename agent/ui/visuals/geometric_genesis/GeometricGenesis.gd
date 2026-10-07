@@ -14,7 +14,7 @@ const SIDE_SEQUENCE: Array[int] = [3, 4, 5, 4, 5, 6, 5, 6, 7, 6, 7, 8, 7, 8, 9, 
 
 enum SealState { CONSTRUCTING, COMPLETE }
 enum ToolState { RUNNING, SUCCESS, FAILED }
-enum GeometryKind { STAR, ROSETTE, RADIAL, NESTED, WEAVE }
+enum GeometryKind { STAR, ROSETTE, RADIAL, NESTED, WEAVE, ELLIPSE, PARABOLA, ROSE, LISSAJOUS, SPIRAL }
 
 var seals: Array[Dictionary] = []
 var active_seal: Dictionary = {}
@@ -309,6 +309,13 @@ func draw_seal(seal: Dictionary, center: Vector2, radius: float) -> void:
 	if growth < 0.12:
 		draw_circle(center, 2.5 + growth * 16.0, Color(accent, 0.7))
 		return
+	var geometry_kind: int = seal["geometry_kind"]
+	if geometry_kind >= GeometryKind.ELLIPSE:
+		draw_analytic_geometry(seal, center, radius, smoothstep(0.12, 1.0, growth))
+		for motif: Dictionary in seal["motifs"]:
+			draw_tool_motif(motif, center, radius, sides, rotation)
+		draw_construction_formula(seal, center, radius)
+		return
 	var points := polygon_points(center, radius, sides, rotation)
 	var closed := PackedVector2Array(points)
 	closed.append(points[0])
@@ -334,6 +341,78 @@ func draw_seal(seal: Dictionary, center: Vector2, radius: float) -> void:
 		draw_tool_motif(motif, center, radius, sides, rotation)
 	draw_construction_formula(seal, center, radius)
 	pass
+
+
+func draw_analytic_geometry(seal: Dictionary, center: Vector2, radius: float, growth: float) -> void:
+	var kind: int = seal["geometry_kind"]
+	var rotation: float = seal["rotation"]
+	var variant: int = seal["index"]
+	var points := analytic_curve_points(kind, center, radius, rotation, growth, variant)
+	if points.size() < 2:
+		return
+	var accent := ThemeColor.accent_theme_color()
+	draw_polyline(points, Color(accent, 0.028), 4.5, true)
+	draw_polyline(points, Color(accent, 0.74), 1.2, true)
+	var head := points[points.size() - 1]
+	draw_circle(head, 2.2, Color(accent, 0.76))
+	var settle: float = seal["settle"]
+	var construction_alpha := 0.18 * (1.0 - settle * 0.72)
+	match kind:
+		GeometryKind.ELLIPSE:
+			var axis := Vector2.from_angle(rotation)
+			var focus_distance := radius * sqrt(1.0 - 0.62 * 0.62)
+			draw_dashed_segment(center - axis * focus_distance, center + axis * focus_distance, Color(accent, construction_alpha))
+			draw_circle(center - axis * focus_distance, 2.2, Color(accent, construction_alpha * 2.0))
+			draw_circle(center + axis * focus_distance, 2.2, Color(accent, construction_alpha * 2.0))
+		GeometryKind.PARABOLA:
+			var local_focus := Vector2(0.0, -radius * 0.22).rotated(rotation)
+			draw_circle(center + local_focus, 2.4, Color(accent, construction_alpha * 2.0))
+			draw_dashed_segment(center + Vector2(-radius, radius * 0.42).rotated(rotation), center + Vector2(radius, radius * 0.42).rotated(rotation), Color(accent, construction_alpha))
+		GeometryKind.ROSE, GeometryKind.LISSAJOUS, GeometryKind.SPIRAL:
+			draw_line(center - Vector2(radius * 0.18, 0.0), center + Vector2(radius * 0.18, 0.0), Color(accent, construction_alpha), 1.0)
+			draw_line(center - Vector2(0.0, radius * 0.18), center + Vector2(0.0, radius * 0.18), Color(accent, construction_alpha), 1.0)
+	pass
+
+
+func draw_dashed_segment(from: Vector2, to: Vector2, color: Color) -> void:
+	var distance := from.distance_to(to)
+	if distance <= 0.1:
+		return
+	var direction := (to - from) / distance
+	for start in range(0, ceili(distance), 9):
+		var segment_start := float(start)
+		var segment_end := minf(segment_start + 4.5, distance)
+		draw_line(from + direction * segment_start, from + direction * segment_end, color, 1.0, true)
+	pass
+
+
+static func analytic_curve_points(kind: int, center: Vector2, radius: float, rotation: float, growth: float, variant: int) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	var steps := maxi(2, ceili(96.0 * clampf(growth, 0.0, 1.0)))
+	for step in range(steps):
+		var amount := float(step) / 95.0
+		var local := Vector2.ZERO
+		match kind:
+			GeometryKind.ELLIPSE:
+				var angle := amount * TAU
+				local = Vector2(cos(angle) * radius, sin(angle) * radius * 0.62)
+			GeometryKind.PARABOLA:
+				var u := lerpf(-1.0, 1.0, amount)
+				local = Vector2(u * radius, (u * u - 0.46) * radius * 0.72)
+			GeometryKind.ROSE:
+				var angle := amount * TAU
+				var petals := 3.0 + float(variant % 4)
+				local = Vector2.from_angle(angle) * radius * cos(petals * angle)
+			GeometryKind.LISSAJOUS:
+				var time := amount * TAU
+				var frequency_x := 2.0 + float(variant % 3)
+				var frequency_y := 3.0 + float((variant + 1) % 4)
+				local = Vector2(sin(frequency_x * time + PI * 0.5), sin(frequency_y * time)) * radius * 0.82
+			GeometryKind.SPIRAL:
+				var angle := amount * TAU * 3.4
+				local = Vector2.from_angle(angle) * radius * amount
+		points.append(center + local.rotated(rotation))
+	return points
 
 
 func draw_construction_formula(seal: Dictionary, center: Vector2, radius: float) -> void:
@@ -384,6 +463,16 @@ static func geometry_formula(kind: int, sides: int) -> String:
 			return "v_(k,j) = P_n + lambda_j (v_k - P_n)"
 		GeometryKind.WEAVE:
 			return "C_k = segment(v_k, v_((k+s) mod %d))" % sides
+		GeometryKind.ELLIPSE:
+			return "x^2 / a^2 + y^2 / b^2 = 1"
+		GeometryKind.PARABOLA:
+			return "y = a x^2    |PF| = dist(P, directrix)"
+		GeometryKind.ROSE:
+			return "r(theta) = a cos(k theta)"
+		GeometryKind.LISSAJOUS:
+			return "x = A sin(a t + delta),  y = B sin(b t)"
+		GeometryKind.SPIRAL:
+			return "r(theta) = a + b theta"
 	return "v_k = P_n + r (cos(2 PI k / m), sin(2 PI k / m))"
 
 
@@ -618,11 +707,13 @@ static func geometry_kind_for(index: int, complexity: int) -> int:
 		1:
 			return GeometryKind.RADIAL if index % 2 == 0 else GeometryKind.NESTED
 		2:
-			const DEVELOPING_KINDS: Array[int] = [GeometryKind.STAR, GeometryKind.NESTED, GeometryKind.RADIAL]
+			const DEVELOPING_KINDS: Array[int] = [GeometryKind.ELLIPSE, GeometryKind.STAR, GeometryKind.PARABOLA, GeometryKind.NESTED]
 			return DEVELOPING_KINDS[index % DEVELOPING_KINDS.size()]
 		3:
-			return (index * 3 + 1) % GeometryKind.size()
-	return (index * 2 + floori(float(index) / 3.0)) % GeometryKind.size()
+			const PARAMETRIC_KINDS: Array[int] = [GeometryKind.ROSE, GeometryKind.LISSAJOUS, GeometryKind.SPIRAL, GeometryKind.WEAVE, GeometryKind.ROSETTE]
+			return PARAMETRIC_KINDS[index % PARAMETRIC_KINDS.size()]
+	const MATURE_KINDS: Array[int] = [GeometryKind.ELLIPSE, GeometryKind.PARABOLA, GeometryKind.ROSE, GeometryKind.LISSAJOUS, GeometryKind.SPIRAL]
+	return MATURE_KINDS[index % MATURE_KINDS.size()]
 
 
 static func polygon_points(center: Vector2, radius: float, sides: int, rotation: float) -> PackedVector2Array:
