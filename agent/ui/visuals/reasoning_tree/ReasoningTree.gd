@@ -134,7 +134,7 @@ func on_message_complete(_usage: OpenAiUsage) -> void:
 
 
 func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
-	branches.append(make_branch(tool_call_id, tool_name, branch_sequence, target_trunk_growth))
+	branches.append(make_branch(tool_call_id, tool_name, branch_sequence, trunk_growth))
 	branch_sequence += 1
 	active_tool_indices[tool_call_id] = branches.size() - 1
 	phase_label = StringUtils.format(I18n.t("agent.visuals.calling_tool"), VisualToolFormatter.title_name(tool_name, I18n.t("agent.visuals.tool")))
@@ -265,9 +265,11 @@ func _draw() -> void:
 	var crown_center_y := Margin.ma_8 + crown_radius
 	var segment_height := maxf(12.0, (base.y - crown_center_y) / float(MAX_TRUNK_SEGMENTS))
 	var accent := ThemeColor.accent_theme_color()
-	draw_trunk(base, segment_height, accent)
+	# Render branches below the trunk so their flat start caps disappear beneath the trunk stroke.
+	# This produces a clean fork without a gap or a visible circular junction marker.
 	for branch: Dictionary in branches:
 		draw_branch(branch, base, segment_height)
+	draw_trunk(base, segment_height, accent)
 	draw_tree_pulses(base, segment_height, accent)
 	draw_crown(base, segment_height, accent)
 	draw_status(base)
@@ -284,7 +286,7 @@ func draw_trunk(base: Vector2, segment_height: float, accent: Color) -> void:
 
 
 func draw_branch(branch: Dictionary, base: Vector2, segment_height: float) -> void:
-	var anchor_segment := float(branch["anchor"]) + float(branch["anchor_offset"])
+	var anchor_segment := float(branch["anchor"])
 	var anchor := trunk_point(base, segment_height, anchor_segment)
 	var direction: float = branch["direction"]
 	var growth: float = branch["growth"]
@@ -302,9 +304,6 @@ func draw_branch(branch: Dictionary, base: Vector2, segment_height: float) -> vo
 	var parent_alpha := BRANCH_ALPHA_FAILED if state == BranchState.FAILED else (BRANCH_ALPHA_SUCCESS if state == BranchState.SUCCESS else BRANCH_ALPHA_RUNNING)
 	var pulse := running_pulse(visual_time, float(branch["animation_phase"])) if state == BranchState.RUNNING else 1.0
 	var parent_width := (2.5 if state == BranchState.FAILED else 3.0) + (pulse - 1.0)
-	# Polyline ends use flat caps. A line-sized fill at the real junction seals the anti-aliased
-	# seam without bringing back the visible decorative trunk nodes.
-	draw_circle(anchor, parent_width * 0.62, Color(parent_color, parent_alpha * pulse))
 	if state == BranchState.RUNNING:
 		draw_polyline(parent_curve, Color(parent_color, parent_alpha * 0.22 * pulse), 8.0 + pulse * 2.0, true)
 	draw_polyline(parent_curve, Color(parent_color, parent_alpha * pulse), parent_width, true)
@@ -580,7 +579,6 @@ static func make_branch(tool_call_id: String, tool_name: String, branch_index: i
 		"label": VisualToolFormatter.title_name(tool_name, I18n.t("agent.visuals.tool")),
 		"state": BranchState.RUNNING,
 		"anchor": clampf(growth, ANCHOR_MIN, ANCHOR_MAX),
-		"anchor_offset": branch_anchor_offset(branch_index),
 		"direction": direction,
 		"angle": branch_angle(branch_index),
 		"completion_angle": completion_angle(branch_index),
@@ -670,15 +668,8 @@ static func branch_elevation_degrees(branch_index: int) -> float:
 	return 10.0 + 52.0 * (1.0 - pow(0.94, branch_index))
 
 
-## Later tools always attach higher than earlier tools while staying below the turn endpoint.
-static func branch_anchor_offset(branch_index: int) -> float:
-	# The negative offset shrinks monotonically instead of cycling, so a later branch can never
-	# drop below an earlier branch when both are created at the same trunk height.
-	return -0.24 * pow(0.82, branch_index)
-
-
 static func branch_anchor_segment(branch: Dictionary) -> float:
-	return float(branch["anchor"]) + float(branch["anchor_offset"])
+	return float(branch["anchor"])
 
 
 static func can_branch_grow(current_trunk_growth: float, branch: Dictionary) -> bool:

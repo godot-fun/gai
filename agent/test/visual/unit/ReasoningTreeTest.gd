@@ -190,23 +190,9 @@ func failed_completion_droops_and_stays_full_length_test() -> void:
 	pass
 
 
-func nearby_branch_anchors_are_staggered_test() -> void:
-	var offsets: Dictionary[float, bool] = {}
-	for index in range(6):
-		var offset := ReasoningTree.branch_anchor_offset(index)
-		assert(not offsets.has(offset))
-		offsets[offset] = true
-	pass
-
-
-func later_branch_anchors_are_always_higher_test() -> void:
-	var previous_anchor := -INF
-	for index in range(ReasoningTree.MAX_BRANCHES * 2):
-		var turn_growth := ReasoningTree.trunk_growth_for_turn(mini(index / 3 + 1, AgentLoop.MAX_TURNS))
-		var branch := ReasoningTree.make_branch("call-%d" % index, "tool", index, turn_growth)
-		var anchor := ReasoningTree.branch_anchor_segment(branch)
-		assert(anchor > previous_anchor)
-		previous_anchor = anchor
+func branch_anchor_matches_growth_origin_test() -> void:
+	var branch := ReasoningTree.make_branch("call", "tool", 3, 2.4)
+	assert(is_equal_approx(ReasoningTree.branch_anchor_segment(branch), 2.4))
 	pass
 
 
@@ -216,6 +202,17 @@ func branch_waits_until_trunk_reaches_anchor_test() -> void:
 	assert(not ReasoningTree.can_branch_grow(anchor - 0.01, branch))
 	assert(ReasoningTree.can_branch_grow(anchor, branch))
 	assert(ReasoningTree.can_branch_grow(anchor + 0.01, branch))
+	pass
+
+
+func live_branch_starts_at_current_trunk_tip_test() -> void:
+	var tree := ReasoningTree.new()
+	tree.trunk_growth = 2.4
+	tree.target_trunk_growth = 5.8
+	tree.on_tool_execution_start("live", "read", {})
+	assert(tree.branches.size() == 1)
+	assert(is_equal_approx(ReasoningTree.branch_anchor_segment(tree.branches[0]), tree.trunk_growth))
+	tree.free()
 	pass
 
 
@@ -230,12 +227,6 @@ func fractional_branch_anchor_lies_on_drawn_trunk_test() -> void:
 	var segment_end := tree.trunk_point(base, segment_height, 3.0)
 	assert(anchor.is_equal_approx(segment_start.lerp(segment_end, 0.4)))
 	tree.free()
-	pass
-
-
-func staggered_anchor_never_exceeds_turn_endpoint_test() -> void:
-	for index in range(24):
-		assert(ReasoningTree.branch_anchor_offset(index) <= 0.0)
 	pass
 
 
