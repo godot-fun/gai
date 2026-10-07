@@ -13,7 +13,7 @@ static func visual_type_test() -> void:
 
 
 static func preset_catalog_test() -> void:
-	assert(FilterCarousel.PRESETS.size() >= 90)
+	assert(FilterCarousel.PRESETS.size() >= 110)
 	var names: Dictionary[String, bool] = {}
 	for preset: Dictionary in FilterCarousel.PRESETS:
 		var name := str(preset["name"])

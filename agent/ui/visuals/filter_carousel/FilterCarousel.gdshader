@@ -257,6 +257,81 @@ void fragment() {
 		vec2 corrupt_uv = uv + block_shift * texel;
 		vec3 corrupt = texture(screen_texture, corrupt_uv).rgb;
 		filtered = mix(corrupt, corrupt.brg * tint_color.rgb, broken * 0.55);
+	} else if (mode == 43) {
+		float char_size = max(effect_scale, 5.0);
+		vec2 char_cell = floor(pixel / vec2(char_size * 0.7, char_size));
+		vec2 char_local = fract(pixel / vec2(char_size * 0.7, char_size)) - 0.5;
+		vec2 char_uv = (char_cell * vec2(char_size * 0.7, char_size) + vec2(char_size * 0.35, char_size * 0.5)) / screen_size;
+		float char_gray = luminance(texture(screen_texture, char_uv).rgb);
+		float bar = step(abs(char_local.x), 0.08 + char_gray * 0.12) * step(abs(char_local.y), 0.42);
+		float cross_bar = step(abs(char_local.y), 0.055) * step(abs(char_local.x), 0.34) * step(0.3, char_gray);
+		float dot = step(length(char_local), 0.09) * step(0.08, char_gray);
+		float glyph = clamp(bar + cross_bar + dot, 0.0, 1.0) * step(0.04, char_gray);
+		filtered = mix(paper_color.rgb, ink_color.rgb, glyph);
+	} else if (mode == 44) {
+		float led_size = max(effect_scale, 3.0);
+		vec2 led_cell = floor(pixel / led_size);
+		vec2 led_local = fract(pixel / led_size) - 0.5;
+		vec2 led_uv = (led_cell * led_size + led_size * 0.5) / screen_size;
+		vec3 led_color = texture(screen_texture, led_uv).rgb;
+		float led_dot = 1.0 - smoothstep(0.31, 0.48, length(led_local));
+		filtered = led_color * led_dot * 1.28 + led_color * 0.035;
+	} else if (mode == 45) {
+		float lcd_size = max(effect_scale, 2.0);
+		vec2 lcd_uv = (floor(pixel / lcd_size) * lcd_size + lcd_size * 0.5) / screen_size;
+		vec3 lcd_color = texture(screen_texture, lcd_uv).rgb;
+		float subpixel = mod(floor(pixel.x), 3.0);
+		vec3 lcd_mask = subpixel < 1.0 ? vec3(1.0, 0.32, 0.32) : (subpixel < 2.0 ? vec3(0.32, 1.0, 0.32) : vec3(0.32, 0.32, 1.0));
+		float lcd_grid = step(0.12, fract(pixel.y / lcd_size)) * step(fract(pixel.y / lcd_size), 0.9);
+		filtered = lcd_color * lcd_mask * lcd_grid * 1.42;
+	} else if (mode == 46) {
+		float ink_threshold = bayer4(pixel / max(effect_scale, 1.0));
+		float ink_level = floor(gray * levels + ink_threshold) / max(levels - 1.0, 1.0);
+		filtered = vec3(clamp(ink_level, 0.04, 0.94));
+	} else if (mode == 47) {
+		float hatch_scale = max(effect_scale, 2.0);
+		float diagonal_a = step(0.72, fract((pixel.x + pixel.y) / hatch_scale));
+		float diagonal_b = step(0.72, fract((pixel.x - pixel.y) / hatch_scale));
+		float horizontal = step(0.78, fract(pixel.y / hatch_scale));
+		float hatch = diagonal_a * step(gray, 0.78) + diagonal_b * step(gray, 0.52) + horizontal * step(gray, 0.28);
+		filtered = mix(paper_color.rgb, ink_color.rgb, clamp(hatch + edge * 1.8, 0.0, 1.0));
+	} else if (mode == 48) {
+		float stipple_scale = max(effect_scale, 2.0);
+		vec2 stipple_cell = floor(pixel / stipple_scale);
+		vec2 stipple_local = fract(pixel / stipple_scale) - 0.5;
+		float stipple_radius = (1.0 - gray) * 0.48;
+		vec2 stipple_jitter = (vec2(random_noise(stipple_cell), random_noise(stipple_cell + 17.0)) - 0.5) * 0.35;
+		float stipple_dot = 1.0 - step(stipple_radius, length(stipple_local - stipple_jitter));
+		filtered = mix(paper_color.rgb, ink_color.rgb, max(stipple_dot, edge));
+	} else if (mode == 49) {
+		vec2 stereo_shift = vec2(effect_scale, 0.0) * texel;
+		float red_eye = luminance(texture(screen_texture, uv + stereo_shift).rgb);
+		float cyan_eye = luminance(texture(screen_texture, uv - stereo_shift).rgb);
+		filtered = vec3(red_eye, cyan_eye, cyan_eye);
+	} else if (mode == 50) {
+		vec2 tunnel_center = uv - 0.5;
+		float tunnel_radius = max(length(tunnel_center), 0.025);
+		float tunnel_angle = atan(tunnel_center.y, tunnel_center.x) / 6.2831853 + 0.5;
+		float tunnel_depth = fract(effect_scale * 0.08 / tunnel_radius - TIME * 0.12);
+		vec2 tunnel_uv = vec2(tunnel_angle, tunnel_depth);
+		filtered = texture(screen_texture, tunnel_uv).rgb;
+	} else if (mode == 51) {
+		vec2 radar_position = uv - 0.5;
+		float radar_radius = length(radar_position);
+		float radar_angle = atan(radar_position.y, radar_position.x);
+		float radar_sweep_angle = mod(TIME * (0.7 + effect_scale * 0.04), 6.2831853) - 3.14159265;
+		float radar_delta = abs(atan(sin(radar_angle - radar_sweep_angle), cos(radar_angle - radar_sweep_angle)));
+		float radar_sweep = exp(-radar_delta * 8.0) * step(radar_radius, 0.7);
+		float radar_rings = smoothstep(0.045, 0.0, abs(fract(radar_radius * 10.0) - 0.5));
+		float radar_signal = clamp(gray * 0.58 + radar_sweep + radar_rings * 0.22 + edge, 0.0, 1.0);
+		filtered = mix(paper_color.rgb, ink_color.rgb, radar_signal);
+	} else if (mode == 52) {
+		float holo_line = sin(pixel.y * 1.7 + TIME * 7.0);
+		float holo_jump = step(0.96, random_noise(vec2(floor(pixel.y / 12.0), floor(TIME * 8.0))));
+		vec2 holo_uv = uv + vec2(holo_jump * sin(TIME * 31.0) * effect_scale * texel.x, holo_line * effect_scale * 0.08 * texel.y);
+		float holo_gray = luminance(texture(screen_texture, holo_uv).rgb);
+		float holo_alpha = clamp(holo_gray * 0.66 + edge * 1.3 + holo_line * 0.06, 0.0, 1.0);
+		filtered = mix(paper_color.rgb, ink_color.rgb, holo_alpha);
 	}
 
 	float grain = (random_noise(pixel + floor(TIME * 8.0)) - 0.5) * grain_strength;
