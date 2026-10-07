@@ -5,6 +5,9 @@ extends Object
 const MIN_INT: int = -2147483648
 const MAX_INT: int = 2147483647
 
+# Letters, digits and the common English symbols (printable ASCII without whitespace).
+const RANDOM_STRING_CHARS: String = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+
 static func random_boolean() -> bool:
 	return 1 == randi_range(0, 2)
 
@@ -31,6 +34,19 @@ static func random_int_range(from: int, to: int) -> int:
 
 static func random_ele(array: Array) -> Variant:
 	return array[random_int_limit(array.size())]
+
+# Generate a random string with the given character count.
+static func random_string(length: int, chars: String = RANDOM_STRING_CHARS) -> String:
+	if length <= 0:
+		return ""
+	if chars.is_empty():
+		push_error("chars should not be empty")
+		return ""
+	
+	var builder := StringBuilder.new()
+	for _i in length:
+		builder.append(chars[random_int_limit(chars.length())])
+	return builder.build_string()
 
 
 # Generate a random position inside a circle.

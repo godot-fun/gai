@@ -31,6 +31,13 @@ func RandomUtils_test() -> void:
 	var array: Array[int] = [1, 2, 3]
 	var randomElement = RandomUtils.random_ele(array)
 	assert(array.find(randomElement) >= 0)
+	var randomString := RandomUtils.random_string(8)
+	assert(randomString.length() == 8)
+	for c: String in randomString:
+		assert(RandomUtils.RANDOM_STRING_CHARS.contains(c))
+	assert(RandomUtils.RANDOM_STRING_CHARS.length() == 94)
+	assert(RandomUtils.random_string(0) == "")
+	assert(RandomUtils.random_string(4, "a") == "aaaa")
 	pass
 
 
