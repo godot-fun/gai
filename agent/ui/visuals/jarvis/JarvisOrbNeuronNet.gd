@@ -21,6 +21,7 @@ var neuron_anchors: PackedVector3Array = PackedVector3Array()
 var neuron_positions: PackedVector3Array = PackedVector3Array()
 var neuron_phases: PackedFloat32Array = PackedFloat32Array()
 var neuron_speeds: PackedFloat32Array = PackedFloat32Array()
+## Persistent physical velocities. Positions must advance from these velocities and must not spring back to anchors.
 var neuron_velocities: PackedVector3Array = PackedVector3Array()
 var neuron_amps: PackedFloat32Array = PackedFloat32Array()
 var neuron_tangent_a: PackedVector3Array = PackedVector3Array()
@@ -28,8 +29,10 @@ var neuron_tangent_b: PackedVector3Array = PackedVector3Array()
 var neuron_layers: PackedByteArray = PackedByteArray()
 var synapse_pairs_inner: Array[Vector2i] = []
 var synapse_pairs_outer: Array[Vector2i] = []
+## Anchors define initial distribution and filament topology only; they are not motion targets.
 var motion_time: float = 0.0
 var wander_speed_scale: float = 0.75
+## Only the inner core consumes thinking energy. The outer shell deliberately keeps its normal pace for contrast.
 var thinking_blend: float = 0.0
 var thinking_target: float = 0.0
 var pulse_levels: PackedFloat32Array = PackedFloat32Array()
@@ -434,8 +437,10 @@ func update_neuron_motion(motion_delta: float) -> void:
 		var phase := neuron_phases[i]
 		var speed := neuron_speeds[i]
 		var is_inner := neuron_layers[i] == LAYER_INNER
+		# Thinking/global phase speed applies only to the inner core. Keep the shell visually calm and readable.
 		var step := minf(motion_delta * wander_speed_scale, 0.075) if is_inner else minf(motion_delta, 0.075)
 		var velocity := neuron_velocities[i]
+		# Low-frequency steering prevents straight-line repetition without pulling a neuron toward its old position.
 		var steer := Vector3(
 			sin(motion_time * (0.71 + speed * 0.13) + phase),
 			cos(motion_time * (0.83 + speed * 0.17) + phase * 1.37),
@@ -448,11 +453,14 @@ func update_neuron_motion(motion_delta: float) -> void:
 		neuron_positions[i] += velocity * step
 		neuron_velocities[i] = velocity
 		constrain_neuron_to_layer(i)
+	# Synapse pairs are reused as a bounded collision candidate set, avoiding an O(n²) all-pairs scan every frame.
 	resolve_neuron_collisions(synapse_pairs_inner, 0.075, 1.0)
 	resolve_neuron_collisions(synapse_pairs_outer, 0.115, 0.72)
 	pass
 
 
+## Keeps each population inside its visual volume and reflects velocity at the boundary.
+## This is a container collision, not a spring: no anchor position is involved.
 func constrain_neuron_to_layer(index: int) -> void:
 	var position := neuron_positions[index]
 	var radius := position.length()
@@ -468,6 +476,8 @@ func constrain_neuron_to_layer(index: int) -> void:
 	pass
 
 
+## Resolves equal-mass sphere contacts with positional separation and a velocity impulse.
+## Inner restitution is higher than outer restitution so thinking reads as energetic core collisions.
 func resolve_neuron_collisions(pairs: Array[Vector2i], collision_distance: float, restitution: float) -> void:
 	for pair in pairs:
 		var delta := neuron_positions[pair.y] - neuron_positions[pair.x]
