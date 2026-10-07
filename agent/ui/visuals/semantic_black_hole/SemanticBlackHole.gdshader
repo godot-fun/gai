@@ -60,13 +60,27 @@ void fragment() {
 	float breath_strength = 0.35 + gravity * 0.45;
 	float horizon_radius = horizon_base * (1.0 + breath * 0.28 * breath_strength);
 
-	// Same ion look as the original dust field; only the advection changes so cells orbit
-	// inward in one direction instead of sitting on fixed angular sectors.
-	float spiral_phase = angle * 7.0 + log(max(radius, 0.025)) * 19.0 - t * (2.0 + 1.8 / max(radius * 8.0, 0.8));
-	float sector = floor(fract(angle / tau + 0.5 - t * 14.0 / sector_count) * sector_count);
-	float dust_cells = noise(vec2(sector, floor(radius * 92.0 + t * 8.0)));
-	float dust = smoothstep(0.82 - context_density * 0.22, 0.98, dust_cells) * smoothstep(0.78, 0.11, radius);
-	dust *= 0.3 + 0.7 * pow(abs(sin(spiral_phase)), 9.0);
+	// Advect the original block-like ions without shearing them. Angular speed is calculated once
+	// per radial cell, so each square stays rigid while inner layers orbit faster than outer ones.
+	float flow_log_radius = log(max(radius, 0.025)) + t * 0.12;
+	float radial_coordinate = flow_log_radius * sector_count / tau;
+	float radial_cell = floor(radial_coordinate);
+	float cell_log_radius = (radial_cell + 0.5) * tau / sector_count - t * 0.12;
+	float cell_radius = exp(cell_log_radius);
+	float vortex_rotation = t * 0.055 + 0.012 * (1.0 - exp(-t * 0.12)) / (0.12 * max(cell_radius, 0.075));
+	float flow_angle = angle - vortex_rotation;
+	float angular_coordinate = fract(flow_angle / tau + 0.5) * sector_count;
+	float sector = floor(angular_coordinate);
+	// Equal angular and logarithmic-radial cell spans form locally square ions. Keeping the mask
+	// inset leaves a stable gap around every square, even while neighboring layers rotate apart.
+	vec2 cell_uv = abs(fract(vec2(angular_coordinate, radial_coordinate)) - 0.5);
+	float square = 1.0 - smoothstep(0.37, 0.44, max(cell_uv.x, cell_uv.y));
+	float dust_cells = noise(vec2(sector, radial_cell));
+	float cell_angle = (sector + 0.5) * tau / sector_count - tau * 0.5;
+	float cell_log = (radial_cell + 0.5) * tau / sector_count;
+	float spiral_weight = 0.3 + 0.7 * pow(abs(sin(cell_angle * 7.0 + cell_log * 19.0)), 9.0);
+	float dust = smoothstep(0.82 - context_density * 0.22, 0.98, dust_cells) * square * smoothstep(0.78, 0.11, radius);
+	dust *= spiral_weight;
 	// Ions soften as the breathing horizon reaches them so each swell reads as a swallow.
 	dust *= smoothstep(horizon_radius, horizon_radius + 0.08, radius);
 	vec3 color = accent_color.rgb * dust * (0.24 + gravity * 0.72);
