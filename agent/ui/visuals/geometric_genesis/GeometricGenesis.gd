@@ -434,8 +434,6 @@ func draw_construction_formula(seal: Dictionary, center: Vector2, radius: float)
 	x = clampf(x, 18.0, size.x - formula_width - 18.0)
 	var y := clampf(center.y - radius * 0.38, 34.0, size.y - 48.0)
 	var accent := ThemeColor.accent_theme_color()
-	var panel_rect := Rect2(Vector2(x - 7.0, y - 17.0), Vector2(formula_width + 10.0, 43.0))
-	draw_rect(panel_rect, Color(ColorBase.deep_surface, 0.62 * fade), true)
 	draw_line(Vector2(x - 7.0, y - 17.0), Vector2(x - 7.0, y + 26.0), Color(accent, 0.42 * fade), 1.0)
 	draw_string(Fonts.regular(), Vector2(x, y), point_text, HORIZONTAL_ALIGNMENT_LEFT, formula_width, Typography.label_small_size, Color(accent, 0.58 * fade))
 	if not shape_text.is_empty():
