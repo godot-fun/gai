@@ -23,6 +23,7 @@ const EFFECT_SPECS: Array[Dictionary] = [
 	{"type": VisualType.Type.DESKTOP_CAT, "label": "Desktop Cat"},
 	{"type": VisualType.Type.GEOMETRIC_GENESIS, "label": "Geometric Genesis"},
 	{"type": VisualType.Type.MATRIX_RAIN, "label": "Matrix Rain"},
+	{"type": VisualType.Type.FILTER_CAROUSEL, "label": "Filter Carousel"},
 ]
 
 const TOOL_CATALOG: Array[Dictionary] = [

@@ -88,7 +88,8 @@
       "visual_quantum_circuit": "Quantum Circuit",
       "visual_desktop_cat": "Desktop Cat",
       "visual_geometric_genesis": "Geometric Genesis",
-      "visual_matrix_rain": "Matrix Rain"
+      "visual_matrix_rain": "Matrix Rain",
+      "visual_filter_carousel": "Filter Carousel"
     },
     "sidebar": {
       "new_session": "+ New Agent",

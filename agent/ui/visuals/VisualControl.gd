@@ -53,6 +53,8 @@ func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 			return GeometricGenesis.new()
 		VisualType.Type.MATRIX_RAIN:
 			return MatrixRain.new()
+		VisualType.Type.FILTER_CAROUSEL:
+			return FilterCarousel.new()
 	return null
 
 
