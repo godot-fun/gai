@@ -1,6 +1,30 @@
 extends Node
 
 
+func agent_end_cancels_unfinished_pipeline_test() -> void:
+	TransformerController.complete_animation_on_agent_end = false
+	var controller := TransformerController.new()
+	controller.request_generation = 7
+	controller.pipeline_running = true
+	controller.on_agent_end("")
+	assert(controller.request_generation == 8)
+	assert(not controller.pipeline_running)
+	controller.free()
+	pass
+
+
+func complete_animation_switch_is_global_test() -> void:
+	TransformerController.complete_animation_on_agent_end = true
+	var first := TransformerController.new()
+	var second := TransformerController.new()
+	assert(first.complete_animation_on_agent_end)
+	assert(second.complete_animation_on_agent_end)
+	TransformerController.complete_animation_on_agent_end = false
+	first.free()
+	second.free()
+	pass
+
+
 func complete_sentence_after_minimum_test() -> void:
 	var tokens: Array[LlamaHelper.Token] = []
 	for index in 14:

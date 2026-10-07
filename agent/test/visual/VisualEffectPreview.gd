@@ -66,6 +66,7 @@ var play_buttons: Array[Button] = []
 func _ready() -> void:
 	# This preview runs directly with F6 and bypasses Agent._ready(), where the application normally
 	# initializes translations. Keep this first so effects created below receive translated labels.
+	TransformerController.complete_animation_on_agent_end = true
 	I18nHelper.init_i18n()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	AgentSessionManager.load_from_disk()
@@ -78,6 +79,11 @@ func _ready() -> void:
 	gdf.events.theme_color_changed.connect(apply_theme)
 	apply_theme()
 	set_status("选择一排特效按钮开始模拟真实 AgentEvents。")
+	pass
+
+
+func _exit_tree() -> void:
+	TransformerController.complete_animation_on_agent_end = false
 	pass
 
 

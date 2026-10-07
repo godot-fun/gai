@@ -3,7 +3,8 @@ extends VisualEffect
 
 ## Orchestrates tokenizer, embedding, and attention transformer-stage animations.
 
-signal end_animation_finished
+## Enables the full completion animation for visual previews and tests. Production stops immediately.
+static var complete_animation_on_agent_end: bool = false
 
 var session_id: int = 0
 var request_generation: int = 0
@@ -15,7 +16,6 @@ var logits_burst: Control
 var active_tween: Tween
 var run_entry_start: int = 0
 var pipeline_running: bool = false
-var waiting_for_end_animation: bool = false
 
 
 func _ready() -> void:
@@ -104,14 +104,11 @@ func on_agent_start(value: int) -> void:
 
 
 func on_agent_end(error_message: String) -> void:
-	if StringUtils.is_not_blank(error_message):
-		request_generation += 1
-		cancel_stages()
+	if complete_animation_on_agent_end and StringUtils.is_blank(error_message):
+		await finish_logits_animation(request_generation)
 		return
-	waiting_for_end_animation = true
-	finish_logits_animation(request_generation)
-	if waiting_for_end_animation:
-		await end_animation_finished
+	request_generation += 1
+	cancel_stages()
 	pass
 
 
@@ -158,19 +155,11 @@ func finish_logits_animation(generation: int) -> void:
 	while pipeline_running and generation == request_generation and is_inside_tree():
 		await get_tree().process_frame
 	if generation != request_generation or not is_inside_tree():
-		complete_end_animation()
 		return
 	var final_text := StringUtils.truncate(latest_run_text(ChatEntry.KIND_AGENT), 1024)
 	var high_tokens := await tokenize_text(final_text)
 	if generation == request_generation and is_inside_tree():
 		await logits_burst.play_high_probability(high_tokens)
-	complete_end_animation()
-	pass
-
-
-func complete_end_animation() -> void:
-	waiting_for_end_animation = false
-	end_animation_finished.emit()
 	pass
 
 
@@ -230,6 +219,4 @@ func cancel_stages() -> void:
 	if logits_burst != null:
 		logits_burst.cancel()
 	pipeline_running = false
-	if waiting_for_end_animation:
-		complete_end_animation()
 	pass
