@@ -9,8 +9,10 @@ const MAX_COLUMNS := 112
 const MAX_TRAIL_LENGTH := 22
 const GLYPH_REFRESH_SECONDS := 0.075
 const SENTENCE_INTERVAL_SECONDS := 0.2
-const MAX_REPLY_GLYPHS := 512
+const MAX_REPLY_RAINS := 64
 const REPLY_COLUMN_LENGTH := 18
+const MIN_REPLY_RAIN_SPEED := 80.0
+const MAX_REPLY_RAIN_SPEED := 180.0
 const GLYPHS := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ{}[]<>/\\|+-=*:#@$%&!?"
 
 enum ToolState { NONE, RUNNING, SUCCESS, FAILED }
@@ -27,6 +29,8 @@ var sentence_timer: float = 0.0
 var sentence_cursor: VisualChatSentenceCursor = VisualChatSentenceCursor.new()
 var reply_glyphs: Array[Dictionary] = []
 var reply_sentence_index: int = 0
+var active_reply_rain_count: int = 0
+var pending_sentence: String = ""
 
 
 func _ready() -> void:
@@ -61,6 +65,8 @@ func reset_visual() -> void:
 	sentence_cursor.clear()
 	reply_glyphs.clear()
 	reply_sentence_index = 0
+	active_reply_rain_count = 0
+	pending_sentence = ""
 	queue_redraw()
 	pass
 
@@ -68,6 +74,7 @@ func reset_visual() -> void:
 func on_agent_start(session_id: int) -> void:
 	active_session_id = session_id
 	sentence_cursor.reset_for_session(session_id)
+	pending_sentence = ""
 	reasoning_energy = 0.28
 	ensure_columns()
 	queue_redraw()
@@ -164,6 +171,8 @@ func _process(delta: float) -> void:
 		var reply_glyph: Dictionary = reply_glyphs[index]
 		reply_glyph["y"] = float(reply_glyph["y"]) + float(reply_glyph["speed"]) * delta
 		if float(reply_glyph["y"]) > size.y + 32.0:
+			if bool(reply_glyph["releases_rain_slot"]):
+				active_reply_rain_count = maxi(active_reply_rain_count - 1, 0)
 			reply_glyphs.remove_at(index)
 	queue_redraw()
 	pass
@@ -178,21 +187,34 @@ func clear_tool_column(column: Dictionary) -> void:
 	pass
 
 
-func offer_next_sentence() -> void:
-	var sentence: String = sentence_cursor.take_next_from_session(active_session_id)
+func offer_next_sentence() -> bool:
+	if active_reply_rain_count >= MAX_REPLY_RAINS:
+		return false
+	var sentence := pending_sentence
 	if sentence.is_empty():
-		return
+		sentence = sentence_cursor.take_next_from_session(active_session_id)
+	if sentence.is_empty():
+		return false
+	if active_reply_rain_count + reply_rain_count(sentence) > MAX_REPLY_RAINS:
+		pending_sentence = sentence
+		return false
+	pending_sentence = ""
 	ingest_sentence(sentence)
-	pass
+	return true
 
 
 func drain_available_sentences() -> void:
-	while active_session_id != 0:
-		var sentence: String = sentence_cursor.take_next_from_session(active_session_id)
-		if sentence.is_empty():
-			return
-		ingest_sentence(sentence)
+	while active_session_id != 0 and offer_next_sentence():
+		pass
 	pass
+
+
+func reply_rain_count(sentence: String) -> int:
+	var character_count := 0
+	for character: String in sentence:
+		if not character.strip_edges().is_empty():
+			character_count += 1
+	return mini(ceili(float(character_count) / float(REPLY_COLUMN_LENGTH)), MAX_REPLY_RAINS)
 
 
 func ingest_sentence(sentence: String) -> void:
@@ -211,9 +233,15 @@ func spawn_reply_rain(sentence: String) -> void:
 	reply_sentence_index += 1
 	var spacing := maxf(MIN_COLUMN_STEP, size.x / float(maxi(columns.size(), 1)))
 	var first_slot: int = (reply_sentence_index * 11) % maxi(columns.size(), 1)
+	var rain_speed: float = 0.0
 	for character_index: int in range(characters.length()):
 		var local_column: int = character_index / REPLY_COLUMN_LENGTH
 		var row: int = character_index % REPLY_COLUMN_LENGTH
+		if row == 0:
+			if active_reply_rain_count >= MAX_REPLY_RAINS:
+				return
+			active_reply_rain_count += 1
+			rain_speed = randf_range(MIN_REPLY_RAIN_SPEED, MAX_REPLY_RAIN_SPEED)
 		var slot: int = (first_slot + local_column) % maxi(columns.size(), 1)
 		var x: float = (float(slot) + 0.5) * spacing
 		var start_y: float = -36.0 - float(row) * 22.0 - float(local_column) * 48.0
@@ -221,10 +249,9 @@ func spawn_reply_rain(sentence: String) -> void:
 			"text": characters.substr(character_index, 1),
 			"x": x,
 			"y": start_y,
-			"speed": 104.0 + float((reply_sentence_index + local_column) % 5) * 13.0,
+			"speed": rain_speed,
+			"releases_rain_slot": row == REPLY_COLUMN_LENGTH - 1 or character_index == characters.length() - 1,
 		})
-	while reply_glyphs.size() > MAX_REPLY_GLYPHS:
-		reply_glyphs.pop_front()
 	pass
 
 
@@ -332,7 +359,7 @@ func draw_column(column: Dictionary) -> void:
 		var jitter := sin(elapsed * 36.0 + float(row)) * 2.5 * highlight if state == ToolState.FAILED else 0.0
 		draw_centered_text(Vector2(x + jitter, y), glyph, Fonts.medium(), Typography.label_small_size, draw_color)
 	if state != ToolState.NONE and not String(column["tool_label"]).is_empty():
-		var label_y := clampf(head_y - float(trail_length) * step_y - 5.0, 18.0, size.y - 12.0)
+		var label_y := head_y - float(trail_length) * step_y - 5.0
 		draw_centered_text(Vector2(x, label_y), String(column["tool_label"]), Fonts.semibold(), Typography.label_small_size, Color(color, 0.45 + highlight * 0.5))
 	pass
 
