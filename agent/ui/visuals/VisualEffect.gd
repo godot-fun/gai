@@ -3,6 +3,10 @@ class_name VisualEffect
 extends Control
 
 ## Effect contract used by [VisualControl]. Override the hooks needed by an effect.
+##
+## Effects paint on a [CanvasLayer] above the chat, so every effect stays an overlay: draw
+## shapes, glyphs, and glows, but never a full-surface translucent wash. A film over the whole
+## rect dims the chat behind it and reads as a blur layer even without a blur shader.
 
 var fade_tween: Tween
 

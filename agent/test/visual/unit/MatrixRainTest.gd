@@ -66,6 +66,7 @@ func tools_reserve_and_release_columns_test() -> void:
 	var effect := MatrixRain.new()
 	effect.size = Vector2(1280.0, 720.0)
 	effect.ensure_columns()
+	effect.on_agent_start(1)
 	effect.on_tool_execution_start("tool-1", "read_file", {})
 	assert(effect.active_tools.has("tool-1"))
 	var column_index: int = effect.active_tools["tool-1"]
@@ -79,6 +80,28 @@ func tools_reserve_and_release_columns_test() -> void:
 	effect.visible = true
 	effect._process(0.01)
 	assert(int(column["tool_state"]) == MatrixRain.ToolState.NONE)
+	effect.free()
+	pass
+
+
+func agent_end_accelerates_rain_offscreen_test() -> void:
+	var effect := MatrixRain.new()
+	effect.size = Vector2(1280.0, 720.0)
+	effect.ensure_columns()
+	effect.ingest_sentence("Finish with a fast falling rain animation.")
+	var delay := effect.on_agent_end("")
+	assert(is_equal_approx(delay, MatrixRain.END_DROP_SECONDS))
+	assert(effect.active_session_id == 0)
+	for column: Dictionary in effect.columns:
+		assert(float(column["speed"]) >= MatrixRain.END_DROP_MIN_SPEED)
+	for reply_glyph: Dictionary in effect.reply_glyphs:
+		assert(float(reply_glyph["speed"]) >= MatrixRain.END_DROP_MIN_SPEED)
+	effect.visible = true
+	effect._process(MatrixRain.END_DROP_SECONDS)
+	for column: Dictionary in effect.columns:
+		var tail_y := float(column["head_y"]) - float(column["length"] - 1) * float(column["step_y"])
+		assert(tail_y > effect.size.y)
+	assert(effect.reply_glyphs.is_empty())
 	effect.free()
 	pass
 

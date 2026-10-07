@@ -13,6 +13,8 @@ const MAX_REPLY_RAINS := 64
 const REPLY_COLUMN_LENGTH := 18
 const MIN_REPLY_RAIN_SPEED := 80.0
 const MAX_REPLY_RAIN_SPEED := 240.0
+const END_DROP_SECONDS := 0.55
+const END_DROP_MIN_SPEED := 1200.0
 
 enum ToolState { NONE, RUNNING, SUCCESS, FAILED }
 
@@ -81,7 +83,18 @@ func on_agent_start(session_id: int) -> void:
 
 
 func on_agent_end(error_message: String) -> float:
-	return 0.35 if StringUtils.is_not_blank(error_message) else 0.2
+	active_session_id = 0
+	pending_sentence = ""
+	ensure_columns()
+	for column: Dictionary in columns:
+		var column_exit_y := size.y + float(column["length"]) * float(column["step_y"]) + 48.0
+		column["speed"] = maxf(END_DROP_MIN_SPEED, (column_exit_y - float(column["head_y"])) / END_DROP_SECONDS)
+	for reply_glyph: Dictionary in reply_glyphs:
+		var glyph_exit_y := size.y + 48.0
+		reply_glyph["speed"] = maxf(END_DROP_MIN_SPEED, (glyph_exit_y - float(reply_glyph["y"])) / END_DROP_SECONDS)
+	reasoning_energy = 1.0 if StringUtils.is_not_blank(error_message) else 0.72
+	queue_redraw()
+	return END_DROP_SECONDS
 
 
 func on_turn_start() -> void:
@@ -158,7 +171,7 @@ func _process(delta: float) -> void:
 	for column: Dictionary in columns:
 		column["head_y"] = float(column["head_y"]) + float(column["speed"]) * delta
 		var wrap_height := size.y + float(column["length"]) * float(column["step_y"])
-		if float(column["head_y"]) > wrap_height:
+		if active_session_id != 0 and float(column["head_y"]) > wrap_height:
 			if bool(column["release_pending"]):
 				clear_tool_column(column)
 			column["head_y"] = -float(column["length"]) * float(column["step_y"])
