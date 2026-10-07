@@ -38,6 +38,17 @@ func RandomUtils_test() -> void:
 	assert(RandomUtils.RANDOM_STRING_CHARS.length() == 94)
 	assert(RandomUtils.random_string(0) == "")
 	assert(RandomUtils.random_string(4, "a") == "aaaa")
+
+	var glyph := RandomUtils.random_char_at(104729, 3, 0)
+	assert(glyph.length() == 1)
+	assert(RandomUtils.RANDOM_STRING_CHARS.contains(glyph))
+	# Deterministic: the same arguments always return the same character, so repainting never flickers.
+	assert(RandomUtils.random_char_at(104729, 3, 7) == RandomUtils.random_char_at(104729, 3, 7))
+	# Advancing the frame refreshes the character, so a trail of cells does not stand still.
+	var glyphs := {}
+	for frame in range(60):
+		glyphs[RandomUtils.random_char_at(3, 1, frame)] = true
+	assert(glyphs.size() > 1)
 	pass
 
 

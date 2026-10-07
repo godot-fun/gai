@@ -12,8 +12,7 @@ const SENTENCE_INTERVAL_SECONDS := 0.2
 const MAX_REPLY_RAINS := 64
 const REPLY_COLUMN_LENGTH := 18
 const MIN_REPLY_RAIN_SPEED := 80.0
-const MAX_REPLY_RAIN_SPEED := 180.0
-const GLYPHS := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ{}[]<>/\\|+-=*:#@$%&!?"
+const MAX_REPLY_RAIN_SPEED := 240.0
 
 enum ToolState { NONE, RUNNING, SUCCESS, FAILED }
 
@@ -21,7 +20,7 @@ var columns: Array[Dictionary] = []
 var active_tools: Dictionary[String, int] = {}
 var elapsed: float = 0.0
 var glyph_clock: float = 0.0
-var glyph_frame: int = 0
+var glyph_tick: int = 0
 var reasoning_energy: float = 0.0
 var layout_width: float = -1.0
 var active_session_id: int = 0
@@ -57,7 +56,7 @@ func reset_visual() -> void:
 	active_tools.clear()
 	elapsed = 0.0
 	glyph_clock = 0.0
-	glyph_frame = 0
+	glyph_tick = 0
 	reasoning_energy = 0.0
 	layout_width = -1.0
 	active_session_id = 0
@@ -153,7 +152,7 @@ func _process(delta: float) -> void:
 		offer_next_sentence()
 	glyph_clock += delta
 	if glyph_clock >= GLYPH_REFRESH_SECONDS:
-		glyph_frame += 1
+		glyph_tick += 1
 		glyph_clock = fmod(glyph_clock, GLYPH_REFRESH_SECONDS)
 	reasoning_energy = move_toward(reasoning_energy, 0.12, delta * 0.48)
 	for column: Dictionary in columns:
@@ -349,7 +348,7 @@ func draw_column(column: Dictionary) -> void:
 			continue
 		var fade := 1.0 - float(row) / float(trail_length)
 		fade = fade * fade
-		var glyph := glyph_at(seed, row, glyph_frame)
+		var glyph := RandomUtils.random_char_at(seed, row, glyph_tick)
 		var alpha := (0.08 + fade * 0.42) * (1.0 + reasoning_energy * 0.32)
 		if state != ToolState.NONE:
 			alpha = minf(1.0, alpha + highlight * (0.18 + fade * 0.58))
@@ -376,12 +375,6 @@ static func tool_color(state: ToolState) -> Color:
 		ToolState.FAILED:
 			return ColorBase.error
 	return ThemeColor.accent_theme_color()
-
-
-static func glyph_at(seed: int, row: int, frame: int) -> String:
-	var refresh_offset: int = frame / (2 + absi(seed + row) % 4)
-	var index: int = absi(seed * 31 + row * 17 + refresh_offset * 13) % GLYPHS.length()
-	return GLYPHS.substr(index, 1)
 
 
 static func compact_tool_name(tool_name: String) -> String:

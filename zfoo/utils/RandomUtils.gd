@@ -48,6 +48,13 @@ static func random_string(length: int, chars: String = RANDOM_STRING_CHARS) -> S
 		builder.append(chars[random_int_limit(chars.length())])
 	return builder.build_string()
 
+# Deterministic pseudo-random character picked from [constant RANDOM_STRING_CHARS], derived from [param seed], [param index] and [param tick].
+# The same arguments always return the same character, so repainting inside one tick never flickers; advance [param tick] to refresh it.
+static func random_char_at(seed: int, index: int, tick: int) -> String:
+	# Cells with a nearby seed rotate at a slightly different pace, so trails do not refresh in lockstep.
+	var refresh_offset := tick / (2 + absi(seed + index) % 4)
+	return RANDOM_STRING_CHARS[absi(seed * 31 + index * 17 + refresh_offset * 13) % RANDOM_STRING_CHARS.length()]
+
 
 # Generate a random position inside a circle.
 static func random_circle(center: Vector2, radius: float) -> Vector2:
