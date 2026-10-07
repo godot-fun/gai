@@ -363,10 +363,8 @@ func draw_quantum_readout(center_y: float) -> void:
 
 
 func draw_header() -> void:
-	draw_line(Vector2(34.0, 42.0), Vector2(size.x - 34.0, 42.0), Color(ThemeColor.accent_theme_color(), 0.18), 1.0)
-	draw_string(Fonts.semibold(), Vector2(38.0, 32.0), I18n.t("agent.visuals.quantum_circuit_live"), HORIZONTAL_ALIGNMENT_LEFT, 300.0, Typography.label_large_size, Color(CYAN, 0.88))
-	var state := I18n.t("agent.visuals.collapsing") if completing else I18n.t("agent.visuals.superposition")
-	draw_string(Fonts.medium(), Vector2(size.x - 220.0, 32.0), state, HORIZONTAL_ALIGNMENT_RIGHT, 180.0, Typography.label_small_size, Color(SUCCESS if completing else MAGENTA, 0.78))
+	# Top bar (rule + live / superposition labels) removed — it competed with the
+	# register. Keep only the footer cue.
 	draw_string(Fonts.regular(), Vector2(38.0, size.y - 27.0), I18n.t("agent.visuals.reasoning_bus"), HORIZONTAL_ALIGNMENT_LEFT, 260.0, Typography.label_small_size, Color(ColorBase.secondary_text, 0.62))
 	pass
 
@@ -569,16 +567,30 @@ func draw_noise(position: Vector2, age: float, amount: float) -> void:
 	pass
 
 
+## Collapse readout: lanes ease onto the mid-axis (see draw_wire settle), brief
+## vertical feeders drop onto that axis, then a single horizontal inject runs into
+## the measurement node — no per-wire spike fan on the right edge.
 func draw_collapse(center_y: float) -> void:
 	var progress := smoothstep(0.15, 1.0, collapse)
-	var right := size.x - 94.0
-	for index in range(wires.size()):
-		var from := Vector2(right - 34.0, wire_display_y(wires[index], center_y))
-		draw_line(from, from.lerp(Vector2(right, center_y), progress), Color(ERROR if ended_with_error else SUCCESS, 0.24 + progress * 0.52), 2.0, true)
 	var color := ERROR if ended_with_error else SUCCESS
+	var merge_x := size.x - 130.0
+	var measure := Vector2(size.x - 94.0, center_y)
+	var settle := smoothstep(0.18, 0.82, collapse)
+	# Vertical feeders: each lane meets the mid-axis, then fades as settle finishes.
+	var feeder_alpha := (1.0 - progress) * 0.4
+	if feeder_alpha > 0.02:
+		for index in range(wires.size()):
+			var wire_y := lerpf(wire_display_y(wires[index], center_y), center_y, settle)
+			if absf(wire_y - center_y) < 2.0:
+				continue
+			draw_line(Vector2(merge_x, wire_y), Vector2(merge_x, center_y), Color(color, feeder_alpha), 1.5, true)
+	# One mid-axis inject into the measurement point.
+	var inject_to := Vector2(lerpf(merge_x, measure.x, progress), center_y)
+	draw_line(Vector2(merge_x, center_y), inject_to, Color(color, 0.1 + progress * 0.14), 6.0, true)
+	draw_line(Vector2(merge_x, center_y), inject_to, Color(color, 0.32 + progress * 0.55), 2.0, true)
 	var radius := 22.0 + sin(elapsed * 8.0) * 3.0
-	draw_circle(Vector2(right, center_y), radius + progress * 36.0, Color(color, 0.035 * progress))
-	draw_arc(Vector2(right, center_y), radius, 0.0, TAU, 48, Color(color, progress), 3.0, true)
+	draw_circle(measure, radius + progress * 36.0, Color(color, 0.035 * progress))
+	draw_arc(measure, radius, 0.0, TAU, 48, Color(color, progress), 3.0, true)
 	if collapse > 0.7:
 		draw_centered_text(Vector2(size.x * 0.5, 86.0), I18n.t("agent.visuals.state_error") if ended_with_error else I18n.t("agent.visuals.determinate_state"), Fonts.semibold(), Typography.title_medium_size, Color(color, progress))
 	pass

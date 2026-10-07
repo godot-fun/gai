@@ -2,21 +2,40 @@ class_name CyberCommandDeck
 extends VisualEffect
 
 ## Full-screen command interface with a central mission core and concurrent tool pods.
+##
+## Layout (maintainers)
+## - Center: one flat-top hex (`draw_core`, rotation PI/6) + wireframe cube; pod links attach to its left/right vertical edges via `hex_flat_half_width`.
+## - Sides: up to `MAX_PODS` tool panels in a fixed 4×2 grid (`pod_rect`); slot 0 replaces oldest when full.
+## - Radar: radius is precomputed for all `MAX_PODS` slots so rings never resize when tools appear.
+##
+## Paint order (`_draw`): backplate → decor → radar → pod links → pods → core (on top of links) → orbit → end shockwave.
+##
+## Pod lifecycle: CONNECTING → EXECUTING → COMPLETE/FAILED; `pending_state` applies after `MIN_EXECUTION_SECONDS`.
+## Agent end: wait for pods to hold complete, then `ENDING` drives `scan_wave` / `collapse` (core shrink + fade).
 
 const MAX_PODS := 8
+## Time pod stays in CONNECTING before EXECUTING (link + panel open animation).
 const CONNECT_SECONDS := 0.38
+## Minimum EXECUTING duration so flashes are readable even on instant tool results.
 const MIN_EXECUTION_SECONDS := 1.0
+## COMPLETE/FAILED must hold this long before `wait_for_agent_end` can finish.
 const COMPLETE_HOLD_SECONDS := 0.85
+## Duration of the radial `draw_completion_wave` when the session ends.
 const END_SECONDS := 1.25
+## Inscribed radius of the mission hex and wireframe cube anchor (scales with `collapse`).
 const CORE_RADIUS := 80.0
 const RADAR_VIEWPORT_RATIO := 0.48
 const RADAR_MAX_RADIUS := 400.0
+## Extra margin beyond pod corners when sizing radar rings.
 const RADAR_POD_CLEARANCE := 28.0
-const RADAR_ECHO_SECONDS := 0.9
+## Linear decay time for `radar_echoes` after the sweep hits a pod (also drives pod afterglow).
+const RADAR_ECHO_SECONDS := 1.75
 ## Hot contrast hue offset from the accent (keeps the magenta readouts on the cyber palette).
 const ACCENT_HOT_HUE_OFFSET := 0.41
 ## Cool secondary hue offset from the accent (keeps the blue grid / bus tones).
 const ACCENT_COOL_HUE_OFFSET := 0.09
+## Stroke width for radar concentric rings and the mission hex outline (keep in sync).
+const HUD_RING_STROKE := 1.0
 
 enum DeckPhase { IDLE, ACTIVE, REASONING, RESPONDING, ENDING }
 enum PodState { CONNECTING, EXECUTING, COMPLETE, FAILED }
@@ -34,6 +53,7 @@ var session_id: int = 0
 var next_replacement_slot: int = 0
 var end_requested: bool = false
 var end_error_message: String = ""
+## Per-slot strength 0..1 when the radar beam crosses that pod; decays in `_process`.
 var radar_echoes: Dictionary[int, float] = {}
 
 
@@ -91,6 +111,7 @@ func on_agent_end(error_message: String) -> float:
 	return 0.0
 
 
+## Blocks until every pod has reached COMPLETE/FAILED and held for `COMPLETE_HOLD_SECONDS`, then runs the end wave.
 func wait_for_agent_end() -> void:
 	while not all_pods_finished_holding():
 		await get_tree().process_frame
@@ -127,6 +148,7 @@ func on_message_complete(_usage: OpenAiUsage) -> void:
 	pass
 
 
+## Registers or replaces a pod; replacement reuses slot index and clears stale radar echo for that slot.
 func on_tool_execution_start(tool_call_id: String, tool_name: String, args: Dictionary[String, Variant]) -> void:
 	var slot := pods.size()
 	if pods.size() >= MAX_PODS:
@@ -162,6 +184,7 @@ func _process(delta: float) -> void:
 	if not visible:
 		return
 	elapsed += delta
+	# Faster sweep during reasoning; echoes and pod highlight use the same `radar_angle`.
 	var radar_speed := 1.5 if phase == DeckPhase.REASONING else 0.55
 	var previous_radar_angle := radar_angle
 	radar_angle = fmod(radar_angle + delta * radar_speed, TAU)
@@ -171,6 +194,7 @@ func _process(delta: float) -> void:
 			radar_echoes.erase(slot)
 		else:
 			radar_echoes[slot] = echo
+	# Only open pods register hits; angle is pod center vs screen center (same as `draw_radar_echoes`).
 	for pod: Dictionary in pods:
 		if float(pod["open"]) < 0.75:
 			continue
@@ -190,6 +214,7 @@ func _process(delta: float) -> void:
 			pod["age"] = 0.0
 	if phase == DeckPhase.ENDING:
 		scan_wave = minf(1.0, scan_wave + delta / END_SECONDS)
+		# Core shrink lags slightly so the shockwave reads before the hex collapses.
 		collapse = clampf((scan_wave - 0.18) / 0.62, 0.0, 1.0)
 	queue_redraw()
 	pass
@@ -206,11 +231,11 @@ func _draw() -> void:
 	draw_edge_telemetry(center)
 	draw_radar(center)
 	draw_live_telemetry(center)
-	draw_waveforms(center)
 	for index in range(pods.size()):
 		draw_pod_link(pods[index], pod_rect(index, pods.size(), center), center)
 	for index in range(pods.size()):
 		draw_tool_pod(pods[index], pod_rect(index, pods.size(), center), center)
+	# Core draws after links so the hex occludes line ends at the attachment edge.
 	draw_core(center)
 	draw_orbit_packets(center)
 	if scan_wave >= 0.0:
@@ -352,11 +377,12 @@ func draw_backplane(center: Vector2) -> void:
 	pass
 
 
+## Concentric rings, sweep wedge, targeting arc, and pod echo ticks (`draw_radar_echoes`).
 func draw_radar(center: Vector2) -> void:
 	var radius := radar_radius(center)
 	for ring in range(1, 5):
 		var ring_color := neon_cyan() if ring % 2 else neon_blue()
-		draw_arc(center, radius * float(ring) / 4.0, 0.0, TAU, 72, Color(ring_color, 0.1), 1.0, true)
+		draw_arc(center, radius * float(ring) / 4.0, 0.0, TAU, 72, Color(ring_color, 0.1), HUD_RING_STROKE, true)
 		for tick in range(24):
 			var tick_angle := float(tick) * TAU / 24.0
 			var tick_radius := radius * float(ring) / 4.0
@@ -376,22 +402,7 @@ func draw_radar(center: Vector2) -> void:
 	pass
 
 
-func draw_waveforms(center: Vector2) -> void:
-	var width := minf(size.x * 0.2, 245.0)
-	for side: float in [-1.0, 1.0]:
-		var points := PackedVector2Array()
-		for index in range(33):
-			var amount := float(index) / 32.0
-			var x := center.x + side * (CORE_RADIUS + 66.0 + amount * width)
-			var wave_value := sin(elapsed * 7.0 + amount * 25.0) * 7.0 * activity + sin(elapsed * 3.1 + amount * 11.0) * 3.0
-			points.append(Vector2(x, center.y + wave_value))
-		draw_polyline(points, Color(neon_cyan(), 0.1), 9.0, true)
-		draw_polyline(points, Color(neon_cyan(), 0.88), 1.7, true)
-		for marker in range(0, points.size(), 8):
-			draw_circle(points[marker], 2.2, Color(neon_magenta(), 0.72))
-	pass
-
-
+## Mission hex (single ring), facet tint, and rotating wireframe cube. No outer hex — links use `hex_flat_half_width`.
 func draw_core(center: Vector2) -> void:
 	var core_scale := 1.0 - collapse * 0.82
 	var radius := CORE_RADIUS * core_scale
@@ -417,69 +428,39 @@ func draw_core(center: Vector2) -> void:
 	# Soft reactor bloom stays behind one stable frame instead of several rotating polygons.
 	for glow in range(7, 0, -1):
 		draw_circle(center, radius + glow * 9.0 + pulse * 3.0, Color(neon_cyan(), 0.006 * float(8 - glow) * visibility))
-	var outer_hex := polygon_points(center, radius + 18.0, 6, PI / 6.0)
 	var core_hex := polygon_points(center, radius, 6, PI / 6.0)
-	draw_colored_polygon(outer_hex, Color(neon_blue(), (0.075 + pulse * 0.02) * visibility))
-	draw_closed_polyline(outer_hex, Color(neon_cyan(), 0.38 * visibility), 2.0)
 	draw_colored_polygon(core_hex, Color(ColorBase.deep_surface, 0.96))
-	draw_closed_polyline(core_hex, Color(neon_cyan(), 0.94 * visibility), 2.5)
+	draw_hex_outline(core_hex, Color(neon_cyan(), 0.94 * visibility), HUD_RING_STROKE)
 	# Subtle facet lighting and a breathing cube establish a single focal point.
 	for index in range(6):
 		var facet := PackedVector2Array([center, core_hex[index], core_hex[(index + 1) % 6]])
 		draw_colored_polygon(facet, Color(neon_blue() if index % 2 else neon_cyan(), 0.018 + index * 0.005))
-	var energy_center := center + Vector2(0.0, 12.0)
+	var energy_center := center
 	draw_circle(energy_center, 15.0 + pulse * 5.0, Color(neon_cyan(), 0.07 * visibility))
 	draw_energy_cube(energy_center, 8.5 + pulse * 1.8, visibility)
 	if collapse < 0.86:
-		draw_centered_text(center - Vector2(0.0, 29.0), I18n.t("agent.visuals.mission"), Fonts.semibold(), Typography.label_medium_size, ColorBase.primary_text)
-		draw_centered_text(center - Vector2(0.0, 10.0), I18n.t("agent.visuals.core"), Fonts.bold(), Typography.title_small_size, Color(neon_cyan(), 0.98))
-		draw_centered_text(center + Vector2(0.0, 43.0), core_status(), Fonts.medium(), Typography.label_small_size, Color(neon_magenta(), 0.9))
+		draw_centered_text(center - Vector2(0.0, 30.0), I18n.t("agent.visuals.core"), Fonts.bold(), Typography.title_small_size, Color(neon_cyan(), 0.98))
+		draw_centered_text(center + Vector2(0.0, 30.0), core_status(), Fonts.medium(), Typography.label_small_size, Color(neon_magenta(), 0.9))
 	pass
 
 
 func draw_energy_cube(energy_center: Vector2, half: float, visibility: float) -> void:
-	# Orthographic yaw/pitch cube with back-face culling. Edges are drawn once (not per face)
-	# and inset slightly so thick line caps do not spike past the corners.
+	# Orthographic yaw/pitch wireframe cube — edges only, no filled faces.
 	var xform := Basis.from_euler(Vector3(0.55, elapsed * 0.7, 0.0))
-	var points_3d: Array[Vector3] = []
 	var corners := PackedVector2Array()
 	for index in range(8):
 		var local := Vector3(-1.0 if index & 1 else 1.0, -1.0 if index & 2 else 1.0, -1.0 if index & 4 else 1.0)
 		var rotated: Vector3 = xform * local
-		points_3d.append(rotated)
 		corners.append(energy_center + Vector2(rotated.x, rotated.y) * half)
-	var faces: Array[PackedInt32Array] = [
-		PackedInt32Array([0, 1, 3, 2]), PackedInt32Array([4, 6, 7, 5]),
-		PackedInt32Array([0, 4, 5, 1]), PackedInt32Array([2, 3, 7, 6]),
-		PackedInt32Array([0, 2, 6, 4]), PackedInt32Array([1, 5, 7, 3]),
+	var edges: Array[Vector2i] = [
+		Vector2i(0, 1), Vector2i(1, 3), Vector2i(3, 2), Vector2i(2, 0),
+		Vector2i(4, 5), Vector2i(5, 7), Vector2i(7, 6), Vector2i(6, 4),
+		Vector2i(0, 4), Vector2i(1, 5), Vector2i(2, 6), Vector2i(3, 7),
 	]
-	var visible: Array[Dictionary] = []
-	for face: PackedInt32Array in faces:
-		var a := points_3d[face[0]]
-		var b := points_3d[face[1]]
-		var c := points_3d[face[2]]
-		var normal := (b - a).cross(c - a)
-		if normal.z <= 0.02:
-			continue
-		var depth := (points_3d[face[0]].z + points_3d[face[1]].z + points_3d[face[2]].z + points_3d[face[3]].z) * 0.25
-		visible.append({"face": face, "depth": depth, "facing": normal.z})
-	visible.sort_custom(func(left: Dictionary, right: Dictionary) -> bool: return float(left["depth"]) < float(right["depth"]))
-	var accent := neon_cyan()
-	var cool := neon_blue()
-	var edge_keys: Dictionary = {}
-	for item: Dictionary in visible:
-		var face: PackedInt32Array = item["face"]
-		var poly := PackedVector2Array([corners[face[0]], corners[face[1]], corners[face[2]], corners[face[3]]])
-		var facing := float(item["facing"])
-		var shade := clampf(0.34 + facing * 0.1, 0.3, 0.88)
-		draw_colored_polygon(poly, Color(accent.lerp(cool, 0.28), shade * visibility))
-		for edge_index in range(4):
-			var from_i := int(face[edge_index])
-			var to_i := int(face[(edge_index + 1) % 4])
-			edge_keys[mini(from_i, to_i) * 8 + maxi(from_i, to_i)] = Vector2i(from_i, to_i)
 	const EDGE_WIDTH := 1.15
 	const EDGE_INSET := 0.55
-	for edge: Vector2i in edge_keys.values():
+	var accent := neon_cyan()
+	for edge: Vector2i in edges:
 		var from := corners[edge.x]
 		var to := corners[edge.y]
 		var delta := to - from
@@ -491,13 +472,17 @@ func draw_energy_cube(energy_center: Vector2, half: float, visibility: float) ->
 	pass
 
 
+## Orthogonal path from pod inner edge to mission hex flat side (must stay in sync with `draw_core` radius/rotation).
 func draw_pod_link(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
 	var open_amount := float(pod["open"]) * (1.0 - collapse)
 	if open_amount <= 0.01:
 		return
 	var left_side := rect.get_center().x < center.x
 	var target := Vector2(rect.end.x if left_side else rect.position.x, rect.get_center().y)
-	var start := center + Vector2(-CORE_RADIUS - 35.0 if left_side else CORE_RADIUS + 35.0, (target.y - center.y) * 0.18)
+	var core_radius := CORE_RADIUS * (1.0 - collapse * 0.82)
+	var attach_x := hex_flat_half_width(core_radius)
+	# Slight vertical bias keeps long horizontal segments visually centered on the core.
+	var start := center + Vector2(-attach_x if left_side else attach_x, (target.y - center.y) * 0.18)
 	var elbow := Vector2(lerpf(start.x, target.x, 0.58), target.y)
 	var state: int = pod["state"]
 	var color := pod_color(state)
@@ -519,6 +504,7 @@ func draw_pod_link(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
 	pass
 
 
+## Tool panel chrome. In-pod decor: energy bars (non-EXECUTING), waveform + activity overlays (`draw_pod_activity`), radar scan tint.
 func draw_tool_pod(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
 	var open_amount := float(pod["open"]) * (1.0 - collapse)
 	if open_amount <= 0.01:
@@ -539,7 +525,8 @@ func draw_tool_pod(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
 	draw_polyline(PackedVector2Array([shadow[0], shadow[1], shadow[2], shadow[3]]), Color(color, 0.16), 4.0, true)
 	var is_executing := state == PodState.EXECUTING
 	var active_breath := 0.5 + 0.5 * sin(elapsed * 5.2 + float(pod["slot"]))
-	var radar_feedback := maxf(radar_pod_feedback(shown, center), float(radar_echoes.get(int(pod["slot"]), 0.0)) * 0.35) * open_amount
+	# Live beam width × `radar_pod_feedback`; echo adds sustained highlight (0.55 scales decay tail on the panel).
+	var radar_feedback := maxf(radar_pod_feedback(shown, center), float(radar_echoes.get(int(pod["slot"]), 0.0)) * 0.55) * open_amount
 	if is_executing:
 		for glow in range(4, 0, -1):
 			draw_polyline(outset_polyline(panel, float(glow) * 3.0), Color(color, (0.018 + active_breath * 0.012) * float(5 - glow)), 4.0, true)
@@ -568,6 +555,7 @@ func draw_tool_pod(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
 		draw_rect(live_rect, Color(color, 0.12 + active_breath * 0.08), true)
 		draw_rect(live_rect, Color(color, 0.8), false, 1.0)
 		draw_string(Fonts.bold(), live_rect.position + Vector2(8.0, 11.0), I18n.t("agent.visuals.live"), HORIZONTAL_ALIGNMENT_LEFT, 34.0, Typography.label_small_size, Color(color, 0.95))
+	# Upper-right energy columns — idle/complete pods only; EXECUTING uses LIVE badge instead.
 	if not is_executing:
 		for bar in range(5):
 			var bar_height := 3.0 + absf(sin(elapsed * 5.0 + bar * 1.7 + int(pod["slot"]))) * 8.0
@@ -581,6 +569,7 @@ func draw_tool_pod(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
 	pass
 
 
+## State-specific motion inside the pod: connect sweep, execute scan/chevrons, shared waveform, complete pulse ring.
 func draw_pod_activity(pod: Dictionary, rect: Rect2, color: Color) -> void:
 	var state: int = pod["state"]
 	var age: float = pod["age"]
@@ -598,24 +587,30 @@ func draw_pod_activity(pod: Dictionary, rect: Rect2, color: Color) -> void:
 			var chevron_x := rect.position.x + 58.0 + chevron * 10.0
 			var chevron_y := rect.end.y - 10.0
 			draw_polyline(PackedVector2Array([Vector2(chevron_x, chevron_y - 3.0), Vector2(chevron_x + 4.0, chevron_y), Vector2(chevron_x, chevron_y + 3.0)]), Color(neon_cyan(), 0.4 + chevron * 0.18), 1.3, true)
-		var graph := PackedVector2Array()
-		var graph_left := rect.position.x + rect.size.x * 0.58
-		var graph_width := rect.size.x * 0.28
-		for point in range(13):
-			var amount := float(point) / 12.0
-			var value := sin(elapsed * 5.4 + amount * 13.0 + int(pod["slot"])) * 5.0 + sin(elapsed * 2.1 + amount * 27.0) * 2.0
-			graph.append(Vector2(graph_left + amount * graph_width, rect.position.y + rect.size.y - 23.0 + value))
-		draw_polyline(graph, Color(color, 0.2), 5.0, true)
-		draw_polyline(graph, Color(color, 0.9), 1.2, true)
-		return
-	# A short local confirmation pulse is tied to the tool completion event.
-	if age < 0.7:
+	if state >= PodState.EXECUTING:
+		draw_pod_waveform(pod, rect, color)
+	if state >= PodState.COMPLETE and age < 0.7:
 		var pulse := age / 0.7
 		var pulse_rect := rect.grow(10.0 * pulse)
 		draw_polyline(closed_cut_panel(pulse_rect), Color(color, (1.0 - pulse) * 0.65), 2.0, true)
 	pass
 
 
+## Lower-right sine trace; kept for EXECUTING and after (COMPLETE/FAILED) — independent of energy bars above.
+func draw_pod_waveform(pod: Dictionary, rect: Rect2, color: Color) -> void:
+	var graph := PackedVector2Array()
+	var graph_left := rect.position.x + rect.size.x * 0.58
+	var graph_width := rect.size.x * 0.28
+	for point in range(13):
+		var amount := float(point) / 12.0
+		var value := sin(elapsed * 5.4 + amount * 13.0 + int(pod["slot"])) * 5.0 + sin(elapsed * 2.1 + amount * 27.0) * 2.0
+		graph.append(Vector2(graph_left + amount * graph_width, rect.position.y + rect.size.y - 23.0 + value))
+	draw_polyline(graph, Color(color, 0.2), 5.0, true)
+	draw_polyline(graph, Color(color, 0.9), 1.2, true)
+	pass
+
+
+## Expanding rings when `phase == ENDING`; opacity tied to `scan_wave`, not the tool radar.
 func draw_completion_wave(center: Vector2) -> void:
 	var max_radius := size.length() * 0.58
 	var radius := scan_wave * max_radius
@@ -625,6 +620,7 @@ func draw_completion_wave(center: Vector2) -> void:
 	pass
 
 
+## Fixed grid: even index = left column, odd = right; row = index / 2. Used for layout, links, and radar targeting.
 func pod_rect(index: int, _count: int, center: Vector2) -> Rect2:
 	var width := clampf(size.x * 0.17, 170.0, 260.0)
 	var height := 78.0
@@ -652,13 +648,15 @@ func radar_radius(center: Vector2) -> float:
 	return radius
 
 
+## 0..1 while the radar spoke aims near this pod; wider span (×1.45, floor 0.12 rad) lengthens the visible hit window.
 func radar_pod_feedback(rect: Rect2, center: Vector2) -> float:
 	var direction := rect.get_center() - center
 	var angle_delta := absf(wrapf(radar_angle - direction.angle() + PI, 0.0, TAU) - PI)
 	var angular_span := atan2(rect.size.y * 0.72, maxf(direction.length(), 1.0))
-	return clampf(1.0 - angle_delta / maxf(angular_span, 0.08), 0.0, 1.0)
+	return clampf(1.0 - angle_delta / maxf(angular_span * 1.45, 0.12), 0.0, 1.0)
 
 
+## Tick marks on the radar ring at each echoing pod bearing (strength follows `radar_echoes` decay).
 func draw_radar_echoes(center: Vector2, radius: float) -> void:
 	for pod: Dictionary in pods:
 		var strength := float(radar_echoes.get(int(pod["slot"]), 0.0))
@@ -684,6 +682,7 @@ func draw_radar_echoes(center: Vector2, radius: float) -> void:
 	pass
 
 
+## True when `target_angle` lies on the forward sweep arc from `previous_angle` to `current_angle` (handles wrap).
 static func radar_crossed_angle(previous_angle: float, current_angle: float, target_angle: float) -> bool:
 	var swept := fposmod(current_angle - previous_angle, TAU)
 	var target_offset := fposmod(target_angle - previous_angle, TAU)
@@ -751,6 +750,7 @@ static func accent_shifted(hue_offset: float, sat_mul: float = 1.0, val_mul: flo
 	return Color.from_hsv(fposmod(base.h + hue_offset, 1.0), clampf(base.s * sat_mul, 0.0, 1.0), clampf(maxf(base.v, 0.72) * val_mul, 0.0, 1.0))
 
 
+## `pending_state`: -1 until tool returns; then COMPLETE/FAILED applied after min execute time. `open`: panel reveal 0..1.
 static func make_pod(tool_call_id: String, tool_name: String, args: Dictionary[String, Variant], slot: int) -> Dictionary:
 	return {"id": tool_call_id, "name": tool_name, "arg_count": args.size(), "slot": slot, "state": PodState.CONNECTING, "pending_state": -1, "age": 0.0, "open": 0.0}
 
@@ -760,6 +760,11 @@ func all_pods_finished_holding() -> bool:
 		if int(pod["state"]) < PodState.COMPLETE or float(pod["age"]) < COMPLETE_HOLD_SECONDS:
 			return false
 	return true
+
+
+## Horizontal distance from center to the flat vertical edge of a PI/6 hex — shared by `draw_core` and `draw_pod_link`.
+static func hex_flat_half_width(radius: float) -> float:
+	return radius * cos(PI / 6.0)
 
 
 static func polygon_points(center: Vector2, radius: float, sides: int, rotation: float) -> PackedVector2Array:
@@ -795,4 +800,11 @@ func draw_closed_polyline(points: PackedVector2Array, color: Color, width: float
 	var closed := PackedVector2Array(points)
 	closed.append(points[0])
 	draw_polyline(closed, color, width, true)
+	pass
+
+
+## Six separate edges avoid closed-polyline corner caps looking heavier than `draw_arc` rings.
+func draw_hex_outline(points: PackedVector2Array, color: Color, width: float) -> void:
+	for index in range(points.size()):
+		draw_line(points[index], points[(index + 1) % points.size()], color, width, true)
 	pass
