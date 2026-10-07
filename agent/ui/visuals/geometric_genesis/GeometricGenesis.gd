@@ -219,7 +219,7 @@ func prepare_formula_layout(origin: Vector2) -> void:
 
 
 func find_formula_rect(center: Vector2, radius: float, occupied: Array[Rect2], geometry_zones: Array[Rect2] = []) -> Rect2:
-	const FORMULA_SIZE := Vector2(330.0, 43.0)
+	const FORMULA_SIZE := Vector2(330.0, 25.0)
 	const GAP := 52.0
 	var candidates: Array[Vector2] = [
 		center + Vector2(radius + GAP, -FORMULA_SIZE.y * 0.5),
@@ -475,14 +475,11 @@ func draw_construction_formula(seal: Dictionary, center: Vector2, radius: float)
 	var fade := lerpf(1.0, 0.38, smoothstep(0.05, 0.72, settle))
 	var index: int = seal["index"]
 	var sides: int = seal["sides"]
-	var point_formula := "theta_%d = %d * 137.508 deg    rho_%d = R sqrt(%d / %d)" % [index + 1, index, index + 1, index, MAX_SEALS - 1]
 	var shape_formula := geometry_formula(int(seal["geometry_kind"]), sides)
-	var point_reveal := clampf(growth / 0.42, 0.0, 1.0)
-	var shape_reveal := clampf((growth - 0.34) / 0.58, 0.0, 1.0)
-	var point_text := reveal_formula(point_formula, point_reveal)
+	var shape_reveal := clampf(growth / 0.82, 0.0, 1.0)
 	var shape_text := reveal_formula(shape_formula, shape_reveal)
 	var formula_width := 330.0
-	var rect: Rect2 = formula_layout.get(index, Rect2(center + Vector2(radius + 12.0, -21.5), Vector2(formula_width, 43.0)))
+	var rect: Rect2 = formula_layout.get(index, Rect2(center + Vector2(radius + 12.0, -12.5), Vector2(formula_width, 25.0)))
 	var x := rect.position.x + 7.0
 	var y := rect.position.y + 17.0
 	var accent := ThemeColor.accent_theme_color()
@@ -492,10 +489,9 @@ func draw_construction_formula(seal: Dictionary, center: Vector2, radius: float)
 		var leader_start := center + to_label.normalized() * radius
 		draw_line(leader_start, label_anchor, Color(accent, 0.14 * fade), 0.7, true)
 		draw_circle(label_anchor, 1.5, Color(accent, 0.30 * fade))
-	draw_line(Vector2(x - 7.0, y - 17.0), Vector2(x - 7.0, y + 26.0), Color(accent, 0.42 * fade), 1.0)
-	draw_string(Fonts.regular(), Vector2(x, y), point_text, HORIZONTAL_ALIGNMENT_LEFT, formula_width, Typography.label_small_size, Color(accent, 0.58 * fade))
+	draw_line(Vector2(x - 7.0, y - 17.0), Vector2(x - 7.0, y + 8.0), Color(accent, 0.42 * fade), 1.0)
 	if not shape_text.is_empty():
-		draw_string(Fonts.medium(), Vector2(x, y + 18.0), shape_text, HORIZONTAL_ALIGNMENT_LEFT, formula_width, Typography.label_small_size, Color(accent, 0.82 * fade))
+		draw_string(Fonts.medium(), Vector2(x, y), shape_text, HORIZONTAL_ALIGNMENT_LEFT, formula_width, Typography.label_small_size, Color(accent, 0.82 * fade))
 	pass
 
 
@@ -520,9 +516,9 @@ static func geometry_formula(kind: int, sides: int) -> String:
 		GeometryKind.WEAVE:
 			return "C_k = segment(v_k, v_((k+s) mod %d))" % sides
 		GeometryKind.ELLIPSE:
-			return "x^2 / a^2 + y^2 / b^2 = 1"
+			return "f(theta) = P + (a cos(theta), b sin(theta))"
 		GeometryKind.PARABOLA:
-			return "y = a x^2    |PF| = dist(P, directrix)"
+			return "f(x) = a x^2 + b x + c"
 		GeometryKind.ROSE:
 			return "r(theta) = a cos(k theta)"
 		GeometryKind.LISSAJOUS:
