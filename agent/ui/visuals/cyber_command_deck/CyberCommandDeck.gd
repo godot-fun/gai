@@ -9,6 +9,9 @@ const MIN_EXECUTION_SECONDS := 1.0
 const COMPLETE_HOLD_SECONDS := 0.85
 const END_SECONDS := 1.25
 const CORE_RADIUS := 76.0
+const RADAR_VIEWPORT_RATIO := 0.48
+const RADAR_MAX_RADIUS := 400.0
+const RADAR_POD_CLEARANCE := 28.0
 const NEON_CYAN := Color("#00f5d4")
 const NEON_BLUE := Color("#16a8ff")
 const NEON_MAGENTA := Color("#ff2bd6")
@@ -188,7 +191,7 @@ func _draw() -> void:
 	for index in range(pods.size()):
 		draw_pod_link(pods[index], pod_rect(index, pods.size(), center), center)
 	for index in range(pods.size()):
-		draw_tool_pod(pods[index], pod_rect(index, pods.size(), center))
+		draw_tool_pod(pods[index], pod_rect(index, pods.size(), center), center)
 	draw_core(center)
 	draw_orbit_packets(center)
 	if scan_wave >= 0.0:
@@ -197,7 +200,7 @@ func _draw() -> void:
 
 
 func draw_live_telemetry(center: Vector2) -> void:
-	var radius := minf(size.y * 0.35, 270.0)
+	var radius := radar_radius(center)
 	# Radar contacts come alive during reasoning and settle while responding.
 	var contact_count := 9 if phase == DeckPhase.REASONING else 5
 	for index in range(contact_count):
@@ -249,20 +252,11 @@ func draw_ambient_energy(center: Vector2) -> void:
 
 
 func draw_system_chrome(center: Vector2) -> void:
-	var top_y := 34.0
-	var bar_width := minf(size.x * 0.42, 720.0)
-	var left := center.x - bar_width * 0.5
-	draw_line(Vector2(left, top_y), Vector2(center.x - 86.0, top_y), Color(NEON_CYAN, 0.5), 1.0)
-	draw_line(Vector2(center.x + 86.0, top_y), Vector2(left + bar_width, top_y), Color(NEON_MAGENTA, 0.42), 1.0)
-	draw_centered_text(Vector2(center.x, top_y + 5.0), I18n.t("agent.visuals.cyber_command_deck"), Fonts.semibold(), Typography.label_small_size, Color(NEON_CYAN, 0.9))
-	draw_string(Fonts.regular(), Vector2(left, top_y + 24.0), I18n.t("agent.visuals.gai_system"), HORIZONTAL_ALIGNMENT_LEFT, 160.0, Typography.label_small_size, ColorBase.secondary_text)
-	draw_string(Fonts.regular(), Vector2(left + bar_width - 160.0, top_y + 24.0), I18n.t("agent.visuals.secure_link"), HORIZONTAL_ALIGNMENT_RIGHT, 160.0, Typography.label_small_size, Color(NEON_MAGENTA, 0.72))
 	var bottom_y := size.y - 34.0
 	for index in range(24):
 		var height := 3.0 + absf(sin(elapsed * 3.0 + index * 0.73)) * 12.0 * activity
 		var x := center.x - 144.0 + index * 12.0
 		draw_rect(Rect2(Vector2(x, bottom_y - height), Vector2(5.0, height)), Color(NEON_CYAN if index % 4 else NEON_MAGENTA, 0.48), true)
-	draw_centered_text(Vector2(center.x, bottom_y + 16.0), I18n.t("agent.visuals.live_telemetry"), Fonts.regular(), Typography.label_small_size, ColorBase.secondary_text)
 	pass
 
 
@@ -352,7 +346,7 @@ func draw_hud_corners() -> void:
 
 
 func draw_radar(center: Vector2) -> void:
-	var radius := minf(size.y * 0.35, 270.0)
+	var radius := radar_radius(center)
 	for ring in range(1, 5):
 		var ring_color := NEON_CYAN if ring % 2 else NEON_BLUE
 		draw_arc(center, radius * float(ring) / 4.0, 0.0, TAU, 72, Color(ring_color, 0.1), 1.0, true)
@@ -483,7 +477,7 @@ func draw_pod_link(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
 	pass
 
 
-func draw_tool_pod(pod: Dictionary, rect: Rect2) -> void:
+func draw_tool_pod(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
 	var open_amount := float(pod["open"]) * (1.0 - collapse)
 	if open_amount <= 0.01:
 		return
@@ -503,10 +497,17 @@ func draw_tool_pod(pod: Dictionary, rect: Rect2) -> void:
 	draw_polyline(PackedVector2Array([shadow[0], shadow[1], shadow[2], shadow[3]]), Color(NEON_MAGENTA, 0.16), 4.0, true)
 	var is_executing := state == PodState.EXECUTING
 	var active_breath := 0.5 + 0.5 * sin(elapsed * 5.2 + float(pod["slot"]))
+	var radar_feedback := radar_pod_feedback(shown, center) * open_amount
 	if is_executing:
 		for glow in range(4, 0, -1):
 			draw_polyline(outset_polyline(panel, float(glow) * 3.0), Color(NEON_CYAN, (0.018 + active_breath * 0.012) * float(5 - glow)), 4.0, true)
 	draw_colored_polygon(panel, Color(NEON_CYAN, 0.075 + active_breath * 0.025) if is_executing else Color(ColorBase.deep_surface, 0.94))
+	if radar_feedback > 0.0:
+		draw_colored_polygon(panel, Color(NEON_CYAN, radar_feedback * 0.13))
+		var scan_x := lerpf(shown.position.x, shown.end.x, radar_feedback)
+		draw_rect(Rect2(Vector2(scan_x - 13.0, shown.position.y + 3.0), Vector2(26.0, shown.size.y - 6.0)), Color(NEON_CYAN, radar_feedback * 0.12), true)
+		for glow in range(4, 0, -1):
+			draw_polyline(outset_polyline(panel, float(glow) * 3.5), Color(NEON_CYAN, radar_feedback * 0.055 * float(5 - glow)), 4.0, true)
 	var outline := PackedVector2Array(panel)
 	outline.append(panel[0])
 	draw_polyline(outline, Color(color, 0.2 if is_executing else 0.12), 9.0 if is_executing else 7.0, true)
@@ -591,6 +592,30 @@ func pod_rect(index: int, _count: int, center: Vector2) -> Rect2:
 	var y_offset := (float(row) - 1.5) * (height + 22.0)
 	var x := center.x + side * (minf(size.x * 0.31, 390.0) + width * 0.5) - width * 0.5
 	return Rect2(Vector2(x, center.y + y_offset - height * 0.5), Vector2(width, height))
+
+
+func radar_radius(center: Vector2) -> float:
+	var radius := minf(size.y * RADAR_VIEWPORT_RATIO, RADAR_MAX_RADIUS)
+	# Reserve the full command envelope from the first frame so the radar never jumps
+	# outward as tool pods are added during startup.
+	for index in range(MAX_PODS):
+		var rect := pod_rect(index, MAX_PODS, center)
+		var corners := PackedVector2Array([
+			rect.position,
+			Vector2(rect.end.x, rect.position.y),
+			rect.end,
+			Vector2(rect.position.x, rect.end.y),
+		])
+		for corner: Vector2 in corners:
+			radius = maxf(radius, center.distance_to(corner) + RADAR_POD_CLEARANCE)
+	return radius
+
+
+func radar_pod_feedback(rect: Rect2, center: Vector2) -> float:
+	var direction := rect.get_center() - center
+	var angle_delta := absf(wrapf(radar_angle - direction.angle() + PI, 0.0, TAU) - PI)
+	var angular_span := atan2(rect.size.y * 0.72, maxf(direction.length(), 1.0))
+	return clampf(1.0 - angle_delta / maxf(angular_span, 0.08), 0.0, 1.0)
 
 
 func active_pod_count() -> int:

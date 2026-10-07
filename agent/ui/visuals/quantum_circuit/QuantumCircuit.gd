@@ -128,9 +128,6 @@ func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dic
 	var gate := append_gate(GateKind.TOOL, tool_call_id, VisualToolFormatter.gate_name(tool_name))
 	gate["state"] = GateState.RUNNING
 	tool_gates[tool_call_id] = gate
-	active_wire["signal_kind"] = SignalKind.TOOL
-	active_wire["signal_age"] = 0.0
-	(active_wire["tool_echoes"] as Array).append({"x_ratio": float(gate["x_ratio"]), "age": 0.0, "failed": false})
 	pulse = 1.0
 	pass
 
@@ -144,8 +141,6 @@ func on_tool_execution_end(tool_call_id: String, _tool_name: String, result: Age
 	var gate_wire: Dictionary = gate["wire"]
 	if result.is_error:
 		gate_wire["decoherence"] = 1.0
-	gate_wire["signal_kind"] = SignalKind.TOOL
-	gate_wire["signal_age"] = 0.0
 	var echoes: Array = gate_wire["tool_echoes"]
 	echoes.append({"x_ratio": float(gate["x_ratio"]), "age": 0.0, "failed": result.is_error})
 	pulse = 1.0
@@ -306,8 +301,11 @@ func draw_quantum_readout(center_y: float, wire_top: float, wire_spacing: float)
 	var height := maxf(register_height, minf(120.0, size.y - 154.0))
 	var top := wire_top if wires.size() > 1 else center_y - height * 0.5
 	draw_line(Vector2(x, top), Vector2(x, top + height), Color(VIOLET, 0.18), 1.0)
-	for index in range(17):
-		var y := top + index * height / 16.0
+	# Preserve the original ~19 px ruler density as the register grows instead of
+	# stretching a fixed set of ticks across the added height.
+	var tick_count := maxi(17, roundi(height / 19.0) + 1)
+	for index in range(tick_count):
+		var y := top + index * height / float(tick_count - 1)
 		var probability := 0.25 + 0.75 * absf(sin(elapsed * 0.9 + index * 2.37))
 		var length := 4.0 + probability * 20.0
 		draw_line(Vector2(x - length, y), Vector2(x, y), Color(CYAN if index % 4 else MAGENTA, 0.18 + probability * 0.32), 1.0)
@@ -408,14 +406,14 @@ func draw_oscilloscope_wire(wire: Dictionary, left: float, right: float, y: floa
 		var offset := 0.0
 		if signal_kind == SignalKind.REASONING:
 			# Two close high-frequency carriers create a lively inference beat.
-			offset = (sin(ratio * TAU * 18.0 - elapsed * 15.0) * 4.8 + sin(ratio * TAU * 31.0 - elapsed * 22.0) * 1.7) * freshness
+			offset = (sin(ratio * TAU * 18.0 - elapsed * 15.0) * 22.0 + sin(ratio * TAU * 31.0 - elapsed * 22.0) * 8.0) * freshness
 		elif signal_kind == SignalKind.OUTPUT:
 			# Final-answer tokens travel as a controlled, stable low-amplitude wave.
-			offset = sin(ratio * TAU * 5.0 - elapsed * 6.0) * 2.6 * freshness
+			offset = sin(ratio * TAU * 5.0 - elapsed * 6.0) * 13.0 * freshness
 		elif signal_kind == SignalKind.TOOL:
-			offset = sin(ratio * TAU * 3.0 - elapsed * 4.0) * 1.4 * freshness
+			offset = sin(ratio * TAU * 3.0 - elapsed * 4.0) * 7.5 * freshness
 		else:
-			offset = sin(ratio * TAU * 2.0 - elapsed * 2.2) * 0.7 * activity
+			offset = sin(ratio * TAU * 2.0 - elapsed * 2.2) * 3.5 * activity
 		for echo: Dictionary in wire.get("tool_echoes", []):
 			var echo_age := float(echo["age"])
 			var echo_center := float(echo["x_ratio"]) + echo_age * 0.11
