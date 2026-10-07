@@ -349,18 +349,6 @@ func draw_backplane(center: Vector2) -> void:
 	for y in range(0, int(horizon / grid_step) + 1):
 		draw_line(Vector2(0.0, y * grid_step), Vector2(size.x, y * grid_step), Color(neon_blue(), 0.025), 1.0)
 	draw_line(Vector2(center.x, 0.0), Vector2(center.x, size.y), Color(neon_magenta(), 0.08), 1.0)
-	draw_hud_corners()
-	pass
-
-
-func draw_hud_corners() -> void:
-	var inset := 28.0
-	var length := 72.0
-	for x_side: float in [-1.0, 1.0]:
-		for y_side: float in [-1.0, 1.0]:
-			var corner := Vector2(inset if x_side < 0.0 else size.x - inset, inset if y_side < 0.0 else size.y - inset)
-			draw_line(corner, corner + Vector2(-x_side * length, 0.0), Color(neon_cyan(), 0.55), 2.0)
-			draw_line(corner, corner + Vector2(0.0, -y_side * length), Color(neon_magenta(), 0.42), 2.0)
 	pass
 
 
