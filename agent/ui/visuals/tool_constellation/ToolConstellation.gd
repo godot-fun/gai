@@ -17,7 +17,11 @@ const COMPLETE_SECONDS := 2.8
 const RING_EXPAND_SECONDS := 3.6
 const RING_LAYER_COUNT := 7
 const DUST_COUNT := 48
+## Fixed logical-pixel footprint of the center CRT. Keep orbit_radius() clearance in sync
+## when changing this value so live tool nodes never overlap the command card.
 const TERMINAL_SIZE := Vector2(304.0, 174.0)
+## Streaming text is bounded because message chunks may contain an entire long response.
+## The renderer only needs the most recent tail that could appear on the two-line display.
 const STREAM_BUFFER_LIMIT := 180
 const CRT_GLITCH_SECONDS := 0.55
 
@@ -39,8 +43,12 @@ var absorb_flash: float = 0.0
 var completion: float = 0.0
 var completing: bool = false
 var ended_with_error: bool = false
+## Raw recent stream tail and its OpenAI stream kind drive the terminal copy independently
+## from the serialized tool-call playback timeline.
 var stream_buffer: String = ""
 var stream_kind: String = ""
+## Seconds remaining, not a normalized amount. Rendering normalizes it so duration can be
+## tuned without rewriting every glitch effect.
 var crt_glitch: float = 0.0
 ## 0 = rings collapsed at the core, 1 = fully expanded field.
 var field_spread: float = 0.0
@@ -144,6 +152,8 @@ func on_chat_entry_add(_entry: ChatEntry) -> void:
 
 
 func on_message_update(chunk: String, next_stream_kind: String) -> void:
+	# Chunks can be tiny token fragments. Append first, then retain only a bounded tail so
+	# redraw cost and memory usage remain stable throughout long responses.
 	stream_kind = next_stream_kind
 	stream_buffer = terminal_text(stream_buffer + chunk)
 	core_pulse = 1.0
@@ -383,6 +393,8 @@ func angled_constellation_points(group: PackedInt32Array, center: Vector2) -> Pa
 
 
 func draw_core(center: Vector2, fade: float) -> void:
+	# Render order is intentional: ambient glow and halo sit behind the opaque chassis;
+	# terminal content sits below scanlines and the edge vignette to read as CRT glass.
 	var accent := ThemeColor.accent_theme_color()
 	var breath := (sin(elapsed * 2.4) + 1.0) * 0.5
 	var terminal_rect := Rect2(center - TERMINAL_SIZE * 0.5, TERMINAL_SIZE)
@@ -413,6 +425,8 @@ func draw_core(center: Vector2, fade: float) -> void:
 
 
 func draw_terminal_content(rect: Rect2, accent: Color, fade: float, glitch_strength: float) -> void:
+	# The top half belongs to streamed reasoning/answer text. The lower command card mirrors
+	# playing_call, which remains populated during RESULT_HOLD_SECONDS so OK/ERR is readable.
 	var font := Fonts.regular()
 	var font_size := Typography.body_small_size
 	var text_origin := rect.position + Vector2(12.0, 45.0)
@@ -432,6 +446,8 @@ func draw_terminal_content(rect: Rect2, accent: Color, fade: float, glitch_stren
 	draw_line(card_rect.position + Vector2(9.0, 27.0), card_rect.position + Vector2(card_rect.size.x - 9.0, 27.0), Color(card_color, 0.24 * fade), 1.0)
 	draw_string(font, card_rect.position + Vector2(9.0, 47.0), current_command_arguments(), HORIZONTAL_ALIGNMENT_LEFT, card_rect.size.x - 18.0, font_size, Color(ColorBase.primary_text, 0.82 * fade))
 	if glitch_strength > 0.0:
+		# These deterministic moving slices mimic horizontal sync loss without introducing
+		# random state, which keeps previews and tests reproducible.
 		for slice_index in range(3):
 			var y := rect.position.y + 34.0 + fmod(elapsed * 173.0 + slice_index * 29.0, rect.size.y - 38.0)
 			var offset := sin(elapsed * 83.0 + slice_index) * 12.0 * glitch_strength
@@ -440,6 +456,8 @@ func draw_terminal_content(rect: Rect2, accent: Color, fade: float, glitch_stren
 
 
 func draw_crt_scanlines(rect: Rect2, accent: Color, fade: float) -> void:
+	# Static low-alpha lines supply texture; one brighter sweep provides continuous motion.
+	# Keep both subtle because they are drawn over text rather than clipped behind it.
 	for line_index in range(9):
 		var y := rect.position.y + 29.0 + float(line_index) * 16.0
 		draw_line(Vector2(rect.position.x + 2.0, y), Vector2(rect.end.x - 2.0, y), Color(accent, 0.026 * fade), 1.0)
@@ -449,6 +467,7 @@ func draw_crt_scanlines(rect: Rect2, accent: Color, fade: float) -> void:
 
 
 func draw_crt_vignette(rect: Rect2, fade: float) -> void:
+	# Layered top/bottom strips approximate curved glass without a shader or extra CanvasItem.
 	for edge_index in range(4):
 		var inset := float(edge_index) * 3.0
 		var shade := Color(ColorBase.deep_surface, (0.22 - edge_index * 0.04) * fade)
@@ -487,6 +506,8 @@ func current_command_arguments() -> String:
 
 
 func current_tool_status() -> String:
+	# active_calls is erased as soon as a result arrives, while playing_call is deliberately
+	# held for the result card. Resolve state from the persistent node collection instead.
 	if playing_call.is_empty():
 		return "READY"
 	var playing_id := String(playing_call["id"])
@@ -512,6 +533,8 @@ static func terminal_text(text: String) -> String:
 
 
 static func terminal_display_lines(text: String, line_length: int, line_count: int) -> PackedStringArray:
+	# Normalize arbitrary chunk boundaries and newlines into a stable terminal tail. Cropping
+	# occurs before slicing so the newest streamed content always owns the visible display.
 	var clean := " ".join(text.replace("\r", "").replace("\n", " ").split(" ", false)).strip_edges()
 	if clean.is_empty():
 		clean = "awaiting input..."
@@ -714,6 +737,8 @@ func node_position(index: int, _count: int, center: Vector2) -> Vector2:
 
 func orbit_radius(orbit: float) -> float:
 	var available := minf(size.x, size.y)
+	# The former circular core only needed CORE_RADIUS clearance. The wider CRT requires a
+	# horizontal safety radius that also includes one tool node and a shared spacing token.
 	var terminal_clearance := TERMINAL_SIZE.x * 0.5 + NODE_RADIUS + Margin.ma_8
 	var inner := minf(maxf(available * 0.18, terminal_clearance), 230.0)
 	var step := minf(minf(size.x, size.y) * 0.125, 108.0)

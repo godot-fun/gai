@@ -139,6 +139,9 @@ func _process(delta: float) -> void:
 		var item: Dictionary = items[index]
 		var next_progress := float(item["progress"]) + delta * PARTICLE_SPEED * float(item["speed"])
 		var input_x := lerpf(-50.0, size.x * 0.5, next_progress)
+		# Convert incoming packets at the visible outer ring instead of letting them
+		# fade in front of the context window. The position-based threshold keeps the
+		# collision stable when the control is resized.
 		if item["type"] as StreamType != StreamType.ANSWER and input_x >= size.x * 0.5 - 94.0:
 			add_absorption_effect(item)
 			items.remove_at(index)
@@ -158,6 +161,8 @@ func _process(delta: float) -> void:
 	pass
 
 
+## Captures the minimum packet state needed by the short-lived intake animation.
+## Keeping this separate from items prevents an absorbed packet from being drawn twice.
 func add_absorption_effect(item: Dictionary) -> void:
 	absorption_effects.append({
 		"age": 0.0,
@@ -194,12 +199,16 @@ func _draw() -> void:
 	draw_river(center)
 	for item: Dictionary in items:
 		draw_item(item, center)
+	# Draw the collapse below the opaque context body so the packet appears to
+	# enter it; draw_context_window adds the corresponding visible core flash.
 	draw_absorption_effects(center)
 	draw_context_window(center)
 	draw_output(center)
 	pass
 
 
+## Pulls each incoming packet from the left edge of the context ring into its
+## core, while a type-colored ripple preserves the packet's source identity.
 func draw_absorption_effects(center: Vector2) -> void:
 	for effect: Dictionary in absorption_effects:
 		var phase := clampf(float(effect["age"]) / ABSORPTION_DURATION, 0.0, 1.0)
@@ -319,6 +328,8 @@ func draw_context_window(center: Vector2) -> void:
 	pass
 
 
+## Combines overlapping intake events into one bounded core response. The clamp
+## avoids a distracting flash when several packets arrive in the same frame.
 func absorption_activity() -> float:
 	var intensity := 0.0
 	for effect: Dictionary in absorption_effects:
@@ -328,6 +339,9 @@ func absorption_activity() -> float:
 	return clampf(intensity, 0.0, 1.0)
 
 
+## Answer-colored particles alone communicate generated output. Deliberately do
+## not add a solid channel, glow band, or text label here: those compete with the
+## river and duplicate information already carried by the particle color.
 func draw_output(center: Vector2) -> void:
 	var answer := color_for_type(StreamType.ANSWER)
 	var alpha := 0.28 + output_activity * 0.48

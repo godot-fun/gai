@@ -17,6 +17,7 @@ const VOID := Color("#030711")
 
 enum GateKind { HADAMARD, PHASE, ROTATION, TOOL }
 enum GateState { EVOLVING, RUNNING, MEASURED, FAILED }
+enum SignalKind { IDLE, REASONING, OUTPUT, TOOL }
 
 var wires: Array[Dictionary] = []
 var tool_gates: Dictionary[String, Dictionary] = {}
@@ -81,7 +82,8 @@ func on_turn_start() -> void:
 	if not active_wire.is_empty():
 		active_wire["active"] = false
 	turn_serial += 1
-	var wire := {"turn": turn_serial, "gates": [], "phase": 0.0, "decoherence": 0.0, "complete": false, "active": true}
+	var wire := {"turn": turn_serial, "gates": [], "phase": 0.0, "decoherence": 0.0, "complete": false, "active": true,
+		"signal_kind": SignalKind.IDLE, "signal_age": 0.0, "tool_echoes": []}
 	if wires.size() >= MAX_WIRES:
 		# Keep every visual slot stationary. Shifting the array would move all existing
 		# wires upward for every new turn, which reads as a full-screen UI hitch.
@@ -108,12 +110,15 @@ func on_turn_end() -> void:
 func on_message_update(chunk: String, stream_kind: String) -> void:
 	ensure_wire()
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
+		active_wire["signal_kind"] = SignalKind.REASONING
 		var count := maxi(1, ceili(float(chunk.length()) / 24.0))
 		for index in range(count):
 			var kind := (turn_serial + (active_wire["gates"] as Array).size() + index) % 3
 			append_gate(kind, "", "")
 	else:
+		active_wire["signal_kind"] = SignalKind.OUTPUT
 		active_wire["phase"] = minf(float(active_wire["phase"]) + 0.12, 1.0)
+	active_wire["signal_age"] = 0.0
 	pulse = 1.0
 	pass
 
@@ -123,6 +128,9 @@ func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dic
 	var gate := append_gate(GateKind.TOOL, tool_call_id, VisualToolFormatter.gate_name(tool_name))
 	gate["state"] = GateState.RUNNING
 	tool_gates[tool_call_id] = gate
+	active_wire["signal_kind"] = SignalKind.TOOL
+	active_wire["signal_age"] = 0.0
+	(active_wire["tool_echoes"] as Array).append({"x_ratio": float(gate["x_ratio"]), "age": 0.0, "failed": false})
 	pulse = 1.0
 	pass
 
@@ -133,9 +141,13 @@ func on_tool_execution_end(tool_call_id: String, _tool_name: String, result: Age
 	var gate: Dictionary = tool_gates[tool_call_id]
 	gate["state"] = GateState.FAILED if result.is_error else GateState.MEASURED
 	gate["event_age"] = 0.0
+	var gate_wire: Dictionary = gate["wire"]
 	if result.is_error:
-		var wire: Dictionary = gate["wire"]
-		wire["decoherence"] = 1.0
+		gate_wire["decoherence"] = 1.0
+	gate_wire["signal_kind"] = SignalKind.TOOL
+	gate_wire["signal_age"] = 0.0
+	var echoes: Array = gate_wire["tool_echoes"]
+	echoes.append({"x_ratio": float(gate["x_ratio"]), "age": 0.0, "failed": result.is_error})
 	pulse = 1.0
 	pass
 
@@ -153,6 +165,13 @@ func _process(delta: float) -> void:
 	for wire: Dictionary in wires:
 		wire["phase"] = fmod(float(wire["phase"]) + delta * 0.24, 1.0)
 		wire["decoherence"] = move_toward(float(wire["decoherence"]), 0.0, delta * 0.12)
+		wire["signal_age"] = float(wire.get("signal_age", 0.0)) + delta
+		var echoes: Array = wire.get("tool_echoes", [])
+		for echo: Dictionary in echoes:
+			echo["age"] = float(echo["age"]) + delta
+		for echo_index in range(echoes.size() - 1, -1, -1):
+			if float((echoes[echo_index] as Dictionary)["age"]) > 3.2:
+				echoes.remove_at(echo_index)
 		for gate: Dictionary in wire["gates"]:
 			gate["age"] = float(gate["age"]) + delta
 			gate["event_age"] = float(gate["event_age"]) + delta
@@ -175,7 +194,7 @@ func _draw() -> void:
 	draw_entanglements(top, spacing)
 	for index in range(wires.size()):
 		draw_wire(wires[index], index, top + index * spacing)
-	draw_quantum_readout(center_y)
+	draw_quantum_readout(center_y, top, spacing)
 	if completing:
 		draw_collapse(center_y, top, spacing)
 	pass
@@ -281,10 +300,11 @@ func draw_entanglements(top: float, spacing: float) -> void:
 	pass
 
 
-func draw_quantum_readout(center_y: float) -> void:
+func draw_quantum_readout(center_y: float, wire_top: float, wire_spacing: float) -> void:
 	var x := size.x - 62.0
-	var height := minf(size.y * 0.44, 310.0)
-	var top := center_y - height * 0.5
+	var register_height := wire_spacing * float(maxi(wires.size() - 1, 0))
+	var height := maxf(register_height, minf(120.0, size.y - 154.0))
+	var top := wire_top if wires.size() > 1 else center_y - height * 0.5
 	draw_line(Vector2(x, top), Vector2(x, top + height), Color(VIOLET, 0.18), 1.0)
 	for index in range(17):
 		var y := top + index * height / 16.0
@@ -315,11 +335,11 @@ func draw_wire(wire: Dictionary, wire_index: int, y: float) -> void:
 	if decoherence > 0.01:
 		draw_decoherent_wire(left, right, y, decoherence, wire_index)
 	else:
-		draw_lensed_wire(left, right, y, right, Color(CYAN, 0.18 + pulse * 0.2), 1.0)
+		draw_oscilloscope_wire(wire, left, right, y, Color(CYAN, 0.18 + pulse * 0.2), 1.0)
 		var phase_x := lerpf(left, right, float(wire["phase"]))
 		for glow in range(5, 0, -1):
-			draw_lensed_wire(left, right, y, phase_x, Color(CYAN, 0.008 * (6 - glow)), 1.0 + glow * 2.2)
-		draw_lensed_wire(left, right, y, phase_x, Color(CYAN, 0.88), 2.0)
+			draw_oscilloscope_wire(wire, left, phase_x, y, Color(CYAN, 0.008 * (6 - glow)), 1.0 + glow * 2.2)
+		draw_oscilloscope_wire(wire, left, phase_x, y, Color(CYAN, 0.88), 2.0)
 		for packet in range(3):
 			var packet_phase := fmod(float(wire["phase"]) - packet * 0.07 + 1.0, 1.0)
 			var packet_x := lerpf(left, right, packet_phase)
@@ -368,36 +388,57 @@ func draw_active_wire_effect(left: float, right: float, y: float, wire_index: in
 		draw_line(corner, corner + Vector2(0.0, vertical * bracket), Color(CYAN, 0.55 + breathe * 0.3), 1.5)
 	var label_position := Vector2(left + 8.0, y - band_height * 0.5 - 7.0)
 	draw_string(Fonts.semibold(), label_position, I18n.t("agent.visuals.quantum_executing"), HORIZONTAL_ALIGNMENT_LEFT, 310.0, Typography.label_small_size, Color(CYAN, 0.7 + breathe * 0.25))
-	# Oscilloscope trace rides directly on the active lane.
-	var waveform := PackedVector2Array()
-	for step in range(49):
-		var ratio := float(step) / 48.0
-		var x := lerpf(left, right, ratio)
-		var envelope := sin(ratio * PI)
-		var offset := sin(ratio * TAU * 9.0 - elapsed * 8.0) * 4.0 * envelope
-		waveform.append(Vector2(x, y + offset))
-	draw_polyline(waveform, Color(CYAN, 0.34 + breathe * 0.18), 1.0, true)
 	pass
 
 
-func draw_lensed_wire(left: float, right: float, y: float, limit_x: float, color: Color, width: float) -> void:
+## Draws the token stream as an ECG/oscilloscope trace. Reasoning is dense and
+## energetic, answer tokens settle into a calm carrier, and tools leave pulse echoes.
+func draw_oscilloscope_wire(wire: Dictionary, left: float, right: float, y: float, color: Color, width: float) -> void:
+	if right <= left:
+		return
 	var points := PackedVector2Array()
-	var core := Vector2(size.x * 0.72, size.y * 0.53)
-	var radius := minf(size.x, size.y) * 0.22
-	var steps := maxi(2, ceili((limit_x - left) / 34.0))
-	for step in range(steps + 1):
-		var x := lerpf(left, limit_x, float(step) / steps)
-		var horizontal_distance := (x - core.x) / radius
-		var influence := exp(-horizontal_distance * horizontal_distance * 2.4)
-		var vertical_distance := y - core.y
-		var direction := -1.0 if vertical_distance < 0.0 else 1.0
-		if absf(vertical_distance) < 4.0:
-			direction = -1.0 if int(y) % 2 else 1.0
-		var bend := direction * influence * maxf(0.0, 1.0 - absf(vertical_distance) / radius) * 24.0
-		points.append(Vector2(x, y + bend))
+	var step_count := maxi(24, ceili((right - left) / 8.0))
+	var signal_kind := int(wire.get("signal_kind", SignalKind.IDLE))
+	var signal_age := float(wire.get("signal_age", 0.0))
+	var activity := 1.0 if bool(wire.get("active", false)) else 0.32
+	var freshness := lerpf(0.38, 1.0, exp(-signal_age * 0.75)) * activity
+	for step in range(step_count + 1):
+		var ratio := float(step) / float(step_count)
+		var x := lerpf(left, right, ratio)
+		var offset := 0.0
+		if signal_kind == SignalKind.REASONING:
+			# Two close high-frequency carriers create a lively inference beat.
+			offset = (sin(ratio * TAU * 18.0 - elapsed * 15.0) * 4.8 + sin(ratio * TAU * 31.0 - elapsed * 22.0) * 1.7) * freshness
+		elif signal_kind == SignalKind.OUTPUT:
+			# Final-answer tokens travel as a controlled, stable low-amplitude wave.
+			offset = sin(ratio * TAU * 5.0 - elapsed * 6.0) * 2.6 * freshness
+		elif signal_kind == SignalKind.TOOL:
+			offset = sin(ratio * TAU * 3.0 - elapsed * 4.0) * 1.4 * freshness
+		else:
+			offset = sin(ratio * TAU * 2.0 - elapsed * 2.2) * 0.7 * activity
+		for echo: Dictionary in wire.get("tool_echoes", []):
+			var echo_age := float(echo["age"])
+			var echo_center := float(echo["x_ratio"]) + echo_age * 0.11
+			var distance := ratio - echo_center
+			var envelope := exp(-absf(distance) * 24.0) * exp(-echo_age * 0.72)
+			var polarity := -1.0 if bool(echo["failed"]) else 1.0
+			offset += polarity * sin(distance * TAU * 13.0) * envelope * 15.0
+		points.append(Vector2(x, lensed_wire_y(x, y) + offset))
 	if points.size() >= 2:
 		draw_polyline(points, color, width, true)
 	pass
+
+
+func lensed_wire_y(x: float, y: float) -> float:
+	var core := Vector2(size.x * 0.72, size.y * 0.53)
+	var radius := minf(size.x, size.y) * 0.22
+	var horizontal_distance := (x - core.x) / radius
+	var influence := exp(-horizontal_distance * horizontal_distance * 2.4)
+	var vertical_distance := y - core.y
+	var direction := -1.0 if vertical_distance < 0.0 else 1.0
+	if absf(vertical_distance) < 4.0:
+		direction = -1.0 if int(y) % 2 else 1.0
+	return y + direction * influence * maxf(0.0, 1.0 - absf(vertical_distance) / radius) * 24.0
 
 
 func draw_decoherent_wire(left: float, right: float, y: float, amount: float, seed: int) -> void:

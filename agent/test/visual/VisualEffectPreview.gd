@@ -64,6 +64,8 @@ var play_buttons: Array[Button] = []
 
 
 func _ready() -> void:
+	# This preview runs directly with F6 and bypasses Agent._ready(), where the application normally
+	# initializes translations. Keep this first so effects created below receive translated labels.
 	I18nHelper.init_i18n()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	visual_control.wait_for_effect_completion_on_agent_end = true
