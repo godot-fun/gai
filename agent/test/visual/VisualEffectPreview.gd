@@ -22,6 +22,7 @@ const EFFECT_SPECS: Array[Dictionary] = [
 	{"type": VisualType.Type.QUANTUM_CIRCUIT, "label": "Quantum Circuit"},
 	{"type": VisualType.Type.DESKTOP_CAT, "label": "Desktop Cat"},
 	{"type": VisualType.Type.GEOMETRIC_GENESIS, "label": "Geometric Genesis"},
+	{"type": VisualType.Type.MATRIX_RAIN, "label": "Matrix Rain"},
 ]
 
 const TOOL_CATALOG: Array[Dictionary] = [
@@ -365,6 +366,8 @@ func visual_label() -> String:
 			return "Desktop Cat"
 		VisualType.Type.GEOMETRIC_GENESIS:
 			return "Geometric Genesis"
+		VisualType.Type.MATRIX_RAIN:
+			return "Matrix Rain"
 	return "None"
 
 

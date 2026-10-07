@@ -16,8 +16,7 @@ var sub_viewport: SubViewport
 var jarvis_orb: JarvisOrb
 var orb_tween: Tween
 var active_session_id: int = 0
-var chat_entry_index: int = 0
-var entry_char_index: int = 0
+var sentence_cursor: VisualChatSentenceCursor = VisualChatSentenceCursor.new()
 var sentence_timer: float = 0.0
 
 
@@ -103,51 +102,15 @@ func reset_visual() -> void:
 func on_agent_start(session_id: int) -> void:
 	transition_to(OrbPhase.Phase.AWAKE)
 	active_session_id = session_id
-	chat_entry_index = find_latest_user_entry(session_id)
-	entry_char_index = 0
+	sentence_cursor.reset_for_session(session_id)
 	sentence_timer = 0.0
 	pass
 
 
-func find_latest_user_entry(session_id: int) -> int:
-	var session := AgentSessionStore.load_session(session_id)
-	if session == null:
-		return 0
-	for i in range(session.chat_entries.size() - 1, -1, -1):
-		var entry: ChatEntry = session.chat_entries[i]
-		if entry.kind == ChatEntry.KIND_USER:
-			return i
-	return session.chat_entries.size()
-
-
-## Returns one complete sentence at [param start_index]. An unfinished tail is never returned.
-static func take_sentence(text: String, start_index: int) -> Dictionary:
-	var start := clampi(start_index, 0, text.length())
-	while start < text.length() and text.substr(start, 1).strip_edges().is_empty():
-		start += 1
-	for i in range(start, text.length()):
-		if not StringUtils.is_sentence_end(text.substr(start, i - start + 1)):
-			continue
-		return {"text": text.substr(start, i - start + 1).strip_edges(), "next_index": i + 1}
-	return {"text": "", "next_index": start}
-
-
 func offer_next_sentence() -> void:
-	var session := AgentSessionStore.load_session(active_session_id)
-	if session == null:
-		return
-	while chat_entry_index < session.chat_entries.size():
-		var entry: ChatEntry = session.chat_entries[chat_entry_index]
-		var sentence := take_sentence(entry.body, entry_char_index)
-		var text: String = sentence.text
-		entry_char_index = sentence.next_index
-		if not text.is_empty():
-			jarvis_orb.add_step_text(text)
-			return
-		if chat_entry_index == session.chat_entries.size() - 1:
-			return
-		chat_entry_index += 1
-		entry_char_index = 0
+	var sentence: String = sentence_cursor.take_next_from_session(active_session_id)
+	if not sentence.is_empty():
+		jarvis_orb.add_step_text(sentence)
 	pass
 
 

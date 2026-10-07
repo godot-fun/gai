@@ -16,8 +16,9 @@ enum Type {
 	QUANTUM_CIRCUIT,
 	DESKTOP_CAT,
 	GEOMETRIC_GENESIS,
+	MATRIX_RAIN,
 }
 
 
 static func is_valid(value: int) -> bool:
-	return value >= Type.NONE and value <= Type.GEOMETRIC_GENESIS
+	return value >= Type.NONE and value <= Type.MATRIX_RAIN

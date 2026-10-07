@@ -66,6 +66,7 @@ func update_popup_items() -> void:
 	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_quantum_circuit"), VisualType.Type.QUANTUM_CIRCUIT)
 	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_desktop_cat"), VisualType.Type.DESKTOP_CAT)
 	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_geometric_genesis"), VisualType.Type.GEOMETRIC_GENESIS)
+	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_matrix_rain"), VisualType.Type.MATRIX_RAIN)
 	for visual_type: VisualType.Type in VisualType.Type.values():
 		popup.set_item_checked(popup.get_item_index(visual_type), selected_type == visual_type)
 	pass

@@ -53,6 +53,8 @@ func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 			return DesktopCat.new()
 		VisualType.Type.GEOMETRIC_GENESIS:
 			return GeometricGenesis.new()
+		VisualType.Type.MATRIX_RAIN:
+			return MatrixRain.new()
 	return null
 
 
