@@ -177,6 +177,86 @@ void fragment() {
 		vec2 chroma = vec2(effect_scale * 0.65 * texel.x, 0.0);
 		filtered = vec3(texture(screen_texture, tape_uv + chroma).r, texture(screen_texture, tape_uv).g, texture(screen_texture, tape_uv - chroma).b);
 		filtered *= 0.9 + 0.1 * sin(pixel.y * 3.14159265);
+	} else if (mode == 31) {
+		vec3 paint_sum = vec3(0.0);
+		float paint_radius = max(effect_scale, 1.0);
+		paint_sum += texture(screen_texture, uv + vec2(-paint_radius, -paint_radius) * texel).rgb;
+		paint_sum += texture(screen_texture, uv + vec2(0.0, -paint_radius) * texel).rgb;
+		paint_sum += texture(screen_texture, uv + vec2(paint_radius, -paint_radius) * texel).rgb;
+		paint_sum += texture(screen_texture, uv + vec2(-paint_radius, 0.0) * texel).rgb;
+		paint_sum += source * 2.0;
+		paint_sum += texture(screen_texture, uv + vec2(paint_radius, 0.0) * texel).rgb;
+		paint_sum += texture(screen_texture, uv + vec2(-paint_radius, paint_radius) * texel).rgb;
+		paint_sum += texture(screen_texture, uv + vec2(0.0, paint_radius) * texel).rgb;
+		paint_sum += texture(screen_texture, uv + vec2(paint_radius, paint_radius) * texel).rgb;
+		filtered = floor(adjusted(paint_sum / 10.0) * levels + 0.5) / levels;
+	} else if (mode == 32) {
+		float wash_radius = max(effect_scale, 1.0);
+		vec3 wash = source * 0.32;
+		wash += texture(screen_texture, uv + vec2(wash_radius, 0.0) * texel).rgb * 0.17;
+		wash += texture(screen_texture, uv - vec2(wash_radius, 0.0) * texel).rgb * 0.17;
+		wash += texture(screen_texture, uv + vec2(0.0, wash_radius) * texel).rgb * 0.17;
+		wash += texture(screen_texture, uv - vec2(0.0, wash_radius) * texel).rgb * 0.17;
+		filtered = mix(floor(adjusted(wash) * levels + 0.5) / levels, tint_color.rgb, 0.12) - edge * 0.18;
+	} else if (mode == 33) {
+		vec2 glass_cell = floor(pixel / max(effect_scale, 1.0));
+		vec2 glass_offset = vec2(random_noise(glass_cell), random_noise(glass_cell + 31.7)) - 0.5;
+		vec2 glass_uv = uv + glass_offset * effect_scale * 1.7 * texel;
+		filtered = texture(screen_texture, glass_uv).rgb;
+	} else if (mode == 34) {
+		vec2 direction = uv - 0.5;
+		float rush = effect_scale * 0.0025;
+		filtered = source * 0.24;
+		filtered += texture(screen_texture, uv - direction * rush).rgb * 0.19;
+		filtered += texture(screen_texture, uv - direction * rush * 2.0).rgb * 0.17;
+		filtered += texture(screen_texture, uv - direction * rush * 3.0).rgb * 0.15;
+		filtered += texture(screen_texture, uv - direction * rush * 4.0).rgb * 0.13;
+		filtered += texture(screen_texture, uv - direction * rush * 5.0).rgb * 0.12;
+		filtered *= tint_color.rgb;
+	} else if (mode == 35) {
+		vec2 trail = vec2(effect_scale, effect_scale * 0.28) * texel;
+		filtered = source * 0.28;
+		filtered += texture(screen_texture, uv - trail).rgb * 0.22;
+		filtered += texture(screen_texture, uv - trail * 2.0).rgb * 0.18;
+		filtered += texture(screen_texture, uv - trail * 3.0).rgb * 0.14;
+		filtered += texture(screen_texture, uv - trail * 4.0).rgb * 0.1;
+		filtered += texture(screen_texture, uv - trail * 5.0).rgb * 0.08;
+		filtered *= tint_color.rgb;
+	} else if (mode == 36) {
+		float threshold = bayer4(pixel / max(effect_scale, 1.0)) - 0.5;
+		filtered = floor(clamp(base + threshold / max(levels, 2.0), 0.0, 1.0) * levels) / max(levels - 1.0, 1.0);
+	} else if (mode == 37) {
+		float density = pow(1.0 - gray, 0.72);
+		filtered = mix(paper_color.rgb, ink_color.rgb, clamp(density + edge * 1.4, 0.0, 1.0));
+	} else if (mode == 38) {
+		float surveillance_scan = 0.72 + 0.28 * step(0.5, fract(pixel.y * 0.5));
+		float surveillance_noise = (random_noise(pixel + floor(TIME * 12.0)) - 0.5) * 0.12;
+		filtered = mix(paper_color.rgb, ink_color.rgb, clamp(gray + surveillance_noise, 0.0, 1.0)) * surveillance_scan;
+	} else if (mode == 39) {
+		float grid = max(floor(effect_scale), 2.0);
+		vec2 tile_uv = fract(uv * grid);
+		float border = step(0.015, tile_uv.x) * step(0.015, tile_uv.y) * step(tile_uv.x, 0.985) * step(tile_uv.y, 0.985);
+		filtered = texture(screen_texture, tile_uv).rgb * border;
+	} else if (mode == 40) {
+		vec2 swirl_center = uv - 0.5;
+		float swirl_radius = length(swirl_center);
+		float swirl_angle = atan(swirl_center.y, swirl_center.x) + (1.0 - smoothstep(0.0, 0.72, swirl_radius)) * effect_scale * 0.34;
+		vec2 swirl_uv = vec2(cos(swirl_angle), sin(swirl_angle)) * swirl_radius + 0.5;
+		filtered = texture(screen_texture, swirl_uv).rgb;
+	} else if (mode == 41) {
+		float sort_band = floor(pixel.x / max(effect_scale, 1.0));
+		float gate = step(0.48, random_noise(vec2(sort_band, floor(pixel.y / 80.0))));
+		float sort_offset = (gray - 0.5) * effect_scale * 9.0 * gate;
+		vec2 sort_uv = uv + vec2(0.0, sort_offset * texel.y);
+		filtered = texture(screen_texture, sort_uv).rgb;
+	} else if (mode == 42) {
+		float block_size = max(effect_scale, 2.0);
+		vec2 block_id = floor(pixel / block_size);
+		float broken = step(0.68, random_noise(block_id + floor(TIME * 4.0)));
+		vec2 block_shift = vec2(random_noise(block_id + 8.1) - 0.5, random_noise(block_id + 19.4) - 0.5) * block_size * 2.5 * broken;
+		vec2 corrupt_uv = uv + block_shift * texel;
+		vec3 corrupt = texture(screen_texture, corrupt_uv).rgb;
+		filtered = mix(corrupt, corrupt.brg * tint_color.rgb, broken * 0.55);
 	}
 
 	float grain = (random_noise(pixel + floor(TIME * 8.0)) - 0.5) * grain_strength;
