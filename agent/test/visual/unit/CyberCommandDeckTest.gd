@@ -56,6 +56,24 @@ func radar_angle_stays_continuous_across_phase_changes_test() -> void:
 	pass
 
 
+func palette_follows_accent_theme_color_test() -> void:
+	var original: Color = ThemeColor.theme_color
+	ThemeColor.theme_color = Color(0.2, 0.45, 1.0)
+	ThemeColor.refresh_derived_colors()
+	assert(CyberCommandDeck.neon_cyan() == ThemeColor.accent_theme_color())
+	assert(CyberCommandDeck.neon_blue() != CyberCommandDeck.neon_cyan())
+	assert(CyberCommandDeck.neon_magenta() != CyberCommandDeck.neon_cyan())
+	assert(CyberCommandDeck.pod_color(CyberCommandDeck.PodState.EXECUTING) == ThemeColor.accent_theme_color())
+	assert(CyberCommandDeck.pod_color(CyberCommandDeck.PodState.CONNECTING) == CyberCommandDeck.neon_magenta())
+	ThemeColor.theme_color = Color(1.0, 0.35, 0.05)
+	ThemeColor.refresh_derived_colors()
+	assert(CyberCommandDeck.neon_cyan() == ThemeColor.accent_theme_color())
+	assert(CyberCommandDeck.pod_color(CyberCommandDeck.PodState.EXECUTING) == ThemeColor.accent_theme_color())
+	ThemeColor.theme_color = original
+	ThemeColor.refresh_derived_colors()
+	pass
+
+
 func full_deck_replaces_head_without_reflow_test() -> void:
 	var effect := CyberCommandDeck.new()
 	for index in range(CyberCommandDeck.MAX_PODS):
