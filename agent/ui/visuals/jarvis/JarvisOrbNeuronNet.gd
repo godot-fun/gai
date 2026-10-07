@@ -21,6 +21,7 @@ var neuron_anchors: PackedVector3Array = PackedVector3Array()
 var neuron_positions: PackedVector3Array = PackedVector3Array()
 var neuron_phases: PackedFloat32Array = PackedFloat32Array()
 var neuron_speeds: PackedFloat32Array = PackedFloat32Array()
+var neuron_velocities: PackedVector3Array = PackedVector3Array()
 var neuron_amps: PackedFloat32Array = PackedFloat32Array()
 var neuron_tangent_a: PackedVector3Array = PackedVector3Array()
 var neuron_tangent_b: PackedVector3Array = PackedVector3Array()
@@ -29,6 +30,8 @@ var synapse_pairs_inner: Array[Vector2i] = []
 var synapse_pairs_outer: Array[Vector2i] = []
 var motion_time: float = 0.0
 var wander_speed_scale: float = 0.75
+var thinking_blend: float = 0.0
+var thinking_target: float = 0.0
 var pulse_levels: PackedFloat32Array = PackedFloat32Array()
 var active_pulse_indices: Array[int] = []
 var pulse_sum: float = 0.0
@@ -110,10 +113,17 @@ func _process(delta: float) -> void:
 	if neuron_shader_outer != null:
 		neuron_shader_outer.set_shader_parameter("pulse", avg_pulse)
 
+	thinking_blend = move_toward(thinking_blend, thinking_target, delta * 3.8)
 	motion_time += delta * wander_speed_scale
-	update_neuron_motion()
+	update_neuron_motion(delta)
 	refresh_multimesh_transforms()
 	refresh_filament_vertices()
+	pass
+
+
+## Thinking raises the motion energy gradually so phase changes stay fluid.
+func set_thinking(enabled: bool) -> void:
+	thinking_target = 1.0 if enabled else 0.0
 	pass
 
 
@@ -148,6 +158,8 @@ func reset_growth() -> void:
 	rebuild_cooldown = 0.0
 	filament_dirty = false
 	motion_time = 0.0
+	thinking_blend = 0.0
+	thinking_target = 0.0
 	active_pulse_indices.clear()
 	pulse_sum = 0.0
 	rebuild_neurons(OrbGrowth.NEURON_MIN)
@@ -396,6 +408,7 @@ func build_layer_filament_mesh(
 func init_motion_params(from_index: int, to_index: int) -> void:
 	neuron_phases.resize(to_index)
 	neuron_speeds.resize(to_index)
+	neuron_velocities.resize(to_index)
 	neuron_amps.resize(to_index)
 	neuron_tangent_a.resize(to_index)
 	neuron_tangent_b.resize(to_index)
@@ -410,21 +423,67 @@ func init_motion_params(from_index: int, to_index: int) -> void:
 		neuron_phases[i] = rng.randf_range(0.0, TAU)
 		neuron_speeds[i] = rng.randf_range(0.4, 1.05)
 		var is_inner := neuron_layers[i] == LAYER_INNER
+		var initial_speed := rng.randf_range(0.055, 0.09) if is_inner else rng.randf_range(0.025, 0.045)
+		neuron_velocities[i] = random_unit_direction() * initial_speed
 		neuron_amps[i] = rng.randf_range(0.012, 0.028) if is_inner else rng.randf_range(0.022, 0.052)
 	pass
 
 
-func update_neuron_motion() -> void:
+func update_neuron_motion(motion_delta: float) -> void:
 	for i in neuron_anchors.size():
-		var anchor := neuron_anchors[i]
 		var phase := neuron_phases[i]
 		var speed := neuron_speeds[i]
-		var amp := neuron_amps[i]
-		var t := motion_time * speed + phase
-		var offset := neuron_tangent_a[i] * (sin(t) * amp)
-		offset += neuron_tangent_b[i] * (cos(t * 0.71) * amp * 0.88)
-		offset += neuron_tangent_a[i].cross(neuron_tangent_b[i]).normalized() * (sin(t * 1.37 + phase) * amp * 0.35)
-		neuron_positions[i] = anchor + offset
+		var is_inner := neuron_layers[i] == LAYER_INNER
+		var step := minf(motion_delta * wander_speed_scale, 0.075) if is_inner else minf(motion_delta, 0.075)
+		var velocity := neuron_velocities[i]
+		var steer := Vector3(
+			sin(motion_time * (0.71 + speed * 0.13) + phase),
+			cos(motion_time * (0.83 + speed * 0.17) + phase * 1.37),
+			sin(motion_time * (0.59 + speed * 0.19) + phase * 2.11)
+		).normalized()
+		var steer_energy := 0.025 * (1.0 + thinking_blend) if is_inner else 0.009
+		velocity += steer * step * steer_energy
+		var target_speed := lerpf(0.075, 0.19, thinking_blend) if is_inner else 0.034
+		velocity = velocity.normalized() * move_toward(velocity.length(), target_speed * (0.82 + speed * 0.28), step * 0.18)
+		neuron_positions[i] += velocity * step
+		neuron_velocities[i] = velocity
+		constrain_neuron_to_layer(i)
+	resolve_neuron_collisions(synapse_pairs_inner, 0.075, 1.0)
+	resolve_neuron_collisions(synapse_pairs_outer, 0.115, 0.72)
+	pass
+
+
+func constrain_neuron_to_layer(index: int) -> void:
+	var position := neuron_positions[index]
+	var radius := position.length()
+	if radius <= 0.0001:
+		return
+	var normal := position / radius
+	var min_radius := 0.035 if neuron_layers[index] == LAYER_INNER else OrbVisualScale.OUTER_SHELL_RADIUS_CENTER - 0.09
+	var max_radius := INNER_CORE_RADIUS if neuron_layers[index] == LAYER_INNER else OrbVisualScale.OUTER_SHELL_RADIUS_CENTER + 0.09
+	if radius < min_radius or radius > max_radius:
+		var boundary := min_radius if radius < min_radius else max_radius
+		neuron_positions[index] = normal * boundary
+		neuron_velocities[index] = neuron_velocities[index].bounce(normal)
+	pass
+
+
+func resolve_neuron_collisions(pairs: Array[Vector2i], collision_distance: float, restitution: float) -> void:
+	for pair in pairs:
+		var delta := neuron_positions[pair.y] - neuron_positions[pair.x]
+		var distance := delta.length()
+		if distance <= 0.0001 or distance >= collision_distance:
+			continue
+		var normal := delta / distance
+		var relative_speed := (neuron_velocities[pair.y] - neuron_velocities[pair.x]).dot(normal)
+		if relative_speed >= 0.0:
+			continue
+		var correction := normal * (collision_distance - distance) * 0.5
+		neuron_positions[pair.x] -= correction
+		neuron_positions[pair.y] += correction
+		var impulse := -(1.0 + restitution) * relative_speed * 0.5
+		neuron_velocities[pair.x] -= normal * impulse
+		neuron_velocities[pair.y] += normal * impulse
 	pass
 
 

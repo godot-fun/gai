@@ -57,9 +57,10 @@ func set_phase(new_phase: OrbPhase.Phase) -> void:
 	color_controller.set_target(OrbPhase.color_for(new_phase))
 	char_overlay.set_phase(new_phase)
 	rings.set_tool_mode(new_phase == OrbPhase.Phase.TOOL_EXEC)
+	neuron_net.set_thinking(new_phase == OrbPhase.Phase.REASONING)
 	match new_phase:
 		OrbPhase.Phase.REASONING:
-			spin_speed = 0.45
+			spin_speed = 2.35
 		OrbPhase.Phase.TOOL_EXEC:
 			spin_speed = 1.1
 		OrbPhase.Phase.ERROR:
