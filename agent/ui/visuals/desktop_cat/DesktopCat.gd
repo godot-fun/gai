@@ -464,13 +464,13 @@ func draw_effects() -> void:
 		CatState.TOOL_WAITING:
 			draw_tool_button(true)
 		CatState.TOOL_SUCCESS:
-			draw_status_burst(ColorBase.success, "OK")
+			draw_status_burst(ColorBase.success, I18n.t("agent.visuals.ok"))
 		CatState.TOOL_FAILED:
 			draw_status_burst(ColorBase.error, "!")
 		CatState.SUCCESS:
-			draw_result_card(ColorBase.success, "RESULT READY")
+			draw_result_card(ColorBase.success, I18n.t("agent.visuals.result_ready"), true)
 		CatState.FAILED:
-			draw_result_card(ColorBase.error, "ERROR")
+			draw_result_card(ColorBase.error, I18n.t("agent.visuals.error"), false)
 		CatState.CANCELLED:
 			draw_cancel_sweep()
 	pass
@@ -537,11 +537,11 @@ func draw_paw_alert(color: Color) -> void:
 	pass
 
 
-func draw_result_card(color: Color, title: String) -> void:
+func draw_result_card(color: Color, title: String, succeeded: bool) -> void:
 	var progress := minf(1.0, state_seconds / 0.48)
 	var center := Vector2(108.0, 151.0).lerp(Vector2(77.0, 123.0), 1.0 - progress)
 	draw_paw_print(center, 1.18 * progress, Color(ColorBase.control_surface, 0.98), Color(color, 0.9))
-	draw_centered_text(center + Vector2(0.0, 10.0), "✓" if title == "RESULT READY" else "!", Fonts.bold(), Typography.title_medium_size, color)
+	draw_centered_text(center + Vector2(0.0, 10.0), "✓" if succeeded else "!", Fonts.bold(), Typography.title_medium_size, color)
 	draw_centered_text(center + Vector2(0.0, 57.0), title, Fonts.semibold(), Typography.label_medium_size, ColorBase.primary_text)
 	draw_centered_text(center + Vector2(0.0, 76.0), compact_label(card_text, 17), Fonts.regular(), Typography.label_small_size, ColorBase.secondary_text)
 	pass
@@ -553,7 +553,7 @@ func draw_cancel_sweep() -> void:
 		var start := Vector2(50.0 + index * 27.0, 178.0 - float(index % 2) * 16.0)
 		var position := start + Vector2(-190.0 * progress, -45.0 * progress * progress + sin(float(index)) * 12.0)
 		draw_paw_print(position, 0.28, Color(ColorBase.control_surface, 0.88), Color(ColorBase.subtle_border, 0.7), -0.5 - progress)
-	draw_text(Vector2(42.0, 68.0), "CLEAN SLATE", Fonts.semibold(), Typography.label_medium_size, Color(ColorBase.secondary_text, 1.0 - progress * 0.7))
+	draw_text(Vector2(42.0, 68.0), I18n.t("agent.visuals.clean_slate"), Fonts.semibold(), Typography.label_medium_size, Color(ColorBase.secondary_text, 1.0 - progress * 0.7))
 	pass
 
 

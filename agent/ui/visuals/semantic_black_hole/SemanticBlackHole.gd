@@ -271,13 +271,13 @@ func set_tool_badge_state(state: ToolBadgeState) -> void:
 	tool_badge_state = state
 	match state:
 		ToolBadgeState.CONNECTING:
-			tool_status_label.text = "CONNECTING"
+			tool_status_label.text = I18n.t("agent.visuals.connecting")
 		ToolBadgeState.RETURNING:
-			tool_status_label.text = "RETURNING"
+			tool_status_label.text = I18n.t("agent.visuals.returning")
 		ToolBadgeState.COMPLETE:
-			tool_status_label.text = "COMPLETE"
+			tool_status_label.text = I18n.t("agent.visuals.complete")
 		ToolBadgeState.FAILED:
-			tool_status_label.text = "FAILED"
+			tool_status_label.text = I18n.t("agent.visuals.failed")
 	apply_tool_badge_style()
 	pass
 

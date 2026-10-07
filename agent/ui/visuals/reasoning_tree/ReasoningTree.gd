@@ -75,7 +75,7 @@ func reset_visual() -> void:
 	visual_time = 0.0
 	pulse_travel_distances.clear()
 	pulse_spawn_elapsed = 0.0
-	phase_label = "准备任务"
+	phase_label = I18n.t("agent.visuals.preparing_task")
 	branches.clear()
 	active_tool_indices.clear()
 	queue_redraw()
@@ -83,7 +83,7 @@ func reset_visual() -> void:
 
 
 func on_agent_start(_session_id: int) -> void:
-	phase_label = "理解任务"
+	phase_label = I18n.t("agent.visuals.understanding_task")
 	# Stay below the first turn tip so the trunk only grows forward once turns begin.
 	target_trunk_growth = trunk_growth_for_turn(1) * 0.5
 	queue_redraw()
@@ -92,18 +92,18 @@ func on_agent_start(_session_id: int) -> void:
 
 func on_agent_end(error_message: String) -> float:
 	if StringUtils.is_blank(error_message):
-		phase_label = "任务已完成"
+		phase_label = I18n.t("agent.visuals.task_complete")
 		target_crown_growth = 1.0
 		play_completion_burst()
 	else:
-		phase_label = "任务已停止" if error_message.begins_with("Stop") else "任务失败"
+		phase_label = I18n.t("agent.visuals.task_stopped") if error_message.begins_with("Stop") else I18n.t("agent.visuals.task_failed")
 	queue_redraw()
 	return 0.9
 
 
 func on_turn_start() -> void:
 	turn_index += 1
-	phase_label = "第 %d 轮 · 分析任务" % turn_index
+	phase_label = StringUtils.format(I18n.t("agent.visuals.turn_analyzing"), turn_index)
 	# Map turns across the full trunk using AgentLoop.MAX_TURNS so late tools do not pile at the tip.
 	target_trunk_growth = trunk_growth_for_turn(turn_index)
 	queue_redraw()
@@ -111,7 +111,7 @@ func on_turn_start() -> void:
 
 
 func on_turn_end() -> void:
-	phase_label = "第 %d 轮 · 阶段完成" % turn_index
+	phase_label = StringUtils.format(I18n.t("agent.visuals.turn_complete"), turn_index)
 	queue_redraw()
 	pass
 
@@ -120,9 +120,9 @@ func on_message_update(chunk: String, stream_kind: String) -> void:
 	if chunk.is_empty():
 		return
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
-		phase_label = "第 %d 轮 · 正在分析" % maxi(turn_index, 1)
+		phase_label = StringUtils.format(I18n.t("agent.visuals.turn_reasoning"), maxi(turn_index, 1))
 	else:
-		phase_label = "整理最终答案"
+		phase_label = I18n.t("agent.visuals.preparing_answer")
 		target_crown_growth = minf(0.82, target_crown_growth + 0.035)
 	queue_redraw()
 	pass
@@ -137,7 +137,7 @@ func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dic
 	branches.append(make_branch(tool_call_id, tool_name, branch_sequence, target_trunk_growth))
 	branch_sequence += 1
 	active_tool_indices[tool_call_id] = branches.size() - 1
-	phase_label = "调用工具 · %s" % VisualToolFormatter.title_name(tool_name, "工具")
+	phase_label = StringUtils.format(I18n.t("agent.visuals.calling_tool"), VisualToolFormatter.title_name(tool_name, I18n.t("agent.visuals.tool")))
 	queue_redraw()
 	pass
 
@@ -147,11 +147,11 @@ func on_tool_execution_end(tool_call_id: String, tool_name: String, result: Agen
 		return
 	var index: int = active_tool_indices[tool_call_id]
 	branches[index]["state"] = BranchState.FAILED if result.is_error else BranchState.SUCCESS
-	branches[index]["label"] = "%s · %s" % [VisualToolFormatter.title_name(tool_name, "工具"), "失败" if result.is_error else "已完成"]
+	branches[index]["label"] = "%s · %s" % [VisualToolFormatter.title_name(tool_name, I18n.t("agent.visuals.tool")), I18n.t("agent.visuals.failed") if result.is_error else I18n.t("agent.visuals.complete")]
 	active_tool_indices.erase(tool_call_id)
 	if not result.is_error:
 		target_trunk_growth = maxf(target_trunk_growth, trunk_growth_for_turn(turn_index))
-	phase_label = "工具失败 · 调整方案" if result.is_error else "工具完成 · 继续任务"
+	phase_label = I18n.t("agent.visuals.tool_failed") if result.is_error else I18n.t("agent.visuals.tool_complete")
 	queue_redraw()
 	pass
 
@@ -577,7 +577,7 @@ static func make_branch(tool_call_id: String, tool_name: String, branch_index: i
 	var direction := -1.0 if branch_index % 2 == 0 else 1.0
 	return {
 		"id": tool_call_id,
-		"label": VisualToolFormatter.title_name(tool_name, "工具"),
+		"label": VisualToolFormatter.title_name(tool_name, I18n.t("agent.visuals.tool")),
 		"state": BranchState.RUNNING,
 		"anchor": clampf(growth, ANCHOR_MIN, ANCHOR_MAX),
 		"anchor_offset": branch_anchor_offset(branch_index),

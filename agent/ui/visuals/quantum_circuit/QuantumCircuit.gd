@@ -297,10 +297,10 @@ func draw_quantum_readout(center_y: float) -> void:
 
 func draw_header() -> void:
 	draw_line(Vector2(34.0, 42.0), Vector2(size.x - 34.0, 42.0), Color(ThemeColor.accent_theme_color(), 0.18), 1.0)
-	draw_string(Fonts.semibold(), Vector2(38.0, 32.0), "QUANTUM CIRCUIT // LIVE", HORIZONTAL_ALIGNMENT_LEFT, 300.0, Typography.label_large_size, Color(CYAN, 0.88))
-	var state := "COLLAPSING" if completing else "SUPERPOSITION"
+	draw_string(Fonts.semibold(), Vector2(38.0, 32.0), I18n.t("agent.visuals.quantum_circuit_live"), HORIZONTAL_ALIGNMENT_LEFT, 300.0, Typography.label_large_size, Color(CYAN, 0.88))
+	var state := I18n.t("agent.visuals.collapsing") if completing else I18n.t("agent.visuals.superposition")
 	draw_string(Fonts.medium(), Vector2(size.x - 220.0, 32.0), state, HORIZONTAL_ALIGNMENT_RIGHT, 180.0, Typography.label_small_size, Color(SUCCESS if completing else MAGENTA, 0.78))
-	draw_string(Fonts.regular(), Vector2(38.0, size.y - 27.0), "|psi>  UNITARY REASONING BUS", HORIZONTAL_ALIGNMENT_LEFT, 260.0, Typography.label_small_size, Color(ColorBase.secondary_text, 0.62))
+	draw_string(Fonts.regular(), Vector2(38.0, size.y - 27.0), I18n.t("agent.visuals.reasoning_bus"), HORIZONTAL_ALIGNMENT_LEFT, 260.0, Typography.label_small_size, Color(ColorBase.secondary_text, 0.62))
 	pass
 
 
@@ -367,7 +367,7 @@ func draw_active_wire_effect(left: float, right: float, y: float, wire_index: in
 		draw_line(corner, corner + Vector2(horizontal * bracket, 0.0), Color(CYAN, 0.55 + breathe * 0.3), 1.5)
 		draw_line(corner, corner + Vector2(0.0, vertical * bracket), Color(CYAN, 0.55 + breathe * 0.3), 1.5)
 	var label_position := Vector2(left + 8.0, y - band_height * 0.5 - 7.0)
-	draw_string(Fonts.semibold(), label_position, "● EXECUTING  /  QUANTUM CHANNEL LOCKED", HORIZONTAL_ALIGNMENT_LEFT, 310.0, Typography.label_small_size, Color(CYAN, 0.7 + breathe * 0.25))
+	draw_string(Fonts.semibold(), label_position, I18n.t("agent.visuals.quantum_executing"), HORIZONTAL_ALIGNMENT_LEFT, 310.0, Typography.label_small_size, Color(CYAN, 0.7 + breathe * 0.25))
 	# Oscilloscope trace rides directly on the active lane.
 	var waveform := PackedVector2Array()
 	for step in range(49):
@@ -492,7 +492,7 @@ func draw_collapse(center_y: float, top: float, spacing: float) -> void:
 	draw_circle(Vector2(right, center_y), radius + progress * 36.0, Color(color, 0.035 * progress))
 	draw_arc(Vector2(right, center_y), radius, 0.0, TAU, 48, Color(color, progress), 3.0, true)
 	if collapse > 0.7:
-		draw_centered_text(Vector2(size.x * 0.5, 86.0), "STATE ERROR  |X>" if ended_with_error else "DETERMINATE STATE  |1>", Fonts.semibold(), Typography.title_medium_size, Color(color, progress))
+		draw_centered_text(Vector2(size.x * 0.5, 86.0), I18n.t("agent.visuals.state_error") if ended_with_error else I18n.t("agent.visuals.determinate_state"), Fonts.semibold(), Typography.title_medium_size, Color(color, progress))
 	pass
 
 

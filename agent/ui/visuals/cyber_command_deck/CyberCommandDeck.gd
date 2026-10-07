@@ -254,15 +254,15 @@ func draw_system_chrome(center: Vector2) -> void:
 	var left := center.x - bar_width * 0.5
 	draw_line(Vector2(left, top_y), Vector2(center.x - 86.0, top_y), Color(NEON_CYAN, 0.5), 1.0)
 	draw_line(Vector2(center.x + 86.0, top_y), Vector2(left + bar_width, top_y), Color(NEON_MAGENTA, 0.42), 1.0)
-	draw_centered_text(Vector2(center.x, top_y + 5.0), "C Y B E R   C O M M A N D   D E C K", Fonts.semibold(), Typography.label_small_size, Color(NEON_CYAN, 0.9))
-	draw_string(Fonts.regular(), Vector2(left, top_y + 24.0), "SYS // GAI-OS", HORIZONTAL_ALIGNMENT_LEFT, 160.0, Typography.label_small_size, ColorBase.secondary_text)
-	draw_string(Fonts.regular(), Vector2(left + bar_width - 160.0, top_y + 24.0), "LINK // SECURE", HORIZONTAL_ALIGNMENT_RIGHT, 160.0, Typography.label_small_size, Color(NEON_MAGENTA, 0.72))
+	draw_centered_text(Vector2(center.x, top_y + 5.0), I18n.t("agent.visuals.cyber_command_deck"), Fonts.semibold(), Typography.label_small_size, Color(NEON_CYAN, 0.9))
+	draw_string(Fonts.regular(), Vector2(left, top_y + 24.0), I18n.t("agent.visuals.gai_system"), HORIZONTAL_ALIGNMENT_LEFT, 160.0, Typography.label_small_size, ColorBase.secondary_text)
+	draw_string(Fonts.regular(), Vector2(left + bar_width - 160.0, top_y + 24.0), I18n.t("agent.visuals.secure_link"), HORIZONTAL_ALIGNMENT_RIGHT, 160.0, Typography.label_small_size, Color(NEON_MAGENTA, 0.72))
 	var bottom_y := size.y - 34.0
 	for index in range(24):
 		var height := 3.0 + absf(sin(elapsed * 3.0 + index * 0.73)) * 12.0 * activity
 		var x := center.x - 144.0 + index * 12.0
 		draw_rect(Rect2(Vector2(x, bottom_y - height), Vector2(5.0, height)), Color(NEON_CYAN if index % 4 else NEON_MAGENTA, 0.48), true)
-	draw_centered_text(Vector2(center.x, bottom_y + 16.0), "NEURAL BUS  /  LIVE TELEMETRY  /  ZERO LATENCY", Fonts.regular(), Typography.label_small_size, ColorBase.secondary_text)
+	draw_centered_text(Vector2(center.x, bottom_y + 16.0), I18n.t("agent.visuals.live_telemetry"), Fonts.regular(), Typography.label_small_size, ColorBase.secondary_text)
 	pass
 
 
@@ -287,7 +287,7 @@ func draw_edge_telemetry(center: Vector2) -> void:
 	# Phase marker deliberately sits off-axis like a cockpit warning label.
 	var phase_text: String = String(DeckPhase.keys()[phase])
 	draw_string(Fonts.semibold(), Vector2(rail_inset + 13.0, center.y - 9.0), "[ %s ]" % phase_text, HORIZONTAL_ALIGNMENT_LEFT, 110.0, Typography.label_small_size, Color(NEON_MAGENTA, 0.72))
-	draw_string(Fonts.regular(), Vector2(size.x - rail_inset - 132.0, center.y - 9.0), "ACT %03d%%" % int(activity * 100.0), HORIZONTAL_ALIGNMENT_RIGHT, 118.0, Typography.label_small_size, Color(NEON_CYAN, 0.68))
+	draw_string(Fonts.regular(), Vector2(size.x - rail_inset - 132.0, center.y - 9.0), StringUtils.format(I18n.t("agent.visuals.activity"), "%03d" % int(activity * 100.0)), HORIZONTAL_ALIGNMENT_RIGHT, 118.0, Typography.label_small_size, Color(NEON_CYAN, 0.68))
 	pass
 
 
@@ -448,10 +448,10 @@ func draw_core(center: Vector2) -> void:
 	draw_circle(center, 9.0 + pulse * 4.0, Color(NEON_CYAN, 0.11))
 	draw_circle(center, 3.5 + pulse * 1.5, Color(NEON_CYAN, 0.95))
 	if collapse < 0.86:
-		draw_centered_text(center - Vector2(0.0, 23.0), "MISSION", Fonts.semibold(), Typography.label_medium_size, ColorBase.primary_text)
-		draw_centered_text(center - Vector2(0.0, 6.0), "C O R E", Fonts.bold(), Typography.title_small_size, Color(NEON_CYAN, 0.98))
+		draw_centered_text(center - Vector2(0.0, 23.0), I18n.t("agent.visuals.mission"), Fonts.semibold(), Typography.label_medium_size, ColorBase.primary_text)
+		draw_centered_text(center - Vector2(0.0, 6.0), I18n.t("agent.visuals.core"), Fonts.bold(), Typography.title_small_size, Color(NEON_CYAN, 0.98))
 		draw_centered_text(center + Vector2(0.0, 24.0), core_status(), Fonts.medium(), Typography.label_small_size, Color(NEON_MAGENTA, 0.9))
-		draw_centered_text(center + Vector2(0.0, 42.0), "T-%02d  //  %02d ACTIVE" % [maxi(turn_index, 1), active_pod_count()], Fonts.regular(), Typography.label_small_size, ColorBase.secondary_text)
+		draw_centered_text(center + Vector2(0.0, 42.0), StringUtils.format(I18n.t("agent.visuals.active_pods"), "%02d" % maxi(turn_index, 1), "%02d" % active_pod_count()), Fonts.regular(), Typography.label_small_size, ColorBase.secondary_text)
 	pass
 
 
@@ -525,7 +525,7 @@ func draw_tool_pod(pod: Dictionary, rect: Rect2) -> void:
 		var live_rect := Rect2(shown.position + Vector2(shown.size.x - 62.0, 8.0), Vector2(46.0, 15.0))
 		draw_rect(live_rect, Color(NEON_CYAN, 0.12 + active_breath * 0.08), true)
 		draw_rect(live_rect, Color(NEON_CYAN, 0.8), false, 1.0)
-		draw_string(Fonts.bold(), live_rect.position + Vector2(8.0, 11.0), "LIVE", HORIZONTAL_ALIGNMENT_LEFT, 34.0, Typography.label_small_size, Color(NEON_CYAN, 0.95))
+		draw_string(Fonts.bold(), live_rect.position + Vector2(8.0, 11.0), I18n.t("agent.visuals.live"), HORIZONTAL_ALIGNMENT_LEFT, 34.0, Typography.label_small_size, Color(NEON_CYAN, 0.95))
 	if not is_executing:
 		for bar in range(5):
 			var bar_height := 3.0 + absf(sin(elapsed * 5.0 + bar * 1.7 + int(pod["slot"]))) * 8.0
@@ -604,23 +604,23 @@ func active_pod_count() -> int:
 func core_status() -> String:
 	match phase:
 		DeckPhase.REASONING:
-			return "RADAR ANALYSIS"
+			return I18n.t("agent.visuals.radar_analysis")
 		DeckPhase.RESPONDING:
-			return "SYNTHESIZING"
+			return I18n.t("agent.visuals.synthesizing")
 		DeckPhase.ENDING:
-			return "MISSION COMPLETE"
-	return "SYSTEM ONLINE"
+			return I18n.t("agent.visuals.mission_complete")
+	return I18n.t("agent.visuals.system_online")
 
 
 static func pod_status(state: int) -> String:
 	match state:
 		PodState.CONNECTING:
-			return "CONNECTING"
+			return I18n.t("agent.visuals.connecting")
 		PodState.EXECUTING:
-			return "EXECUTING"
+			return I18n.t("agent.visuals.executing")
 		PodState.COMPLETE:
-			return "COMPLETE"
-	return "FAILED"
+			return I18n.t("agent.visuals.complete")
+	return I18n.t("agent.visuals.failed")
 
 
 static func pod_color(state: int) -> Color:

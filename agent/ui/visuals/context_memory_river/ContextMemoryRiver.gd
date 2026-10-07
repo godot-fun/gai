@@ -60,7 +60,7 @@ func on_agent_start(_session_id: int) -> void:
 
 
 func on_agent_end(error_message: String) -> float:
-	add_item(StreamType.ANSWER, "ERROR" if StringUtils.is_not_blank(error_message) else "ANSWER", 0.72)
+	add_item(StreamType.ANSWER, I18n.t("agent.visuals.error") if StringUtils.is_not_blank(error_message) else I18n.t("agent.visuals.answer"), 0.72)
 	output_activity = 1.0
 	return 0.6
 
@@ -86,7 +86,7 @@ func on_chat_entry_add(entry: ChatEntry) -> void:
 
 func on_message_update(chunk: String, stream_kind: String) -> void:
 	var stream_type := StreamType.REASONING if stream_kind == OpenAiClient.STREAM_KIND_REASONING else StreamType.ANSWER
-	add_item(stream_type, "THOUGHT" if stream_type == StreamType.REASONING else "ANSWER", weight_for_text(chunk))
+	add_item(stream_type, I18n.t("agent.visuals.thought") if stream_type == StreamType.REASONING else I18n.t("agent.visuals.answer"), weight_for_text(chunk))
 	if stream_type == StreamType.ANSWER:
 		output_activity = 1.0
 	else:
@@ -113,7 +113,7 @@ func on_tool_execution_start(_tool_call_id: String, tool_name: String, _args: Di
 
 func on_tool_execution_end(_tool_call_id: String, tool_name: String, result: AgentToolResult) -> void:
 	var stream_type := StreamType.FILE if tool_name.to_lower().contains("read") else StreamType.TOOL
-	add_item(stream_type, "FILE" if stream_type == StreamType.FILE else "RESULT", 0.82 if not result.is_error else 0.45)
+	add_item(stream_type, I18n.t("agent.visuals.file") if stream_type == StreamType.FILE else I18n.t("agent.visuals.result"), 0.82 if not result.is_error else 0.45)
 	activity = 1.0
 	pass
 
@@ -269,7 +269,7 @@ func draw_context_window(center: Vector2) -> void:
 	draw_circle(center, core_radius * 1.75, Color(accent, 0.035 + breath * 0.025))
 	draw_circle(center, core_radius, Color(accent, 0.62 + breath * 0.2))
 	draw_circle(center - Vector2(core_radius * 0.24, core_radius * 0.24), core_radius * 0.25, Color(1.0, 1.0, 1.0, 0.16 + breath * 0.12))
-	draw_centered_text(center + Vector2(0.0, 30.0), "CONTEXT", Fonts.semibold(), Typography.label_medium_size, ColorBase.primary_text)
+	draw_centered_text(center + Vector2(0.0, 30.0), I18n.t("agent.visuals.context"), Fonts.semibold(), Typography.label_medium_size, ColorBase.primary_text)
 	draw_centered_text(center + Vector2(0.0, 48.0), token_label(), Fonts.regular(), Typography.label_small_size, Color(capacity_color, 0.9))
 	pass
 
@@ -283,7 +283,7 @@ func draw_output(center: Vector2) -> void:
 		var progress := fmod(elapsed * 0.3 + index * 0.25, 1.0)
 		var position := Vector2(lerpf(center.x + 90.0, size.x, progress), center.y + sin(progress * TAU + index) * 13.0)
 		draw_circle(position, 3.0 + output_activity * 2.0, Color(answer, alpha))
-	draw_centered_text(Vector2(x, center.y - 42.0), "GENERATED RESPONSE", Fonts.semibold(), Typography.label_small_size, Color(answer, 0.75))
+	draw_centered_text(Vector2(x, center.y - 42.0), I18n.t("agent.visuals.generated_response"), Fonts.semibold(), Typography.label_small_size, Color(answer, 0.75))
 	pass
 
 
@@ -293,7 +293,7 @@ func context_ratio() -> float:
 
 func token_label() -> String:
 	if prompt_tokens <= 0:
-		return "AWAITING TOKENS"
+		return I18n.t("agent.visuals.awaiting_tokens")
 	return "%s / %s" % [compact_number(prompt_tokens), compact_number(context_limit)]
 
 
@@ -325,18 +325,18 @@ static func stream_type_for_entry(entry: ChatEntry) -> int:
 static func label_for_type(stream_type: StreamType) -> String:
 	match stream_type:
 		StreamType.USER:
-			return "USER"
+			return I18n.t("agent.visuals.user")
 		StreamType.SYSTEM:
-			return "SYSTEM"
+			return I18n.t("agent.visuals.system")
 		StreamType.FILE:
-			return "FILE"
+			return I18n.t("agent.visuals.file")
 		StreamType.TOOL:
-			return "TOOL"
+			return I18n.t("agent.visuals.tool")
 		StreamType.REASONING:
-			return "THOUGHT"
+			return I18n.t("agent.visuals.thought")
 		StreamType.ANSWER:
-			return "ANSWER"
-	return "HISTORY"
+			return I18n.t("agent.visuals.answer")
+	return I18n.t("agent.visuals.history")
 
 
 static func color_for_type(stream_type: StreamType) -> Color:

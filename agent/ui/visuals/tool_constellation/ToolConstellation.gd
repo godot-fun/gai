@@ -382,8 +382,8 @@ func draw_core(center: Vector2, fade: float) -> void:
 	draw_arc(center, CORE_RADIUS - 17.0, PI * 0.18, PI * 0.82, 30, Color(accent, 0.18 * fade), 2.0, true)
 	draw_circle(center, 8.0 + breath * 2.0, Color(accent, 0.82 * fade))
 	draw_circle(center, 3.0 + breath, Color(Color.WHITE, 0.92 * fade))
-	draw_centered_text(center + Vector2(0.0, 28.0), "AGENT CORE", Fonts.semibold(), Typography.label_medium_size, Color(ColorBase.primary_text, fade))
-	draw_centered_text(center + Vector2(0.0, 45.0), "TURN %02d" % maxi(turn_index, 1), Fonts.regular(), Typography.label_small_size, Color(accent, 0.78 * fade))
+	draw_centered_text(center + Vector2(0.0, 28.0), I18n.t("agent.visuals.agent_core"), Fonts.semibold(), Typography.label_medium_size, Color(ColorBase.primary_text, fade))
+	draw_centered_text(center + Vector2(0.0, 45.0), StringUtils.format(I18n.t("agent.visuals.turn"), "%02d" % maxi(turn_index, 1)), Fonts.regular(), Typography.label_small_size, Color(accent, 0.78 * fade))
 	pass
 
 
@@ -476,11 +476,11 @@ func draw_tool_node(node: Dictionary, position: Vector2, center: Vector2, fade: 
 	var label_position := position + Vector2(0.0, node_radius + Margin.ma_5)
 	draw_centered_text(label_position, VisualToolFormatter.title_name(String(node["name"])), Fonts.semibold(), Typography.label_medium_size, Color(ColorBase.primary_text, alpha))
 	if state == ExecutionState.RUNNING:
-		draw_centered_text(label_position + Vector2(0.0, Margin.ma_4), "RUNNING", Fonts.medium(), Typography.label_small_size, Color(state_color, 0.9 * alpha))
+		draw_centered_text(label_position + Vector2(0.0, Margin.ma_4), I18n.t("agent.visuals.running"), Fonts.medium(), Typography.label_small_size, Color(state_color, 0.9 * alpha))
 		if int(node["arg_count"]) > 0:
-			draw_centered_text(label_position + Vector2(0.0, Margin.ma_8), "%d args" % int(node["arg_count"]), Fonts.regular(), Typography.label_small_size, Color(ColorBase.secondary_text, alpha))
+			draw_centered_text(label_position + Vector2(0.0, Margin.ma_8), StringUtils.format(I18n.t("agent.visuals.args"), int(node["arg_count"])), Fonts.regular(), Typography.label_small_size, Color(ColorBase.secondary_text, alpha))
 	elif state == ExecutionState.FAILED:
-		draw_centered_text(label_position + Vector2(0.0, Margin.ma_4), "FAILED", Fonts.medium(), Typography.label_small_size, Color(state_color, 0.9 * alpha))
+		draw_centered_text(label_position + Vector2(0.0, Margin.ma_4), I18n.t("agent.visuals.failed"), Fonts.medium(), Typography.label_small_size, Color(state_color, 0.9 * alpha))
 	pass
 
 
