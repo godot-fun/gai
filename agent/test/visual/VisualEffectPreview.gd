@@ -64,6 +64,7 @@ var play_buttons: Array[Button] = []
 
 
 func _ready() -> void:
+	I18nHelper.init_i18n()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	visual_control.wait_for_effect_completion_on_agent_end = true
 	AgentSessionManager.load_from_disk()

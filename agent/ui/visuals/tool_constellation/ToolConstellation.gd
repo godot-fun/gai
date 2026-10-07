@@ -17,6 +17,9 @@ const COMPLETE_SECONDS := 2.8
 const RING_EXPAND_SECONDS := 3.6
 const RING_LAYER_COUNT := 7
 const DUST_COUNT := 48
+const TERMINAL_SIZE := Vector2(248.0, 142.0)
+const STREAM_BUFFER_LIMIT := 180
+const CRT_GLITCH_SECONDS := 0.55
 
 enum ExecutionState { RUNNING, SUCCESS, FAILED }
 enum ToolFamily { GENERIC, READ, WRITE, SEARCH, SHELL, WEB, IMAGE, AUDIO }
@@ -36,6 +39,9 @@ var absorb_flash: float = 0.0
 var completion: float = 0.0
 var completing: bool = false
 var ended_with_error: bool = false
+var stream_buffer: String = ""
+var stream_kind: String = ""
+var crt_glitch: float = 0.0
 ## 0 = rings collapsed at the core, 1 = fully expanded field.
 var field_spread: float = 0.0
 
@@ -75,6 +81,9 @@ func reset_visual() -> void:
 	completion = 0.0
 	completing = false
 	ended_with_error = false
+	stream_buffer = ""
+	stream_kind = ""
+	crt_glitch = 0.0
 	field_spread = 0.0
 	queue_redraw()
 	pass
@@ -91,6 +100,8 @@ func on_agent_end(error_message: String) -> float:
 	# Tool animation owns a separate timeline. VisualControl waits for the queued calls in
 	# wait_for_agent_end(), so fast real executions remain readable instead of collapsing.
 	ended_with_error = StringUtils.is_not_blank(error_message)
+	if ended_with_error:
+		crt_glitch = CRT_GLITCH_SECONDS
 	var fallback_result := AgentToolResult.ok("completed") if not ended_with_error else AgentToolResult.error(error_message)
 	if not playing_call.is_empty():
 		var playing_id := String(playing_call["id"])
@@ -132,6 +143,14 @@ func on_chat_entry_add(_entry: ChatEntry) -> void:
 	pass
 
 
+func on_message_update(chunk: String, next_stream_kind: String) -> void:
+	stream_kind = next_stream_kind
+	stream_buffer = terminal_text(stream_buffer + chunk)
+	core_pulse = 1.0
+	queue_redraw()
+	pass
+
+
 func on_tool_execution_start(tool_call_id: String, tool_name: String, args: Dictionary[String, Variant]) -> void:
 	pending_calls.append({"id": tool_call_id, "name": tool_name, "args": args.duplicate(true), "turn": turn_index})
 	start_next_queued_call()
@@ -154,6 +173,7 @@ func _process(delta: float) -> void:
 	elapsed += delta
 	core_pulse = move_toward(core_pulse, 0.0, delta * 1.8)
 	absorb_flash = move_toward(absorb_flash, 0.0, delta * 2.4)
+	crt_glitch = move_toward(crt_glitch, 0.0, delta)
 	if completing:
 		completion = minf(completion + delta / COMPLETE_SECONDS, 1.0)
 		field_spread = 1.0 - completion
@@ -221,6 +241,8 @@ func complete_playing_call(result: AgentToolResult) -> void:
 		if index >= 0 and index < nodes.size():
 			nodes[index]["state"] = ExecutionState.FAILED if result.is_error else ExecutionState.SUCCESS
 			nodes[index]["settle"] = 0.0
+			if result.is_error:
+				crt_glitch = CRT_GLITCH_SECONDS
 	active_calls.erase(tool_call_id)
 	pending_results.erase(tool_call_id)
 	result_hold_seconds = RESULT_HOLD_SECONDS
@@ -363,28 +385,82 @@ func angled_constellation_points(group: PackedInt32Array, center: Vector2) -> Pa
 func draw_core(center: Vector2, fade: float) -> void:
 	var accent := ThemeColor.accent_theme_color()
 	var breath := (sin(elapsed * 2.4) + 1.0) * 0.5
-	var pulse_radius := CORE_RADIUS + core_pulse * 34.0 + breath * 5.0 + absorb_flash * 18.0
-	for glow_index in range(5):
-		draw_circle(center, pulse_radius + glow_index * 8.0, Color(accent, (0.04 - glow_index * 0.006) * fade))
+	var terminal_rect := Rect2(center - TERMINAL_SIZE * 0.5, TERMINAL_SIZE)
+	var glitch_strength := clampf(crt_glitch / CRT_GLITCH_SECONDS, 0.0, 1.0)
+	var jitter := Vector2(sin(elapsed * 91.0), 0.0) * glitch_strength * 5.0
+	terminal_rect.position += jitter
+	for glow_index in range(4, 0, -1):
+		var glow_rect := terminal_rect.grow(float(glow_index) * (4.0 + core_pulse * 2.0))
+		draw_rect(glow_rect, Color(accent, (0.012 + breath * 0.006) * fade))
 	if absorb_flash > 0.02:
-		draw_arc(center, CORE_RADIUS + 20.0 + (1.0 - absorb_flash) * 28.0, 0.0, TAU, 72, Color(ColorBase.success, 0.35 * absorb_flash * fade), 2.4, true)
-	for ring_index in range(3):
-		var radius := CORE_RADIUS + 12.0 + ring_index * 9.0
-		var start := elapsed * (0.55 + ring_index * 0.18) * (-1.0 if ring_index % 2 else 1.0)
-		draw_arc(center, radius, start, start + PI * (0.75 + ring_index * 0.12), 42, Color(accent, (0.7 - ring_index * 0.14) * fade), 2.5 - ring_index * 0.4, true)
-	for spoke in range(8):
-		var angle := float(spoke) * TAU / 8.0 + elapsed * 0.08
-		var direction := Vector2.from_angle(angle)
-		draw_line(center + direction * (CORE_RADIUS + 5.0), center + direction * (CORE_RADIUS + 14.0 + (spoke % 2) * 5.0), Color(accent, 0.38 * fade), 1.4, true)
-	draw_circle(center, CORE_RADIUS, Color(ColorBase.deep_surface, 0.97 * fade))
-	draw_circle(center, CORE_RADIUS - 8.0, Color(accent, (0.16 + breath * 0.08) * fade))
-	draw_arc(center, CORE_RADIUS - 17.0, -PI * 0.82, -PI * 0.18, 30, Color(accent, 0.4 * fade), 2.0, true)
-	draw_arc(center, CORE_RADIUS - 17.0, PI * 0.18, PI * 0.82, 30, Color(accent, 0.18 * fade), 2.0, true)
-	draw_circle(center, 8.0 + breath * 2.0, Color(accent, 0.82 * fade))
-	draw_circle(center, 3.0 + breath, Color(Color.WHITE, 0.92 * fade))
-	draw_centered_text(center + Vector2(0.0, 28.0), I18n.t("agent.visuals.agent_core"), Fonts.semibold(), Typography.label_medium_size, Color(ColorBase.primary_text, fade))
-	draw_centered_text(center + Vector2(0.0, 45.0), StringUtils.format(I18n.t("agent.visuals.turn"), "%02d" % maxi(turn_index, 1)), Fonts.regular(), Typography.label_small_size, Color(accent, 0.78 * fade))
+		draw_rect(terminal_rect.grow(8.0 + (1.0 - absorb_flash) * 12.0), Color(ColorBase.success, 0.26 * absorb_flash * fade), false, 2.0)
+	draw_rect(terminal_rect, Color(ColorBase.deep_surface, 0.98 * fade))
+	draw_rect(terminal_rect, Color(accent, (0.72 + breath * 0.18) * fade), false, 2.0)
+	var title_rect := Rect2(terminal_rect.position, Vector2(terminal_rect.size.x, 25.0))
+	draw_rect(title_rect, Color(accent, 0.1 * fade))
+	draw_line(title_rect.position + Vector2(0.0, title_rect.size.y), title_rect.end, Color(accent, 0.38 * fade), 1.0)
+	draw_string(Fonts.semibold(), title_rect.position + Vector2(10.0, 17.0), "AGENT://CORE  T%02d" % maxi(turn_index, 1), HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.label_small_size, Color(accent, 0.9 * fade))
+	for light_index in range(3):
+		draw_circle(title_rect.position + Vector2(title_rect.size.x - 13.0 - light_index * 10.0, 12.0), 2.2, Color(accent, (0.28 + light_index * 0.16) * fade))
+	draw_terminal_content(terminal_rect, accent, fade, glitch_strength)
+	draw_crt_scanlines(terminal_rect, accent, fade)
 	pass
+
+
+func draw_terminal_content(rect: Rect2, accent: Color, fade: float, glitch_strength: float) -> void:
+	var font := Fonts.regular()
+	var font_size := Typography.label_small_size
+	var text_origin := rect.position + Vector2(10.0, 43.0)
+	var status := "THINK" if stream_kind == OpenAiClient.STREAM_KIND_REASONING else "STREAM"
+	var body := stream_buffer.replace("\n", " ").replace("\r", " ").strip_edges()
+	if body.is_empty():
+		body = "awaiting input..."
+	var visible_body := body.right(58)
+	var command := current_command_line()
+	var cursor_on := fmod(elapsed, 0.8) < 0.52
+	draw_string(font, text_origin, "[%s] %s%s" % [status, visible_body, "_" if cursor_on else " "], HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 20.0, font_size, Color(accent, 0.8 * fade))
+	var card_rect := Rect2(rect.position + Vector2(9.0, 64.0), Vector2(rect.size.x - 18.0, 48.0))
+	var card_color := ColorBase.error if glitch_strength > 0.0 else accent
+	draw_rect(card_rect, Color(card_color, (0.08 + glitch_strength * 0.12) * fade))
+	draw_rect(card_rect, Color(card_color, 0.48 * fade), false, 1.0)
+	draw_string(Fonts.semibold(), card_rect.position + Vector2(8.0, 16.0), "$ TOOL EXEC", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(card_color, 0.88 * fade))
+	draw_string(font, card_rect.position + Vector2(8.0, 35.0), command, HORIZONTAL_ALIGNMENT_LEFT, card_rect.size.x - 16.0, font_size, Color(ColorBase.primary_text, 0.88 * fade))
+	if glitch_strength > 0.0:
+		for slice_index in range(3):
+			var y := rect.position.y + 34.0 + fmod(elapsed * 173.0 + slice_index * 29.0, rect.size.y - 38.0)
+			var offset := sin(elapsed * 83.0 + slice_index) * 12.0 * glitch_strength
+			draw_line(Vector2(rect.position.x + offset, y), Vector2(rect.end.x + offset, y), Color(ColorBase.error, 0.48 * fade), 2.0 + slice_index, true)
+	pass
+
+
+func draw_crt_scanlines(rect: Rect2, accent: Color, fade: float) -> void:
+	for line_index in range(7):
+		var y := rect.position.y + 29.0 + float(line_index) * 16.0
+		draw_line(Vector2(rect.position.x + 2.0, y), Vector2(rect.end.x - 2.0, y), Color(accent, 0.035 * fade), 1.0)
+	var sweep_y := rect.position.y + 27.0 + fmod(elapsed * 38.0, rect.size.y - 30.0)
+	draw_line(Vector2(rect.position.x + 2.0, sweep_y), Vector2(rect.end.x - 2.0, sweep_y), Color(accent, 0.18 * fade), 2.0)
+	pass
+
+
+func current_command_line() -> String:
+	if playing_call.is_empty():
+		return "idle --watch constellation"
+	var name := String(playing_call["name"])
+	var args: Dictionary[String, Variant] = playing_call["args"]
+	var parts: PackedStringArray = PackedStringArray([name])
+	for key: String in args.keys():
+		parts.append("--%s=%s" % [key, short_argument(args[key])])
+	return " ".join(parts).left(42)
+
+
+static func short_argument(value: Variant) -> String:
+	var text := str(value).replace("\n", " ").replace("\r", " ")
+	return text.left(18) + ("..." if text.length() > 18 else "")
+
+
+static func terminal_text(text: String) -> String:
+	var clean := text.replace("\t", " ")
+	return clean.right(STREAM_BUFFER_LIMIT)
 
 
 func draw_connection(node: Dictionary, center: Vector2, position: Vector2, fade: float) -> void:

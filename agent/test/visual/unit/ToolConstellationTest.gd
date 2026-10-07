@@ -22,6 +22,22 @@ static func node_and_labels_test() -> void:
 	assert(ToolConstellation.tool_family("audio_to_text") == ToolConstellation.ToolFamily.AUDIO)
 	assert(VisualToolFormatter.title_name("web_search") == "Web Search")
 	assert(VisualToolFormatter.glyph("shell") == ">_")
+	assert(ToolConstellation.short_argument("a very long argument value") == "a very long argume...")
+	assert(ToolConstellation.terminal_text("abc") == "abc")
+	pass
+
+
+func retro_terminal_stream_and_command_test() -> void:
+	var effect := ToolConstellation.new()
+	effect.on_message_update("streamed terminal content", OpenAiClient.STREAM_KIND_REASONING)
+	assert(effect.stream_buffer == "streamed terminal content")
+	assert(effect.stream_kind == OpenAiClient.STREAM_KIND_REASONING)
+	effect.on_tool_execution_start("shell-1", "exec_command", {"cmd": "godot --headless"})
+	assert(effect.current_command_line().begins_with("exec_command --cmd="))
+	effect.on_tool_execution_end("shell-1", "exec_command", AgentToolResult.error("failed"))
+	effect.advance_tool_queue(ToolConstellation.MIN_TOOL_PLAY_SECONDS)
+	assert(effect.crt_glitch > 0.0)
+	effect.free()
 	pass
 
 
