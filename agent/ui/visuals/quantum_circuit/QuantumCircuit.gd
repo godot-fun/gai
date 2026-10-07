@@ -25,6 +25,7 @@ var active_wire: Dictionary = {}
 var elapsed: float = 0.0
 var pulse: float = 0.0
 var collapse: float = 0.0
+var readout_height: float = 0.0
 var completing: bool = false
 var ended_with_error: bool = false
 var turn_serial: int = 0
@@ -58,6 +59,7 @@ func reset_visual() -> void:
 	elapsed = 0.0
 	pulse = 0.0
 	collapse = 0.0
+	readout_height = 0.0
 	completing = false
 	ended_with_error = false
 	turn_serial = 0
@@ -91,9 +93,12 @@ func on_turn_start() -> void:
 		for gate: Dictionary in removed["gates"]:
 			if int(gate["kind"]) == GateKind.TOOL:
 				tool_gates.erase(String(gate["id"]))
+		# Inherit the slot's settled Y so replacement does not re-expand from center.
+		wire["display_y"] = float(removed.get("display_y", size.y * 0.53))
 		wires[next_replacement_slot] = wire
 		next_replacement_slot = (next_replacement_slot + 1) % MAX_WIRES
 	else:
+		# New wires spawn on the register center and ease out to their lane.
 		wires.append(wire)
 	active_wire = wire
 	pulse = 1.0
@@ -157,7 +162,20 @@ func _process(delta: float) -> void:
 		return
 	elapsed += delta
 	pulse = move_toward(pulse, 0.16, delta * 0.9)
-	for wire: Dictionary in wires:
+	var layout_ease := 1.0 - exp(-delta * 3.2)
+	# Grow / shrink the P(q) ruler from the register center instead of jumping in steps.
+	readout_height = lerpf(readout_height, target_readout_height(), layout_ease)
+	# Ease each wire from the center outward so adding a lane expands both sides
+	# instead of instantly recentering (and hitching) the whole register.
+	var center_y := size.y * 0.53
+	var spacing := wire_spacing()
+	var top := center_y - spacing * float(maxi(wires.size() - 1, 0)) * 0.5
+	for index in range(wires.size()):
+		var wire: Dictionary = wires[index]
+		var target_y := top + float(index) * spacing
+		if not wire.has("display_y"):
+			wire["display_y"] = center_y
+		wire["display_y"] = lerpf(float(wire["display_y"]), target_y, layout_ease)
 		wire["phase"] = fmod(float(wire["phase"]) + delta * 0.24, 1.0)
 		wire["decoherence"] = move_toward(float(wire["decoherence"]), 0.0, delta * 0.12)
 		wire["signal_age"] = float(wire.get("signal_age", 0.0)) + delta
@@ -176,6 +194,14 @@ func _process(delta: float) -> void:
 	pass
 
 
+func wire_spacing() -> float:
+	return minf(72.0, (size.y - 154.0) / maxf(float(wires.size() - 1), 1.0))
+
+
+func wire_display_y(wire: Dictionary, fallback: float) -> float:
+	return float(wire.get("display_y", fallback))
+
+
 func _draw() -> void:
 	if size.x < 320.0 or size.y < 220.0:
 		return
@@ -184,14 +210,12 @@ func _draw() -> void:
 	draw_qpu_core()
 	draw_header()
 	var center_y := size.y * 0.53
-	var spacing := minf(72.0, (size.y - 154.0) / maxf(float(wires.size() - 1), 1.0))
-	var top := center_y - spacing * float(wires.size() - 1) * 0.5
-	draw_entanglements(top, spacing)
+	draw_entanglements(center_y)
 	for index in range(wires.size()):
-		draw_wire(wires[index], index, top + index * spacing)
-	draw_quantum_readout(center_y, top, spacing)
+		draw_wire(wires[index], index, wire_display_y(wires[index], center_y))
+	draw_quantum_readout(center_y)
 	if completing:
-		draw_collapse(center_y, top, spacing)
+		draw_collapse(center_y)
 	pass
 
 
@@ -272,7 +296,7 @@ func draw_qpu_core() -> void:
 	pass
 
 
-func draw_entanglements(top: float, spacing: float) -> void:
+func draw_entanglements(center_y: float) -> void:
 	if wires.size() < 2:
 		return
 	var left := 90.0
@@ -281,9 +305,9 @@ func draw_entanglements(top: float, spacing: float) -> void:
 	for index in range(wires.size() - 1):
 		if (index + turn_serial) % 3 == 1:
 			continue
-		var upper_y := lerpf(top + index * spacing, size.y * 0.52, settle)
+		var upper_y := lerpf(wire_display_y(wires[index], center_y), size.y * 0.52, settle)
 		var lower_index := mini(index + 1 + (index % 2), wires.size() - 1)
-		var lower_y := lerpf(top + lower_index * spacing, size.y * 0.52, settle)
+		var lower_y := lerpf(wire_display_y(wires[lower_index], center_y), size.y * 0.52, settle)
 		var x := lerpf(left, right, 0.19 + fmod(float(index) * 0.217, 0.62))
 		var color := VIOLET if index % 2 else CYAN
 		draw_line(Vector2(x, upper_y), Vector2(x, lower_y), Color(color, 0.2), 1.5, true)
@@ -295,20 +319,34 @@ func draw_entanglements(top: float, spacing: float) -> void:
 	pass
 
 
-func draw_quantum_readout(center_y: float, wire_top: float, wire_spacing: float) -> void:
+func target_readout_height() -> float:
+	var register_height := wire_spacing() * float(maxi(wires.size() - 1, 0))
+	return maxf(register_height, minf(120.0, size.y - 154.0))
+
+
+func draw_quantum_readout(center_y: float) -> void:
 	var x := size.x - 62.0
-	var register_height := wire_spacing * float(maxi(wires.size() - 1, 0))
-	var height := maxf(register_height, minf(120.0, size.y - 154.0))
-	var top := wire_top if wires.size() > 1 else center_y - height * 0.5
-	draw_line(Vector2(x, top), Vector2(x, top + height), Color(VIOLET, 0.18), 1.0)
-	# Preserve the original ~19 px ruler density as the register grows instead of
-	# stretching a fixed set of ticks across the added height.
-	var tick_count := maxi(17, roundi(height / 19.0) + 1)
-	for index in range(tick_count):
-		var y := top + index * height / float(tick_count - 1)
-		var probability := 0.25 + 0.75 * absf(sin(elapsed * 0.9 + index * 2.37))
-		var length := 4.0 + probability * 20.0
-		draw_line(Vector2(x - length, y), Vector2(x, y), Color(CYAN if index % 4 else MAGENTA, 0.18 + probability * 0.32), 1.0)
+	var height := readout_height
+	if height < 1.0:
+		return
+	# Always expand symmetrically from the register center toward both ends.
+	var top := center_y - height * 0.5
+	var bottom := top + height
+	draw_line(Vector2(x, top), Vector2(x, bottom), Color(VIOLET, 0.18), 1.0)
+	# Keep the original dense pitch (~17 ticks over 120 px) fixed as the register grows.
+	const TICK_SPACING := 7.5
+	var half_span := height * 0.5
+	var max_offset := floori(half_span / TICK_SPACING)
+	for offset in range(-max_offset, max_offset + 1):
+		var y := center_y + float(offset) * TICK_SPACING
+		if y < top - 0.5 or y > bottom + 0.5:
+			continue
+		# Soften ticks near the moving tips so growth reads as a continuous reveal.
+		var edge_fade := clampf((half_span - absf(y - center_y)) / TICK_SPACING, 0.0, 1.0)
+		var probability := 0.25 + 0.75 * absf(sin(elapsed * 0.9 + float(offset) * 2.37))
+		var length := (4.0 + probability * 20.0) * lerpf(0.35, 1.0, edge_fade)
+		var alpha := (0.18 + probability * 0.32) * lerpf(0.25, 1.0, edge_fade)
+		draw_line(Vector2(x - length, y), Vector2(x, y), Color(CYAN if offset % 4 else MAGENTA, alpha), 1.0)
 	draw_string(Fonts.regular(), Vector2(x - 44.0, top - 10.0), "P(q)", HORIZONTAL_ALIGNMENT_CENTER, 40.0, Typography.label_small_size, Color(VIOLET, 0.55))
 	pass
 
@@ -520,11 +558,11 @@ func draw_noise(position: Vector2, age: float, amount: float) -> void:
 	pass
 
 
-func draw_collapse(center_y: float, top: float, spacing: float) -> void:
+func draw_collapse(center_y: float) -> void:
 	var progress := smoothstep(0.15, 1.0, collapse)
 	var right := size.x - 94.0
 	for index in range(wires.size()):
-		var from := Vector2(right - 34.0, top + index * spacing)
+		var from := Vector2(right - 34.0, wire_display_y(wires[index], center_y))
 		draw_line(from, from.lerp(Vector2(right, center_y), progress), Color(ERROR if ended_with_error else SUCCESS, 0.24 + progress * 0.52), 2.0, true)
 	var color := ERROR if ended_with_error else SUCCESS
 	var radius := 22.0 + sin(elapsed * 8.0) * 3.0
