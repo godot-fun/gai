@@ -312,8 +312,8 @@ func find_tool_column(tool_call_id: String) -> int:
 func _draw() -> void:
 	if size.x < 160.0 or size.y < 140.0:
 		return
-	var overlay_alpha := 0.12 if ThemeColor.is_dark_theme() else 0.055
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.0, 0.035, 0.018, overlay_alpha))
+	# Rain overlays the chat surface, so paint no full-rect wash: a translucent film over the
+	# whole effect reads as a blur layer on the content below even without a blur shader.
 	for column: Dictionary in columns:
 		draw_column(column)
 	for reply_glyph: Dictionary in reply_glyphs:
