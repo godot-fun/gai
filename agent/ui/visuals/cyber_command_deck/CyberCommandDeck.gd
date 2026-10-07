@@ -18,7 +18,7 @@ const MAX_PODS := 8
 const CONNECT_SECONDS := 0.38
 ## Minimum EXECUTING duration so flashes are readable even on instant tool results.
 const MIN_EXECUTION_SECONDS := 1.0
-## COMPLETE/FAILED must hold this long before `wait_for_agent_end` can finish.
+## COMPLETE/FAILED must hold this long before `on_agent_end` can finish.
 const COMPLETE_HOLD_SECONDS := 0.85
 ## Duration of the radial `draw_completion_wave` when the session ends.
 const END_SECONDS := 1.25
@@ -104,17 +104,15 @@ func on_agent_start(p_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> float:
+## Blocks until every pod has reached COMPLETE/FAILED and held for `COMPLETE_HOLD_SECONDS`, then runs the end wave.
+func on_agent_end(error_message: String) -> void:
 	end_requested = true
 	end_error_message = error_message
 	for pod: Dictionary in pods:
 		if int(pod["state"]) < PodState.COMPLETE and int(pod["pending_state"]) < 0:
 			pod["pending_state"] = PodState.FAILED if StringUtils.is_not_blank(error_message) else PodState.COMPLETE
-	return 0.0
-
-
-## Blocks until every pod has reached COMPLETE/FAILED and held for `COMPLETE_HOLD_SECONDS`, then runs the end wave.
-func wait_for_agent_end() -> void:
+	if not is_inside_tree():
+		return
 	while not all_pods_finished_holding():
 		await get_tree().process_frame
 	phase = DeckPhase.ENDING

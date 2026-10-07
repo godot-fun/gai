@@ -60,12 +60,8 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(_error_message: String) -> float:
-	return 0.0
-
-
-## Optional asynchronous tail. VisualControl keeps the effect visible until this returns.
-func wait_for_agent_end() -> void:
+## Runs the effect's optional completion animation before [VisualControl] fades it out.
+func on_agent_end(_error_message: String) -> void:
 	pass
 
 

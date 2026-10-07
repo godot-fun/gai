@@ -90,7 +90,7 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> float:
+func on_agent_end(error_message: String) -> void:
 	if StringUtils.is_blank(error_message):
 		phase_label = I18n.t("agent.visuals.task_complete")
 		target_crown_growth = 1.0
@@ -98,7 +98,9 @@ func on_agent_end(error_message: String) -> float:
 	else:
 		phase_label = I18n.t("agent.visuals.task_stopped") if error_message.begins_with("Stop") else I18n.t("agent.visuals.task_failed")
 	queue_redraw()
-	return 0.9
+	if is_inside_tree():
+		await get_tree().create_timer(0.9).timeout
+	pass
 
 
 func on_turn_start() -> void:

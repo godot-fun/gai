@@ -89,8 +89,7 @@ func agent_end_accelerates_rain_offscreen_test() -> void:
 	effect.size = Vector2(1280.0, 720.0)
 	effect.ensure_columns()
 	effect.ingest_sentence("Finish with a fast falling rain animation.")
-	var delay := effect.on_agent_end("")
-	assert(is_zero_approx(delay))
+	effect.on_agent_end("")
 	assert(effect.active_session_id == 0)
 	for column: MatrixRain.RainColumn in effect.columns:
 		assert(column.speed >= MatrixRain.END_DROP_MIN_SPEED)

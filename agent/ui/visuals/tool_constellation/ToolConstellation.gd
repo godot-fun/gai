@@ -104,9 +104,8 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> float:
-	# Tool animation owns a separate timeline. VisualControl waits for the queued calls in
-	# wait_for_agent_end(), so fast real executions remain readable instead of collapsing.
+func on_agent_end(error_message: String) -> void:
+	# Drain the independent tool timeline so fast real executions remain readable.
 	ended_with_error = StringUtils.is_not_blank(error_message)
 	if ended_with_error:
 		crt_glitch = CRT_GLITCH_SECONDS
@@ -121,10 +120,8 @@ func on_agent_end(error_message: String) -> float:
 			pending_results[pending_id] = fallback_result
 	core_pulse = 1.0
 	queue_redraw()
-	return 0.0
-
-
-func wait_for_agent_end() -> void:
+	if not is_inside_tree():
+		return
 	while not pending_calls.is_empty() or not playing_call.is_empty() or result_hold_seconds > 0.0:
 		await get_tree().process_frame
 	completing = true

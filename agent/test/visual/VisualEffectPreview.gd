@@ -68,7 +68,6 @@ func _ready() -> void:
 	# initializes translations. Keep this first so effects created below receive translated labels.
 	I18nHelper.init_i18n()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
-	visual_control.wait_for_effect_completion_on_agent_end = true
 	AgentSessionManager.load_from_disk()
 	demo_session_id = AgentSessionManager.active_session_id
 	theme_color_select_ctrl.setup(theme_color_select)

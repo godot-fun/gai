@@ -7,8 +7,6 @@ extends Control
 ## Session whose run is currently represented; 0 while no run is tracked.
 var running_session_id: int = 0
 var current_effect: VisualEffect
-## Test previews can opt into playing an effect's complete ending after the agent stops.
-var wait_for_effect_completion_on_agent_end: bool = false
 
 
 func _ready() -> void:
@@ -70,6 +68,7 @@ func unmount_current_effect() -> void:
 
 func connect_visual_events() -> void:
 	gdf.events.theme_changed.connect(on_theme_changed)
+	gdf.events.theme_color_changed.connect(on_theme_changed)
 	AgentEvents.events.agent_start.connect(on_agent_start)
 	AgentEvents.events.agent_end.connect(on_agent_end)
 	AgentEvents.events.session_stop.connect(on_session_stop)
@@ -86,6 +85,8 @@ func connect_visual_events() -> void:
 
 func on_agent_start(session_id: int) -> void:
 	# Newest run always owns the effect and replaces any previous session's visual.
+	if running_session_id != 0:
+		mount_selected_effect()
 	running_session_id = session_id
 	var effect := get_selected_effect()
 	if effect == null:
@@ -100,17 +101,8 @@ func on_agent_end(session_id: int, error_message: String) -> void:
 	if session_id != running_session_id:
 		return
 	var effect := get_selected_effect()
-	if not wait_for_effect_completion_on_agent_end:
-		if is_instance_valid(effect):
-			effect.reset_visual()
-			effect.set_visual_visible(false, false)
-		running_session_id = 0
-		return
-	var delay := effect.on_agent_end(error_message) if effect != null else 0.0
-	if delay > 0.0:
-		await get_tree().create_timer(delay).timeout
 	if is_instance_valid(effect):
-		await effect.wait_for_agent_end()
+		await effect.on_agent_end(error_message)
 	if running_session_id == session_id:
 		if is_instance_valid(effect):
 			effect.set_visual_visible(false, true)

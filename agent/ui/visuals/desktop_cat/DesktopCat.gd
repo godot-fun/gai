@@ -99,7 +99,7 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> float:
+func on_agent_end(error_message: String) -> void:
 	# The final result takes priority over cosmetic events that have not finished playing.
 	active_tools.clear()
 	animation_queue.clear()
@@ -114,7 +114,9 @@ func on_agent_end(error_message: String) -> float:
 	else:
 		card_text = compact_label(error_message, 22)
 		set_state(CatState.FAILED)
-	return END_HOLD_SECONDS
+	if is_inside_tree():
+		await get_tree().create_timer(END_HOLD_SECONDS).timeout
+	pass
 
 
 func on_turn_start() -> void:

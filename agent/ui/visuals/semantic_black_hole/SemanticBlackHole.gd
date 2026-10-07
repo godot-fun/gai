@@ -132,14 +132,16 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> float:
+func on_agent_end(error_message: String) -> void:
 	ended_with_error = StringUtils.is_not_blank(error_message)
 	if ended_with_error:
 		failure_shock = 1.0
 	completing = true
 	target_wormhole_open = 0.0
 	target_tool_badge_alpha = 0.0
-	return COMPLETE_SECONDS
+	if is_inside_tree():
+		await get_tree().create_timer(COMPLETE_SECONDS).timeout
+	pass
 
 
 func on_turn_start() -> void:

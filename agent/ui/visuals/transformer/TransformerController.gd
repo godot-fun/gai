@@ -103,17 +103,13 @@ func on_agent_start(value: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> float:
+func on_agent_end(error_message: String) -> void:
 	if StringUtils.is_not_blank(error_message):
 		request_generation += 1
 		cancel_stages()
-		return 0.0
+		return
 	waiting_for_end_animation = true
 	finish_logits_animation(request_generation)
-	return 0.0
-
-
-func wait_for_agent_end() -> void:
 	if waiting_for_end_animation:
 		await end_animation_finished
 	pass

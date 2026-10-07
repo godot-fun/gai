@@ -132,7 +132,7 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> float:
+func on_agent_end(error_message: String) -> void:
 	# The asynchronous tail waits for queued tools before beginning the closing ritual.
 	ended_with_error = StringUtils.is_not_blank(error_message)
 	var fallback_result := AgentToolResult.error(error_message) if ended_with_error else AgentToolResult.ok("completed")
@@ -145,10 +145,8 @@ func on_agent_end(error_message: String) -> float:
 		if not pending_tool_results.has(pending_id):
 			pending_tool_results[pending_id] = fallback_result
 	target_energy = 1.0
-	return 0.0
-
-
-func wait_for_agent_end() -> void:
+	if not is_inside_tree():
+		return
 	while not pending_tool_calls.is_empty() or not playing_tool.is_empty() or tool_result_hold_seconds > 0.0:
 		await get_tree().process_frame
 	if ended_with_error:

@@ -70,12 +70,14 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> float:
+func on_agent_end(error_message: String) -> void:
 	if not active_seal.is_empty():
 		finish_active_seal()
 	ended_with_error = StringUtils.is_not_blank(error_message)
 	completing = true
-	return COMPLETION_SECONDS
+	if is_inside_tree():
+		await get_tree().create_timer(COMPLETION_SECONDS).timeout
+	pass
 
 
 func on_turn_start() -> void:

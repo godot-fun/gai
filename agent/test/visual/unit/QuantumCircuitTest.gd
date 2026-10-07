@@ -46,7 +46,7 @@ func tool_measurement_and_decoherence_test() -> void:
 
 func final_answer_starts_collapse_test() -> void:
 	var effect := QuantumCircuit.new()
-	assert(is_equal_approx(effect.on_agent_end(""), QuantumCircuit.COLLAPSE_SECONDS))
+	effect.on_agent_end("")
 	assert(effect.completing)
 	assert(not effect.ended_with_error)
 	effect.free()

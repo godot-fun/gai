@@ -62,10 +62,12 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> float:
+func on_agent_end(error_message: String) -> void:
 	add_item(StreamType.ANSWER, I18n.t("agent.visuals.error") if StringUtils.is_not_blank(error_message) else I18n.t("agent.visuals.answer"), 0.72)
 	output_activity = 1.0
-	return 0.6
+	if is_inside_tree():
+		await get_tree().create_timer(0.6).timeout
+	pass
 
 
 func on_turn_start() -> void:

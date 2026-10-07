@@ -114,13 +114,16 @@ func offer_next_sentence() -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> float:
+func on_agent_end(error_message: String) -> void:
 	var is_stop: bool = error_message == "Stop." or error_message == "Stop..."
 	var end_phase: OrbPhase.Phase = OrbPhase.Phase.SUCCESS
 	if StringUtils.is_not_blank(error_message) and not is_stop:
 		end_phase = OrbPhase.Phase.ERROR
 	transition_to(end_phase)
-	return 1.1 if end_phase == OrbPhase.Phase.ERROR else 0.75
+	if is_inside_tree():
+		var hold_seconds := 1.1 if end_phase == OrbPhase.Phase.ERROR else 0.75
+		await get_tree().create_timer(hold_seconds).timeout
+	pass
 
 
 func on_turn_start() -> void:

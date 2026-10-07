@@ -35,7 +35,7 @@ func completion_sequence_test() -> void:
 	var effect := CyberCommandDeck.new()
 	effect.on_agent_start(7)
 	assert(effect.phase == CyberCommandDeck.DeckPhase.ACTIVE)
-	assert(effect.on_agent_end("") == 0.0)
+	effect.on_agent_end("")
 	assert(effect.end_requested)
 	assert(effect.phase == CyberCommandDeck.DeckPhase.ACTIVE)
 	effect.free()

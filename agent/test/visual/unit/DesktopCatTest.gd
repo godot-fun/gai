@@ -18,7 +18,7 @@ func lifecycle_state_test() -> void:
 	assert(cat.state == DesktopCat.CatState.THINKING)
 	cat.on_turn_end()
 	assert(cat.state == DesktopCat.CatState.IDLE)
-	assert(is_equal_approx(cat.on_agent_end(""), DesktopCat.END_HOLD_SECONDS))
+	cat.on_agent_end("")
 	assert(cat.state == DesktopCat.CatState.SUCCESS)
 	cat.reset_visual()
 	assert(cat.state == DesktopCat.CatState.IDLE)

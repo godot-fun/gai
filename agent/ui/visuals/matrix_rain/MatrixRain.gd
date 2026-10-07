@@ -106,7 +106,7 @@ func on_agent_start(session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> float:
+func on_agent_end(error_message: String) -> void:
 	active_session_id = 0
 	pending_sentence = ""
 	ensure_columns()
@@ -118,10 +118,8 @@ func on_agent_end(error_message: String) -> float:
 		reply_glyph.speed = maxf(END_DROP_MIN_SPEED, (glyph_exit_y - reply_glyph.y) / END_DROP_SECONDS)
 	reasoning_energy = 1.0 if StringUtils.is_not_blank(error_message) else 0.72
 	queue_redraw()
-	return 0.0
-
-
-func wait_for_agent_end() -> void:
+	if not is_inside_tree():
+		return
 	while active_session_id == 0:
 		var all_columns_exited := true
 		for column: RainColumn in columns:

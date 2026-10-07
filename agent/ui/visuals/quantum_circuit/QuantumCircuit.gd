@@ -76,10 +76,12 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> float:
+func on_agent_end(error_message: String) -> void:
 	ended_with_error = StringUtils.is_not_blank(error_message)
 	completing = true
-	return COLLAPSE_SECONDS
+	if is_inside_tree():
+		await get_tree().create_timer(COLLAPSE_SECONDS).timeout
+	pass
 
 
 func on_turn_start() -> void:

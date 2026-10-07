@@ -46,9 +46,9 @@ State falls into three categories:
 2. One-shot envelopes: `output_pulse`, `success_pulse`, and `failure_pulse`. An event sets the value to `1`, after which it decays at a rate measured per second.
 3. Monotonic timelines: `tool_pulse` travels from the center to the edge; `completion` advances from `0` to `1` and never reverses.
 
-`COMPLETE_SECONDS` controls the shader completion duration. `wait_for_agent_end()` waits for that timeline after draining queued tool visuals, so changing the duration must keep the controller and shader composition aligned.
+`COMPLETE_SECONDS` controls the shader completion duration. `on_agent_end()` waits for that timeline after draining queued tool visuals, so changing the duration must keep the controller and shader composition aligned.
 
-Tool events use a visual queue because real tools may finish in only a few frames. Each call owns at least `MIN_TOOL_PLAY_SECONDS`, allowing its arc head to reach the edge, followed by `TOOL_RESULT_HOLD_SECONDS` for the green return or red crack result. Tool labels remain visible throughout the call and result hold, using the accent color while running and semantic success/error colors for the result. `wait_for_agent_end()` drains this queue before starting completion so the final tool is never cut off.
+Tool events use a visual queue because real tools may finish in only a few frames. Each call owns at least `MIN_TOOL_PLAY_SECONDS`, allowing its arc head to reach the edge, followed by `TOOL_RESULT_HOLD_SECONDS` for the green return or red crack result. Tool labels remain visible throughout the call and result hold, using the accent color while running and semantic success/error colors for the result. `on_agent_end()` drains this queue before starting completion so the final tool is never cut off.
 
 Failure is a one-way explosion rather than a persistent full-screen mask. `failure_progress` triggers a brief compressed core flash and launches many narrow streak segments with bright heads and fading tails. Their wavefront travels beyond the viewport over `FAILURE_REVEAL_SECONDS`; pixels behind each tail immediately return to the aurora, so red lines never remain parked on screen. Per-ray variation changes width, brightness, and tail length to create an irregular burst. Keep failure intensity and travel progress separate so label hold time cannot freeze the explosion.
 
