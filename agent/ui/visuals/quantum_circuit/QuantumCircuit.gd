@@ -25,6 +25,8 @@ var active_wire: Dictionary = {}
 var elapsed: float = 0.0
 var pulse: float = 0.0
 var collapse: float = 0.0
+## Animated P(q) ruler height. Eases toward target_readout_height() so the scale
+## grows from the register center instead of jumping when a wire is added.
 var readout_height: float = 0.0
 var completing: bool = false
 var ended_with_error: bool = false
@@ -162,11 +164,12 @@ func _process(delta: float) -> void:
 		return
 	elapsed += delta
 	pulse = move_toward(pulse, 0.16, delta * 0.9)
+	# Shared ease for register layout: wires + P(q) ruler expand together.
 	var layout_ease := 1.0 - exp(-delta * 3.2)
-	# Grow / shrink the P(q) ruler from the register center instead of jumping in steps.
 	readout_height = lerpf(readout_height, target_readout_height(), layout_ease)
-	# Ease each wire from the center outward so adding a lane expands both sides
-	# instead of instantly recentering (and hitching) the whole register.
+	# Each wire keeps a display_y that lerps toward its lane. New wires omit the
+	# key so they spawn on center_y and ease outward; do not assign target_y
+	# instantly or the whole stack hitch-jumps when the second wire appears.
 	var center_y := size.y * 0.53
 	var spacing := wire_spacing()
 	var top := center_y - spacing * float(maxi(wires.size() - 1, 0)) * 0.5
@@ -194,10 +197,14 @@ func _process(delta: float) -> void:
 	pass
 
 
+## Vertical pitch between qubit lanes. Caps at 72 px, then packs tighter so the
+## full register still fits inside the drawable area as wires.size() grows.
 func wire_spacing() -> float:
 	return minf(72.0, (size.y - 154.0) / maxf(float(wires.size() - 1), 1.0))
 
 
+## Settled / in-flight draw Y for a wire. Prefer this over recomputing from index
+## so entanglement, collapse, and lane drawing stay in sync during the ease.
 func wire_display_y(wire: Dictionary, fallback: float) -> float:
 	return float(wire.get("display_y", fallback))
 
@@ -319,21 +326,25 @@ func draw_entanglements(center_y: float) -> void:
 	pass
 
 
+## Desired P(q) ruler height for the current wire count. Floor at ~120 px so a
+## single wire still shows a readable scale; otherwise match the register span.
 func target_readout_height() -> float:
 	var register_height := wire_spacing() * float(maxi(wires.size() - 1, 0))
 	return maxf(register_height, minf(120.0, size.y - 154.0))
 
 
+## Right-edge probability ruler. Height follows readout_height (center-out ease).
+## Tick pitch stays fixed in pixels — never redistribute a fixed tick count across
+## a taller spine, or the scale looks sparse as wires are added.
 func draw_quantum_readout(center_y: float) -> void:
 	var x := size.x - 62.0
 	var height := readout_height
 	if height < 1.0:
 		return
-	# Always expand symmetrically from the register center toward both ends.
 	var top := center_y - height * 0.5
 	var bottom := top + height
 	draw_line(Vector2(x, top), Vector2(x, bottom), Color(VIOLET, 0.18), 1.0)
-	# Keep the original dense pitch (~17 ticks over 120 px) fixed as the register grows.
+	# ~17 ticks over the 120 px minimum height. Length still pulses with elapsed.
 	const TICK_SPACING := 7.5
 	var half_span := height * 0.5
 	var max_offset := floori(half_span / TICK_SPACING)
@@ -341,7 +352,7 @@ func draw_quantum_readout(center_y: float) -> void:
 		var y := center_y + float(offset) * TICK_SPACING
 		if y < top - 0.5 or y > bottom + 0.5:
 			continue
-		# Soften ticks near the moving tips so growth reads as a continuous reveal.
+		# Fade ticks at the moving tips so growth reads as a continuous reveal.
 		var edge_fade := clampf((half_span - absf(y - center_y)) / TICK_SPACING, 0.0, 1.0)
 		var probability := 0.25 + 0.75 * absf(sin(elapsed * 0.9 + float(offset) * 2.37))
 		var length := (4.0 + probability * 20.0) * lerpf(0.35, 1.0, edge_fade)

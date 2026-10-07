@@ -20,35 +20,15 @@ func reasoning_accelerates_rain_test() -> void:
 	pass
 
 
-func answer_creates_bounded_wave_test() -> void:
+func answer_creates_bounded_reply_glyphs_test() -> void:
 	var effect := MatrixRain.new()
-	for index in range(MatrixRain.MAX_WAVES + 5):
-		effect.ingest_sentence("answer %d." % index)
-		effect.emit_turn_wave()
-	assert(effect.waves.size() == MatrixRain.MAX_WAVES)
+	effect.size = Vector2(1280.0, 720.0)
+	effect.ensure_columns()
+	for index in range(80):
+		effect.ingest_sentence("answer %d with enough characters to fill columns." % index)
+	assert(effect.reply_glyphs.size() <= MatrixRain.MAX_REPLY_GLYPHS)
 	assert(not effect.reply_glyphs.is_empty())
-	assert(String(effect.reply_glyphs[0]["text"]) == "a")
 	effect.free()
-	pass
-
-
-func sentences_share_one_wave_per_turn_test() -> void:
-	var effect := MatrixRain.new()
-	effect.on_turn_start()
-	effect.ingest_sentence("First sentence.")
-	effect.ingest_sentence("Second sentence.")
-	assert(effect.waves.is_empty())
-	effect.on_turn_end()
-	assert(effect.waves.size() == 1)
-	assert(String(effect.waves[0]["text"]) == "First sentence.Second sentence.")
-	effect.free()
-	pass
-
-
-static func wave_glyph_density_is_bounded_test() -> void:
-	assert(MatrixRain.wave_glyph_count(1000, 100.0) == floori(TAU * 100.0 / MatrixRain.WAVE_GLYPH_SPACING))
-	assert(MatrixRain.wave_glyph_count(12, 100.0) == 12)
-	assert(MatrixRain.wave_glyph_count(1000, 0.0) == 0)
 	pass
 
 

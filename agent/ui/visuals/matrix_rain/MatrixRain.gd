@@ -2,37 +2,31 @@ class_name MatrixRain
 extends VisualEffect
 
 ## Event-driven code rain. Reasoning accelerates the fall, tools reserve highlighted
-## columns, and answer text is decoded into expanding waves around the screen center.
+## columns, and answer text falls as reply glyphs.
 
 const MIN_COLUMN_STEP := 22.0
 const MAX_COLUMNS := 112
 const MAX_TRAIL_LENGTH := 22
-const MAX_WAVES := 18
 const GLYPH_REFRESH_SECONDS := 0.075
 const SENTENCE_INTERVAL_SECONDS := 0.2
 const MAX_REPLY_GLYPHS := 512
 const REPLY_COLUMN_LENGTH := 18
-const WAVE_GLYPH_SPACING := 11.0
 const GLYPHS := "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ{}[]<>/\\|+-=*:#@$%&!?"
 
 enum ToolState { NONE, RUNNING, SUCCESS, FAILED }
 
 var columns: Array[Dictionary] = []
-var waves: Array[Dictionary] = []
 var active_tools: Dictionary[String, int] = {}
 var elapsed: float = 0.0
 var glyph_clock: float = 0.0
 var glyph_frame: int = 0
 var reasoning_energy: float = 0.0
-var output_energy: float = 0.0
-var turn_index: int = 0
 var layout_width: float = -1.0
 var active_session_id: int = 0
 var sentence_timer: float = 0.0
 var sentence_cursor: VisualChatSentenceCursor = VisualChatSentenceCursor.new()
 var reply_glyphs: Array[Dictionary] = []
 var reply_sentence_index: int = 0
-var turn_wave_text: String = ""
 
 
 func _ready() -> void:
@@ -56,21 +50,17 @@ func fade_out_seconds() -> float:
 
 func reset_visual() -> void:
 	columns.clear()
-	waves.clear()
 	active_tools.clear()
 	elapsed = 0.0
 	glyph_clock = 0.0
 	glyph_frame = 0
 	reasoning_energy = 0.0
-	output_energy = 0.0
-	turn_index = 0
 	layout_width = -1.0
 	active_session_id = 0
 	sentence_timer = 0.0
 	sentence_cursor.clear()
 	reply_glyphs.clear()
 	reply_sentence_index = 0
-	turn_wave_text = ""
 	queue_redraw()
 	pass
 
@@ -89,15 +79,12 @@ func on_agent_end(error_message: String) -> float:
 
 
 func on_turn_start() -> void:
-	turn_index += 1
-	turn_wave_text = ""
 	reasoning_energy = maxf(reasoning_energy, 0.52)
 	pass
 
 
 func on_turn_end() -> void:
 	drain_available_sentences()
-	emit_turn_wave()
 	reasoning_energy = minf(reasoning_energy, 0.32)
 	pass
 
@@ -107,8 +94,6 @@ func on_message_update(chunk: String, stream_kind: String) -> void:
 		return
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
 		reasoning_energy = minf(1.0, reasoning_energy + 0.08 + float(chunk.length()) / 220.0)
-	else:
-		output_energy = 1.0
 	queue_redraw()
 	pass
 
@@ -164,7 +149,6 @@ func _process(delta: float) -> void:
 		glyph_frame += 1
 		glyph_clock = fmod(glyph_clock, GLYPH_REFRESH_SECONDS)
 	reasoning_energy = move_toward(reasoning_energy, 0.12, delta * 0.48)
-	output_energy = move_toward(output_energy, 0.0, delta * 0.85)
 	for column: Dictionary in columns:
 		var speed_scale := 0.72 + reasoning_energy * 2.15
 		column["head_y"] = float(column["head_y"]) + float(column["speed"]) * speed_scale * delta
@@ -182,11 +166,6 @@ func _process(delta: float) -> void:
 		reply_glyph["y"] = float(reply_glyph["y"]) + float(reply_glyph["speed"]) * delta
 		if float(reply_glyph["y"]) > size.y + 32.0:
 			reply_glyphs.remove_at(index)
-	for index in range(waves.size() - 1, -1, -1):
-		var wave: Dictionary = waves[index]
-		wave["age"] = float(wave["age"]) + delta
-		if float(wave["age"]) >= float(wave["duration"]):
-			waves.remove_at(index)
 	queue_redraw()
 	pass
 
@@ -219,17 +198,7 @@ func drain_available_sentences() -> void:
 
 func ingest_sentence(sentence: String) -> void:
 	spawn_reply_rain(sentence)
-	turn_wave_text += sentence
-	output_energy = 1.0
 	queue_redraw()
-	pass
-
-
-func emit_turn_wave() -> void:
-	if turn_wave_text.is_empty():
-		return
-	add_wave(turn_wave_text)
-	turn_wave_text = ""
 	pass
 
 
@@ -315,21 +284,6 @@ func find_tool_column(tool_call_id: String) -> int:
 	return preferred
 
 
-func add_wave(text: String) -> void:
-	var fragment := text.strip_edges()
-	if fragment.is_empty():
-		fragment = "OUTPUT"
-	if waves.size() >= MAX_WAVES:
-		waves.pop_front()
-	waves.append({
-		"text": fragment,
-		"age": 0.0,
-		"duration": 1.25,
-		"phase": float((turn_index * 37 + waves.size() * 19) % 100) / 100.0 * TAU,
-	})
-	pass
-
-
 func _draw() -> void:
 	if size.x < 160.0 or size.y < 140.0:
 		return
@@ -339,8 +293,6 @@ func _draw() -> void:
 		draw_column(column)
 	for reply_glyph: Dictionary in reply_glyphs:
 		draw_reply_glyph(reply_glyph)
-	for wave: Dictionary in waves:
-		draw_output_wave(wave)
 	pass
 
 
@@ -384,31 +336,6 @@ func draw_column(column: Dictionary) -> void:
 		var label_y := clampf(head_y - float(trail_length) * step_y - 5.0, 18.0, size.y - 12.0)
 		draw_centered_text(Vector2(x, label_y), String(column["tool_label"]), Fonts.semibold(), Typography.label_small_size, Color(color, 0.45 + highlight * 0.5))
 	pass
-
-
-func draw_output_wave(wave: Dictionary) -> void:
-	var duration: float = wave["duration"]
-	var progress := clampf(float(wave["age"]) / duration, 0.0, 1.0)
-	var reveal := smoothstep(0.0, 0.14, progress)
-	var fade := 1.0 - smoothstep(0.58, 1.0, progress)
-	var center := size * 0.5
-	var radius := ease(progress, 0.72) * minf(size.x, size.y) * 0.3
-	var color := ThemeColor.accent_theme_color()
-	draw_arc(center, radius, 0.0, TAU, 96, Color(color, fade * 0.3), 1.8, true)
-	draw_arc(center, maxf(0.0, radius - 9.0), 0.0, TAU, 96, Color(color, fade * 0.1), 7.0, true)
-	var text := String(wave["text"])
-	var glyph_count := wave_glyph_count(text.length(), radius)
-	for index in range(glyph_count):
-		var text_index := floori(float(index) * float(text.length()) / float(glyph_count))
-		var angle := float(wave["phase"]) + float(index) / float(glyph_count) * TAU
-		var position := center + Vector2.from_angle(angle) * radius
-		var glyph := text.substr(text_index, 1)
-		draw_centered_text(position, glyph, Fonts.semibold(), Typography.label_medium_size, Color(color, reveal * fade * 0.92))
-	pass
-
-
-static func wave_glyph_count(text_length: int, radius: float) -> int:
-	return mini(text_length, floori(TAU * maxf(radius, 0.0) / WAVE_GLYPH_SPACING))
 
 
 func matrix_color() -> Color:
