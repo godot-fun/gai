@@ -25,7 +25,7 @@ const TRUNK_GROWTH_EASE_POWER := 1.25
 const BRANCH_CURVE_SEGMENTS := 18
 const BRANCH_CURVE_RATIO := 0.10
 const TREE_PULSE_SPEED := 230.0
-const TREE_PULSE_GAP := 120.0
+const TREE_PULSE_INTERVAL := 2.0
 
 enum BranchState { RUNNING, SUCCESS, FAILED }
 
@@ -40,7 +40,8 @@ var branches: Array[Dictionary] = []
 var active_tool_indices: Dictionary[String, int] = {}
 var completion_particles: GPUParticles2D
 var visual_time: float = 0.0
-var pulse_travel_distance: float = 0.0
+var pulse_travel_distances: Array[float] = []
+var pulse_spawn_elapsed: float = 0.0
 
 
 func _ready() -> void:
@@ -71,7 +72,8 @@ func reset_visual() -> void:
 	turn_index = 0
 	branch_sequence = 0
 	visual_time = 0.0
-	pulse_travel_distance = 0.0
+	pulse_travel_distances.clear()
+	pulse_spawn_elapsed = 0.0
 	phase_label = "准备任务"
 	branches.clear()
 	active_tool_indices.clear()
@@ -235,7 +237,7 @@ func _process(delta: float) -> void:
 	var changed := not is_equal_approx(trunk_growth, target_trunk_growth) or not is_equal_approx(crown_growth, target_crown_growth)
 	if visible and trunk_growth > 0.0:
 		visual_time += delta
-		pulse_travel_distance = advance_tree_pulse_distance(pulse_travel_distance, delta, get_tree_pulse_cycle_length())
+		update_tree_pulses(delta)
 		changed = true
 	trunk_growth = move_toward(trunk_growth, target_trunk_growth, delta * 2.3)
 	crown_growth = move_toward(crown_growth, target_crown_growth, delta * 1.4)
@@ -265,7 +267,7 @@ func _draw() -> void:
 	draw_trunk(base, segment_height, accent)
 	for branch: Dictionary in branches:
 		draw_branch(branch, base, segment_height)
-	draw_tree_pulse(base, segment_height, accent)
+	draw_tree_pulses(base, segment_height, accent)
 	draw_crown(base, segment_height, accent)
 	draw_status(base)
 	pass
@@ -349,13 +351,19 @@ func draw_branch_tip(tip: Vector2, direction: float, state: int, color: Color, p
 
 ## Emit one wavefront from the root. Once it passes an anchor, the same wave spreads through
 ## that branch while the original continues climbing the trunk.
-func draw_tree_pulse(base: Vector2, segment_height: float, color: Color) -> void:
+func draw_tree_pulses(base: Vector2, segment_height: float, color: Color) -> void:
 	if trunk_growth <= 0.0:
 		return
 	var branch_length := minf(size.x * 0.20, maxf(MIN_BRANCH_LENGTH, segment_height * 2.5))
 	var completion_length := maxf(MIN_COMPLETION_LENGTH, branch_length * 0.38)
 	var trunk_length := trunk_growth * segment_height
-	var pulse_distance := pulse_travel_distance
+	for pulse_distance in pulse_travel_distances:
+		draw_tree_pulse_at_distance(base, segment_height, color, pulse_distance, trunk_length, branch_length, completion_length)
+	pass
+
+
+func draw_tree_pulse_at_distance(base: Vector2, segment_height: float, color: Color, pulse_distance: float,
+		trunk_length: float, branch_length: float, completion_length: float) -> void:
 	if pulse_distance <= trunk_length:
 		var trunk_segment := pulse_distance / segment_height
 		draw_pulse_light(trunk_point(base, segment_height, trunk_segment), color)
@@ -388,13 +396,30 @@ func draw_tree_pulse(base: Vector2, segment_height: float, color: Color) -> void
 	pass
 
 
-func get_tree_pulse_cycle_length() -> float:
+func get_tree_pulse_path_length() -> float:
 	var base_y := size.y - Margin.ma_8
 	var crown_center_y := Margin.ma_8 + get_crown_radius()
 	var segment_height := maxf(12.0, (base_y - crown_center_y) / float(MAX_TRUNK_SEGMENTS))
 	var branch_length := minf(size.x * 0.20, maxf(MIN_BRANCH_LENGTH, segment_height * 2.5))
 	var completion_length := maxf(MIN_COMPLETION_LENGTH, branch_length * 0.38)
-	return trunk_growth * segment_height + branch_length + completion_length + TREE_PULSE_GAP
+	return trunk_growth * segment_height + branch_length + completion_length
+
+
+func update_tree_pulses(delta: float) -> void:
+	if pulse_travel_distances.is_empty():
+		pulse_travel_distances.append(0.0)
+	var travel_step := maxf(delta, 0.0) * TREE_PULSE_SPEED
+	for index in range(pulse_travel_distances.size()):
+		pulse_travel_distances[index] += travel_step
+	var path_length := get_tree_pulse_path_length()
+	for index in range(pulse_travel_distances.size() - 1, -1, -1):
+		if pulse_travel_distances[index] > path_length:
+			pulse_travel_distances.remove_at(index)
+	pulse_spawn_elapsed += maxf(delta, 0.0)
+	while pulse_spawn_elapsed >= TREE_PULSE_INTERVAL:
+		pulse_spawn_elapsed -= TREE_PULSE_INTERVAL
+		pulse_travel_distances.append(0.0)
+	pass
 
 
 func draw_pulse_light(point: Vector2, color: Color) -> void:
@@ -496,12 +521,6 @@ static func quadratic_curve_point(from: Vector2, control: Vector2, to: Vector2, 
 	var t := clampf(progress, 0.0, 1.0)
 	var inverse := 1.0 - t
 	return inverse * inverse * from + 2.0 * inverse * t * control + t * t * to
-
-
-static func advance_tree_pulse_distance(current_distance: float, delta: float, cycle_length: float) -> float:
-	var next_distance := maxf(current_distance, 0.0) + maxf(delta, 0.0) * TREE_PULSE_SPEED
-	var safe_cycle_length := maxf(cycle_length, 1.0)
-	return fmod(next_distance, safe_cycle_length) if next_distance >= safe_cycle_length else next_distance
 
 
 static func running_pulse(time: float, phase: float) -> float:

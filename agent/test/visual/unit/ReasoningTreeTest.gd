@@ -83,20 +83,29 @@ func running_pulse_is_subtle_and_changes_over_time_test() -> void:
 	pass
 
 
-func tree_pulse_starts_at_root_and_repeats_after_full_spread_test() -> void:
-	const CYCLE_LENGTH := 1000.0
-	assert(is_equal_approx(ReasoningTree.advance_tree_pulse_distance(0.0, 0.0, CYCLE_LENGTH), 0.0))
-	var halfway_delta := CYCLE_LENGTH * 0.5 / ReasoningTree.TREE_PULSE_SPEED
-	assert(is_equal_approx(ReasoningTree.advance_tree_pulse_distance(0.0, halfway_delta, CYCLE_LENGTH), CYCLE_LENGTH * 0.5))
-	var remaining_delta := CYCLE_LENGTH * 0.5 / ReasoningTree.TREE_PULSE_SPEED
-	assert(is_equal_approx(ReasoningTree.advance_tree_pulse_distance(CYCLE_LENGTH * 0.5, remaining_delta, CYCLE_LENGTH), 0.0))
+func growing_tree_does_not_move_pulse_backward_test() -> void:
+	var tree := ReasoningTree.new()
+	tree.size = Vector2(1920.0, 1080.0)
+	tree.trunk_growth = 2.0
+	tree.update_tree_pulses(0.1)
+	var distance := tree.pulse_travel_distances[0]
+	tree.trunk_growth = 6.0
+	tree.update_tree_pulses(0.1)
+	assert(tree.pulse_travel_distances[0] > distance)
+	tree.free()
 	pass
 
 
-func growing_tree_does_not_move_pulse_backward_test() -> void:
-	var distance := ReasoningTree.advance_tree_pulse_distance(300.0, 0.1, 800.0)
-	var distance_after_growth := ReasoningTree.advance_tree_pulse_distance(distance, 0.1, 1200.0)
-	assert(distance_after_growth > distance)
+func tree_emits_overlapping_pulses_every_two_seconds_test() -> void:
+	var tree := ReasoningTree.new()
+	tree.size = Vector2(1920.0, 1080.0)
+	tree.trunk_growth = 5.0
+	tree.update_tree_pulses(0.1)
+	assert(tree.pulse_travel_distances.size() == 1)
+	tree.update_tree_pulses(ReasoningTree.TREE_PULSE_INTERVAL)
+	assert(tree.pulse_travel_distances.size() == 2)
+	assert(tree.pulse_travel_distances[0] > tree.pulse_travel_distances[1])
+	tree.free()
 	pass
 
 
