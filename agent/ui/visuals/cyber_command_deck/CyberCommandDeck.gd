@@ -12,6 +12,7 @@ const CORE_RADIUS := 76.0
 const RADAR_VIEWPORT_RATIO := 0.48
 const RADAR_MAX_RADIUS := 400.0
 const RADAR_POD_CLEARANCE := 28.0
+const RADAR_ECHO_SECONDS := 0.9
 const NEON_CYAN := Color("#00f5d4")
 const NEON_BLUE := Color("#16a8ff")
 const NEON_MAGENTA := Color("#ff2bd6")
@@ -32,6 +33,7 @@ var session_id: int = 0
 var next_replacement_slot: int = 0
 var end_requested: bool = false
 var end_error_message: String = ""
+var radar_echoes: Dictionary[int, float] = {}
 
 
 func _ready() -> void:
@@ -67,6 +69,7 @@ func reset_visual() -> void:
 	next_replacement_slot = 0
 	end_requested = false
 	end_error_message = ""
+	radar_echoes.clear()
 	queue_redraw()
 	pass
 
@@ -130,6 +133,7 @@ func on_tool_execution_start(tool_call_id: String, tool_name: String, args: Dict
 		next_replacement_slot = (next_replacement_slot + 1) % MAX_PODS
 		pod_by_id.erase(String(pods[slot]["id"]))
 	var pod := make_pod(tool_call_id, tool_name, args, slot)
+	radar_echoes.erase(slot)
 	if slot < pods.size():
 		pods[slot] = pod
 	else:
@@ -158,7 +162,21 @@ func _process(delta: float) -> void:
 		return
 	elapsed += delta
 	var radar_speed := 1.5 if phase == DeckPhase.REASONING else 0.55
+	var previous_radar_angle := radar_angle
 	radar_angle = fmod(radar_angle + delta * radar_speed, TAU)
+	for slot: int in radar_echoes.keys():
+		var echo := maxf(0.0, radar_echoes[slot] - delta / RADAR_ECHO_SECONDS)
+		if echo <= 0.0:
+			radar_echoes.erase(slot)
+		else:
+			radar_echoes[slot] = echo
+	for pod: Dictionary in pods:
+		if float(pod["open"]) < 0.75:
+			continue
+		var rect := pod_rect(int(pod["slot"]), pods.size(), size * 0.5)
+		var target_angle := (rect.get_center() - size * 0.5).angle()
+		if radar_crossed_angle(previous_radar_angle, radar_angle, target_angle):
+			radar_echoes[int(pod["slot"])] = 1.0
 	activity = move_toward(activity, 0.22, delta * 0.7)
 	for pod: Dictionary in pods:
 		pod["age"] = float(pod["age"]) + delta
@@ -355,6 +373,7 @@ func draw_radar(center: Vector2) -> void:
 			var tick_radius := radius * float(ring) / 4.0
 			var tick_length := 6.0 if tick % 3 == 0 else 3.0
 			draw_line(center + Vector2.from_angle(tick_angle) * tick_radius, center + Vector2.from_angle(tick_angle) * (tick_radius + tick_length), Color(NEON_CYAN, 0.22), 1.0)
+	draw_radar_echoes(center, radius)
 	var angle := radar_angle
 	for slice in range(7):
 		var slice_angle := angle - float(slice) * 0.055
@@ -497,7 +516,7 @@ func draw_tool_pod(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
 	draw_polyline(PackedVector2Array([shadow[0], shadow[1], shadow[2], shadow[3]]), Color(NEON_MAGENTA, 0.16), 4.0, true)
 	var is_executing := state == PodState.EXECUTING
 	var active_breath := 0.5 + 0.5 * sin(elapsed * 5.2 + float(pod["slot"]))
-	var radar_feedback := radar_pod_feedback(shown, center) * open_amount
+	var radar_feedback := maxf(radar_pod_feedback(shown, center), float(radar_echoes.get(int(pod["slot"]), 0.0)) * 0.35) * open_amount
 	if is_executing:
 		for glow in range(4, 0, -1):
 			draw_polyline(outset_polyline(panel, float(glow) * 3.0), Color(NEON_CYAN, (0.018 + active_breath * 0.012) * float(5 - glow)), 4.0, true)
@@ -616,6 +635,37 @@ func radar_pod_feedback(rect: Rect2, center: Vector2) -> float:
 	var angle_delta := absf(wrapf(radar_angle - direction.angle() + PI, 0.0, TAU) - PI)
 	var angular_span := atan2(rect.size.y * 0.72, maxf(direction.length(), 1.0))
 	return clampf(1.0 - angle_delta / maxf(angular_span, 0.08), 0.0, 1.0)
+
+
+func draw_radar_echoes(center: Vector2, radius: float) -> void:
+	for pod: Dictionary in pods:
+		var strength := float(radar_echoes.get(int(pod["slot"]), 0.0))
+		if strength <= 0.0:
+			continue
+		var rect := pod_rect(int(pod["slot"]), pods.size(), center)
+		var angle := (rect.get_center() - center).angle()
+		var echo_radius := radius - 10.0
+		var marker := center + Vector2.from_angle(angle) * echo_radius
+		var direction := Vector2.from_angle(angle)
+		var tangent := direction.rotated(PI * 0.5)
+		draw_arc(center, echo_radius, angle - 0.075, angle + 0.075, 12, Color(NEON_CYAN, strength * 0.9), 3.0, true)
+		draw_arc(center, echo_radius - 11.0, angle - 0.045, angle + 0.045, 10, Color(NEON_CYAN, strength * 0.38), 2.0, true)
+		draw_polyline(PackedVector2Array([
+			marker - direction * 7.0,
+			marker + tangent * 7.0,
+			marker + direction * 7.0,
+			marker - tangent * 7.0,
+			marker - direction * 7.0,
+		]), Color(NEON_CYAN, strength), 1.6, true)
+		draw_line(marker - tangent * 13.0, marker - tangent * 8.0, Color(NEON_CYAN, strength * 0.72), 1.0)
+		draw_line(marker + tangent * 8.0, marker + tangent * 13.0, Color(NEON_CYAN, strength * 0.72), 1.0)
+	pass
+
+
+static func radar_crossed_angle(previous_angle: float, current_angle: float, target_angle: float) -> bool:
+	var swept := fposmod(current_angle - previous_angle, TAU)
+	var target_offset := fposmod(target_angle - previous_angle, TAU)
+	return target_offset <= swept
 
 
 func active_pod_count() -> int:
