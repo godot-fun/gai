@@ -516,16 +516,16 @@ static func geometry_formula(kind: int, sides: int) -> String:
 		GeometryKind.WEAVE:
 			return "C_k = segment(v_k, v_((k+s) mod %d))" % sides
 		GeometryKind.ELLIPSE:
-			return "f(theta) = P + (a cos(theta), b sin(theta))"
+			return "f(θ) = P + (a cos(θ), b sin(θ))"
 		GeometryKind.PARABOLA:
 			return "f(x) = a x^2 + b x + c"
 		GeometryKind.ROSE:
-			return "r(theta) = a cos(k theta)"
+			return "r(θ) = a cos(kθ)"
 		GeometryKind.LISSAJOUS:
 			return "x = A sin(a t + delta),  y = B sin(b t)"
 		GeometryKind.SPIRAL:
-			return "r(theta) = a + b theta"
-	return "v_k = P_n + r (cos(2 PI k / m), sin(2 PI k / m))"
+			return "r(θ) = a + bθ"
+	return "v_k = P_n + r (cos(2πk / m), sin(2πk / m))"
 
 
 func draw_inner_geometry(seal: Dictionary, center: Vector2, radius: float, points: PackedVector2Array, growth: float) -> void:
