@@ -24,6 +24,10 @@ static func node_and_labels_test() -> void:
 	assert(VisualToolFormatter.glyph("shell") == ">_")
 	assert(ToolConstellation.short_argument("a very long argument value") == "a very long argume...")
 	assert(ToolConstellation.terminal_text("abc") == "abc")
+	var terminal_lines := ToolConstellation.terminal_display_lines("first line\nsecond line", 12, 2)
+	assert(terminal_lines.size() == 2)
+	assert(terminal_lines[0] == "first line s")
+	assert(terminal_lines[1] == "econd line")
 	pass
 
 
@@ -34,9 +38,13 @@ func retro_terminal_stream_and_command_test() -> void:
 	assert(effect.stream_kind == OpenAiClient.STREAM_KIND_REASONING)
 	effect.on_tool_execution_start("shell-1", "exec_command", {"cmd": "godot --headless"})
 	assert(effect.current_command_line().begins_with("exec_command --cmd="))
+	assert(effect.current_tool_name() == "EXEC_COMMAND")
+	assert(effect.current_tool_status() == "RUN")
+	assert(effect.current_command_arguments().begins_with("cmd: godot --headless"))
 	effect.on_tool_execution_end("shell-1", "exec_command", AgentToolResult.error("failed"))
 	effect.advance_tool_queue(ToolConstellation.MIN_TOOL_PLAY_SECONDS)
 	assert(effect.crt_glitch > 0.0)
+	assert(effect.current_tool_status() == "ERR")
 	effect.free()
 	pass
 

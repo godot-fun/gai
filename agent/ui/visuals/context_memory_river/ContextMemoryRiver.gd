@@ -7,10 +7,12 @@ extends VisualEffect
 const MAX_ITEMS := 256
 const PARTICLE_SPEED := 0.19
 const DEFAULT_CONTEXT_LIMIT := 128_000
+const ABSORPTION_DURATION := 0.62
 
 enum StreamType { USER, SYSTEM, HISTORY, FILE, TOOL, REASONING, ANSWER }
 
 var items: Array[Dictionary] = []
+var absorption_effects: Array[Dictionary] = []
 var elapsed: float = 0.0
 var turn_index: int = 0
 var prompt_tokens: int = 0
@@ -42,6 +44,7 @@ func fade_out_seconds() -> float:
 
 func reset_visual() -> void:
 	items.clear()
+	absorption_effects.clear()
 	elapsed = 0.0
 	turn_index = 0
 	prompt_tokens = 0
@@ -135,14 +138,33 @@ func _process(delta: float) -> void:
 	for index in range(items.size() - 1, -1, -1):
 		var item: Dictionary = items[index]
 		var next_progress := float(item["progress"]) + delta * PARTICLE_SPEED * float(item["speed"])
+		var input_x := lerpf(-50.0, size.x * 0.5, next_progress)
+		if item["type"] as StreamType != StreamType.ANSWER and input_x >= size.x * 0.5 - 94.0:
+			add_absorption_effect(item)
+			items.remove_at(index)
+			activity = 1.0
+			continue
 		if next_progress >= 1.0:
-			if item["type"] as StreamType != StreamType.ANSWER:
-				activity = 1.0
 			items.remove_at(index)
 			continue
 		item["progress"] = next_progress
 		item["pulse"] = move_toward(float(item["pulse"]), 0.0, delta)
+	for index in range(absorption_effects.size() - 1, -1, -1):
+		var effect: Dictionary = absorption_effects[index]
+		effect["age"] = float(effect["age"]) + delta
+		if float(effect["age"]) >= ABSORPTION_DURATION:
+			absorption_effects.remove_at(index)
 	queue_redraw()
+	pass
+
+
+func add_absorption_effect(item: Dictionary) -> void:
+	absorption_effects.append({
+		"age": 0.0,
+		"color": color_for_type(item["type"] as StreamType),
+		"lane": float(item["lane"]),
+		"weight": float(item["weight"]),
+	})
 	pass
 
 
@@ -172,8 +194,30 @@ func _draw() -> void:
 	draw_river(center)
 	for item: Dictionary in items:
 		draw_item(item, center)
+	draw_absorption_effects(center)
 	draw_context_window(center)
 	draw_output(center)
+	pass
+
+
+func draw_absorption_effects(center: Vector2) -> void:
+	for effect: Dictionary in absorption_effects:
+		var phase := clampf(float(effect["age"]) / ABSORPTION_DURATION, 0.0, 1.0)
+		var color: Color = effect["color"]
+		var weight: float = effect["weight"]
+		var lane_y := float(effect["lane"]) * 8.0
+		var impact_position := center + Vector2(-94.0, lane_y)
+		var collapse := smoothstep(0.0, 0.55, phase)
+		var particle_position := impact_position.lerp(center, collapse)
+		var particle_alpha := 1.0 - smoothstep(0.38, 0.72, phase)
+		var particle_radius := lerpf(7.0 + weight * 5.0, 2.0, collapse)
+		draw_line(impact_position, particle_position, Color(color, particle_alpha * 0.28), 2.0 + weight * 2.0, true)
+		draw_circle(particle_position, particle_radius * 2.2, Color(color, particle_alpha * 0.12))
+		draw_circle(particle_position, particle_radius, Color(color, particle_alpha * 0.92))
+		var ripple_phase := clampf(phase / 0.82, 0.0, 1.0)
+		var ripple_radius := lerpf(78.0, 126.0, ripple_phase)
+		var ripple_alpha := (1.0 - ripple_phase) * 0.24
+		draw_arc(center, ripple_radius, 0.0, TAU, 80, Color(color, ripple_alpha), 2.4 - ripple_phase, true)
 	pass
 
 
@@ -242,6 +286,7 @@ func draw_item(item: Dictionary, center: Vector2) -> void:
 
 func draw_context_window(center: Vector2) -> void:
 	var accent := ThemeColor.accent_theme_color()
+	var absorption := absorption_activity()
 	# The body breathes slowly while the capacity gauge stays fixed and trustworthy.
 	var breath_phase := sin(elapsed * TAU / 2.8)
 	var breath := 0.5 + breath_phase * 0.5
@@ -252,7 +297,7 @@ func draw_context_window(center: Vector2) -> void:
 	for glow in range(4):
 		var glow_radius := gauge_radius + 13.0 + glow * 11.0 + breath * (5.0 + glow * 1.5) + visual_activity * 5.0
 		var glow_alpha := 0.032 - glow * 0.005 + breath * 0.012 + visual_activity * 0.014
-		draw_circle(center, glow_radius, Color(capacity_color, glow_alpha))
+		draw_circle(center, glow_radius + absorption * 6.0, Color(capacity_color, glow_alpha + absorption * 0.025))
 	# A thin secondary wave gives the pulse a visible leading edge.
 	var wave_radius := gauge_radius + 18.0 + breath * 24.0 + visual_activity * 7.0
 	draw_arc(center, wave_radius, 0.0, TAU, 72, Color(capacity_color, (1.0 - breath) * 0.08 + visual_activity * 0.05), 1.4, true)
@@ -265,25 +310,33 @@ func draw_context_window(center: Vector2) -> void:
 		var tick_start := center + Vector2.from_angle(angle) * (gauge_radius + 6.0)
 		var tick_end := center + Vector2.from_angle(angle) * (gauge_radius + 10.0)
 		draw_line(tick_start, tick_end, Color(ColorBase.secondary_text, 0.28), 0.8, true)
-	var core_radius := 10.5 + breath * 3.0 + visual_activity * 1.4
-	draw_circle(center, core_radius * 1.75, Color(accent, 0.035 + breath * 0.025))
-	draw_circle(center, core_radius, Color(accent, 0.62 + breath * 0.2))
+	var core_radius := 10.5 + breath * 3.0 + visual_activity * 1.4 + absorption * 4.0
+	draw_circle(center, core_radius * 1.75, Color(accent, 0.035 + breath * 0.025 + absorption * 0.08))
+	draw_circle(center, core_radius, Color(accent, 0.62 + breath * 0.2 + absorption * 0.18))
 	draw_circle(center - Vector2(core_radius * 0.24, core_radius * 0.24), core_radius * 0.25, Color(1.0, 1.0, 1.0, 0.16 + breath * 0.12))
 	draw_centered_text(center + Vector2(0.0, 30.0), I18n.t("agent.visuals.context"), Fonts.semibold(), Typography.label_medium_size, ColorBase.primary_text)
 	draw_centered_text(center + Vector2(0.0, 48.0), token_label(), Fonts.regular(), Typography.label_small_size, Color(capacity_color, 0.9))
 	pass
 
 
+func absorption_activity() -> float:
+	var intensity := 0.0
+	for effect: Dictionary in absorption_effects:
+		var phase := clampf(float(effect["age"]) / ABSORPTION_DURATION, 0.0, 1.0)
+		var pulse := sin(clampf(phase / 0.62, 0.0, 1.0) * PI) * (1.0 - smoothstep(0.68, 1.0, phase))
+		intensity += pulse * (0.55 + float(effect["weight"]) * 0.45)
+	return clampf(intensity, 0.0, 1.0)
+
+
 func draw_output(center: Vector2) -> void:
 	var answer := color_for_type(StreamType.ANSWER)
-	var x := center.x + minf(size.x * 0.29, 350.0)
 	var alpha := 0.28 + output_activity * 0.48
-	draw_line(Vector2(center.x + 86.0, center.y), Vector2(size.x, center.y), Color(answer, alpha * 0.22), 14.0, true)
+	var stream_start := center.x + 82.0
 	for index in range(4):
 		var progress := fmod(elapsed * 0.3 + index * 0.25, 1.0)
-		var position := Vector2(lerpf(center.x + 90.0, size.x, progress), center.y + sin(progress * TAU + index) * 13.0)
-		draw_circle(position, 3.0 + output_activity * 2.0, Color(answer, alpha))
-	draw_centered_text(Vector2(x, center.y - 42.0), I18n.t("agent.visuals.generated_response"), Fonts.semibold(), Typography.label_small_size, Color(answer, 0.75))
+		var particle_fade := 1.0 - smoothstep(0.72, 1.0, progress)
+		var position := Vector2(lerpf(stream_start + 8.0, size.x, progress), center.y + sin(progress * TAU * 1.8 + index) * (5.0 + progress * 8.0))
+		draw_circle(position, 3.0 + output_activity * 2.0, Color(answer, alpha * particle_fade))
 	pass
 
 

@@ -17,7 +17,7 @@ const COMPLETE_SECONDS := 2.8
 const RING_EXPAND_SECONDS := 3.6
 const RING_LAYER_COUNT := 7
 const DUST_COUNT := 48
-const TERMINAL_SIZE := Vector2(248.0, 142.0)
+const TERMINAL_SIZE := Vector2(304.0, 174.0)
 const STREAM_BUFFER_LIMIT := 180
 const CRT_GLITCH_SECONDS := 0.55
 
@@ -391,7 +391,11 @@ func draw_core(center: Vector2, fade: float) -> void:
 	terminal_rect.position += jitter
 	for glow_index in range(4, 0, -1):
 		var glow_rect := terminal_rect.grow(float(glow_index) * (4.0 + core_pulse * 2.0))
-		draw_rect(glow_rect, Color(accent, (0.012 + breath * 0.006) * fade))
+		draw_rect(glow_rect, Color(accent, (0.007 + breath * 0.003) * fade))
+	# A restrained circular halo visually seats the rectangular CRT in the radial map.
+	for halo_index in range(2):
+		var halo_radius := TERMINAL_SIZE.x * (0.54 + float(halo_index) * 0.07)
+		draw_arc(center, halo_radius, -PI * 0.86, PI * 0.16, 72, Color(accent, (0.13 - halo_index * 0.045) * fade), 1.2, true)
 	if absorb_flash > 0.02:
 		draw_rect(terminal_rect.grow(8.0 + (1.0 - absorb_flash) * 12.0), Color(ColorBase.success, 0.26 * absorb_flash * fade), false, 2.0)
 	draw_rect(terminal_rect, Color(ColorBase.deep_surface, 0.98 * fade))
@@ -404,27 +408,29 @@ func draw_core(center: Vector2, fade: float) -> void:
 		draw_circle(title_rect.position + Vector2(title_rect.size.x - 13.0 - light_index * 10.0, 12.0), 2.2, Color(accent, (0.28 + light_index * 0.16) * fade))
 	draw_terminal_content(terminal_rect, accent, fade, glitch_strength)
 	draw_crt_scanlines(terminal_rect, accent, fade)
+	draw_crt_vignette(terminal_rect, fade)
 	pass
 
 
 func draw_terminal_content(rect: Rect2, accent: Color, fade: float, glitch_strength: float) -> void:
 	var font := Fonts.regular()
-	var font_size := Typography.label_small_size
-	var text_origin := rect.position + Vector2(10.0, 43.0)
+	var font_size := Typography.body_small_size
+	var text_origin := rect.position + Vector2(12.0, 45.0)
 	var status := "THINK" if stream_kind == OpenAiClient.STREAM_KIND_REASONING else "STREAM"
-	var body := stream_buffer.replace("\n", " ").replace("\r", " ").strip_edges()
-	if body.is_empty():
-		body = "awaiting input..."
-	var visible_body := body.right(58)
-	var command := current_command_line()
+	# Twenty-four glyphs keeps CJK streams readable instead of relying on Latin-width clipping.
+	var lines := terminal_display_lines(stream_buffer, 24, 2)
 	var cursor_on := fmod(elapsed, 0.8) < 0.52
-	draw_string(font, text_origin, "[%s] %s%s" % [status, visible_body, "_" if cursor_on else " "], HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 20.0, font_size, Color(accent, 0.8 * fade))
-	var card_rect := Rect2(rect.position + Vector2(9.0, 64.0), Vector2(rect.size.x - 18.0, 48.0))
+	draw_string(Fonts.semibold(), text_origin, "[%s]" % status, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(accent, 0.92 * fade))
+	draw_string(font, text_origin + Vector2(0.0, 18.0), lines[0], HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 24.0, font_size, Color(accent, 0.76 * fade))
+	draw_string(font, text_origin + Vector2(0.0, 35.0), "%s%s" % [lines[1], "▋" if cursor_on else " "], HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 24.0, font_size, Color(accent, 0.86 * fade))
+	var card_rect := Rect2(rect.position + Vector2(10.0, 92.0), Vector2(rect.size.x - 20.0, 66.0))
 	var card_color := ColorBase.error if glitch_strength > 0.0 else accent
 	draw_rect(card_rect, Color(card_color, (0.08 + glitch_strength * 0.12) * fade))
 	draw_rect(card_rect, Color(card_color, 0.48 * fade), false, 1.0)
-	draw_string(Fonts.semibold(), card_rect.position + Vector2(8.0, 16.0), "$ TOOL EXEC", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(card_color, 0.88 * fade))
-	draw_string(font, card_rect.position + Vector2(8.0, 35.0), command, HORIZONTAL_ALIGNMENT_LEFT, card_rect.size.x - 16.0, font_size, Color(ColorBase.primary_text, 0.88 * fade))
+	draw_string(Fonts.semibold(), card_rect.position + Vector2(9.0, 18.0), "$ %s" % current_tool_name(), HORIZONTAL_ALIGNMENT_LEFT, card_rect.size.x - 76.0, font_size, Color(card_color, 0.92 * fade))
+	draw_string(Fonts.semibold(), card_rect.position + Vector2(-9.0, 18.0), current_tool_status(), HORIZONTAL_ALIGNMENT_RIGHT, card_rect.size.x, font_size, Color(card_color, 0.86 * fade))
+	draw_line(card_rect.position + Vector2(9.0, 27.0), card_rect.position + Vector2(card_rect.size.x - 9.0, 27.0), Color(card_color, 0.24 * fade), 1.0)
+	draw_string(font, card_rect.position + Vector2(9.0, 47.0), current_command_arguments(), HORIZONTAL_ALIGNMENT_LEFT, card_rect.size.x - 18.0, font_size, Color(ColorBase.primary_text, 0.82 * fade))
 	if glitch_strength > 0.0:
 		for slice_index in range(3):
 			var y := rect.position.y + 34.0 + fmod(elapsed * 173.0 + slice_index * 29.0, rect.size.y - 38.0)
@@ -434,11 +440,20 @@ func draw_terminal_content(rect: Rect2, accent: Color, fade: float, glitch_stren
 
 
 func draw_crt_scanlines(rect: Rect2, accent: Color, fade: float) -> void:
-	for line_index in range(7):
+	for line_index in range(9):
 		var y := rect.position.y + 29.0 + float(line_index) * 16.0
-		draw_line(Vector2(rect.position.x + 2.0, y), Vector2(rect.end.x - 2.0, y), Color(accent, 0.035 * fade), 1.0)
+		draw_line(Vector2(rect.position.x + 2.0, y), Vector2(rect.end.x - 2.0, y), Color(accent, 0.026 * fade), 1.0)
 	var sweep_y := rect.position.y + 27.0 + fmod(elapsed * 38.0, rect.size.y - 30.0)
-	draw_line(Vector2(rect.position.x + 2.0, sweep_y), Vector2(rect.end.x - 2.0, sweep_y), Color(accent, 0.18 * fade), 2.0)
+	draw_line(Vector2(rect.position.x + 2.0, sweep_y), Vector2(rect.end.x - 2.0, sweep_y), Color(accent, 0.13 * fade), 2.0)
+	pass
+
+
+func draw_crt_vignette(rect: Rect2, fade: float) -> void:
+	for edge_index in range(4):
+		var inset := float(edge_index) * 3.0
+		var shade := Color(ColorBase.deep_surface, (0.22 - edge_index * 0.04) * fade)
+		draw_rect(Rect2(rect.position + Vector2(inset, inset), Vector2(rect.size.x - inset * 2.0, 3.0)), shade)
+		draw_rect(Rect2(Vector2(rect.position.x + inset, rect.end.y - inset - 3.0), Vector2(rect.size.x - inset * 2.0, 3.0)), shade)
 	pass
 
 
@@ -453,6 +468,39 @@ func current_command_line() -> String:
 	return " ".join(parts).left(42)
 
 
+func current_tool_name() -> String:
+	if playing_call.is_empty():
+		return "IDLE"
+	return String(playing_call["name"]).to_upper()
+
+
+func current_command_arguments() -> String:
+	if playing_call.is_empty():
+		return "watching constellation events..."
+	var args: Dictionary[String, Variant] = playing_call["args"]
+	if args.is_empty():
+		return "no arguments"
+	var parts := PackedStringArray()
+	for key: String in args.keys():
+		parts.append("%s: %s" % [key, short_argument(args[key])])
+	return "  ".join(parts).left(45)
+
+
+func current_tool_status() -> String:
+	if playing_call.is_empty():
+		return "READY"
+	var playing_id := String(playing_call["id"])
+	for node: Dictionary in nodes:
+		if String(node["id"]) != playing_id:
+			continue
+		var state: int = node["state"]
+		if state == ExecutionState.FAILED:
+			return "ERR"
+		if state == ExecutionState.SUCCESS:
+			return "OK"
+	return "RUN"
+
+
 static func short_argument(value: Variant) -> String:
 	var text := str(value).replace("\n", " ").replace("\r", " ")
 	return text.left(18) + ("..." if text.length() > 18 else "")
@@ -461,6 +509,20 @@ static func short_argument(value: Variant) -> String:
 static func terminal_text(text: String) -> String:
 	var clean := text.replace("\t", " ")
 	return clean.right(STREAM_BUFFER_LIMIT)
+
+
+static func terminal_display_lines(text: String, line_length: int, line_count: int) -> PackedStringArray:
+	var clean := " ".join(text.replace("\r", "").replace("\n", " ").split(" ", false)).strip_edges()
+	if clean.is_empty():
+		clean = "awaiting input..."
+	var capacity := maxi(line_length, 1) * maxi(line_count, 1)
+	clean = clean.right(capacity)
+	var result := PackedStringArray()
+	for line_index in range(maxi(line_count, 1)):
+		result.append(clean.substr(line_index * line_length, line_length))
+	while result.size() < 2:
+		result.append("")
+	return result
 
 
 func draw_connection(node: Dictionary, center: Vector2, position: Vector2, fade: float) -> void:
@@ -474,9 +536,9 @@ func draw_connection(node: Dictionary, center: Vector2, position: Vector2, fade:
 		draw_broken_curve(visible_points, Color(color, 0.78 * fade))
 		draw_failure_sparks(visible_points, color, fade)
 	elif state == ExecutionState.RUNNING:
-		draw_polyline(visible_points, Color(color, 0.07 * fade), 24.0, true)
-		draw_polyline(visible_points, Color(color, 0.18 * fade), 11.0, true)
-		draw_polyline(visible_points, Color(color, 0.72 * fade), 3.6, true)
+		draw_polyline(visible_points, Color(color, 0.04 * fade), 18.0, true)
+		draw_polyline(visible_points, Color(color, 0.13 * fade), 8.0, true)
+		draw_polyline(visible_points, Color(color, 0.68 * fade), 3.0, true)
 	else:
 		# Settled success stays quiet so the live call owns attention.
 		draw_polyline(visible_points, Color(color, 0.02 * fade), 12.0, true)
@@ -651,7 +713,9 @@ func node_position(index: int, _count: int, center: Vector2) -> Vector2:
 
 
 func orbit_radius(orbit: float) -> float:
-	var inner := minf(minf(size.x, size.y) * 0.18, 190.0)
+	var available := minf(size.x, size.y)
+	var terminal_clearance := TERMINAL_SIZE.x * 0.5 + NODE_RADIUS + Margin.ma_8
+	var inner := minf(maxf(available * 0.18, terminal_clearance), 230.0)
 	var step := minf(minf(size.x, size.y) * 0.125, 108.0)
 	return inner + orbit * step
 
