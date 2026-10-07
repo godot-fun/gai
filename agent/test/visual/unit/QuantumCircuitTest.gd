@@ -53,6 +53,25 @@ func final_answer_starts_collapse_test() -> void:
 	pass
 
 
+func palette_follows_accent_theme_color_test() -> void:
+	var original: Color = ThemeColor.theme_color
+	ThemeColor.theme_color = Color(0.18, 0.52, 0.96)
+	ThemeColor.refresh_derived_colors()
+	assert(QuantumCircuit.circuit_color() == ThemeColor.accent_theme_color())
+	var first_phase := QuantumCircuit.phase_color()
+	var first_tool := QuantumCircuit.tool_color()
+	assert(first_phase != QuantumCircuit.circuit_color())
+	assert(first_tool != QuantumCircuit.circuit_color())
+	ThemeColor.theme_color = Color(0.95, 0.3, 0.12)
+	ThemeColor.refresh_derived_colors()
+	assert(QuantumCircuit.circuit_color() == ThemeColor.accent_theme_color())
+	assert(QuantumCircuit.phase_color() != first_phase)
+	assert(QuantumCircuit.tool_color() != first_tool)
+	ThemeColor.theme_color = original
+	ThemeColor.refresh_derived_colors()
+	pass
+
+
 func full_register_replaces_slots_without_reflow_test() -> void:
 	var effect := QuantumCircuit.new()
 	for index in range(QuantumCircuit.MAX_WIRES):
