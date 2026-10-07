@@ -77,8 +77,8 @@
       "show_animation": "智能体工作时显示运行动画",
       "visuals": "选择运行视觉效果",
       "visual_none": "无特效",
-      "visual_jarvis": "Jarvis 特效",
-      "visual_transformer": "Transformer 特效",
+      "visual_jarvis": "Jarvis 大脑",
+      "visual_transformer": "Transformer 流程图",
       "visual_reasoning_tree": "Reasoning Tree 推理树",
       "visual_tool_constellation": "Tool Constellation 工具星图",
       "visual_context_memory_river": "Context Memory River 上下文记忆河",
@@ -86,10 +86,10 @@
       "visual_semantic_black_hole": "Semantic Black Hole 语义黑洞",
       "visual_cyber_command_deck": "Cyber Command Deck 赛博指挥舱",
       "visual_quantum_circuit": "Quantum Circuit 量子电路",
-      "visual_desktop_cat": "猫咪桌面助手",
+      "visual_desktop_cat": "Cat 猫咪桌面助手",
       "visual_geometric_genesis": "Geometric Genesis 几何创生",
       "visual_matrix_rain": "Matrix Rain 矩阵字符雨",
-      "visual_filter_carousel": "全屏滤镜轮播"
+      "visual_filter_carousel": "Filter 全屏滤镜轮播"
     },
     "sidebar": {
       "new_session": "+ 新建智能体",
