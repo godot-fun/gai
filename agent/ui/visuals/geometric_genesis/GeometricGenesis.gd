@@ -26,6 +26,7 @@ var completing: bool = false
 var ended_with_error: bool = false
 var turn_serial: int = 0
 var coordinate_reveal: float = 0.0
+var formula_layout: Dictionary[int, Rect2] = {}
 
 
 func _ready() -> void:
@@ -58,6 +59,7 @@ func reset_visual() -> void:
 	ended_with_error = false
 	turn_serial = 0
 	coordinate_reveal = 0.0
+	formula_layout.clear()
 	queue_redraw()
 	pass
 
@@ -176,15 +178,87 @@ func _draw() -> void:
 	var center := size * 0.5
 	draw_coordinate_plane(center)
 	draw_origin(center)
+	prepare_formula_layout(center)
 	for index in range(seals.size()):
 		var position := seal_position(index, center)
 		draw_coordinate_projection(index, position, center)
-		if index > 0:
-			draw_connection(index, position, center)
 		draw_seal(seals[index], position, seal_radius(index))
 	if completing:
 		draw_completion_wave(center)
+	# Annotations are a dedicated top layer. Later geometry must never paint over an
+	# earlier proof, and keeping layout separate avoids moving already placed formulas.
+	for index in range(seals.size()):
+		draw_construction_formula(seals[index], seal_position(index, center), seal_radius(index))
 	pass
+
+
+func prepare_formula_layout(origin: Vector2) -> void:
+	var occupied: Array[Rect2] = []
+	var geometry_zones: Array[Rect2] = []
+	# Reserve the complete deterministic construction field. A formula placed now will
+	# not be covered by a shape that appears many turns later.
+	for index in range(MAX_SEALS):
+		var position := seal_position(index, origin)
+		var radius := seal_radius(index) * 1.28
+		geometry_zones.append(Rect2(position - Vector2(radius, radius), Vector2(radius, radius) * 2.0))
+	# Once assigned, an annotation is locked in place. Reflowing every historical label
+	# when one new turn arrives reads as a full-screen hitch even at a stable frame rate.
+	for key: int in formula_layout.keys():
+		var stable_rect := clamp_formula_rect(formula_layout[key])
+		formula_layout[key] = stable_rect
+		occupied.append(stable_rect)
+	for seal: Dictionary in seals:
+		var index: int = seal["index"]
+		if formula_layout.has(index):
+			continue
+		var position := seal_position(index, origin)
+		var rect := find_formula_rect(position, seal_radius(index), occupied, geometry_zones)
+		formula_layout[index] = rect
+		occupied.append(rect)
+	pass
+
+
+func find_formula_rect(center: Vector2, radius: float, occupied: Array[Rect2], geometry_zones: Array[Rect2] = []) -> Rect2:
+	const FORMULA_SIZE := Vector2(330.0, 43.0)
+	const GAP := 52.0
+	var candidates: Array[Vector2] = [
+		center + Vector2(radius + GAP, -FORMULA_SIZE.y * 0.5),
+		center + Vector2(-radius - GAP - FORMULA_SIZE.x, -FORMULA_SIZE.y * 0.5),
+		center + Vector2(-FORMULA_SIZE.x * 0.5, -radius - GAP - FORMULA_SIZE.y),
+		center + Vector2(-FORMULA_SIZE.x * 0.5, radius + GAP),
+	]
+	for candidate: Vector2 in candidates:
+		var rect := clamp_formula_rect(Rect2(candidate, FORMULA_SIZE))
+		if not formula_rect_overlaps(rect, occupied) and not formula_rect_overlaps(rect, geometry_zones):
+			return rect
+	# Search concentric rings around the owner. The angular offset prevents every label
+	# from preferring the same four diagonals when the canvas becomes dense.
+	for ring in range(1, 15):
+		var distance := radius + 36.0 + float(ring) * 38.0
+		for slot in range(16):
+			var angle := float(slot) * TAU / 16.0 + float(ring % 2) * TAU / 32.0
+			var anchor := center + Vector2.from_angle(angle) * distance
+			var candidate := anchor - FORMULA_SIZE * 0.5
+			var rect := clamp_formula_rect(Rect2(candidate, FORMULA_SIZE))
+			if not formula_rect_overlaps(rect, occupied) and not formula_rect_overlaps(rect, geometry_zones):
+				return rect
+	# A completely saturated canvas still keeps the annotation on-screen. Overlap is
+	# preferable to deleting mathematical history.
+	return clamp_formula_rect(Rect2(candidates[0], FORMULA_SIZE))
+
+
+func clamp_formula_rect(rect: Rect2) -> Rect2:
+	const SCREEN_MARGIN := 12.0
+	var maximum := Vector2(maxf(SCREEN_MARGIN, size.x - rect.size.x - SCREEN_MARGIN), maxf(SCREEN_MARGIN, size.y - rect.size.y - SCREEN_MARGIN))
+	var position := Vector2(clampf(rect.position.x, SCREEN_MARGIN, maximum.x), clampf(rect.position.y, SCREEN_MARGIN, maximum.y))
+	return Rect2(position, rect.size)
+
+
+static func formula_rect_overlaps(rect: Rect2, occupied: Array[Rect2]) -> bool:
+	for other: Rect2 in occupied:
+		if rect.grow(4.0).intersects(other):
+			return true
+	return false
 
 
 func draw_coordinate_plane(origin: Vector2) -> void:
@@ -202,8 +276,6 @@ func draw_coordinate_plane(origin: Vector2) -> void:
 			continue
 		var x := origin.x + float(step) * spacing
 		var major := step % 4 == 0
-		var grid_alpha := (0.045 if major else 0.018) * line_reveal
-		draw_line(Vector2(x, lerpf(origin.y, 0.0, line_reveal)), Vector2(x, lerpf(origin.y, size.y, line_reveal)), Color(accent, grid_alpha), 1.0)
 		var tick_height := 8.0 if major else 4.0
 		draw_line(Vector2(x, origin.y - tick_height * line_reveal), Vector2(x, origin.y + tick_height * line_reveal), Color(accent, (0.20 if major else 0.10) * line_reveal), 1.0)
 	for step in range(-vertical_steps, vertical_steps + 1):
@@ -215,8 +287,6 @@ func draw_coordinate_plane(origin: Vector2) -> void:
 			continue
 		var y := origin.y + float(step) * spacing
 		var major := step % 4 == 0
-		var grid_alpha := (0.045 if major else 0.018) * line_reveal
-		draw_line(Vector2(lerpf(origin.x, 0.0, line_reveal), y), Vector2(lerpf(origin.x, size.x, line_reveal), y), Color(accent, grid_alpha), 1.0)
 		var tick_width := 8.0 if major else 4.0
 		draw_line(Vector2(origin.x - tick_width * line_reveal, y), Vector2(origin.x + tick_width * line_reveal, y), Color(accent, (0.20 if major else 0.10) * line_reveal), 1.0)
 	# Axes are the stable reference frame; arrowheads keep them legible without a UI panel.
@@ -279,23 +349,6 @@ func draw_origin(center: Vector2) -> void:
 	pass
 
 
-func draw_connection(index: int, position: Vector2, center: Vector2) -> void:
-	var parent_position := seal_position(index - 1, center)
-	var growth: float = seals[index]["growth"]
-	var to := parent_position.lerp(position, smoothstep(0.0, 0.42, growth))
-	var accent := ThemeColor.accent_theme_color()
-	draw_line(parent_position, to, Color(accent, 0.025), 7.0, true)
-	draw_line(parent_position, to, Color(accent, 0.16), 1.0, true)
-	# A small arrowhead turns the golden-angle locus into a directed construction path.
-	if growth > 0.8:
-		var direction := (position - parent_position).normalized()
-		var normal := direction.orthogonal()
-		var arrow_base := position - direction * 9.0
-		draw_line(position, arrow_base + normal * 3.5, Color(accent, 0.26), 1.0, true)
-		draw_line(position, arrow_base - normal * 3.5, Color(accent, 0.26), 1.0, true)
-	pass
-
-
 func draw_seal(seal: Dictionary, center: Vector2, radius: float) -> void:
 	var growth: float = seal["growth"]
 	var settle: float = seal["settle"]
@@ -314,7 +367,6 @@ func draw_seal(seal: Dictionary, center: Vector2, radius: float) -> void:
 		draw_analytic_geometry(seal, center, radius, smoothstep(0.12, 1.0, growth))
 		for motif: Dictionary in seal["motifs"]:
 			draw_tool_motif(motif, center, radius, sides, rotation)
-		draw_construction_formula(seal, center, radius)
 		return
 	var points := polygon_points(center, radius, sides, rotation)
 	var closed := PackedVector2Array(points)
@@ -339,7 +391,6 @@ func draw_seal(seal: Dictionary, center: Vector2, radius: float) -> void:
 		draw_polygon(points, fill)
 	for motif: Dictionary in seal["motifs"]:
 		draw_tool_motif(motif, center, radius, sides, rotation)
-	draw_construction_formula(seal, center, radius)
 	pass
 
 
@@ -417,6 +468,8 @@ static func analytic_curve_points(kind: int, center: Vector2, radius: float, rot
 
 func draw_construction_formula(seal: Dictionary, center: Vector2, radius: float) -> void:
 	var growth: float = seal["growth"]
+	if growth <= 0.0:
+		return
 	var settle: float = seal["settle"]
 	# Completed formulas remain as quiet proof annotations instead of disappearing.
 	var fade := lerpf(1.0, 0.38, smoothstep(0.05, 0.72, settle))
@@ -428,12 +481,17 @@ func draw_construction_formula(seal: Dictionary, center: Vector2, radius: float)
 	var shape_reveal := clampf((growth - 0.34) / 0.58, 0.0, 1.0)
 	var point_text := reveal_formula(point_formula, point_reveal)
 	var shape_text := reveal_formula(shape_formula, shape_reveal)
-	var place_left := center.x > size.x * 0.68
 	var formula_width := 330.0
-	var x := center.x - radius - formula_width if place_left else center.x + radius + 12.0
-	x = clampf(x, 18.0, size.x - formula_width - 18.0)
-	var y := clampf(center.y - radius * 0.38, 34.0, size.y - 48.0)
+	var rect: Rect2 = formula_layout.get(index, Rect2(center + Vector2(radius + 12.0, -21.5), Vector2(formula_width, 43.0)))
+	var x := rect.position.x + 7.0
+	var y := rect.position.y + 17.0
 	var accent := ThemeColor.accent_theme_color()
+	var label_anchor := Vector2(clampf(center.x, rect.position.x, rect.end.x), clampf(center.y, rect.position.y, rect.end.y))
+	var to_label := label_anchor - center
+	if to_label.length() > radius + 8.0:
+		var leader_start := center + to_label.normalized() * radius
+		draw_line(leader_start, label_anchor, Color(accent, 0.14 * fade), 0.7, true)
+		draw_circle(label_anchor, 1.5, Color(accent, 0.30 * fade))
 	draw_line(Vector2(x - 7.0, y - 17.0), Vector2(x - 7.0, y + 26.0), Color(accent, 0.42 * fade), 1.0)
 	draw_string(Fonts.regular(), Vector2(x, y), point_text, HORIZONTAL_ALIGNMENT_LEFT, formula_width, Typography.label_small_size, Color(accent, 0.58 * fade))
 	if not shape_text.is_empty():

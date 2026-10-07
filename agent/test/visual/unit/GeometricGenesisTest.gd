@@ -93,3 +93,30 @@ func completed_formula_remains_visible_test() -> void:
 	var settled_fade := lerpf(1.0, 0.38, smoothstep(0.05, 0.72, 1.0))
 	assert(settled_fade > 0.0)
 	pass
+
+
+func formula_layout_avoids_available_space_test() -> void:
+	var effect := GeometricGenesis.new()
+	effect.size = Vector2(1600.0, 900.0)
+	var occupied: Array[Rect2] = []
+	var first := effect.find_formula_rect(Vector2(800.0, 450.0), 50.0, occupied)
+	occupied.append(first)
+	var second := effect.find_formula_rect(Vector2(800.0, 450.0), 50.0, occupied)
+	assert(not first.intersects(second))
+	effect.free()
+	pass
+
+
+func existing_formula_layout_stays_stable_test() -> void:
+	var effect := GeometricGenesis.new()
+	effect.size = Vector2(1600.0, 900.0)
+	effect.on_turn_start()
+	effect.prepare_formula_layout(effect.size * 0.5)
+	var first_rect: Rect2 = effect.formula_layout[0]
+	effect.on_turn_end()
+	effect.on_turn_start()
+	effect.prepare_formula_layout(effect.size * 0.5)
+	assert(effect.formula_layout[0] == first_rect)
+	assert(effect.formula_layout.has(1))
+	effect.free()
+	pass
