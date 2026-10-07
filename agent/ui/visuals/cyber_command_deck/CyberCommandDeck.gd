@@ -8,7 +8,7 @@ const CONNECT_SECONDS := 0.38
 const MIN_EXECUTION_SECONDS := 1.0
 const COMPLETE_HOLD_SECONDS := 0.85
 const END_SECONDS := 1.25
-const CORE_RADIUS := 76.0
+const CORE_RADIUS := 80.0
 const RADAR_VIEWPORT_RATIO := 0.48
 const RADAR_MAX_RADIUS := 400.0
 const RADAR_POD_CLEARANCE := 28.0
@@ -393,7 +393,7 @@ func draw_waveforms(center: Vector2) -> void:
 		var points := PackedVector2Array()
 		for index in range(33):
 			var amount := float(index) / 32.0
-			var x := center.x + side * (CORE_RADIUS + 32.0 + amount * width)
+			var x := center.x + side * (CORE_RADIUS + 66.0 + amount * width)
 			var wave_value := sin(elapsed * 7.0 + amount * 25.0) * 7.0 * activity + sin(elapsed * 3.1 + amount * 11.0) * 3.0
 			points.append(Vector2(x, center.y + wave_value))
 		draw_polyline(points, Color(NEON_CYAN, 0.1), 9.0, true)
@@ -407,64 +407,51 @@ func draw_core(center: Vector2) -> void:
 	var core_scale := 1.0 - collapse * 0.82
 	var radius := CORE_RADIUS * core_scale
 	var pulse := (sin(elapsed * 4.0) + 1.0) * 0.5
-	# Broken targeting rings add the dense mechanical readout associated with cyberpunk HUDs.
-	for ring in range(3):
-		var lock_radius := radius + 112.0 + ring * 18.0
-		var rotation := elapsed * (0.22 + ring * 0.07) * (-1.0 if ring == 1 else 1.0)
-		for segment in range(8):
-			if (segment + ring) % 3 == 0:
-				continue
-			var start := rotation + float(segment) * TAU / 8.0
-			var span := 0.24 + float((segment + ring) % 3) * 0.07
-			var ring_color := NEON_MAGENTA if ring == 1 and segment % 2 == 0 else NEON_CYAN
-			draw_arc(center, lock_radius, start, start + span, 10, Color(ring_color, (0.2 + pulse * 0.08) * (1.0 - collapse)), 1.5 if ring == 1 else 1.0, true)
-	# Orthogonal lock brackets make the core read as a target rather than decoration.
-	var bracket_radius := radius + 58.0
-	for quarter in range(4):
-		var direction := Vector2.from_angle(float(quarter) * PI * 0.5)
-		var tangent := direction.rotated(PI * 0.5)
-		var anchor := center + direction * bracket_radius
-		draw_line(anchor - tangent * 12.0, anchor + tangent * 12.0, Color(NEON_CYAN, 0.66 * (1.0 - collapse)), 2.0)
-		draw_line(anchor, anchor + direction * 9.0, Color(NEON_MAGENTA, 0.52 * (1.0 - collapse)), 1.0)
-	# Wide fake bloom gives the core its own light source.
-	for glow in range(9, 0, -1):
-		draw_circle(center, radius + glow * 11.0 + pulse * 5.0, Color(NEON_CYAN, 0.0055 * float(10 - glow) * (1.0 - collapse)))
-	# Detached armour shards create a machine silhouette instead of another radar dial.
-	for shard in range(12):
-		var angle := elapsed * (0.08 if shard % 2 else -0.06) + float(shard) * TAU / 12.0
-		var inner := radius + 39.0 + float(shard % 3) * 8.0
-		var outer := inner + 20.0 + float(shard % 2) * 11.0
-		var half_angle := 0.045 + float(shard % 3) * 0.012
-		var shard_color := NEON_MAGENTA if shard % 4 == 0 else NEON_CYAN
-		var shard_points := PackedVector2Array([
-			center + Vector2.from_angle(angle - half_angle) * inner,
-			center + Vector2.from_angle(angle - half_angle * 0.45) * outer,
-			center + Vector2.from_angle(angle + half_angle * 0.45) * outer,
-			center + Vector2.from_angle(angle + half_angle) * inner,
-		])
-		draw_colored_polygon(shard_points, Color(shard_color, (0.22 + pulse * 0.08) * (1.0 - collapse)))
-		draw_polyline(PackedVector2Array([shard_points[0], shard_points[1], shard_points[2], shard_points[3]]), Color(shard_color, 0.75 * (1.0 - collapse)), 1.2, true)
-	# Three nested faceted shells suggest a holographic reactor.
-	var outer_hex := polygon_points(center, radius + 24.0, 6, elapsed * 0.11)
-	var mid_hex := polygon_points(center, radius + 8.0, 6, -elapsed * 0.16 + PI / 6.0)
+	var visibility := 1.0 - collapse
+	# A restrained two-stage bus replaces the previous stack of competing rings.
+	for ring in range(2):
+		var bus_radius := radius + 58.0 + ring * 23.0
+		var rotation := elapsed * (0.18 + ring * 0.07) * (-1.0 if ring == 1 else 1.0)
+		for segment in range(6):
+			var start := rotation + float(segment) * TAU / 6.0
+			var span := 0.34 if ring == 0 else 0.21
+			var ring_color := NEON_MAGENTA if ring == 1 and segment % 3 == 0 else NEON_CYAN
+			draw_arc(center, bus_radius, start, start + span, 10, Color(ring_color, (0.22 + pulse * 0.07) * visibility), 1.8 if ring == 0 else 1.2, true)
+	# Eight compact data blocks form a coherent status ring.
+	for block in range(8):
+		var angle := -elapsed * 0.12 + float(block) * TAU / 8.0
+		var block_radius := radius + 38.0
+		var position := center + Vector2.from_angle(angle) * block_radius
+		var tangent := Vector2.from_angle(angle + PI * 0.5)
+		var block_color := NEON_MAGENTA if block % 4 == 0 else NEON_CYAN
+		draw_line(position - tangent * 8.0, position + tangent * 8.0, Color(block_color, (0.5 + pulse * 0.22) * visibility), 3.0, true)
+	# Soft reactor bloom stays behind one stable frame instead of several rotating polygons.
+	for glow in range(7, 0, -1):
+		draw_circle(center, radius + glow * 9.0 + pulse * 3.0, Color(NEON_CYAN, 0.006 * float(8 - glow) * visibility))
+	var outer_hex := polygon_points(center, radius + 18.0, 6, PI / 6.0)
 	var core_hex := polygon_points(center, radius, 6, PI / 6.0)
-	draw_colored_polygon(outer_hex, Color(NEON_BLUE, (0.08 + pulse * 0.025) * (1.0 - collapse)))
-	draw_closed_polyline(outer_hex, Color(NEON_CYAN, 0.34 * (1.0 - collapse)), 2.0)
-	draw_colored_polygon(mid_hex, Color(NEON_MAGENTA, 0.055 * (1.0 - collapse)))
-	draw_closed_polyline(mid_hex, Color(NEON_MAGENTA, 0.65 * (1.0 - collapse)), 1.6)
+	draw_colored_polygon(outer_hex, Color(NEON_BLUE, (0.075 + pulse * 0.02) * visibility))
+	draw_closed_polyline(outer_hex, Color(NEON_CYAN, 0.38 * visibility), 2.0)
 	draw_colored_polygon(core_hex, Color(ColorBase.deep_surface, 0.96))
-	draw_closed_polyline(core_hex, Color(NEON_CYAN, 0.9 * (1.0 - collapse)), 2.2)
-	# Facet lighting and hot centre.
+	draw_closed_polyline(core_hex, Color(NEON_CYAN, 0.94 * visibility), 2.5)
+	# Subtle facet lighting and a breathing diamond establish a single focal point.
 	for index in range(6):
 		var facet := PackedVector2Array([center, core_hex[index], core_hex[(index + 1) % 6]])
-		draw_colored_polygon(facet, Color(NEON_BLUE if index % 2 else NEON_CYAN, 0.025 + index * 0.008))
-	draw_circle(center, 9.0 + pulse * 4.0, Color(NEON_CYAN, 0.11))
-	draw_circle(center, 3.5 + pulse * 1.5, Color(NEON_CYAN, 0.95))
+		draw_colored_polygon(facet, Color(NEON_BLUE if index % 2 else NEON_CYAN, 0.018 + index * 0.005))
+	var energy_center := center + Vector2(0.0, 12.0)
+	var energy_diamond := polygon_points(energy_center, 6.0 + pulse * 2.5, 4, PI * 0.25)
+	draw_circle(energy_center, 15.0 + pulse * 5.0, Color(NEON_CYAN, 0.07 * visibility))
+	draw_colored_polygon(energy_diamond, Color(NEON_CYAN, 0.92 * visibility))
 	if collapse < 0.86:
-		draw_centered_text(center - Vector2(0.0, 23.0), I18n.t("agent.visuals.mission"), Fonts.semibold(), Typography.label_medium_size, ColorBase.primary_text)
-		draw_centered_text(center - Vector2(0.0, 6.0), I18n.t("agent.visuals.core"), Fonts.bold(), Typography.title_small_size, Color(NEON_CYAN, 0.98))
-		draw_centered_text(center + Vector2(0.0, 24.0), core_status(), Fonts.medium(), Typography.label_small_size, Color(NEON_MAGENTA, 0.9))
-		draw_centered_text(center + Vector2(0.0, 42.0), StringUtils.format(I18n.t("agent.visuals.active_pods"), "%02d" % maxi(turn_index, 1), "%02d" % active_pod_count()), Fonts.regular(), Typography.label_small_size, ColorBase.secondary_text)
+		draw_centered_text(center - Vector2(0.0, 29.0), I18n.t("agent.visuals.mission"), Fonts.semibold(), Typography.label_medium_size, ColorBase.primary_text)
+		draw_centered_text(center - Vector2(0.0, 10.0), I18n.t("agent.visuals.core"), Fonts.bold(), Typography.title_small_size, Color(NEON_CYAN, 0.98))
+		draw_centered_text(center + Vector2(0.0, 43.0), core_status(), Fonts.medium(), Typography.label_small_size, Color(NEON_MAGENTA, 0.9))
+		var status_center := center + Vector2(0.0, radius + 31.0)
+		var status_rect := Rect2(status_center - Vector2(91.0, 11.0), Vector2(182.0, 22.0))
+		draw_rect(status_rect, Color(ColorBase.deep_surface, 0.86), true)
+		draw_line(status_rect.position + Vector2(9.0, 0.0), status_rect.end - Vector2(9.0, status_rect.size.y), Color(NEON_CYAN, 0.55 * visibility), 1.0)
+		draw_line(status_rect.position + Vector2(9.0, status_rect.size.y), status_rect.end - Vector2(9.0, 0.0), Color(NEON_MAGENTA, 0.38 * visibility), 1.0)
+		draw_centered_text(status_center + Vector2(0.0, 4.0), StringUtils.format(I18n.t("agent.visuals.active_pods"), "%02d" % maxi(turn_index, 1), "%02d" % active_pod_count()), Fonts.regular(), Typography.label_small_size, ColorBase.secondary_text)
 	pass
 
 
