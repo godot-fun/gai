@@ -4,11 +4,11 @@ extends VisualEffect
 ## Full-screen command interface with a central mission core and concurrent tool pods.
 ##
 ## Layout (maintainers)
-## - Center: one flat-top hex (`draw_core`, rotation PI/6) + wireframe cube; pod links attach to its left/right vertical edges via `hex_flat_half_width`.
+## - Center: flat-top hex underlay (`draw_core_hex_underlay`) then radar; cube/labels in `draw_core`. Links use `hex_flat_half_width`.
 ## - Sides: up to `MAX_PODS` tool panels in a fixed 4×2 grid (`pod_rect`); slot 0 replaces oldest when full.
 ## - Radar: radius is precomputed for all `MAX_PODS` slots so rings never resize when tools appear.
 ##
-## Paint order (`_draw`): backplate → decor → radar → pod links → pods → core (on top of links) → orbit → end shockwave.
+## Paint order (`_draw`): backplate → decor → core hex underlay → radar → pod links → pods → core foreground → orbit → end shockwave.
 ##
 ## Pod lifecycle: CONNECTING → EXECUTING → COMPLETE/FAILED; `pending_state` applies after `MIN_EXECUTION_SECONDS`.
 ## Agent end: wait for pods to hold complete, then `ENDING` drives `scan_wave` / `collapse` (core shrink + fade).
@@ -34,8 +34,10 @@ const RADAR_ECHO_SECONDS := 1.75
 const ACCENT_HOT_HUE_OFFSET := 0.41
 ## Cool secondary hue offset from the accent (keeps the blue grid / bus tones).
 const ACCENT_COOL_HUE_OFFSET := 0.09
-## Stroke width for radar concentric rings and the mission hex outline (keep in sync).
+## Stroke width for radar concentric rings.
 const HUD_RING_STROKE := 1.0
+## Mission hex outline — slightly below ring stroke so high-contrast accent does not read heavier than arcs.
+const HUD_HEX_STROKE := 0.65
 
 enum DeckPhase { IDLE, ACTIVE, REASONING, RESPONDING, ENDING }
 enum PodState { CONNECTING, EXECUTING, COMPLETE, FAILED }
@@ -227,15 +229,15 @@ func _draw() -> void:
 	draw_backplane(center)
 	draw_data_rain(center)
 	draw_ambient_energy(center)
-	draw_system_chrome(center)
 	draw_edge_telemetry(center)
+	draw_core_hex_underlay(center)
 	draw_radar(center)
 	draw_live_telemetry(center)
 	for index in range(pods.size()):
 		draw_pod_link(pods[index], pod_rect(index, pods.size(), center), center)
 	for index in range(pods.size()):
 		draw_tool_pod(pods[index], pod_rect(index, pods.size(), center), center)
-	# Core draws after links so the hex occludes line ends at the attachment edge.
+	# Foreground core (cube, labels) above links; hex fill/outline already in `draw_core_hex_underlay`.
 	draw_core(center)
 	draw_orbit_packets(center)
 	if scan_wave >= 0.0:
@@ -295,15 +297,6 @@ func draw_ambient_energy(center: Vector2) -> void:
 	pass
 
 
-func draw_system_chrome(center: Vector2) -> void:
-	var bottom_y := size.y - 34.0
-	for index in range(24):
-		var height := 3.0 + absf(sin(elapsed * 3.0 + index * 0.73)) * 12.0 * activity
-		var x := center.x - 144.0 + index * 12.0
-		draw_rect(Rect2(Vector2(x, bottom_y - height), Vector2(5.0, height)), Color(neon_cyan() if index % 4 else neon_magenta(), 0.48), true)
-	pass
-
-
 func draw_edge_telemetry(center: Vector2) -> void:
 	var rail_top := 104.0
 	var rail_bottom := size.y - 92.0
@@ -341,12 +334,14 @@ func draw_data_rain(center: Vector2) -> void:
 		var alpha := 0.055 + float(index % 4) * 0.014
 		draw_line(Vector2(lane_x, y - column_height), Vector2(lane_x, y), Color(color, alpha), 1.0)
 		draw_rect(Rect2(Vector2(lane_x - 1.0, y), Vector2(3.0, 2.0)), Color(color, alpha * 2.2), true)
-	# Low skyline blocks anchor the horizon and add parallax against the floor grid.
+	# Low skyline blocks — same fake bounce as bottom chrome (base height + sine kick).
 	for index in range(30):
 		var block_width := 18.0 + float((index * 7) % 23)
 		var x := float(index) * size.x / 29.0 - block_width * 0.5
-		var block_height := 8.0 + float((index * 17) % 52)
-		draw_rect(Rect2(Vector2(x, horizon - block_height), Vector2(block_width, block_height)), Color(neon_blue(), 0.018 + float(index % 3) * 0.008), true)
+		var base_height := 8.0 + float((index * 17) % 52)
+		var bounce := absf(sin(elapsed * 7.6 + float(index) * 0.91)) * 22.0 + absf(sin(elapsed * 12.3 + float(index) * 1.27)) * 12.0
+		var block_height := base_height + bounce
+		draw_rect(Rect2(Vector2(x, horizon - block_height), Vector2(block_width, block_height)), Color(neon_blue(), 0.04 + float(index % 3) * 0.012), true)
 		if index % 3 == 0:
 			draw_line(Vector2(x + block_width * 0.5, horizon - block_height), Vector2(x + block_width * 0.5, horizon - block_height - 11.0), Color(neon_magenta(), 0.13), 1.0)
 	pass
@@ -402,7 +397,21 @@ func draw_radar(center: Vector2) -> void:
 	pass
 
 
-## Mission hex (single ring), facet tint, and rotating wireframe cube. No outer hex — links use `hex_flat_half_width`.
+## Hex fill, facet tint, and outline — drawn before `draw_radar` so the sweep reads through the core.
+func draw_core_hex_underlay(center: Vector2) -> void:
+	var core_scale := 1.0 - collapse * 0.82
+	var radius := CORE_RADIUS * core_scale
+	var visibility := 1.0 - collapse
+	var core_hex := polygon_points(center, radius, 6, PI / 6.0)
+	draw_colored_polygon(core_hex, Color(ColorBase.deep_surface, 0.96))
+	for index in range(6):
+		var facet := PackedVector2Array([center, core_hex[index], core_hex[(index + 1) % 6]])
+		draw_colored_polygon(facet, Color(neon_blue() if index % 2 else neon_cyan(), 0.018 + index * 0.005))
+	draw_hex_outline(core_hex, Color(neon_cyan(), 0.94 * visibility), HUD_HEX_STROKE)
+	pass
+
+
+## Bus rings, cube, and labels above radar/links. Hex frame is `draw_core_hex_underlay`.
 func draw_core(center: Vector2) -> void:
 	var core_scale := 1.0 - collapse * 0.82
 	var radius := CORE_RADIUS * core_scale
@@ -428,19 +437,16 @@ func draw_core(center: Vector2) -> void:
 	# Soft reactor bloom stays behind one stable frame instead of several rotating polygons.
 	for glow in range(7, 0, -1):
 		draw_circle(center, radius + glow * 9.0 + pulse * 3.0, Color(neon_cyan(), 0.006 * float(8 - glow) * visibility))
-	var core_hex := polygon_points(center, radius, 6, PI / 6.0)
-	draw_colored_polygon(core_hex, Color(ColorBase.deep_surface, 0.96))
-	draw_hex_outline(core_hex, Color(neon_cyan(), 0.94 * visibility), HUD_RING_STROKE)
-	# Subtle facet lighting and a breathing cube establish a single focal point.
-	for index in range(6):
-		var facet := PackedVector2Array([center, core_hex[index], core_hex[(index + 1) % 6]])
-		draw_colored_polygon(facet, Color(neon_blue() if index % 2 else neon_cyan(), 0.018 + index * 0.005))
 	var energy_center := center
 	draw_circle(energy_center, 15.0 + pulse * 5.0, Color(neon_cyan(), 0.07 * visibility))
 	draw_energy_cube(energy_center, 8.5 + pulse * 1.8, visibility)
 	if collapse < 0.86:
-		draw_centered_text(center - Vector2(0.0, 30.0), I18n.t("agent.visuals.core"), Fonts.bold(), Typography.title_small_size, Color(neon_cyan(), 0.98))
-		draw_centered_text(center + Vector2(0.0, 30.0), core_status(), Fonts.medium(), Typography.label_small_size, Color(neon_magenta(), 0.9))
+		# Flat-top hex left/right vertical edges end at ±radius*0.5; status baseline sits on that bottom line.
+		const CORE_LABEL_GAP := 30.0
+		var status_font := Fonts.medium()
+		var status_size := Typography.label_small_size
+		draw_centered_text(center - Vector2(0.0, CORE_LABEL_GAP), I18n.t("agent.visuals.core"), Fonts.bold(), Typography.title_small_size, Color(neon_cyan(), 0.98))
+		draw_centered_text(center + Vector2(0.0, radius * 0.5), core_status(), status_font, status_size, Color(neon_magenta(), 0.9))
 	pass
 
 
