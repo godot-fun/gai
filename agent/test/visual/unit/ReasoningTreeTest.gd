@@ -36,6 +36,33 @@ func visible_branch_angles_are_unique_test() -> void:
 	pass
 
 
+func later_branch_tips_are_always_higher_test() -> void:
+	const BRANCH_LENGTH := 180.0
+	const COMPLETION_LENGTH := 64.0
+	const SEGMENT_HEIGHT := 96.0
+	var previous_parent_y := INF
+	var previous_completed_y := INF
+	for index in range(ReasoningTree.MAX_BRANCHES * 2):
+		var turn_growth := ReasoningTree.trunk_growth_for_turn(mini(index / 3 + 1, AgentLoop.MAX_TURNS))
+		var branch := ReasoningTree.make_branch("call-%d" % index, "tool", index, turn_growth)
+		var anchor_y := -ReasoningTree.branch_anchor_segment(branch) * SEGMENT_HEIGHT
+		var parent_y := anchor_y + Vector2.from_angle(float(branch["angle"])).y * BRANCH_LENGTH
+		var completed_y := parent_y + Vector2.from_angle(float(branch["completion_angle"])).y * COMPLETION_LENGTH
+		assert(parent_y < previous_parent_y)
+		assert(completed_y < previous_completed_y)
+		previous_parent_y = parent_y
+		previous_completed_y = completed_y
+	pass
+
+
+func branch_elevation_starts_shallow_and_opens_slowly_test() -> void:
+	assert(ReasoningTree.branch_elevation_degrees(0) <= 12.0)
+	assert(ReasoningTree.branch_elevation_degrees(12) < 40.0)
+	assert(ReasoningTree.branch_elevation_degrees(24) < 52.0)
+	assert(ReasoningTree.branch_elevation_degrees(36) < 58.0)
+	pass
+
+
 func branches_are_never_discarded_test() -> void:
 	var tree := ReasoningTree.new()
 	for index in range(ReasoningTree.MAX_BRANCHES + 3):
@@ -69,6 +96,17 @@ func nearby_branch_anchors_are_staggered_test() -> void:
 		var offset := ReasoningTree.branch_anchor_offset(index)
 		assert(not offsets.has(offset))
 		offsets[offset] = true
+	pass
+
+
+func later_branch_anchors_are_always_higher_test() -> void:
+	var previous_anchor := -INF
+	for index in range(ReasoningTree.MAX_BRANCHES * 2):
+		var turn_growth := ReasoningTree.trunk_growth_for_turn(mini(index / 3 + 1, AgentLoop.MAX_TURNS))
+		var branch := ReasoningTree.make_branch("call-%d" % index, "tool", index, turn_growth)
+		var anchor := ReasoningTree.branch_anchor_segment(branch)
+		assert(anchor > previous_anchor)
+		previous_anchor = anchor
 	pass
 
 

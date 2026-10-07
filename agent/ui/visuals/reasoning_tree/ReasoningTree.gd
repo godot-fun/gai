@@ -405,26 +405,32 @@ static func trunk_growth_for_turn(turn: int) -> float:
 	return eased_progress * float(MAX_TRUNK_SEGMENTS)
 
 
-## Alternates sides and advances through non-repeating elevations. Any 12 consecutive
-## branch indices have distinct angles.
+## Alternate sides while raising every later branch tip above the previous one.
 static func branch_angle(branch_index: int) -> float:
-	var elevation_degrees := 24.0 + float(branch_index * 17 % 55)
+	var elevation_degrees := branch_elevation_degrees(branch_index)
 	return deg_to_rad(180.0 + elevation_degrees) if branch_index % 2 == 0 else deg_to_rad(-elevation_degrees)
 
 
 ## Tool completion grows as a connected child branch with its own visible bend.
 static func completion_angle(branch_index: int) -> float:
 	var parent_angle := branch_angle(branch_index)
-	var direction := -1.0 if branch_index % 2 == 0 else 1.0
-	var bend_degrees := 20.0 + float(branch_index * 11 % 23)
+	# Bend farther upward, not back toward the horizontal. This keeps completed branch tips in
+	# the same bottom-to-top order as their parent tips.
+	var direction := 1.0 if branch_index % 2 == 0 else -1.0
+	var bend_degrees := 8.0
 	return parent_angle + deg_to_rad(direction * bend_degrees)
 
 
-## Nearby tools in one turn attach around the trunk node instead of sharing one exact pixel.
+## Start nearly horizontal and rise slowly so large tool runs fan out instead of clustering upright.
+static func branch_elevation_degrees(branch_index: int) -> float:
+	return 10.0 + 52.0 * (1.0 - pow(0.94, branch_index))
+
+
+## Later tools always attach higher than earlier tools while staying below the turn endpoint.
 static func branch_anchor_offset(branch_index: int) -> float:
-	# Stay just below the turn endpoint so the trunk can always reach every staggered anchor.
-	const OFFSETS: Array[float] = [-0.18, -0.05, -0.13, -0.02, -0.10, -0.21]
-	return OFFSETS[branch_index % OFFSETS.size()]
+	# The negative offset shrinks monotonically instead of cycling, so a later branch can never
+	# drop below an earlier branch when both are created at the same trunk height.
+	return -0.24 * pow(0.82, branch_index)
 
 
 static func branch_anchor_segment(branch: Dictionary) -> float:
