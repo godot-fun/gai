@@ -34,10 +34,11 @@ func tool_bird_tracks_result_test() -> void:
 	effect.on_tool_execution_start("tool-1", ReadTool.NAME, args)
 	assert(effect.birds.size() == 1)
 	assert(effect.active_birds.has("tool-1"))
-	assert(int(effect.birds[0]["state"]) == InkLandscape.BirdState.FLYING)
+	assert(int(effect.birds[0]["phase"]) == InkLandscape.BirdPhase.ENTERING)
+	assert(int(effect.birds[0]["result"]) == InkLandscape.BirdResult.ACTIVE)
 	effect.on_tool_execution_end("tool-1", ReadTool.NAME, AgentToolResult.ok("done"))
 	assert(not effect.active_birds.has("tool-1"))
-	assert(int(effect.birds[0]["state"]) == InkLandscape.BirdState.GLIDING)
+	assert(int(effect.birds[0]["result"]) == InkLandscape.BirdResult.SUCCESS)
 	effect.free()
 	pass
 
@@ -56,23 +57,23 @@ func repeated_tools_retire_old_birds_without_abrupt_removal_test() -> void:
 		var position := InkLandscape.bird_position(int(bird["serial"]), float(bird["seed"]))
 		positions[position] = true
 	assert(positions.size() == effect.birds.size())
-	assert(effect.birds.any(func(bird: Dictionary) -> bool: return bool(bird["forced_departure"])))
+	assert(effect.birds.any(func(bird: Dictionary) -> bool: return int(bird["result"]) != InkLandscape.BirdResult.ACTIVE))
 	effect.free()
 	pass
 
 
-func capacity_retirement_shrinks_entering_bird_test() -> void:
+func capacity_retirement_waits_for_entering_bird_test() -> void:
 	var effect := InkLandscape.new()
 	effect.visible = true
 	var args: Dictionary[String, Variant] = {}
 	for index in range(InkLandscape.MAX_BIRDS + 1):
 		effect.on_tool_execution_start("capacity-%d" % index, ReadTool.NAME, args)
 	var retiring_bird: Dictionary = effect.birds[0]
-	assert(bool(retiring_bird["forced_departure"]))
+	assert(int(retiring_bird["result"]) == InkLandscape.BirdResult.SUCCESS)
+	assert(int(retiring_bird["phase"]) == InkLandscape.BirdPhase.ENTERING)
 	assert(float(retiring_bird["entry"]) < 1.0)
 	effect._process(1.0)
-	assert(float(retiring_bird["flight"]) > 0.0)
-	assert(InkLandscape.bird_departure_scale(float(retiring_bird["flight"])) < 1.0)
+	assert(float(retiring_bird["departure"]) == 0.0)
 	effect.free()
 	pass
 
@@ -85,15 +86,30 @@ func tool_birds_enter_from_both_screen_edges_test() -> void:
 	var spawn := InkLandscape.bird_spawn_position(target.x, 1)
 	assert(spawn.y < 0.0)
 	assert(target.y > 0.0 and target.y < 1.0)
-	assert(is_equal_approx(spawn.x, target.x))
+	assert(spawn.x > target.x)
 	effect.on_tool_execution_start("bottom-bird", ReadTool.NAME, args)
 	var second_target := InkLandscape.bird_exit_position(2, float(effect.birds[1]["seed"]))
 	var second_spawn := InkLandscape.bird_spawn_position(second_target.x, 2)
 	assert(second_spawn.y > 1.0)
+	assert(second_spawn.x < second_target.x)
 	effect.visible = true
 	effect._process(0.5)
 	assert(float(effect.birds[0]["entry"]) > 0.0 and float(effect.birds[0]["entry"]) < 1.0)
 	effect.free()
+	pass
+
+
+func descending_birds_stay_in_distant_sky_test() -> void:
+	for serial in range(1, 12, 2):
+		var target := InkLandscape.bird_exit_position(serial, 0.5)
+		var spawn := InkLandscape.bird_spawn_position(target.x, serial)
+		assert(InkLandscape.bird_flies_down(serial))
+		assert(spawn.y < target.y)
+		assert(target.y >= 0.08 and target.y <= 0.34)
+		var normal_perspective := InkLandscape.bird_perspective(target.y)
+		var distant_perspective := InkLandscape.bird_perspective(target.y, true)
+		assert(distant_perspective.x < normal_perspective.x)
+		assert(distant_perspective.y < normal_perspective.y)
 	pass
 
 
@@ -110,6 +126,7 @@ func tool_bird_crosses_and_exits_screen_test() -> void:
 	assert(spawn.y < 0.0)
 	assert(middle.y < finish.y)
 	assert(finish.y > 0.0 and finish.y < 1.0)
+	assert(middle.x < spawn.x and middle.x > finish.x)
 	effect.free()
 	pass
 
@@ -127,6 +144,20 @@ func bird_entry_uses_constant_speed_test() -> void:
 	assert(absf(first_distance - second_distance) < 0.015)
 	assert(absf(second_distance - third_distance) < 0.015)
 	assert(not is_equal_approx(first.x, target.x))
+	pass
+
+
+func bird_entry_never_reverses_horizontal_direction_test() -> void:
+	for serial in range(1, 7):
+		var target := InkLandscape.bird_position(serial, 0.5)
+		var spawn := InkLandscape.bird_spawn_position(target.x, serial)
+		var control := InkLandscape.bird_entry_control(spawn, target, serial, 0.5)
+		var previous := spawn
+		var direction := signf(target.x - spawn.x)
+		for index in range(1, 25):
+			var current := InkLandscape.bird_entry_position(spawn, control, target, float(index) / 24.0)
+			assert((current.x - previous.x) * direction >= -0.0001)
+			previous = current
 	pass
 
 
@@ -171,6 +202,44 @@ func departing_bird_shrinks_to_nothing_test() -> void:
 	pass
 
 
+func bird_downstroke_shortens_visible_wing_span_test() -> void:
+	var raised := InkLandscape.bird_wing_span_scale(1.0)
+	var level := InkLandscape.bird_wing_span_scale(0.0)
+	var partial_downstroke := InkLandscape.bird_wing_span_scale(-0.5)
+	var full_downstroke := InkLandscape.bird_wing_span_scale(-1.0)
+	assert(is_equal_approx(raised, 1.0))
+	assert(is_equal_approx(level, 1.0))
+	assert(partial_downstroke < level and partial_downstroke > full_downstroke)
+	assert(is_equal_approx(full_downstroke, 0.78))
+	pass
+
+
+func gliding_bird_finishes_flap_cycle_before_locking_test() -> void:
+	var effect := InkLandscape.new()
+	effect.visible = true
+	effect.on_tool_execution_start("glide-anchor", ReadTool.NAME, {})
+	var bird: Dictionary = effect.birds[0]
+	bird["entry"] = 1.0
+	effect.on_tool_execution_end("glide-anchor", ReadTool.NAME, AgentToolResult.ok("done"))
+	var phase_before := float(bird["wing"])
+	effect._process(0.01)
+	assert(int(bird["phase"]) == InkLandscape.BirdPhase.FINISHING)
+	assert(float(bird["wing"]) > phase_before)
+	assert(float(bird["departure"]) == 0.0)
+	for _frame in range(180):
+		effect._process(1.0 / 60.0)
+		if int(bird["phase"]) == InkLandscape.BirdPhase.DEPARTING:
+			break
+	assert(int(bird["phase"]) == InkLandscape.BirdPhase.DEPARTING)
+	var locked_phase := float(bird["wing"])
+	assert(is_equal_approx(sin(locked_phase), 3.0 / 11.0))
+	effect._process(0.1)
+	assert(is_equal_approx(float(bird["wing"]), locked_phase))
+	assert(float(bird["departure"]) > 0.0)
+	effect.free()
+	pass
+
+
 func bird_perspective_shrinks_and_fades_with_height_test() -> void:
 	var far := InkLandscape.bird_perspective(-0.08)
 	var upper := InkLandscape.bird_perspective(0.25)
@@ -195,12 +264,12 @@ func completed_tool_keeps_flapping_until_entry_finishes_test() -> void:
 	effect._process(1.0)
 	assert(float(effect.birds[0]["entry"]) < 1.0)
 	assert(float(effect.birds[0]["wing"]) > initial_wing + 6.9)
-	assert(float(effect.birds[0]["flight"]) == 0.0)
+	assert(float(effect.birds[0]["departure"]) == 0.0)
 	for _frame in range(600):
 		effect._process(1.0 / 60.0)
 	assert(float(effect.birds[0]["entry"]) == 1.0)
 	effect._process(0.5)
-	assert(float(effect.birds[0]["flight"]) > 0.0)
+	assert(float(effect.birds[0]["departure"]) > 0.0)
 	effect.free()
 	pass
 

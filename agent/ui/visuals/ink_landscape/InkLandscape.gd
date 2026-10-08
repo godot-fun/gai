@@ -16,7 +16,8 @@ const COMPLETION_SECONDS := 1.2
 const BIRD_ENTRY_SPEED := 0.10
 const BIRD_DEPARTURE_SPEED := 0.18
 
-enum BirdState { FLYING, GLIDING, FALLING }
+enum BirdPhase { ENTERING, ACTIVE, FINISHING, DEPARTING }
+enum BirdResult { ACTIVE, SUCCESS, ERROR }
 
 var mountains: Array[Dictionary] = []
 var birds: Array[Dictionary] = []
@@ -152,7 +153,7 @@ func on_agent_end(error_message: String) -> void:
 	ended_with_error = StringUtils.is_not_blank(error_message)
 	completing = true
 	for bird: Dictionary in active_birds.values():
-		bird["state"] = BirdState.FALLING if ended_with_error else BirdState.GLIDING
+		request_bird_departure(bird, BirdResult.ERROR if ended_with_error else BirdResult.SUCCESS)
 	active_birds.clear()
 	if is_inside_tree():
 		await get_tree().create_timer(COMPLETION_SECONDS).timeout
@@ -238,25 +239,24 @@ func on_message_update(chunk: String, stream_kind: String) -> void:
 func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	bird_serial += 1
 	if birds.size() >= MAX_BIRDS:
-		# Never pop a visible bird: abrupt capacity eviction bypasses its departure
-		# animation. Retire the oldest non-retiring bird in place instead.
+		# Retire the oldest active bird through the same phase sequence instead of
+		# deleting it or maintaining a second capacity-only animation path.
 		for existing_bird: Dictionary in birds:
-			if bool(existing_bird.get("forced_departure", false)):
+			if int(existing_bird["result"]) != BirdResult.ACTIVE:
 				continue
-			existing_bird["forced_departure"] = true
-			existing_bird["state"] = BirdState.GLIDING
-			existing_bird["flight"] = 0.0
+			request_bird_departure(existing_bird, BirdResult.SUCCESS)
 			active_birds.erase(str(existing_bird["id"]))
 			break
 	var bird := {
 		"id": tool_call_id,
-		"state": BirdState.FLYING,
+		"phase": BirdPhase.ENTERING,
+		"result": BirdResult.ACTIVE,
 		"growth": 0.0,
 		"wing": float(birds.size()) * 0.83,
 		"flap_rate": lerpf(0.82, 1.16, float(abs((tool_name + tool_call_id).hash()) % 1000) / 1000.0),
 		"entry": 0.0,
-		"flight": 0.0,
-		"forced_departure": false,
+		"departure": 0.0,
+		"finish_phase": -1.0,
 		"serial": bird_serial,
 		"seed": float(abs(tool_name.hash()) % 1000) / 1000.0,
 	}
@@ -271,10 +271,18 @@ func on_tool_execution_end(tool_call_id: String, _tool_name: String, result: Age
 	if not active_birds.has(tool_call_id):
 		return
 	var bird: Dictionary = active_birds[tool_call_id]
-	bird["state"] = BirdState.FALLING if result.is_error else BirdState.GLIDING
-	bird["flight"] = 0.0
+	request_bird_departure(bird, BirdResult.ERROR if result.is_error else BirdResult.SUCCESS)
 	active_birds.erase(tool_call_id)
 	queue_redraw()
+	pass
+
+
+func request_bird_departure(bird: Dictionary, result: int) -> void:
+	if int(bird["result"]) != BirdResult.ACTIVE:
+		return
+	bird["result"] = result
+	if int(bird["phase"]) == BirdPhase.ACTIVE:
+		bird["phase"] = BirdPhase.FINISHING
 	pass
 
 
@@ -301,17 +309,27 @@ func _process(delta: float) -> void:
 	var departed_birds: Array[Dictionary] = []
 	for bird: Dictionary in birds:
 		bird["growth"] = move_toward(float(bird["growth"]), 1.0, delta * 3.4)
-		var state: int = bird["state"]
-		var entering := float(bird["entry"]) < 1.0
+		var phase: int = bird["phase"]
 		var flap_rate: float = bird["flap_rate"]
-		bird["wing"] = float(bird["wing"]) + delta * (7.0 * flap_rate if entering or state == BirdState.FLYING else 2.2 * flap_rate)
-		if entering:
+		if phase == BirdPhase.ENTERING:
+			bird["wing"] = float(bird["wing"]) + delta * 7.0 * flap_rate
 			var flight_speed := bird_flight_speed(float(bird["wing"]))
 			bird["entry"] = minf(1.0, float(bird["entry"]) + delta * BIRD_ENTRY_SPEED * flight_speed)
-		var forced_departure := bool(bird.get("forced_departure", false))
-		if (not entering or forced_departure) and state != BirdState.FLYING:
-			bird["flight"] = minf(1.0, float(bird["flight"]) + delta * BIRD_DEPARTURE_SPEED)
-			if float(bird["flight"]) >= 1.0:
+			if float(bird["entry"]) >= 1.0:
+				bird["phase"] = BirdPhase.ACTIVE if int(bird["result"]) == BirdResult.ACTIVE else BirdPhase.FINISHING
+		elif phase == BirdPhase.ACTIVE:
+			bird["wing"] = float(bird["wing"]) + delta * 7.0 * flap_rate
+		elif phase == BirdPhase.FINISHING:
+			var finish_phase: float = bird["finish_phase"]
+			if finish_phase < 0.0:
+				finish_phase = next_glide_phase(float(bird["wing"]))
+				bird["finish_phase"] = finish_phase
+			bird["wing"] = minf(finish_phase, float(bird["wing"]) + delta * 7.0 * flap_rate)
+			if is_equal_approx(float(bird["wing"]), finish_phase):
+				bird["phase"] = BirdPhase.DEPARTING
+		elif phase == BirdPhase.DEPARTING:
+			bird["departure"] = minf(1.0, float(bird["departure"]) + delta * BIRD_DEPARTURE_SPEED)
+			if float(bird["departure"]) >= 1.0:
 				departed_birds.append(bird)
 	for bird: Dictionary in departed_birds:
 		birds.erase(bird)
@@ -482,34 +500,38 @@ func draw_tool_bird(bird: Dictionary, field: Rect2) -> void:
 	var growth: float = bird["growth"]
 	if growth <= 0.0:
 		return
-	var state: int = bird["state"]
+	var phase: int = bird["phase"]
+	var result: int = bird["result"]
 	var serial: int = bird["serial"]
 	var seed: float = bird["seed"]
-	var flight: float = bird["flight"]
+	var departure: float = bird["departure"]
 	var target_ratio := bird_exit_position(serial, seed)
 	var entry: float = bird["entry"]
 	var spawn_ratio := bird_spawn_position(target_ratio.x, serial)
 	var control_ratio := bird_entry_control(spawn_ratio, target_ratio, serial, seed)
 	var position_ratio := bird_entry_position(spawn_ratio, control_ratio, target_ratio, entry)
 	var center := field.position + field.size * position_ratio
-	if state == BirdState.GLIDING:
-		center += Vector2(field.size.x * 0.07 * flight, -field.size.y * 0.055 * flight)
-	elif state == BirdState.FALLING:
-		center += Vector2(field.size.x * 0.018 * flight, field.size.y * 0.085 * flight)
-	var perspective := bird_perspective(position_ratio.y)
-	var departure_scale := bird_departure_scale(flight)
-	var scale := (0.78 + seed * 0.38) * perspective.x * ease(growth, -1.2) * departure_scale
+	if phase == BirdPhase.DEPARTING:
+		if result == BirdResult.SUCCESS:
+			center += Vector2(field.size.x * 0.07 * departure, -field.size.y * 0.055 * departure)
+		else:
+			center += Vector2(field.size.x * 0.018 * departure, field.size.y * 0.085 * departure)
+	var perspective := bird_perspective(position_ratio.y, bird_flies_down(serial))
+	var departure_scale := bird_departure_scale(departure)
+	var base_scale := (0.78 + seed * 0.38) * perspective.x * ease(growth, -1.2)
+	var scale := base_scale * departure_scale
 	var flap := sin(float(bird["wing"]))
-	# The body rises slightly on the power stroke and settles during recovery.
-	center.y -= flap * 3.8 * scale
-	center.x += cos(float(bird["wing"]) * 0.5) * 1.6 * scale
+	# Keep the final flap offset as the glide anchor. Removing it at the exact
+	# lock-frame causes a small but visible backward snap.
+	center += bird_body_flap_offset(float(bird["wing"]), base_scale)
 	var wing_lift := flap * 11.0 * scale
-	if state == BirdState.GLIDING and entry >= 1.0:
+	if phase == BirdPhase.DEPARTING and result == BirdResult.SUCCESS:
 		wing_lift = 3.0 * scale
-	var span := (24.0 + seed * 11.0) * scale
+	var downstroke_phase := flap if wing_lift < 0.0 else 0.0
+	var span := (24.0 + seed * 11.0) * scale * bird_wing_span_scale(downstroke_phase)
 	var ink := ink_color()
-	var departure_alpha := 1.0 - smoothstep(0.42, 1.0, flight)
-	var alpha := (0.62 if state != BirdState.FALLING else 0.56) * departure_alpha * perspective.y * exit_alpha
+	var departure_alpha := 1.0 - smoothstep(0.42, 1.0, departure)
+	var alpha := (0.56 if result == BirdResult.ERROR else 0.62) * departure_alpha * perspective.y * exit_alpha
 	# Layered strokes give each bird a soft ink belly and two calligraphic wings.
 	draw_circle(center, 4.2 * scale, Color(ink, alpha * 0.42))
 	draw_circle(center + Vector2(3.0, 0.8) * scale, 2.4 * scale, Color(ink, alpha * 0.58))
@@ -553,18 +575,28 @@ static func bird_position(serial: int, seed: float) -> Vector2:
 
 
 static func bird_exit_position(serial: int, seed: float) -> Vector2:
-	return bird_position(serial, seed)
+	var target := bird_position(serial, seed)
+	if bird_flies_down(serial):
+		# Birds entering from above may descend, but remain in the high, distant
+		# sky band instead of growing into foreground silhouettes.
+		target.y = lerpf(0.08, 0.34, inverse_lerp(0.08, 0.82, target.y))
+	return target
+
+
+static func bird_flies_down(serial: int) -> bool:
+	return serial % 2 == 1
 
 
 static func bird_spawn_position(target_x: float, serial: int = 0) -> Vector2:
 	var spawn_y := -0.08 if serial % 2 == 1 else 1.08
-	return Vector2(clampf(target_x, 0.04, 0.96), spawn_y)
-
-
-static func bird_entry_control(spawn: Vector2, target: Vector2, serial: int, seed: float) -> Vector2:
 	var direction := -1.0 if serial % 2 == 1 else 1.0
-	var sideways := direction * (0.08 + seed * 0.09)
-	return Vector2(clampf(target.x + sideways, 0.04, 0.96), lerpf(spawn.y, target.y, 0.48))
+	var spawn_x := clampf(target_x - direction * 0.12, 0.04, 0.96)
+	return Vector2(spawn_x, spawn_y)
+
+
+static func bird_entry_control(spawn: Vector2, target: Vector2, _serial: int, seed: float) -> Vector2:
+	var horizontal_progress := lerpf(0.42, 0.62, seed)
+	return Vector2(lerpf(spawn.x, target.x, horizontal_progress), lerpf(spawn.y, target.y, 0.48))
 
 
 static func bird_entry_position(spawn: Vector2, control: Vector2, target: Vector2, progress: float) -> Vector2:
@@ -599,20 +631,43 @@ static func bird_flight_speed(wing_phase: float) -> float:
 	return 1.0 - cos(wing_phase) * 0.50
 
 
+static func next_glide_phase(wing_phase: float) -> float:
+	# Finish the current flap cycle, then stop where sin(phase) produces the
+	# established shallow gliding lift (3 / 11 of the full stroke).
+	var glide_phase := asin(3.0 / 11.0)
+	var cycles := ceilf((wing_phase - glide_phase) / TAU)
+	return glide_phase + maxf(cycles, 0.0) * TAU
+
+
 static func bird_departure_scale(flight: float) -> float:
 	# Preserve the readable silhouette at first, then recede continuously until
 	# it is effectively a point before _process removes the completed bird.
 	return 1.0 - smoothstep(0.08, 1.0, clampf(flight, 0.0, 1.0))
 
 
-static func bird_perspective(vertical_ratio: float) -> Vector2:
+static func bird_wing_span_scale(wing_phase: float) -> float:
+	# A downstroke turns the wing partly out of the screen plane and folds its
+	# joints, shortening the visible projection to 78% at the lowest pose.
+	var downstroke := smoothstep(0.0, 1.0, clampf(-wing_phase, 0.0, 1.0))
+	return lerpf(1.0, 0.78, downstroke)
+
+
+static func bird_body_flap_offset(wing_phase: float, scale: float) -> Vector2:
+	# Vertical lift sells the wing stroke without ever reversing horizontal travel.
+	return Vector2(0.0, -sin(wing_phase) * 3.8 * scale)
+
+
+static func bird_perspective(vertical_ratio: float, distant_only: bool = false) -> Vector2:
 	# Birds near the bottom read as closer; those approaching the upper edge shrink
 	# and fade into atmospheric perspective. Do not clamp at y=0: the off-screen
 	# target must reach almost zero size/alpha instead of disappearing at medium size.
 	# Returns (scale, alpha multiplier).
 	var scale_depth := smoothstep(-0.10, 0.72, vertical_ratio)
 	var alpha_depth := smoothstep(-0.08, 0.45, vertical_ratio)
-	return Vector2(lerpf(0.04, 1.18, scale_depth), alpha_depth)
+	var perspective := Vector2(lerpf(0.04, 1.18, scale_depth), alpha_depth)
+	if distant_only:
+		perspective *= Vector2(0.62, 0.82)
+	return perspective
 
 
 static func quadratic_bezier(start: Vector2, control: Vector2, end: Vector2, time: float) -> Vector2:
