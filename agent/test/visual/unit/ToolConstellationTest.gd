@@ -118,6 +118,24 @@ func rings_expand_one_layer_at_a_time_test() -> void:
 	pass
 
 
+func tool_nodes_retract_with_their_orbits_test() -> void:
+	var effect := ToolConstellation.new()
+	effect.size = Vector2(1200.0, 800.0)
+	effect.nodes.append(ToolConstellation.make_node("read-1", "read", {}, 0, 1))
+	effect.nodes[0]["orbit"] = 2.0
+	var center := effect.field_center()
+	var expanded_distance := effect.node_position(0, 1, center).distance_to(center)
+	effect.completing = true
+	effect.field_spread = 0.4
+	var retracting_distance := effect.node_position(0, 1, center).distance_to(center)
+	effect.field_spread = 0.0
+	var collapsed_distance := effect.node_position(0, 1, center).distance_to(center)
+	assert(retracting_distance < expanded_distance)
+	assert(is_zero_approx(collapsed_distance))
+	effect.free()
+	pass
+
+
 func full_constellation_replaces_oldest_slot_test() -> void:
 	var effect := ToolConstellation.new()
 	for index in range(ToolConstellation.MAX_NODES):

@@ -725,7 +725,10 @@ func draw_broken_curve(points: PackedVector2Array, color: Color) -> void:
 func node_position(index: int, _count: int, center: Vector2) -> Vector2:
 	var angle := -PI * 0.5 + float(index) * GOLDEN_ANGLE
 	var orbit := float(nodes[index]["orbit"]) if index < nodes.size() else float(index % 3)
-	var radius := orbit_radius(orbit)
+	# During completion, keep each tool attached to its matching visual orbit so the
+	# constellation itself retracts into the core instead of only fading in place.
+	var orbit_layer := clampi(int(round(orbit)) + 2, 2, RING_LAYER_COUNT)
+	var radius := orbit_radius(orbit) * (layer_spread(orbit_layer, RING_LAYER_COUNT) if completing else 1.0)
 	# Tiny angular drift keeps packed slots from reading as a rigid dial.
 	angle += sin(elapsed * 0.35 + float(index)) * 0.018
 	var squash := clampf(size.y / maxf(size.x, 1.0) * 1.25, 0.7, 0.94)
