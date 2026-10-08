@@ -202,6 +202,30 @@ func departing_bird_shrinks_to_nothing_test() -> void:
 	pass
 
 
+func bird_departure_continues_entry_direction_test() -> void:
+	for serial in range(1, 7):
+		var target := InkLandscape.bird_exit_position(serial, 0.5)
+		var spawn := InkLandscape.bird_spawn_position(target.x, serial)
+		var control := InkLandscape.bird_entry_control(spawn, target, serial, 0.5)
+		var entry_direction := (target - control).normalized()
+		for falls in [false, true]:
+			var first_offset := InkLandscape.bird_departure_offset(control, target, 0.001, falls)
+			assert(first_offset.normalized().dot(entry_direction) > 0.999)
+			assert(signf(first_offset.x) == signf(target.x - spawn.x))
+	pass
+
+
+func failed_bird_sags_without_reversing_departure_test() -> void:
+	var control := Vector2(0.4, 0.7)
+	var target := Vector2(0.6, 0.4)
+	var success := InkLandscape.bird_departure_offset(control, target, 1.0, false)
+	var failure := InkLandscape.bird_departure_offset(control, target, 1.0, true)
+	assert(is_equal_approx(failure.x, success.x))
+	assert(failure.y > success.y)
+	assert(failure.x > 0.0)
+	pass
+
+
 func bird_downstroke_shortens_visible_wing_span_test() -> void:
 	var raised := InkLandscape.bird_wing_span_scale(1.0)
 	var level := InkLandscape.bird_wing_span_scale(0.0)

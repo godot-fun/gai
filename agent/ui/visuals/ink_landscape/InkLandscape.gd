@@ -533,12 +533,9 @@ func draw_tool_bird(bird: BirdState, field: Rect2) -> void:
 	var spawn_ratio := bird_spawn_position(target_ratio.x, serial)
 	var control_ratio := bird_entry_control(spawn_ratio, target_ratio, serial, seed)
 	var position_ratio := bird_entry_position(spawn_ratio, control_ratio, target_ratio, entry)
-	var center := field.position + field.size * position_ratio
 	if phase == BirdPhase.DEPARTING:
-		if result == BirdResult.SUCCESS:
-			center += Vector2(field.size.x * 0.07 * departure, -field.size.y * 0.055 * departure)
-		else:
-			center += Vector2(field.size.x * 0.018 * departure, field.size.y * 0.085 * departure)
+		position_ratio += bird_departure_offset(control_ratio, target_ratio, departure, result == BirdResult.ERROR)
+	var center := field.position + field.size * position_ratio
 	var perspective := bird_perspective(position_ratio.y, bird_flies_down(serial))
 	var departure_scale := bird_departure_scale(departure)
 	var base_scale := (0.78 + seed * 0.38) * perspective.x * ease(growth, -1.2)
@@ -666,6 +663,18 @@ static func bird_departure_scale(flight: float) -> float:
 	# Preserve the readable silhouette at first, then recede continuously until
 	# it is effectively a point before _process removes the completed bird.
 	return 1.0 - smoothstep(0.08, 1.0, clampf(flight, 0.0, 1.0))
+
+
+static func bird_departure_offset(control: Vector2, target: Vector2, flight: float, falls: bool) -> Vector2:
+	# Continue along the entry curve's end tangent so switching to DEPARTING never
+	# introduces a sharp turn. Error birds sag progressively; the quadratic term
+	# has zero initial velocity and therefore preserves that tangent at handoff.
+	var tangent := (target - control).normalized()
+	var progress := clampf(flight, 0.0, 1.0)
+	var offset := tangent * 0.09 * progress
+	if falls:
+		offset.y += 0.10 * progress * progress
+	return offset
 
 
 static func bird_wing_span_scale(wing_phase: float) -> float:
