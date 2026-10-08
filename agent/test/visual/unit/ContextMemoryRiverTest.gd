@@ -39,9 +39,20 @@ static func saturated_stream_preserves_in_flight_items_test() -> void:
 	var effect := ContextMemoryRiver.new()
 	for index in range(ContextMemoryRiver.MAX_ITEMS):
 		effect.add_item(ContextMemoryRiver.StreamType.REASONING, "THOUGHT", 0.5)
-	var oldest: Dictionary = effect.items[0]
+	var oldest := effect.items[0]
 	effect.add_item(ContextMemoryRiver.StreamType.REASONING, "NEW", 0.5)
 	assert(effect.items.size() == ContextMemoryRiver.MAX_ITEMS)
 	assert(effect.items[0] == oldest)
+	effect.free()
+	pass
+
+
+static func streaming_fragments_coalesce_test() -> void:
+	var effect := ContextMemoryRiver.new()
+	effect.add_stream_fragment(ContextMemoryRiver.StreamType.REASONING, "follow", "THOUGHT")
+	effect.add_stream_fragment(ContextMemoryRiver.StreamType.REASONING, " path", "THOUGHT")
+	assert(effect.items.size() == 1)
+	assert(effect.items[0].label == "follow path")
+	assert(effect.items[0].glyph_advances.size() == effect.items[0].label.length())
 	effect.free()
 	pass
