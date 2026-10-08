@@ -19,9 +19,39 @@ const BIRD_DEPARTURE_SPEED := 0.18
 enum BirdPhase { ENTERING, ACTIVE, FINISHING, DEPARTING }
 enum BirdResult { ACTIVE, SUCCESS, ERROR }
 
-var mountains: Array[Dictionary] = []
-var birds: Array[Dictionary] = []
-var active_birds: Dictionary[String, Dictionary] = {}
+
+class MountainState extends RefCounted:
+	var serial: int
+	var depth: float
+	var center: float
+	var width: float
+	var height: float
+	var base: float
+	var strength: float
+	var softness: float
+	var shape: float
+	var growth: float = 0.0
+	var settled: bool = false
+	var canvas: ColorRect
+	var material: ShaderMaterial
+
+
+class BirdState extends RefCounted:
+	var id: String
+	var phase: BirdPhase = BirdPhase.ENTERING
+	var result: BirdResult = BirdResult.ACTIVE
+	var growth: float = 0.0
+	var wing: float
+	var flap_rate: float
+	var entry: float = 0.0
+	var departure: float = 0.0
+	var finish_phase: float = -1.0
+	var serial: int
+	var seed: float
+
+
+var mountains: Array[MountainState] = []
+var birds: Array[BirdState] = []
 var ink_canvas: ColorRect
 var ink_material: ShaderMaterial
 var cloud_canvas: ColorRect
@@ -120,13 +150,12 @@ func fade_out_seconds() -> float:
 
 
 func reset_visual() -> void:
-	for mountain: Dictionary in mountains:
-		var canvas: ColorRect = mountain.get("canvas")
+	for mountain: MountainState in mountains:
+		var canvas := mountain.canvas
 		if is_instance_valid(canvas):
 			canvas.queue_free()
 	mountains.clear()
 	birds.clear()
-	active_birds.clear()
 	elapsed = 0.0
 	reasoning_ink = 0.0
 	completion = 0.0
@@ -152,9 +181,9 @@ func on_agent_start(_session_id: int) -> void:
 func on_agent_end(error_message: String) -> void:
 	ended_with_error = StringUtils.is_not_blank(error_message)
 	completing = true
-	for bird: Dictionary in active_birds.values():
-		request_bird_departure(bird, BirdResult.ERROR if ended_with_error else BirdResult.SUCCESS)
-	active_birds.clear()
+	for bird: BirdState in birds:
+		if bird.result == BirdResult.ACTIVE:
+			request_bird_departure(bird, BirdResult.ERROR if ended_with_error else BirdResult.SUCCESS)
 	if is_inside_tree():
 		await get_tree().create_timer(COMPLETION_SECONDS).timeout
 		var dissolve := create_tween()
@@ -169,8 +198,8 @@ func set_landscape_alpha(value: float) -> void:
 	for material: ShaderMaterial in cloud_materials:
 		# self_modulate is insufficient because InkCloud.gdshader assigns COLOR.
 		material.set_shader_parameter("fade_alpha", exit_alpha)
-	for mountain: Dictionary in mountains:
-		var material: ShaderMaterial = mountain.get("material")
+	for mountain: MountainState in mountains:
+		var material := mountain.material
 		if material != null:
 			material.set_shader_parameter("fade_alpha", exit_alpha)
 	queue_redraw()
@@ -193,21 +222,18 @@ func on_turn_start() -> void:
 	var mountain_serial := mountains.size() + 1
 	var depth := mountain_depth(mountain_serial)
 	var dimensions := mountain_dimensions(depth)
-	var mountain := {
-		"serial": mountain_serial,
-		"depth": depth,
-		"center": mountain_center(mountain_serial, dimensions.x),
-		"width": dimensions.x,
-		"height": dimensions.y,
-		# Distant ranges begin near the top edge while foreground ranges still
-		# anchor below the viewport, using the complete canvas as a depth field.
-		"base": lerpf(0.14, 1.04, depth),
-		"strength": lerpf(0.07, 0.42, depth) * (1.12 if mountain_serial == 3 else 1.0),
-		"softness": lerpf(0.94, 0.16, depth),
-		"shape": 3.0 if mountain_serial == 3 else float((mountain_serial - 1) % 5),
-		"growth": 0.0,
-		"settled": false,
-	}
+	var mountain := MountainState.new()
+	mountain.serial = mountain_serial
+	mountain.depth = depth
+	mountain.center = mountain_center(mountain_serial, dimensions.x)
+	mountain.width = dimensions.x
+	mountain.height = dimensions.y
+	# Distant ranges begin near the top edge while foreground ranges still
+	# anchor below the viewport, using the complete canvas as a depth field.
+	mountain.base = lerpf(0.14, 1.04, depth)
+	mountain.strength = lerpf(0.07, 0.42, depth) * (1.12 if mountain_serial == 3 else 1.0)
+	mountain.softness = lerpf(0.94, 0.16, depth)
+	mountain.shape = 3.0 if mountain_serial == 3 else float((mountain_serial - 1) % 5)
 	mountains.append(mountain)
 	current_turn_has_mountain = true
 	if is_inside_tree():
@@ -219,8 +245,8 @@ func on_turn_start() -> void:
 
 func on_turn_end() -> void:
 	if current_turn_has_mountain and not mountains.is_empty():
-		mountains[-1]["settled"] = true
-		mountains[-1]["growth"] = 1.0
+		mountains[-1].settled = true
+		mountains[-1].growth = 1.0
 	current_turn_has_mountain = false
 	queue_redraw()
 	pass
@@ -241,48 +267,45 @@ func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dic
 	if birds.size() >= MAX_BIRDS:
 		# Retire the oldest active bird through the same phase sequence instead of
 		# deleting it or maintaining a second capacity-only animation path.
-		for existing_bird: Dictionary in birds:
-			if int(existing_bird["result"]) != BirdResult.ACTIVE:
+		for existing_bird: BirdState in birds:
+			if existing_bird.result != BirdResult.ACTIVE:
 				continue
 			request_bird_departure(existing_bird, BirdResult.SUCCESS)
-			active_birds.erase(str(existing_bird["id"]))
 			break
-	var bird := {
-		"id": tool_call_id,
-		"phase": BirdPhase.ENTERING,
-		"result": BirdResult.ACTIVE,
-		"growth": 0.0,
-		"wing": float(birds.size()) * 0.83,
-		"flap_rate": lerpf(0.82, 1.16, float(abs((tool_name + tool_call_id).hash()) % 1000) / 1000.0),
-		"entry": 0.0,
-		"departure": 0.0,
-		"finish_phase": -1.0,
-		"serial": bird_serial,
-		"seed": float(abs(tool_name.hash()) % 1000) / 1000.0,
-	}
+	var bird := BirdState.new()
+	bird.id = tool_call_id
+	bird.wing = float(birds.size()) * 0.83
+	bird.flap_rate = lerpf(0.82, 1.16, float(abs((tool_name + tool_call_id).hash()) % 1000) / 1000.0)
+	bird.serial = bird_serial
+	bird.seed = float(abs(tool_name.hash()) % 1000) / 1000.0
 	birds.append(bird)
-	active_birds[tool_call_id] = bird
 	reasoning_ink = minf(2.0, reasoning_ink + 0.36)
 	queue_redraw()
 	pass
 
 
 func on_tool_execution_end(tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
-	if not active_birds.has(tool_call_id):
+	var bird := find_active_bird(tool_call_id)
+	if bird == null:
 		return
-	var bird: Dictionary = active_birds[tool_call_id]
 	request_bird_departure(bird, BirdResult.ERROR if result.is_error else BirdResult.SUCCESS)
-	active_birds.erase(tool_call_id)
 	queue_redraw()
 	pass
 
 
-func request_bird_departure(bird: Dictionary, result: int) -> void:
-	if int(bird["result"]) != BirdResult.ACTIVE:
+func find_active_bird(tool_call_id: String) -> BirdState:
+	for bird: BirdState in birds:
+		if bird.id == tool_call_id and bird.result == BirdResult.ACTIVE:
+			return bird
+	return null
+
+
+func request_bird_departure(bird: BirdState, result: BirdResult) -> void:
+	if bird.result != BirdResult.ACTIVE:
 		return
-	bird["result"] = result
-	if int(bird["phase"]) == BirdPhase.ACTIVE:
-		bird["phase"] = BirdPhase.FINISHING
+	bird.result = result
+	if bird.phase == BirdPhase.ACTIVE:
+		bird.phase = BirdPhase.FINISHING
 	pass
 
 
@@ -299,39 +322,39 @@ func _process(delta: float) -> void:
 	var old_cloud_reveal := cloud_reveal
 	cloud_reveal = move_toward(cloud_reveal, float(cloud_count), delta * 0.55)
 	var changed := completing or reasoning_ink > 0.0 or old_cloud_reveal != cloud_reveal
-	for mountain: Dictionary in mountains:
-		var old_growth: float = mountain["growth"]
-		mountain["growth"] = move_toward(old_growth, 1.0, delta * (0.22 + reasoning_ink * 0.46))
-		var material: ShaderMaterial = mountain.get("material")
+	for mountain: MountainState in mountains:
+		var old_growth := mountain.growth
+		mountain.growth = move_toward(old_growth, 1.0, delta * (0.22 + reasoning_ink * 0.46))
+		var material := mountain.material
 		if material != null:
-			material.set_shader_parameter("growth", mountain["growth"])
-		changed = changed or old_growth != float(mountain["growth"])
-	var departed_birds: Array[Dictionary] = []
-	for bird: Dictionary in birds:
-		bird["growth"] = move_toward(float(bird["growth"]), 1.0, delta * 3.4)
-		var phase: int = bird["phase"]
-		var flap_rate: float = bird["flap_rate"]
+			material.set_shader_parameter("growth", mountain.growth)
+		changed = changed or old_growth != mountain.growth
+	var departed_birds: Array[BirdState] = []
+	for bird: BirdState in birds:
+		bird.growth = move_toward(bird.growth, 1.0, delta * 3.4)
+		var phase := bird.phase
+		var flap_rate := bird.flap_rate
 		if phase == BirdPhase.ENTERING:
-			bird["wing"] = float(bird["wing"]) + delta * 7.0 * flap_rate
-			var flight_speed := bird_flight_speed(float(bird["wing"]))
-			bird["entry"] = minf(1.0, float(bird["entry"]) + delta * BIRD_ENTRY_SPEED * flight_speed)
-			if float(bird["entry"]) >= 1.0:
-				bird["phase"] = BirdPhase.ACTIVE if int(bird["result"]) == BirdResult.ACTIVE else BirdPhase.FINISHING
+			bird.wing += delta * 7.0 * flap_rate
+			var flight_speed := bird_flight_speed(bird.wing)
+			bird.entry = minf(1.0, bird.entry + delta * BIRD_ENTRY_SPEED * flight_speed)
+			if bird.entry >= 1.0:
+				bird.phase = BirdPhase.ACTIVE if bird.result == BirdResult.ACTIVE else BirdPhase.FINISHING
 		elif phase == BirdPhase.ACTIVE:
-			bird["wing"] = float(bird["wing"]) + delta * 7.0 * flap_rate
+			bird.wing += delta * 7.0 * flap_rate
 		elif phase == BirdPhase.FINISHING:
-			var finish_phase: float = bird["finish_phase"]
+			var finish_phase := bird.finish_phase
 			if finish_phase < 0.0:
-				finish_phase = next_glide_phase(float(bird["wing"]))
-				bird["finish_phase"] = finish_phase
-			bird["wing"] = minf(finish_phase, float(bird["wing"]) + delta * 7.0 * flap_rate)
-			if is_equal_approx(float(bird["wing"]), finish_phase):
-				bird["phase"] = BirdPhase.DEPARTING
+				finish_phase = next_glide_phase(bird.wing)
+				bird.finish_phase = finish_phase
+			bird.wing = minf(finish_phase, bird.wing + delta * 7.0 * flap_rate)
+			if is_equal_approx(bird.wing, finish_phase):
+				bird.phase = BirdPhase.DEPARTING
 		elif phase == BirdPhase.DEPARTING:
-			bird["departure"] = minf(1.0, float(bird["departure"]) + delta * BIRD_DEPARTURE_SPEED)
-			if float(bird["departure"]) >= 1.0:
+			bird.departure = minf(1.0, bird.departure + delta * BIRD_DEPARTURE_SPEED)
+			if bird.departure >= 1.0:
 				departed_birds.append(bird)
-	for bird: Dictionary in departed_birds:
+	for bird: BirdState in departed_birds:
 		birds.erase(bird)
 	if completing:
 		completion = minf(1.0, completion + delta / COMPLETION_SECONDS)
@@ -347,7 +370,7 @@ func _draw() -> void:
 	if size.x < 220.0 or size.y < 180.0:
 		return
 	var field := landscape_rect()
-	for bird: Dictionary in birds:
+	for bird: BirdState in birds:
 		draw_tool_bird(bird, field)
 	pass
 
@@ -367,8 +390,8 @@ func update_canvas_rect() -> void:
 		var bounds := cloud_layer_bounds(index)
 		canvas.position = field.position + field.size * bounds.position
 		canvas.size = field.size * bounds.size
-	for mountain: Dictionary in mountains:
-		var canvas: ColorRect = mountain.get("canvas")
+	for mountain: MountainState in mountains:
+		var canvas := mountain.canvas
 		if is_instance_valid(canvas):
 			var bounds := mountain_bounds(mountain)
 			canvas.position = field.position + field.size * bounds.position
@@ -402,8 +425,8 @@ func update_shader_theme() -> void:
 		material.set_shader_parameter("cloud_color", Color(0.48, 0.51, 0.49, 1.0) if ThemeColor.is_dark_theme() else Color(0.94, 0.945, 0.925, 1.0))
 		material.set_shader_parameter("ink_color", ink_color())
 		material.set_shader_parameter("dark_theme", 1.0 if ThemeColor.is_dark_theme() else 0.0)
-	for mountain: Dictionary in mountains:
-		var material: ShaderMaterial = mountain.get("material")
+	for mountain: MountainState in mountains:
+		var material := mountain.material
 		if material != null:
 			material.set_shader_parameter("ink_color", ink_color())
 			material.set_shader_parameter("background_color", ColorBase.app_background)
@@ -411,26 +434,26 @@ func update_shader_theme() -> void:
 	pass
 
 
-func mount_mountain(mountain: Dictionary) -> void:
+func mount_mountain(mountain: MountainState) -> void:
 	var canvas := ColorRect.new()
 	canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	canvas.color = Color.WHITE
 	canvas.show_behind_parent = true
-	canvas.z_index = -90 + int(float(mountain["depth"]) * 80.0)
+	canvas.z_index = -90 + int(mountain.depth * 80.0)
 	var material := ShaderMaterial.new()
 	material.shader = load(MOUNTAIN_SHADER_PATH)
 	material.set_shader_parameter("ink_color", ink_color())
 	material.set_shader_parameter("background_color", ColorBase.app_background)
-	material.set_shader_parameter("center", mountain["center"])
-	material.set_shader_parameter("mountain_width", mountain["width"])
-	material.set_shader_parameter("mountain_height", mountain["height"])
-	material.set_shader_parameter("base", mountain["base"])
-	material.set_shader_parameter("strength", mountain["strength"])
-	material.set_shader_parameter("softness", mountain["softness"])
-	material.set_shader_parameter("depth", mountain["depth"])
-	material.set_shader_parameter("shape", mountain["shape"])
-	material.set_shader_parameter("seed", float(mountain["serial"]) * 1.137)
-	material.set_shader_parameter("growth", mountain["growth"])
+	material.set_shader_parameter("center", mountain.center)
+	material.set_shader_parameter("mountain_width", mountain.width)
+	material.set_shader_parameter("mountain_height", mountain.height)
+	material.set_shader_parameter("base", mountain.base)
+	material.set_shader_parameter("strength", mountain.strength)
+	material.set_shader_parameter("softness", mountain.softness)
+	material.set_shader_parameter("depth", mountain.depth)
+	material.set_shader_parameter("shape", mountain.shape)
+	material.set_shader_parameter("seed", float(mountain.serial) * 1.137)
+	material.set_shader_parameter("growth", mountain.growth)
 	material.set_shader_parameter("dark_theme", 1.0 if ThemeColor.is_dark_theme() else 0.0)
 	material.set_shader_parameter("fade_alpha", exit_alpha)
 	var bounds := mountain_bounds(mountain)
@@ -438,19 +461,19 @@ func mount_mountain(mountain: Dictionary) -> void:
 	material.set_shader_parameter("uv_scale", bounds.size)
 	canvas.material = material
 	add_child(canvas)
-	mountain["canvas"] = canvas
-	mountain["material"] = material
+	mountain.canvas = canvas
+	mountain.material = material
 	update_canvas_rect()
 	pass
 
 
-static func mountain_bounds(mountain: Dictionary) -> Rect2:
+static func mountain_bounds(mountain: MountainState) -> Rect2:
 	# Include profile side lobes, noisy edges, and the opaque foot. Do not expand
 	# this to fullscreen: local bounds are the main mountain GPU optimization.
-	var center: float = mountain["center"]
-	var width: float = mountain["width"]
-	var base: float = mountain["base"]
-	var height: float = mountain["height"]
+	var center := mountain.center
+	var width := mountain.width
+	var base := mountain.base
+	var height := mountain.height
 	var left := maxf(0.0, center - width * 5.6)
 	var right := minf(1.0, center + width * 5.6)
 	var top := maxf(0.0, base - height * 1.55 - 0.045)
@@ -496,17 +519,17 @@ static func mountain_center(serial: int, width: float) -> float:
 	return clampf(golden_position, margin, 1.0 - margin)
 
 
-func draw_tool_bird(bird: Dictionary, field: Rect2) -> void:
-	var growth: float = bird["growth"]
+func draw_tool_bird(bird: BirdState, field: Rect2) -> void:
+	var growth := bird.growth
 	if growth <= 0.0:
 		return
-	var phase: int = bird["phase"]
-	var result: int = bird["result"]
-	var serial: int = bird["serial"]
-	var seed: float = bird["seed"]
-	var departure: float = bird["departure"]
+	var phase := bird.phase
+	var result := bird.result
+	var serial := bird.serial
+	var seed := bird.seed
+	var departure := bird.departure
 	var target_ratio := bird_exit_position(serial, seed)
-	var entry: float = bird["entry"]
+	var entry := bird.entry
 	var spawn_ratio := bird_spawn_position(target_ratio.x, serial)
 	var control_ratio := bird_entry_control(spawn_ratio, target_ratio, serial, seed)
 	var position_ratio := bird_entry_position(spawn_ratio, control_ratio, target_ratio, entry)
@@ -520,10 +543,10 @@ func draw_tool_bird(bird: Dictionary, field: Rect2) -> void:
 	var departure_scale := bird_departure_scale(departure)
 	var base_scale := (0.78 + seed * 0.38) * perspective.x * ease(growth, -1.2)
 	var scale := base_scale * departure_scale
-	var flap := sin(float(bird["wing"]))
+	var flap := sin(bird.wing)
 	# Keep the final flap offset as the glide anchor. Removing it at the exact
 	# lock-frame causes a small but visible backward snap.
-	center += bird_body_flap_offset(float(bird["wing"]), base_scale)
+	center += bird_body_flap_offset(bird.wing, base_scale)
 	var wing_lift := flap * 11.0 * scale
 	if phase == BirdPhase.DEPARTING and result == BirdResult.SUCCESS:
 		wing_lift = 3.0 * scale
