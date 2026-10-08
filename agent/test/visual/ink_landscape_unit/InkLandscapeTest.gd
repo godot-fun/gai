@@ -107,6 +107,16 @@ func bird_entry_uses_constant_speed_test() -> void:
 	pass
 
 
+func bird_speed_varies_smoothly_with_wing_stroke_test() -> void:
+	var slow := InkLandscape.bird_flight_speed(0.0)
+	var cruise := InkLandscape.bird_flight_speed(PI * 0.5)
+	var fast := InkLandscape.bird_flight_speed(PI)
+	assert(slow < cruise)
+	assert(cruise < fast)
+	assert(slow >= 0.50 and fast <= 1.50)
+	pass
+
+
 func completed_tool_keeps_flapping_until_entry_finishes_test() -> void:
 	var effect := InkLandscape.new()
 	var args: Dictionary[String, Variant] = {}
@@ -118,7 +128,8 @@ func completed_tool_keeps_flapping_until_entry_finishes_test() -> void:
 	assert(float(effect.birds[0]["entry"]) < 1.0)
 	assert(float(effect.birds[0]["wing"]) > initial_wing + 6.9)
 	assert(float(effect.birds[0]["flight"]) == 0.0)
-	effect._process(4.0)
+	for _frame in range(600):
+		effect._process(1.0 / 60.0)
 	assert(float(effect.birds[0]["entry"]) == 1.0)
 	effect._process(0.5)
 	assert(float(effect.birds[0]["flight"]) > 0.0)

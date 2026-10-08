@@ -11,6 +11,7 @@ const MAX_MOUNTAINS := 16
 const MAX_CLOUDS := 16
 const MAX_BIRDS := 16
 const COMPLETION_SECONDS := 1.2
+const BIRD_ENTRY_SPEED := 0.10
 
 enum BirdState { FLYING, GLIDING, FALLING }
 
@@ -266,10 +267,12 @@ func _process(delta: float) -> void:
 		changed = changed or old_growth != float(mountain["growth"])
 	for bird: Dictionary in birds:
 		bird["growth"] = move_toward(float(bird["growth"]), 1.0, delta * 3.4)
-		bird["entry"] = move_toward(float(bird["entry"]), 1.0, delta * 0.25)
 		var state: int = bird["state"]
 		var entering := float(bird["entry"]) < 1.0
 		bird["wing"] = float(bird["wing"]) + delta * (7.0 if entering or state == BirdState.FLYING else 2.2)
+		if entering:
+			var flight_speed := bird_flight_speed(float(bird["wing"]))
+			bird["entry"] = minf(1.0, float(bird["entry"]) + delta * BIRD_ENTRY_SPEED * flight_speed)
 		if not entering and state != BirdState.FLYING:
 			bird["flight"] = minf(1.0, float(bird["flight"]) + delta * 0.28)
 	if completing:
@@ -449,6 +452,9 @@ func draw_tool_bird(bird: Dictionary, field: Rect2) -> void:
 		center += Vector2(field.size.x * 0.018 * flight, field.size.y * 0.085 * flight)
 	var scale := (0.78 + seed * 0.38) * ease(growth, -1.2)
 	var flap := sin(float(bird["wing"]))
+	# The body rises slightly on the power stroke and settles during recovery.
+	center.y -= flap * 3.8 * scale
+	center.x += cos(float(bird["wing"]) * 0.5) * 1.6 * scale
 	var wing_lift := flap * 11.0 * scale
 	if state == BirdState.GLIDING and entry >= 1.0:
 		wing_lift = 3.0 * scale
@@ -530,6 +536,13 @@ static func bird_entry_position(spawn: Vector2, control: Vector2, target: Vector
 		var amount := 0.0 if segment_length <= 0.0001 else (wanted - lengths[index - 1]) / segment_length
 		return points[index - 1].lerp(points[index], amount)
 	return target
+
+
+static func bird_flight_speed(wing_phase: float) -> float:
+	# wing_lift follows sin(phase), so its downward velocity follows -cos(phase).
+	# This makes the power stroke accelerate the bird and the recovery stroke
+	# slow it down, independent of the wing's current high/low pose.
+	return 1.0 - cos(wing_phase) * 0.50
 
 
 static func quadratic_bezier(start: Vector2, control: Vector2, end: Vector2, time: float) -> Vector2:
