@@ -24,6 +24,7 @@ const EFFECT_SPECS: Array[Dictionary] = [
 	{"type": VisualType.Type.GEOMETRIC_GENESIS, "label": "Geometric Genesis"},
 	{"type": VisualType.Type.MATRIX_RAIN, "label": "Matrix Rain"},
 	{"type": VisualType.Type.FILTER_CAROUSEL, "label": "Filter Carousel"},
+	{"type": VisualType.Type.INK_LANDSCAPE, "label": "Ink Landscape"},
 ]
 
 const TOOL_CATALOG: Array[Dictionary] = [
@@ -377,6 +378,10 @@ func visual_label() -> String:
 			return "Geometric Genesis"
 		VisualType.Type.MATRIX_RAIN:
 			return "Matrix Rain"
+		VisualType.Type.FILTER_CAROUSEL:
+			return "Filter Carousel"
+		VisualType.Type.INK_LANDSCAPE:
+			return "Ink Landscape"
 	return "None"
 
 

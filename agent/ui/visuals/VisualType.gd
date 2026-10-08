@@ -18,8 +18,9 @@ enum Type {
 	GEOMETRIC_GENESIS,
 	MATRIX_RAIN,
 	FILTER_CAROUSEL,
+	INK_LANDSCAPE,
 }
 
 
 static func is_valid(value: int) -> bool:
-	return value >= Type.NONE and value <= Type.FILTER_CAROUSEL
+	return value >= Type.NONE and value <= Type.INK_LANDSCAPE

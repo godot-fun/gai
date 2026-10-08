@@ -55,6 +55,8 @@ func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 			return MatrixRain.new()
 		VisualType.Type.FILTER_CAROUSEL:
 			return FilterCarousel.new()
+		VisualType.Type.INK_LANDSCAPE:
+			return InkLandscape.new()
 	return null
 
 
