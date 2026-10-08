@@ -95,13 +95,31 @@ void fragment() {
 	float coverage = body * bloom * grown;
 	float ink = (body * (0.39 + grain * mix(0.14, 0.31, depth)) + wet_edge) * strength * bloom * grown;
 
+	// Interior structure: sparse diagonal creases descend from the summit while
+	// broken contour strokes suggest traditional cun texture. Keep distant ranges
+	// restrained; foreground mountains carry most of the brush information.
+	float mountain_span = max(base - height, 0.001);
+	float down_slope = clamp((uv.y - height) / mountain_span, 0.0, 1.0);
+	float normalized_x = (uv.x - center) / max(mountain_width, 0.001);
+	float crease_wave = abs(sin(normalized_x * 5.2 + down_slope * 8.4 + seed));
+	float creases = pow(1.0 - crease_wave, 18.0);
+	float contour_wave = abs(sin(down_slope * 31.0 + normalized_x * 1.8 + seed * 0.7));
+	float contours = pow(1.0 - contour_wave, 24.0) * smoothstep(0.40, 0.80, grain);
+	// Keep texture away from the silhouette and the opaque foot so the mountain's
+	// principal outline remains visually dominant.
+	float interior_mask = smoothstep(0.018, 0.070, edge_distance) * (1.0 - smoothstep(0.82, 1.0, down_slope));
+	float texture_detail = (creases * 0.055 + contours * 0.035) * body * bloom * grown * interior_mask * smoothstep(0.34, 0.94, depth);
+	ink += texture_detail * strength;
+
 	// More distant layers meet higher, thinner fog; foreground layers retain more body.
 	float fog_y = mix(0.48, 0.78, depth) + sin(uv.x * mix(8.0, 4.5, depth) + seed) * 0.015;
 	float fog = exp(-abs(uv.y - fog_y) * mix(50.0, 31.0, depth));
 	ink *= 1.0 - fog * mix(0.66, 0.38, depth);
 	float ink_alpha = clamp(pow(max(ink, 0.0), 0.86) * 1.08, 0.0, mix(0.28, 0.78, depth));
 	float occlusion_alpha = coverage * mix(0.68, 0.94, depth);
-	float wash = clamp(strength * (0.46 + grain * 0.34), 0.0, 0.62);
+	// Slightly lighter left slope and darker right slope establish readable volume.
+	float slope_shade = smoothstep(-0.65, 0.85, normalized_x) * mix(0.04, 0.18, depth);
+	float wash = clamp(strength * (0.42 + grain * 0.30 + slope_shade) + texture_detail * 0.18, 0.0, 0.68);
 	vec3 body_color = mix(background_color.rgb, ink_color.rgb, wash);
 	vec3 final_color = mix(body_color, ink_color.rgb, clamp(wet_edge * strength * 1.8, 0.0, 1.0));
 	COLOR = vec4(final_color, max(ink_alpha, occlusion_alpha) * fade_alpha);

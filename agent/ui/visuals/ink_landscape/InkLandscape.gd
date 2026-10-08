@@ -40,6 +40,9 @@ var cloud_reveal: float = 0.0
 ## Shared end opacity. Shaders consume it directly because they overwrite COLOR,
 ## which bypasses CanvasItem modulation in their output calculation.
 var exit_alpha: float = 1.0
+## True only when the current turn created a mountain. Cloud turns must not
+## accidentally settle the mountain created by the preceding turn.
+var current_turn_has_mountain: bool = false
 
 
 func _ready() -> void:
@@ -88,6 +91,9 @@ func create_cloud_canvas() -> void:
 		var material := ShaderMaterial.new()
 		material.shader = load(CLOUD_SHADER_PATH)
 		material.set_shader_parameter("layer_index", float(index))
+		var bounds := cloud_layer_bounds(index)
+		material.set_shader_parameter("uv_origin", bounds.position)
+		material.set_shader_parameter("uv_scale", bounds.size)
 		canvas.material = material
 		add_child(canvas)
 		cloud_canvases.append(canvas)
@@ -128,6 +134,7 @@ func reset_visual() -> void:
 	bird_serial = 0
 	cloud_count = 0
 	cloud_reveal = 0.0
+	current_turn_has_mountain = false
 	set_landscape_alpha(1.0)
 	update_shader_state()
 	queue_redraw()
@@ -170,6 +177,7 @@ func set_landscape_alpha(value: float) -> void:
 
 func on_turn_start() -> void:
 	turn_serial += 1
+	current_turn_has_mountain = false
 	# Composition cadence is cloud -> mountain. Mountain geometry uses its own
 	# serial below so alternating turns do not skip shape/depth seeds.
 	if turn_serial % 2 == 1:
@@ -190,13 +198,14 @@ func on_turn_start() -> void:
 		"width": dimensions.x,
 		"height": dimensions.y,
 		"base": lerpf(0.28, 1.04, depth),
-		"strength": lerpf(0.07, 0.42, depth),
+		"strength": lerpf(0.07, 0.42, depth) * (1.12 if mountain_serial == 3 else 1.0),
 		"softness": lerpf(0.94, 0.16, depth),
-		"shape": float((mountain_serial - 1) % 5),
+		"shape": 3.0 if mountain_serial == 3 else float((mountain_serial - 1) % 5),
 		"growth": 0.0,
 		"settled": false,
 	}
 	mountains.append(mountain)
+	current_turn_has_mountain = true
 	if is_inside_tree():
 		mount_mountain(mountain)
 		rebalance_mountain_opacity()
@@ -206,9 +215,10 @@ func on_turn_start() -> void:
 
 
 func on_turn_end() -> void:
-	if not mountains.is_empty():
+	if current_turn_has_mountain and not mountains.is_empty():
 		mountains[-1]["settled"] = true
 		mountains[-1]["growth"] = 1.0
+	current_turn_has_mountain = false
 	queue_redraw()
 	pass
 
@@ -217,7 +227,7 @@ func on_message_update(chunk: String, stream_kind: String) -> void:
 	if chunk.is_empty():
 		return
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
-		ensure_mountain()
+		ensure_landscape_mark()
 		reasoning_ink = minf(2.0, reasoning_ink + float(chunk.length()) / 90.0)
 	queue_redraw()
 	pass
@@ -316,8 +326,10 @@ func update_canvas_rect() -> void:
 	ink_canvas.position = field.position
 	ink_canvas.size = field.size
 	for canvas: ColorRect in cloud_canvases:
-		canvas.position = field.position
-		canvas.size = field.size
+		var index := cloud_canvases.find(canvas)
+		var bounds := cloud_layer_bounds(index)
+		canvas.position = field.position + field.size * bounds.position
+		canvas.size = field.size * bounds.size
 	for mountain: Dictionary in mountains:
 		var canvas: ColorRect = mountain.get("canvas")
 		if is_instance_valid(canvas):
@@ -417,6 +429,11 @@ func rebalance_mountain_opacity() -> void:
 
 
 static func mountain_depth(serial: int) -> float:
+	# Establish a composed opening: two distant supports, a dominant right-hand
+	# peak, then foreground companions. Later turns resume even depth coverage.
+	const OPENING_DEPTHS := [0.18, 0.34, 0.84, 0.48, 0.70, 0.27]
+	if serial <= OPENING_DEPTHS.size():
+		return OPENING_DEPTHS[serial - 1]
 	# Van der Corput sequence distributes unlimited turns evenly through the depth field.
 	var value := maxi(serial, 1)
 	var factor := 0.5
@@ -434,6 +451,10 @@ static func mountain_dimensions(depth: float) -> Vector2:
 
 
 static func mountain_center(serial: int, width: float) -> float:
+	const OPENING_CENTERS := [0.16, 0.48, 0.72, 0.34, 0.14, 0.88]
+	if serial <= OPENING_CENTERS.size():
+		var opening_margin := width * 1.8
+		return clampf(OPENING_CENTERS[serial - 1], opening_margin, 1.0 - opening_margin)
 	# The first three turns establish a complete left/center/right composition. Later
 	# cycles add bounded jitter and fill the gaps without creating visible columns.
 	var lane := (serial - 1) % 3
@@ -497,10 +518,22 @@ func draw_tool_bird(bird: Dictionary, field: Rect2) -> void:
 	pass
 
 
-func ensure_mountain() -> void:
-	if mountains.is_empty():
+func ensure_landscape_mark() -> void:
+	if mountains.is_empty() and cloud_count == 0:
 		on_turn_start()
 	pass
+
+
+static func cloud_layer_bounds(layer_index: int) -> Rect2:
+	# Procedural clouds in each pass occupy a known vertical depth band. Cropping
+	# those passes reduces fill-rate while retaining full horizontal distribution.
+	match layer_index:
+		0:
+			return Rect2(0.0, 0.25, 1.0, 0.30)
+		1:
+			return Rect2(0.0, 0.40, 1.0, 0.43)
+		_:
+			return Rect2(0.0, 0.58, 1.0, 0.42)
 
 
 func ink_color() -> Color:

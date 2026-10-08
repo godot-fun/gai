@@ -11,6 +11,8 @@ uniform float layer_index : hint_range(0.0, 2.0) = 0.0;
 uniform float cloud_reveal : hint_range(0.0, 16.0) = 0.0;
 // Multiply final alpha explicitly because this shader overwrites COLOR.
 uniform float fade_alpha : hint_range(0.0, 1.0) = 1.0;
+uniform vec2 uv_origin = vec2(0.0);
+uniform vec2 uv_scale = vec2(1.0);
 
 float hash21(vec2 p) {
 	p = fract(p * vec2(123.34, 456.21));
@@ -54,7 +56,7 @@ float cloud_wisp(vec2 uv, vec2 center, vec2 size, float seed, float speed) {
 }
 
 void fragment() {
-	vec2 uv = UV;
+	vec2 uv = uv_origin + UV * uv_scale;
 	// Clouds are revealed one by one. Their procedural depth assignment lets each
 	// new wash sit behind, among, or in front of different mountain ranges.
 	float cloud = 0.0;

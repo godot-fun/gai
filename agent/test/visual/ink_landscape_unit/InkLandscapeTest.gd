@@ -183,6 +183,8 @@ func first_three_mountains_span_screen_test() -> void:
 	assert(first < 0.3)
 	assert(second > 0.4 and second < 0.6)
 	assert(third > 0.7)
+	assert(InkLandscape.mountain_depth(3) > InkLandscape.mountain_depth(1))
+	assert(InkLandscape.mountain_depth(3) > InkLandscape.mountain_depth(2))
 	pass
 
 
@@ -221,6 +223,29 @@ func cloud_appears_gradually_test() -> void:
 	effect._process(2.0)
 	assert(effect.cloud_reveal == 1.0)
 	effect.free()
+	pass
+
+
+func cloud_turn_does_not_settle_previous_mountain_test() -> void:
+	var effect := InkLandscape.new()
+	effect.on_turn_start()
+	effect.on_turn_start()
+	assert(effect.current_turn_has_mountain)
+	effect.mountains[0]["growth"] = 0.42
+	effect.on_turn_start()
+	assert(not effect.current_turn_has_mountain)
+	effect.on_turn_end()
+	assert(is_equal_approx(float(effect.mountains[0]["growth"]), 0.42))
+	effect.free()
+	pass
+
+
+func cloud_layers_are_vertically_cropped_test() -> void:
+	for index in range(3):
+		var bounds := InkLandscape.cloud_layer_bounds(index)
+		assert(bounds.position.y >= 0.0)
+		assert(bounds.end.y <= 1.0)
+		assert(bounds.size.y < 1.0)
 	pass
 
 
