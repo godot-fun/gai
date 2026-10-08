@@ -13,8 +13,11 @@ uniform float depth : hint_range(0.0, 1.0) = 0.5;
 uniform float shape : hint_range(0.0, 4.0) = 0.0;
 uniform float seed = 1.0;
 uniform float growth : hint_range(0.0, 1.0) = 0.0;
+// The ColorRect is cropped to mountain_bounds(); reconstruct full-viewport UV
+// so all mountain parameters remain normalized to the complete screen.
 uniform vec2 uv_origin = vec2(0.0);
 uniform vec2 uv_scale = vec2(1.0);
+// Multiply final alpha explicitly because this shader overwrites COLOR.
 uniform float fade_alpha : hint_range(0.0, 1.0) = 1.0;
 
 float hash21(vec2 p) {

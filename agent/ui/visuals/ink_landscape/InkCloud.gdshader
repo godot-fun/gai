@@ -6,7 +6,10 @@ uniform vec4 ink_color : source_color = vec4(0.10, 0.12, 0.105, 1.0);
 uniform float elapsed = 0.0;
 uniform float presence : hint_range(0.0, 1.0) = 0.6;
 uniform float layer_index : hint_range(0.0, 2.0) = 0.0;
+// Shared across three passes. Modulo-3 depth assignment makes each cloud run in
+// exactly one pass instead of being shaded three times.
 uniform float cloud_reveal : hint_range(0.0, 16.0) = 0.0;
+// Multiply final alpha explicitly because this shader overwrites COLOR.
 uniform float fade_alpha : hint_range(0.0, 1.0) = 1.0;
 
 float hash21(vec2 p) {

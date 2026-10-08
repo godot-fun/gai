@@ -1,8 +1,10 @@
 class_name InkLandscape
 extends VisualEffect
 
-## Event-driven ink landscape. A shader paints the continuous mountains, wet edges,
-## paper grain, and negative-space fog; this control draws semantic foreground marks.
+## Event-driven ink landscape built from independent depth-sorted canvas layers.
+## Odd turns reveal one cloud and even turns grow one mountain. Mountains are cropped
+## to local bounds for fill-rate; clouds use three shared full-screen depth passes.
+## Birds are CPU-drawn above both, one per tool execution.
 
 const SHADER_PATH := "res://agent/ui/visuals/ink_landscape/InkLandscape.gdshader"
 const MOUNTAIN_SHADER_PATH := "res://agent/ui/visuals/ink_landscape/InkMountain.gdshader"
@@ -32,7 +34,11 @@ var ended_with_error: bool = false
 var turn_serial: int = 0
 var bird_serial: int = 0
 var cloud_count: int = 0
+## Fractional reveal cursor: its integer part counts completed clouds and its
+## fractional part drives the newest cloud's ink-spreading animation.
 var cloud_reveal: float = 0.0
+## Shared end opacity. Shaders consume it directly because they overwrite COLOR,
+## which bypasses CanvasItem modulation in their output calculation.
 var exit_alpha: float = 1.0
 
 
@@ -70,6 +76,8 @@ func create_ink_canvas() -> void:
 func create_cloud_canvas() -> void:
 	if not cloud_canvases.is_empty():
 		return
+	# These values interleave with mountain z [-87, -14], allowing cloud banks
+	# behind, among, and in front of different mountain ranges.
 	var layer_z := [-82, -52, -1]
 	for index in range(3):
 		var canvas := ColorRect.new()
@@ -150,6 +158,7 @@ func on_agent_end(error_message: String) -> void:
 func set_landscape_alpha(value: float) -> void:
 	exit_alpha = clampf(value, 0.0, 1.0)
 	for material: ShaderMaterial in cloud_materials:
+		# self_modulate is insufficient because InkCloud.gdshader assigns COLOR.
 		material.set_shader_parameter("fade_alpha", exit_alpha)
 	for mountain: Dictionary in mountains:
 		var material: ShaderMaterial = mountain.get("material")
@@ -161,6 +170,8 @@ func set_landscape_alpha(value: float) -> void:
 
 func on_turn_start() -> void:
 	turn_serial += 1
+	# Composition cadence is cloud -> mountain. Mountain geometry uses its own
+	# serial below so alternating turns do not skip shape/depth seeds.
 	if turn_serial % 2 == 1:
 		cloud_count = mini(cloud_count + 1, MAX_CLOUDS)
 		reasoning_ink = minf(2.0, reasoning_ink + 0.34)
@@ -382,6 +393,8 @@ func mount_mountain(mountain: Dictionary) -> void:
 
 
 static func mountain_bounds(mountain: Dictionary) -> Rect2:
+	# Include profile side lobes, noisy edges, and the opaque foot. Do not expand
+	# this to fullscreen: local bounds are the main mountain GPU optimization.
 	var center: float = mountain["center"]
 	var width: float = mountain["width"]
 	var base: float = mountain["base"]
@@ -542,6 +555,8 @@ static func bird_flight_speed(wing_phase: float) -> float:
 	# wing_lift follows sin(phase), so its downward velocity follows -cos(phase).
 	# This makes the power stroke accelerate the bird and the recovery stroke
 	# slow it down, independent of the wing's current high/low pose.
+	# 0.50 produces a visible 50%-150% range around BIRD_ENTRY_SPEED. Keep the
+	# result positive or a large frame could make the bird travel backwards.
 	return 1.0 - cos(wing_phase) * 0.50
 
 
