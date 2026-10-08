@@ -42,31 +42,54 @@ func tool_bird_tracks_result_test() -> void:
 	pass
 
 
-func repeated_tools_keep_unique_bird_positions_test() -> void:
+func repeated_tools_retire_old_birds_without_abrupt_removal_test() -> void:
 	var effect := InkLandscape.new()
+	effect.visible = true
 	var args: Dictionary[String, Variant] = {}
 	for index in range(24):
 		effect.on_tool_execution_start("tool-%d" % index, ReadTool.NAME, args)
-	assert(effect.birds.size() == InkLandscape.MAX_BIRDS)
+		effect._process(0.5)
+	assert(effect.birds.size() >= InkLandscape.MAX_BIRDS)
 	assert(effect.bird_serial == 24)
 	var positions: Dictionary[Vector2, bool] = {}
 	for bird: Dictionary in effect.birds:
 		var position := InkLandscape.bird_position(int(bird["serial"]), float(bird["seed"]))
 		positions[position] = true
-	assert(positions.size() == InkLandscape.MAX_BIRDS)
+	assert(positions.size() == effect.birds.size())
+	assert(effect.birds.any(func(bird: Dictionary) -> bool: return bool(bird["forced_departure"])))
 	effect.free()
 	pass
 
 
-func tool_birds_enter_from_below_screen_test() -> void:
+func capacity_retirement_shrinks_entering_bird_test() -> void:
+	var effect := InkLandscape.new()
+	effect.visible = true
+	var args: Dictionary[String, Variant] = {}
+	for index in range(InkLandscape.MAX_BIRDS + 1):
+		effect.on_tool_execution_start("capacity-%d" % index, ReadTool.NAME, args)
+	var retiring_bird: Dictionary = effect.birds[0]
+	assert(bool(retiring_bird["forced_departure"]))
+	assert(float(retiring_bird["entry"]) < 1.0)
+	effect._process(1.0)
+	assert(float(retiring_bird["flight"]) > 0.0)
+	assert(InkLandscape.bird_departure_scale(float(retiring_bird["flight"])) < 1.0)
+	effect.free()
+	pass
+
+
+func tool_birds_enter_from_both_screen_edges_test() -> void:
 	var effect := InkLandscape.new()
 	var args: Dictionary[String, Variant] = {}
-	effect.on_tool_execution_start("bottom-bird", ReadTool.NAME, args)
+	effect.on_tool_execution_start("top-bird", ReadTool.NAME, args)
 	var target := InkLandscape.bird_exit_position(1, float(effect.birds[0]["seed"]))
-	var spawn := InkLandscape.bird_spawn_position(target.x)
-	assert(spawn.y > 1.0)
-	assert(target.y < 0.0)
+	var spawn := InkLandscape.bird_spawn_position(target.x, 1)
+	assert(spawn.y < 0.0)
+	assert(target.y > 0.0 and target.y < 1.0)
 	assert(is_equal_approx(spawn.x, target.x))
+	effect.on_tool_execution_start("bottom-bird", ReadTool.NAME, args)
+	var second_target := InkLandscape.bird_exit_position(2, float(effect.birds[1]["seed"]))
+	var second_spawn := InkLandscape.bird_spawn_position(second_target.x, 2)
+	assert(second_spawn.y > 1.0)
 	effect.visible = true
 	effect._process(0.5)
 	assert(float(effect.birds[0]["entry"]) > 0.0 and float(effect.birds[0]["entry"]) < 1.0)
@@ -80,13 +103,13 @@ func tool_bird_crosses_and_exits_screen_test() -> void:
 	effect.on_tool_execution_start("cross-screen", ReadTool.NAME, args)
 	var bird: Dictionary = effect.birds[0]
 	var target := InkLandscape.bird_exit_position(int(bird["serial"]), float(bird["seed"]))
-	var spawn := InkLandscape.bird_spawn_position(target.x)
+	var spawn := InkLandscape.bird_spawn_position(target.x, int(bird["serial"]))
 	var control := InkLandscape.bird_entry_control(spawn, target, int(bird["serial"]), float(bird["seed"]))
 	var middle := InkLandscape.bird_entry_position(spawn, control, target, 0.5)
 	var finish := InkLandscape.bird_entry_position(spawn, control, target, 1.0)
-	assert(spawn.y > 1.0)
-	assert(middle.y > 0.0 and middle.y < 1.0)
-	assert(finish.y < 0.0)
+	assert(spawn.y < 0.0)
+	assert(middle.y < finish.y)
+	assert(finish.y > 0.0 and finish.y < 1.0)
 	effect.free()
 	pass
 
@@ -114,6 +137,16 @@ func bird_speed_varies_smoothly_with_wing_stroke_test() -> void:
 	assert(slow < cruise)
 	assert(cruise < fast)
 	assert(slow >= 0.50 and fast <= 1.50)
+	pass
+
+
+func departing_bird_shrinks_to_nothing_test() -> void:
+	var full_size := InkLandscape.bird_departure_scale(0.0)
+	var middle_size := InkLandscape.bird_departure_scale(0.5)
+	var final_size := InkLandscape.bird_departure_scale(1.0)
+	assert(is_equal_approx(full_size, 1.0))
+	assert(middle_size > 0.0 and middle_size < full_size)
+	assert(is_zero_approx(final_size))
 	pass
 
 
@@ -151,6 +184,18 @@ func completed_tool_keeps_flapping_until_entry_finishes_test() -> void:
 	pass
 
 
+func completed_tool_bird_departs_after_glide_test() -> void:
+	var effect := InkLandscape.new()
+	effect.on_tool_execution_start("departing-tool", ReadTool.NAME, {})
+	effect.birds[0]["entry"] = 1.0
+	effect.on_tool_execution_end("departing-tool", ReadTool.NAME, AgentToolResult.ok("done"))
+	effect.visible = true
+	effect._process(6.0)
+	assert(effect.birds.is_empty())
+	effect.free()
+	pass
+
+
 func mountain_count_is_capped_test() -> void:
 	var effect := InkLandscape.new()
 	for _index in range(96):
@@ -169,7 +214,7 @@ func perspective_strictly_controls_size_test() -> void:
 	assert(distant.x < middle.x and middle.x < foreground.x)
 	assert(distant.y < middle.y and middle.y < foreground.y)
 	assert(distant.x >= 0.025 and foreground.x <= 0.12)
-	assert(distant.y >= 0.07 and foreground.y <= 0.44)
+	assert(distant.y >= 0.10 and foreground.y <= 0.56)
 	pass
 
 

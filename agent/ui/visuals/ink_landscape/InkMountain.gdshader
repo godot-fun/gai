@@ -19,6 +19,7 @@ uniform vec2 uv_origin = vec2(0.0);
 uniform vec2 uv_scale = vec2(1.0);
 // Multiply final alpha explicitly because this shader overwrites COLOR.
 uniform float fade_alpha : hint_range(0.0, 1.0) = 1.0;
+uniform float dark_theme : hint_range(0.0, 1.0) = 0.0;
 
 float hash21(vec2 p) {
 	p = fract(p * vec2(123.34, 456.21));
@@ -88,7 +89,10 @@ void fragment() {
 	float edge_distance = uv.y - height;
 	float body = smoothstep(-0.01 - softness * 0.014, 0.022 + softness * 0.03 + edge_noise, edge_distance);
 	body *= smoothstep(base + 0.065, base - 0.025, uv.y);
-	float wet_edge = exp(-abs(edge_distance + edge_noise) * mix(150.0, 76.0, softness)) * mix(0.28, 0.78, depth);
+	float wet_edge = exp(-abs(edge_distance + edge_noise) * mix(150.0, 76.0, softness)) * mix(0.20, 0.58, depth);
+	// Light paper supports a concentrated wet rim. On a dark canvas that same
+	// value reads as neon, so retain only a restrained broken highlight.
+	wet_edge *= mix(1.0, 0.28 + texture * 0.16, dark_theme);
 	float grain = clamp(texture * 0.78 + noise(vec2(uv.x * 67.0, uv.y * 29.0 + seed * 2.7)) * 0.22, 0.0, 1.0);
 	float local_distance = abs(uv.x - center) / max(mountain_width * mix(4.8, 3.5, depth), 0.001);
 	float bloom = smoothstep(grown + 0.14, grown - 0.10, local_distance);
@@ -101,25 +105,30 @@ void fragment() {
 	float mountain_span = max(base - height, 0.001);
 	float down_slope = clamp((uv.y - height) / mountain_span, 0.0, 1.0);
 	float normalized_x = (uv.x - center) / max(mountain_width, 0.001);
-	float crease_wave = abs(sin(normalized_x * 5.2 + down_slope * 8.4 + seed));
-	float creases = pow(1.0 - crease_wave, 18.0);
-	float contour_wave = abs(sin(down_slope * 31.0 + normalized_x * 1.8 + seed * 0.7));
-	float contours = pow(1.0 - contour_wave, 24.0) * smoothstep(0.40, 0.80, grain);
+	float structure_noise = fbm(vec2(normalized_x * 1.7 + seed * 2.1, down_slope * 3.4 - seed));
+	float crease_wave = abs(sin(normalized_x * 4.4 + down_slope * 7.2 + seed + (structure_noise - 0.5) * 5.2));
+	float crease_breaks = smoothstep(0.45, 0.72, noise(vec2(normalized_x * 3.1 + seed, down_slope * 9.0)));
+	float creases = pow(1.0 - crease_wave, 22.0) * crease_breaks;
+	float contour_wave = abs(sin(down_slope * 25.0 + normalized_x * 1.3 + seed * 0.7 + structure_noise * 4.0));
+	float contour_breaks = smoothstep(0.52, 0.76, noise(vec2(normalized_x * 5.2 - seed, down_slope * 12.0)));
+	float contours = pow(1.0 - contour_wave, 26.0) * contour_breaks * smoothstep(0.44, 0.82, grain);
 	// Keep texture away from the silhouette and the opaque foot so the mountain's
 	// principal outline remains visually dominant.
 	float interior_mask = smoothstep(0.018, 0.070, edge_distance) * (1.0 - smoothstep(0.82, 1.0, down_slope));
-	float texture_detail = (creases * 0.055 + contours * 0.035) * body * bloom * grown * interior_mask * smoothstep(0.34, 0.94, depth);
+	float texture_detail = (creases * 0.085 + contours * 0.055) * body * bloom * grown * interior_mask * smoothstep(0.25, 0.92, depth);
 	ink += texture_detail * strength;
 
 	// More distant layers meet higher, thinner fog; foreground layers retain more body.
 	float fog_y = mix(0.48, 0.78, depth) + sin(uv.x * mix(8.0, 4.5, depth) + seed) * 0.015;
 	float fog = exp(-abs(uv.y - fog_y) * mix(50.0, 31.0, depth));
 	ink *= 1.0 - fog * mix(0.66, 0.38, depth);
-	float ink_alpha = clamp(pow(max(ink, 0.0), 0.86) * 1.08, 0.0, mix(0.28, 0.78, depth));
-	float occlusion_alpha = coverage * mix(0.68, 0.94, depth);
+	float ink_alpha = clamp(pow(max(ink, 0.0), 0.86) * 1.08, 0.0, mix(0.16, 0.80, depth));
+	// Atmospheric perspective must affect actual coverage, not only pigment.
+	// A high distant floor made every range merge into the same grey slab.
+	float occlusion_alpha = coverage * mix(0.20, 0.86, smoothstep(0.08, 0.96, depth));
 	// Slightly lighter left slope and darker right slope establish readable volume.
 	float slope_shade = smoothstep(-0.65, 0.85, normalized_x) * mix(0.04, 0.18, depth);
-	float wash = clamp(strength * (0.42 + grain * 0.30 + slope_shade) + texture_detail * 0.18, 0.0, 0.68);
+	float wash = clamp(strength * (0.34 + grain * 0.34 + slope_shade) + texture_detail * mix(0.28, 0.72, depth), 0.0, 0.72);
 	vec3 body_color = mix(background_color.rgb, ink_color.rgb, wash);
 	vec3 final_color = mix(body_color, ink_color.rgb, clamp(wet_edge * strength * 1.8, 0.0, 1.0));
 	COLOR = vec4(final_color, max(ink_alpha, occlusion_alpha) * fade_alpha);

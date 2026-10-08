@@ -8,9 +8,10 @@ uniform float presence : hint_range(0.0, 1.0) = 0.6;
 uniform float layer_index : hint_range(0.0, 2.0) = 0.0;
 // Shared across three passes. Modulo-3 depth assignment makes each cloud run in
 // exactly one pass instead of being shaded three times.
-uniform float cloud_reveal : hint_range(0.0, 16.0) = 0.0;
+uniform float cloud_reveal : hint_range(0.0, 12.0) = 0.0;
 // Multiply final alpha explicitly because this shader overwrites COLOR.
 uniform float fade_alpha : hint_range(0.0, 1.0) = 1.0;
+uniform float dark_theme : hint_range(0.0, 1.0) = 0.0;
 uniform vec2 uv_origin = vec2(0.0);
 uniform vec2 uv_scale = vec2(1.0);
 
@@ -59,7 +60,7 @@ void fragment() {
 	// Clouds are revealed one by one. Their procedural depth assignment lets each
 	// new wash sit behind, among, or in front of different mountain ranges.
 	float cloud = 0.0;
-	for (int index = 0; index < 16; index++) {
+	for (int index = 0; index < 12; index++) {
 		float serial = float(index);
 		float depth_layer = mod(serial, 3.0);
 		float growth = smoothstep(0.0, 1.0, clamp(cloud_reveal - serial, 0.0, 1.0));
@@ -68,19 +69,19 @@ void fragment() {
 		}
 		float random_x = hash21(vec2(serial + 1.7, 4.3));
 		float random_size = hash21(vec2(serial + 8.1, 9.7));
-		float y = mix(0.34, 0.46, hash21(vec2(serial, 2.1)));
-		float width = mix(0.15, 0.22, random_size);
+		float y = mix(0.08, 0.36, hash21(vec2(serial, 2.1)));
+		float width = mix(0.13, 0.19, random_size);
 		float height = mix(0.040, 0.058, random_size);
 		float strength = mix(0.38, 0.52, random_size);
 		if (depth_layer > 0.5) {
-			y = mix(0.53, 0.70, hash21(vec2(serial, 5.4)));
-			width = mix(0.20, 0.30, random_size);
+			y = mix(0.34, 0.68, hash21(vec2(serial, 5.4)));
+			width = mix(0.17, 0.25, random_size);
 			height = mix(0.062, 0.088, random_size);
 			strength = mix(0.58, 0.76, random_size);
 		}
 		if (depth_layer > 1.5) {
-			y = mix(0.72, 0.88, hash21(vec2(serial, 7.8)));
-			width = mix(0.21, 0.31, random_size);
+			y = mix(0.62, 0.94, hash21(vec2(serial, 7.8)));
+			width = mix(0.18, 0.26, random_size);
 			height = mix(0.078, 0.105, random_size);
 			strength = mix(0.62, 0.78, random_size);
 		}
@@ -106,10 +107,11 @@ void fragment() {
 	}
 	float fibers = fbm(uv * vec2(34.0, 18.0) + vec2(elapsed * 0.004, 0.0));
 	float depth_alpha = mix(0.62, 1.0, layer_index * 0.5);
-	float alpha = cloud * mix(0.48, 0.82, smoothstep(0.12, 0.78, cloud)) * depth_alpha;
+	float alpha = cloud * mix(0.44, 0.76, smoothstep(0.12, 0.78, cloud)) * depth_alpha;
 	alpha *= 0.90 + (fibers - 0.5) * 0.20;
+	alpha *= mix(1.0, 0.72, dark_theme);
 	// A faint grey underside makes the white/black cloud mass readable in either theme.
 	float underside = smoothstep(0.36, 0.92, cloud) * (0.035 + fibers * 0.025);
 	vec3 color = mix(cloud_color.rgb, ink_color.rgb, underside);
-	COLOR = vec4(color, clamp(alpha, 0.0, 0.84) * fade_alpha);
+	COLOR = vec4(color, clamp(alpha, 0.0, mix(0.80, 0.56, dark_theme)) * fade_alpha);
 }

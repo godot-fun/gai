@@ -10,10 +10,11 @@ const SHADER_PATH := "res://agent/ui/visuals/ink_landscape/InkLandscape.gdshader
 const MOUNTAIN_SHADER_PATH := "res://agent/ui/visuals/ink_landscape/InkMountain.gdshader"
 const CLOUD_SHADER_PATH := "res://agent/ui/visuals/ink_landscape/InkCloud.gdshader"
 const MAX_MOUNTAINS := 16
-const MAX_CLOUDS := 16
-const MAX_BIRDS := 16
+const MAX_CLOUDS := 12
+const MAX_BIRDS := 7
 const COMPLETION_SECONDS := 1.2
 const BIRD_ENTRY_SPEED := 0.10
+const BIRD_DEPARTURE_SPEED := 0.18
 
 enum BirdState { FLYING, GLIDING, FALLING }
 
@@ -197,7 +198,9 @@ func on_turn_start() -> void:
 		"center": mountain_center(mountain_serial, dimensions.x),
 		"width": dimensions.x,
 		"height": dimensions.y,
-		"base": lerpf(0.28, 1.04, depth),
+		# Distant ranges begin near the top edge while foreground ranges still
+		# anchor below the viewport, using the complete canvas as a depth field.
+		"base": lerpf(0.14, 1.04, depth),
 		"strength": lerpf(0.07, 0.42, depth) * (1.12 if mountain_serial == 3 else 1.0),
 		"softness": lerpf(0.94, 0.16, depth),
 		"shape": 3.0 if mountain_serial == 3 else float((mountain_serial - 1) % 5),
@@ -235,8 +238,16 @@ func on_message_update(chunk: String, stream_kind: String) -> void:
 func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	bird_serial += 1
 	if birds.size() >= MAX_BIRDS:
-		var removed: Dictionary = birds.pop_front()
-		active_birds.erase(str(removed["id"]))
+		# Never pop a visible bird: abrupt capacity eviction bypasses its departure
+		# animation. Retire the oldest non-retiring bird in place instead.
+		for existing_bird: Dictionary in birds:
+			if bool(existing_bird.get("forced_departure", false)):
+				continue
+			existing_bird["forced_departure"] = true
+			existing_bird["state"] = BirdState.GLIDING
+			existing_bird["flight"] = 0.0
+			active_birds.erase(str(existing_bird["id"]))
+			break
 	var bird := {
 		"id": tool_call_id,
 		"state": BirdState.FLYING,
@@ -245,6 +256,7 @@ func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dic
 		"flap_rate": lerpf(0.82, 1.16, float(abs((tool_name + tool_call_id).hash()) % 1000) / 1000.0),
 		"entry": 0.0,
 		"flight": 0.0,
+		"forced_departure": false,
 		"serial": bird_serial,
 		"seed": float(abs(tool_name.hash()) % 1000) / 1000.0,
 	}
@@ -286,6 +298,7 @@ func _process(delta: float) -> void:
 		if material != null:
 			material.set_shader_parameter("growth", mountain["growth"])
 		changed = changed or old_growth != float(mountain["growth"])
+	var departed_birds: Array[Dictionary] = []
 	for bird: Dictionary in birds:
 		bird["growth"] = move_toward(float(bird["growth"]), 1.0, delta * 3.4)
 		var state: int = bird["state"]
@@ -295,8 +308,13 @@ func _process(delta: float) -> void:
 		if entering:
 			var flight_speed := bird_flight_speed(float(bird["wing"]))
 			bird["entry"] = minf(1.0, float(bird["entry"]) + delta * BIRD_ENTRY_SPEED * flight_speed)
-		if not entering and state != BirdState.FLYING:
-			bird["flight"] = minf(1.0, float(bird["flight"]) + delta * 0.28)
+		var forced_departure := bool(bird.get("forced_departure", false))
+		if (not entering or forced_departure) and state != BirdState.FLYING:
+			bird["flight"] = minf(1.0, float(bird["flight"]) + delta * BIRD_DEPARTURE_SPEED)
+			if float(bird["flight"]) >= 1.0:
+				departed_birds.append(bird)
+	for bird: Dictionary in departed_birds:
+		birds.erase(bird)
 	if completing:
 		completion = minf(1.0, completion + delta / COMPLETION_SECONDS)
 	reasoning_ink = move_toward(reasoning_ink, 0.08, delta * 0.55)
@@ -361,15 +379,17 @@ func update_shader_theme() -> void:
 	ink_material.set_shader_parameter("ink_color", ink_color())
 	ink_material.set_shader_parameter("accent_color", ink_color())
 	for material: ShaderMaterial in cloud_materials:
-		# Clouds stay paper-white in both themes; using the app background made them
-		# disappear into dark mode and read as nothing more than blurred mountains.
-		material.set_shader_parameter("cloud_color", Color(0.94, 0.945, 0.925, 1.0))
+		# Dark canvases need restrained grey vapour; near-white clouds turn layered
+		# wisps into opaque horizontal light bars.
+		material.set_shader_parameter("cloud_color", Color(0.48, 0.51, 0.49, 1.0) if ThemeColor.is_dark_theme() else Color(0.94, 0.945, 0.925, 1.0))
 		material.set_shader_parameter("ink_color", ink_color())
+		material.set_shader_parameter("dark_theme", 1.0 if ThemeColor.is_dark_theme() else 0.0)
 	for mountain: Dictionary in mountains:
 		var material: ShaderMaterial = mountain.get("material")
 		if material != null:
 			material.set_shader_parameter("ink_color", ink_color())
 			material.set_shader_parameter("background_color", ColorBase.app_background)
+			material.set_shader_parameter("dark_theme", 1.0 if ThemeColor.is_dark_theme() else 0.0)
 	pass
 
 
@@ -393,6 +413,7 @@ func mount_mountain(mountain: Dictionary) -> void:
 	material.set_shader_parameter("shape", mountain["shape"])
 	material.set_shader_parameter("seed", float(mountain["serial"]) * 1.137)
 	material.set_shader_parameter("growth", mountain["growth"])
+	material.set_shader_parameter("dark_theme", 1.0 if ThemeColor.is_dark_theme() else 0.0)
 	material.set_shader_parameter("fade_alpha", exit_alpha)
 	var bounds := mountain_bounds(mountain)
 	material.set_shader_parameter("uv_origin", bounds.position)
@@ -438,7 +459,7 @@ static func mountain_depth(serial: int) -> float:
 
 static func mountain_dimensions(depth: float) -> Vector2:
 	var perspective := smoothstep(0.0, 1.0, clampf(depth, 0.0, 1.0))
-	return Vector2(lerpf(0.025, 0.12, perspective), lerpf(0.07, 0.44, perspective))
+	return Vector2(lerpf(0.025, 0.12, perspective), lerpf(0.10, 0.56, perspective))
 
 
 static func mountain_center(serial: int, width: float) -> float:
@@ -467,7 +488,7 @@ func draw_tool_bird(bird: Dictionary, field: Rect2) -> void:
 	var flight: float = bird["flight"]
 	var target_ratio := bird_exit_position(serial, seed)
 	var entry: float = bird["entry"]
-	var spawn_ratio := bird_spawn_position(target_ratio.x)
+	var spawn_ratio := bird_spawn_position(target_ratio.x, serial)
 	var control_ratio := bird_entry_control(spawn_ratio, target_ratio, serial, seed)
 	var position_ratio := bird_entry_position(spawn_ratio, control_ratio, target_ratio, entry)
 	var center := field.position + field.size * position_ratio
@@ -476,7 +497,8 @@ func draw_tool_bird(bird: Dictionary, field: Rect2) -> void:
 	elif state == BirdState.FALLING:
 		center += Vector2(field.size.x * 0.018 * flight, field.size.y * 0.085 * flight)
 	var perspective := bird_perspective(position_ratio.y)
-	var scale := (0.78 + seed * 0.38) * perspective.x * ease(growth, -1.2)
+	var departure_scale := bird_departure_scale(flight)
+	var scale := (0.78 + seed * 0.38) * perspective.x * ease(growth, -1.2) * departure_scale
 	var flap := sin(float(bird["wing"]))
 	# The body rises slightly on the power stroke and settles during recovery.
 	center.y -= flap * 3.8 * scale
@@ -486,7 +508,8 @@ func draw_tool_bird(bird: Dictionary, field: Rect2) -> void:
 		wing_lift = 3.0 * scale
 	var span := (24.0 + seed * 11.0) * scale
 	var ink := ink_color()
-	var alpha := (0.62 if state != BirdState.FALLING else lerpf(0.56, 0.18, flight)) * perspective.y * exit_alpha
+	var departure_alpha := 1.0 - smoothstep(0.42, 1.0, flight)
+	var alpha := (0.62 if state != BirdState.FALLING else 0.56) * departure_alpha * perspective.y * exit_alpha
 	# Layered strokes give each bird a soft ink belly and two calligraphic wings.
 	draw_circle(center, 4.2 * scale, Color(ink, alpha * 0.42))
 	draw_circle(center + Vector2(3.0, 0.8) * scale, 2.4 * scale, Color(ink, alpha * 0.58))
@@ -521,11 +544,11 @@ static func cloud_layer_bounds(layer_index: int) -> Rect2:
 	# those passes reduces fill-rate while retaining full horizontal distribution.
 	match layer_index:
 		0:
-			return Rect2(0.0, 0.25, 1.0, 0.30)
+			return Rect2(0.0, 0.0, 1.0, 0.48)
 		1:
-			return Rect2(0.0, 0.40, 1.0, 0.43)
+			return Rect2(0.0, 0.22, 1.0, 0.66)
 		_:
-			return Rect2(0.0, 0.58, 1.0, 0.42)
+			return Rect2(0.0, 0.50, 1.0, 0.50)
 
 
 func ink_color() -> Color:
@@ -536,15 +559,16 @@ static func bird_position(serial: int, seed: float) -> Vector2:
 	# Coprime low-discrepancy sequences keep repeated tool types spread across the sky.
 	var x := fmod(float(serial) * 0.61803398875 + seed * 0.07, 1.0)
 	var y := fmod(float(serial) * 0.41421356237 + seed * 0.05, 1.0)
-	return Vector2(lerpf(0.07, 0.93, x), lerpf(0.08, 0.52, y))
+	return Vector2(lerpf(0.07, 0.93, x), lerpf(0.08, 0.82, y))
 
 
 static func bird_exit_position(serial: int, seed: float) -> Vector2:
-	return Vector2(bird_position(serial, seed).x, -0.08)
+	return bird_position(serial, seed)
 
 
-static func bird_spawn_position(target_x: float) -> Vector2:
-	return Vector2(clampf(target_x, 0.04, 0.96), 1.08)
+static func bird_spawn_position(target_x: float, serial: int = 0) -> Vector2:
+	var spawn_y := -0.08 if serial % 2 == 1 else 1.08
+	return Vector2(clampf(target_x, 0.04, 0.96), spawn_y)
 
 
 static func bird_entry_control(spawn: Vector2, target: Vector2, serial: int, seed: float) -> Vector2:
@@ -583,6 +607,12 @@ static func bird_flight_speed(wing_phase: float) -> float:
 	# 0.50 produces a visible 50%-150% range around BIRD_ENTRY_SPEED. Keep the
 	# result positive or a large frame could make the bird travel backwards.
 	return 1.0 - cos(wing_phase) * 0.50
+
+
+static func bird_departure_scale(flight: float) -> float:
+	# Preserve the readable silhouette at first, then recede continuously until
+	# it is effectively a point before _process removes the completed bird.
+	return 1.0 - smoothstep(0.08, 1.0, clampf(flight, 0.0, 1.0))
 
 
 static func bird_perspective(vertical_ratio: float) -> Vector2:
