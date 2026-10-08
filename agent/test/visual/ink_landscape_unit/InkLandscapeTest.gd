@@ -443,10 +443,6 @@ func render_smoke_test() -> void:
 	effect.size = Vector2(1280.0, 720.0)
 	Engine.get_main_loop().root.add_child.call_deferred(effect)
 	await Engine.get_main_loop().process_frame
-	assert(effect.ink_canvas != null)
-	assert(effect.ink_material != null)
-	assert(effect.ink_material.shader != null)
-	assert(not effect.ink_canvas.visible)
 	assert(effect.cloud_canvas != null)
 	assert(effect.cloud_material != null)
 	assert(effect.cloud_material.shader != null)

@@ -6,7 +6,6 @@ extends VisualEffect
 ## to local bounds for fill-rate; clouds use three shared full-screen depth passes.
 ## Birds are CPU-drawn above both, one per tool execution.
 
-const SHADER_PATH := "res://agent/ui/visuals/ink_landscape/InkLandscape.gdshader"
 const MOUNTAIN_SHADER_PATH := "res://agent/ui/visuals/ink_landscape/InkMountain.gdshader"
 const CLOUD_SHADER_PATH := "res://agent/ui/visuals/ink_landscape/InkCloud.gdshader"
 const MAX_MOUNTAINS := 16
@@ -59,15 +58,12 @@ class BirdState extends RefCounted:
 
 var mountains: Array[MountainState] = []
 var birds: Array[BirdState] = []
-var ink_canvas: ColorRect
-var ink_material: ShaderMaterial
 var cloud_canvas: ColorRect
 var cloud_material: ShaderMaterial
 var cloud_canvases: Array[ColorRect] = []
 var cloud_materials: Array[ShaderMaterial] = []
 var elapsed: float = 0.0
 var reasoning_ink: float = 0.0
-var completion: float = 0.0
 var completing: bool = false
 var ended_with_error: bool = false
 var turn_serial: int = 0
@@ -89,29 +85,8 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	# Parent-drawn birds stay above every relative negative-z landscape layer.
 	z_index = 100
-	create_ink_canvas()
 	create_cloud_canvas()
 	visible = false
-	pass
-
-
-func create_ink_canvas() -> void:
-	if ink_canvas != null:
-		return
-	ink_canvas = ColorRect.new()
-	ink_canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ink_canvas.color = Color.WHITE
-	ink_canvas.show_behind_parent = true
-	ink_material = ShaderMaterial.new()
-	ink_material.shader = load(SHADER_PATH)
-	ink_canvas.material = ink_material
-	ink_canvas.z_index = -99
-	# The legacy base shader no longer contributes pixels now that mountains and
-	# clouds have independent layers. Keep the node for compatibility, but skip
-	# its expensive full-screen noise pass.
-	ink_canvas.visible = false
-	add_child(ink_canvas)
-	update_shader_theme()
 	pass
 
 
@@ -165,7 +140,6 @@ func reset_visual() -> void:
 	birds.clear()
 	elapsed = 0.0
 	reasoning_ink = 0.0
-	completion = 0.0
 	completing = false
 	ended_with_error = false
 	turn_serial = 0
@@ -174,7 +148,7 @@ func reset_visual() -> void:
 	cloud_reveal = 0.0
 	current_turn_has_mountain = false
 	set_landscape_alpha(1.0)
-	update_shader_state()
+	update_cloud_shader_state()
 	queue_redraw()
 	pass
 
@@ -221,7 +195,7 @@ func on_turn_start() -> void:
 	if turn_serial % 2 == 1:
 		cloud_count = mini(cloud_count + 1, MAX_CLOUDS)
 		reasoning_ink = minf(2.0, reasoning_ink + 0.34)
-		update_shader_state()
+		update_cloud_shader_state()
 		queue_redraw()
 		return
 	if mountains.size() >= MAX_MOUNTAINS:
@@ -375,11 +349,9 @@ func _process(delta: float) -> void:
 				departed_birds.append(bird)
 	for bird: BirdState in departed_birds:
 		birds.erase(bird)
-	if completing:
-		completion = minf(1.0, completion + delta / COMPLETION_SECONDS)
 	reasoning_ink = move_toward(reasoning_ink, 0.08, delta * 0.55)
 	update_canvas_rect()
-	update_shader_state()
+	update_cloud_shader_state()
 	if changed:
 		queue_redraw()
 	pass
@@ -399,11 +371,7 @@ func landscape_rect() -> Rect2:
 
 
 func update_canvas_rect() -> void:
-	if ink_canvas == null:
-		return
 	var field := landscape_rect()
-	ink_canvas.position = field.position
-	ink_canvas.size = field.size
 	for canvas: ColorRect in cloud_canvases:
 		var index := cloud_canvases.find(canvas)
 		var bounds := cloud_layer_bounds(index)
@@ -418,14 +386,7 @@ func update_canvas_rect() -> void:
 	pass
 
 
-func update_shader_state() -> void:
-	if ink_material == null:
-		return
-	ink_material.set_shader_parameter("elapsed", elapsed)
-	for index in range(8):
-		ink_material.set_shader_parameter("mountain_%d" % index, 0.0)
-	ink_material.set_shader_parameter("reasoning", minf(reasoning_ink, 1.0))
-	ink_material.set_shader_parameter("completion", completion)
+func update_cloud_shader_state() -> void:
 	for material: ShaderMaterial in cloud_materials:
 		material.set_shader_parameter("elapsed", elapsed)
 		material.set_shader_parameter("presence", clampf(0.28 + float(mountains.size()) * 0.055, 0.28, 1.0))
@@ -434,10 +395,6 @@ func update_shader_state() -> void:
 
 
 func update_shader_theme() -> void:
-	if ink_material == null:
-		return
-	ink_material.set_shader_parameter("ink_color", ink_color())
-	ink_material.set_shader_parameter("accent_color", ink_color())
 	for material: ShaderMaterial in cloud_materials:
 		# Dark canvases need restrained grey vapour; near-white clouds turn layered
 		# wisps into opaque horizontal light bars.
