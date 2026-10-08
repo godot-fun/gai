@@ -29,6 +29,10 @@ const OUTPUT_SPIRAL_TURNS := 3.25
 const OUTPUT_SPIRAL_RADIUS := 11.0
 const OUTPUT_TRAIL_SAMPLES := 8
 const OUTPUT_TRAIL_STEP := 0.011
+const END_INPUT_SECONDS := 0.55
+const END_OUTPUT_SECONDS := 0.65
+const END_LENS_SECONDS := 0.32
+const END_TIMEOUT_MSEC := 4000
 
 enum StreamType { USER, SYSTEM, HISTORY, FILE, TOOL, REASONING, ANSWER }
 
@@ -86,6 +90,9 @@ var context_limit: int = DEFAULT_CONTEXT_LIMIT
 var activity: float = 0.0
 var visual_activity: float = 0.0
 var output_activity: float = 0.0
+var is_ending: bool = false
+var lens_closing: bool = false
+var lens_close_progress: float = 0.0
 
 
 func _ready() -> void:
@@ -123,22 +130,35 @@ func reset_visual() -> void:
 	activity = 0.0
 	visual_activity = 0.0
 	output_activity = 0.0
+	is_ending = false
+	lens_closing = false
+	lens_close_progress = 0.0
 	queue_redraw()
 	pass
 
 
 func on_agent_start(_session_id: int) -> void:
+	is_ending = false
+	lens_closing = false
+	lens_close_progress = 0.0
 	activity = 1.0
 	queue_redraw()
 	pass
 
 
 func on_agent_end(_error_message: String) -> void:
-	# Output motes are created by completed absorption events, never directly by
-	# lifecycle callbacks. Keep only the activity response here.
+	# Stop admitting new work, then let the existing visual story finish in order:
+	# intake -> absorption -> output -> lens close.
+	is_ending = true
 	output_activity = 1.0
-	if is_inside_tree():
-		await get_tree().create_timer(0.6).timeout
+	if not is_inside_tree():
+		return
+	var deadline := Time.get_ticks_msec() + END_TIMEOUT_MSEC
+	while not visual_flow_is_empty() and Time.get_ticks_msec() < deadline:
+		await get_tree().process_frame
+	lens_closing = true
+	while lens_close_progress < 1.0:
+		await get_tree().process_frame
 	pass
 
 
@@ -213,10 +233,15 @@ func _process(delta: float) -> void:
 	var activity_follow := 1.0 - exp(-delta * (5.0 if activity > visual_activity else 2.2))
 	visual_activity = lerpf(visual_activity, activity, activity_follow)
 	output_activity = move_toward(output_activity, 0.0, delta * 0.65)
+	if lens_closing:
+		lens_close_progress = minf(lens_close_progress + delta / END_LENS_SECONDS, 1.0)
 	var center := size * 0.5
 	for index in range(items.size() - 1, -1, -1):
 		var item := items[index]
-		var next_progress := item.progress + delta * PARTICLE_SPEED * item.speed
+		var progress_step := delta * PARTICLE_SPEED * item.speed
+		if is_ending:
+			progress_step = maxf(progress_step, delta / END_INPUT_SECONDS)
+		var next_progress := item.progress + progress_step
 		var input_x := lerpf(-50.0, size.x * 0.5, next_progress)
 		# Convert incoming phrases at the visible outer ring instead of letting them
 		# overlap the opaque context body. Backward iteration keeps removal safe.
@@ -250,12 +275,15 @@ func _process(delta: float) -> void:
 ## appearing halfway along a time-looped path when the visual becomes visible.
 func update_decorative_motes(delta: float, center: Vector2) -> void:
 	decorative_spawn_timer -= delta
-	if decorative_motes.size() < DECORATIVE_MOTE_COUNT and decorative_spawn_timer <= 0.0:
+	if not is_ending and decorative_motes.size() < DECORATIVE_MOTE_COUNT and decorative_spawn_timer <= 0.0:
 		spawn_decorative_mote()
 		decorative_spawn_timer = DECORATIVE_SPAWN_INTERVAL
 	for index in range(decorative_motes.size() - 1, -1, -1):
 		var mote := decorative_motes[index]
-		mote.progress += delta * PARTICLE_SPEED * mote.speed
+		var progress_step := delta * PARTICLE_SPEED * mote.speed
+		if is_ending:
+			progress_step = maxf(progress_step, delta / END_INPUT_SECONDS)
+		mote.progress += progress_step
 		var input_x := lerpf(-50.0, center.x, mote.progress)
 		if input_x >= center.x - 58.0:
 			add_absorption_effect(mote)
@@ -287,7 +315,10 @@ func spawn_output_mote() -> void:
 func update_output_motes(delta: float) -> void:
 	for index in range(output_motes.size() - 1, -1, -1):
 		var mote := output_motes[index]
-		mote.progress += delta * PARTICLE_SPEED * mote.speed
+		var progress_step := delta * PARTICLE_SPEED * mote.speed
+		if is_ending:
+			progress_step = maxf(progress_step, delta / END_OUTPUT_SECONDS)
+		mote.progress += progress_step
 		if mote.progress >= 1.0:
 			output_motes.remove_at(index)
 	pass
@@ -306,6 +337,8 @@ func add_absorption_effect(item: StreamItem) -> void:
 
 
 func add_item(stream_type: StreamType, label: String, weight: float) -> void:
+	if is_ending:
+		return
 	# Never evict a packet that is visibly in transit. At saturation, wait for an
 	# existing packet to reach its destination before admitting another one.
 	if items.size() >= MAX_ITEMS:
@@ -342,11 +375,17 @@ func active_text_item_count() -> int:
 	return count
 
 
+func visual_flow_is_empty() -> bool:
+	return items.is_empty() and decorative_motes.is_empty() and absorption_effects.is_empty() and output_motes.is_empty()
+
+
 ## Streaming APIs commonly deliver one or two characters per chunk. Merge nearby
 ## chunks into one visual item so draw cost follows phrases instead of token count.
 ## Only young items are eligible: changing an older label would alter spacing
 ## after that phrase is already well inside the scene.
 func add_stream_fragment(stream_type: StreamType, chunk: String, fallback: String) -> void:
+	if is_ending:
+		return
 	if not items.is_empty():
 		var latest := items[items.size() - 1]
 		if latest.stream_type == stream_type and latest.progress <= STREAM_COALESCE_PROGRESS and latest.label.length() < MAX_FLOATING_TEXT_LENGTH:
@@ -601,14 +640,20 @@ func draw_context_window(center: Vector2) -> void:
 	# A transparent lens replaces the previous solid dashboard. The input collapse
 	# and output braid remain visible through it, making the center read as a
 	# transformation point instead of a separate widget.
-	var gauge_radius := CONTEXT_RING_RADIUS
+	var close_eased := smoothstep(0.0, 1.0, lens_close_progress)
+	var lens_alpha := 1.0 - close_eased
+	var gauge_radius := lerpf(CONTEXT_RING_RADIUS, 44.0, close_eased)
 	if absorption > 0.0:
-		draw_arc(center, gauge_radius + 7.0 + absorption * 4.0, 0.0, TAU, 64, Color(capacity_color, absorption * 0.08), 2.0, true)
-	draw_arc(center, gauge_radius, 0.0, TAU, 72, Color(ColorBase.subtle_border, 0.34), 1.0, true)
+		draw_arc(center, gauge_radius + 7.0 + absorption * 4.0, 0.0, TAU, 64, Color(capacity_color, absorption * 0.08 * lens_alpha), 2.0, true)
+	if lens_closing:
+		var closing_wave_radius := lerpf(CONTEXT_RING_RADIUS, CONTEXT_RING_RADIUS + 30.0, close_eased)
+		draw_arc(center, closing_wave_radius, 0.0, TAU, 64, Color(capacity_color, sin(close_eased * PI) * 0.1), 1.2, true)
+	draw_arc(center, gauge_radius, 0.0, TAU, 72, Color(ColorBase.subtle_border, 0.34 * lens_alpha), 1.0, true)
 	if ratio > 0.0:
-		draw_arc(center, gauge_radius, -PI * 0.5, -PI * 0.5 + TAU * ratio, maxi(2, int(72.0 * ratio)), Color(capacity_color, 0.92), 2.2, true)
-	draw_centered_text(center + Vector2(0.0, 72.0), I18n.t("agent.visuals.context"), Fonts.semibold(), Typography.label_small_size, Color(ColorBase.primary_text, 0.82))
-	draw_centered_text(center + Vector2(0.0, 88.0), token_label(), Fonts.regular(), Typography.label_small_size, Color(capacity_color, 0.82))
+		draw_arc(center, gauge_radius, -PI * 0.5, -PI * 0.5 + TAU * ratio, maxi(2, int(72.0 * ratio)), Color(capacity_color, 0.92 * lens_alpha), 2.2, true)
+	var text_alpha := 1.0 - smoothstep(0.0, 0.55, lens_close_progress)
+	draw_centered_text(center + Vector2(0.0, 72.0), I18n.t("agent.visuals.context"), Fonts.semibold(), Typography.label_small_size, Color(ColorBase.primary_text, 0.82 * text_alpha))
+	draw_centered_text(center + Vector2(0.0, 88.0), token_label(), Fonts.regular(), Typography.label_small_size, Color(capacity_color, 0.82 * text_alpha))
 	pass
 
 
