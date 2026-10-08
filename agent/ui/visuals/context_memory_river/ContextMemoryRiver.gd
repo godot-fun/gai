@@ -5,11 +5,12 @@ extends VisualEffect
 ## and generated content leaves through the output channel.
 
 const MAX_ITEMS := 96
+# Mirrors MatrixRain's bounded reply slots: curved glyph rendering is relatively
+# expensive, so only this many semantic text phrases may be visible at once.
+const MAX_TEXT_ITEMS := 32
 const PARTICLE_SPEED := 0.19
 const DEFAULT_CONTEXT_LIMIT := 128_000
 const ABSORPTION_DURATION := 0.62
-# Output braids are cheap fixed curves; incoming text uses cached paths below.
-const RIVER_SAMPLE_COUNT := 64
 const TRAIL_SAMPLE_COUNT := 4
 # Sample history by travelled screen distance rather than frame count. This keeps
 # curve quality stable across frame rates and bounds memory per item.
@@ -18,6 +19,16 @@ const PATH_HISTORY_STEP := 2.0
 # Short phrases remain readable while keeping per-character draw calls bounded.
 const MAX_FLOATING_TEXT_LENGTH := 18
 const STREAM_COALESCE_PROGRESS := 0.2
+# A fixed small count adds depth without scaling draw cost with stream traffic.
+const DECORATIVE_MOTE_COUNT := 7
+const DECORATIVE_TRAIL_SAMPLES := 4
+const DECORATIVE_SPAWN_INTERVAL := 0.55
+const CONTEXT_RING_RADIUS := 52.0
+const OUTPUT_START_OFFSET := 58.0
+const OUTPUT_SPIRAL_TURNS := 3.25
+const OUTPUT_SPIRAL_RADIUS := 11.0
+const OUTPUT_TRAIL_SAMPLES := 8
+const OUTPUT_TRAIL_STEP := 0.011
 
 enum StreamType { USER, SYSTEM, HISTORY, FILE, TOOL, REASONING, ANSWER }
 
@@ -50,13 +61,25 @@ class AbsorptionEffect extends RefCounted:
 	var label: String
 	var lane: float
 	var weight: float
+	var output_spawned: bool = false
+
+
+class OutputMote extends RefCounted:
+	var progress: float = 0.0
+	var speed: float
+	var phase_offset: float
 
 
 var items: Array[StreamItem] = []
 var absorption_effects: Array[AbsorptionEffect] = []
+var decorative_motes: Array[StreamItem] = []
+var output_motes: Array[OutputMote] = []
 var elapsed: float = 0.0
 var turn_index: int = 0
 var spawn_index: int = 0
+var decorative_spawn_index: int = 0
+var decorative_spawn_timer: float = 0.0
+var output_spawn_index: int = 0
 var prompt_tokens: int = 0
 var completion_tokens: int = 0
 var context_limit: int = DEFAULT_CONTEXT_LIMIT
@@ -87,9 +110,14 @@ func fade_out_seconds() -> float:
 func reset_visual() -> void:
 	items.clear()
 	absorption_effects.clear()
+	decorative_motes.clear()
+	output_motes.clear()
 	elapsed = 0.0
 	turn_index = 0
 	spawn_index = 0
+	decorative_spawn_index = 0
+	decorative_spawn_timer = 0.0
+	output_spawn_index = 0
 	prompt_tokens = 0
 	completion_tokens = 0
 	activity = 0.0
@@ -105,8 +133,9 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> void:
-	add_item(StreamType.ANSWER, I18n.t("agent.visuals.error") if StringUtils.is_not_blank(error_message) else I18n.t("agent.visuals.answer"), 0.72)
+func on_agent_end(_error_message: String) -> void:
+	# Output motes are created by completed absorption events, never directly by
+	# lifecycle callbacks. Keep only the activity response here.
 	output_activity = 1.0
 	if is_inside_tree():
 		await get_tree().create_timer(0.6).timeout
@@ -138,10 +167,10 @@ func on_message_update(chunk: String, stream_kind: String) -> void:
 		return
 	var stream_type := StreamType.REASONING if stream_kind == OpenAiClient.STREAM_KIND_REASONING else StreamType.ANSWER
 	var fallback := I18n.t("agent.visuals.thought") if stream_type == StreamType.REASONING else I18n.t("agent.visuals.answer")
-	add_stream_fragment(stream_type, chunk, fallback)
 	if stream_type == StreamType.ANSWER:
 		output_activity = 1.0
 	else:
+		add_stream_fragment(stream_type, chunk, fallback)
 		activity = 1.0
 	pass
 
@@ -191,7 +220,7 @@ func _process(delta: float) -> void:
 		var input_x := lerpf(-50.0, size.x * 0.5, next_progress)
 		# Convert incoming phrases at the visible outer ring instead of letting them
 		# overlap the opaque context body. Backward iteration keeps removal safe.
-		if item.stream_type != StreamType.ANSWER and input_x >= size.x * 0.5 - 82.0:
+		if item.stream_type != StreamType.ANSWER and input_x >= size.x * 0.5 - 58.0:
 			add_absorption_effect(item)
 			items.remove_at(index)
 			activity = 1.0
@@ -205,9 +234,62 @@ func _process(delta: float) -> void:
 	for index in range(absorption_effects.size() - 1, -1, -1):
 		var effect := absorption_effects[index]
 		effect.age += delta
+		if not effect.output_spawned and effect.age >= ABSORPTION_DURATION * 0.5:
+			effect.output_spawned = true
+			spawn_output_mote()
 		if effect.age >= ABSORPTION_DURATION:
 			absorption_effects.remove_at(index)
+	update_decorative_motes(delta, center)
+	update_output_motes(delta)
 	queue_redraw()
+	pass
+
+
+## Decorative motes share the same progress and speed model as semantic items.
+## Staggered creation guarantees they enter through the left edge instead of
+## appearing halfway along a time-looped path when the visual becomes visible.
+func update_decorative_motes(delta: float, center: Vector2) -> void:
+	decorative_spawn_timer -= delta
+	if decorative_motes.size() < DECORATIVE_MOTE_COUNT and decorative_spawn_timer <= 0.0:
+		spawn_decorative_mote()
+		decorative_spawn_timer = DECORATIVE_SPAWN_INTERVAL
+	for index in range(decorative_motes.size() - 1, -1, -1):
+		var mote := decorative_motes[index]
+		mote.progress += delta * PARTICLE_SPEED * mote.speed
+		var input_x := lerpf(-50.0, center.x, mote.progress)
+		if input_x >= center.x - 58.0:
+			add_absorption_effect(mote)
+			decorative_motes.remove_at(index)
+	pass
+
+
+func spawn_decorative_mote() -> void:
+	var mote := StreamItem.new()
+	mote.stream_type = decorative_spawn_index % 6 as StreamType
+	mote.speed = 0.82 + float(decorative_spawn_index % 5) * 0.08
+	mote.source_y_ratio = 0.06 + fmod(float(decorative_spawn_index) * 0.61803398875 + 0.31, 1.0) * 0.88
+	mote.curve_direction = -1.0 if decorative_spawn_index % 2 == 0 else 1.0
+	decorative_motes.append(mote)
+	decorative_spawn_index += 1
+	pass
+
+
+func spawn_output_mote() -> void:
+	var mote := OutputMote.new()
+	mote.speed = 0.82 + float(output_spawn_index % 5) * 0.08
+	mote.phase_offset = float(output_spawn_index % 6) * TAU / 6.0
+	output_motes.append(mote)
+	output_spawn_index += 1
+	output_activity = 1.0
+	pass
+
+
+func update_output_motes(delta: float) -> void:
+	for index in range(output_motes.size() - 1, -1, -1):
+		var mote := output_motes[index]
+		mote.progress += delta * PARTICLE_SPEED * mote.speed
+		if mote.progress >= 1.0:
+			output_motes.remove_at(index)
 	pass
 
 
@@ -228,6 +310,10 @@ func add_item(stream_type: StreamType, label: String, weight: float) -> void:
 	# existing packet to reach its destination before admitting another one.
 	if items.size() >= MAX_ITEMS:
 		return
+	# ANSWER items are small output particles and do not pay the per-glyph curved
+	# text cost. Limit only the semantic phrases travelling on the left side.
+	if stream_type != StreamType.ANSWER and active_text_item_count() >= MAX_TEXT_ITEMS:
+		return
 	# A golden-ratio sequence distributes arrivals across the full height without
 	# random state, obvious repetition, or dependence on the current item count.
 	var source_y_ratio := 0.06 + fmod(float(spawn_index) * 0.61803398875 + 0.17, 1.0) * 0.88
@@ -246,6 +332,14 @@ func add_item(stream_type: StreamType, label: String, weight: float) -> void:
 	spawn_index += 1
 	queue_redraw()
 	pass
+
+
+func active_text_item_count() -> int:
+	var count := 0
+	for item: StreamItem in items:
+		if item.stream_type != StreamType.ANSWER:
+			count += 1
+	return count
 
 
 ## Streaming APIs commonly deliver one or two characters per chunk. Merge nearby
@@ -270,13 +364,36 @@ func _draw() -> void:
 	if size.x < 320.0 or size.y < 220.0:
 		return
 	var center := size * 0.5
+	draw_decorative_motes(center)
 	for item: StreamItem in items:
 		draw_item(item, center)
-	# Draw the collapse below the opaque context body so the packet appears to
-	# enter it; draw_context_window adds the corresponding visible core flash.
+	# Intake and output sit below the lens outline, preserving a crisp portal edge
+	# while remaining visible through its transparent center.
 	draw_absorption_effects(center)
-	draw_context_window(center)
 	draw_output(center)
+	draw_context_window(center)
+	pass
+
+
+## Low-density circles preserve the earlier particle language as atmosphere.
+## They carry no event text, but otherwise use the same motion rules as phrases.
+func draw_decorative_motes(center: Vector2) -> void:
+	for mote: StreamItem in decorative_motes:
+		var progress := mote.progress
+		var fade_in := smoothstep(0.0, 0.08, progress)
+		var fade_out := 1.0 - smoothstep(0.82, 1.0, progress)
+		var alpha := fade_in * fade_out
+		var color := color_for_type(mote.stream_type)
+		var trail := PackedVector2Array()
+		for sample in range(DECORATIVE_TRAIL_SAMPLES, -1, -1):
+			var sample_progress := maxf(progress - float(sample) * 0.012, 0.0)
+			trail.append(item_position(sample_progress, mote, center, false))
+		if trail.size() > 1:
+			draw_polyline(trail, Color(color, alpha * 0.12), 1.0, true)
+		var position := trail[trail.size() - 1]
+		var radius := 2.2 + float(mote.stream_type % 3) * 0.65
+		draw_circle(position, radius * 2.0, Color(color, alpha * 0.055))
+		draw_circle(position, radius, Color(color, alpha * 0.72))
 	pass
 
 
@@ -289,7 +406,7 @@ func draw_absorption_effects(center: Vector2) -> void:
 		var label := effect.label
 		var weight := effect.weight
 		var lane_y := effect.lane * 8.0
-		var impact_position := center + Vector2(-82.0, lane_y * 0.42)
+		var impact_position := center + Vector2(-58.0, lane_y * 0.34)
 		var collapse := smoothstep(0.0, 0.55, phase)
 		var particle_position := impact_position.lerp(center, collapse)
 		var particle_alpha := 1.0 - smoothstep(0.38, 0.72, phase)
@@ -298,7 +415,7 @@ func draw_absorption_effects(center: Vector2) -> void:
 		draw_line(impact_position, tail_anchor, Color(color, particle_alpha * 0.24), 1.0 + weight, true)
 		draw_rotated_centered_text(particle_position, label, text_rotation, Color(color, particle_alpha * 0.92))
 		var ripple_phase := clampf(phase / 0.82, 0.0, 1.0)
-		var ripple_radius := lerpf(68.0, 104.0, ripple_phase)
+		var ripple_radius := lerpf(54.0, 84.0, ripple_phase)
 		draw_arc(center, ripple_radius, 0.0, TAU, 72, Color(color, (1.0 - ripple_phase) * 0.2), 1.6, true)
 	pass
 
@@ -317,8 +434,8 @@ func draw_item(item: StreamItem, center: Vector2) -> void:
 		# Answers remain compact particles; drawing answer text again would compete
 		# with the chat response and multiply glyph draw calls.
 		var trail_points := PackedVector2Array()
-		for trail_index in range(TRAIL_SAMPLE_COUNT, -1, -1):
-			var trail_progress := maxf(progress - float(trail_index) * 0.009, 0.0)
+		for trail_index in range(OUTPUT_TRAIL_SAMPLES, -1, -1):
+			var trail_progress := maxf(progress - float(trail_index) * OUTPUT_TRAIL_STEP, 0.0)
 			trail_points.append(item_position(trail_progress, item, center, true))
 		if trail_points.size() > 1:
 			draw_polyline(trail_points, Color(color, edge_fade * 0.18), maxf(1.0, radius * 0.26), true)
@@ -456,11 +573,12 @@ func item_position(progress: float, item: StreamItem, center: Vector2, is_output
 	var lane_offset := source_y - center.y
 	var curve_direction := item.curve_direction
 	if is_output:
-		var output_start := center + Vector2(82.0, lane_offset * 0.04)
-		var output_end := Vector2(size.x + 50.0, center.y + lane_offset * 0.45)
-		return cubic_bezier(output_start, output_start + Vector2(150.0, -lane_offset * 0.28), output_end - Vector2(210.0, lane_offset * 0.75), output_end, eased)
+		var x := lerpf(center.x + OUTPUT_START_OFFSET, size.x + 50.0, eased)
+		var spiral_envelope := smoothstep(0.0, 0.12, eased)
+		var phase := eased * TAU * OUTPUT_SPIRAL_TURNS + item.source_y_ratio * TAU - elapsed * 0.9
+		return Vector2(x, center.y + sin(phase) * OUTPUT_SPIRAL_RADIUS * spiral_envelope)
 	var input_start := Vector2(-50.0, center.y + lane_offset)
-	var impact := center + Vector2(-82.0, lane_offset * 0.06)
+	var impact := center + Vector2(-58.0, lane_offset * 0.04)
 	var pull := smoothstep(0.42, 1.0, eased)
 	var drift := sin(progress * TAU * 1.65 + item.source_y_ratio * 9.0 + elapsed * 0.8) * 30.0 * (1.0 - pull)
 	var control_a := Vector2(center.x * 0.2, center.y + lane_offset * 1.28 + curve_direction * 96.0)
@@ -475,40 +593,22 @@ static func cubic_bezier(start: Vector2, control_a: Vector2, control_b: Vector2,
 	return inverse * inverse * inverse * start + 3.0 * inverse * inverse * progress * control_a + 3.0 * inverse * progress * progress * control_b + progress * progress * progress * end
 
 
-func draw_diamond(center: Vector2, radius: float, color: Color) -> void:
-	var points := PackedVector2Array([
-		center + Vector2(0.0, -radius * 0.72),
-		center + Vector2(radius, 0.0),
-		center + Vector2(0.0, radius * 0.72),
-		center + Vector2(-radius, 0.0),
-	])
-	draw_colored_polygon(points, color)
-	pass
-
-
 func draw_context_window(center: Vector2) -> void:
 	var accent := ThemeColor.accent_theme_color()
 	var absorption := absorption_activity()
-	var breath_phase := sin(elapsed * TAU / 2.8)
-	var breath := 0.5 + breath_phase * 0.5
 	var ratio := context_ratio()
 	var capacity_color := ColorBase.error if ratio >= 0.9 else (ColorBase.warning if ratio >= 0.72 else accent)
-	# The loom stays circular and minimal: one quiet body and one truthful gauge.
-	var body_radius := 64.0 + breath_phase * 0.8
-	var gauge_radius := 74.0
-	draw_circle(center, gauge_radius + 12.0 + absorption * 5.0, Color(capacity_color, 0.025 + absorption * 0.035))
-	draw_circle(center, body_radius, Color(ColorBase.deep_surface, 0.97))
-	draw_arc(center, body_radius, 0.0, TAU, 72, Color(accent, 0.16 + visual_activity * 0.1), 1.2, true)
-	draw_arc(center, gauge_radius, -PI * 0.5, PI * 1.5, 80, Color(ColorBase.subtle_border, 0.3), 1.3, true)
+	# A transparent lens replaces the previous solid dashboard. The input collapse
+	# and output braid remain visible through it, making the center read as a
+	# transformation point instead of a separate widget.
+	var gauge_radius := CONTEXT_RING_RADIUS
+	if absorption > 0.0:
+		draw_arc(center, gauge_radius + 7.0 + absorption * 4.0, 0.0, TAU, 64, Color(capacity_color, absorption * 0.08), 2.0, true)
+	draw_arc(center, gauge_radius, 0.0, TAU, 72, Color(ColorBase.subtle_border, 0.34), 1.0, true)
 	if ratio > 0.0:
-		draw_arc(center, gauge_radius, -PI * 0.5, -PI * 0.5 + TAU * ratio, maxi(2, int(80.0 * ratio)), Color(capacity_color, 0.94), 3.0, true)
-	# The shuttle moves vertically while active, suggesting synthesis rather than storage.
-	var shuttle_y := sin(elapsed * 2.1) * (5.0 + visual_activity * 4.0)
-	var shuttle_center := center + Vector2(0.0, shuttle_y - 17.0)
-	draw_diamond(shuttle_center, 10.0 + absorption * 3.5, Color(accent, 0.18 + breath * 0.12 + absorption * 0.24))
-	draw_diamond(shuttle_center, 5.0 + absorption * 1.5, Color(accent, 0.82))
-	draw_centered_text(center + Vector2(0.0, 8.0), I18n.t("agent.visuals.context"), Fonts.semibold(), Typography.label_medium_size, ColorBase.primary_text)
-	draw_centered_text(center + Vector2(0.0, 27.0), token_label(), Fonts.regular(), Typography.label_small_size, Color(capacity_color, 0.9))
+		draw_arc(center, gauge_radius, -PI * 0.5, -PI * 0.5 + TAU * ratio, maxi(2, int(72.0 * ratio)), Color(capacity_color, 0.92), 2.2, true)
+	draw_centered_text(center + Vector2(0.0, 72.0), I18n.t("agent.visuals.context"), Fonts.semibold(), Typography.label_small_size, Color(ColorBase.primary_text, 0.82))
+	draw_centered_text(center + Vector2(0.0, 88.0), token_label(), Fonts.regular(), Typography.label_small_size, Color(capacity_color, 0.82))
 	pass
 
 
@@ -529,23 +629,34 @@ func absorption_activity() -> float:
 func draw_output(center: Vector2) -> void:
 	var answer := color_for_type(StreamType.ANSWER)
 	var alpha := 0.22 + output_activity * 0.5
-	var stream_start := center.x + 66.0
-	# Three interlaced threads carry the synthesized answer away from the loom.
-	for strand in range(3):
-		var strand_points := PackedVector2Array()
-		for step in range(RIVER_SAMPLE_COUNT + 1):
-			var progress := float(step) / float(RIVER_SAMPLE_COUNT)
-			var x := lerpf(stream_start, size.x, progress)
-			var envelope := sin(progress * PI) * (0.35 + smoothstep(0.0, 0.35, progress) * 0.65)
-			var y := center.y + sin(progress * TAU * 3.0 + strand * TAU / 3.0 - elapsed * 0.9) * envelope * 9.0
-			strand_points.append(Vector2(x, y))
-		draw_polyline(strand_points, Color(answer, 0.12 + output_activity * 0.16), 1.5, true)
-	for index in range(5):
-		var progress := fmod(elapsed * 0.22 + index * 0.2, 1.0)
-		var particle_fade := 1.0 - smoothstep(0.72, 1.0, progress)
-		var position := Vector2(lerpf(stream_start + 6.0, size.x, progress), center.y + sin(progress * TAU * 3.0 + index * TAU / 3.0 - elapsed * 0.9) * sin(progress * PI) * 9.0)
-		draw_diamond(position, 2.5 + output_activity * 1.8, Color(answer, alpha * particle_fade))
+	# No permanent output rail: each generated mote carries only its own curved
+	# history, leaving negative space between responses.
+	for mote: OutputMote in output_motes:
+		var progress := mote.progress
+		var particle_fade := smoothstep(0.0, 0.06, progress) * (1.0 - smoothstep(0.72, 1.0, progress))
+		var phase := output_spiral_phase(progress, mote.phase_offset)
+		var depth := cos(phase) * 0.5 + 0.5
+		var tail_points := PackedVector2Array()
+		for sample in range(OUTPUT_TRAIL_SAMPLES, -1, -1):
+			var sample_progress := maxf(progress - float(sample) * OUTPUT_TRAIL_STEP, 0.0)
+			tail_points.append(output_spiral_position(sample_progress, mote.phase_offset, center))
+		draw_polyline(tail_points, Color(answer, alpha * particle_fade * 0.16), lerpf(0.8, 1.5, depth), true)
+		var position := tail_points[tail_points.size() - 1]
+		var radius := lerpf(2.0, 4.2 + output_activity, depth)
+		draw_circle(position, radius * 2.0, Color(answer, alpha * particle_fade * 0.07))
+		draw_circle(position, radius, Color(answer, alpha * particle_fade * lerpf(0.48, 1.0, depth)))
 	pass
+
+
+func output_spiral_position(progress: float, phase_offset: float, center: Vector2) -> Vector2:
+	var envelope := smoothstep(0.0, 0.1, progress)
+	var phase := output_spiral_phase(progress, phase_offset)
+	var x := lerpf(center.x + OUTPUT_START_OFFSET + 4.0, size.x, progress)
+	return Vector2(x, center.y + sin(phase) * OUTPUT_SPIRAL_RADIUS * envelope)
+
+
+func output_spiral_phase(progress: float, phase_offset: float) -> float:
+	return progress * TAU * OUTPUT_SPIRAL_TURNS + phase_offset - elapsed * 0.9
 
 
 func context_ratio() -> float:

@@ -56,3 +56,28 @@ static func streaming_fragments_coalesce_test() -> void:
 	assert(effect.items[0].glyph_advances.size() == effect.items[0].label.length())
 	effect.free()
 	pass
+
+
+static func visible_text_items_are_bounded_test() -> void:
+	var effect := ContextMemoryRiver.new()
+	for index in range(ContextMemoryRiver.MAX_TEXT_ITEMS + 4):
+		effect.add_item(ContextMemoryRiver.StreamType.TOOL, "TOOL %d" % index, 0.5)
+	assert(effect.active_text_item_count() == ContextMemoryRiver.MAX_TEXT_ITEMS)
+	assert(effect.items.size() == ContextMemoryRiver.MAX_TEXT_ITEMS)
+	# Output particles use their own cheap rendering path and remain independent.
+	effect.add_item(ContextMemoryRiver.StreamType.ANSWER, "ANSWER", 0.5)
+	assert(effect.items.size() == ContextMemoryRiver.MAX_TEXT_ITEMS + 1)
+	effect.free()
+	pass
+
+
+static func absorption_spawns_one_output_mote_test() -> void:
+	var effect := ContextMemoryRiver.new()
+	effect.add_item(ContextMemoryRiver.StreamType.TOOL, "READ", 0.5)
+	effect.add_absorption_effect(effect.items[0])
+	effect.visible = true
+	effect._process(ContextMemoryRiver.ABSORPTION_DURATION * 0.51)
+	assert(effect.output_motes.size() == 1)
+	assert(effect.absorption_effects[0].output_spawned)
+	effect.free()
+	pass
