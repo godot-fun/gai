@@ -15,6 +15,7 @@ uniform float seed = 1.0;
 uniform float growth : hint_range(0.0, 1.0) = 0.0;
 uniform vec2 uv_origin = vec2(0.0);
 uniform vec2 uv_scale = vec2(1.0);
+uniform float fade_alpha : hint_range(0.0, 1.0) = 1.0;
 
 float hash21(vec2 p) {
 	p = fract(p * vec2(123.34, 456.21));
@@ -100,5 +101,5 @@ void fragment() {
 	float wash = clamp(strength * (0.46 + grain * 0.34), 0.0, 0.62);
 	vec3 body_color = mix(background_color.rgb, ink_color.rgb, wash);
 	vec3 final_color = mix(body_color, ink_color.rgb, clamp(wet_edge * strength * 1.8, 0.0, 1.0));
-	COLOR = vec4(final_color, max(ink_alpha, occlusion_alpha));
+	COLOR = vec4(final_color, max(ink_alpha, occlusion_alpha) * fade_alpha);
 }

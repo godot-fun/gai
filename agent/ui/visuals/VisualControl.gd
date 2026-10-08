@@ -2,6 +2,8 @@ class_name VisualControl
 extends Control
 
 ## Single event bridge that routes an agent run to the selected visual effect.
+## Only one effect instance and one owning session are supported at a time. A newer
+## agent run replaces the previous animation; late events from the old run are ignored.
 
 
 ## Session whose run is currently represented; 0 while no run is tracked.
@@ -17,6 +19,7 @@ func _ready() -> void:
 
 
 func mount_selected_effect() -> void:
+	# Recreate instead of reusing the node so no animation state leaks between runs or types.
 	unmount_current_effect()
 	var effect := create_effect(AgentSetting.get_visual_type())
 	if effect == null:
@@ -88,7 +91,7 @@ func connect_visual_events() -> void:
 
 
 func on_agent_start(session_id: int) -> void:
-	# Newest run always owns the effect and replaces any previous session's visual.
+	# Newest run always owns the single effect. There is intentionally no animation queue.
 	if running_session_id != 0:
 		mount_selected_effect()
 	running_session_id = session_id
@@ -194,7 +197,8 @@ func get_selected_effect() -> VisualEffect:
 
 
 func get_running_effect(session_id: int) -> VisualEffect:
-	# Bound to the latest run only — chat selection must not interrupt playback or updates.
+	# Reject late events from a run whose animation was replaced by a newer session.
+	# Selecting another chat does not affect ownership; only agent_start transfers it.
 	if session_id != running_session_id:
 		return null
 	var effect := get_selected_effect()

@@ -9,6 +9,15 @@ func visual_type_test() -> void:
 	pass
 
 
+func ink_landscape_uses_slow_fade_out_test() -> void:
+	var effect := InkLandscape.new()
+	assert(effect.fade_out_seconds() > 0.0)
+	effect.set_landscape_alpha(0.42)
+	assert(is_equal_approx(effect.exit_alpha, 0.42))
+	effect.free()
+	pass
+
+
 func reasoning_builds_mountain_test() -> void:
 	var effect := InkLandscape.new()
 	effect.on_message_update("Study the context, then compare the paths.", OpenAiClient.STREAM_KIND_REASONING)
@@ -219,6 +228,8 @@ func render_smoke_test() -> void:
 	assert(effect.cloud_canvases.size() == 3)
 	assert(effect.cloud_canvases[0].z_index < effect.cloud_canvases[1].z_index)
 	assert(effect.cloud_canvases[1].z_index < effect.cloud_canvases[2].z_index)
+	effect.set_landscape_alpha(0.37)
+	assert(is_equal_approx(float(effect.cloud_material.get_shader_parameter("fade_alpha")), 0.37))
 	effect.visible = true
 	effect.on_turn_start()
 	effect.on_turn_start()
@@ -231,9 +242,12 @@ func render_smoke_test() -> void:
 	await Engine.get_main_loop().process_frame
 	assert(effect.z_index == 100)
 	var mountain_canvas: ColorRect = effect.mountains[0]["canvas"]
+	var mountain_material: ShaderMaterial = effect.mountains[0]["material"]
 	assert(mountain_canvas.z_index < 0)
 	assert(mountain_canvas.z_index < effect.cloud_canvas.z_index)
 	assert(effect.cloud_canvases[0].z_index < mountain_canvas.z_index)
+	effect.set_landscape_alpha(0.23)
+	assert(is_equal_approx(float(mountain_material.get_shader_parameter("fade_alpha")), 0.23))
 	effect.get_parent().remove_child(effect)
 	effect.free()
 	pass

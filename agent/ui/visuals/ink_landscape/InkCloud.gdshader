@@ -7,6 +7,7 @@ uniform float elapsed = 0.0;
 uniform float presence : hint_range(0.0, 1.0) = 0.6;
 uniform float layer_index : hint_range(0.0, 2.0) = 0.0;
 uniform float cloud_reveal : hint_range(0.0, 16.0) = 0.0;
+uniform float fade_alpha : hint_range(0.0, 1.0) = 1.0;
 
 float hash21(vec2 p) {
 	p = fract(p * vec2(123.34, 456.21));
@@ -102,5 +103,5 @@ void fragment() {
 	// A faint grey underside makes the white/black cloud mass readable in either theme.
 	float underside = smoothstep(0.36, 0.92, cloud) * (0.035 + fibers * 0.025);
 	vec3 color = mix(cloud_color.rgb, ink_color.rgb, underside);
-	COLOR = vec4(color, clamp(alpha, 0.0, 0.84));
+	COLOR = vec4(color, clamp(alpha, 0.0, 0.84) * fade_alpha);
 }

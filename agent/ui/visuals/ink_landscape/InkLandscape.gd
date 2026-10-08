@@ -32,6 +32,7 @@ var turn_serial: int = 0
 var bird_serial: int = 0
 var cloud_count: int = 0
 var cloud_reveal: float = 0.0
+var exit_alpha: float = 1.0
 
 
 func _ready() -> void:
@@ -97,7 +98,8 @@ func fade_in_seconds() -> float:
 
 
 func fade_out_seconds() -> float:
-	return 0.7
+	# The landscape performs its own guaranteed fade inside on_agent_end().
+	return 0.15
 
 
 func reset_visual() -> void:
@@ -117,6 +119,7 @@ func reset_visual() -> void:
 	bird_serial = 0
 	cloud_count = 0
 	cloud_reveal = 0.0
+	set_landscape_alpha(1.0)
 	update_shader_state()
 	queue_redraw()
 	pass
@@ -136,6 +139,22 @@ func on_agent_end(error_message: String) -> void:
 	active_birds.clear()
 	if is_inside_tree():
 		await get_tree().create_timer(COMPLETION_SECONDS).timeout
+		var dissolve := create_tween()
+		# One uninterrupted curve avoids velocity changes between tween segments.
+		dissolve.tween_method(set_landscape_alpha, 1.0, 0.0, 4.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		await dissolve.finished
+	pass
+
+
+func set_landscape_alpha(value: float) -> void:
+	exit_alpha = clampf(value, 0.0, 1.0)
+	for material: ShaderMaterial in cloud_materials:
+		material.set_shader_parameter("fade_alpha", exit_alpha)
+	for mountain: Dictionary in mountains:
+		var material: ShaderMaterial = mountain.get("material")
+		if material != null:
+			material.set_shader_parameter("fade_alpha", exit_alpha)
+	queue_redraw()
 	pass
 
 
@@ -347,6 +366,7 @@ func mount_mountain(mountain: Dictionary) -> void:
 	material.set_shader_parameter("shape", mountain["shape"])
 	material.set_shader_parameter("seed", float(mountain["serial"]) * 1.137)
 	material.set_shader_parameter("growth", mountain["growth"])
+	material.set_shader_parameter("fade_alpha", exit_alpha)
 	var bounds := mountain_bounds(mountain)
 	material.set_shader_parameter("uv_origin", bounds.position)
 	material.set_shader_parameter("uv_scale", bounds.size)
@@ -434,7 +454,7 @@ func draw_tool_bird(bird: Dictionary, field: Rect2) -> void:
 		wing_lift = 3.0 * scale
 	var span := (24.0 + seed * 11.0) * scale
 	var ink := ink_color()
-	var alpha := 0.62 if state != BirdState.FALLING else lerpf(0.56, 0.18, flight)
+	var alpha := (0.62 if state != BirdState.FALLING else lerpf(0.56, 0.18, flight)) * exit_alpha
 	# Layered strokes give each bird a soft ink belly and two calligraphic wings.
 	draw_circle(center, 4.2 * scale, Color(ink, alpha * 0.42))
 	draw_circle(center + Vector2(3.0, 0.8) * scale, 2.4 * scale, Color(ink, alpha * 0.58))
