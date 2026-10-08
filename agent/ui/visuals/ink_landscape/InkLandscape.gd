@@ -48,6 +48,13 @@ class BirdState extends RefCounted:
 	var finish_phase: float = -1.0
 	var serial: int
 	var seed: float
+	var target: Vector2
+	var spawn: Vector2
+	var control: Vector2
+	var entry_points: PackedVector2Array
+	var entry_lengths: PackedFloat32Array
+	var entry_length: float
+	var departure_tangent: Vector2
 
 
 var mountains: Array[MountainState] = []
@@ -278,6 +285,7 @@ func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dic
 	bird.flap_rate = lerpf(0.82, 1.16, float(abs((tool_name + tool_call_id).hash()) % 1000) / 1000.0)
 	bird.serial = bird_serial
 	bird.seed = float(abs(tool_name.hash()) % 1000) / 1000.0
+	initialize_bird_path(bird)
 	birds.append(bird)
 	reasoning_ink = minf(2.0, reasoning_ink + 0.36)
 	queue_redraw()
@@ -306,6 +314,17 @@ func request_bird_departure(bird: BirdState, result: BirdResult) -> void:
 	bird.result = result
 	if bird.phase == BirdPhase.ACTIVE:
 		bird.phase = BirdPhase.FINISHING
+	pass
+
+
+func initialize_bird_path(bird: BirdState) -> void:
+	bird.target = bird_exit_position(bird.serial, bird.seed)
+	bird.spawn = bird_spawn_position(bird.target.x, bird.serial)
+	bird.control = bird_entry_control(bird.spawn, bird.target, bird.serial, bird.seed)
+	bird.entry_points = bird_entry_path(bird.spawn, bird.control, bird.target)
+	bird.entry_lengths = bird_path_lengths(bird.entry_points)
+	bird.entry_length = bird.entry_lengths[-1]
+	bird.departure_tangent = (bird.target - bird.control).normalized()
 	pass
 
 
@@ -528,13 +547,10 @@ func draw_tool_bird(bird: BirdState, field: Rect2) -> void:
 	var serial := bird.serial
 	var seed := bird.seed
 	var departure := bird.departure
-	var target_ratio := bird_exit_position(serial, seed)
 	var entry := bird.entry
-	var spawn_ratio := bird_spawn_position(target_ratio.x, serial)
-	var control_ratio := bird_entry_control(spawn_ratio, target_ratio, serial, seed)
-	var position_ratio := bird_entry_position(spawn_ratio, control_ratio, target_ratio, entry)
+	var position_ratio := bird_path_position(bird.entry_points, bird.entry_lengths, bird.entry_length, entry)
 	if phase == BirdPhase.DEPARTING:
-		position_ratio += bird_departure_offset(control_ratio, target_ratio, departure, result == BirdResult.ERROR)
+		position_ratio += bird_departure_offset(bird.departure_tangent, departure, result == BirdResult.ERROR)
 	var center := field.position + field.size * position_ratio
 	var perspective := bird_perspective(position_ratio.y, bird_flies_down(serial))
 	var departure_scale := bird_departure_scale(departure)
@@ -622,16 +638,30 @@ static func bird_entry_control(spawn: Vector2, target: Vector2, _serial: int, se
 static func bird_entry_position(spawn: Vector2, control: Vector2, target: Vector2, progress: float) -> Vector2:
 	# Convert linear progress to an approximate arc-length parameter so the curved
 	# flight remains steady instead of accelerating around the bend.
+	var points := bird_entry_path(spawn, control, target)
+	var lengths := bird_path_lengths(points)
+	return bird_path_position(points, lengths, lengths[-1], progress)
+
+
+static func bird_entry_path(spawn: Vector2, control: Vector2, target: Vector2) -> PackedVector2Array:
 	const SAMPLES := 24
 	var points := PackedVector2Array([spawn])
-	var lengths := PackedFloat32Array([0.0])
-	var total_length := 0.0
 	for index in range(1, SAMPLES + 1):
 		var time := float(index) / float(SAMPLES)
-		var point := quadratic_bezier(spawn, control, target, time)
-		total_length += points[-1].distance_to(point)
-		points.append(point)
-		lengths.append(total_length)
+		points.append(quadratic_bezier(spawn, control, target, time))
+	return points
+
+
+static func bird_path_lengths(points: PackedVector2Array) -> PackedFloat32Array:
+	var lengths := PackedFloat32Array([0.0])
+	for index in range(1, points.size()):
+		lengths.append(lengths[-1] + points[index - 1].distance_to(points[index]))
+	return lengths
+
+
+static func bird_path_position(points: PackedVector2Array, lengths: PackedFloat32Array, total_length: float, progress: float) -> Vector2:
+	if points.is_empty() or lengths.size() != points.size():
+		return Vector2.ZERO
 	var wanted := total_length * clampf(progress, 0.0, 1.0)
 	for index in range(1, lengths.size()):
 		if lengths[index] < wanted:
@@ -639,7 +669,7 @@ static func bird_entry_position(spawn: Vector2, control: Vector2, target: Vector
 		var segment_length := lengths[index] - lengths[index - 1]
 		var amount := 0.0 if segment_length <= 0.0001 else (wanted - lengths[index - 1]) / segment_length
 		return points[index - 1].lerp(points[index], amount)
-	return target
+	return points[-1]
 
 
 static func bird_flight_speed(wing_phase: float) -> float:
@@ -665,13 +695,12 @@ static func bird_departure_scale(flight: float) -> float:
 	return 1.0 - smoothstep(0.08, 1.0, clampf(flight, 0.0, 1.0))
 
 
-static func bird_departure_offset(control: Vector2, target: Vector2, flight: float, falls: bool) -> Vector2:
+static func bird_departure_offset(tangent: Vector2, flight: float, falls: bool) -> Vector2:
 	# Continue along the entry curve's end tangent so switching to DEPARTING never
 	# introduces a sharp turn. Error birds sag progressively; the quadratic term
 	# has zero initial velocity and therefore preserves that tangent at handoff.
-	var tangent := (target - control).normalized()
 	var progress := clampf(flight, 0.0, 1.0)
-	var offset := tangent * 0.09 * progress
+	var offset := tangent.normalized() * 0.09 * progress
 	if falls:
 		offset.y += 0.10 * progress * progress
 	return offset

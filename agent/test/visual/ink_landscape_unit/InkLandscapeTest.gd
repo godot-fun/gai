@@ -147,6 +147,21 @@ func bird_entry_uses_constant_speed_test() -> void:
 	pass
 
 
+func cached_bird_path_matches_entry_position_test() -> void:
+	var spawn := Vector2(0.74, -0.08)
+	var control := Vector2(0.61, 0.18)
+	var target := Vector2(0.52, 0.36)
+	var points := InkLandscape.bird_entry_path(spawn, control, target)
+	var lengths := InkLandscape.bird_path_lengths(points)
+	assert(points.size() == 25)
+	assert(lengths.size() == points.size())
+	for progress in [0.0, 0.2, 0.5, 0.8, 1.0]:
+		var cached := InkLandscape.bird_path_position(points, lengths, lengths[-1], progress)
+		var direct := InkLandscape.bird_entry_position(spawn, control, target, progress)
+		assert(cached.is_equal_approx(direct))
+	pass
+
+
 func bird_entry_never_reverses_horizontal_direction_test() -> void:
 	for serial in range(1, 7):
 		var target := InkLandscape.bird_position(serial, 0.5)
@@ -209,7 +224,7 @@ func bird_departure_continues_entry_direction_test() -> void:
 		var control := InkLandscape.bird_entry_control(spawn, target, serial, 0.5)
 		var entry_direction := (target - control).normalized()
 		for falls in [false, true]:
-			var first_offset := InkLandscape.bird_departure_offset(control, target, 0.001, falls)
+			var first_offset := InkLandscape.bird_departure_offset(entry_direction, 0.001, falls)
 			assert(first_offset.normalized().dot(entry_direction) > 0.999)
 			assert(signf(first_offset.x) == signf(target.x - spawn.x))
 	pass
@@ -218,8 +233,9 @@ func bird_departure_continues_entry_direction_test() -> void:
 func failed_bird_sags_without_reversing_departure_test() -> void:
 	var control := Vector2(0.4, 0.7)
 	var target := Vector2(0.6, 0.4)
-	var success := InkLandscape.bird_departure_offset(control, target, 1.0, false)
-	var failure := InkLandscape.bird_departure_offset(control, target, 1.0, true)
+	var tangent := (target - control).normalized()
+	var success := InkLandscape.bird_departure_offset(tangent, 1.0, false)
+	var failure := InkLandscape.bird_departure_offset(tangent, 1.0, true)
 	assert(is_equal_approx(failure.x, success.x))
 	assert(failure.y > success.y)
 	assert(failure.x > 0.0)
