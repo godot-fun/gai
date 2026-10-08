@@ -123,9 +123,12 @@ void fragment() {
 	float fog = exp(-abs(uv.y - fog_y) * mix(50.0, 31.0, depth));
 	ink *= 1.0 - fog * mix(0.66, 0.38, depth);
 	float ink_alpha = clamp(pow(max(ink, 0.0), 0.86) * 1.08, 0.0, mix(0.16, 0.80, depth));
-	// Atmospheric perspective must affect actual coverage, not only pigment.
-	// A high distant floor made every range merge into the same grey slab.
-	float occlusion_alpha = coverage * mix(0.20, 0.86, smoothstep(0.08, 0.96, depth));
+	// Keep enough translucency for layered ink washes, but make nearer mountains
+	// substantially more occlusive so a rear silhouette does not read as a line
+	// drawn across their body. Full opacity made the composition look like flat
+	// grey cutouts and removed the atmospheric overlap between ranges.
+	float occlusion_strength = mix(0.78, 0.96, smoothstep(0.08, 0.96, depth));
+	float occlusion_alpha = coverage * occlusion_strength;
 	// Slightly lighter left slope and darker right slope establish readable volume.
 	float slope_shade = smoothstep(-0.65, 0.85, normalized_x) * mix(0.04, 0.18, depth);
 	float wash = clamp(strength * (0.34 + grain * 0.34 + slope_shade) + texture_detail * mix(0.28, 0.72, depth), 0.0, 0.72);
