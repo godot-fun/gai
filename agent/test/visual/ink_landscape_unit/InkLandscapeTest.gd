@@ -117,6 +117,20 @@ func bird_speed_varies_smoothly_with_wing_stroke_test() -> void:
 	pass
 
 
+func bird_perspective_shrinks_and_fades_with_height_test() -> void:
+	var far := InkLandscape.bird_perspective(-0.08)
+	var upper := InkLandscape.bird_perspective(0.25)
+	var near := InkLandscape.bird_perspective(1.0)
+	assert(far.x < upper.x)
+	assert(upper.x < near.x)
+	assert(far.x < near.x)
+	assert(far.y < near.y)
+	assert(far.x < 0.06)
+	assert(is_zero_approx(far.y))
+	assert(is_equal_approx(near.x, 1.18))
+	pass
+
+
 func completed_tool_keeps_flapping_until_entry_finishes_test() -> void:
 	var effect := InkLandscape.new()
 	var args: Dictionary[String, Variant] = {}

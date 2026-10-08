@@ -38,10 +38,9 @@ float fbm(vec2 p) {
 	return value;
 }
 
-float cloud_wisp(vec2 uv, vec2 center, vec2 size, float seed, float speed) {
+float cloud_wisp(vec2 uv, vec2 center, vec2 size, float seed) {
 	// Ink-wash cloud: a long eroded stroke with no closed cartoon silhouette.
-	float drift = sin(elapsed * speed + seed) * 0.010;
-	vec2 p = (uv - center - vec2(drift, 0.0)) / size;
+	vec2 p = (uv - center) / size;
 	float bend = (noise(vec2(p.x * 1.7 + seed, seed * 2.3)) - 0.5) * 0.72;
 	float vertical = abs(p.y - bend);
 	float taper = smoothstep(1.18, 0.34, abs(p.x));
@@ -81,11 +80,15 @@ void fragment() {
 		}
 		if (depth_layer > 1.5) {
 			y = mix(0.72, 0.88, hash21(vec2(serial, 7.8)));
-			width = mix(0.26, 0.38, random_size);
-			height = mix(0.086, 0.118, random_size);
-			strength = mix(0.76, 0.94, random_size);
+			width = mix(0.21, 0.31, random_size);
+			height = mix(0.078, 0.105, random_size);
+			strength = mix(0.62, 0.78, random_size);
 		}
 		vec2 center = vec2(mix(0.08, 0.92, random_x), y);
+		// Continuous rightward drift with depth parallax. Wrapping happens beyond
+		// the visible edge, so a cloud naturally re-enters from the left.
+		float drift_speed = mix(0.0014, 0.0042, depth_layer * 0.5);
+		center.x = mod(center.x + elapsed * drift_speed + 0.18, 1.36) - 0.18;
 		// Reject pixels outside this cloud before any FBM work. Without this guard,
 		// every transparent pixel evaluated two noise stacks for every visible cloud.
 		if (abs(uv.x - center.x) > width * 1.35 || abs(uv.y - center.y) > height * 1.65) {
@@ -94,7 +97,7 @@ void fragment() {
 		// A new cloud begins as a pale short stroke, then spreads sideways like
 		// diluted ink soaking into paper instead of popping into existence.
 		vec2 grown_size = vec2(width * mix(0.30, 1.0, growth), height * mix(0.62, 1.0, growth));
-		float grown_cloud = cloud_wisp(uv, center, grown_size, serial * 1.73 + 1.2, 0.25 + depth_layer * 0.06);
+		float grown_cloud = cloud_wisp(uv, center, grown_size, serial * 1.73 + 1.2);
 		cloud = max(cloud, grown_cloud * strength * growth);
 	}
 	cloud = clamp(cloud * presence, 0.0, 1.0);

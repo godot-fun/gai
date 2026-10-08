@@ -242,6 +242,7 @@ func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dic
 		"state": BirdState.FLYING,
 		"growth": 0.0,
 		"wing": float(birds.size()) * 0.83,
+		"flap_rate": lerpf(0.82, 1.16, float(abs((tool_name + tool_call_id).hash()) % 1000) / 1000.0),
 		"entry": 0.0,
 		"flight": 0.0,
 		"serial": bird_serial,
@@ -289,7 +290,8 @@ func _process(delta: float) -> void:
 		bird["growth"] = move_toward(float(bird["growth"]), 1.0, delta * 3.4)
 		var state: int = bird["state"]
 		var entering := float(bird["entry"]) < 1.0
-		bird["wing"] = float(bird["wing"]) + delta * (7.0 if entering or state == BirdState.FLYING else 2.2)
+		var flap_rate: float = bird["flap_rate"]
+		bird["wing"] = float(bird["wing"]) + delta * (7.0 * flap_rate if entering or state == BirdState.FLYING else 2.2 * flap_rate)
 		if entering:
 			var flight_speed := bird_flight_speed(float(bird["wing"]))
 			bird["entry"] = minf(1.0, float(bird["entry"]) + delta * BIRD_ENTRY_SPEED * flight_speed)
@@ -473,7 +475,8 @@ func draw_tool_bird(bird: Dictionary, field: Rect2) -> void:
 		center += Vector2(field.size.x * 0.07 * flight, -field.size.y * 0.055 * flight)
 	elif state == BirdState.FALLING:
 		center += Vector2(field.size.x * 0.018 * flight, field.size.y * 0.085 * flight)
-	var scale := (0.78 + seed * 0.38) * ease(growth, -1.2)
+	var perspective := bird_perspective(position_ratio.y)
+	var scale := (0.78 + seed * 0.38) * perspective.x * ease(growth, -1.2)
 	var flap := sin(float(bird["wing"]))
 	# The body rises slightly on the power stroke and settles during recovery.
 	center.y -= flap * 3.8 * scale
@@ -483,7 +486,7 @@ func draw_tool_bird(bird: Dictionary, field: Rect2) -> void:
 		wing_lift = 3.0 * scale
 	var span := (24.0 + seed * 11.0) * scale
 	var ink := ink_color()
-	var alpha := (0.62 if state != BirdState.FALLING else lerpf(0.56, 0.18, flight)) * exit_alpha
+	var alpha := (0.62 if state != BirdState.FALLING else lerpf(0.56, 0.18, flight)) * perspective.y * exit_alpha
 	# Layered strokes give each bird a soft ink belly and two calligraphic wings.
 	draw_circle(center, 4.2 * scale, Color(ink, alpha * 0.42))
 	draw_circle(center + Vector2(3.0, 0.8) * scale, 2.4 * scale, Color(ink, alpha * 0.58))
@@ -580,6 +583,16 @@ static func bird_flight_speed(wing_phase: float) -> float:
 	# 0.50 produces a visible 50%-150% range around BIRD_ENTRY_SPEED. Keep the
 	# result positive or a large frame could make the bird travel backwards.
 	return 1.0 - cos(wing_phase) * 0.50
+
+
+static func bird_perspective(vertical_ratio: float) -> Vector2:
+	# Birds near the bottom read as closer; those approaching the upper edge shrink
+	# and fade into atmospheric perspective. Do not clamp at y=0: the off-screen
+	# target must reach almost zero size/alpha instead of disappearing at medium size.
+	# Returns (scale, alpha multiplier).
+	var scale_depth := smoothstep(-0.10, 0.72, vertical_ratio)
+	var alpha_depth := smoothstep(-0.08, 0.45, vertical_ratio)
+	return Vector2(lerpf(0.04, 1.18, scale_depth), alpha_depth)
 
 
 static func quadratic_bezier(start: Vector2, control: Vector2, end: Vector2, time: float) -> Vector2:
