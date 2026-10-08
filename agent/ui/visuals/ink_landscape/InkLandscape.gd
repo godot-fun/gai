@@ -513,18 +513,8 @@ func draw_tool_bird(bird: Dictionary, field: Rect2) -> void:
 	# Layered strokes give each bird a soft ink belly and two calligraphic wings.
 	draw_circle(center, 4.2 * scale, Color(ink, alpha * 0.42))
 	draw_circle(center + Vector2(3.0, 0.8) * scale, 2.4 * scale, Color(ink, alpha * 0.58))
-	var left_wing := PackedVector2Array([
-		center,
-		center + Vector2(-span * 0.34, -wing_lift * 0.78),
-		center + Vector2(-span * 0.72, -wing_lift),
-		center + Vector2(-span, -wing_lift * 0.42),
-	])
-	var right_wing := PackedVector2Array([
-		center,
-		center + Vector2(span * 0.32, -wing_lift * 0.72),
-		center + Vector2(span * 0.68, -wing_lift * 0.94),
-		center + Vector2(span, -wing_lift * 0.34),
-	])
+	var left_wing := bird_wing_curve(center, span, wing_lift, -1.0, 1.0)
+	var right_wing := bird_wing_curve(center, span, wing_lift, 1.0, 0.88)
 	draw_polyline(left_wing, Color(ink, alpha * 0.18), 5.0 * scale, true)
 	draw_polyline(right_wing, Color(ink, alpha * 0.18), 5.0 * scale, true)
 	draw_polyline(left_wing, Color(ink, alpha), 1.45 * scale, true)
@@ -628,3 +618,32 @@ static func bird_perspective(vertical_ratio: float) -> Vector2:
 static func quadratic_bezier(start: Vector2, control: Vector2, end: Vector2, time: float) -> Vector2:
 	var inverse := 1.0 - time
 	return inverse * inverse * start + 2.0 * inverse * time * control + time * time * end
+
+
+static func bird_wing_curve(center: Vector2, span: float, wing_lift: float, direction: float, lift_bias: float) -> PackedVector2Array:
+	const SAMPLES := 12
+	var control_1: Vector2
+	var control_2: Vector2
+	var wing_tip: Vector2
+	if wing_lift >= 0.0:
+		# Upstroke: lift the middle of the wing while the tip trails behind.
+		control_1 = center + Vector2(direction * span * 0.24, -wing_lift * 0.82 * lift_bias)
+		control_2 = center + Vector2(direction * span * 0.68, -wing_lift * 1.12 * lift_bias)
+		wing_tip = center + Vector2(direction * span, -wing_lift * 0.40 * lift_bias)
+	else:
+		# Downstroke: the shoulder lifts slightly before the elbow turns and the
+		# primary feathers descend. This curved articulation avoids both a bowl and
+		# the rigid straight V produced by nearly collinear control points.
+		control_1 = center + Vector2(direction * span * 0.28, wing_lift * 0.08 * lift_bias)
+		control_2 = center + Vector2(direction * span * 0.70, -wing_lift * 0.22 * lift_bias)
+		wing_tip = center + Vector2(direction * span, -wing_lift * 0.94 * lift_bias)
+	var points := PackedVector2Array()
+	for index in range(SAMPLES + 1):
+		var time := float(index) / float(SAMPLES)
+		points.append(cubic_bezier(center, control_1, control_2, wing_tip, time))
+	return points
+
+
+static func cubic_bezier(start: Vector2, control_1: Vector2, control_2: Vector2, end: Vector2, time: float) -> Vector2:
+	var inverse := 1.0 - time
+	return inverse * inverse * inverse * start + 3.0 * inverse * inverse * time * control_1 + 3.0 * inverse * time * time * control_2 + time * time * time * end

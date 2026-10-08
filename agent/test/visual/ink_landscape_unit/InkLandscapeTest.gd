@@ -130,6 +130,27 @@ func bird_entry_uses_constant_speed_test() -> void:
 	pass
 
 
+func bird_wing_is_sampled_as_smooth_curve_test() -> void:
+	var center := Vector2(100.0, 80.0)
+	var wing := InkLandscape.bird_wing_curve(center, 32.0, 12.0, -1.0, 1.0)
+	assert(wing.size() == 13)
+	assert(wing[0].is_equal_approx(center))
+	assert(wing[-1].is_equal_approx(center + Vector2(-32.0, -4.8)))
+	for index in range(1, wing.size()):
+		assert(wing[index].distance_to(wing[index - 1]) < 5.0)
+	pass
+
+
+func bird_downstroke_bows_above_its_straight_chord_test() -> void:
+	var center := Vector2(100.0, 80.0)
+	var wing := InkLandscape.bird_wing_curve(center, 32.0, -12.0, 1.0, 1.0)
+	assert(wing[-1].y > center.y)
+	var straight_middle := center.lerp(wing[-1], 0.5)
+	assert(wing[6].y < straight_middle.y - 1.0)
+	assert(wing[-1].y > wing[-2].y)
+	pass
+
+
 func bird_speed_varies_smoothly_with_wing_stroke_test() -> void:
 	var slow := InkLandscape.bird_flight_speed(0.0)
 	var cruise := InkLandscape.bird_flight_speed(PI * 0.5)
