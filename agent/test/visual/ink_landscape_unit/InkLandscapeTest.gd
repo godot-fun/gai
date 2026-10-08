@@ -279,11 +279,15 @@ func render_smoke_test() -> void:
 	assert(effect.z_index == 100)
 	var mountain_canvas: ColorRect = effect.mountains[0]["canvas"]
 	var mountain_material: ShaderMaterial = effect.mountains[0]["material"]
+	var initial_strength := float(mountain_material.get_shader_parameter("strength"))
 	assert(mountain_canvas.z_index < 0)
 	assert(mountain_canvas.z_index < effect.cloud_canvas.z_index)
 	assert(effect.cloud_canvases[0].z_index < mountain_canvas.z_index)
 	effect.set_landscape_alpha(0.23)
 	assert(is_equal_approx(float(mountain_material.get_shader_parameter("fade_alpha")), 0.23))
+	for _index in range(12):
+		effect.on_turn_start()
+	assert(is_equal_approx(float(mountain_material.get_shader_parameter("strength")), initial_strength))
 	effect.get_parent().remove_child(effect)
 	effect.free()
 	pass

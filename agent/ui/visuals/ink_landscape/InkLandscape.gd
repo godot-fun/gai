@@ -208,7 +208,6 @@ func on_turn_start() -> void:
 	current_turn_has_mountain = true
 	if is_inside_tree():
 		mount_mountain(mountain)
-		rebalance_mountain_opacity()
 	reasoning_ink = minf(2.0, reasoning_ink + 0.52)
 	queue_redraw()
 	pass
@@ -416,16 +415,6 @@ static func mountain_bounds(mountain: Dictionary) -> Rect2:
 	var top := maxf(0.0, base - height * 1.55 - 0.045)
 	var bottom := minf(1.0, base + 0.085)
 	return Rect2(Vector2(left, top), Vector2(maxf(0.001, right - left), maxf(0.001, bottom - top)))
-
-
-func rebalance_mountain_opacity() -> void:
-	# Preserve a finite ink budget as turns grow without deleting any mountain.
-	var density_scale := minf(1.0, pow(6.0 / float(maxi(mountains.size(), 6)), 0.78))
-	for mountain: Dictionary in mountains:
-		var material: ShaderMaterial = mountain.get("material")
-		if material != null:
-			material.set_shader_parameter("strength", float(mountain["strength"]) * density_scale)
-	pass
 
 
 static func mountain_depth(serial: int) -> float:
