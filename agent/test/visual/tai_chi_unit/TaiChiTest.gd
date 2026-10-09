@@ -1,5 +1,7 @@
 extends RefCounted
 
+const TAI_CHI_CAROUSEL_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiCarouselFlow.gd")
+
 static func visual_type_test() -> void:
 	assert(VisualType.is_valid(VisualType.Type.TAI_CHI))
 	var control := VisualControl.new()
@@ -119,6 +121,21 @@ func bagua_moves_left_to_right_and_builds_frame_test() -> void:
 	var canvas_size := Vector2(1920.0, 1080.0)
 	assert(flow.taiji_center(canvas_size, evolution).is_equal_approx(canvas_size * 0.5))
 	assert(flow.taiji_radius(canvas_size, evolution) > evolution.symbol_radius(canvas_size))
+	pass
+
+
+func carousel_rotates_and_cycles_all_trigrams_test() -> void:
+	var flow = TAI_CHI_CAROUSEL_FLOW_SCRIPT.new()
+	flow.begin()
+	flow.advance(TAI_CHI_CAROUSEL_FLOW_SCRIPT.INTRO_SECONDS * 0.5)
+	assert(flow.taiji_rotation() > 0.0)
+	assert(flow.taiji_opacity() < 1.0)
+	assert(flow.ring_rotation() > 0.0)
+	flow.advance(TAI_CHI_CAROUSEL_FLOW_SCRIPT.INTRO_SECONDS * 0.5 + TAI_CHI_CAROUSEL_FLOW_SCRIPT.ITEM_SECONDS * 3.2)
+	assert(flow.selected_index() == 6)
+	assert(flow.item_opacity() > 0.0)
+	flow.advance(TAI_CHI_CAROUSEL_FLOW_SCRIPT.ITEM_SECONDS * 5.0)
+	assert(flow.selected_index() == 0)
 	pass
 
 

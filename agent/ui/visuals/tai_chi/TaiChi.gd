@@ -7,6 +7,7 @@ extends VisualEffect
 const COMPLETION_SECONDS := 1.25
 const LINE_AURA_SHADER_PATH := "res://agent/ui/visuals/tai_chi/TaiChiLineAura.gdshader"
 const FILL_SHADER_PATH := "res://agent/ui/visuals/tai_chi/TaiChiFill.gdshader"
+const CAROUSEL_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiCarouselFlow.gd")
 const FILL_ALPHA := 0.58
 
 var opening := TaiChiOpeningFlow.new()
@@ -14,6 +15,8 @@ var duality := TaiChiDualityFlow.new()
 var formation := TaiChiFormationFlow.new()
 var evolution := TaiChiEvolutionFlow.new()
 var bagua := TaiChiBaguaFlow.new()
+# Explicit preload keeps a clean command-line parse independent of Godot's editor class cache.
+var carousel = CAROUSEL_FLOW_SCRIPT.new()
 var line_aura_canvas: ColorRect
 var line_aura_material: ShaderMaterial
 var fill_layer: ColorRect
@@ -47,6 +50,7 @@ func reset_visual() -> void:
 	formation.reset()
 	evolution.reset()
 	bagua.reset()
+	carousel.reset()
 	queue_redraw()
 	pass
 
@@ -88,6 +92,10 @@ func _process(delta: float) -> void:
 		bagua.begin()
 		changed = true
 	changed = bagua.advance(delta) or changed
+	if bagua.progress() >= 1.0 and not carousel.active:
+		carousel.begin()
+		changed = true
+	changed = carousel.advance(delta) or changed
 	update_line_aura()
 	update_fill_layer()
 	if changed:
@@ -128,12 +136,15 @@ func update_fill_layer() -> void:
 		return
 	var reveal := formation.fill_progress() if formation.active else 0.0
 	fill_layer.visible = reveal > 0.0
-	fill_material.set_shader_parameter("opacity", reveal * FILL_ALPHA)
+	var taiji_alpha := carousel.taiji_opacity() if carousel.active else 1.0
+	fill_material.set_shader_parameter("opacity", reveal * FILL_ALPHA * taiji_alpha)
 	if fill_layer.visible:
 		var radius := bagua.taiji_radius(size, evolution) if bagua.active else (evolution.symbol_radius(size) if evolution.active else formation.symbol_radius(size))
 		var symbol_center := bagua.taiji_center(size, evolution) if bagua.active else (evolution.symbol_center(size) if evolution.active else formation.symbol_center(size))
 		fill_layer.position = symbol_center - Vector2(radius, radius)
 		fill_layer.size = Vector2.ONE * radius * 2.0
+		fill_layer.pivot_offset = fill_layer.size * 0.5
+		fill_layer.rotation = carousel.taiji_rotation() if carousel.active else 0.0
 	pass
 
 
@@ -174,6 +185,8 @@ func _draw() -> void:
 	var center := size * 0.5
 	if not duality.active:
 		opening.draw(self, center, size.x)
+	elif carousel.active:
+		carousel.draw(self, bagua)
 	elif bagua.active:
 		evolution.draw(self, bagua.hierarchy_opacity(), false)
 		bagua.draw(self, evolution)
