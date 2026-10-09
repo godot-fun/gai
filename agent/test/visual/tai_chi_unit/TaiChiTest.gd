@@ -198,11 +198,12 @@ func hexagram_flow_combines_and_reveals_sixty_four_symbols_test() -> void:
 
 func hexagram_catalog_contains_every_unique_identity_test() -> void:
 	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.ENTRIES.size() == 64)
-	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.GUIDANCE.size() == 64)
+	for raw_entry in TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.ENTRIES:
+		assert(raw_entry.size() == 10)
 	var values := {}
 	for number in range(1, 65):
-		var entry: Dictionary = TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.entry_from_number(number)
-		assert(not entry.is_empty())
+		var entry := TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.entry_from_number(number)
+		assert(entry != null)
 		assert(not values.has(entry.value))
 		assert(not str(entry.theme).is_empty())
 		assert(not str(entry.interpretation).is_empty())
@@ -210,7 +211,7 @@ func hexagram_catalog_contains_every_unique_identity_test() -> void:
 		assert(not str(entry.avoid).is_empty())
 		values[entry.value] = true
 	assert(values.size() == 64)
-	var tun: Dictionary = TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.entry_from_number(3)
+	var tun := TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.entry_from_number(3)
 	assert(tun.value == 34)
 	assert(tun.symbol == "䷂")
 	assert(tun.full_name == "水雷屯")

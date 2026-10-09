@@ -175,7 +175,7 @@ func draw_prompt(canvas: Control, center: Vector2) -> void:
 
 
 func draw_spinning_label(canvas: Control, center: Vector2) -> void:
-	var entry: Dictionary = TaiChiHexagramCatalog.entry_from_value(highlighted_value())
+	var entry := TaiChiHexagramCatalog.entry_from_value(highlighted_value())
 	var alpha := 0.35 + 0.4 * (1.0 - spin_progress())
 	draw_centered_text(canvas, "问卦", center - Vector2(0.0, canvas.size.y * 0.025),
 		clampi(int(canvas.size.y * 0.064), 42, 70), alpha)
@@ -202,7 +202,7 @@ func draw_selected_hexagram(canvas: Control, center: Vector2, short_side: float)
 
 func draw_result(canvas: Control, center: Vector2) -> void:
 	var alpha := result_progress()
-	var entry: Dictionary = TaiChiHexagramCatalog.entry_from_value(selected_value)
+	var entry := TaiChiHexagramCatalog.entry_from_value(selected_value)
 	var title_y := center.y - canvas.size.y * 0.035
 	draw_centered_text(canvas, "%s  第 %d 卦 · %s" % [entry.symbol, entry.number, entry.full_name],
 		Vector2(center.x, title_y), clampi(int(canvas.size.y * 0.038), 25, 42), alpha * 0.9)
