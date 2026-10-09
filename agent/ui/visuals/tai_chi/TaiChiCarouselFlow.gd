@@ -22,6 +22,16 @@ const FEATURES := [
 	"静止 · 界限 · 笃实",
 	"柔顺 · 承载 · 包容",
 ]
+const XIANG_QUOTES := [
+	"天行健，君子以自强不息。",
+	"丽泽，兑；君子以朋友讲习。",
+	"明两作，离；大人以继明照于四方。",
+	"洊雷，震；君子以恐惧修省。",
+	"随风，巽；君子以申命行事。",
+	"水洊至，习坎；君子以常德行，习教事。",
+	"兼山，艮；君子以思不出其位。",
+	"地势坤，君子以厚德载物。",
+]
 
 var elapsed: float = 0.0
 var active: bool = false
@@ -136,6 +146,9 @@ func draw_explanation(canvas: Control, center: Vector2) -> void:
 	draw_centered_text(canvas, ELEMENTS[index], center - Vector2(0.0, 20.0 + lift), clampi(int(canvas.size.y * 0.14), 76, 142), alpha * 0.9)
 	draw_centered_text(canvas, STATEMENTS[index], center + Vector2(0.0, canvas.size.y * 0.105), clampi(int(canvas.size.y * 0.035), 20, 36), alpha * 0.76)
 	draw_centered_text(canvas, FEATURES[index], center + Vector2(0.0, canvas.size.y * 0.155), clampi(int(canvas.size.y * 0.022), 15, 23), alpha * 0.58)
+	# Keep the source sentence near the bottom of the inner circle: visually tied
+	# to the current explanation, but clear of the lower 坤 trigram and its label.
+	draw_centered_text(canvas, XIANG_QUOTES[index], center + Vector2(0.0, canvas.size.y * 0.225), clampi(int(canvas.size.y * 0.019), 14, 20), alpha * 0.52)
 	pass
 
 

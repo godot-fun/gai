@@ -126,6 +126,10 @@ func bagua_moves_left_to_right_and_builds_frame_test() -> void:
 
 func carousel_rotates_and_cycles_all_trigrams_test() -> void:
 	var flow = TAI_CHI_CAROUSEL_FLOW_SCRIPT.new()
+	assert(flow.PLAY_ORDER == [0, 4, 5, 6, 7, 3, 2, 1])
+	assert(flow.XIANG_QUOTES.size() == 8)
+	assert(flow.XIANG_QUOTES[0] == "天行健，君子以自强不息。")
+	assert(flow.XIANG_QUOTES[7] == "地势坤，君子以厚德载物。")
 	flow.begin()
 	flow.advance(TAI_CHI_CAROUSEL_FLOW_SCRIPT.INTRO_SECONDS * 0.5)
 	assert(flow.taiji_rotation() > 0.0)

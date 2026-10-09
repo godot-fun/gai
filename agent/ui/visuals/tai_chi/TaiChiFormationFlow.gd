@@ -115,16 +115,23 @@ func draw_inner_morph(canvas: Control, center: Vector2, radius: float, half_widt
 		var points := PackedVector2Array()
 		var reveal := upper_reveal if side == 0 else lower_reveal
 		var dot_center := center + Vector2(0.0, (-0.5 if side == 0 else 0.5) * radius)
+		var eased_reveal := ease(reveal, -1.4)
+		var source_start := -half_width if side == 0 else gap
+		var source_end := -gap if side == 0 else half_width
+		var source_center := Vector2(center.x + (source_start + source_end) * 0.5, source_y)
+		var source_radius_x := absf(source_end - source_start) * 0.5
+		var target_radius := radius * DOT_RADIUS_RATIO
+		var shape_center := source_center.lerp(dot_center, eased_reveal)
+		var radius_x := lerpf(source_radius_x, target_radius, eased_reveal)
+		var radius_y := target_radius * eased_reveal
+		# A zero-height ellipse is the original horizontal segment traced in both
+		# directions. Raising its vertical radius opens it into a circle without any
+		# point crossing another point, avoiding the knot created by line-to-circle
+		# point interpolation.
 		for index in range(CURVE_STEPS + 1):
 			var ratio := float(index) / float(CURVE_STEPS)
-			var source_start := -half_width if side == 0 else gap
-			var source_end := -gap if side == 0 else half_width
-			var source := Vector2(center.x + lerpf(source_start, source_end, ratio), source_y)
-			# Each broken stroke becomes one of the two taiji eyes. Close from the point
-			# nearest the source row so neither stroke travels through the other eye.
-			var angle := (PI * 0.5 if side == 0 else -PI * 0.5) + TAU * ratio
-			var target := dot_center + Vector2.from_angle(angle) * radius * DOT_RADIUS_RATIO
-			points.append(source.lerp(target, ease(reveal, -1.4)))
+			var angle := TAU * ratio
+			points.append(shape_center + Vector2(cos(angle) * radius_x, sin(angle) * radius_y))
 		canvas.draw_polyline(points, Color(ColorBase.primary_text, alpha * CONSTRUCTION_ALPHA), 1.6, true)
 	pass
 
