@@ -93,7 +93,7 @@ func draw_moving_trigram(canvas: Control, evolution: TaiChiEvolutionFlow, center
 	var arc_offset := Vector2(0.0, -sin(local * PI) * minf(90.0, canvas.size.y * 0.11))
 	var position := source.lerp(target, ease(local, -1.3)) + arc_offset
 	var rotation := lerpf(0.0, angle + PI * 0.5, ease(local, -1.2))
-	var source_width := minf(area.size.x / 8.0 * 0.58, 54.0)
+	var source_width := TaiChiEvolutionFlow.SYMBOL_WIDTH
 	var target_width := minf(76.0, canvas.size.y * 0.085)
 	var width := lerpf(source_width, target_width, local)
 	var line_gap := lerpf(7.0, 13.0, local)

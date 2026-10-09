@@ -8,8 +8,17 @@ extends RefCounted
 ## from outside the viewport and settle before the next generation takes focus.
 const TRANSITION_SECONDS := 14.4
 const ROW_COUNT := 4
+const ROW_TOP_RATIO := 0.16
+const CONTENT_LEFT_RATIO := 0.25
+const CONTENT_WIDTH_RATIO := 0.5
+const SYMBOL_WIDTH := 54.0
 # Values are stored top line first because [draw_line_symbol] lays lines out from
 # top to bottom. This produces 乾 ☰ through 坤 ☷ in the displayed name order.
+const DUALITY_NAMES := ["阳", "阴"]
+const DUALITY_VALUES := [1, 0]
+const FOUR_IMAGE_NAMES := ["太阳", "少阴", "少阳", "太阴"]
+const FOUR_IMAGE_VALUES := [3, 2, 1, 0]
+const TRIGRAM_NAMES := ["乾", "兑", "离", "震", "巽", "坎", "艮", "坤"]
 const TRIGRAM_VALUES := [7, 6, 5, 4, 3, 2, 1, 0]
 const DEPARTING_TITLE := "易有太极，是生两仪"
 const DEPARTING_SUBTITLE := "There is in the Changes the Great Primal Beginning. This generates the two primary forces."
@@ -53,10 +62,6 @@ func shrink_progress() -> float:
 	return smoothstep(0.0, 0.18, progress())
 
 
-func move_progress() -> float:
-	return smoothstep(0.18, 0.34, progress())
-
-
 func final_caption_progress() -> float:
 	return smoothstep(0.34, 0.42, progress())
 
@@ -68,21 +73,14 @@ func symbol_radius(canvas_size: Vector2) -> float:
 
 
 func symbol_center(canvas_size: Vector2) -> Vector2:
-	var source_y := canvas_size.y * 0.5 - minf(42.0, canvas_size.y * 0.055)
-	var final_y := row_y(canvas_size, 0)
-	# Align the final taiji with the exact midpoint between the 阳 and 阴 cells,
-	# rather than the viewport center (the left-side row labels make these differ).
-	var duality_center_x := content_area(canvas_size).get_center().x
-	var source_x := canvas_size.x * 0.5
-	return Vector2(
-		lerpf(source_x, duality_center_x, ease(move_progress(), -1.5)),
-		lerpf(source_y, final_y, ease(move_progress(), -1.5))
-	)
+	# Shrinking never changes the established formation position. All hierarchy
+	# geometry is anchored to this center instead of moving the taiji to a row.
+	return canvas_size * 0.5 - Vector2(0.0, minf(42.0, canvas_size.y * 0.055))
 
 
 func row_y(canvas_size: Vector2, row_from_bottom: int) -> float:
-	var bottom := canvas_size.y * 0.7
-	var top := canvas_size.y * 0.12
+	var bottom := symbol_center(canvas_size).y
+	var top := canvas_size.y * ROW_TOP_RATIO
 	return lerpf(bottom, top, float(row_from_bottom) / float(ROW_COUNT - 1))
 
 
@@ -91,8 +89,10 @@ func draw(canvas: Control, opacity: float = 1.0, draw_trigrams: bool = true) -> 
 		return
 	draw_departing_caption(canvas)
 	draw_taiji_row(canvas, row_progress(0) * opacity)
-	draw_binary_row(canvas, "两仪", 2, row_y(canvas.size, 1), row_progress(1) * opacity)
-	draw_binary_row(canvas, "四象", 4, row_y(canvas.size, 2), row_progress(2) * opacity)
+	draw_symbol_row(canvas, "两仪", DUALITY_NAMES, DUALITY_VALUES, 1,
+		row_y(canvas.size, 1), row_progress(1) * opacity)
+	draw_symbol_row(canvas, "四象", FOUR_IMAGE_NAMES, FOUR_IMAGE_VALUES, 2,
+		row_y(canvas.size, 2), row_progress(2) * opacity)
 	if draw_trigrams:
 		# The bagua phase passes false and takes ownership of these same trigrams,
 		# allowing them to move continuously into the circle without a cross-fade.
@@ -154,25 +154,25 @@ func draw_final_caption(canvas: Control, reveal: float) -> void:
 	pass
 
 
-func draw_binary_row(canvas: Control, title: String, item_count: int, y: float, reveal: float) -> void:
+func draw_symbol_row(canvas: Control, title: String, names: Array, values: Array, line_count: int,
+		y: float, reveal: float) -> void:
 	if reveal <= 0.0:
 		return
 	draw_row_label(canvas, title, y, reveal)
 	var area := content_area(canvas.size)
-	var gap := minf(18.0, area.size.x * 0.012)
-	var cell_width := (area.size.x - gap * float(item_count - 1)) / float(item_count)
-	var labels := PackedStringArray(["阳", "阴"]) if item_count == 2 else PackedStringArray(["太阳", "少阴", "少阳", "太阴"])
+	var item_count := values.size()
+	var cell_width := area.size.x / float(item_count)
 	for index in item_count:
 		var local := item_progress(reveal, index, item_count)
 		if local <= 0.0:
 			continue
-		var target_center := Vector2(area.position.x + float(index) * (cell_width + gap) + cell_width * 0.5, y)
+		var target_center := Vector2(area.position.x + (float(index) + 0.5) * cell_width, y)
 		var center := flying_position(canvas.size, target_center, local, index, item_count)
-		var scale := lerpf(0.42, 1.0, ease(local, -1.8))
-		var rect_size := Vector2(cell_width, 44.0) * scale
-		var rect := Rect2(center - rect_size * 0.5, rect_size)
+		var scale := lerpf(0.38, 1.0, ease(local, -1.8))
 		draw_flight_trail(canvas, center, local, index)
-		draw_glowing_cell(canvas, rect, labels[index], index % 2 == 0, local)
+		draw_line_symbol(canvas, center, values[index], line_count, SYMBOL_WIDTH * scale, local)
+		draw_centered_text(canvas, names[index], center + Vector2(0.0, -34.0 * scale),
+			maxi(10, int(round(18.0 * scale))), local * 0.76)
 	pass
 
 
@@ -180,7 +180,6 @@ func draw_trigram_row(canvas: Control, y: float, reveal: float) -> void:
 	if reveal <= 0.0:
 		return
 	draw_row_label(canvas, "八卦", y, reveal)
-	var names := PackedStringArray(["乾", "兑", "离", "震", "巽", "坎", "艮", "坤"])
 	var area := content_area(canvas.size)
 	var cell_width := area.size.x / 8.0
 	for index in 8:
@@ -191,13 +190,15 @@ func draw_trigram_row(canvas: Control, y: float, reveal: float) -> void:
 		var center := flying_position(canvas.size, target_center, local, index, 8)
 		var scale := lerpf(0.38, 1.0, ease(local, -1.8))
 		draw_flight_trail(canvas, center, local, index)
-		draw_line_symbol(canvas, center, TRIGRAM_VALUES[index], 3, minf(cell_width * 0.58, 54.0) * scale, local)
-		draw_centered_text(canvas, names[index], center + Vector2(0.0, -34.0 * scale), maxi(10, int(round(18.0 * scale))), local * 0.76)
+		draw_line_symbol(canvas, center, TRIGRAM_VALUES[index], 3, SYMBOL_WIDTH * scale, local)
+		draw_centered_text(canvas, TRIGRAM_NAMES[index], center + Vector2(0.0, -34.0 * scale),
+			maxi(10, int(round(18.0 * scale))), local * 0.76)
 	pass
 
 
 func content_area(canvas_size: Vector2) -> Rect2:
-	return Rect2(canvas_size.x * 0.2, 0.0, canvas_size.x * 0.72, canvas_size.y)
+	return Rect2(canvas_size.x * CONTENT_LEFT_RATIO, 0.0,
+		canvas_size.x * CONTENT_WIDTH_RATIO, canvas_size.y)
 
 
 func item_progress(reveal: float, index: int, count: int) -> float:
@@ -235,19 +236,6 @@ func draw_row_label(canvas: Control, text: String, y: float, reveal: float) -> v
 	var font_size := clampi(int(canvas.size.y * 0.034), 20, 34)
 	var x := canvas.size.x * 0.085
 	draw_centered_text(canvas, text, Vector2(x, y), font_size, reveal * 0.72)
-	pass
-
-
-func draw_glowing_cell(canvas: Control, rect: Rect2, text: String, bright: bool, reveal: float) -> void:
-	var fill_alpha := 0.07 if bright else 0.018
-	var fill := ThemeColor.alpha_theme_color(fill_alpha * reveal)
-	canvas.draw_rect(rect, fill, true)
-	canvas.draw_rect(rect, ThemeColor.alpha_theme_color(0.24 * reveal), false, 1.2, true)
-	if bright:
-		var glow_rect := rect.grow(5.0)
-		canvas.draw_rect(glow_rect, ThemeColor.alpha_theme_color(0.025 * reveal), false, 7.0, true)
-	var font_size := clampi(int(rect.size.y * 0.65), 10, 30)
-	draw_centered_text(canvas, text, rect.get_center(), font_size, reveal * 0.82)
 	pass
 
 
