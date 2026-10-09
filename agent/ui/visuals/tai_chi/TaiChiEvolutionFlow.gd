@@ -4,10 +4,14 @@ extends RefCounted
 ## Expands the completed taiji into five generations. Rows rise from the taiji,
 ## while every row reveals its symbols in reading order from left to right.
 
+## The deliberately long duration gives every generation enough time to travel
+## from outside the viewport and settle before the next generation takes focus.
 const TRANSITION_SECONDS := 14.4
 const ROW_COUNT := 5
 const YANG := 1
 const YIN := 0
+# Values are stored top line first because [draw_line_symbol] lays lines out from
+# top to bottom. This produces 乾 ☰ through 坤 ☷ in the displayed name order.
 const TRIGRAM_VALUES := [7, 6, 5, 4, 3, 2, 1, 0]
 const DEPARTING_TITLE := "易有太极，是生两仪"
 const DEPARTING_SUBTITLE := "IN CHANGE THERE IS THE GREAT ULTIMATE"
@@ -40,11 +44,14 @@ func progress() -> float:
 
 
 func row_progress(row_from_bottom: int) -> float:
+	# Rows overlap slightly, but their starts remain bottom-to-top: 太极、两仪、四象、八卦、六十四卦.
 	var start := 0.26 + float(row_from_bottom) * 0.15
 	return smoothstep(start, minf(start + 0.18, 1.0), progress())
 
 
 func shrink_progress() -> float:
+	# Shrinking finishes before movement begins so the large completed taiji does
+	# not sweep across the whole screen at full size.
 	return smoothstep(0.0, 0.18, progress())
 
 
@@ -61,6 +68,8 @@ func symbol_radius(canvas_size: Vector2) -> float:
 func symbol_center(canvas_size: Vector2) -> Vector2:
 	var source_y := canvas_size.y * 0.5 - minf(42.0, canvas_size.y * 0.055)
 	var final_y := row_y(canvas_size, 0)
+	# Align the final taiji with the exact midpoint between the 阳 and 阴 cells,
+	# rather than the viewport center (the left-side row labels make these differ).
 	var duality_center_x := content_area(canvas_size).get_center().x
 	var source_x := canvas_size.x * 0.5
 	return Vector2(
@@ -83,12 +92,16 @@ func draw(canvas: Control, opacity: float = 1.0, draw_trigrams: bool = true) -> 
 	draw_binary_row(canvas, "两仪", 2, row_y(canvas.size, 1), row_progress(1) * opacity)
 	draw_binary_row(canvas, "四象", 4, row_y(canvas.size, 2), row_progress(2) * opacity)
 	if draw_trigrams:
+		# The bagua phase passes false and takes ownership of these same trigrams,
+		# allowing them to move continuously into the circle without a cross-fade.
 		draw_trigram_row(canvas, row_y(canvas.size, 3), row_progress(3) * opacity)
 	draw_hexagram_row(canvas, row_y(canvas.size, 4), row_progress(4) * opacity)
 	pass
 
 
 func draw_departing_caption(canvas: Control) -> void:
+	# Continue the exact title layout from TaiChiFormationFlow while reducing both
+	# font size and opacity. This prevents a one-frame typography jump at handoff.
 	var shrink := shrink_progress()
 	var opacity := 1.0 - smoothstep(0.58, 1.0, shrink)
 	if opacity <= 0.0:
@@ -190,11 +203,16 @@ func content_area(canvas_size: Vector2) -> Rect2:
 
 
 func item_progress(reveal: float, index: int, count: int) -> float:
+	# Stagger each item across 70% of its row window. The remaining 30% is the
+	# individual flight duration, preserving a clear left-to-right launch order.
 	var start := float(index) / float(count) * 0.7
 	return smoothstep(start, minf(start + 0.3, 1.0), reveal)
 
 
 func flying_position(canvas_size: Vector2, target: Vector2, local: float, index: int, count: int) -> Vector2:
+	# All symbols begin above the viewport. Their start x positions occupy a narrow
+	# fan around the center, then alternating sine offsets create curved approaches
+	# without changing the exact final target when local reaches 1.
 	var spread := (float(index) - float(count - 1) * 0.5) / maxf(float(count - 1), 1.0)
 	var start := Vector2(canvas_size.x * (0.5 + spread * 0.18), -70.0 - float(index % 3) * 28.0)
 	var settle := ease(local, -1.65)
@@ -204,6 +222,8 @@ func flying_position(canvas_size: Vector2, target: Vector2, local: float, index:
 
 
 func draw_flight_trail(canvas: Control, position: Vector2, local: float, index: int) -> void:
+	# sin(0..PI) makes the trail invisible at launch and landing and strongest at
+	# mid-flight. Alternating slants keep adjacent symbols visually distinguishable.
 	var strength := sin(clampf(local, 0.0, 1.0) * PI)
 	if strength <= 0.01:
 		return
@@ -238,6 +258,7 @@ func draw_line_symbol(canvas: Control, center: Vector2, value: int, line_count: 
 	var color := ThemeColor.alpha_theme_color(reveal * 0.32)
 	for line_index in line_count:
 		var y := center.y + (float(line_index) - float(line_count - 1) * 0.5) * line_gap
+		# Each bit selects a solid yang line or a center-broken yin line.
 		var solid := ((value >> line_index) & YANG) == YANG
 		if solid:
 			canvas.draw_line(Vector2(center.x - width * 0.5, y), Vector2(center.x + width * 0.5, y), color, 3.0, true)

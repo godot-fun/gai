@@ -6,6 +6,8 @@ extends RefCounted
 
 const TRANSITION_SECONDS := 5.8
 const NAMES := ["乾", "兑", "离", "震", "巽", "坎", "艮", "坤"]
+# Angles match the reference compass: 乾 at top, 坤 at bottom, 离/坎 at left/right,
+# and the remaining four trigrams on the diagonals.
 const TARGET_ANGLES := [-PI * 0.5, -PI * 0.75, PI, PI * 0.75, -PI * 0.25, 0.0, PI * 0.25, PI * 0.5]
 
 var elapsed: float = 0.0
@@ -36,10 +38,13 @@ func progress() -> float:
 
 
 func hierarchy_opacity() -> float:
+	# Only the supporting hierarchy fades. The trigrams and taiji are redrawn by
+	# this flow at their current positions, so their motion remains continuous.
 	return 1.0 - smoothstep(0.0, 0.28, progress())
 
 
 func trigram_progress(index: int) -> float:
+	# Small start offsets preserve the original row's left-to-right reading order.
 	var start := 0.04 + float(index) * 0.035
 	return smoothstep(start, start + 0.48, progress())
 
@@ -53,6 +58,8 @@ func taiji_progress() -> float:
 
 
 func taiji_center(canvas_size: Vector2, evolution: TaiChiEvolutionFlow) -> Vector2:
+	# Begin at the exact final position of the hierarchy phase, then move the same
+	# shader-backed taiji into the compass center—no replacement image is created.
 	return evolution.symbol_center(canvas_size).lerp(canvas_size * 0.5, ease(taiji_progress(), -1.35))
 
 
@@ -76,9 +83,13 @@ func draw(canvas: Control, evolution: TaiChiEvolutionFlow) -> void:
 func draw_moving_trigram(canvas: Control, evolution: TaiChiEvolutionFlow, center: Vector2, orbit_radius: float, index: int) -> void:
 	var local := trigram_progress(index)
 	var area := evolution.content_area(canvas.size)
+	# Source geometry intentionally matches TaiChiEvolutionFlow.draw_trigram_row.
+	# At local == 0 the handoff is pixel-aligned; at local == 1 it is radial.
 	var source := Vector2(area.position.x + (float(index) + 0.5) * area.size.x / 8.0, evolution.row_y(canvas.size, 3))
 	var angle: float = TARGET_ANGLES[index]
 	var target := center + Vector2.from_angle(angle) * orbit_radius
+	# Lift the midpoint of the interpolation into a shallow arc while retaining
+	# identical endpoints, producing a deliberate rather than mechanical move.
 	var arc_offset := Vector2(0.0, -sin(local * PI) * minf(90.0, canvas.size.y * 0.11))
 	var position := source.lerp(target, ease(local, -1.3)) + arc_offset
 	var rotation := lerpf(0.0, angle + PI * 0.5, ease(local, -1.2))
@@ -99,6 +110,8 @@ func draw_moving_trigram(canvas: Control, evolution: TaiChiEvolutionFlow, center
 
 
 func draw_trigram(canvas: Control, center: Vector2, rotation: float, value: int, width: float, line_gap: float, line_width: float, alpha: float) -> void:
+	# Build in local direction/normal axes instead of changing the canvas transform;
+	# this keeps subsequent labels, rings, and sibling trigrams unaffected.
 	var direction := Vector2.from_angle(rotation)
 	var normal := direction.rotated(PI * 0.5)
 	var color := ThemeColor.alpha_theme_color(alpha * 0.58)
@@ -130,6 +143,8 @@ func draw_frame(canvas: Control, center: Vector2, orbit_radius: float) -> void:
 	canvas.draw_arc(center, orbit_radius * 1.31, -PI * 0.5, -PI * 0.5 + TAU * reveal, 160, ThemeColor.alpha_theme_color(reveal * 0.09), 1.0, true)
 	canvas.draw_arc(center, orbit_radius * 0.63, -PI * 0.5, -PI * 0.5 + TAU * reveal, 120, ring_color, 1.2, true)
 	for tick in 64:
+		# Eight major ticks mark trigram directions; the remaining ticks echo the
+		# sixty-four hexagrams without adding another dense row of symbols.
 		var tick_progress := float(tick + 1) / 64.0
 		if tick_progress > reveal:
 			break
