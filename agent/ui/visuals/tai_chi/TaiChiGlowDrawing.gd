@@ -52,6 +52,33 @@ static func draw_line(canvas: Control, start: Vector2, finish: Vector2, line_wid
 	pass
 
 
+static func draw_tapered_line(canvas: Control, start: Vector2, finish: Vector2,
+		start_width: float, finish_width: float, alpha: float) -> void:
+	var direction := start.direction_to(finish)
+	if direction.is_zero_approx():
+		return
+	var normal := direction.rotated(PI * 0.5)
+	draw_tapered_layer(canvas, start, finish, normal, start_width * 5.0, finish_width * 5.0,
+		ThemeColor.alpha_theme_color(alpha * LINE_FAR_GLOW_ALPHA))
+	draw_tapered_layer(canvas, start, finish, normal, start_width * 2.8, finish_width * 2.8,
+		ThemeColor.alpha_theme_color(alpha * LINE_NEAR_GLOW_ALPHA))
+	draw_tapered_layer(canvas, start, finish, normal, start_width, finish_width,
+		Color(ColorBase.primary_text, alpha))
+	pass
+
+
+static func draw_tapered_layer(canvas: Control, start: Vector2, finish: Vector2, normal: Vector2,
+		start_width: float, finish_width: float, color: Color) -> void:
+	var points := PackedVector2Array([
+		start + normal * start_width * 0.5,
+		finish + normal * finish_width * 0.5,
+		finish - normal * finish_width * 0.5,
+		start - normal * start_width * 0.5,
+	])
+	canvas.draw_colored_polygon(points, color)
+	pass
+
+
 static func draw_polyline(canvas: Control, points: PackedVector2Array, line_width: float,
 		alpha: float) -> void:
 	canvas.draw_polyline(points, ThemeColor.alpha_theme_color(alpha * LINE_FAR_GLOW_ALPHA),

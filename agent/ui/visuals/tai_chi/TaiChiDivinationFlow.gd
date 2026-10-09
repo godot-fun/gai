@@ -1,8 +1,8 @@
 class_name TaiChiDivinationFlow
 extends RefCounted
 
-## Final one-spin divination stage. The Fuxi circle becomes a prize wheel under
-## a fixed pointer; the highlighted hexagram follows the pointer like a marquee.
+## Final one-spin divination stage. The Fuxi circle remains still while a fine
+## compass needle rotates from the center and selects one hexagram.
 
 const PROMPT_SECONDS := 4.5
 const SPIN_SECONDS := 8.0
@@ -34,7 +34,7 @@ func begin(forced_value: int = -1) -> void:
 	rng.randomize()
 	selected_value = clampi(forced_value, 0, 63) if forced_value >= 0 else rng.randi_range(0, 63)
 	var selected_position := fuxi_circle_position(selected_value)
-	var landing_offset := float(posmod(HEXAGRAM_COUNT - selected_position, HEXAGRAM_COUNT)) / float(HEXAGRAM_COUNT) * TAU
+	var landing_offset := float(selected_position) / float(HEXAGRAM_COUNT) * TAU
 	target_rotation = TAU * float(rng.randi_range(5, 7)) + landing_offset
 	pass
 
@@ -68,9 +68,9 @@ func animation_finished() -> bool:
 	return elapsed >= TOTAL_SECONDS
 
 
-func wheel_rotation() -> float:
+func pointer_rotation() -> float:
 	var t := spin_progress()
-	# Cubic ease-out is strictly monotonic: the wheel only moves forward and
+	# Cubic ease-out is strictly monotonic: the needle only moves forward and
 	# continuously loses speed until it reaches the selected hexagram.
 	var deceleration := 1.0 - pow(1.0 - t, 3.0)
 	return target_rotation * deceleration
@@ -78,7 +78,7 @@ func wheel_rotation() -> float:
 
 func highlighted_position() -> int:
 	var step := TAU / float(HEXAGRAM_COUNT)
-	return posmod(int(round(-wheel_rotation() / step)), HEXAGRAM_COUNT)
+	return posmod(int(round(pointer_rotation() / step)), HEXAGRAM_COUNT)
 
 
 func highlighted_value() -> int:
@@ -99,7 +99,7 @@ func draw(canvas: Control) -> void:
 	var center := canvas.size * 0.5
 	var short_side := minf(canvas.size.x, canvas.size.y)
 	draw_wheel(canvas, center, short_side)
-	draw_pointer(canvas, center, short_side)
+	draw_needle(canvas, center, short_side)
 	if elapsed < PROMPT_SECONDS:
 		draw_prompt(canvas, center)
 	elif elapsed < PROMPT_SECONDS + SPIN_SECONDS:
@@ -115,7 +115,6 @@ func draw_wheel(canvas: Control, center: Vector2, short_side: float) -> void:
 	var radius := short_side * RING_RADIUS_RATIO
 	var width := clampf(short_side * 0.027, 18.0, 32.0)
 	var line_gap := clampf(short_side * 0.0048, 3.5, 5.5)
-	var rotation := wheel_rotation()
 	var flight := flight_progress()
 	var current_highlight := highlighted_position()
 	var selected_position := fuxi_circle_position(selected_value)
@@ -126,7 +125,7 @@ func draw_wheel(canvas: Control, center: Vector2, short_side: float) -> void:
 	for position in HEXAGRAM_COUNT:
 		if flight > 0.0 and position == selected_position:
 			continue
-		var angle := -PI * 0.5 + TAU * float(position) / float(HEXAGRAM_COUNT) + rotation
+		var angle := -PI * 0.5 + TAU * float(position) / float(HEXAGRAM_COUNT)
 		var point := center + Vector2.from_angle(angle) * radius
 		var highlighted := elapsed >= PROMPT_SECONDS and elapsed < PROMPT_SECONDS + SPIN_SECONDS \
 			and position == current_highlight
@@ -139,34 +138,29 @@ func draw_wheel(canvas: Control, center: Vector2, short_side: float) -> void:
 	pass
 
 
-func draw_pointer(canvas: Control, center: Vector2, short_side: float) -> void:
+func draw_needle(canvas: Control, center: Vector2, short_side: float) -> void:
+	var appear := smoothstep(PROMPT_SECONDS - 0.2, PROMPT_SECONDS + 0.3, elapsed)
+	var disappear := 1.0 - smoothstep(PROMPT_SECONDS + SPIN_SECONDS,
+		PROMPT_SECONDS + SPIN_SECONDS + FLY_SECONDS * 0.45, elapsed)
+	var alpha := appear * disappear * 0.82
+	if alpha <= 0.0:
+		return
 	var radius := short_side * RING_RADIUS_RATIO
-	# Keep the tip above the outer guide ring so it points at, rather than covers,
-	# the highlighted hexagram. The body follows the normal text color while the
-	# accent color is reserved for a restrained two-layer halo.
-	var tip := center + Vector2(0.0, -radius * 1.075)
-	var base_y := tip.y - clampf(short_side * 0.038, 25.0, 42.0)
-	var half_width := clampf(short_side * 0.012, 9.0, 14.0)
-	var points := PackedVector2Array([
-		Vector2(center.x, tip.y),
-		Vector2(center.x - half_width, base_y),
-		Vector2(center.x + half_width, base_y),
-	])
-	var wide_glow := PackedVector2Array([
-		Vector2(center.x, tip.y + 7.0),
-		Vector2(center.x - half_width - 7.0, base_y - 5.0),
-		Vector2(center.x + half_width + 7.0, base_y - 5.0),
-	])
-	var close_glow := PackedVector2Array([
-		Vector2(center.x, tip.y + 4.0),
-		Vector2(center.x - half_width - 4.0, base_y - 3.0),
-		Vector2(center.x + half_width + 4.0, base_y - 3.0),
-	])
-	canvas.draw_colored_polygon(wide_glow, ThemeColor.alpha_theme_color(0.055))
-	canvas.draw_colored_polygon(close_glow, ThemeColor.alpha_theme_color(0.12))
-	canvas.draw_colored_polygon(points, Color(ColorBase.primary_text, 0.9))
-	canvas.draw_polyline(PackedVector2Array([points[0], points[1], points[2], points[0]]),
-		ThemeColor.alpha_theme_color(0.58), 1.4, true)
+	var angle := -PI * 0.5 + pointer_rotation()
+	var direction := Vector2.from_angle(angle)
+	var normal := direction.rotated(PI * 0.5)
+	var hub_radius := clampf(short_side * 0.005, 4.0, 6.0)
+	var tip := center + direction * radius * 0.8
+	var needle_start := center + direction * hub_radius
+	var arrow_length := clampf(short_side * 0.009, 7.0, 11.0)
+	var arrow_half_width := clampf(short_side * 0.004, 3.0, 5.0)
+	var needle_end := tip - direction * arrow_length * 0.72
+	TaiChiGlowDrawing.draw_tapered_line(canvas, needle_start, needle_end, 2.0, 1.0, alpha)
+	TaiChiGlowDrawing.draw_line(canvas, tip, tip - direction * arrow_length + normal * arrow_half_width,
+		1.1, alpha)
+	TaiChiGlowDrawing.draw_line(canvas, tip, tip - direction * arrow_length - normal * arrow_half_width,
+		1.1, alpha)
+	TaiChiGlowDrawing.draw_circle(canvas, center, hub_radius, 1.3, alpha * 0.88)
 	pass
 
 
@@ -193,7 +187,8 @@ func draw_spinning_label(canvas: Control, center: Vector2) -> void:
 func draw_selected_hexagram(canvas: Control, center: Vector2, short_side: float) -> void:
 	var flight := flight_progress()
 	var radius := short_side * RING_RADIUS_RATIO
-	var source := center + Vector2(0.0, -radius)
+	var selected_angle := -PI * 0.5 + TAU * float(fuxi_circle_position(selected_value)) / float(HEXAGRAM_COUNT)
+	var source := center + Vector2.from_angle(selected_angle) * radius
 	var target := center - Vector2(0.0, canvas.size.y * 0.17)
 	var arc := Vector2(sin(flight * PI) * minf(110.0, canvas.size.x * 0.06), 0.0)
 	var position := source.lerp(target, ease(flight, -1.5)) + arc
@@ -208,18 +203,22 @@ func draw_selected_hexagram(canvas: Control, center: Vector2, short_side: float)
 func draw_result(canvas: Control, center: Vector2) -> void:
 	var alpha := result_progress()
 	var entry: Dictionary = TaiChiHexagramCatalog.entry_from_value(selected_value)
-	var title_y := center.y + canvas.size.y * 0.005
+	var title_y := center.y - canvas.size.y * 0.035
 	draw_centered_text(canvas, "%s  第 %d 卦 · %s" % [entry.symbol, entry.number, entry.full_name],
 		Vector2(center.x, title_y), clampi(int(canvas.size.y * 0.038), 25, 42), alpha * 0.9)
-	draw_centered_text(canvas, "上卦：%s · %s    下卦：%s · %s" % [
-		entry.upper_name, entry.upper_element, entry.lower_name, entry.lower_element],
-		Vector2(center.x, title_y + canvas.size.y * 0.055), clampi(int(canvas.size.y * 0.019), 14, 20), alpha * 0.64)
-	draw_centered_text(canvas, "原典", Vector2(center.x, title_y + canvas.size.y * 0.105),
-		clampi(int(canvas.size.y * 0.021), 15, 23), alpha * 0.72)
-	draw_wrapped_text(canvas, "卦辞：" + str(entry.judgment), Vector2(center.x, title_y + canvas.size.y * 0.15),
-		clampi(int(canvas.size.y * 0.017), 12, 18), alpha * 0.58, canvas.size.x * 0.48)
-	draw_wrapped_text(canvas, "象曰：" + str(entry.image), Vector2(center.x, title_y + canvas.size.y * 0.205),
-		clampi(int(canvas.size.y * 0.017), 12, 18), alpha * 0.52, canvas.size.x * 0.48)
+	draw_centered_text(canvas, str(entry.theme), Vector2(center.x, title_y + canvas.size.y * 0.06),
+		clampi(int(canvas.size.y * 0.025), 18, 28), alpha * 0.82)
+	draw_wrapped_text(canvas, str(entry.interpretation), Vector2(center.x, title_y + canvas.size.y * 0.115),
+		clampi(int(canvas.size.y * 0.018), 13, 19), alpha * 0.68, canvas.size.x * 0.56)
+	draw_centered_text(canvas, "宜：%s    忌：%s" % [entry.advice, entry.avoid],
+		Vector2(center.x, title_y + canvas.size.y * 0.19), clampi(int(canvas.size.y * 0.017), 12, 18), alpha * 0.62)
+	draw_centered_text(canvas, "原典 · 上%s%s，下%s%s" % [entry.upper_name, entry.upper_element,
+		entry.lower_name, entry.lower_element], Vector2(center.x, title_y + canvas.size.y * 0.255),
+		clampi(int(canvas.size.y * 0.016), 12, 17), alpha * 0.48)
+	draw_wrapped_text(canvas, "卦辞：" + str(entry.judgment), Vector2(center.x, title_y + canvas.size.y * 0.3),
+		clampi(int(canvas.size.y * 0.015), 11, 16), alpha * 0.45, canvas.size.x * 0.52)
+	draw_wrapped_text(canvas, "象曰：" + str(entry.image), Vector2(center.x, title_y + canvas.size.y * 0.35),
+		clampi(int(canvas.size.y * 0.015), 11, 16), alpha * 0.42, canvas.size.x * 0.52)
 	pass
 
 

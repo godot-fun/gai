@@ -198,11 +198,16 @@ func hexagram_flow_combines_and_reveals_sixty_four_symbols_test() -> void:
 
 func hexagram_catalog_contains_every_unique_identity_test() -> void:
 	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.ENTRIES.size() == 64)
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.GUIDANCE.size() == 64)
 	var values := {}
 	for number in range(1, 65):
 		var entry: Dictionary = TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.entry_from_number(number)
 		assert(not entry.is_empty())
 		assert(not values.has(entry.value))
+		assert(not str(entry.theme).is_empty())
+		assert(not str(entry.interpretation).is_empty())
+		assert(not str(entry.advice).is_empty())
+		assert(not str(entry.avoid).is_empty())
 		values[entry.value] = true
 	assert(values.size() == 64)
 	var tun: Dictionary = TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.entry_from_number(3)
@@ -222,13 +227,13 @@ func divination_spins_once_and_lands_on_forced_hexagram_test() -> void:
 	assert(flow.selected_value == 34)
 	assert(flow.spin_progress() == 0.0)
 	flow.advance(TAI_CHI_DIVINATION_FLOW_SCRIPT.PROMPT_SECONDS)
-	var previous_rotation := flow.wheel_rotation()
+	var previous_rotation := flow.pointer_rotation()
 	flow.advance(TAI_CHI_DIVINATION_FLOW_SCRIPT.SPIN_SECONDS * 0.5)
 	assert(flow.spin_progress() > 0.0 and flow.spin_progress() < 1.0)
-	assert(flow.wheel_rotation() > previous_rotation)
-	previous_rotation = flow.wheel_rotation()
+	assert(flow.pointer_rotation() > previous_rotation)
+	previous_rotation = flow.pointer_rotation()
 	flow.advance(TAI_CHI_DIVINATION_FLOW_SCRIPT.SPIN_SECONDS * 0.5)
-	assert(flow.wheel_rotation() > previous_rotation)
+	assert(flow.pointer_rotation() > previous_rotation)
 	flow.advance(TAI_CHI_DIVINATION_FLOW_SCRIPT.FLY_SECONDS + TAI_CHI_DIVINATION_FLOW_SCRIPT.RESULT_REVEAL_SECONDS)
 	assert(flow.result_progress() == 1.0)
 	assert(not flow.animation_finished())
