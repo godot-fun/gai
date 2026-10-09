@@ -74,6 +74,7 @@ func formation_closes_into_taiji_test() -> void:
 
 func evolution_reveals_five_rows_bottom_up_test() -> void:
 	var flow := TaiChiEvolutionFlow.new()
+	assert(flow.TRIGRAM_VALUES == [7, 6, 5, 4, 3, 2, 1, 0])
 	assert(not flow.active)
 	flow.begin()
 	var canvas_size := Vector2(1920.0, 1080.0)
@@ -96,6 +97,25 @@ func evolution_reveals_five_rows_bottom_up_test() -> void:
 	for row in TaiChiEvolutionFlow.ROW_COUNT:
 		assert(flow.row_progress(row) == 1.0)
 	assert(is_equal_approx(flow.symbol_center(canvas_size).x, flow.content_area(canvas_size).get_center().x))
+	pass
+
+
+func bagua_moves_left_to_right_and_builds_frame_test() -> void:
+	var flow := TaiChiBaguaFlow.new()
+	flow.begin()
+	flow.advance(TaiChiBaguaFlow.TRANSITION_SECONDS * 0.22)
+	assert(flow.trigram_progress(0) > flow.trigram_progress(7))
+	assert(flow.hierarchy_opacity() < 1.0)
+	assert(flow.frame_progress() == 0.0)
+	flow.advance(TaiChiBaguaFlow.TRANSITION_SECONDS)
+	assert(flow.progress() == 1.0)
+	assert(flow.frame_progress() == 1.0)
+	var evolution := TaiChiEvolutionFlow.new()
+	evolution.begin()
+	evolution.advance(TaiChiEvolutionFlow.TRANSITION_SECONDS)
+	var canvas_size := Vector2(1920.0, 1080.0)
+	assert(flow.taiji_center(canvas_size, evolution).is_equal_approx(canvas_size * 0.5))
+	assert(flow.taiji_radius(canvas_size, evolution) > evolution.symbol_radius(canvas_size))
 	pass
 
 

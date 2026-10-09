@@ -13,6 +13,7 @@ var opening := TaiChiOpeningFlow.new()
 var duality := TaiChiDualityFlow.new()
 var formation := TaiChiFormationFlow.new()
 var evolution := TaiChiEvolutionFlow.new()
+var bagua := TaiChiBaguaFlow.new()
 var line_aura_canvas: ColorRect
 var line_aura_material: ShaderMaterial
 var fill_layer: ColorRect
@@ -45,6 +46,7 @@ func reset_visual() -> void:
 	duality.reset()
 	formation.reset()
 	evolution.reset()
+	bagua.reset()
 	queue_redraw()
 	pass
 
@@ -82,6 +84,10 @@ func _process(delta: float) -> void:
 		evolution.begin()
 		changed = true
 	changed = evolution.advance(delta) or changed
+	if evolution.progress() >= 1.0 and not bagua.active:
+		bagua.begin()
+		changed = true
+	changed = bagua.advance(delta) or changed
 	update_line_aura()
 	update_fill_layer()
 	if changed:
@@ -124,8 +130,8 @@ func update_fill_layer() -> void:
 	fill_layer.visible = reveal > 0.0
 	fill_material.set_shader_parameter("opacity", reveal * FILL_ALPHA)
 	if fill_layer.visible:
-		var radius := evolution.symbol_radius(size) if evolution.active else formation.symbol_radius(size)
-		var symbol_center := evolution.symbol_center(size) if evolution.active else formation.symbol_center(size)
+		var radius := bagua.taiji_radius(size, evolution) if bagua.active else (evolution.symbol_radius(size) if evolution.active else formation.symbol_radius(size))
+		var symbol_center := bagua.taiji_center(size, evolution) if bagua.active else (evolution.symbol_center(size) if evolution.active else formation.symbol_center(size))
 		fill_layer.position = symbol_center - Vector2(radius, radius)
 		fill_layer.size = Vector2.ONE * radius * 2.0
 	pass
@@ -168,6 +174,9 @@ func _draw() -> void:
 	var center := size * 0.5
 	if not duality.active:
 		opening.draw(self, center, size.x)
+	elif bagua.active:
+		evolution.draw(self, bagua.hierarchy_opacity(), false)
+		bagua.draw(self, evolution)
 	elif evolution.active:
 		evolution.draw(self)
 	elif formation.active:

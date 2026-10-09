@@ -8,6 +8,7 @@ const TRANSITION_SECONDS := 6.4
 const ROW_COUNT := 5
 const YANG := 1
 const YIN := 0
+const TRIGRAM_VALUES := [7, 6, 5, 4, 3, 2, 1, 0]
 const DEPARTING_TITLE := "易有太极，是生两仪"
 const DEPARTING_SUBTITLE := "IN CHANGE THERE IS THE GREAT ULTIMATE"
 
@@ -74,15 +75,16 @@ func row_y(canvas_size: Vector2, row_from_bottom: int) -> float:
 	return lerpf(bottom, top, float(row_from_bottom) / float(ROW_COUNT - 1))
 
 
-func draw(canvas: Control) -> void:
+func draw(canvas: Control, opacity: float = 1.0, draw_trigrams: bool = true) -> void:
 	if not active:
 		return
 	draw_departing_caption(canvas)
-	draw_taiji_row(canvas, row_progress(0))
-	draw_binary_row(canvas, "两仪", 2, row_y(canvas.size, 1), row_progress(1))
-	draw_binary_row(canvas, "四象", 4, row_y(canvas.size, 2), row_progress(2))
-	draw_trigram_row(canvas, row_y(canvas.size, 3), row_progress(3))
-	draw_hexagram_row(canvas, row_y(canvas.size, 4), row_progress(4))
+	draw_taiji_row(canvas, row_progress(0) * opacity)
+	draw_binary_row(canvas, "两仪", 2, row_y(canvas.size, 1), row_progress(1) * opacity)
+	draw_binary_row(canvas, "四象", 4, row_y(canvas.size, 2), row_progress(2) * opacity)
+	if draw_trigrams:
+		draw_trigram_row(canvas, row_y(canvas.size, 3), row_progress(3) * opacity)
+	draw_hexagram_row(canvas, row_y(canvas.size, 4), row_progress(4) * opacity)
 	pass
 
 
@@ -152,7 +154,7 @@ func draw_trigram_row(canvas: Control, y: float, reveal: float) -> void:
 		if local <= 0.0:
 			continue
 		var center := Vector2(area.position.x + (float(index) + 0.5) * cell_width, y)
-		draw_line_symbol(canvas, center, index, 3, minf(cell_width * 0.58, 54.0), local)
+		draw_line_symbol(canvas, center, TRIGRAM_VALUES[index], 3, minf(cell_width * 0.58, 54.0), local)
 		draw_centered_text(canvas, names[index], center + Vector2(0.0, -34.0), 18, local * 0.76)
 	pass
 
