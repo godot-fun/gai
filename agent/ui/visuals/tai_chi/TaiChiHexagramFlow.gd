@@ -132,11 +132,11 @@ func draw_frame(canvas: Control, center: Vector2, orbit_radius: float) -> void:
 	var final_fade := 1.0 - panorama_progress() * 0.45
 	var rotation := ring_rotation()
 	canvas.draw_arc(center, orbit_radius * 1.27, rotation, rotation + TAU, 160,
-		ThemeColor.alpha_theme_color(0.16 * final_fade), 1.4, true)
+		TaiChiGlowDrawing.outer_ring_color(0.16 * final_fade), 1.4, true)
 	canvas.draw_arc(center, orbit_radius * 1.31, -rotation, -rotation + TAU, 160,
-		ThemeColor.alpha_theme_color(0.09 * final_fade), 1.0, true)
+		TaiChiGlowDrawing.outer_ring_color(0.09 * final_fade), 1.0, true)
 	canvas.draw_arc(center, orbit_radius * 0.63, -rotation, -rotation + TAU, 120,
-		ThemeColor.alpha_theme_color(0.12 * final_fade), 1.2, true)
+		TaiChiGlowDrawing.inner_ring_color(0.12 * final_fade), 1.2, true)
 	pass
 
 
@@ -154,14 +154,15 @@ func draw_sector_frames(canvas: Control, center: Vector2, short_side: float) -> 
 		var angle := slot_angle(slot)
 		var left_angle := angle - half_angle
 		var right_angle := angle + half_angle
+		var frame_color := TaiChiGlowDrawing.inner_ring_color(alpha)
 		canvas.draw_line(center + Vector2.from_angle(left_angle) * inner_radius,
-			center + Vector2.from_angle(left_angle) * outer_radius, ThemeColor.alpha_theme_color(alpha), 1.2, true)
+			center + Vector2.from_angle(left_angle) * outer_radius, frame_color, 1.2, true)
 		canvas.draw_line(center + Vector2.from_angle(right_angle) * inner_radius,
-			center + Vector2.from_angle(right_angle) * outer_radius, ThemeColor.alpha_theme_color(alpha), 1.2, true)
+			center + Vector2.from_angle(right_angle) * outer_radius, frame_color, 1.2, true)
 		canvas.draw_arc(center, inner_radius, left_angle, right_angle, 12,
-			ThemeColor.alpha_theme_color(alpha * 0.7), 1.0, true)
+			TaiChiGlowDrawing.inner_ring_color(alpha * 0.7), 1.0, true)
 		canvas.draw_arc(center, outer_radius, left_angle, right_angle, 12,
-			ThemeColor.alpha_theme_color(alpha), 1.2, true)
+			frame_color, 1.2, true)
 	pass
 
 
@@ -220,10 +221,9 @@ func draw_hexagram(canvas: Control, center: Vector2, short_side: float, slot: in
 	var angle := lerp_angle(source_angle, target_angle, flight)
 	var radius := lerpf(short_side * 0.25, target_radius, flight)
 	var position := center + Vector2.from_angle(angle) * radius
-	var pulse := sin(reveal * PI)
 	TaiChiTrigramDrawing.draw_symbol(canvas, position, value, 6,
 		width * lerpf(0.72, 1.0, reveal), line_gap, 2.1, reveal * TaiChiTrigramDrawing.BASE_ALPHA,
-		target_angle + PI * 0.5, pulse * 0.08)
+		target_angle + PI * 0.5)
 	pass
 
 
@@ -257,11 +257,5 @@ func draw_caption(canvas: Control, center: Vector2) -> void:
 func draw_centered_text(canvas: Control, text: String, position: Vector2, font_size: int, alpha: float) -> void:
 	if alpha <= 0.0:
 		return
-	var font := Fonts.light()
-	var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
-	var baseline := position + Vector2(-text_size.x * 0.5, text_size.y * 0.34)
-	canvas.draw_string_outline(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 6,
-		ThemeColor.alpha_theme_color(alpha * 0.07))
-	canvas.draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size,
-		Color(ColorBase.primary_text, alpha))
+	TaiChiGlowDrawing.draw_centered_text(canvas, Fonts.light(), text, position, font_size, alpha)
 	pass

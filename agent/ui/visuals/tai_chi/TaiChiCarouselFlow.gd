@@ -137,10 +137,12 @@ func draw_rotating_frame(canvas: Control, center: Vector2, orbit_radius: float) 
 	# The circles themselves are rotationally symmetric; rotating their start angle
 	# and all tick positions makes the motion visible without rotating the labels.
 	var rotation := ring_rotation()
-	var ring_color := ThemeColor.alpha_theme_color(0.16)
-	canvas.draw_arc(center, orbit_radius * 1.27, rotation, rotation + TAU, 160, ring_color, 1.4, true)
-	canvas.draw_arc(center, orbit_radius * 1.31, -rotation, -rotation + TAU, 160, ThemeColor.alpha_theme_color(0.09), 1.0, true)
-	canvas.draw_arc(center, orbit_radius * 0.63, -rotation, -rotation + TAU, 120, ring_color, 1.2, true)
+	canvas.draw_arc(center, orbit_radius * 1.27, rotation, rotation + TAU, 160,
+		TaiChiGlowDrawing.outer_ring_color(0.16), 1.4, true)
+	canvas.draw_arc(center, orbit_radius * 1.31, -rotation, -rotation + TAU, 160,
+		TaiChiGlowDrawing.outer_ring_color(0.09), 1.0, true)
+	canvas.draw_arc(center, orbit_radius * 0.63, -rotation, -rotation + TAU, 120,
+		TaiChiGlowDrawing.inner_ring_color(0.16), 1.2, true)
 	for tick in 64:
 		var angle := rotation + TAU * float(tick) / 64.0
 		var length := 11.0 if tick % 8 == 0 else 5.0
@@ -186,9 +188,5 @@ func draw_explanation(canvas: Control, center: Vector2) -> void:
 func draw_centered_text(canvas: Control, text: String, position: Vector2, font_size: int, alpha: float) -> void:
 	if alpha <= 0.0:
 		return
-	var font := Fonts.light()
-	var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
-	var baseline := position + Vector2(-text_size.x * 0.5, text_size.y * 0.34)
-	canvas.draw_string_outline(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 7, ThemeColor.alpha_theme_color(alpha * 0.08))
-	canvas.draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(ColorBase.primary_text, alpha))
+	TaiChiGlowDrawing.draw_centered_text(canvas, Fonts.light(), text, position, font_size, alpha)
 	pass

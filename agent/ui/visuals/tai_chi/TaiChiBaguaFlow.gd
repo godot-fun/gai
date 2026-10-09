@@ -112,8 +112,8 @@ func draw_moving_trigram(canvas: Control, evolution: TaiChiEvolutionFlow, center
 
 func draw_trigram(canvas: Control, center: Vector2, rotation: float, value: int, width: float, line_gap: float,
 		line_width: float, alpha: float, local: float = 1.0) -> void:
-	var glow_alpha := alpha * 0.055 * smoothstep(0.0, 0.32, local)
-	TaiChiTrigramDrawing.draw_symbol(canvas, center, value, 3, width, line_gap, line_width, alpha, rotation, glow_alpha)
+	TaiChiTrigramDrawing.draw_symbol(canvas, center, value, 3, width, line_gap, line_width,
+		alpha * smoothstep(0.0, 0.32, local), rotation)
 	pass
 
 
@@ -121,10 +121,12 @@ func draw_frame(canvas: Control, center: Vector2, orbit_radius: float) -> void:
 	var reveal := frame_progress()
 	if reveal <= 0.0:
 		return
-	var ring_color := ThemeColor.alpha_theme_color(reveal * 0.16)
-	canvas.draw_arc(center, orbit_radius * 1.27, -PI * 0.5, -PI * 0.5 + TAU * reveal, 160, ring_color, 1.4, true)
-	canvas.draw_arc(center, orbit_radius * 1.31, -PI * 0.5, -PI * 0.5 + TAU * reveal, 160, ThemeColor.alpha_theme_color(reveal * 0.09), 1.0, true)
-	canvas.draw_arc(center, orbit_radius * 0.63, -PI * 0.5, -PI * 0.5 + TAU * reveal, 120, ring_color, 1.2, true)
+	canvas.draw_arc(center, orbit_radius * 1.27, -PI * 0.5, -PI * 0.5 + TAU * reveal, 160,
+		TaiChiGlowDrawing.outer_ring_color(reveal * 0.16), 1.4, true)
+	canvas.draw_arc(center, orbit_radius * 1.31, -PI * 0.5, -PI * 0.5 + TAU * reveal, 160,
+		TaiChiGlowDrawing.outer_ring_color(reveal * 0.09), 1.0, true)
+	canvas.draw_arc(center, orbit_radius * 0.63, -PI * 0.5, -PI * 0.5 + TAU * reveal, 120,
+		TaiChiGlowDrawing.inner_ring_color(reveal * 0.16), 1.2, true)
 	for tick in 64:
 		# Eight major ticks mark trigram directions; the remaining ticks echo the
 		# sixty-four hexagrams without adding another dense row of symbols.
@@ -142,9 +144,5 @@ func draw_frame(canvas: Control, center: Vector2, orbit_radius: float) -> void:
 func draw_centered_text(canvas: Control, text: String, position: Vector2, font_size: int, alpha: float) -> void:
 	if alpha <= 0.0:
 		return
-	var font := Fonts.light()
-	var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
-	var baseline := position + Vector2(-text_size.x * 0.5, text_size.y * 0.34)
-	canvas.draw_string_outline(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 5, ThemeColor.alpha_theme_color(alpha * 0.06))
-	canvas.draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(ColorBase.primary_text, alpha))
+	TaiChiGlowDrawing.draw_centered_text(canvas, Fonts.light(), text, position, font_size, alpha)
 	pass

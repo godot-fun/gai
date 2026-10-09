@@ -39,7 +39,7 @@ func draw(canvas: Control, center: Vector2, available_width: float) -> void:
 
 
 func draw_horizon_line(canvas: Control, start: Vector2, finish: Vector2) -> void:
-	canvas.draw_line(start, finish, Color(ColorBase.primary_text, 0.62), 2.0, true)
+	TaiChiGlowDrawing.draw_line(canvas, start, finish, 2.0, 0.62)
 	pass
 
 
@@ -62,6 +62,5 @@ func draw_title(canvas: Control, center: Vector2, opacity: float = 1.0) -> void:
 		var glyph_size := font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 		var baseline := glyph_position + Vector2(-glyph_size.x * 0.5, glyph_size.y * 0.35)
 		var alpha := local_progress * (0.82 + 0.18 * progress) * opacity
-		canvas.draw_string_outline(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 9, ThemeColor.alpha_theme_color(alpha * 0.14))
-		canvas.draw_string(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(ColorBase.primary_text, alpha * 0.72))
+		TaiChiGlowDrawing.draw_text(canvas, font, baseline, glyph, font_size, alpha * 0.72)
 	pass

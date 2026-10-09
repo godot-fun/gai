@@ -120,15 +120,13 @@ func draw_departing_caption(canvas: Control) -> void:
 		var glyph := DEPARTING_TITLE.substr(index, 1)
 		var glyph_size := font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 		var baseline := position + Vector2((float(index) - middle) * gap - glyph_size.x * 0.5, glyph_size.y * 0.34)
-		canvas.draw_string_outline(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 5,
-			ThemeColor.alpha_theme_color(opacity * 0.1))
-		canvas.draw_string(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size,
-			Color(ColorBase.primary_text, opacity * 0.72))
+		TaiChiGlowDrawing.draw_text(canvas, font, baseline, glyph, font_size, opacity * 0.72)
 	var subtitle_font := Fonts.medium()
 	var subtitle_size := clampi(int(canvas.size.y * 0.014), 10, 15)
 	var subtitle_width := subtitle_font.get_string_size(DEPARTING_SUBTITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, subtitle_size).x
-	canvas.draw_string(subtitle_font, position + Vector2(-subtitle_width * 0.5, float(font_size) * 1.25), DEPARTING_SUBTITLE,
-		HORIZONTAL_ALIGNMENT_LEFT, -1.0, subtitle_size, Color(ColorBase.secondary_text, opacity * 0.58))
+	TaiChiGlowDrawing.draw_text(canvas, subtitle_font,
+		position + Vector2(-subtitle_width * 0.5, float(font_size) * 1.25), DEPARTING_SUBTITLE,
+		subtitle_size, opacity * 0.58, ColorBase.secondary_text)
 	pass
 
 
@@ -248,9 +246,5 @@ func draw_line_symbol(canvas: Control, center: Vector2, value: int, line_count: 
 
 
 func draw_centered_text(canvas: Control, text: String, position: Vector2, font_size: int, alpha: float) -> void:
-	var font := Fonts.light()
-	var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
-	var baseline := position + Vector2(-text_size.x * 0.5, text_size.y * 0.34)
-	canvas.draw_string_outline(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 4, ThemeColor.alpha_theme_color(alpha * 0.04))
-	canvas.draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(ColorBase.primary_text, alpha))
+	TaiChiGlowDrawing.draw_centered_text(canvas, Fonts.light(), text, position, font_size, alpha)
 	pass

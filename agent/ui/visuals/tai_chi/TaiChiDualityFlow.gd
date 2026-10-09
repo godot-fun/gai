@@ -46,11 +46,14 @@ func draw(canvas: Control, center: Vector2, available_width: float, opacity: flo
 	var row_gap := minf(105.0, canvas.size.y * 0.14)
 	var yang_y := lerpf(origin_y, center.y - row_gap * 0.5, reveal)
 	var yin_y := lerpf(origin_y, center.y + row_gap * 0.5, reveal)
-	var line_color := Color(ColorBase.primary_text, 0.62 * opacity)
-	canvas.draw_line(Vector2(center.x - half_width, yang_y), Vector2(center.x + half_width, yang_y), line_color, 2.0, true)
+	var line_alpha := 0.62 * opacity
+	TaiChiGlowDrawing.draw_line(canvas, Vector2(center.x - half_width, yang_y),
+		Vector2(center.x + half_width, yang_y), 2.0, line_alpha)
 	var gap_half := half_width * 0.13 * ease(reveal, -1.5)
-	canvas.draw_line(Vector2(center.x - half_width, yin_y), Vector2(center.x - gap_half, yin_y), line_color, 2.0, true)
-	canvas.draw_line(Vector2(center.x + gap_half, yin_y), Vector2(center.x + half_width, yin_y), line_color, 2.0, true)
+	TaiChiGlowDrawing.draw_line(canvas, Vector2(center.x - half_width, yin_y),
+		Vector2(center.x - gap_half, yin_y), 2.0, line_alpha)
+	TaiChiGlowDrawing.draw_line(canvas, Vector2(center.x + gap_half, yin_y),
+		Vector2(center.x + half_width, yin_y), 2.0, line_alpha)
 	draw_labels(canvas, center, half_width, yang_y, yin_y, reveal, opacity)
 	draw_bottom_title(canvas, center, row_gap, reveal, opacity)
 	pass
@@ -74,10 +77,8 @@ func draw_labels(canvas: Control, center: Vector2, half_width: float, yang_y: fl
 
 
 func draw_centered_label(canvas: Control, font: Font, text: String, position: Vector2, font_size: int, alpha: float) -> void:
-	var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
-	var baseline := position + Vector2(-text_size.x * 0.5, text_size.y * 0.34)
-	canvas.draw_string_outline(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 4, ThemeColor.alpha_theme_color(alpha * 0.1))
-	canvas.draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(ColorBase.secondary_text, alpha * 0.72))
+	TaiChiGlowDrawing.draw_centered_text(canvas, font, text, position, font_size, alpha * 0.72,
+		ColorBase.secondary_text)
 	pass
 
 
@@ -98,6 +99,5 @@ func draw_bottom_title(canvas: Control, center: Vector2, row_gap: float, reveal:
 		var glyph := BOTTOM_TITLE.substr(index, 1)
 		var glyph_size := font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 		var baseline := glyph_position + Vector2(-glyph_size.x * 0.5, glyph_size.y * 0.34)
-		canvas.draw_string_outline(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 5, ThemeColor.alpha_theme_color(local_progress * opacity * 0.1))
-		canvas.draw_string(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(ColorBase.primary_text, local_progress * opacity * 0.72))
+		TaiChiGlowDrawing.draw_text(canvas, font, baseline, glyph, font_size, local_progress * opacity * 0.72)
 	pass

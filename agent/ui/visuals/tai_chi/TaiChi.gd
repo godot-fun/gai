@@ -11,7 +11,6 @@ static var complete_animation_on_agent_end: bool = false
 const COMPLETION_SECONDS := 1.25
 const TAI_CHI_HEXAGRAM_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiHexagramFlow.gd")
 const TAI_CHI_DIVINATION_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiDivinationFlow.gd")
-const LINE_AURA_SHADER_PATH := "res://agent/ui/visuals/tai_chi/TaiChiLineAura.gdshader"
 const FILL_SHADER_PATH := "res://agent/ui/visuals/tai_chi/TaiChiFill.gdshader"
 const FILL_ALPHA := 0.58
 
@@ -24,8 +23,6 @@ var carousel := TaiChiCarouselFlow.new()
 var hexagram := TAI_CHI_HEXAGRAM_FLOW_SCRIPT.new()
 var divination := TAI_CHI_DIVINATION_FLOW_SCRIPT.new()
 var element_background := TaiChiElementBackground.new()
-var line_aura_canvas: ColorRect
-var line_aura_material: ShaderMaterial
 var fill_layer: ColorRect
 var fill_material: ShaderMaterial
 
@@ -35,7 +32,6 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	element_background.create(self)
 	create_fill_layer()
-	create_line_aura()
 	visible = false
 	pass
 
@@ -82,7 +78,6 @@ func on_agent_end(error_message: String) -> void:
 
 
 func on_theme_changed() -> void:
-	sync_theme_colors()
 	queue_redraw()
 	pass
 
@@ -119,26 +114,10 @@ func _process(delta: float) -> void:
 		divination.begin()
 		changed = true
 	changed = divination.advance(delta) or changed
-	update_line_aura()
 	update_fill_layer()
 	element_background.update(size, carousel)
 	if changed:
 		queue_redraw()
-	pass
-
-
-func create_line_aura() -> void:
-	line_aura_canvas = ColorRect.new()
-	line_aura_canvas.name = "LineAura"
-	line_aura_canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	line_aura_canvas.color = Color.WHITE
-	line_aura_canvas.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	line_aura_canvas.z_index = -2
-	line_aura_material = ShaderMaterial.new()
-	line_aura_material.shader = load(LINE_AURA_SHADER_PATH) as Shader
-	line_aura_canvas.material = line_aura_material
-	add_child(line_aura_canvas)
-	sync_theme_colors()
 	pass
 
 
@@ -169,37 +148,6 @@ func update_fill_layer() -> void:
 		fill_layer.size = Vector2.ONE * radius * 2.0
 		fill_layer.pivot_offset = fill_layer.size * 0.5
 		fill_layer.rotation = carousel.taiji_rotation() if carousel.active else 0.0
-	pass
-
-
-func sync_theme_colors() -> void:
-	if line_aura_material != null:
-		line_aura_material.set_shader_parameter("aura_color", ThemeColor.alpha_theme_color(0.45))
-	pass
-
-
-func update_line_aura() -> void:
-	if line_aura_material == null or size.x <= 0.0 or size.y <= 0.0:
-		return
-	line_aura_canvas.visible = not formation.active
-	if formation.active:
-		return
-	var center := size * 0.5
-	var origin_y := center.y + minf(132.0, size.y * 0.17)
-	var row_gap := minf(105.0, size.y * 0.14)
-	var duality_reveal := duality.progress() if duality.active else 0.0
-	var yang_y := lerpf(origin_y, center.y - row_gap * 0.5, duality_reveal)
-	var yin_y := lerpf(origin_y, center.y + row_gap * 0.5, duality_reveal)
-	var half_width := minf(size.x * 0.38, 620.0)
-	line_aura_material.set_shader_parameter("viewport_size", size)
-	line_aura_material.set_shader_parameter("half_width_uv", half_width / size.x)
-	line_aura_material.set_shader_parameter("opening_y_uv", origin_y / size.y)
-	line_aura_material.set_shader_parameter("yang_y_uv", yang_y / size.y)
-	line_aura_material.set_shader_parameter("yin_y_uv", yin_y / size.y)
-	line_aura_material.set_shader_parameter("yin_gap_uv", half_width * 0.13 * ease(duality_reveal, -1.5) / size.x)
-	line_aura_material.set_shader_parameter("opening_progress", opening.line_progress())
-	line_aura_material.set_shader_parameter("duality_progress", duality_reveal)
-	line_aura_material.set_shader_parameter("duality_active", duality.active)
 	pass
 
 

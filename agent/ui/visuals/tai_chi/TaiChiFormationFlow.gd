@@ -93,9 +93,9 @@ func draw(canvas: Control, center: Vector2, available_width: float) -> void:
 
 
 func draw_outer_morph(canvas: Control, center: Vector2, radius: float, half_width: float, source_y: float, reveal: float, alpha: float) -> void:
-	var color := Color(ColorBase.primary_text, alpha * CONSTRUCTION_ALPHA)
+	var line_alpha := alpha * CONSTRUCTION_ALPHA
 	if is_equal_approx(reveal, 1.0):
-		canvas.draw_circle(center, radius, color, false, CONSTRUCTION_WIDTH, true)
+		TaiChiGlowDrawing.draw_circle(canvas, center, radius, CONSTRUCTION_WIDTH, line_alpha)
 		return
 	var points := PackedVector2Array()
 	for index in range(CURVE_STEPS + 1):
@@ -106,7 +106,7 @@ func draw_outer_morph(canvas: Control, center: Vector2, radius: float, half_widt
 		var angle := PI * 0.5 + TAU * ratio
 		var target := center + Vector2.from_angle(angle) * radius
 		points.append(source.lerp(target, ease(reveal, -1.4)))
-	canvas.draw_polyline(points, color, CONSTRUCTION_WIDTH, true)
+	TaiChiGlowDrawing.draw_polyline(canvas, points, CONSTRUCTION_WIDTH, line_alpha)
 	pass
 
 
@@ -132,7 +132,7 @@ func draw_inner_morph(canvas: Control, center: Vector2, radius: float, half_widt
 			var ratio := float(index) / float(CURVE_STEPS)
 			var angle := TAU * ratio
 			points.append(shape_center + Vector2(cos(angle) * radius_x, sin(angle) * radius_y))
-		canvas.draw_polyline(points, Color(ColorBase.primary_text, alpha * CONSTRUCTION_ALPHA), 1.6, true)
+		TaiChiGlowDrawing.draw_polyline(canvas, points, 1.6, alpha * CONSTRUCTION_ALPHA)
 	pass
 
 
@@ -150,15 +150,15 @@ func draw_divider(canvas: Control, center: Vector2, radius: float, reveal: float
 		var ratio := minf(float(index) / float(CURVE_STEPS / 2), upper_reveal)
 		var upper_angle := -PI * 0.5 + PI * ratio
 		upper_points.append(upper_center + Vector2.from_angle(upper_angle) * radius * 0.5)
-	var color := Color(ColorBase.primary_text, alpha * CONSTRUCTION_ALPHA)
-	canvas.draw_polyline(upper_points, color, CONSTRUCTION_WIDTH, true)
+	var line_alpha := alpha * CONSTRUCTION_ALPHA
+	TaiChiGlowDrawing.draw_polyline(canvas, upper_points, CONSTRUCTION_WIDTH, line_alpha)
 	if lower_reveal > 0.0:
 		var lower_steps := maxi(2, int(ceil(float(CURVE_STEPS / 2) * lower_reveal)))
 		for index in range(lower_steps + 1):
 			var ratio := minf(float(index) / float(CURVE_STEPS / 2), lower_reveal)
 			var lower_angle := -PI * 0.5 - PI * ratio
 			lower_points.append(lower_center + Vector2.from_angle(lower_angle) * radius * 0.5)
-		canvas.draw_polyline(lower_points, color, CONSTRUCTION_WIDTH, true)
+		TaiChiGlowDrawing.draw_polyline(canvas, lower_points, CONSTRUCTION_WIDTH, line_alpha)
 	pass
 
 
@@ -180,10 +180,11 @@ func draw_caption(canvas: Control, position: Vector2, reveal: float) -> void:
 		var glyph_size := font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 		var target_x := (float(index) - middle) * gap
 		var baseline := position + Vector2(target_x * ease(local, -1.5) - glyph_size.x * 0.5, glyph_size.y * 0.34)
-		canvas.draw_string_outline(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 5, ThemeColor.alpha_theme_color(local * 0.1))
-		canvas.draw_string(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(ColorBase.primary_text, local * 0.72))
+		TaiChiGlowDrawing.draw_text(canvas, font, baseline, glyph, font_size, local * 0.72)
 	var subtitle_font := Fonts.medium()
 	var subtitle_size := clampi(int(canvas.size.y * 0.014), 10, 15)
 	var subtitle_width := subtitle_font.get_string_size(SUBTITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, subtitle_size).x
-	canvas.draw_string(subtitle_font, position + Vector2(-subtitle_width * 0.5, font_size * 1.25), SUBTITLE, HORIZONTAL_ALIGNMENT_LEFT, -1.0, subtitle_size, Color(ColorBase.secondary_text, title_reveal * 0.58))
+	TaiChiGlowDrawing.draw_text(canvas, subtitle_font,
+		position + Vector2(-subtitle_width * 0.5, font_size * 1.25), SUBTITLE, subtitle_size,
+		title_reveal * 0.58, ColorBase.secondary_text)
 	pass

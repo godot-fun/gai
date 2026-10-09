@@ -13,7 +13,8 @@ Tai Chi 是一个连续演化的全屏视觉特效，用动画表现：
 - 背景保持应用当前主题背景，不额外覆盖不透明底色。
 - 文字以 `ColorBase.primary_text` 和 `ColorBase.secondary_text` 为主。
 - 强调色统一使用 `ThemeColor.alpha_theme_color(alpha)`。
-- 强调色只承担轮廓、卦线、微光和轨迹作用，不使用高饱和实色大面积填充。
+- 文字和卦线使用中性前景色作为清晰主体，主题强调色只承担近、远两层光影和轨迹作用。
+- 文字与卦线的光影参数统一由 `TaiChiGlowDrawing` 管理，不在各阶段单独设置描边宽度和透明度。
 - 所有位置和尺寸根据 `Control.size` 动态计算，支持不同窗口比例。
 
 ## 2. 文件职责
@@ -26,7 +27,7 @@ Tai Chi 是一个连续演化的全屏视觉特效，用动画表现：
 | `TaiChiFormationFlow.gd` | 将两仪线条变形成完整太极。 |
 | `TaiChiEvolutionFlow.gd` | 太极缩小、移动，并从下到上生成四层结构。 |
 | `TaiChiBaguaFlow.gd` | 将横排八卦连续移动成圆阵，并将太极移到圆心。 |
-| `TaiChiLineAura.gdshader` | 开场线条和两仪阶段的柔和流动光效。 |
+| `TaiChiGlowDrawing.gd` | 统一绘制文字和卦线的中性主体、主题色近层光与远层光。 |
 | `TaiChiFill.gdshader` | 绘制黑白太极填充图案。 |
 
 ## 3. 总时间线
@@ -282,17 +283,16 @@ ThemeColor.alpha_theme_color(alpha)
 - 圆环：约 `0.09–0.16`。
 - 刻度：最高约 `0.20`。
 
-主题色变化时，`TaiChi.on_theme_changed()` 会更新 Shader 参数并触发重绘。
+主题色变化时，`TaiChi.on_theme_changed()` 会触发重绘，所有线条和文字从统一绘制工具获取最新主题色。
 
 ## 14. 绘制层级
 
 `TaiChi.gd` 中的主要绘制层：
 
-1. `LineAura`：`z_index = -2`，开场和两仪阶段光效。
-2. `FillLayer`：`z_index = -1`，Shader 太极填充。
-3. `_draw()`：构造线、层级结构、卦象、圆环和文字。
+1. `FillLayer`：`z_index = -1`，Shader 太极填充。
+2. `_draw()`：统一绘制构造线、层级结构、卦象、圆环、光影和文字。
 
-进入太极成形阶段后，LineAura 隐藏。FillLayer 从成形阶段一直复用到最终圆阵。
+FillLayer 从太极成形阶段一直复用到最终圆阵。
 
 ## 15. 响应式规则
 

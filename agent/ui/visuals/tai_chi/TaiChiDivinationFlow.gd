@@ -119,8 +119,10 @@ func draw_wheel(canvas: Control, center: Vector2, short_side: float) -> void:
 	var flight := flight_progress()
 	var current_highlight := highlighted_position()
 	var selected_position := fuxi_circle_position(selected_value)
-	canvas.draw_arc(center, radius * 0.985, 0.0, TAU, 192, ThemeColor.alpha_theme_color(0.14), 1.2, true)
-	canvas.draw_arc(center, radius * 1.04, 0.0, TAU, 192, ThemeColor.alpha_theme_color(0.08), 1.0, true)
+	canvas.draw_arc(center, radius * 0.985, 0.0, TAU, 192,
+		TaiChiGlowDrawing.outer_ring_color(0.14), 1.2, true)
+	canvas.draw_arc(center, radius * 1.04, 0.0, TAU, 192,
+		TaiChiGlowDrawing.outer_ring_color(0.08), 1.0, true)
 	for position in HEXAGRAM_COUNT:
 		if flight > 0.0 and position == selected_position:
 			continue
@@ -133,7 +135,7 @@ func draw_wheel(canvas: Control, center: Vector2, short_side: float) -> void:
 		var scale := 1.18 if highlighted else 1.0
 		var value := value_from_fuxi_position(position)
 		TaiChiTrigramDrawing.draw_symbol(canvas, point, value, 6, width * scale, line_gap * scale,
-			2.2 if highlighted else 2.0, alpha, angle + PI * 0.5, 0.12 if highlighted else 0.0)
+			2.2 if highlighted else 2.0, alpha, angle + PI * 0.5)
 	pass
 
 
@@ -199,7 +201,7 @@ func draw_selected_hexagram(canvas: Control, center: Vector2, short_side: float)
 	var line_gap := lerpf(clampf(short_side * 0.0048, 3.5, 5.5), minf(19.0, canvas.size.y * 0.021), flight)
 	var line_width := lerpf(2.1, 5.0, flight)
 	TaiChiTrigramDrawing.draw_symbol(canvas, position, selected_value, 6, width, line_gap, line_width,
-		lerpf(0.9, 0.74, flight), 0.0, sin(flight * PI) * 0.14)
+		lerpf(0.9, 0.74, flight))
 	pass
 
 
@@ -244,11 +246,5 @@ func draw_wrapped_text(canvas: Control, text: String, position: Vector2, font_si
 func draw_centered_text(canvas: Control, text: String, position: Vector2, font_size: int, alpha: float) -> void:
 	if alpha <= 0.0:
 		return
-	var font := Fonts.light()
-	var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
-	var baseline := position + Vector2(-text_size.x * 0.5, text_size.y * 0.34)
-	canvas.draw_string_outline(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 6,
-		ThemeColor.alpha_theme_color(alpha * 0.07))
-	canvas.draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size,
-		Color(ColorBase.primary_text, alpha))
+	TaiChiGlowDrawing.draw_centered_text(canvas, Fonts.light(), text, position, font_size, alpha)
 	pass

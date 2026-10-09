@@ -240,16 +240,13 @@ func divination_spins_once_and_lands_on_forced_hexagram_test() -> void:
 	pass
 
 
-func line_aura_shader_is_isolated_test() -> void:
+func shared_line_glow_does_not_create_a_shader_layer_test() -> void:
 	var control := VisualControl.new()
 	var effect := control.create_effect(VisualType.Type.TAI_CHI)
 	Engine.get_main_loop().root.add_child.call_deferred(effect)
 	await Engine.get_main_loop().process_frame
 	await Engine.get_main_loop().process_frame
-	assert(effect.line_aura_canvas != null)
-	assert(effect.line_aura_material != null)
-	assert(effect.line_aura_material.shader != null)
-	assert(effect.line_aura_material.get_shader_parameter("aura_color") == ThemeColor.alpha_theme_color(0.45))
+	assert(effect.get_node_or_null("LineAura") == null)
 	effect.size = Vector2(1280.0, 720.0)
 	effect.visible = true
 	effect._process(TaiChiOpeningFlow.REVEAL_SECONDS)
@@ -257,7 +254,6 @@ func line_aura_shader_is_isolated_test() -> void:
 	effect._process(TaiChiFormationFlow.TRANSITION_SECONDS * 0.7)
 	await Engine.get_main_loop().process_frame
 	assert(effect.formation.active)
-	assert(not effect.line_aura_canvas.visible)
 	effect._process(TaiChiFormationFlow.TRANSITION_SECONDS * 0.2)
 	await Engine.get_main_loop().process_frame
 	assert(effect.fill_layer.visible)
