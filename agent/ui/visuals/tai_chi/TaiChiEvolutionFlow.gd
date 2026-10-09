@@ -4,7 +4,7 @@ extends RefCounted
 ## Expands the completed taiji into five generations. Rows rise from the taiji,
 ## while every row reveals its symbols in reading order from left to right.
 
-const TRANSITION_SECONDS := 6.4
+const TRANSITION_SECONDS := 14.4
 const ROW_COUNT := 5
 const YANG := 1
 const YIN := 0
@@ -137,7 +137,12 @@ func draw_binary_row(canvas: Control, title: String, item_count: int, y: float, 
 		var local := item_progress(reveal, index, item_count)
 		if local <= 0.0:
 			continue
-		var rect := Rect2(area.position.x + float(index) * (cell_width + gap), y - 22.0, cell_width, 44.0)
+		var target_center := Vector2(area.position.x + float(index) * (cell_width + gap) + cell_width * 0.5, y)
+		var center := flying_position(canvas.size, target_center, local, index, item_count)
+		var scale := lerpf(0.42, 1.0, ease(local, -1.8))
+		var rect_size := Vector2(cell_width, 44.0) * scale
+		var rect := Rect2(center - rect_size * 0.5, rect_size)
+		draw_flight_trail(canvas, center, local, index)
 		draw_glowing_cell(canvas, rect, labels[index], index % 2 == 0, local)
 	pass
 
@@ -153,9 +158,12 @@ func draw_trigram_row(canvas: Control, y: float, reveal: float) -> void:
 		var local := item_progress(reveal, index, 8)
 		if local <= 0.0:
 			continue
-		var center := Vector2(area.position.x + (float(index) + 0.5) * cell_width, y)
-		draw_line_symbol(canvas, center, TRIGRAM_VALUES[index], 3, minf(cell_width * 0.58, 54.0), local)
-		draw_centered_text(canvas, names[index], center + Vector2(0.0, -34.0), 18, local * 0.76)
+		var target_center := Vector2(area.position.x + (float(index) + 0.5) * cell_width, y)
+		var center := flying_position(canvas.size, target_center, local, index, 8)
+		var scale := lerpf(0.38, 1.0, ease(local, -1.8))
+		draw_flight_trail(canvas, center, local, index)
+		draw_line_symbol(canvas, center, TRIGRAM_VALUES[index], 3, minf(cell_width * 0.58, 54.0) * scale, local)
+		draw_centered_text(canvas, names[index], center + Vector2(0.0, -34.0 * scale), maxi(10, int(round(18.0 * scale))), local * 0.76)
 	pass
 
 
@@ -169,8 +177,11 @@ func draw_hexagram_row(canvas: Control, y: float, reveal: float) -> void:
 		var local := item_progress(reveal, index, 64)
 		if local <= 0.0:
 			continue
-		var center := Vector2(area.position.x + (float(index) + 0.5) * cell_width, y)
-		draw_line_symbol(canvas, center, index, 6, maxf(4.0, cell_width * 0.62), local)
+		var target_center := Vector2(area.position.x + (float(index) + 0.5) * cell_width, y)
+		var center := flying_position(canvas.size, target_center, local, index, 64)
+		var scale := lerpf(0.3, 1.0, ease(local, -1.8))
+		draw_flight_trail(canvas, center, local, index)
+		draw_line_symbol(canvas, center, index, 6, maxf(4.0, cell_width * 0.62) * scale, local)
 	pass
 
 
@@ -181,6 +192,25 @@ func content_area(canvas_size: Vector2) -> Rect2:
 func item_progress(reveal: float, index: int, count: int) -> float:
 	var start := float(index) / float(count) * 0.7
 	return smoothstep(start, minf(start + 0.3, 1.0), reveal)
+
+
+func flying_position(canvas_size: Vector2, target: Vector2, local: float, index: int, count: int) -> Vector2:
+	var spread := (float(index) - float(count - 1) * 0.5) / maxf(float(count - 1), 1.0)
+	var start := Vector2(canvas_size.x * (0.5 + spread * 0.18), -70.0 - float(index % 3) * 28.0)
+	var settle := ease(local, -1.65)
+	var curve_direction := -1.0 if index % 2 == 0 else 1.0
+	var curve := Vector2(curve_direction * sin(settle * PI) * minf(86.0, canvas_size.x * 0.045), 0.0)
+	return start.lerp(target, settle) + curve
+
+
+func draw_flight_trail(canvas: Control, position: Vector2, local: float, index: int) -> void:
+	var strength := sin(clampf(local, 0.0, 1.0) * PI)
+	if strength <= 0.01:
+		return
+	var slant := -1.0 if index % 2 == 0 else 1.0
+	var tail := Vector2(slant * 18.0, -54.0) * strength
+	canvas.draw_line(position, position + tail, ThemeColor.alpha_theme_color(strength * 0.055), 2.0, true)
+	pass
 
 
 func draw_row_label(canvas: Control, text: String, y: float, reveal: float) -> void:
@@ -198,7 +228,8 @@ func draw_glowing_cell(canvas: Control, rect: Rect2, text: String, bright: bool,
 	if bright:
 		var glow_rect := rect.grow(5.0)
 		canvas.draw_rect(glow_rect, ThemeColor.alpha_theme_color(0.025 * reveal), false, 7.0, true)
-	draw_centered_text(canvas, text, rect.get_center(), clampi(int(canvas.size.y * 0.03), 18, 30), reveal * 0.82)
+	var font_size := clampi(int(rect.size.y * 0.65), 10, 30)
+	draw_centered_text(canvas, text, rect.get_center(), font_size, reveal * 0.82)
 	pass
 
 
