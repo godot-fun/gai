@@ -86,8 +86,8 @@ func evolution_reveals_four_rows_bottom_up_test() -> void:
 	assert(flow.DUALITY_VALUES == [1, 0])
 	assert(flow.FOUR_IMAGE_NAMES == ["太阳", "少阴", "少阳", "太阴"])
 	assert(flow.FOUR_IMAGE_VALUES == [3, 2, 1, 0])
-	assert(flow.TRIGRAM_NAMES == ["乾", "兑", "离", "震", "巽", "坎", "艮", "坤"])
-	assert(flow.TRIGRAM_VALUES == [7, 6, 5, 4, 3, 2, 1, 0])
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.TRIGRAM_NAMES == ["乾", "兑", "离", "震", "巽", "坎", "艮", "坤"])
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.TRIGRAM_VALUES == [7, 6, 5, 4, 3, 2, 1, 0])
 	assert(not flow.active)
 	flow.begin()
 	var canvas_size := Vector2(1920.0, 1080.0)
@@ -143,7 +143,7 @@ func bagua_moves_left_to_right_and_builds_frame_test() -> void:
 
 func carousel_rotates_and_cycles_all_trigrams_test() -> void:
 	var flow = TAI_CHI_CAROUSEL_FLOW_SCRIPT.new()
-	assert(flow.PLAY_ORDER == [0, 4, 5, 6, 7, 3, 2, 1])
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.COMPASS_ORDER == [0, 4, 5, 6, 7, 3, 2, 1])
 	assert(flow.XIANG_QUOTES.size() == 8)
 	assert(flow.XIANG_QUOTES[0] == "天行健，君子以自强不息。")
 	assert(flow.XIANG_QUOTES[7] == "地势坤，君子以厚德载物。")
@@ -167,7 +167,7 @@ func carousel_rotates_and_cycles_all_trigrams_test() -> void:
 func hexagram_flow_combines_and_reveals_sixty_four_symbols_test() -> void:
 	var flow = TAI_CHI_HEXAGRAM_FLOW_SCRIPT.new()
 	flow.begin(PI * 0.75)
-	assert(flow.HEXAGRAM_COUNT == 64)
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.HEXAGRAM_COUNT == 64)
 	assert(flow.hexagram_value(0, 0) == 63)
 	assert(flow.hexagram_value(7, 7) == 0)
 	assert(flow.hexagram_value(0, 7) == 7)
@@ -178,7 +178,7 @@ func hexagram_flow_combines_and_reveals_sixty_four_symbols_test() -> void:
 	assert(flow.fuxi_circle_position(0) == 32)
 	assert(flow.fuxi_circle_position(1) == 33)
 	assert(flow.fuxi_circle_position(31) == 63)
-	assert(flow.COMPASS_ORDER == [0, 4, 5, 6, 7, 3, 2, 1])
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.COMPASS_ORDER == [0, 4, 5, 6, 7, 3, 2, 1])
 	assert(flow.lower_index_for_slot(0, 0) == 0)
 	assert(flow.lower_index_for_slot(0, 1) == 1)
 	flow.advance(TAI_CHI_HEXAGRAM_FLOW_SCRIPT.TRANSITION_SECONDS * 0.18)
@@ -197,6 +197,13 @@ func hexagram_flow_combines_and_reveals_sixty_four_symbols_test() -> void:
 
 
 func hexagram_catalog_contains_every_unique_identity_test() -> void:
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.TRIGRAM_COUNT == 8)
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.HEXAGRAM_COUNT == 64)
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.trigram_statement(0) == "乾为天")
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.compass_position_from_trigram(5) == 2)
+	assert(is_equal_approx(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.compass_angle_from_trigram(0), -PI * 0.5))
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.fuxi_position_from_value(63) == 0)
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.value_from_fuxi_position(0) == 63)
 	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.ENTRIES.size() == 64)
 	for raw_entry in TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.ENTRIES:
 		assert(raw_entry.size() == 10)

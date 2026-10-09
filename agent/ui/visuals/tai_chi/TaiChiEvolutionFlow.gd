@@ -19,8 +19,6 @@ const DUALITY_NAMES := ["阳", "阴"]
 const DUALITY_VALUES := [1, 0]
 const FOUR_IMAGE_NAMES := ["太阳", "少阴", "少阳", "太阴"]
 const FOUR_IMAGE_VALUES := [3, 2, 1, 0]
-const TRIGRAM_NAMES := ["乾", "兑", "离", "震", "巽", "坎", "艮", "坤"]
-const TRIGRAM_VALUES := [7, 6, 5, 4, 3, 2, 1, 0]
 const DEPARTING_TITLE := "易有太极，是生两仪"
 const DEPARTING_SUBTITLE := "There is in the Changes the Great Primal Beginning. This generates the two primary forces."
 
@@ -180,17 +178,18 @@ func draw_trigram_row(canvas: Control, y: float, reveal: float) -> void:
 		return
 	draw_row_label(canvas, "八卦", y, reveal)
 	var area := content_area(canvas.size)
-	var cell_width := area.size.x / 8.0
-	for index in 8:
-		var local := item_progress(reveal, index, 8)
+	var cell_width := area.size.x / float(TaiChiHexagramCatalog.TRIGRAM_COUNT)
+	for index in TaiChiHexagramCatalog.TRIGRAM_COUNT:
+		var local := item_progress(reveal, index, TaiChiHexagramCatalog.TRIGRAM_COUNT)
 		if local <= 0.0:
 			continue
 		var target_center := Vector2(area.position.x + (float(index) + 0.5) * cell_width, y)
-		var center := flying_position(canvas.size, target_center, local, index, 8)
+		var center := flying_position(canvas.size, target_center, local, index,
+			TaiChiHexagramCatalog.TRIGRAM_COUNT)
 		var scale := lerpf(0.38, 1.0, ease(local, -1.8))
 		draw_flight_trail(canvas, center, local, index)
-		draw_line_symbol(canvas, center, TRIGRAM_VALUES[index], 3, SYMBOL_WIDTH * scale, local)
-		draw_centered_text(canvas, TRIGRAM_NAMES[index], center + Vector2(0.0, -34.0 * scale),
+		draw_line_symbol(canvas, center, TaiChiHexagramCatalog.TRIGRAM_VALUES[index], 3, SYMBOL_WIDTH * scale, local)
+		draw_centered_text(canvas, TaiChiHexagramCatalog.TRIGRAM_NAMES[index], center + Vector2(0.0, -34.0 * scale),
 			maxi(10, int(round(18.0 * scale))), local * 0.76)
 	pass
 

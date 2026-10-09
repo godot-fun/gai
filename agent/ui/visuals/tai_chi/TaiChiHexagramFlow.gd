@@ -8,7 +8,7 @@ extends RefCounted
 const SETTLE_SECONDS := 1.0
 const SPLIT_SECONDS := 1.0
 const ROUND_SECONDS := 1.0
-const ROUND_COUNT := 8
+const ROUND_COUNT := TaiChiHexagramCatalog.TRIGRAM_COUNT
 const FINAL_SECONDS := 0.8
 const TRANSITION_SECONDS := SETTLE_SECONDS + SPLIT_SECONDS + ROUND_SECONDS * ROUND_COUNT + FINAL_SECONDS
 const ROUND_START_SECONDS := SETTLE_SECONDS + SPLIT_SECONDS
@@ -17,10 +17,7 @@ const PAIR_END := 0.24
 const FLIGHT_START := 0.18
 const FLIGHT_END := 0.68
 const ROTATION_START := 0.72
-const HEXAGRAM_COUNT := 64
-const ORBIT_RADIUS_RATIO := 0.34
-const INNER_FRAME_RADIUS_RATIO := ORBIT_RADIUS_RATIO * 0.63
-const COMPASS_ORDER := [0, 4, 5, 6, 7, 3, 2, 1]
+const INNER_FRAME_RADIUS_RATIO := TaiChiHexagramCatalog.ORBIT_RADIUS_RATIO * 0.63
 
 var elapsed: float = 0.0
 var active: bool = false
@@ -90,20 +87,18 @@ func inner_rotation_steps() -> float:
 
 
 func lower_index_for_slot(slot: int, round_index: int) -> int:
-	return COMPASS_ORDER[posmod(slot - round_index, ROUND_COUNT)]
+	return TaiChiHexagramCatalog.COMPASS_ORDER[posmod(slot - round_index, ROUND_COUNT)]
 
 
 func hexagram_value(upper_index: int, lower_index: int) -> int:
-	var upper: int = TaiChiEvolutionFlow.TRIGRAM_VALUES[upper_index]
-	var lower: int = TaiChiEvolutionFlow.TRIGRAM_VALUES[lower_index]
+	var upper: int = TaiChiHexagramCatalog.TRIGRAM_VALUES[upper_index]
+	var lower: int = TaiChiHexagramCatalog.TRIGRAM_VALUES[lower_index]
 	# TaiChiTrigramDrawing renders bit zero as the top line.
 	return upper | (lower << 3)
 
 
 func fuxi_circle_position(value: int) -> int:
-	# The first semicircle runs 乾 63 → 复 32. The second begins at
-	# 坤 0 and runs through 剥 1 → 姤 31 before returning to 乾.
-	return 63 - value if value >= 32 else 32 + value
+	return TaiChiHexagramCatalog.fuxi_position_from_value(value)
 
 
 func hexagram_progress(index: int) -> float:
@@ -120,7 +115,7 @@ func draw(canvas: Control, bagua: TaiChiBaguaFlow) -> void:
 		return
 	var center := canvas.size * 0.5
 	var short_side := minf(canvas.size.x, canvas.size.y)
-	draw_frame(canvas, center, short_side * ORBIT_RADIUS_RATIO)
+	draw_frame(canvas, center, short_side * TaiChiHexagramCatalog.ORBIT_RADIUS_RATIO)
 	draw_sector_frames(canvas, center, short_side)
 	draw_trigram_layers(canvas, bagua, center, short_side)
 	draw_hexagrams(canvas, center, short_side)
@@ -169,28 +164,28 @@ func draw_sector_frames(canvas: Control, center: Vector2, short_side: float) -> 
 func draw_trigram_layers(canvas: Control, bagua: TaiChiBaguaFlow, center: Vector2, short_side: float) -> void:
 	var split := split_progress()
 	var final_fade := 1.0 - panorama_progress()
-	var source_radius := short_side * 0.34
+	var source_radius := short_side * TaiChiHexagramCatalog.ORBIT_RADIUS_RATIO
 	var outer_radius := lerpf(source_radius, short_side * 0.275, split)
 	var inner_radius := lerpf(source_radius, short_side * 0.225, split)
 	for slot in ROUND_COUNT:
 		var angle := slot_angle(slot)
-		var upper_index: int = COMPASS_ORDER[slot]
+		var upper_index: int = TaiChiHexagramCatalog.COMPASS_ORDER[slot]
 		var outer_position := center + Vector2.from_angle(angle) * outer_radius
 		bagua.draw_trigram(canvas, outer_position, angle + PI * 0.5,
-			TaiChiEvolutionFlow.TRIGRAM_VALUES[upper_index], minf(70.0, canvas.size.y * 0.078),
+			TaiChiHexagramCatalog.TRIGRAM_VALUES[upper_index], minf(70.0, canvas.size.y * 0.078),
 			11.0, 4.0, final_fade * TaiChiTrigramDrawing.BASE_ALPHA)
 		var label_position := center + Vector2.from_angle(angle) * (outer_radius + minf(58.0, canvas.size.y * 0.065))
-		draw_centered_text(canvas, TaiChiEvolutionFlow.TRIGRAM_NAMES[upper_index], label_position,
+		draw_centered_text(canvas, TaiChiHexagramCatalog.TRIGRAM_NAMES[upper_index], label_position,
 			clampi(int(canvas.size.y * 0.026), 17, 27), final_fade * 0.54)
 	if split <= 0.0:
 		return
 	var steps := inner_rotation_steps()
 	for source_slot in ROUND_COUNT:
 		var angle := slot_angle_float(float(source_slot) + steps)
-		var lower_index: int = COMPASS_ORDER[source_slot]
+		var lower_index: int = TaiChiHexagramCatalog.COMPASS_ORDER[source_slot]
 		var inner_position := center + Vector2.from_angle(angle) * inner_radius
 		bagua.draw_trigram(canvas, inner_position, angle + PI * 0.5,
-			TaiChiEvolutionFlow.TRIGRAM_VALUES[lower_index], minf(56.0, canvas.size.y * 0.062),
+			TaiChiHexagramCatalog.TRIGRAM_VALUES[lower_index], minf(56.0, canvas.size.y * 0.062),
 			9.0, 3.5, split * final_fade * TaiChiTrigramDrawing.BASE_ALPHA)
 	pass
 
@@ -212,11 +207,11 @@ func draw_hexagram(canvas: Control, center: Vector2, short_side: float, slot: in
 	var width := clampf(short_side * 0.027, 18.0, 32.0)
 	var line_gap := clampf(short_side * 0.0048, 3.5, 5.5)
 	var source_angle := slot_angle(slot)
-	var upper_index: int = COMPASS_ORDER[slot]
+	var upper_index: int = TaiChiHexagramCatalog.COMPASS_ORDER[slot]
 	var lower_index := lower_index_for_slot(slot, round_index)
 	var value := hexagram_value(upper_index, lower_index)
 	var target_index := fuxi_circle_position(value)
-	var target_angle := -PI * 0.5 + TAU * float(target_index) / float(HEXAGRAM_COUNT)
+	var target_angle := -PI * 0.5 + TAU * float(target_index) / float(TaiChiHexagramCatalog.HEXAGRAM_COUNT)
 	var flight := ease(reveal, -1.5)
 	var angle := lerp_angle(source_angle, target_angle, flight)
 	var radius := lerpf(short_side * 0.25, target_radius, flight)

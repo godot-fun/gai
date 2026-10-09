@@ -338,7 +338,7 @@ godot --headless --path . --check-only --script res://agent/ui/visuals/tai_chi/T
 ## 17. 后续修改原则
 
 1. 优先延续已有图形，不用淡出后重新创建的方式模拟移动。
-2. 修改卦象编码时只改 `TRIGRAM_VALUES`。
+2. 八卦名称、自然象、编码、罗盘顺序和圆阵半径统一维护在 `TaiChiHexagramCatalog.gd`。
 3. 修改层级位置时同时检查太极与“两仪”中心对齐。
 4. 修改八卦源位置时确保 Bagua Flow 与 Evolution Flow 使用相同坐标公式。
 5. 增加主题色强度时优先调整 Alpha，不要改为不透明颜色。

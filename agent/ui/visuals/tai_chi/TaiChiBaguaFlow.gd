@@ -5,10 +5,6 @@ extends RefCounted
 ## a circular compass. Each trigram leaves the row from left to right.
 
 const TRANSITION_SECONDS := 5.8
-const NAMES := ["乾", "兑", "离", "震", "巽", "坎", "艮", "坤"]
-# Angles match the reference compass: 乾 at top, 坤 at bottom, 离/坎 at left/right,
-# and the remaining four trigrams on the diagonals.
-const TARGET_ANGLES := [-PI * 0.5, -PI * 0.75, PI, PI * 0.75, -PI * 0.25, 0.0, PI * 0.25, PI * 0.5]
 
 var elapsed: float = 0.0
 var active: bool = false
@@ -73,8 +69,8 @@ func draw(canvas: Control, evolution: TaiChiEvolutionFlow) -> void:
 	if not active:
 		return
 	var center := canvas.size * 0.5
-	var orbit_radius := minf(canvas.size.x, canvas.size.y) * 0.34
-	for index in 8:
+	var orbit_radius := minf(canvas.size.x, canvas.size.y) * TaiChiHexagramCatalog.ORBIT_RADIUS_RATIO
+	for index in TaiChiHexagramCatalog.TRIGRAM_COUNT:
 		draw_moving_trigram(canvas, evolution, center, orbit_radius, index)
 	draw_frame(canvas, center, orbit_radius)
 	pass
@@ -85,8 +81,8 @@ func draw_moving_trigram(canvas: Control, evolution: TaiChiEvolutionFlow, center
 	var area := evolution.content_area(canvas.size)
 	# Source geometry intentionally matches TaiChiEvolutionFlow.draw_trigram_row.
 	# At local == 0 the handoff is pixel-aligned; at local == 1 it is radial.
-	var source := Vector2(area.position.x + (float(index) + 0.5) * area.size.x / 8.0, evolution.row_y(canvas.size, 3))
-	var angle: float = TARGET_ANGLES[index]
+	var source := Vector2(area.position.x + (float(index) + 0.5) * area.size.x / float(TaiChiHexagramCatalog.TRIGRAM_COUNT), evolution.row_y(canvas.size, 3))
+	var angle := TaiChiHexagramCatalog.compass_angle_from_trigram(index)
 	var target := center + Vector2.from_angle(angle) * orbit_radius
 	# Lift the midpoint of the interpolation into a shallow arc while retaining
 	# identical endpoints, producing a deliberate rather than mechanical move.
@@ -99,13 +95,13 @@ func draw_moving_trigram(canvas: Control, evolution: TaiChiEvolutionFlow, center
 	var line_gap := lerpf(7.0, 13.0, local)
 	var line_width := lerpf(3.0, 5.0, local)
 	var alpha := lerpf(TaiChiTrigramDrawing.SOURCE_ALPHA, TaiChiTrigramDrawing.BASE_ALPHA, local)
-	draw_trigram(canvas, position, rotation, TaiChiEvolutionFlow.TRIGRAM_VALUES[index], width, line_gap, line_width, alpha, local)
+	draw_trigram(canvas, position, rotation, TaiChiHexagramCatalog.TRIGRAM_VALUES[index], width, line_gap, line_width, alpha, local)
 	var name_position := center + Vector2.from_angle(angle) * (orbit_radius + minf(72.0, canvas.size.y * 0.085))
 	var source_name_position := source - Vector2(0.0, 34.0)
 	var moving_name_position := source_name_position.lerp(name_position, ease(local, -1.3)) + arc_offset
 	var target_font_size := clampi(int(canvas.size.y * 0.035), 20, 36)
 	var font_size := int(round(lerpf(18.0, float(target_font_size), local)))
-	draw_centered_text(canvas, NAMES[index], moving_name_position, font_size,
+	draw_centered_text(canvas, TaiChiHexagramCatalog.TRIGRAM_NAMES[index], moving_name_position, font_size,
 		lerpf(0.76, TaiChiTrigramDrawing.LABEL_BASE_ALPHA, local))
 	pass
 
@@ -127,14 +123,14 @@ func draw_frame(canvas: Control, center: Vector2, orbit_radius: float) -> void:
 		TaiChiGlowDrawing.outer_ring_color(reveal * 0.09), 1.0, true)
 	canvas.draw_arc(center, orbit_radius * 0.63, -PI * 0.5, -PI * 0.5 + TAU * reveal, 120,
 		TaiChiGlowDrawing.inner_ring_color(reveal * 0.16), 1.2, true)
-	for tick in 64:
+	for tick in TaiChiHexagramCatalog.HEXAGRAM_COUNT:
 		# Eight major ticks mark trigram directions; the remaining ticks echo the
 		# sixty-four hexagrams without adding another dense row of symbols.
-		var tick_progress := float(tick + 1) / 64.0
+		var tick_progress := float(tick + 1) / float(TaiChiHexagramCatalog.HEXAGRAM_COUNT)
 		if tick_progress > reveal:
 			break
-		var angle := -PI * 0.5 + TAU * float(tick) / 64.0
-		var length := 11.0 if tick % 8 == 0 else 5.0
+		var angle := -PI * 0.5 + TAU * float(tick) / float(TaiChiHexagramCatalog.HEXAGRAM_COUNT)
+		var length := 11.0 if tick % TaiChiHexagramCatalog.TRIGRAM_COUNT == 0 else 5.0
 		var outer := center + Vector2.from_angle(angle) * orbit_radius * 1.29
 		var inner := center + Vector2.from_angle(angle) * (orbit_radius * 1.29 - length)
 		canvas.draw_line(inner, outer, ThemeColor.alpha_theme_color(0.2 * reveal), 1.2, true)

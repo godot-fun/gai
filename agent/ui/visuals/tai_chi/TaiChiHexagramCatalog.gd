@@ -45,9 +45,15 @@ class HexagramEntry extends RefCounted:
 		avoid = entry_avoid
 		pass
 
+const TRIGRAM_COUNT := 8
+const HEXAGRAM_COUNT := TRIGRAM_COUNT * TRIGRAM_COUNT
+const HEXAGRAM_HALF_COUNT := HEXAGRAM_COUNT >> 1
 const TRIGRAM_NAMES := ["乾", "兑", "离", "震", "巽", "坎", "艮", "坤"]
 const TRIGRAM_ELEMENTS := ["天", "泽", "火", "雷", "风", "水", "山", "地"]
 const TRIGRAM_VALUES := [7, 6, 5, 4, 3, 2, 1, 0]
+## Clockwise from the top: 乾、巽、坎、艮、坤、震、离、兑.
+const COMPASS_ORDER := [0, 4, 5, 6, 7, 3, 2, 1]
+const ORBIT_RADIUS_RATIO := 0.34
 ## number, name, upper, lower, judgment, image, theme, interpretation, advice, avoid
 const ENTRIES := [
 	[1, "乾", 0, 0, "元亨利贞。", "天行健，君子以自强不息。", "主动开创，刚健有为", "能量充足、方向清楚，适合承担责任并推动重要事情。", "确立目标，持续行动", "自满冒进，刚愎独断"],
@@ -125,6 +131,26 @@ static func entry_from_value(value: int) -> HexagramEntry:
 		if entry_value == value:
 			return build_entry(raw_entry, entry_value)
 	return null
+
+
+static func trigram_statement(index: int) -> String:
+	return TRIGRAM_NAMES[index] + "为" + TRIGRAM_ELEMENTS[index]
+
+
+static func compass_position_from_trigram(index: int) -> int:
+	return COMPASS_ORDER.find(index)
+
+
+static func compass_angle_from_trigram(index: int) -> float:
+	return -PI * 0.5 + TAU * float(compass_position_from_trigram(index)) / float(TRIGRAM_COUNT)
+
+
+static func fuxi_position_from_value(value: int) -> int:
+	return HEXAGRAM_COUNT - 1 - value if value >= HEXAGRAM_HALF_COUNT else HEXAGRAM_HALF_COUNT + value
+
+
+static func value_from_fuxi_position(position: int) -> int:
+	return HEXAGRAM_COUNT - 1 - position if position < HEXAGRAM_HALF_COUNT else position - HEXAGRAM_HALF_COUNT
 
 
 static func entry_from_number(number: int) -> HexagramEntry:

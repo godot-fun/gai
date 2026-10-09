@@ -10,19 +10,18 @@ const FLY_SECONDS := 2.3
 const RESULT_REVEAL_SECONDS := 0.8
 const RESULT_HOLD_SECONDS := 3.0
 const TOTAL_SECONDS := PROMPT_SECONDS + SPIN_SECONDS + FLY_SECONDS + RESULT_REVEAL_SECONDS + RESULT_HOLD_SECONDS
-const HEXAGRAM_COUNT := 64
 const RING_RADIUS_RATIO := 0.438
 
 var elapsed: float = 0.0
 var active: bool = false
-var selected_value: int = 63
+var selected_value: int = TaiChiHexagramCatalog.HEXAGRAM_COUNT - 1
 var target_rotation: float = 0.0
 
 
 func reset() -> void:
 	elapsed = 0.0
 	active = false
-	selected_value = 63
+	selected_value = TaiChiHexagramCatalog.HEXAGRAM_COUNT - 1
 	target_rotation = 0.0
 	pass
 
@@ -32,9 +31,10 @@ func begin(forced_value: int = -1) -> void:
 	active = true
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	selected_value = clampi(forced_value, 0, 63) if forced_value >= 0 else rng.randi_range(0, 63)
-	var selected_position := fuxi_circle_position(selected_value)
-	var landing_offset := float(selected_position) / float(HEXAGRAM_COUNT) * TAU
+	var last_value := TaiChiHexagramCatalog.HEXAGRAM_COUNT - 1
+	selected_value = clampi(forced_value, 0, last_value) if forced_value >= 0 else rng.randi_range(0, last_value)
+	var selected_position := TaiChiHexagramCatalog.fuxi_position_from_value(selected_value)
+	var landing_offset := float(selected_position) / float(TaiChiHexagramCatalog.HEXAGRAM_COUNT) * TAU
 	target_rotation = TAU * float(rng.randi_range(5, 7)) + landing_offset
 	pass
 
@@ -77,20 +77,12 @@ func pointer_rotation() -> float:
 
 
 func highlighted_position() -> int:
-	var step := TAU / float(HEXAGRAM_COUNT)
-	return posmod(int(round(pointer_rotation() / step)), HEXAGRAM_COUNT)
+	var step := TAU / float(TaiChiHexagramCatalog.HEXAGRAM_COUNT)
+	return posmod(int(round(pointer_rotation() / step)), TaiChiHexagramCatalog.HEXAGRAM_COUNT)
 
 
 func highlighted_value() -> int:
-	return value_from_fuxi_position(highlighted_position())
-
-
-func fuxi_circle_position(value: int) -> int:
-	return 63 - value if value >= 32 else 32 + value
-
-
-func value_from_fuxi_position(position: int) -> int:
-	return 63 - position if position < 32 else position - 32
+	return TaiChiHexagramCatalog.value_from_fuxi_position(highlighted_position())
 
 
 func draw(canvas: Control) -> void:
@@ -117,22 +109,22 @@ func draw_wheel(canvas: Control, center: Vector2, short_side: float) -> void:
 	var line_gap := clampf(short_side * 0.0048, 3.5, 5.5)
 	var flight := flight_progress()
 	var current_highlight := highlighted_position()
-	var selected_position := fuxi_circle_position(selected_value)
+	var selected_position := TaiChiHexagramCatalog.fuxi_position_from_value(selected_value)
 	canvas.draw_arc(center, radius * 0.985, 0.0, TAU, 192,
 		TaiChiGlowDrawing.outer_ring_color(0.14), 1.2, true)
 	canvas.draw_arc(center, radius * 1.04, 0.0, TAU, 192,
 		TaiChiGlowDrawing.outer_ring_color(0.08), 1.0, true)
-	for position in HEXAGRAM_COUNT:
+	for position in TaiChiHexagramCatalog.HEXAGRAM_COUNT:
 		if flight > 0.0 and position == selected_position:
 			continue
-		var angle := -PI * 0.5 + TAU * float(position) / float(HEXAGRAM_COUNT)
+		var angle := -PI * 0.5 + TAU * float(position) / float(TaiChiHexagramCatalog.HEXAGRAM_COUNT)
 		var point := center + Vector2.from_angle(angle) * radius
 		var highlighted := elapsed >= PROMPT_SECONDS and elapsed < PROMPT_SECONDS + SPIN_SECONDS \
 			and position == current_highlight
 		var alpha := (TaiChiTrigramDrawing.HIGHLIGHT_ALPHA if highlighted \
 			else TaiChiTrigramDrawing.BASE_ALPHA) * lerpf(1.0, 0.2, flight)
 		var scale := 1.18 if highlighted else 1.0
-		var value := value_from_fuxi_position(position)
+		var value := TaiChiHexagramCatalog.value_from_fuxi_position(position)
 		TaiChiTrigramDrawing.draw_symbol(canvas, point, value, 6, width * scale, line_gap * scale,
 			2.2 if highlighted else 2.0, alpha, angle + PI * 0.5)
 	pass
@@ -187,7 +179,7 @@ func draw_spinning_label(canvas: Control, center: Vector2) -> void:
 func draw_selected_hexagram(canvas: Control, center: Vector2, short_side: float) -> void:
 	var flight := flight_progress()
 	var radius := short_side * RING_RADIUS_RATIO
-	var selected_angle := -PI * 0.5 + TAU * float(fuxi_circle_position(selected_value)) / float(HEXAGRAM_COUNT)
+	var selected_angle := -PI * 0.5 + TAU * float(TaiChiHexagramCatalog.fuxi_position_from_value(selected_value)) / float(TaiChiHexagramCatalog.HEXAGRAM_COUNT)
 	var source := center + Vector2.from_angle(selected_angle) * radius
 	var target := center - Vector2(0.0, canvas.size.y * 0.17)
 	var arc := Vector2(sin(flight * PI) * minf(110.0, canvas.size.x * 0.06), 0.0)
