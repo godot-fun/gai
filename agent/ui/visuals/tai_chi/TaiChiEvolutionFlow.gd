@@ -8,8 +8,7 @@ extends RefCounted
 ## from outside the viewport and settle before the next generation takes focus.
 const TRANSITION_SECONDS := 14.4
 const ROW_COUNT := 5
-const YANG := 1
-const YIN := 0
+const TRIGRAM_DRAWING_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiTrigramDrawing.gd")
 # Values are stored top line first because [draw_line_symbol] lays lines out from
 # top to bottom. This produces 乾 ☰ through 坤 ☷ in the displayed name order.
 const TRIGRAM_VALUES := [7, 6, 5, 4, 3, 2, 1, 0]
@@ -254,17 +253,7 @@ func draw_glowing_cell(canvas: Control, rect: Rect2, text: String, bright: bool,
 
 func draw_line_symbol(canvas: Control, center: Vector2, value: int, line_count: int, width: float, reveal: float) -> void:
 	var line_gap := 7.0 if line_count == 3 else 5.0
-	var color := ThemeColor.alpha_theme_color(reveal * 0.32)
-	for line_index in line_count:
-		var y := center.y + (float(line_index) - float(line_count - 1) * 0.5) * line_gap
-		# Each bit selects a solid yang line or a center-broken yin line.
-		var solid := ((value >> line_index) & YANG) == YANG
-		if solid:
-			canvas.draw_line(Vector2(center.x - width * 0.5, y), Vector2(center.x + width * 0.5, y), color, 3.0, true)
-		else:
-			var gap := maxf(2.0, width * 0.16)
-			canvas.draw_line(Vector2(center.x - width * 0.5, y), Vector2(center.x - gap, y), color, 3.0, true)
-			canvas.draw_line(Vector2(center.x + gap, y), Vector2(center.x + width * 0.5, y), color, 3.0, true)
+	TRIGRAM_DRAWING_SCRIPT.draw_symbol(canvas, center, value, line_count, width, line_gap, 3.0, reveal * 0.32)
 	pass
 
 

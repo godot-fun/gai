@@ -5,6 +5,7 @@ extends RefCounted
 ## a circular compass. Each trigram leaves the row from left to right.
 
 const TRANSITION_SECONDS := 5.8
+const TRIGRAM_DRAWING_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiTrigramDrawing.gd")
 const NAMES := ["乾", "兑", "离", "震", "巽", "坎", "艮", "坤"]
 # Angles match the reference compass: 乾 at top, 坤 at bottom, 离/坎 at left/right,
 # and the remaining four trigrams on the diagonals.
@@ -99,7 +100,7 @@ func draw_moving_trigram(canvas: Control, evolution: TaiChiEvolutionFlow, center
 	var line_gap := lerpf(7.0, 13.0, local)
 	var line_width := lerpf(3.0, 5.0, local)
 	var alpha := lerpf(0.32, 0.58, local)
-	draw_trigram(canvas, position, rotation, TaiChiEvolutionFlow.TRIGRAM_VALUES[index], width, line_gap, line_width, alpha)
+	draw_trigram(canvas, position, rotation, TaiChiEvolutionFlow.TRIGRAM_VALUES[index], width, line_gap, line_width, alpha, local)
 	var name_position := center + Vector2.from_angle(angle) * (orbit_radius + minf(72.0, canvas.size.y * 0.085))
 	var source_name_position := source - Vector2(0.0, 34.0)
 	var moving_name_position := source_name_position.lerp(name_position, ease(local, -1.3)) + arc_offset
@@ -109,30 +110,10 @@ func draw_moving_trigram(canvas: Control, evolution: TaiChiEvolutionFlow, center
 	pass
 
 
-func draw_trigram(canvas: Control, center: Vector2, rotation: float, value: int, width: float, line_gap: float, line_width: float, alpha: float) -> void:
-	# Build in local direction/normal axes instead of changing the canvas transform;
-	# this keeps subsequent labels, rings, and sibling trigrams unaffected.
-	var direction := Vector2.from_angle(rotation)
-	var normal := direction.rotated(PI * 0.5)
-	# The caller supplies the final opacity. Applying another multiplier here made
-	# every trigram visibly dimmer on the first frame of the hierarchy handoff.
-	var color := ThemeColor.alpha_theme_color(alpha)
-	var glow := ThemeColor.alpha_theme_color(alpha * 0.055)
-	for line_index in 3:
-		var line_center := center + normal * (float(line_index) - 1.0) * line_gap
-		var solid := ((value >> line_index) & 1) == 1
-		if solid:
-			draw_glowing_segment(canvas, line_center - direction * width * 0.5, line_center + direction * width * 0.5, color, glow, line_width)
-		else:
-			var gap := width * 0.12
-			draw_glowing_segment(canvas, line_center - direction * width * 0.5, line_center - direction * gap, color, glow, line_width)
-			draw_glowing_segment(canvas, line_center + direction * gap, line_center + direction * width * 0.5, color, glow, line_width)
-	pass
-
-
-func draw_glowing_segment(canvas: Control, start: Vector2, finish: Vector2, color: Color, glow: Color, line_width: float) -> void:
-	canvas.draw_line(start, finish, glow, line_width * 2.8, true)
-	canvas.draw_line(start, finish, color, line_width, true)
+func draw_trigram(canvas: Control, center: Vector2, rotation: float, value: int, width: float, line_gap: float,
+		line_width: float, alpha: float, local: float = 1.0) -> void:
+	var glow_alpha := alpha * 0.055 * smoothstep(0.0, 0.32, local)
+	TRIGRAM_DRAWING_SCRIPT.draw_symbol(canvas, center, value, 3, width, line_gap, line_width, alpha, rotation, glow_alpha)
 	pass
 
 
