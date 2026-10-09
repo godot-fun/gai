@@ -4,6 +4,10 @@ extends VisualEffect
 ## A quiet, center-out visual inspired by the opening gesture of a Chinese ink scroll.
 ## Each lifecycle concern lives in its own flow so later sequences stay isolated.
 
+## Enables the complete eight-trigram showcase for visual previews and tests.
+## Production keeps the ordinary short completion wait.
+static var complete_animation_on_agent_end: bool = false
+
 const COMPLETION_SECONDS := 1.25
 const LINE_AURA_SHADER_PATH := "res://agent/ui/visuals/tai_chi/TaiChiLineAura.gdshader"
 const FILL_SHADER_PATH := "res://agent/ui/visuals/tai_chi/TaiChiFill.gdshader"
@@ -64,7 +68,13 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(_error_message: String) -> void:
+func on_agent_end(error_message: String) -> void:
+	if complete_animation_on_agent_end and StringUtils.is_blank(error_message):
+		var showcase_seconds := TaiChiCarouselFlow.INTRO_SECONDS \
+			+ TaiChiCarouselFlow.ITEM_SECONDS * float(TaiChiCarouselFlow.PLAY_ORDER.size())
+		while is_inside_tree() and (not carousel.active or carousel.elapsed < showcase_seconds):
+			await get_tree().process_frame
+		return
 	if is_inside_tree():
 		await get_tree().create_timer(COMPLETION_SECONDS).timeout
 	pass

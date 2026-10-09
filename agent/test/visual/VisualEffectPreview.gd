@@ -70,6 +70,7 @@ func _ready() -> void:
 	# This preview runs directly with F6 and bypasses Agent._ready(), where the application normally
 	# initializes translations. Keep this first so effects created below receive translated labels.
 	TransformerController.complete_animation_on_agent_end = true
+	TaiChi.complete_animation_on_agent_end = true
 	I18nHelper.init_i18n()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	AgentSessionManager.load_from_disk()
@@ -87,6 +88,7 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	TransformerController.complete_animation_on_agent_end = false
+	TaiChi.complete_animation_on_agent_end = false
 	pass
 
 
