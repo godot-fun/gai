@@ -39,7 +39,7 @@ func draw(canvas: Control, center: Vector2, available_width: float) -> void:
 
 
 func draw_horizon_line(canvas: Control, start: Vector2, finish: Vector2) -> void:
-	canvas.draw_line(start, finish, Color(1.0, 0.94, 0.72, 0.96), 2.0, true)
+	canvas.draw_line(start, finish, Color(ColorBase.primary_text, 0.62), 2.0, true)
 	pass
 
 
@@ -62,6 +62,6 @@ func draw_title(canvas: Control, center: Vector2, opacity: float = 1.0) -> void:
 		var glyph_size := font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 		var baseline := glyph_position + Vector2(-glyph_size.x * 0.5, glyph_size.y * 0.35)
 		var alpha := local_progress * (0.82 + 0.18 * progress) * opacity
-		canvas.draw_string_outline(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 9, Color(1.0, 0.71, 0.28, alpha * 0.14))
-		canvas.draw_string(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(1.0, 0.97, 0.82, alpha))
+		canvas.draw_string_outline(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 9, Color(ColorBase.primary_text, alpha * 0.14))
+		canvas.draw_string(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(ColorBase.primary_text, alpha * 0.72))
 	pass

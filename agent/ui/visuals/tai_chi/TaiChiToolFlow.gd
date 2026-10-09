@@ -40,7 +40,7 @@ func draw(canvas: Control, center: Vector2, line_y: float, line_half_width: floa
 		var direction := -1.0 if slot % 2 == 0 else 1.0
 		var lane := float(slot / 2 + 1) / float(maxi(4, tools.size() / 2 + 2))
 		var position := Vector2(center.x + direction * line_half_width * lane * float(item["progress"]), line_y)
-		var color := Color(0.93, 0.42, 0.3) if bool(item["failed"]) else Color(1.0, 0.88, 0.52)
-		canvas.draw_circle(position, 3.5 + 2.0 * (1.0 - float(item["progress"])), Color(color, 0.86))
-		canvas.draw_arc(position, 8.0, 0.0, TAU * float(item["progress"]), 18, Color(color, 0.42), 1.2, true)
+		var color := ColorBase.error if bool(item["failed"]) else ColorBase.primary_text
+		canvas.draw_circle(position, 3.5 + 2.0 * (1.0 - float(item["progress"])), Color(color, 0.62))
+		canvas.draw_arc(position, 8.0, 0.0, TAU * float(item["progress"]), 18, Color(color, 0.36), 1.2, true)
 	pass

@@ -2,6 +2,7 @@ extends RefCounted
 
 const OPENING_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiOpeningFlow.gd")
 const DUALITY_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiDualityFlow.gd")
+const FORMATION_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiFormationFlow.gd")
 const TOOL_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiToolFlow.gd")
 const COMPLETION_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiCompletionFlow.gd")
 
@@ -64,4 +65,69 @@ func completion_records_error_state_test() -> void:
 	assert(flow.active)
 	assert(flow.failed)
 	assert(flow.progress == 1.0)
+	pass
+
+
+func formation_closes_into_taiji_test() -> void:
+	var flow := FORMATION_FLOW_SCRIPT.new()
+	assert(not flow.active)
+	assert(is_equal_approx(FORMATION_FLOW_SCRIPT.DOT_RADIUS_RATIO, 0.105))
+	flow.begin()
+	flow.advance(FORMATION_FLOW_SCRIPT.TRANSITION_SECONDS * 0.2)
+	assert(flow.outer_progress() > 0.0)
+	assert(flow.upper_inner_progress() == 0.0)
+	assert(flow.lower_inner_progress() == 0.0)
+	flow.advance(FORMATION_FLOW_SCRIPT.TRANSITION_SECONDS * 0.23)
+	assert(flow.upper_inner_progress() > 0.0)
+	assert(flow.lower_inner_progress() == 0.0)
+	assert(flow.divider_progress() == 0.0)
+	assert(flow.fill_progress() == 0.0)
+	flow.advance(FORMATION_FLOW_SCRIPT.TRANSITION_SECONDS * 0.2)
+	assert(flow.lower_inner_progress() == 1.0)
+	assert(flow.divider_progress() > 0.0)
+	assert(flow.fill_progress() == 0.0)
+	flow.advance(FORMATION_FLOW_SCRIPT.TRANSITION_SECONDS * 0.12)
+	assert(flow.divider_progress() < 1.0)
+	assert(flow.fill_progress() == 0.0)
+	flow.advance(FORMATION_FLOW_SCRIPT.TRANSITION_SECONDS * 0.25)
+	assert(flow.progress() == 1.0)
+	assert(flow.outer_progress() == 1.0)
+	assert(flow.upper_inner_progress() == 1.0)
+	assert(flow.lower_inner_progress() == 1.0)
+	assert(flow.divider_progress() == 1.0)
+	assert(flow.fill_progress() == 1.0)
+	assert(flow.previous_state_opacity() == 0.0)
+	pass
+
+
+func line_aura_shader_is_isolated_test() -> void:
+	var control := VisualControl.new()
+	var effect := control.create_effect(VisualType.Type.TAI_CHI)
+	Engine.get_main_loop().root.add_child.call_deferred(effect)
+	await Engine.get_main_loop().process_frame
+	await Engine.get_main_loop().process_frame
+	assert(effect.line_aura_canvas != null)
+	assert(effect.line_aura_material != null)
+	assert(effect.line_aura_material.shader != null)
+	assert(effect.line_aura_material.get_shader_parameter("aura_color") == ColorBase.primary_text)
+	effect.size = Vector2(1280.0, 720.0)
+	effect.visible = true
+	effect._process(OPENING_FLOW_SCRIPT.REVEAL_SECONDS)
+	effect._process(DUALITY_FLOW_SCRIPT.TRANSITION_SECONDS)
+	effect._process(FORMATION_FLOW_SCRIPT.TRANSITION_SECONDS * 0.7)
+	await Engine.get_main_loop().process_frame
+	assert(effect.formation.active)
+	assert(effect.line_aura_canvas.visible)
+	assert(bool(effect.line_aura_material.get_shader_parameter("formation_active")))
+	assert(float(effect.line_aura_material.get_shader_parameter("outer_progress")) == 1.0)
+	assert(float(effect.line_aura_material.get_shader_parameter("divider_progress")) > 0.0)
+	effect._process(FORMATION_FLOW_SCRIPT.TRANSITION_SECONDS * 0.2)
+	await Engine.get_main_loop().process_frame
+	assert(effect.fill_layer.visible)
+	var fill_opacity := float(effect.fill_material.get_shader_parameter("opacity"))
+	assert(fill_opacity > 0.0 and fill_opacity < 1.0)
+	assert(effect.fill_layer.size.x > 0.0 and effect.fill_layer.size.x == effect.fill_layer.size.y)
+	effect.get_parent().remove_child(effect)
+	effect.free()
+	control.free()
 	pass

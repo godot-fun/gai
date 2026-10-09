@@ -37,5 +37,5 @@ func draw(canvas: Control, center: Vector2, reveal: float) -> void:
 		var wave_b := sin(angle_b * 2.0 - phase) * radius * 0.12
 		var a := center + Vector2.from_angle(angle_a) * (radius + wave_a)
 		var b := center + Vector2.from_angle(angle_b) * (radius + wave_b)
-		canvas.draw_line(a, b, Color(1.0, 0.86, 0.5, alpha * 0.16), 1.2, true)
+		canvas.draw_line(a, b, Color(ColorBase.primary_text, alpha * 0.16), 1.2, true)
 	pass

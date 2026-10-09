@@ -37,7 +37,7 @@ func title_opacity() -> float:
 	return 1.0 - smoothstep(0.0, 0.42, progress())
 
 
-func draw(canvas: Control, center: Vector2, available_width: float) -> void:
+func draw(canvas: Control, center: Vector2, available_width: float, opacity: float = 1.0) -> void:
 	if not active:
 		return
 	var reveal := progress()
@@ -46,18 +46,18 @@ func draw(canvas: Control, center: Vector2, available_width: float) -> void:
 	var row_gap := minf(105.0, canvas.size.y * 0.14)
 	var yang_y := lerpf(origin_y, center.y - row_gap * 0.5, reveal)
 	var yin_y := lerpf(origin_y, center.y + row_gap * 0.5, reveal)
-	var line_color := Color(1.0, 0.94, 0.72, 0.96)
+	var line_color := Color(ColorBase.primary_text, 0.62 * opacity)
 	canvas.draw_line(Vector2(center.x - half_width, yang_y), Vector2(center.x + half_width, yang_y), line_color, 2.0, true)
 	var gap_half := half_width * 0.13 * ease(reveal, -1.5)
 	canvas.draw_line(Vector2(center.x - half_width, yin_y), Vector2(center.x - gap_half, yin_y), line_color, 2.0, true)
 	canvas.draw_line(Vector2(center.x + gap_half, yin_y), Vector2(center.x + half_width, yin_y), line_color, 2.0, true)
-	draw_labels(canvas, center, half_width, yang_y, yin_y, reveal)
-	draw_bottom_title(canvas, center, row_gap, reveal)
+	draw_labels(canvas, center, half_width, yang_y, yin_y, reveal, opacity)
+	draw_bottom_title(canvas, center, row_gap, reveal, opacity)
 	pass
 
 
-func draw_labels(canvas: Control, center: Vector2, half_width: float, yang_y: float, yin_y: float, reveal: float) -> void:
-	var label_alpha := smoothstep(0.48, 0.9, reveal)
+func draw_labels(canvas: Control, center: Vector2, half_width: float, yang_y: float, yin_y: float, reveal: float, opacity: float = 1.0) -> void:
+	var label_alpha := smoothstep(0.48, 0.9, reveal) * opacity
 	if label_alpha <= 0.0:
 		return
 	var chinese_font := Fonts.light()
@@ -76,11 +76,11 @@ func draw_labels(canvas: Control, center: Vector2, half_width: float, yang_y: fl
 func draw_centered_label(canvas: Control, font: Font, text: String, position: Vector2, font_size: int, alpha: float) -> void:
 	var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 	var baseline := position + Vector2(-text_size.x * 0.5, text_size.y * 0.34)
-	canvas.draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(1.0, 0.94, 0.76, alpha))
+	canvas.draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(ColorBase.secondary_text, alpha * 0.72))
 	pass
 
 
-func draw_bottom_title(canvas: Control, center: Vector2, row_gap: float, reveal: float) -> void:
+func draw_bottom_title(canvas: Control, center: Vector2, row_gap: float, reveal: float, opacity: float = 1.0) -> void:
 	var font := Fonts.light()
 	var font_size := clampi(int(canvas.size.y * 0.058), 30, 56)
 	var glyph_width := font.get_string_size("道", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
@@ -97,6 +97,6 @@ func draw_bottom_title(canvas: Control, center: Vector2, row_gap: float, reveal:
 		var glyph := BOTTOM_TITLE.substr(index, 1)
 		var glyph_size := font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 		var baseline := glyph_position + Vector2(-glyph_size.x * 0.5, glyph_size.y * 0.34)
-		canvas.draw_string_outline(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 5, Color(1.0, 0.75, 0.38, local_progress * 0.1))
-		canvas.draw_string(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(1.0, 0.96, 0.82, local_progress))
+		canvas.draw_string_outline(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 5, Color(ColorBase.primary_text, local_progress * opacity * 0.1))
+		canvas.draw_string(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(ColorBase.primary_text, local_progress * opacity * 0.72))
 	pass
