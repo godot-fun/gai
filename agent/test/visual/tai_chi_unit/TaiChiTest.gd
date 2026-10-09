@@ -2,6 +2,8 @@ extends RefCounted
 
 const TAI_CHI_CAROUSEL_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiCarouselFlow.gd")
 const TAI_CHI_HEXAGRAM_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiHexagramFlow.gd")
+const TAI_CHI_HEXAGRAM_CATALOG_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiHexagramCatalog.gd")
+const TAI_CHI_DIVINATION_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiDivinationFlow.gd")
 
 static func visual_type_test() -> void:
 	assert(VisualType.is_valid(VisualType.Type.TAI_CHI))
@@ -191,6 +193,50 @@ func hexagram_flow_combines_and_reveals_sixty_four_symbols_test() -> void:
 	assert(flow.hexagram_progress(0) == 1.0)
 	assert(flow.hexagram_progress(63) == 1.0)
 	assert(flow.panorama_progress() == 1.0)
+	pass
+
+
+func hexagram_catalog_contains_every_unique_identity_test() -> void:
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.ENTRIES.size() == 64)
+	var values := {}
+	for number in range(1, 65):
+		var entry: Dictionary = TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.entry_from_number(number)
+		assert(not entry.is_empty())
+		assert(not values.has(entry.value))
+		values[entry.value] = true
+	assert(values.size() == 64)
+	var tun: Dictionary = TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.entry_from_number(3)
+	assert(tun.value == 34)
+	assert(tun.symbol == "䷂")
+	assert(tun.full_name == "水雷屯")
+	assert(tun.upper_name == "坎" and tun.upper_element == "水")
+	assert(tun.lower_name == "震" and tun.lower_element == "雷")
+	assert(not str(tun.judgment).is_empty())
+	assert(not str(tun.image).is_empty())
+	pass
+
+
+func divination_spins_once_and_lands_on_forced_hexagram_test() -> void:
+	var flow = TAI_CHI_DIVINATION_FLOW_SCRIPT.new()
+	flow.begin(34)
+	assert(flow.selected_value == 34)
+	assert(flow.spin_progress() == 0.0)
+	flow.advance(TAI_CHI_DIVINATION_FLOW_SCRIPT.PROMPT_SECONDS)
+	var previous_rotation := flow.wheel_rotation()
+	flow.advance(TAI_CHI_DIVINATION_FLOW_SCRIPT.SPIN_SECONDS * 0.5)
+	assert(flow.spin_progress() > 0.0 and flow.spin_progress() < 1.0)
+	assert(flow.wheel_rotation() > previous_rotation)
+	previous_rotation = flow.wheel_rotation()
+	flow.advance(TAI_CHI_DIVINATION_FLOW_SCRIPT.SPIN_SECONDS * 0.5)
+	assert(flow.wheel_rotation() > previous_rotation)
+	flow.advance(TAI_CHI_DIVINATION_FLOW_SCRIPT.FLY_SECONDS + TAI_CHI_DIVINATION_FLOW_SCRIPT.RESULT_REVEAL_SECONDS)
+	assert(flow.result_progress() == 1.0)
+	assert(not flow.animation_finished())
+	flow.advance(TAI_CHI_DIVINATION_FLOW_SCRIPT.RESULT_HOLD_SECONDS)
+	assert(flow.animation_finished())
+	assert(flow.highlighted_value() == 34)
+	assert(flow.flight_progress() == 1.0)
+	assert(flow.result_progress() == 1.0)
 	pass
 
 
