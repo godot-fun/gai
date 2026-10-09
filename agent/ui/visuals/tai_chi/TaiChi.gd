@@ -134,6 +134,9 @@ func sync_theme_colors() -> void:
 func update_line_aura() -> void:
 	if line_aura_material == null or size.x <= 0.0 or size.y <= 0.0:
 		return
+	line_aura_canvas.visible = not formation.active
+	if formation.active:
+		return
 	var center := size * 0.5
 	var origin_y := center.y + minf(132.0, size.y * 0.17)
 	var row_gap := minf(105.0, size.y * 0.14)
@@ -150,18 +153,6 @@ func update_line_aura() -> void:
 	line_aura_material.set_shader_parameter("opening_progress", opening.line_progress())
 	line_aura_material.set_shader_parameter("duality_progress", duality_reveal)
 	line_aura_material.set_shader_parameter("duality_active", duality.active)
-	line_aura_material.set_shader_parameter("formation_active", formation.active)
-	if formation.active:
-		var radius := formation.symbol_radius(size)
-		var symbol_center := formation.symbol_center(size)
-		line_aura_material.set_shader_parameter("formation_center_uv", symbol_center / size)
-		line_aura_material.set_shader_parameter("formation_radius_px", radius)
-		line_aura_material.set_shader_parameter("formation_source_y_uv", (center.y + row_gap * 0.5) / size.y)
-		line_aura_material.set_shader_parameter("outer_progress", formation.outer_progress())
-		line_aura_material.set_shader_parameter("upper_dot_progress", formation.upper_inner_progress())
-		line_aura_material.set_shader_parameter("lower_dot_progress", formation.lower_inner_progress())
-		line_aura_material.set_shader_parameter("divider_progress", formation.divider_progress())
-	line_aura_canvas.visible = true
 	pass
 
 

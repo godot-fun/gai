@@ -89,10 +89,7 @@ func line_aura_shader_is_isolated_test() -> void:
 	effect._process(TaiChiFormationFlow.TRANSITION_SECONDS * 0.7)
 	await Engine.get_main_loop().process_frame
 	assert(effect.formation.active)
-	assert(effect.line_aura_canvas.visible)
-	assert(bool(effect.line_aura_material.get_shader_parameter("formation_active")))
-	assert(float(effect.line_aura_material.get_shader_parameter("outer_progress")) == 1.0)
-	assert(float(effect.line_aura_material.get_shader_parameter("divider_progress")) > 0.0)
+	assert(not effect.line_aura_canvas.visible)
 	effect._process(TaiChiFormationFlow.TRANSITION_SECONDS * 0.2)
 	await Engine.get_main_loop().process_frame
 	assert(effect.fill_layer.visible)

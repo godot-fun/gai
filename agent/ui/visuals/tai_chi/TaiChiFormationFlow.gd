@@ -9,6 +9,8 @@ const TITLE := "易有太极，是生两仪"
 const SUBTITLE := "IN CHANGE THERE IS THE GREAT ULTIMATE"
 const CURVE_STEPS := 72
 const DOT_RADIUS_RATIO := 0.105
+const CONSTRUCTION_WIDTH := 2.0
+const CONSTRUCTION_ALPHA := 0.62
 
 var elapsed: float = 0.0
 var active: bool = false
@@ -81,15 +83,20 @@ func draw(canvas: Control, center: Vector2, available_width: float) -> void:
 	var source_yang_y := center.y - row_gap * 0.5
 	var source_yin_y := center.y + row_gap * 0.5
 	var fill_alpha := fill_progress()
-	var construction_alpha := 1.0 - fill_alpha * 0.45
-	draw_outer_morph(canvas, symbol_center_position, radius, source_half_width, source_yang_y, outer_progress(), construction_alpha)
-	draw_inner_morph(canvas, symbol_center_position, radius, source_half_width, source_gap, source_yin_y, upper_inner_progress(), lower_inner_progress(), construction_alpha)
-	draw_divider(canvas, symbol_center_position, radius, divider_progress(), construction_alpha)
+	var construction_alpha := 1.0 - fill_alpha
+	if construction_alpha > 0.0:
+		draw_outer_morph(canvas, symbol_center_position, radius, source_half_width, source_yang_y, outer_progress(), construction_alpha)
+		draw_inner_morph(canvas, symbol_center_position, radius, source_half_width, source_gap, source_yin_y, upper_inner_progress(), lower_inner_progress(), construction_alpha)
+		draw_divider(canvas, symbol_center_position, radius, divider_progress(), construction_alpha)
 	draw_caption(canvas, symbol_center_position + Vector2(0.0, radius + minf(82.0, canvas.size.y * 0.11)), reveal)
 	pass
 
 
 func draw_outer_morph(canvas: Control, center: Vector2, radius: float, half_width: float, source_y: float, reveal: float, alpha: float) -> void:
+	var color := Color(ColorBase.primary_text, alpha * CONSTRUCTION_ALPHA)
+	if is_equal_approx(reveal, 1.0):
+		canvas.draw_circle(center, radius, color, false, CONSTRUCTION_WIDTH, true)
+		return
 	var points := PackedVector2Array()
 	for index in range(CURVE_STEPS + 1):
 		var ratio := float(index) / float(CURVE_STEPS)
@@ -99,7 +106,7 @@ func draw_outer_morph(canvas: Control, center: Vector2, radius: float, half_widt
 		var angle := PI * 0.5 + TAU * ratio
 		var target := center + Vector2.from_angle(angle) * radius
 		points.append(source.lerp(target, ease(reveal, -1.4)))
-	canvas.draw_polyline(points, Color(ColorBase.primary_text, alpha * 0.62), 2.0, true)
+	canvas.draw_polyline(points, color, CONSTRUCTION_WIDTH, true)
 	pass
 
 
@@ -118,7 +125,7 @@ func draw_inner_morph(canvas: Control, center: Vector2, radius: float, half_widt
 			var angle := (PI * 0.5 if side == 0 else -PI * 0.5) + TAU * ratio
 			var target := dot_center + Vector2.from_angle(angle) * radius * DOT_RADIUS_RATIO
 			points.append(source.lerp(target, ease(reveal, -1.4)))
-		canvas.draw_polyline(points, Color(ColorBase.primary_text, alpha * 0.62), 1.6, true)
+		canvas.draw_polyline(points, Color(ColorBase.primary_text, alpha * CONSTRUCTION_ALPHA), 1.6, true)
 	pass
 
 
@@ -136,15 +143,15 @@ func draw_divider(canvas: Control, center: Vector2, radius: float, reveal: float
 		var ratio := minf(float(index) / float(CURVE_STEPS / 2), upper_reveal)
 		var upper_angle := -PI * 0.5 + PI * ratio
 		upper_points.append(upper_center + Vector2.from_angle(upper_angle) * radius * 0.5)
-	var color := Color(ColorBase.primary_text, alpha * 0.62)
-	canvas.draw_polyline(upper_points, color, 2.0, true)
+	var color := Color(ColorBase.primary_text, alpha * CONSTRUCTION_ALPHA)
+	canvas.draw_polyline(upper_points, color, CONSTRUCTION_WIDTH, true)
 	if lower_reveal > 0.0:
 		var lower_steps := maxi(2, int(ceil(float(CURVE_STEPS / 2) * lower_reveal)))
 		for index in range(lower_steps + 1):
 			var ratio := minf(float(index) / float(CURVE_STEPS / 2), lower_reveal)
 			var lower_angle := -PI * 0.5 - PI * ratio
 			lower_points.append(lower_center + Vector2.from_angle(lower_angle) * radius * 0.5)
-		canvas.draw_polyline(lower_points, color, 2.0, true)
+		canvas.draw_polyline(lower_points, color, CONSTRUCTION_WIDTH, true)
 	pass
 
 
