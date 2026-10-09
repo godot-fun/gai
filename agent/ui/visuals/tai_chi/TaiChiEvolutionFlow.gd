@@ -100,20 +100,19 @@ func draw(canvas: Control, opacity: float = 1.0, draw_trigrams: bool = true) -> 
 
 
 func draw_departing_caption(canvas: Control) -> void:
-	# Continue the exact title layout from TaiChiFormationFlow while reducing both
-	# font size and opacity. This prevents a one-frame typography jump at handoff.
+	# Continue the exact title layout from TaiChiFormationFlow and fade it away
+	# without changing font sizes, which would rasterize new glyph sizes mid-animation.
 	var shrink := shrink_progress()
-	var opacity := 1.0 - smoothstep(0.58, 1.0, shrink)
+	var opacity := 1.0 - smoothstep(0.0, 1.0, shrink)
 	if opacity <= 0.0:
 		return
 	var source_radius := minf(canvas.size.x, canvas.size.y) * 0.285
 	var symbol_origin := canvas.size * 0.5 - Vector2(0.0, minf(42.0, canvas.size.y * 0.055))
 	var position := symbol_origin + Vector2(0.0, source_radius + minf(82.0, canvas.size.y * 0.11))
-	var source_size := clampi(int(canvas.size.y * 0.046), 26, 46)
-	var font_size := maxi(12, int(round(lerpf(float(source_size), 12.0, shrink))))
+	var font_size := clampi(int(canvas.size.y * 0.046), 26, 46)
 	var font := Fonts.light()
 	var glyph_width := font.get_string_size("极", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	var gap := maxf(8.0, glyph_width * 1.06)
+	var gap := maxf(30.0, glyph_width * 1.06)
 	var middle := (float(DEPARTING_TITLE.length()) - 1.0) * 0.5
 	for index in DEPARTING_TITLE.length():
 		var glyph := DEPARTING_TITLE.substr(index, 1)
@@ -124,7 +123,7 @@ func draw_departing_caption(canvas: Control) -> void:
 		canvas.draw_string(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size,
 			Color(ColorBase.primary_text, opacity * 0.72))
 	var subtitle_font := Fonts.medium()
-	var subtitle_size := maxi(8, int(round(lerpf(float(clampi(int(canvas.size.y * 0.014), 10, 15)), 8.0, shrink))))
+	var subtitle_size := clampi(int(canvas.size.y * 0.014), 10, 15)
 	var subtitle_width := subtitle_font.get_string_size(DEPARTING_SUBTITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, subtitle_size).x
 	canvas.draw_string(subtitle_font, position + Vector2(-subtitle_width * 0.5, float(font_size) * 1.25), DEPARTING_SUBTITLE,
 		HORIZONTAL_ALIGNMENT_LEFT, -1.0, subtitle_size, Color(ColorBase.secondary_text, opacity * 0.58))

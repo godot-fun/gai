@@ -114,7 +114,9 @@ func draw_trigram(canvas: Control, center: Vector2, rotation: float, value: int,
 	# this keeps subsequent labels, rings, and sibling trigrams unaffected.
 	var direction := Vector2.from_angle(rotation)
 	var normal := direction.rotated(PI * 0.5)
-	var color := ThemeColor.alpha_theme_color(alpha * 0.58)
+	# The caller supplies the final opacity. Applying another multiplier here made
+	# every trigram visibly dimmer on the first frame of the hierarchy handoff.
+	var color := ThemeColor.alpha_theme_color(alpha)
 	var glow := ThemeColor.alpha_theme_color(alpha * 0.055)
 	for line_index in 3:
 		var line_center := center + normal * (float(line_index) - 1.0) * line_gap
