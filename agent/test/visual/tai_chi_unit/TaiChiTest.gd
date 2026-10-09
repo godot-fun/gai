@@ -81,7 +81,7 @@ func line_aura_shader_is_isolated_test() -> void:
 	assert(effect.line_aura_canvas != null)
 	assert(effect.line_aura_material != null)
 	assert(effect.line_aura_material.shader != null)
-	assert(effect.line_aura_material.get_shader_parameter("aura_color") == ColorBase.primary_text)
+	assert(effect.line_aura_material.get_shader_parameter("aura_color") == ThemeColor.accent_theme_color())
 	effect.size = Vector2(1280.0, 720.0)
 	effect.visible = true
 	effect._process(TaiChiOpeningFlow.REVEAL_SECONDS)

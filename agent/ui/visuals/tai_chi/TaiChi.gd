@@ -127,7 +127,7 @@ func update_fill_layer() -> void:
 
 func sync_theme_colors() -> void:
 	if line_aura_material != null:
-		line_aura_material.set_shader_parameter("aura_color", ColorBase.primary_text)
+		line_aura_material.set_shader_parameter("aura_color", ThemeColor.accent_theme_color())
 	pass
 
 

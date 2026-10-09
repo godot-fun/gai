@@ -62,6 +62,6 @@ func draw_title(canvas: Control, center: Vector2, opacity: float = 1.0) -> void:
 		var glyph_size := font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 		var baseline := glyph_position + Vector2(-glyph_size.x * 0.5, glyph_size.y * 0.35)
 		var alpha := local_progress * (0.82 + 0.18 * progress) * opacity
-		canvas.draw_string_outline(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 9, Color(ColorBase.primary_text, alpha * 0.14))
+		canvas.draw_string_outline(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 9, Color(ThemeColor.accent_theme_color(), alpha * 0.14))
 		canvas.draw_string(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(ColorBase.primary_text, alpha * 0.72))
 	pass

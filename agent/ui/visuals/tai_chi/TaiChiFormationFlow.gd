@@ -173,6 +173,7 @@ func draw_caption(canvas: Control, position: Vector2, reveal: float) -> void:
 		var glyph_size := font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 		var target_x := (float(index) - middle) * gap
 		var baseline := position + Vector2(target_x * ease(local, -1.5) - glyph_size.x * 0.5, glyph_size.y * 0.34)
+		canvas.draw_string_outline(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 5, Color(ThemeColor.accent_theme_color(), local * 0.1))
 		canvas.draw_string(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(ColorBase.primary_text, local * 0.72))
 	var subtitle_font := Fonts.medium()
 	var subtitle_size := clampi(int(canvas.size.y * 0.014), 10, 15)
