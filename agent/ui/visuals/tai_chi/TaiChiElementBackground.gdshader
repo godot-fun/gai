@@ -143,15 +143,16 @@ float mountain_ridge(float x, float layer_seed, float base_y, float highest_peak
 		float random_width = hash21(vec2(seed + layer_seed * 2.3, peak_index + 5.1));
 		float random_height = hash21(vec2(peak_index + 9.4, seed * 0.37 + layer_seed));
 		float center = (peak_index + 0.5 + (random_x - 0.5) * 0.72) / 7.0;
-		float half_width = mix(0.105, 0.205, random_width);
+		float half_width = mix(0.12, 0.235, random_width);
 		float peak_y = mix(highest_peak, lowest_peak, random_height);
 		float distance_from_peak = abs(x - center) / half_width;
-		float candidate = mix(peak_y, base_y, clamp(distance_from_peak, 0.0, 1.0));
-		if (distance_from_peak <= 1.0) {
+		float rounded_dome = exp(-pow(distance_from_peak * 1.42, 2.0));
+		float candidate = mix(base_y, peak_y, rounded_dome);
+		if (distance_from_peak <= 1.65) {
 			ridge = min(ridge, candidate);
 		}
 	}
-	float rock_detail = (value_noise(vec2(x * 38.0 + layer_seed, seed * 0.61)) - 0.5) * 0.026;
+	float rock_detail = (value_noise(vec2(x * 19.0 + layer_seed, seed * 0.61)) - 0.5) * 0.012;
 	return ridge + rock_detail;
 }
 

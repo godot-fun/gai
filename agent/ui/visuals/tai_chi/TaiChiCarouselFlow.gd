@@ -8,7 +8,7 @@ const INTRO_SECONDS := 4.2
 const ITEM_SECONDS := 4.8
 const BACKGROUND_COLORS := [
 	Color("b99d62"), Color("93aabb"), Color("d7543f"), Color("716ad1"),
-	Color("4f9873"), Color("376eae"), Color("527f91"), Color("b88945"),
+	Color("4f9873"), Color("376eae"), Color("526b9b"), Color("b88945"),
 ]
 # Cloud, water, fire, mountain, wind, earth, lightning, and marsh shader families.
 const BACKGROUND_EFFECTS := [0, 7, 2, 6, 4, 1, 3, 5]
