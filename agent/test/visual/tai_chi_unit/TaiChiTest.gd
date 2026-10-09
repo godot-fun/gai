@@ -78,6 +78,7 @@ func evolution_reveals_four_rows_bottom_up_test() -> void:
 	var flow := TaiChiEvolutionFlow.new()
 	assert(flow.ROW_COUNT == 4)
 	assert(flow.SYMBOL_WIDTH == 54.0)
+	assert(flow.ROW_LABEL_X_RATIO == 0.2)
 	assert(flow.DUALITY_NAMES == ["阳", "阴"])
 	assert(flow.DUALITY_VALUES == [1, 0])
 	assert(flow.FOUR_IMAGE_NAMES == ["太阳", "少阴", "少阳", "太阴"])

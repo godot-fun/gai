@@ -11,6 +11,7 @@ const ROW_COUNT := 4
 const ROW_TOP_RATIO := 0.16
 const CONTENT_LEFT_RATIO := 0.25
 const CONTENT_WIDTH_RATIO := 0.5
+const ROW_LABEL_X_RATIO := 0.2
 const SYMBOL_WIDTH := 54.0
 # Values are stored top line first because [draw_line_symbol] lays lines out from
 # top to bottom. This produces 乾 ☰ through 坤 ☷ in the displayed name order.
@@ -234,7 +235,7 @@ func draw_flight_trail(canvas: Control, position: Vector2, local: float, index: 
 
 func draw_row_label(canvas: Control, text: String, y: float, reveal: float) -> void:
 	var font_size := clampi(int(canvas.size.y * 0.034), 20, 34)
-	var x := canvas.size.x * 0.085
+	var x := canvas.size.x * ROW_LABEL_X_RATIO
 	draw_centered_text(canvas, text, Vector2(x, y), font_size, reveal * 0.72)
 	pass
 
