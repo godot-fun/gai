@@ -46,7 +46,9 @@ float cloud_effect(vec2 uv, vec2 point) {
 
 
 float ripple_effect(vec2 uv, vec2 point) {
-	vec2 origin = vec2(0.5 + sin(seed) * 0.12, 0.54 + cos(seed) * 0.08);
+	// The compass and its inner circle are drawn at the canvas center. Keep the
+	// ripple origin on that same point; seed may vary texture, never alignment.
+	vec2 origin = vec2(0.5);
 	float distance_to_origin = length((uv - origin) * vec2(viewport_size.x / max(viewport_size.y, 1.0), 1.0));
 	float waves = 0.5 + 0.5 * sin(distance_to_origin * 42.0 - elapsed * 2.0);
 	float rings = smoothstep(0.62, 0.98, waves) * exp(-distance_to_origin * 1.25);
