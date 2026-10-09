@@ -1,6 +1,8 @@
 class_name VisualControl
 extends Control
 
+const TAI_CHI_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChi.gd")
+
 ## Single event bridge that routes an agent run to the selected visual effect.
 ## Only one effect instance and one owning session are supported at a time. A newer
 ## agent run replaces the previous animation; late events from the old run are ignored.
@@ -60,6 +62,8 @@ func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 			return FilterCarousel.new()
 		VisualType.Type.INK_LANDSCAPE:
 			return InkLandscape.new()
+		VisualType.Type.TAI_CHI:
+			return TAI_CHI_SCRIPT.new()
 	return null
 
 

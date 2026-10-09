@@ -69,6 +69,7 @@ func update_popup_items() -> void:
 	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_matrix_rain"), VisualType.Type.MATRIX_RAIN)
 	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_filter_carousel"), VisualType.Type.FILTER_CAROUSEL)
 	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_ink_landscape"), VisualType.Type.INK_LANDSCAPE)
+	popup.add_radio_check_item("Tai Chi", VisualType.Type.TAI_CHI)
 	for visual_type: VisualType.Type in VisualType.Type.values():
 		popup.set_item_checked(popup.get_item_index(visual_type), selected_type == visual_type)
 	pass

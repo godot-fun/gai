@@ -25,6 +25,7 @@ const EFFECT_SPECS: Array[Dictionary] = [
 	{"type": VisualType.Type.MATRIX_RAIN, "label": "Matrix Rain"},
 	{"type": VisualType.Type.FILTER_CAROUSEL, "label": "Filter Carousel"},
 	{"type": VisualType.Type.INK_LANDSCAPE, "label": "Ink Landscape"},
+	{"type": VisualType.Type.TAI_CHI, "label": "Tai Chi"},
 ]
 
 const TOOL_CATALOG: Array[Dictionary] = [
@@ -382,6 +383,8 @@ func visual_label() -> String:
 			return "Filter Carousel"
 		VisualType.Type.INK_LANDSCAPE:
 			return "Ink Landscape"
+		VisualType.Type.TAI_CHI:
+			return "Tai Chi"
 	return "None"
 
 
