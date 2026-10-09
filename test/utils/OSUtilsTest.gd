@@ -218,6 +218,47 @@ static func OSUtils_kill_process_running_test() -> void:
 	pass
 
 
+static func OSUtils_cancel_scope_stops_its_process_test() -> void:
+	OSUtils.stop_all()
+	var scope := CancelScope.new()
+	gdf.callable_deferred(func() -> void: await OSUtils.async_execute(sleep_argv(15), false, TimeUtils.MILLIS_PER_HOUR, scope))
+	await await_pid_count(1)
+	assert(OSUtils.process_pids.size() == 1)
+	scope.cancel()
+	await await_pid_count(0)
+	assert(OSUtils.process_pids.is_empty())
+	pass
+
+
+static func OSUtils_cancel_scope_leaves_other_process_test() -> void:
+	# Cancelling an unrelated scope must not touch a process registered in another scope — this is
+	# the multi-session bug where stop_last() killed whichever process had started most recently.
+	OSUtils.stop_all()
+	var scope_a := CancelScope.new()
+	var scope_b := CancelScope.new()
+	gdf.callable_deferred(func() -> void: await OSUtils.async_execute(sleep_argv(15), false, TimeUtils.MILLIS_PER_HOUR, scope_a))
+	await await_pid_count(1)
+	var survived_unrelated_cancel := false
+	if OSUtils.process_pids.size() == 1:
+		scope_b.cancel()
+		await ThreadUtils.async_sleep(800)
+		survived_unrelated_cancel = OSUtils.process_pids.size() == 1
+	scope_a.cancel()
+	await await_pid_count(0)
+	OSUtils.stop_all()
+	assert(survived_unrelated_cancel)
+	assert(OSUtils.process_pids.is_empty())
+	pass
+
+
+## Polls until the tracked pid count reaches [param expected], or a 5s deadline passes.
+static func await_pid_count(expected: int) -> void:
+	var deadline := Time.get_ticks_msec() + 5000
+	while OSUtils.process_pids.size() != expected and Time.get_ticks_msec() < deadline:
+		await ThreadUtils.async_sleep(50)
+	pass
+
+
 static func utf8_fixture_command() -> String:
 	if OSUtils.is_windows():
 		return "type test\\asset\\Utf8OutputFixture.txt"

@@ -11,6 +11,9 @@ const DEFAULT_TITLE := "New Chat"
 static var session_indexes := AgentSessionIndexes.new()
 ## Selected session. 0 only before [method load_from_disk]; from then on this is always a live session id.
 static var active_session_id: int = 0
+## In-flight run cancel scopes keyed by session id (see [method request_stop]).
+## Deliberately kept off [AgentSessionIndexes.RunState] so persisted index JSON never sees them.
+static var session_cancel_scopes: Dictionary[int, CancelScope] = {}
 
 
 # ---------------------------------------------------------------------------
@@ -292,7 +295,14 @@ static func run_agent(session: AgentSession) -> void:
 	if session_index == null:
 		return
 	session_index.run = AgentSessionIndexes.RunState.new()
-	await AgentLoop.run(ApiSetting.get_client(), session)
+	# One scope per run: the loop's HTTP request and any tool subprocess register into it, so
+	# request_stop only stops this session's work.
+	var cancel_scope := CancelScope.new()
+	session_cancel_scopes[session.id] = cancel_scope
+	var ai_client := ApiSetting.get_client()
+	ai_client.cancel_scope = cancel_scope
+	await AgentLoop.run(ai_client, session)
+	session_cancel_scopes.erase(session.id)
 	pass
 
 
@@ -307,8 +317,9 @@ static func request_stop(session_id: int) -> void:
 	if not session_index.is_running() or session_index.is_stop_requested():
 		return
 	session_index.run.stop_requested = true
-	OSUtils.stop_last()
-	HttpHelper.stop_last()
+	var cancel_scope: CancelScope = session_cancel_scopes.get(session_id)
+	if cancel_scope != null:
+		cancel_scope.cancel()
 	pass
 
 static func is_stop_requested(session_id: int) -> bool:

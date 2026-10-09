@@ -18,13 +18,13 @@ func get_parameters() -> OpenAiToolDef.Parameters:
 	return OpenAiToolDef.Parameters.object().string_prop(ARG_COMMAND, "Shell command to execute", true)
 
 
-func async_execute(args: Dictionary[String, Variant]) -> AgentToolResult:
+func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
 	var command := str(args.get(ARG_COMMAND, "")).strip_edges()
 	if command.is_empty():
 		return AgentToolResult.error("error: command is required")
 	var timeout := TimeUtils.MILLIS_PER_MINUTE * 3 if command.contains("timeout") else TimeUtils.MILLIS_PER_SECOND * 30
 	var argv := build_argv_from_command(command)
-	var exec_result := await OSUtils.async_execute(argv, false, timeout)
+	var exec_result := await OSUtils.async_execute(argv, false, timeout, cancel_scope)
 	var exit_code := StringUtils.format("exit_code: {}", exec_result.exit_code)
 	var exec_output := exec_result.output.build_string()
 	var result := StringUtils.truncate_last(exec_output, MAX_OUTPUT, TRUNCATED_SUFFIX + FileUtils.NEWLINE_LF)

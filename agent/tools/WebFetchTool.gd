@@ -28,7 +28,7 @@ func get_parameters() -> OpenAiToolDef.Parameters:
 	return params
 
 
-func async_execute(args: Dictionary[String, Variant]) -> AgentToolResult:
+func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
 	var url := str(args.get(ARG_URL, "")).strip_edges()
 	if url.is_empty():
 		return AgentToolResult.error("error: url is required")

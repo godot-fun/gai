@@ -26,7 +26,7 @@ func get_parameters() -> OpenAiToolDef.Parameters:
 	return OpenAiToolDef.Parameters.new()
 
 
-func async_execute(args: Dictionary[String, Variant]) -> AgentToolResult:
+func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
 	return AgentToolResult.error("not implemented")
 
 

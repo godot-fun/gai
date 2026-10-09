@@ -27,7 +27,7 @@ func get_parameters() -> OpenAiToolDef.Parameters:
 	return params
 
 
-func async_execute(args: Dictionary[String, Variant]) -> AgentToolResult:
+func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
 	var query := str(args.get(ARG_QUERY, "")).strip_edges()
 	if query.is_empty():
 		return AgentToolResult.error("error: query is required")

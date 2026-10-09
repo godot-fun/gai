@@ -53,7 +53,7 @@ static func run(ai_client: OpenAiClient, session: AgentSession) -> void:
 			if args.has(AgentTool.ARG_PARSE_ERROR):
 				agent_tool_result = AgentToolResult.error(str(args[AgentTool.ARG_PARSE_ERROR]))
 			else:
-				agent_tool_result = await tool.async_execute(args)
+				agent_tool_result = await tool.async_execute(args, ai_client.cancel_scope)
 			AgentEvents.events.tool_execution_end.emit(session.id, tool_call_id, tool_name, agent_tool_result)
 			session.messages.append(ChatMessage.tool_result(tool_call.id, agent_tool_result.content))
 		AgentEvents.events.turn_end.emit(session.id)

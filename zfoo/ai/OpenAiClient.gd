@@ -6,6 +6,8 @@ const REQUEST_TIMEOUT_MILLIS := 5 * TimeUtils.MILLIS_PER_MINUTE
 var api_key: String
 var base_url: String
 var model: String
+## Optional cancellation scope; cancelling it aborts the in-flight request (see CancelScope).
+var cancel_scope: CancelScope = null
 
 
 func _init(p_api_key: String, p_base_url: String, p_model: String) -> void:
@@ -56,7 +58,7 @@ func async_chat_messages(messages: Array[ChatMessage], proxy: String = "", respo
 	request.thinking = OpenAiRequest.THINKING_DISABLED
 	if StringUtils.is_not_blank(response_format):
 		request.response_format = response_format
-	var response := await HttpHelper.async_post(base_url, build_request_json(request), build_headers(), REQUEST_TIMEOUT_MILLIS, proxy)
+	var response := await HttpHelper.async_post(base_url, build_request_json(request), build_headers(), REQUEST_TIMEOUT_MILLIS, proxy, Callable(), cancel_scope)
 	var body := response.get_body_string()
 	Log.info("OpenAI response body:[{}]", StringUtils.truncate(body, 512))
 	if not response.success or response.code != 200:
@@ -104,7 +106,7 @@ func async_chat_messages_stream(messages: Array[ChatMessage], tools: Array[OpenA
 		pending_build.append_if_not_empty(remaining)
 		pass
 	var response := await HttpHelper.async_post(base_url, build_request_json(request), build_headers(true)
-			, REQUEST_TIMEOUT_MILLIS, proxy, on_chunk)
+			, REQUEST_TIMEOUT_MILLIS, proxy, on_chunk, cancel_scope)
 	## The final body carries every delta verbatim, so content / reasoning / finish_reason / usage
 	## all come from that one string instead of being accumulated during streaming.
 	var body := response.get_body_string()

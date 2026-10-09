@@ -6,6 +6,7 @@ extends Object
 ## Output chunks append to ExecResult.output. Pass `log=false` to silence logs.
 ## `async_execute` accepts `timeout_millis`, defaulting to one hour; a process that exceeds it is
 ## killed, appends a `[timeout]` line to ExecResult.output and returns EXIT_CODE_TIMEOUT.
+## `cancel_scope` optionally registers the running process for cancellation (see CancelScope).
 
 const EXIT_CODE_NOT_STARTED: int = -1
 const EXIT_CODE_TIMEOUT: int = -2
@@ -39,7 +40,7 @@ static func execute(argv: PackedStringArray, log: bool = true) -> ExecResult:
 	return result
 
 
-static func async_execute(argv: PackedStringArray, log: bool = true, timeout_millis: int = TimeUtils.MILLIS_PER_HOUR) -> ExecResult:
+static func async_execute(argv: PackedStringArray, log: bool = true, timeout_millis: int = TimeUtils.MILLIS_PER_HOUR, cancel_scope: CancelScope = null) -> ExecResult:
 	var result := ExecResult.new()
 	if argv.is_empty():
 		return result
@@ -48,7 +49,7 @@ static func async_execute(argv: PackedStringArray, log: bool = true, timeout_mil
 		Log.info("async_execute command:{}", JSON.stringify(argv))
 
 	var thread := Thread.new()
-	thread.start(_run_process_async.bind(argv, result, timeout_millis))
+	thread.start(_run_process_async.bind(argv, result, timeout_millis, cancel_scope))
 	while thread.is_alive():
 		await Engine.get_main_loop().process_frame
 	thread.wait_to_finish()
@@ -91,7 +92,7 @@ static func kill_process(pid: int, wait_millis: int = 1000) -> int:
 	return OK
 
 
-static func _run_process_async(argv: PackedStringArray, result: ExecResult, timeout_millis: int = TimeUtils.MILLIS_PER_HOUR) -> void:
+static func _run_process_async(argv: PackedStringArray, result: ExecResult, timeout_millis: int = TimeUtils.MILLIS_PER_HOUR, cancel_scope: CancelScope = null) -> void:
 	var proc := OS.execute_with_pipe(argv[0], argv.slice(1), false)
 	if proc.is_empty():
 		result.exit_code = EXIT_CODE_NOT_STARTED
@@ -100,6 +101,9 @@ static func _run_process_async(argv: PackedStringArray, result: ExecResult, time
 	var pid: int = int(proc.get("pid", -1))
 	if pid > 0:
 		process_pids.add(pid)
+	# Registered from this worker thread; CancelScope.track is thread-safe.
+	if cancel_scope != null:
+		cancel_scope.track(func() -> void: kill_process(pid, 0))
 	var stdio: FileAccess = proc.get("stdio")
 	var stderr_pipe: FileAccess = proc.get("stderr")
 	var stdout_decoder := Utf8StreamDecoder.new()
