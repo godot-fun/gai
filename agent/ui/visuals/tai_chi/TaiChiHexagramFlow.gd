@@ -100,6 +100,12 @@ func hexagram_value(upper_index: int, lower_index: int) -> int:
 	return upper | (lower << 3)
 
 
+func fuxi_circle_position(value: int) -> int:
+	# The first semicircle runs 乾 63 → 复 32. The second begins at
+	# 坤 0 and runs through 剥 1 → 姤 31 before returning to 乾.
+	return 63 - value if value >= 32 else 32 + value
+
+
 func hexagram_progress(index: int) -> float:
 	var round_index := index % ROUND_COUNT
 	if round_index < completed_rounds():
@@ -205,15 +211,17 @@ func draw_hexagram(canvas: Control, center: Vector2, short_side: float, slot: in
 	var width := clampf(short_side * 0.027, 18.0, 32.0)
 	var line_gap := clampf(short_side * 0.0048, 3.5, 5.5)
 	var source_angle := slot_angle(slot)
-	var target_angle := source_angle + (float(round_index) - 3.5) * TAU / float(HEXAGRAM_COUNT)
+	var upper_index: int = COMPASS_ORDER[slot]
+	var lower_index := lower_index_for_slot(slot, round_index)
+	var value := hexagram_value(upper_index, lower_index)
+	var target_index := fuxi_circle_position(value)
+	var target_angle := -PI * 0.5 + TAU * float(target_index) / float(HEXAGRAM_COUNT)
 	var flight := ease(reveal, -1.5)
 	var angle := lerp_angle(source_angle, target_angle, flight)
 	var radius := lerpf(short_side * 0.25, target_radius, flight)
 	var position := center + Vector2.from_angle(angle) * radius
-	var upper_index: int = COMPASS_ORDER[slot]
-	var lower_index := lower_index_for_slot(slot, round_index)
 	var pulse := sin(reveal * PI)
-	TaiChiTrigramDrawing.draw_symbol(canvas, position, hexagram_value(upper_index, lower_index), 6,
+	TaiChiTrigramDrawing.draw_symbol(canvas, position, value, 6,
 		width * lerpf(0.72, 1.0, reveal), line_gap, 2.1, reveal * 0.52,
 		target_angle + PI * 0.5, pulse * 0.08)
 	pass
