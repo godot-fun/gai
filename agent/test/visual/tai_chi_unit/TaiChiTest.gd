@@ -1,6 +1,7 @@
 extends RefCounted
 
 const TAI_CHI_CAROUSEL_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiCarouselFlow.gd")
+const TAI_CHI_HEXAGRAM_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiHexagramFlow.gd")
 
 static func visual_type_test() -> void:
 	assert(VisualType.is_valid(VisualType.Type.TAI_CHI))
@@ -153,7 +154,33 @@ func carousel_rotates_and_cycles_all_trigrams_test() -> void:
 	assert(flow.selected_index() == 6)
 	assert(flow.item_opacity() > 0.0)
 	flow.advance(TAI_CHI_CAROUSEL_FLOW_SCRIPT.ITEM_SECONDS * 5.0)
-	assert(flow.selected_index() == 0)
+	assert(flow.selected_index() == 1)
+	flow.advance(TAI_CHI_CAROUSEL_FLOW_SCRIPT.ITEM_SECONDS)
+	assert(flow.finished())
+	assert(flow.progress() == 1.0)
+	assert(flow.selected_index() == 1)
+	pass
+
+
+func hexagram_flow_combines_and_reveals_sixty_four_symbols_test() -> void:
+	var flow = TAI_CHI_HEXAGRAM_FLOW_SCRIPT.new()
+	flow.begin(PI * 0.75)
+	assert(flow.HEXAGRAM_COUNT == 64)
+	assert(flow.hexagram_value(0, 0) == 63)
+	assert(flow.hexagram_value(7, 7) == 0)
+	assert(flow.hexagram_value(0, 7) == 7)
+	assert(flow.hexagram_value(7, 0) == 56)
+	flow.advance(TAI_CHI_HEXAGRAM_FLOW_SCRIPT.TRANSITION_SECONDS * 0.18)
+	assert(flow.split_progress() > 0.0)
+	assert(flow.hexagram_progress(0) == 0.0)
+	assert(flow.hexagram_progress(63) == 0.0)
+	flow.advance(TAI_CHI_HEXAGRAM_FLOW_SCRIPT.TRANSITION_SECONDS * 0.28)
+	assert(flow.hexagram_progress(0) > flow.hexagram_progress(63))
+	flow.advance(TAI_CHI_HEXAGRAM_FLOW_SCRIPT.TRANSITION_SECONDS)
+	assert(flow.progress() == 1.0)
+	assert(flow.hexagram_progress(0) == 1.0)
+	assert(flow.hexagram_progress(63) == 1.0)
+	assert(flow.panorama_progress() == 1.0)
 	pass
 
 
@@ -180,11 +207,11 @@ func line_aura_shader_is_isolated_test() -> void:
 	assert(effect.fill_layer.visible)
 	var fill_opacity := float(effect.fill_material.get_shader_parameter("opacity"))
 	assert(fill_opacity > 0.0 and fill_opacity < 1.0)
-	assert(effect.fill_layer.size.x > 0.0 and effect.fill_layer.size.x == effect.fill_layer.size.y)
+	assert(effect.fill_layer.size.x > 0.0 and is_equal_approx(effect.fill_layer.size.x, effect.fill_layer.size.y))
 	effect._process(TaiChiFormationFlow.TRANSITION_SECONDS)
 	effect._process(TaiChiEvolutionFlow.TRANSITION_SECONDS)
 	await Engine.get_main_loop().process_frame
-	var fill_center := effect.fill_layer.position + effect.fill_layer.size * 0.5
+	var fill_center: Vector2 = effect.fill_layer.position + effect.fill_layer.size * 0.5
 	assert(is_equal_approx(fill_center.x, effect.evolution.content_area(effect.size).get_center().x))
 	effect.get_parent().remove_child(effect)
 	effect.free()

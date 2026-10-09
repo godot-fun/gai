@@ -1,11 +1,12 @@
 class_name TaiChiCarouselFlow
 extends RefCounted
 
-## Final, looping presentation stage. The taiji and compass begin rotating, the
-## taiji dissolves, and its center is reused for one trigram explanation at a time.
+## Presents every trigram once. The taiji dissolves while the compass rotates,
+## then the final item fades away so the hexagram stage can reuse the same frame.
 
 const INTRO_SECONDS := 4.2
 const ITEM_SECONDS := 4.8
+const TOTAL_SECONDS := INTRO_SECONDS + ITEM_SECONDS * 8.0
 const BACKGROUND_COLORS := [
 	Color("b99d62"), Color("93aabb"), Color("d7543f"), Color("716ad1"),
 	Color("4f9873"), Color("376eae"), Color("526b9b"), Color("b88945"),
@@ -56,10 +57,18 @@ func begin() -> void:
 
 
 func advance(delta: float) -> bool:
-	if not active:
+	if not active or elapsed >= TOTAL_SECONDS:
 		return false
-	elapsed += delta
+	elapsed = minf(TOTAL_SECONDS, elapsed + delta)
 	return true
+
+
+func progress() -> float:
+	return clampf(elapsed / TOTAL_SECONDS, 0.0, 1.0)
+
+
+func finished() -> bool:
+	return elapsed >= TOTAL_SECONDS
 
 
 func intro_progress() -> float:
@@ -83,11 +92,13 @@ func carousel_time() -> float:
 
 
 func selected_index() -> int:
-	var order_index := int(floor(carousel_time() / ITEM_SECONDS)) % PLAY_ORDER.size()
+	var order_index := mini(int(floor(carousel_time() / ITEM_SECONDS)), PLAY_ORDER.size() - 1)
 	return PLAY_ORDER[order_index]
 
 
 func item_phase() -> float:
+	if finished():
+		return 1.0
 	return fmod(carousel_time(), ITEM_SECONDS) / ITEM_SECONDS
 
 

@@ -9,6 +9,7 @@ extends VisualEffect
 static var complete_animation_on_agent_end: bool = false
 
 const COMPLETION_SECONDS := 1.25
+const TAI_CHI_HEXAGRAM_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiHexagramFlow.gd")
 const LINE_AURA_SHADER_PATH := "res://agent/ui/visuals/tai_chi/TaiChiLineAura.gdshader"
 const FILL_SHADER_PATH := "res://agent/ui/visuals/tai_chi/TaiChiFill.gdshader"
 const FILL_ALPHA := 0.58
@@ -19,6 +20,7 @@ var formation := TaiChiFormationFlow.new()
 var evolution := TaiChiEvolutionFlow.new()
 var bagua := TaiChiBaguaFlow.new()
 var carousel := TaiChiCarouselFlow.new()
+var hexagram := TAI_CHI_HEXAGRAM_FLOW_SCRIPT.new()
 var element_background := TaiChiElementBackground.new()
 var line_aura_canvas: ColorRect
 var line_aura_material: ShaderMaterial
@@ -55,6 +57,7 @@ func reset_visual() -> void:
 	evolution.reset()
 	bagua.reset()
 	carousel.reset()
+	hexagram.reset()
 	element_background.reset()
 	queue_redraw()
 	pass
@@ -67,9 +70,7 @@ func on_agent_start(_session_id: int) -> void:
 
 func on_agent_end(error_message: String) -> void:
 	if complete_animation_on_agent_end and StringUtils.is_blank(error_message):
-		var showcase_seconds: float = carousel.INTRO_SECONDS \
-			+ carousel.ITEM_SECONDS * float(carousel.PLAY_ORDER.size())
-		while is_inside_tree() and (not carousel.active or carousel.elapsed < showcase_seconds):
+		while is_inside_tree() and (not hexagram.active or hexagram.progress() < 1.0):
 			await get_tree().process_frame
 		return
 	if is_inside_tree():
@@ -107,6 +108,10 @@ func _process(delta: float) -> void:
 		carousel.begin()
 		changed = true
 	changed = carousel.advance(delta) or changed
+	if carousel.finished() and not hexagram.active:
+		hexagram.begin(carousel.ring_rotation())
+		changed = true
+	changed = hexagram.advance(delta) or changed
 	update_line_aura()
 	update_fill_layer()
 	element_background.update(size, carousel)
@@ -197,6 +202,8 @@ func _draw() -> void:
 	var center := size * 0.5
 	if not duality.active:
 		opening.draw(self, center, size.x)
+	elif hexagram.active:
+		hexagram.draw(self, bagua)
 	elif carousel.active:
 		carousel.draw(self, bagua)
 	elif bagua.active:
