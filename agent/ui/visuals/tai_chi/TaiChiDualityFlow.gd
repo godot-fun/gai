@@ -76,7 +76,7 @@ func draw_labels(canvas: Control, center: Vector2, half_width: float, yang_y: fl
 func draw_centered_label(canvas: Control, font: Font, text: String, position: Vector2, font_size: int, alpha: float) -> void:
 	var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 	var baseline := position + Vector2(-text_size.x * 0.5, text_size.y * 0.34)
-	canvas.draw_string_outline(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 4, Color(ThemeColor.accent_theme_color(), alpha * 0.1))
+	canvas.draw_string_outline(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 4, ThemeColor.alpha_theme_color(alpha * 0.1))
 	canvas.draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(ColorBase.secondary_text, alpha * 0.72))
 	pass
 
@@ -98,6 +98,6 @@ func draw_bottom_title(canvas: Control, center: Vector2, row_gap: float, reveal:
 		var glyph := BOTTOM_TITLE.substr(index, 1)
 		var glyph_size := font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 		var baseline := glyph_position + Vector2(-glyph_size.x * 0.5, glyph_size.y * 0.34)
-		canvas.draw_string_outline(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 5, Color(ThemeColor.accent_theme_color(), local_progress * opacity * 0.1))
+		canvas.draw_string_outline(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, 5, ThemeColor.alpha_theme_color(local_progress * opacity * 0.1))
 		canvas.draw_string(font, baseline, glyph, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color(ColorBase.primary_text, local_progress * opacity * 0.72))
 	pass

@@ -12,6 +12,7 @@ const FILL_ALPHA := 0.58
 var opening := TaiChiOpeningFlow.new()
 var duality := TaiChiDualityFlow.new()
 var formation := TaiChiFormationFlow.new()
+var evolution := TaiChiEvolutionFlow.new()
 var line_aura_canvas: ColorRect
 var line_aura_material: ShaderMaterial
 var fill_layer: ColorRect
@@ -43,6 +44,7 @@ func reset_visual() -> void:
 	opening.reset()
 	duality.reset()
 	formation.reset()
+	evolution.reset()
 	queue_redraw()
 	pass
 
@@ -76,6 +78,10 @@ func _process(delta: float) -> void:
 		formation.begin()
 		changed = true
 	changed = formation.advance(delta) or changed
+	if formation.progress() >= 1.0 and not evolution.active:
+		evolution.begin()
+		changed = true
+	changed = evolution.advance(delta) or changed
 	update_line_aura()
 	update_fill_layer()
 	if changed:
@@ -118,8 +124,8 @@ func update_fill_layer() -> void:
 	fill_layer.visible = reveal > 0.0
 	fill_material.set_shader_parameter("opacity", reveal * FILL_ALPHA)
 	if fill_layer.visible:
-		var radius := formation.symbol_radius(size)
-		var symbol_center := formation.symbol_center(size)
+		var radius := evolution.symbol_radius(size) if evolution.active else formation.symbol_radius(size)
+		var symbol_center := evolution.symbol_center(size) if evolution.active else formation.symbol_center(size)
 		fill_layer.position = symbol_center - Vector2(radius, radius)
 		fill_layer.size = Vector2.ONE * radius * 2.0
 	pass
@@ -127,7 +133,7 @@ func update_fill_layer() -> void:
 
 func sync_theme_colors() -> void:
 	if line_aura_material != null:
-		line_aura_material.set_shader_parameter("aura_color", ThemeColor.accent_theme_color())
+		line_aura_material.set_shader_parameter("aura_color", ThemeColor.alpha_theme_color(0.45))
 	pass
 
 
@@ -162,6 +168,8 @@ func _draw() -> void:
 	var center := size * 0.5
 	if not duality.active:
 		opening.draw(self, center, size.x)
+	elif evolution.active:
+		evolution.draw(self)
 	elif formation.active:
 		duality.draw(self, center, size.x, formation.previous_state_opacity())
 		formation.draw(self, center, size.x)

@@ -72,6 +72,33 @@ func formation_closes_into_taiji_test() -> void:
 	pass
 
 
+func evolution_reveals_five_rows_bottom_up_test() -> void:
+	var flow := TaiChiEvolutionFlow.new()
+	assert(not flow.active)
+	flow.begin()
+	var canvas_size := Vector2(1920.0, 1080.0)
+	var source_center := flow.symbol_center(canvas_size)
+	var source_radius := flow.symbol_radius(canvas_size)
+	flow.advance(TaiChiEvolutionFlow.TRANSITION_SECONDS * 0.12)
+	assert(flow.shrink_progress() > 0.0)
+	assert(flow.symbol_radius(canvas_size) < source_radius)
+	assert(flow.symbol_center(canvas_size).is_equal_approx(source_center))
+	assert(flow.row_progress(0) == 0.0)
+	flow.advance(TaiChiEvolutionFlow.TRANSITION_SECONDS * 0.26)
+	assert(flow.shrink_progress() == 1.0)
+	assert(flow.move_progress() > 0.0)
+	assert(not flow.symbol_center(canvas_size).is_equal_approx(source_center))
+	assert(flow.row_progress(0) > 0.0)
+	assert(flow.row_progress(2) == 0.0)
+	assert(flow.row_progress(4) == 0.0)
+	flow.advance(TaiChiEvolutionFlow.TRANSITION_SECONDS * 0.62)
+	assert(flow.progress() == 1.0)
+	for row in TaiChiEvolutionFlow.ROW_COUNT:
+		assert(flow.row_progress(row) == 1.0)
+	assert(is_equal_approx(flow.symbol_center(canvas_size).x, flow.content_area(canvas_size).get_center().x))
+	pass
+
+
 func line_aura_shader_is_isolated_test() -> void:
 	var control := VisualControl.new()
 	var effect := control.create_effect(VisualType.Type.TAI_CHI)
@@ -81,7 +108,7 @@ func line_aura_shader_is_isolated_test() -> void:
 	assert(effect.line_aura_canvas != null)
 	assert(effect.line_aura_material != null)
 	assert(effect.line_aura_material.shader != null)
-	assert(effect.line_aura_material.get_shader_parameter("aura_color") == ThemeColor.accent_theme_color())
+	assert(effect.line_aura_material.get_shader_parameter("aura_color") == ThemeColor.alpha_theme_color(0.45))
 	effect.size = Vector2(1280.0, 720.0)
 	effect.visible = true
 	effect._process(TaiChiOpeningFlow.REVEAL_SECONDS)
@@ -96,6 +123,11 @@ func line_aura_shader_is_isolated_test() -> void:
 	var fill_opacity := float(effect.fill_material.get_shader_parameter("opacity"))
 	assert(fill_opacity > 0.0 and fill_opacity < 1.0)
 	assert(effect.fill_layer.size.x > 0.0 and effect.fill_layer.size.x == effect.fill_layer.size.y)
+	effect._process(TaiChiFormationFlow.TRANSITION_SECONDS)
+	effect._process(TaiChiEvolutionFlow.TRANSITION_SECONDS)
+	await Engine.get_main_loop().process_frame
+	var fill_center := effect.fill_layer.position + effect.fill_layer.size * 0.5
+	assert(is_equal_approx(fill_center.x, effect.evolution.content_area(effect.size).get_center().x))
 	effect.get_parent().remove_child(effect)
 	effect.free()
 	control.free()
