@@ -67,8 +67,8 @@ func on_agent_start(_session_id: int) -> void:
 
 func on_agent_end(error_message: String) -> void:
 	if complete_animation_on_agent_end and StringUtils.is_blank(error_message):
-		var showcase_seconds := TaiChiCarouselFlow.INTRO_SECONDS \
-			+ TaiChiCarouselFlow.ITEM_SECONDS * float(TaiChiCarouselFlow.PLAY_ORDER.size())
+		var showcase_seconds: float = carousel.INTRO_SECONDS \
+			+ carousel.ITEM_SECONDS * float(carousel.PLAY_ORDER.size())
 		while is_inside_tree() and (not carousel.active or carousel.elapsed < showcase_seconds):
 			await get_tree().process_frame
 		return

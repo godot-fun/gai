@@ -10,8 +10,8 @@ const BACKGROUND_COLORS := [
 	Color("b99d62"), Color("93aabb"), Color("d7543f"), Color("716ad1"),
 	Color("4f9873"), Color("376eae"), Color("527f91"), Color("b88945"),
 ]
-# Cloud, water, fire, mountain, wind, earth, and lightning shader families.
-const BACKGROUND_EFFECTS := [0, 1, 2, 6, 4, 1, 3, 5]
+# Cloud, water, fire, mountain, wind, earth, lightning, and marsh shader families.
+const BACKGROUND_EFFECTS := [0, 7, 2, 6, 4, 1, 3, 5]
 const NAMES := ["乾", "兑", "离", "震", "巽", "坎", "艮", "坤"]
 const ELEMENTS := ["天", "泽", "火", "雷", "风", "水", "山", "地"]
 const STATEMENTS := ["乾为天", "兑为泽", "离为火", "震为雷", "巽为风", "坎为水", "艮为山", "坤为地"]

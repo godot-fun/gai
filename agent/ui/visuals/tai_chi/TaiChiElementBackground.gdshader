@@ -55,17 +55,33 @@ float ripple_effect(vec2 uv, vec2 point) {
 }
 
 
-float energy_effect(vec2 uv, vec2 point) {
-	float path = sin(point.y * 8.0 + seed) * 0.08 + sin(point.y * 21.0 - elapsed * 2.4) * 0.025;
-	float bolt_distance = abs(point.x - path - sin(seed * 2.0) * 0.16);
-	float flash = pow(max(0.0, sin(elapsed * 3.7 + seed)), 12.0);
-	float bolt = (1.0 - smoothstep(0.002, 0.026, bolt_distance)) * (0.18 + flash * 0.82);
+float fire_effect(vec2 uv) {
+	float flames = 0.0;
+	for (int index = 0; index < 11; index++) {
+		float flame_index = float(index);
+		float random_x = hash21(vec2(flame_index + 2.1, seed));
+		float random_shape = hash21(vec2(seed + 8.3, flame_index));
+		float center_x = (flame_index + 0.5 + (random_x - 0.5) * 0.8) / 11.0;
+		float width = mix(0.045, 0.095, random_shape);
+		float height = mix(0.24, 0.52, random_x);
+		float sway = sin(elapsed * mix(1.15, 1.9, random_shape) + flame_index * 1.7 + uv.y * 8.0) * width * 0.28;
+		float horizontal = abs(uv.x - center_x - sway);
+		float normalized_x = horizontal / width;
+		float tip_y = 1.02 - height;
+		float flame_boundary = tip_y + pow(clamp(normalized_x, 0.0, 1.0), 1.45) * height;
+		float body = smoothstep(flame_boundary - 0.025, flame_boundary + 0.018, uv.y);
+		float side_fade = 1.0 - smoothstep(0.72, 1.0, normalized_x);
+		float flicker = 0.76 + 0.24 * sin(elapsed * 3.1 + flame_index * 2.4);
+		flames += body * side_fade * flicker;
+	}
 	vec2 spark_grid = uv * vec2(34.0, 20.0);
+	spark_grid.y += elapsed * 1.15;
 	vec2 spark_cell = floor(spark_grid);
 	vec2 spark_center = vec2(hash21(spark_cell), hash21(spark_cell + 6.7));
-	float spark_shape = 1.0 - smoothstep(0.025, 0.1, length(fract(spark_grid) - spark_center));
-	float spark = spark_shape * step(0.94, hash21(spark_cell + floor(elapsed * 1.4)));
-	return bolt + spark * 0.7 + fbm(uv * 4.0 + elapsed * 0.02) * 0.18;
+	float spark_shape = 1.0 - smoothstep(0.018, 0.075, length(fract(spark_grid) - spark_center));
+	float spark = spark_shape * step(0.9, hash21(spark_cell + seed));
+	float heat_haze = fbm(vec2(uv.x * 4.0, uv.y * 7.0 + elapsed * 0.18)) * (1.0 - smoothstep(0.35, 0.72, uv.y)) * 0.12;
+	return clamp(flames * 0.72 + spark * 0.8 + heat_haze, 0.0, 1.0);
 }
 
 
@@ -87,6 +103,35 @@ float lightning_effect(vec2 uv, vec2 point) {
 	}
 	float storm_haze = fbm(uv * 4.5 + vec2(elapsed * 0.012, seed)) * 0.1;
 	return clamp(bolts + storm_haze, 0.0, 1.0);
+}
+
+
+float marsh_effect(vec2 uv) {
+	float horizon = 0.67 + (value_noise(vec2(uv.x * 5.0, seed)) - 0.5) * 0.014;
+	float waterline = 1.0 - smoothstep(0.001, 0.007, abs(uv.y - horizon));
+	float reeds = 0.0;
+	for (int index = 0; index < 24; index++) {
+		float reed_index = float(index);
+		float random_x = hash21(vec2(reed_index + 1.4, seed));
+		float random_height = hash21(vec2(seed + 6.8, reed_index));
+		float root_x = random_x;
+		float tip_y = mix(0.38, 0.61, random_height);
+		float height_ratio = clamp((uv.y - tip_y) / max(1.0 - tip_y, 0.001), 0.0, 1.0);
+		float sway = sin(elapsed * 0.34 + reed_index * 1.9) * 0.012 * (1.0 - height_ratio);
+		float stem_x = root_x + sway + sin(height_ratio * 2.2 + reed_index) * 0.008;
+		float stem = (1.0 - smoothstep(0.0008, 0.0032, abs(uv.x - stem_x))) * step(tip_y, uv.y);
+		float head_distance = length((uv - vec2(root_x + sway, tip_y + 0.018)) * vec2(85.0, 32.0));
+		float reed_head = (1.0 - smoothstep(0.72, 1.0, head_distance)) * step(0.57, random_height);
+		reeds += stem * mix(0.32, 0.72, random_height) + reed_head * 0.82;
+	}
+	float mist_noise = fbm(vec2(uv.x * 2.0 - elapsed * 0.014, uv.y * 9.0 + seed));
+	float mist_band = exp(-pow((uv.y - 0.55) * 9.0, 2.0)) * mist_noise;
+	vec2 light_grid = uv * vec2(25.0, 13.0);
+	vec2 light_cell = floor(light_grid);
+	vec2 light_center = vec2(hash21(light_cell), hash21(light_cell + 4.9));
+	float floating_light = (1.0 - smoothstep(0.025, 0.09, length(fract(light_grid) - light_center)))
+		* step(0.94, hash21(light_cell + seed)) * exp(-pow((uv.y - 0.58) * 5.5, 2.0));
+	return clamp(waterline * 0.44 + reeds * 0.72 + mist_band * 0.3 + floating_light * 0.65, 0.0, 1.0);
 }
 
 
@@ -167,15 +212,17 @@ void fragment() {
 	} else if (effect_mode == 1) {
 		effect = ripple_effect(uv, point);
 	} else if (effect_mode == 2) {
-		effect = energy_effect(uv, point);
+		effect = fire_effect(uv);
 	} else if (effect_mode == 3) {
 		effect = mountain_effect(uv);
 	} else if (effect_mode == 4) {
 		effect = wind_effect(uv);
 	} else if (effect_mode == 5) {
 		effect = earth_effect(uv);
-	} else {
+	} else if (effect_mode == 6) {
 		effect = lightning_effect(uv, point);
+	} else {
+		effect = marsh_effect(uv);
 	}
 	float center_haze = exp(-dot(point, point) * 0.42) * 0.055;
 	float edge_fade = 1.0 - smoothstep(0.25, 1.35, length(point * vec2(0.68, 1.0)));
