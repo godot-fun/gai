@@ -8,7 +8,6 @@ extends RefCounted
 ## from outside the viewport and settle before the next generation takes focus.
 const TRANSITION_SECONDS := 14.4
 const ROW_COUNT := 5
-const TRIGRAM_DRAWING_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiTrigramDrawing.gd")
 # Values are stored top line first because [draw_line_symbol] lays lines out from
 # top to bottom. This produces 乾 ☰ through 坤 ☷ in the displayed name order.
 const TRIGRAM_VALUES := [7, 6, 5, 4, 3, 2, 1, 0]
@@ -253,8 +252,8 @@ func draw_glowing_cell(canvas: Control, rect: Rect2, text: String, bright: bool,
 
 func draw_line_symbol(canvas: Control, center: Vector2, value: int, line_count: int, width: float, reveal: float) -> void:
 	var line_gap := 7.0 if line_count == 3 else 5.0
-	TRIGRAM_DRAWING_SCRIPT.draw_symbol(canvas, center, value, line_count, width, line_gap, 3.0,
-		reveal * TRIGRAM_DRAWING_SCRIPT.SOURCE_ALPHA)
+	TaiChiTrigramDrawing.draw_symbol(canvas, center, value, line_count, width, line_gap, 3.0,
+		reveal * TaiChiTrigramDrawing.SOURCE_ALPHA)
 	pass
 
 

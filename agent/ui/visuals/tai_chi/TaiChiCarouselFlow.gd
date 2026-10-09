@@ -6,7 +6,6 @@ extends RefCounted
 
 const INTRO_SECONDS := 4.2
 const ITEM_SECONDS := 4.8
-const TRIGRAM_DRAWING_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiTrigramDrawing.gd")
 const BACKGROUND_COLORS := [
 	Color("b99d62"), Color("93aabb"), Color("d7543f"), Color("716ad1"),
 	Color("4f9873"), Color("376eae"), Color("527f91"), Color("b88945"),
@@ -149,10 +148,10 @@ func draw_trigrams(canvas: Control, bagua: TaiChiBaguaFlow, center: Vector2, orb
 		var highlighted := index == selected and explanation_alpha > 0.0
 		var pulse := 0.5 + 0.5 * sin(elapsed * 2.2)
 		var width := minf(76.0, canvas.size.y * 0.085) * (1.0 + (0.1 * pulse if highlighted else 0.0))
-		var alpha := TRIGRAM_DRAWING_SCRIPT.HIGHLIGHT_ALPHA if highlighted else TRIGRAM_DRAWING_SCRIPT.BASE_ALPHA
+		var alpha := TaiChiTrigramDrawing.HIGHLIGHT_ALPHA if highlighted else TaiChiTrigramDrawing.BASE_ALPHA
 		bagua.draw_trigram(canvas, position, angle + PI * 0.5, TaiChiEvolutionFlow.TRIGRAM_VALUES[index], width, 13.0, 5.0, alpha)
 		var label_position := center + Vector2.from_angle(angle) * (orbit_radius + minf(72.0, canvas.size.y * 0.085))
-		var label_alpha := TRIGRAM_DRAWING_SCRIPT.LABEL_HIGHLIGHT_ALPHA if highlighted else TRIGRAM_DRAWING_SCRIPT.LABEL_BASE_ALPHA
+		var label_alpha := TaiChiTrigramDrawing.LABEL_HIGHLIGHT_ALPHA if highlighted else TaiChiTrigramDrawing.LABEL_BASE_ALPHA
 		draw_centered_text(canvas, NAMES[index], label_position, clampi(int(canvas.size.y * 0.035), 20, 36), label_alpha)
 	pass
 

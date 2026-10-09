@@ -5,7 +5,6 @@ extends RefCounted
 ## a circular compass. Each trigram leaves the row from left to right.
 
 const TRANSITION_SECONDS := 5.8
-const TRIGRAM_DRAWING_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiTrigramDrawing.gd")
 const NAMES := ["乾", "兑", "离", "震", "巽", "坎", "艮", "坤"]
 # Angles match the reference compass: 乾 at top, 坤 at bottom, 离/坎 at left/right,
 # and the remaining four trigrams on the diagonals.
@@ -99,7 +98,7 @@ func draw_moving_trigram(canvas: Control, evolution: TaiChiEvolutionFlow, center
 	var width := lerpf(source_width, target_width, local)
 	var line_gap := lerpf(7.0, 13.0, local)
 	var line_width := lerpf(3.0, 5.0, local)
-	var alpha := lerpf(TRIGRAM_DRAWING_SCRIPT.SOURCE_ALPHA, TRIGRAM_DRAWING_SCRIPT.BASE_ALPHA, local)
+	var alpha := lerpf(TaiChiTrigramDrawing.SOURCE_ALPHA, TaiChiTrigramDrawing.BASE_ALPHA, local)
 	draw_trigram(canvas, position, rotation, TaiChiEvolutionFlow.TRIGRAM_VALUES[index], width, line_gap, line_width, alpha, local)
 	var name_position := center + Vector2.from_angle(angle) * (orbit_radius + minf(72.0, canvas.size.y * 0.085))
 	var source_name_position := source - Vector2(0.0, 34.0)
@@ -107,14 +106,14 @@ func draw_moving_trigram(canvas: Control, evolution: TaiChiEvolutionFlow, center
 	var target_font_size := clampi(int(canvas.size.y * 0.035), 20, 36)
 	var font_size := int(round(lerpf(18.0, float(target_font_size), local)))
 	draw_centered_text(canvas, NAMES[index], moving_name_position, font_size,
-		lerpf(0.76, TRIGRAM_DRAWING_SCRIPT.LABEL_BASE_ALPHA, local))
+		lerpf(0.76, TaiChiTrigramDrawing.LABEL_BASE_ALPHA, local))
 	pass
 
 
 func draw_trigram(canvas: Control, center: Vector2, rotation: float, value: int, width: float, line_gap: float,
 		line_width: float, alpha: float, local: float = 1.0) -> void:
 	var glow_alpha := alpha * 0.055 * smoothstep(0.0, 0.32, local)
-	TRIGRAM_DRAWING_SCRIPT.draw_symbol(canvas, center, value, 3, width, line_gap, line_width, alpha, rotation, glow_alpha)
+	TaiChiTrigramDrawing.draw_symbol(canvas, center, value, 3, width, line_gap, line_width, alpha, rotation, glow_alpha)
 	pass
 
 

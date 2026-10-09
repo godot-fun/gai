@@ -11,8 +11,6 @@ static var complete_animation_on_agent_end: bool = false
 const COMPLETION_SECONDS := 1.25
 const LINE_AURA_SHADER_PATH := "res://agent/ui/visuals/tai_chi/TaiChiLineAura.gdshader"
 const FILL_SHADER_PATH := "res://agent/ui/visuals/tai_chi/TaiChiFill.gdshader"
-const CAROUSEL_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiCarouselFlow.gd")
-const ELEMENT_BACKGROUND_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiElementBackground.gd")
 const FILL_ALPHA := 0.58
 
 var opening := TaiChiOpeningFlow.new()
@@ -20,9 +18,8 @@ var duality := TaiChiDualityFlow.new()
 var formation := TaiChiFormationFlow.new()
 var evolution := TaiChiEvolutionFlow.new()
 var bagua := TaiChiBaguaFlow.new()
-# Explicit preload keeps a clean command-line parse independent of Godot's editor class cache.
-var carousel = CAROUSEL_FLOW_SCRIPT.new()
-var element_background = ELEMENT_BACKGROUND_SCRIPT.new()
+var carousel := TaiChiCarouselFlow.new()
+var element_background := TaiChiElementBackground.new()
 var line_aura_canvas: ColorRect
 var line_aura_material: ShaderMaterial
 var fill_layer: ColorRect

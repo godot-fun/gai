@@ -90,18 +90,30 @@ float lightning_effect(vec2 uv, vec2 point) {
 }
 
 
-float mountain_ridge(float x, float scale, float offset, float height, float roughness) {
-	float broad = value_noise(vec2(x * scale + offset, seed * 0.17 + offset));
-	float shoulder = value_noise(vec2(x * scale * 2.73 + offset * 4.1, seed * 0.31 + 8.4));
-	float rock = value_noise(vec2(x * scale * 8.7 + offset * 9.3, seed * 0.53 + 17.2));
-	float peak_shape = pow(1.0 - broad, 1.45) * 0.31;
-	return height + peak_shape + (shoulder - 0.5) * roughness + (rock - 0.5) * roughness * 0.32;
+float mountain_ridge(float x, float layer_seed, float base_y, float highest_peak, float lowest_peak) {
+	float ridge = base_y;
+	for (int index = 0; index < 7; index++) {
+		float peak_index = float(index);
+		float random_x = hash21(vec2(peak_index + 1.7, seed + layer_seed));
+		float random_width = hash21(vec2(seed + layer_seed * 2.3, peak_index + 5.1));
+		float random_height = hash21(vec2(peak_index + 9.4, seed * 0.37 + layer_seed));
+		float center = (peak_index + 0.5 + (random_x - 0.5) * 0.72) / 7.0;
+		float half_width = mix(0.105, 0.205, random_width);
+		float peak_y = mix(highest_peak, lowest_peak, random_height);
+		float distance_from_peak = abs(x - center) / half_width;
+		float candidate = mix(peak_y, base_y, clamp(distance_from_peak, 0.0, 1.0));
+		if (distance_from_peak <= 1.0) {
+			ridge = min(ridge, candidate);
+		}
+	}
+	float rock_detail = (value_noise(vec2(x * 38.0 + layer_seed, seed * 0.61)) - 0.5) * 0.026;
+	return ridge + rock_detail;
 }
 
 
 float mountain_effect(vec2 uv) {
-	float back_ridge = mountain_ridge(uv.x, 2.15, 0.18, 0.27, 0.11);
-	float front_ridge = mountain_ridge(uv.x, 2.8, 0.63, 0.46, 0.14);
+	float back_ridge = mountain_ridge(uv.x, 2.4, 0.67, 0.2, 0.4);
+	float front_ridge = mountain_ridge(uv.x, 8.7, 0.83, 0.34, 0.56);
 	float back_fill = smoothstep(back_ridge - 0.015, back_ridge + 0.11, uv.y) * 0.26;
 	float front_fill = smoothstep(front_ridge - 0.02, front_ridge + 0.13, uv.y) * 0.38;
 	float back_edge = 1.0 - smoothstep(0.004, 0.024, abs(uv.y - back_ridge));
