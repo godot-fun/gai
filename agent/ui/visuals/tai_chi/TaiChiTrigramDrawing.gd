@@ -4,6 +4,12 @@ extends RefCounted
 ## Draws a line symbol in local direction/normal axes so hierarchy and orbit
 ## phases share exactly the same solid/broken-line geometry.
 
+const SOURCE_ALPHA := 0.32
+const BASE_ALPHA := 0.58
+const HIGHLIGHT_ALPHA := 0.9
+const LABEL_BASE_ALPHA := 0.62
+const LABEL_HIGHLIGHT_ALPHA := 0.9
+
 
 static func draw_symbol(canvas: Control, center: Vector2, value: int, line_count: int, width: float,
 		line_gap: float, line_width: float, alpha: float, rotation: float = 0.0, glow_alpha: float = 0.0) -> void:

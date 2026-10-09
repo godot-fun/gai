@@ -253,7 +253,8 @@ func draw_glowing_cell(canvas: Control, rect: Rect2, text: String, bright: bool,
 
 func draw_line_symbol(canvas: Control, center: Vector2, value: int, line_count: int, width: float, reveal: float) -> void:
 	var line_gap := 7.0 if line_count == 3 else 5.0
-	TRIGRAM_DRAWING_SCRIPT.draw_symbol(canvas, center, value, line_count, width, line_gap, 3.0, reveal * 0.32)
+	TRIGRAM_DRAWING_SCRIPT.draw_symbol(canvas, center, value, line_count, width, line_gap, 3.0,
+		reveal * TRIGRAM_DRAWING_SCRIPT.SOURCE_ALPHA)
 	pass
 
 

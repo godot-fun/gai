@@ -99,14 +99,15 @@ func draw_moving_trigram(canvas: Control, evolution: TaiChiEvolutionFlow, center
 	var width := lerpf(source_width, target_width, local)
 	var line_gap := lerpf(7.0, 13.0, local)
 	var line_width := lerpf(3.0, 5.0, local)
-	var alpha := lerpf(0.32, 0.58, local)
+	var alpha := lerpf(TRIGRAM_DRAWING_SCRIPT.SOURCE_ALPHA, TRIGRAM_DRAWING_SCRIPT.BASE_ALPHA, local)
 	draw_trigram(canvas, position, rotation, TaiChiEvolutionFlow.TRIGRAM_VALUES[index], width, line_gap, line_width, alpha, local)
 	var name_position := center + Vector2.from_angle(angle) * (orbit_radius + minf(72.0, canvas.size.y * 0.085))
 	var source_name_position := source - Vector2(0.0, 34.0)
 	var moving_name_position := source_name_position.lerp(name_position, ease(local, -1.3)) + arc_offset
 	var target_font_size := clampi(int(canvas.size.y * 0.035), 20, 36)
 	var font_size := int(round(lerpf(18.0, float(target_font_size), local)))
-	draw_centered_text(canvas, NAMES[index], moving_name_position, font_size, lerpf(0.76, 0.62, local))
+	draw_centered_text(canvas, NAMES[index], moving_name_position, font_size,
+		lerpf(0.76, TRIGRAM_DRAWING_SCRIPT.LABEL_BASE_ALPHA, local))
 	pass
 
 

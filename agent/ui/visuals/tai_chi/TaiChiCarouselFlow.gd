@@ -6,6 +6,13 @@ extends RefCounted
 
 const INTRO_SECONDS := 4.2
 const ITEM_SECONDS := 4.8
+const TRIGRAM_DRAWING_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiTrigramDrawing.gd")
+const BACKGROUND_COLORS := [
+	Color("b99d62"), Color("93aabb"), Color("d7543f"), Color("716ad1"),
+	Color("4f9873"), Color("376eae"), Color("527f91"), Color("b88945"),
+]
+# Cloud, water, fire, mountain, wind, earth, and lightning shader families.
+const BACKGROUND_EFFECTS := [0, 1, 2, 6, 4, 1, 3, 5]
 const NAMES := ["乾", "兑", "离", "震", "巽", "坎", "艮", "坤"]
 const ELEMENTS := ["天", "泽", "火", "雷", "风", "水", "山", "地"]
 const STATEMENTS := ["乾为天", "兑为泽", "离为火", "震为雷", "巽为风", "坎为水", "艮为山", "坤为地"]
@@ -92,6 +99,19 @@ func item_opacity() -> float:
 	return smoothstep(0.0, 0.18, phase) * (1.0 - smoothstep(0.82, 1.0, phase))
 
 
+func background_color(index: int) -> Color:
+	return Color(BACKGROUND_COLORS[index])
+
+
+func background_effect(index: int) -> int:
+	return int(BACKGROUND_EFFECTS[index])
+
+
+func background_seed(index: int) -> float:
+	var item_serial := int(floor(carousel_time() / ITEM_SECONDS))
+	return float(index) * 7.13 + float(item_serial) * 11.47 + 1.0
+
+
 func draw(canvas: Control, bagua: TaiChiBaguaFlow) -> void:
 	if not active:
 		return
@@ -129,10 +149,11 @@ func draw_trigrams(canvas: Control, bagua: TaiChiBaguaFlow, center: Vector2, orb
 		var highlighted := index == selected and explanation_alpha > 0.0
 		var pulse := 0.5 + 0.5 * sin(elapsed * 2.2)
 		var width := minf(76.0, canvas.size.y * 0.085) * (1.0 + (0.1 * pulse if highlighted else 0.0))
-		var alpha := 0.9 if highlighted else 0.46
+		var alpha := TRIGRAM_DRAWING_SCRIPT.HIGHLIGHT_ALPHA if highlighted else TRIGRAM_DRAWING_SCRIPT.BASE_ALPHA
 		bagua.draw_trigram(canvas, position, angle + PI * 0.5, TaiChiEvolutionFlow.TRIGRAM_VALUES[index], width, 13.0, 5.0, alpha)
 		var label_position := center + Vector2.from_angle(angle) * (orbit_radius + minf(72.0, canvas.size.y * 0.085))
-		draw_centered_text(canvas, NAMES[index], label_position, clampi(int(canvas.size.y * 0.035), 20, 36), 0.9 if highlighted else 0.56)
+		var label_alpha := TRIGRAM_DRAWING_SCRIPT.LABEL_HIGHLIGHT_ALPHA if highlighted else TRIGRAM_DRAWING_SCRIPT.LABEL_BASE_ALPHA
+		draw_centered_text(canvas, NAMES[index], label_position, clampi(int(canvas.size.y * 0.035), 20, 36), label_alpha)
 	pass
 
 
