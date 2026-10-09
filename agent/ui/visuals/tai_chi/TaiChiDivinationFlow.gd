@@ -128,7 +128,8 @@ func draw_wheel(canvas: Control, center: Vector2, short_side: float) -> void:
 		var point := center + Vector2.from_angle(angle) * radius
 		var highlighted := elapsed >= PROMPT_SECONDS and elapsed < PROMPT_SECONDS + SPIN_SECONDS \
 			and position == current_highlight
-		var alpha := (0.94 if highlighted else 0.5) * lerpf(1.0, 0.2, flight)
+		var alpha := (TaiChiTrigramDrawing.HIGHLIGHT_ALPHA if highlighted \
+			else TaiChiTrigramDrawing.BASE_ALPHA) * lerpf(1.0, 0.2, flight)
 		var scale := 1.18 if highlighted else 1.0
 		var value := value_from_fuxi_position(position)
 		TaiChiTrigramDrawing.draw_symbol(canvas, point, value, 6, width * scale, line_gap * scale,

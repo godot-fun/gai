@@ -177,7 +177,7 @@ func draw_trigram_layers(canvas: Control, bagua: TaiChiBaguaFlow, center: Vector
 		var outer_position := center + Vector2.from_angle(angle) * outer_radius
 		bagua.draw_trigram(canvas, outer_position, angle + PI * 0.5,
 			TaiChiEvolutionFlow.TRIGRAM_VALUES[upper_index], minf(70.0, canvas.size.y * 0.078),
-			11.0, 4.0, final_fade * 0.52)
+			11.0, 4.0, final_fade * TaiChiTrigramDrawing.BASE_ALPHA)
 		var label_position := center + Vector2.from_angle(angle) * (outer_radius + minf(58.0, canvas.size.y * 0.065))
 		draw_centered_text(canvas, TaiChiEvolutionFlow.TRIGRAM_NAMES[upper_index], label_position,
 			clampi(int(canvas.size.y * 0.026), 17, 27), final_fade * 0.54)
@@ -190,7 +190,7 @@ func draw_trigram_layers(canvas: Control, bagua: TaiChiBaguaFlow, center: Vector
 		var inner_position := center + Vector2.from_angle(angle) * inner_radius
 		bagua.draw_trigram(canvas, inner_position, angle + PI * 0.5,
 			TaiChiEvolutionFlow.TRIGRAM_VALUES[lower_index], minf(56.0, canvas.size.y * 0.062),
-			9.0, 3.5, split * final_fade * 0.46)
+			9.0, 3.5, split * final_fade * TaiChiTrigramDrawing.BASE_ALPHA)
 	pass
 
 
@@ -222,7 +222,7 @@ func draw_hexagram(canvas: Control, center: Vector2, short_side: float, slot: in
 	var position := center + Vector2.from_angle(angle) * radius
 	var pulse := sin(reveal * PI)
 	TaiChiTrigramDrawing.draw_symbol(canvas, position, value, 6,
-		width * lerpf(0.72, 1.0, reveal), line_gap, 2.1, reveal * 0.52,
+		width * lerpf(0.72, 1.0, reveal), line_gap, 2.1, reveal * TaiChiTrigramDrawing.BASE_ALPHA,
 		target_angle + PI * 0.5, pulse * 0.08)
 	pass
 
