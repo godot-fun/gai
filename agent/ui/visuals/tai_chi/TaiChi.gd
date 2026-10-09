@@ -4,23 +4,14 @@ extends VisualEffect
 ## A quiet, center-out visual inspired by the opening gesture of a Chinese ink scroll.
 ## Each lifecycle concern lives in its own flow so later sequences stay isolated.
 
-const OPENING_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiOpeningFlow.gd")
-const DUALITY_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiDualityFlow.gd")
-const FORMATION_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiFormationFlow.gd")
-const THINKING_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiThinkingFlow.gd")
-const TOOL_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiToolFlow.gd")
-const COMPLETION_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiCompletionFlow.gd")
 const COMPLETION_SECONDS := 1.25
 const LINE_AURA_SHADER_PATH := "res://agent/ui/visuals/tai_chi/TaiChiLineAura.gdshader"
-const FILL_GROUP_SHADER_PATH := "res://agent/ui/visuals/tai_chi/TaiChiFillGroup.gdshader"
-const CONTENT_ALPHA := 0.58
+const FILL_SHADER_PATH := "res://agent/ui/visuals/tai_chi/TaiChiFill.gdshader"
+const FILL_ALPHA := 0.58
 
-var opening := OPENING_FLOW_SCRIPT.new()
-var duality := DUALITY_FLOW_SCRIPT.new()
-var formation := FORMATION_FLOW_SCRIPT.new()
-var thinking := THINKING_FLOW_SCRIPT.new()
-var tool_flow := TOOL_FLOW_SCRIPT.new()
-var completion := COMPLETION_FLOW_SCRIPT.new()
+var opening := TaiChiOpeningFlow.new()
+var duality := TaiChiDualityFlow.new()
+var formation := TaiChiFormationFlow.new()
 var line_aura_canvas: ColorRect
 var line_aura_material: ShaderMaterial
 var fill_layer: ColorRect
@@ -52,9 +43,6 @@ func reset_visual() -> void:
 	opening.reset()
 	duality.reset()
 	formation.reset()
-	thinking.reset()
-	tool_flow.reset()
-	completion.reset()
 	queue_redraw()
 	pass
 
@@ -64,32 +52,9 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> void:
-	completion.begin(StringUtils.is_not_blank(error_message))
+func on_agent_end(_error_message: String) -> void:
 	if is_inside_tree():
 		await get_tree().create_timer(COMPLETION_SECONDS).timeout
-	pass
-
-
-func on_turn_start() -> void:
-	thinking.awaken(0.42)
-	pass
-
-
-func on_message_update(chunk: String, _stream_kind: String) -> void:
-	if not chunk.is_empty():
-		thinking.awaken(minf(0.22, float(chunk.length()) / 180.0))
-	pass
-
-
-func on_tool_execution_start(tool_call_id: String, _tool_name: String, _args: Dictionary[String, Variant]) -> void:
-	tool_flow.begin(tool_call_id)
-	thinking.awaken(0.3)
-	pass
-
-
-func on_tool_execution_end(tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
-	tool_flow.finish(tool_call_id, result.is_error)
 	pass
 
 
@@ -111,9 +76,6 @@ func _process(delta: float) -> void:
 		formation.begin()
 		changed = true
 	changed = formation.advance(delta) or changed
-	changed = thinking.advance(delta) or changed
-	changed = tool_flow.advance(delta) or changed
-	changed = completion.advance(delta) or changed
 	update_line_aura()
 	update_fill_layer()
 	if changed:
@@ -143,7 +105,7 @@ func create_fill_layer() -> void:
 	fill_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	fill_layer.color = Color.WHITE
 	fill_material = ShaderMaterial.new()
-	fill_material.shader = load(FILL_GROUP_SHADER_PATH) as Shader
+	fill_material.shader = load(FILL_SHADER_PATH) as Shader
 	fill_layer.material = fill_material
 	add_child(fill_layer)
 	pass
@@ -154,11 +116,10 @@ func update_fill_layer() -> void:
 		return
 	var reveal := formation.fill_progress() if formation.active else 0.0
 	fill_layer.visible = reveal > 0.0
-	fill_material.set_shader_parameter("opacity", reveal * CONTENT_ALPHA)
+	fill_material.set_shader_parameter("opacity", reveal * FILL_ALPHA)
 	if fill_layer.visible:
-		var center := size * 0.5
-		var radius := minf(size.x, size.y) * 0.285
-		var symbol_center := center - Vector2(0.0, minf(42.0, size.y * 0.055))
+		var radius := formation.symbol_radius(size)
+		var symbol_center := formation.symbol_center(size)
 		fill_layer.position = symbol_center - Vector2(radius, radius)
 		fill_layer.size = Vector2.ONE * radius * 2.0
 	pass
@@ -191,8 +152,8 @@ func update_line_aura() -> void:
 	line_aura_material.set_shader_parameter("duality_active", duality.active)
 	line_aura_material.set_shader_parameter("formation_active", formation.active)
 	if formation.active:
-		var radius := minf(size.x, size.y) * 0.285
-		var symbol_center := center - Vector2(0.0, minf(42.0, size.y * 0.055))
+		var radius := formation.symbol_radius(size)
+		var symbol_center := formation.symbol_center(size)
 		line_aura_material.set_shader_parameter("formation_center_uv", symbol_center / size)
 		line_aura_material.set_shader_parameter("formation_radius_px", radius)
 		line_aura_material.set_shader_parameter("formation_source_y_uv", (center.y + row_gap * 0.5) / size.y)

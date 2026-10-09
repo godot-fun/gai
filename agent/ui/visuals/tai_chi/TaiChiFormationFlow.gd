@@ -61,12 +61,20 @@ func previous_state_opacity() -> float:
 	return 1.0 - smoothstep(0.0, 0.28, progress())
 
 
+func symbol_radius(canvas_size: Vector2) -> float:
+	return minf(canvas_size.x, canvas_size.y) * 0.285
+
+
+func symbol_center(canvas_size: Vector2) -> Vector2:
+	return canvas_size * 0.5 - Vector2(0.0, minf(42.0, canvas_size.y * 0.055))
+
+
 func draw(canvas: Control, center: Vector2, available_width: float) -> void:
 	if not active:
 		return
 	var reveal := progress()
-	var radius := minf(canvas.size.x, canvas.size.y) * 0.285
-	var symbol_center := center - Vector2(0.0, minf(42.0, canvas.size.y * 0.055))
+	var radius := symbol_radius(canvas.size)
+	var symbol_center_position := symbol_center(canvas.size)
 	var source_half_width := minf(available_width * 0.38, 620.0)
 	var source_gap := source_half_width * 0.13
 	var row_gap := minf(105.0, canvas.size.y * 0.14)
@@ -74,10 +82,10 @@ func draw(canvas: Control, center: Vector2, available_width: float) -> void:
 	var source_yin_y := center.y + row_gap * 0.5
 	var fill_alpha := fill_progress()
 	var construction_alpha := 1.0 - fill_alpha * 0.45
-	draw_outer_morph(canvas, symbol_center, radius, source_half_width, source_yang_y, outer_progress(), construction_alpha)
-	draw_inner_morph(canvas, symbol_center, radius, source_half_width, source_gap, source_yin_y, upper_inner_progress(), lower_inner_progress(), construction_alpha)
-	draw_divider(canvas, symbol_center, radius, divider_progress(), construction_alpha)
-	draw_caption(canvas, symbol_center + Vector2(0.0, radius + minf(82.0, canvas.size.y * 0.11)), reveal)
+	draw_outer_morph(canvas, symbol_center_position, radius, source_half_width, source_yang_y, outer_progress(), construction_alpha)
+	draw_inner_morph(canvas, symbol_center_position, radius, source_half_width, source_gap, source_yin_y, upper_inner_progress(), lower_inner_progress(), construction_alpha)
+	draw_divider(canvas, symbol_center_position, radius, divider_progress(), construction_alpha)
+	draw_caption(canvas, symbol_center_position + Vector2(0.0, radius + minf(82.0, canvas.size.y * 0.11)), reveal)
 	pass
 
 
