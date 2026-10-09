@@ -74,8 +74,9 @@ func formation_closes_into_taiji_test() -> void:
 	pass
 
 
-func evolution_reveals_five_rows_bottom_up_test() -> void:
+func evolution_reveals_four_rows_bottom_up_test() -> void:
 	var flow := TaiChiEvolutionFlow.new()
+	assert(flow.ROW_COUNT == 4)
 	assert(flow.TRIGRAM_VALUES == [7, 6, 5, 4, 3, 2, 1, 0])
 	assert(not flow.active)
 	flow.begin()
@@ -90,18 +91,21 @@ func evolution_reveals_five_rows_bottom_up_test() -> void:
 	assert(flow.symbol_radius(canvas_size) < source_radius)
 	assert(flow.symbol_center(canvas_size).is_equal_approx(source_center))
 	assert(flow.row_progress(0) == 0.0)
-	flow.advance(TaiChiEvolutionFlow.TRANSITION_SECONDS * 0.26)
+	assert(flow.final_caption_progress() == 0.0)
+	flow.advance(TaiChiEvolutionFlow.TRANSITION_SECONDS * 0.28)
 	assert(flow.shrink_progress() == 1.0)
 	assert(flow.move_progress() > 0.0)
 	assert(not flow.symbol_center(canvas_size).is_equal_approx(source_center))
 	assert(flow.row_progress(0) > 0.0)
 	assert(flow.row_progress(2) == 0.0)
-	assert(flow.row_progress(4) == 0.0)
-	flow.advance(TaiChiEvolutionFlow.TRANSITION_SECONDS * 0.62)
+	assert(flow.final_caption_progress() > 0.0)
+	flow.advance(TaiChiEvolutionFlow.TRANSITION_SECONDS * 0.6)
 	assert(flow.progress() == 1.0)
 	for row in TaiChiEvolutionFlow.ROW_COUNT:
 		assert(flow.row_progress(row) == 1.0)
 	assert(is_equal_approx(flow.symbol_center(canvas_size).x, flow.content_area(canvas_size).get_center().x))
+	assert(is_equal_approx(flow.row_y(canvas_size, 0), canvas_size.y * 0.7))
+	assert(is_equal_approx(flow.row_y(canvas_size, 3), canvas_size.y * 0.12))
 	pass
 
 

@@ -1,18 +1,18 @@
 class_name TaiChiEvolutionFlow
 extends RefCounted
 
-## Expands the completed taiji into five generations. Rows rise from the taiji,
+## Expands the completed taiji into four generations. Rows rise from the taiji,
 ## while every row reveals its symbols in reading order from left to right.
 
 ## The deliberately long duration gives every generation enough time to travel
 ## from outside the viewport and settle before the next generation takes focus.
 const TRANSITION_SECONDS := 14.4
-const ROW_COUNT := 5
+const ROW_COUNT := 4
 # Values are stored top line first because [draw_line_symbol] lays lines out from
 # top to bottom. This produces 乾 ☰ through 坤 ☷ in the displayed name order.
 const TRIGRAM_VALUES := [7, 6, 5, 4, 3, 2, 1, 0]
 const DEPARTING_TITLE := "易有太极，是生两仪"
-const DEPARTING_SUBTITLE := "IN CHANGE THERE IS THE GREAT ULTIMATE"
+const DEPARTING_SUBTITLE := "There is in the Changes the Great Primal Beginning. This generates the two primary forces."
 
 var elapsed: float = 0.0
 var active: bool = false
@@ -42,7 +42,7 @@ func progress() -> float:
 
 
 func row_progress(row_from_bottom: int) -> float:
-	# Rows overlap slightly, but their starts remain bottom-to-top: 太极、两仪、四象、八卦、六十四卦.
+	# Rows overlap slightly, but their starts remain bottom-to-top: 太极、两仪、四象、八卦.
 	var start := 0.26 + float(row_from_bottom) * 0.15
 	return smoothstep(start, minf(start + 0.18, 1.0), progress())
 
@@ -55,6 +55,10 @@ func shrink_progress() -> float:
 
 func move_progress() -> float:
 	return smoothstep(0.18, 0.34, progress())
+
+
+func final_caption_progress() -> float:
+	return smoothstep(0.34, 0.42, progress())
 
 
 func symbol_radius(canvas_size: Vector2) -> float:
@@ -77,8 +81,8 @@ func symbol_center(canvas_size: Vector2) -> Vector2:
 
 
 func row_y(canvas_size: Vector2, row_from_bottom: int) -> float:
-	var bottom := canvas_size.y * 0.84
-	var top := canvas_size.y * 0.14
+	var bottom := canvas_size.y * 0.7
+	var top := canvas_size.y * 0.12
 	return lerpf(bottom, top, float(row_from_bottom) / float(ROW_COUNT - 1))
 
 
@@ -93,7 +97,6 @@ func draw(canvas: Control, opacity: float = 1.0, draw_trigrams: bool = true) -> 
 		# The bagua phase passes false and takes ownership of these same trigrams,
 		# allowing them to move continuously into the circle without a cross-fade.
 		draw_trigram_row(canvas, row_y(canvas.size, 3), row_progress(3) * opacity)
-	draw_hexagram_row(canvas, row_y(canvas.size, 4), row_progress(4) * opacity)
 	pass
 
 
@@ -132,6 +135,22 @@ func draw_taiji_row(canvas: Control, reveal: float) -> void:
 	if reveal <= 0.0:
 		return
 	draw_row_label(canvas, "太极", row_y(canvas.size, 0), reveal)
+	draw_final_caption(canvas, reveal * final_caption_progress())
+	pass
+
+
+func draw_final_caption(canvas: Control, reveal: float) -> void:
+	if reveal <= 0.0:
+		return
+	var center := symbol_center(canvas.size)
+	var radius := symbol_radius(canvas.size)
+	var chinese_position := center + Vector2(0.0, radius + minf(38.0, canvas.size.y * 0.04))
+	draw_centered_text(canvas, "两仪生四象，四象生八卦", chinese_position,
+		clampi(int(canvas.size.y * 0.024), 17, 26), reveal * 0.82)
+	draw_centered_text(canvas,
+		"The two primary forces generate the four images. The four images generate the eight trigrams.",
+		chinese_position + Vector2(0.0, minf(34.0, canvas.size.y * 0.035)),
+		clampi(int(canvas.size.y * 0.014), 11, 15), reveal * 0.58)
 	pass
 
 
@@ -174,24 +193,6 @@ func draw_trigram_row(canvas: Control, y: float, reveal: float) -> void:
 		draw_flight_trail(canvas, center, local, index)
 		draw_line_symbol(canvas, center, TRIGRAM_VALUES[index], 3, minf(cell_width * 0.58, 54.0) * scale, local)
 		draw_centered_text(canvas, names[index], center + Vector2(0.0, -34.0 * scale), maxi(10, int(round(18.0 * scale))), local * 0.76)
-	pass
-
-
-func draw_hexagram_row(canvas: Control, y: float, reveal: float) -> void:
-	if reveal <= 0.0:
-		return
-	draw_row_label(canvas, "六十四卦", y, reveal)
-	var area := content_area(canvas.size)
-	var cell_width := area.size.x / 64.0
-	for index in 64:
-		var local := item_progress(reveal, index, 64)
-		if local <= 0.0:
-			continue
-		var target_center := Vector2(area.position.x + (float(index) + 0.5) * cell_width, y)
-		var center := flying_position(canvas.size, target_center, local, index, 64)
-		var scale := lerpf(0.3, 1.0, ease(local, -1.8))
-		draw_flight_trail(canvas, center, local, index)
-		draw_line_symbol(canvas, center, index, 6, maxf(4.0, cell_width * 0.62) * scale, local)
 	pass
 
 

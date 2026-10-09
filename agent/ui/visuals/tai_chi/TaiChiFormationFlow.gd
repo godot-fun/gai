@@ -6,7 +6,7 @@ extends RefCounted
 
 const TRANSITION_SECONDS := 3.2
 const TITLE := "易有太极，是生两仪"
-const SUBTITLE := "IN CHANGE THERE IS THE GREAT ULTIMATE"
+const SUBTITLE := "There is in the Changes the Great Primal Beginning. This generates the two primary forces."
 const CURVE_STEPS := 72
 const DOT_RADIUS_RATIO := 0.105
 const CONSTRUCTION_WIDTH := 2.0
