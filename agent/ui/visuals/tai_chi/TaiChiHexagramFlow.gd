@@ -1,18 +1,26 @@
 class_name TaiChiHexagramFlow
 extends RefCounted
 
-## Resolves the eight-trigram carousel into sixty-four hexagrams. The existing
-## ticks become destinations: eight upper-trigram sectors, each paired with all
-## eight lower trigrams, bloom clockwise into a quiet final panorama.
+## Combines two trigram rings over eight rounds. The outer ring remains fixed;
+## the inner ring rotates one position after each round. Eight sector frames show
+## the current pairings, then the eight resulting hexagrams fly to their slots.
 
-const TRANSITION_SECONDS := 10.8
-const SETTLE_END := 0.12
-const SPLIT_START := 0.08
-const SPLIT_END := 0.3
-const GENERATION_START := 0.24
-const GENERATION_END := 0.82
-const FINAL_TITLE_START := 0.78
+const SETTLE_SECONDS := 1.0
+const SPLIT_SECONDS := 1.0
+const ROUND_SECONDS := 1.0
+const ROUND_COUNT := 8
+const FINAL_SECONDS := 0.8
+const TRANSITION_SECONDS := SETTLE_SECONDS + SPLIT_SECONDS + ROUND_SECONDS * ROUND_COUNT + FINAL_SECONDS
+const ROUND_START_SECONDS := SETTLE_SECONDS + SPLIT_SECONDS
+const FINAL_START_SECONDS := ROUND_START_SECONDS + ROUND_SECONDS * ROUND_COUNT
+const PAIR_END := 0.24
+const FLIGHT_START := 0.18
+const FLIGHT_END := 0.68
+const ROTATION_START := 0.72
 const HEXAGRAM_COUNT := 64
+const ORBIT_RADIUS_RATIO := 0.34
+const INNER_FRAME_RADIUS_RATIO := ORBIT_RADIUS_RATIO * 0.63
+const COMPASS_ORDER := [0, 4, 5, 6, 7, 3, 2, 1]
 
 var elapsed: float = 0.0
 var active: bool = false
@@ -41,20 +49,48 @@ func advance(delta: float) -> bool:
 
 
 func progress() -> float:
-	return smoothstep(0.0, 1.0, clampf(elapsed / TRANSITION_SECONDS, 0.0, 1.0))
+	return clampf(elapsed / TRANSITION_SECONDS, 0.0, 1.0)
 
 
 func split_progress() -> float:
-	return smoothstep(SPLIT_START, SPLIT_END, progress())
+	return smoothstep(0.0, 1.0, clampf((elapsed - SETTLE_SECONDS) / SPLIT_SECONDS, 0.0, 1.0))
 
 
 func panorama_progress() -> float:
-	return smoothstep(FINAL_TITLE_START, 1.0, progress())
+	return smoothstep(0.0, 1.0, clampf((elapsed - FINAL_START_SECONDS) / FINAL_SECONDS, 0.0, 1.0))
 
 
 func ring_rotation() -> float:
-	var settle := smoothstep(0.0, SETTLE_END, progress())
+	var settle := smoothstep(0.0, 1.0, clampf(elapsed / SETTLE_SECONDS, 0.0, 1.0))
 	return lerpf(source_rotation, 0.0, ease(settle, -1.4))
+
+
+func active_round() -> int:
+	return clampi(int(floor(maxf(0.0, elapsed - ROUND_START_SECONDS) / ROUND_SECONDS)), 0, ROUND_COUNT - 1)
+
+
+func round_phase() -> float:
+	if elapsed < ROUND_START_SECONDS:
+		return 0.0
+	if elapsed >= FINAL_START_SECONDS:
+		return 1.0
+	return fmod(elapsed - ROUND_START_SECONDS, ROUND_SECONDS) / ROUND_SECONDS
+
+
+func completed_rounds() -> int:
+	return clampi(int(floor(maxf(0.0, elapsed - ROUND_START_SECONDS) / ROUND_SECONDS)), 0, ROUND_COUNT)
+
+
+func inner_rotation_steps() -> float:
+	var completed := float(completed_rounds())
+	if completed >= float(ROUND_COUNT) or elapsed < ROUND_START_SECONDS:
+		return completed
+	var turn := smoothstep(ROTATION_START, 1.0, round_phase())
+	return completed + turn
+
+
+func lower_index_for_slot(slot: int, round_index: int) -> int:
+	return COMPASS_ORDER[posmod(slot - round_index, ROUND_COUNT)]
 
 
 func hexagram_value(upper_index: int, lower_index: int) -> int:
@@ -65,9 +101,12 @@ func hexagram_value(upper_index: int, lower_index: int) -> int:
 
 
 func hexagram_progress(index: int) -> float:
-	var sequence := float(index) / float(HEXAGRAM_COUNT - 1)
-	var start := lerpf(GENERATION_START, GENERATION_END - 0.1, sequence)
-	return smoothstep(start, minf(start + 0.1, GENERATION_END), progress())
+	var round_index := index % ROUND_COUNT
+	if round_index < completed_rounds():
+		return 1.0
+	if round_index > active_round() or elapsed < ROUND_START_SECONDS:
+		return 0.0
+	return smoothstep(FLIGHT_START, FLIGHT_END, round_phase())
 
 
 func draw(canvas: Control, bagua: TaiChiBaguaFlow) -> void:
@@ -75,8 +114,8 @@ func draw(canvas: Control, bagua: TaiChiBaguaFlow) -> void:
 		return
 	var center := canvas.size * 0.5
 	var short_side := minf(canvas.size.x, canvas.size.y)
-	var orbit_radius := short_side * 0.34
-	draw_frame(canvas, center, orbit_radius)
+	draw_frame(canvas, center, short_side * ORBIT_RADIUS_RATIO)
+	draw_sector_frames(canvas, center, short_side)
 	draw_trigram_layers(canvas, bagua, center, short_side)
 	draw_hexagrams(canvas, center, short_side)
 	draw_caption(canvas, center)
@@ -84,70 +123,114 @@ func draw(canvas: Control, bagua: TaiChiBaguaFlow) -> void:
 
 
 func draw_frame(canvas: Control, center: Vector2, orbit_radius: float) -> void:
-	var fade := 1.0 - smoothstep(GENERATION_START, GENERATION_END, progress()) * 0.45
+	var final_fade := 1.0 - panorama_progress() * 0.45
 	var rotation := ring_rotation()
 	canvas.draw_arc(center, orbit_radius * 1.27, rotation, rotation + TAU, 160,
-		ThemeColor.alpha_theme_color(0.16 * fade), 1.4, true)
+		ThemeColor.alpha_theme_color(0.16 * final_fade), 1.4, true)
 	canvas.draw_arc(center, orbit_radius * 1.31, -rotation, -rotation + TAU, 160,
-		ThemeColor.alpha_theme_color(0.09 * fade), 1.0, true)
+		ThemeColor.alpha_theme_color(0.09 * final_fade), 1.0, true)
 	canvas.draw_arc(center, orbit_radius * 0.63, -rotation, -rotation + TAU, 120,
-		ThemeColor.alpha_theme_color(0.12 * fade), 1.2, true)
-	for tick in HEXAGRAM_COUNT:
-		var angle := rotation + TAU * float(tick) / float(HEXAGRAM_COUNT)
-		var length := 11.0 if tick % 8 == 0 else 5.0
-		var outer := center + Vector2.from_angle(angle) * orbit_radius * 1.29
-		var inner := center + Vector2.from_angle(angle) * (orbit_radius * 1.29 - length)
-		canvas.draw_line(inner, outer, ThemeColor.alpha_theme_color(0.2 * fade), 1.2, true)
+		ThemeColor.alpha_theme_color(0.12 * final_fade), 1.2, true)
+	pass
+
+
+func draw_sector_frames(canvas: Control, center: Vector2, short_side: float) -> void:
+	if elapsed < ROUND_START_SECONDS or elapsed >= FINAL_START_SECONDS:
+		return
+	var phase := round_phase()
+	var appear := smoothstep(0.0, PAIR_END, phase)
+	var disappear := 1.0 - smoothstep(FLIGHT_END, ROTATION_START, phase)
+	var alpha := appear * disappear * 0.2
+	var inner_radius := short_side * INNER_FRAME_RADIUS_RATIO
+	var outer_radius := short_side * 0.305
+	var half_angle := TAU / 19.0
+	for slot in ROUND_COUNT:
+		var angle := slot_angle(slot)
+		var left_angle := angle - half_angle
+		var right_angle := angle + half_angle
+		canvas.draw_line(center + Vector2.from_angle(left_angle) * inner_radius,
+			center + Vector2.from_angle(left_angle) * outer_radius, ThemeColor.alpha_theme_color(alpha), 1.2, true)
+		canvas.draw_line(center + Vector2.from_angle(right_angle) * inner_radius,
+			center + Vector2.from_angle(right_angle) * outer_radius, ThemeColor.alpha_theme_color(alpha), 1.2, true)
+		canvas.draw_arc(center, inner_radius, left_angle, right_angle, 12,
+			ThemeColor.alpha_theme_color(alpha * 0.7), 1.0, true)
+		canvas.draw_arc(center, outer_radius, left_angle, right_angle, 12,
+			ThemeColor.alpha_theme_color(alpha), 1.2, true)
 	pass
 
 
 func draw_trigram_layers(canvas: Control, bagua: TaiChiBaguaFlow, center: Vector2, short_side: float) -> void:
 	var split := split_progress()
-	var generated := smoothstep(GENERATION_START, GENERATION_END, progress())
+	var final_fade := 1.0 - panorama_progress()
 	var source_radius := short_side * 0.34
-	var upper_radius := lerpf(source_radius, short_side * 0.29, split)
-	var lower_radius := lerpf(source_radius, short_side * 0.215, split)
-	var copy_alpha := split * (1.0 - generated)
-	for index in 8:
-		var angle: float = TaiChiBaguaFlow.TARGET_ANGLES[index]
-		var rotation := angle + PI * 0.5
-		var upper_position := center + Vector2.from_angle(angle) * upper_radius
-		bagua.draw_trigram(canvas, upper_position, rotation, TaiChiEvolutionFlow.TRIGRAM_VALUES[index],
-			minf(70.0, canvas.size.y * 0.078), 11.0, 4.0, lerpf(0.58, 0.4, generated))
-		if copy_alpha > 0.0:
-			var lower_position := center + Vector2.from_angle(angle) * lower_radius
-			bagua.draw_trigram(canvas, lower_position, rotation, TaiChiEvolutionFlow.TRIGRAM_VALUES[index],
-				minf(56.0, canvas.size.y * 0.062), 9.0, 3.5, copy_alpha * 0.42)
-		var label_position := center + Vector2.from_angle(angle) * (upper_radius + minf(58.0, canvas.size.y * 0.065))
-		draw_centered_text(canvas, TaiChiEvolutionFlow.TRIGRAM_NAMES[index], label_position,
-			clampi(int(canvas.size.y * 0.026), 17, 27), lerpf(0.62, 0.44, generated))
+	var outer_radius := lerpf(source_radius, short_side * 0.275, split)
+	var inner_radius := lerpf(source_radius, short_side * 0.225, split)
+	for slot in ROUND_COUNT:
+		var angle := slot_angle(slot)
+		var upper_index: int = COMPASS_ORDER[slot]
+		var outer_position := center + Vector2.from_angle(angle) * outer_radius
+		bagua.draw_trigram(canvas, outer_position, angle + PI * 0.5,
+			TaiChiEvolutionFlow.TRIGRAM_VALUES[upper_index], minf(70.0, canvas.size.y * 0.078),
+			11.0, 4.0, final_fade * 0.52)
+		var label_position := center + Vector2.from_angle(angle) * (outer_radius + minf(58.0, canvas.size.y * 0.065))
+		draw_centered_text(canvas, TaiChiEvolutionFlow.TRIGRAM_NAMES[upper_index], label_position,
+			clampi(int(canvas.size.y * 0.026), 17, 27), final_fade * 0.54)
+	if split <= 0.0:
+		return
+	var steps := inner_rotation_steps()
+	for source_slot in ROUND_COUNT:
+		var angle := slot_angle_float(float(source_slot) + steps)
+		var lower_index: int = COMPASS_ORDER[source_slot]
+		var inner_position := center + Vector2.from_angle(angle) * inner_radius
+		bagua.draw_trigram(canvas, inner_position, angle + PI * 0.5,
+			TaiChiEvolutionFlow.TRIGRAM_VALUES[lower_index], minf(56.0, canvas.size.y * 0.062),
+			9.0, 3.5, split * final_fade * 0.46)
 	pass
 
 
 func draw_hexagrams(canvas: Control, center: Vector2, short_side: float) -> void:
-	var radius := short_side * 0.438
+	for slot in ROUND_COUNT:
+		for round_index in ROUND_COUNT:
+			var index := slot * ROUND_COUNT + round_index
+			var reveal := hexagram_progress(index)
+			if reveal <= 0.0:
+				continue
+			draw_hexagram(canvas, center, short_side, slot, round_index, reveal)
+	pass
+
+
+func draw_hexagram(canvas: Control, center: Vector2, short_side: float, slot: int,
+		round_index: int, reveal: float) -> void:
+	var target_radius := short_side * 0.438
 	var width := clampf(short_side * 0.027, 18.0, 32.0)
 	var line_gap := clampf(short_side * 0.0048, 3.5, 5.5)
-	for index in HEXAGRAM_COUNT:
-		var reveal := hexagram_progress(index)
-		if reveal <= 0.0:
-			continue
-		var upper_index := index / 8
-		var lower_index := index % 8
-		var angle := -PI * 0.5 + TAU * float(index) / float(HEXAGRAM_COUNT)
-		var current_radius := lerpf(short_side * 0.29, radius, ease(reveal, -1.5))
-		var position := center + Vector2.from_angle(angle) * current_radius
-		var pulse := sin(reveal * PI)
-		TaiChiTrigramDrawing.draw_symbol(canvas, position, hexagram_value(upper_index, lower_index), 6,
-			width * lerpf(0.68, 1.0, reveal), line_gap, 2.1, reveal * 0.52,
-			angle + PI * 0.5, pulse * 0.08)
+	var source_angle := slot_angle(slot)
+	var target_angle := source_angle + (float(round_index) - 3.5) * TAU / float(HEXAGRAM_COUNT)
+	var flight := ease(reveal, -1.5)
+	var angle := lerp_angle(source_angle, target_angle, flight)
+	var radius := lerpf(short_side * 0.25, target_radius, flight)
+	var position := center + Vector2.from_angle(angle) * radius
+	var upper_index: int = COMPASS_ORDER[slot]
+	var lower_index := lower_index_for_slot(slot, round_index)
+	var pulse := sin(reveal * PI)
+	TaiChiTrigramDrawing.draw_symbol(canvas, position, hexagram_value(upper_index, lower_index), 6,
+		width * lerpf(0.72, 1.0, reveal), line_gap, 2.1, reveal * 0.52,
+		target_angle + PI * 0.5, pulse * 0.08)
 	pass
+
+
+func slot_angle(slot: int) -> float:
+	return slot_angle_float(float(slot))
+
+
+func slot_angle_float(slot: float) -> float:
+	return -PI * 0.5 + TAU * slot / float(ROUND_COUNT)
 
 
 func draw_caption(canvas: Control, center: Vector2) -> void:
 	var split := split_progress()
 	var panorama := panorama_progress()
-	var explanation_alpha := split * (1.0 - smoothstep(0.4, 0.68, progress()))
+	var explanation_alpha := split * (1.0 - panorama)
 	if explanation_alpha > 0.0:
 		draw_centered_text(canvas, "八卦相荡", center - Vector2(0.0, canvas.size.y * 0.025),
 			clampi(int(canvas.size.y * 0.06), 38, 64), explanation_alpha * 0.82)
