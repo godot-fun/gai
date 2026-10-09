@@ -18,6 +18,10 @@ const FLIGHT_START := 0.18
 const FLIGHT_END := 0.68
 const ROTATION_START := 0.72
 const INNER_FRAME_RADIUS_RATIO := TaiChiHexagramCatalog.ORBIT_RADIUS_RATIO * 0.63
+const OUTER_LINE_GAP := 11.0
+const OUTER_LINE_WIDTH := 4.0
+const INNER_LINE_GAP := 9.0
+const INNER_LINE_WIDTH := 3.5
 
 var elapsed: float = 0.0
 var active: bool = false
@@ -115,7 +119,7 @@ func draw(canvas: Control, bagua: TaiChiBaguaFlow) -> void:
 		return
 	var center := canvas.size * 0.5
 	var short_side := minf(canvas.size.x, canvas.size.y)
-	draw_frame(canvas, center, short_side * TaiChiHexagramCatalog.ORBIT_RADIUS_RATIO)
+	draw_frame(canvas, center, short_side)
 	draw_sector_frames(canvas, center, short_side)
 	draw_trigram_layers(canvas, bagua, center, short_side)
 	draw_hexagrams(canvas, center, short_side)
@@ -123,12 +127,15 @@ func draw(canvas: Control, bagua: TaiChiBaguaFlow) -> void:
 	pass
 
 
-func draw_frame(canvas: Control, center: Vector2, orbit_radius: float) -> void:
+func draw_frame(canvas: Control, center: Vector2, short_side: float) -> void:
 	var final_fade := 1.0 - panorama_progress() * 0.45
 	var rotation := ring_rotation()
-	canvas.draw_arc(center, orbit_radius * 1.27, rotation, rotation + TAU, 160,
+	var orbit_radius := short_side * TaiChiHexagramCatalog.ORBIT_RADIUS_RATIO
+	canvas.draw_arc(center, TaiChiHexagramCatalog.hexagram_inner_ring_radius(short_side),
+		rotation, rotation + TAU, 160,
 		TaiChiGlowDrawing.outer_ring_color(0.16 * final_fade), 1.4, true)
-	canvas.draw_arc(center, orbit_radius * 1.31, -rotation, -rotation + TAU, 160,
+	canvas.draw_arc(center, TaiChiHexagramCatalog.hexagram_outer_ring_radius(short_side),
+		-rotation, -rotation + TAU, 160,
 		TaiChiGlowDrawing.outer_ring_color(0.09 * final_fade), 1.0, true)
 	canvas.draw_arc(center, orbit_radius * 0.63, -rotation, -rotation + TAU, 120,
 		TaiChiGlowDrawing.inner_ring_color(0.12 * final_fade), 1.2, true)
@@ -167,16 +174,29 @@ func draw_trigram_layers(canvas: Control, bagua: TaiChiBaguaFlow, center: Vector
 	var source_radius := short_side * TaiChiHexagramCatalog.ORBIT_RADIUS_RATIO
 	var outer_radius := lerpf(source_radius, short_side * 0.275, split)
 	var inner_radius := lerpf(source_radius, short_side * 0.225, split)
+	var source_width := TaiChiHexagramCatalog.orbit_trigram_width(canvas.size.y)
+	var outer_width := lerpf(source_width, minf(70.0, canvas.size.y * 0.078), split)
+	var inner_width := lerpf(source_width, minf(56.0, canvas.size.y * 0.062), split)
+	var outer_line_gap := lerpf(TaiChiHexagramCatalog.ORBIT_TRIGRAM_LINE_GAP, OUTER_LINE_GAP, split)
+	var inner_line_gap := lerpf(TaiChiHexagramCatalog.ORBIT_TRIGRAM_LINE_GAP, INNER_LINE_GAP, split)
+	var outer_line_width := lerpf(TaiChiHexagramCatalog.ORBIT_TRIGRAM_LINE_WIDTH, OUTER_LINE_WIDTH, split)
+	var inner_line_width := lerpf(TaiChiHexagramCatalog.ORBIT_TRIGRAM_LINE_WIDTH, INNER_LINE_WIDTH, split)
 	for slot in ROUND_COUNT:
 		var angle := slot_angle(slot)
 		var upper_index: int = TaiChiHexagramCatalog.COMPASS_ORDER[slot]
 		var outer_position := center + Vector2.from_angle(angle) * outer_radius
 		bagua.draw_trigram(canvas, outer_position, angle + PI * 0.5,
-			TaiChiHexagramCatalog.TRIGRAM_VALUES[upper_index], minf(70.0, canvas.size.y * 0.078),
-			11.0, 4.0, final_fade * TaiChiTrigramDrawing.BASE_ALPHA)
-		var label_position := center + Vector2.from_angle(angle) * (outer_radius + minf(58.0, canvas.size.y * 0.065))
+			TaiChiHexagramCatalog.TRIGRAM_VALUES[upper_index], outer_width,
+			outer_line_gap, outer_line_width, final_fade * TaiChiTrigramDrawing.BASE_ALPHA)
+		var source_label_gap := TaiChiHexagramCatalog.orbit_label_gap(canvas.size.y)
+		var target_label_gap := minf(58.0, canvas.size.y * 0.065)
+		var label_gap := lerpf(source_label_gap, target_label_gap, split)
+		var label_position := center + Vector2.from_angle(angle) * (outer_radius + label_gap)
+		var source_font_size := TaiChiHexagramCatalog.orbit_label_font_size(canvas.size.y)
+		var target_font_size := clampi(int(canvas.size.y * 0.026), 17, 27)
+		var font_size := int(round(lerpf(float(source_font_size), float(target_font_size), split)))
 		draw_centered_text(canvas, TaiChiHexagramCatalog.TRIGRAM_NAMES[upper_index], label_position,
-			clampi(int(canvas.size.y * 0.026), 17, 27), final_fade * 0.54)
+			font_size, final_fade * lerpf(TaiChiTrigramDrawing.LABEL_BASE_ALPHA, 0.54, split))
 	if split <= 0.0:
 		return
 	var steps := inner_rotation_steps()
@@ -185,8 +205,9 @@ func draw_trigram_layers(canvas: Control, bagua: TaiChiBaguaFlow, center: Vector
 		var lower_index: int = TaiChiHexagramCatalog.COMPASS_ORDER[source_slot]
 		var inner_position := center + Vector2.from_angle(angle) * inner_radius
 		bagua.draw_trigram(canvas, inner_position, angle + PI * 0.5,
-			TaiChiHexagramCatalog.TRIGRAM_VALUES[lower_index], minf(56.0, canvas.size.y * 0.062),
-			9.0, 3.5, split * final_fade * TaiChiTrigramDrawing.BASE_ALPHA)
+			TaiChiHexagramCatalog.TRIGRAM_VALUES[lower_index], inner_width,
+			inner_line_gap, inner_line_width,
+			split * final_fade * TaiChiTrigramDrawing.BASE_ALPHA)
 	pass
 
 
@@ -203,7 +224,7 @@ func draw_hexagrams(canvas: Control, center: Vector2, short_side: float) -> void
 
 func draw_hexagram(canvas: Control, center: Vector2, short_side: float, slot: int,
 		round_index: int, reveal: float) -> void:
-	var target_radius := short_side * 0.438
+	var target_radius := TaiChiHexagramCatalog.hexagram_ring_radius(short_side)
 	var width := clampf(short_side * 0.027, 18.0, 32.0)
 	var line_gap := clampf(short_side * 0.0048, 3.5, 5.5)
 	var source_angle := slot_angle(slot)
@@ -216,7 +237,7 @@ func draw_hexagram(canvas: Control, center: Vector2, short_side: float, slot: in
 	var angle := lerp_angle(source_angle, target_angle, flight)
 	var radius := lerpf(short_side * 0.25, target_radius, flight)
 	var position := center + Vector2.from_angle(angle) * radius
-	TaiChiTrigramDrawing.draw_symbol(canvas, position, value, 6,
+	TaiChiTrigramDrawing.draw_symbol(canvas, position, value, TaiChiHexagramCatalog.HEXAGRAM_LINE_COUNT,
 		width * lerpf(0.72, 1.0, reveal), line_gap, 2.1, reveal * TaiChiTrigramDrawing.BASE_ALPHA,
 		target_angle + PI * 0.5)
 	pass

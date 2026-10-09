@@ -120,28 +120,33 @@ func draw(canvas: Control, bagua: TaiChiBaguaFlow) -> void:
 	if not active:
 		return
 	var center := canvas.size * 0.5
-	var orbit_radius := minf(canvas.size.x, canvas.size.y) * TaiChiHexagramCatalog.ORBIT_RADIUS_RATIO
-	draw_rotating_frame(canvas, center, orbit_radius)
+	var short_side := minf(canvas.size.x, canvas.size.y)
+	var orbit_radius := short_side * TaiChiHexagramCatalog.ORBIT_RADIUS_RATIO
+	draw_rotating_frame(canvas, center, short_side)
 	draw_trigrams(canvas, bagua, center, orbit_radius)
 	draw_explanation(canvas, center)
 	pass
 
 
-func draw_rotating_frame(canvas: Control, center: Vector2, orbit_radius: float) -> void:
+func draw_rotating_frame(canvas: Control, center: Vector2, short_side: float) -> void:
 	# The circles themselves are rotationally symmetric; rotating their start angle
 	# and all tick positions makes the motion visible without rotating the labels.
 	var rotation := ring_rotation()
-	canvas.draw_arc(center, orbit_radius * 1.27, rotation, rotation + TAU, 160,
+	var orbit_radius := short_side * TaiChiHexagramCatalog.ORBIT_RADIUS_RATIO
+	var hexagram_radius := TaiChiHexagramCatalog.hexagram_ring_radius(short_side)
+	canvas.draw_arc(center, TaiChiHexagramCatalog.hexagram_inner_ring_radius(short_side),
+		rotation, rotation + TAU, 160,
 		TaiChiGlowDrawing.outer_ring_color(0.16), 1.4, true)
-	canvas.draw_arc(center, orbit_radius * 1.31, -rotation, -rotation + TAU, 160,
+	canvas.draw_arc(center, TaiChiHexagramCatalog.hexagram_outer_ring_radius(short_side),
+		-rotation, -rotation + TAU, 160,
 		TaiChiGlowDrawing.outer_ring_color(0.09), 1.0, true)
 	canvas.draw_arc(center, orbit_radius * 0.63, -rotation, -rotation + TAU, 120,
 		TaiChiGlowDrawing.inner_ring_color(0.16), 1.2, true)
 	for tick in TaiChiHexagramCatalog.HEXAGRAM_COUNT:
 		var angle := rotation + TAU * float(tick) / float(TaiChiHexagramCatalog.HEXAGRAM_COUNT)
 		var length := 11.0 if tick % TaiChiHexagramCatalog.TRIGRAM_COUNT == 0 else 5.0
-		var outer := center + Vector2.from_angle(angle) * orbit_radius * 1.29
-		var inner := center + Vector2.from_angle(angle) * (orbit_radius * 1.29 - length)
+		var outer := center + Vector2.from_angle(angle) * hexagram_radius
+		var inner := center + Vector2.from_angle(angle) * (hexagram_radius - length)
 		canvas.draw_line(inner, outer, ThemeColor.alpha_theme_color(0.2), 1.2, true)
 	pass
 
@@ -154,12 +159,18 @@ func draw_trigrams(canvas: Control, bagua: TaiChiBaguaFlow, center: Vector2, orb
 		var position := center + Vector2.from_angle(angle) * orbit_radius
 		var highlighted := index == selected and explanation_alpha > 0.0
 		var pulse := 0.5 + 0.5 * sin(elapsed * 2.2)
-		var width := minf(76.0, canvas.size.y * 0.085) * (1.0 + (0.1 * pulse if highlighted else 0.0))
+		var width := TaiChiHexagramCatalog.orbit_trigram_width(canvas.size.y) \
+			* (1.0 + (0.1 * pulse if highlighted else 0.0))
 		var alpha := TaiChiTrigramDrawing.HIGHLIGHT_ALPHA if highlighted else TaiChiTrigramDrawing.BASE_ALPHA
-		bagua.draw_trigram(canvas, position, angle + PI * 0.5, TaiChiHexagramCatalog.TRIGRAM_VALUES[index], width, 13.0, 5.0, alpha)
-		var label_position := center + Vector2.from_angle(angle) * (orbit_radius + minf(72.0, canvas.size.y * 0.085))
+		bagua.draw_trigram(canvas, position, angle + PI * 0.5,
+			TaiChiHexagramCatalog.TRIGRAM_VALUES[index], width,
+			TaiChiHexagramCatalog.ORBIT_TRIGRAM_LINE_GAP,
+			TaiChiHexagramCatalog.ORBIT_TRIGRAM_LINE_WIDTH, alpha)
+		var label_position := center + Vector2.from_angle(angle) * (
+			orbit_radius + TaiChiHexagramCatalog.orbit_label_gap(canvas.size.y))
 		var label_alpha := TaiChiTrigramDrawing.LABEL_HIGHLIGHT_ALPHA if highlighted else TaiChiTrigramDrawing.LABEL_BASE_ALPHA
-		draw_centered_text(canvas, TaiChiHexagramCatalog.TRIGRAM_NAMES[index], label_position, clampi(int(canvas.size.y * 0.035), 20, 36), label_alpha)
+		draw_centered_text(canvas, TaiChiHexagramCatalog.TRIGRAM_NAMES[index], label_position,
+			TaiChiHexagramCatalog.orbit_label_font_size(canvas.size.y), label_alpha)
 	pass
 
 

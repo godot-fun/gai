@@ -10,7 +10,6 @@ const FLY_SECONDS := 2.3
 const RESULT_REVEAL_SECONDS := 0.8
 const RESULT_HOLD_SECONDS := 3.0
 const TOTAL_SECONDS := PROMPT_SECONDS + SPIN_SECONDS + FLY_SECONDS + RESULT_REVEAL_SECONDS + RESULT_HOLD_SECONDS
-const RING_RADIUS_RATIO := 0.438
 
 var elapsed: float = 0.0
 var active: bool = false
@@ -104,15 +103,15 @@ func draw(canvas: Control) -> void:
 
 
 func draw_wheel(canvas: Control, center: Vector2, short_side: float) -> void:
-	var radius := short_side * RING_RADIUS_RATIO
+	var radius := TaiChiHexagramCatalog.hexagram_ring_radius(short_side)
 	var width := clampf(short_side * 0.027, 18.0, 32.0)
 	var line_gap := clampf(short_side * 0.0048, 3.5, 5.5)
 	var flight := flight_progress()
 	var current_highlight := highlighted_position()
 	var selected_position := TaiChiHexagramCatalog.fuxi_position_from_value(selected_value)
-	canvas.draw_arc(center, radius * 0.985, 0.0, TAU, 192,
+	canvas.draw_arc(center, TaiChiHexagramCatalog.hexagram_inner_ring_radius(short_side), 0.0, TAU, 192,
 		TaiChiGlowDrawing.outer_ring_color(0.14), 1.2, true)
-	canvas.draw_arc(center, radius * 1.04, 0.0, TAU, 192,
+	canvas.draw_arc(center, TaiChiHexagramCatalog.hexagram_outer_ring_radius(short_side), 0.0, TAU, 192,
 		TaiChiGlowDrawing.outer_ring_color(0.08), 1.0, true)
 	for position in TaiChiHexagramCatalog.HEXAGRAM_COUNT:
 		if flight > 0.0 and position == selected_position:
@@ -123,9 +122,10 @@ func draw_wheel(canvas: Control, center: Vector2, short_side: float) -> void:
 			and position == current_highlight
 		var alpha := (TaiChiTrigramDrawing.HIGHLIGHT_ALPHA if highlighted \
 			else TaiChiTrigramDrawing.BASE_ALPHA) * lerpf(1.0, 0.2, flight)
-		var scale := 1.18 if highlighted else 1.0
+		var scale := TaiChiHexagramCatalog.HEXAGRAM_HIGHLIGHT_SCALE if highlighted else 1.0
 		var value := TaiChiHexagramCatalog.value_from_fuxi_position(position)
-		TaiChiTrigramDrawing.draw_symbol(canvas, point, value, 6, width * scale, line_gap * scale,
+		TaiChiTrigramDrawing.draw_symbol(canvas, point, value, TaiChiHexagramCatalog.HEXAGRAM_LINE_COUNT,
+			width * scale, line_gap * scale,
 			2.2 if highlighted else 2.0, alpha, angle + PI * 0.5)
 	pass
 
@@ -137,7 +137,7 @@ func draw_needle(canvas: Control, center: Vector2, short_side: float) -> void:
 	var alpha := appear * disappear * 0.82
 	if alpha <= 0.0:
 		return
-	var radius := short_side * RING_RADIUS_RATIO
+	var radius := TaiChiHexagramCatalog.hexagram_ring_radius(short_side)
 	var angle := -PI * 0.5 + pointer_rotation()
 	var direction := Vector2.from_angle(angle)
 	var normal := direction.rotated(PI * 0.5)
@@ -178,7 +178,7 @@ func draw_spinning_label(canvas: Control, center: Vector2) -> void:
 
 func draw_selected_hexagram(canvas: Control, center: Vector2, short_side: float) -> void:
 	var flight := flight_progress()
-	var radius := short_side * RING_RADIUS_RATIO
+	var radius := TaiChiHexagramCatalog.hexagram_ring_radius(short_side)
 	var selected_angle := -PI * 0.5 + TAU * float(TaiChiHexagramCatalog.fuxi_position_from_value(selected_value)) / float(TaiChiHexagramCatalog.HEXAGRAM_COUNT)
 	var source := center + Vector2.from_angle(selected_angle) * radius
 	var target := center - Vector2(0.0, canvas.size.y * 0.17)

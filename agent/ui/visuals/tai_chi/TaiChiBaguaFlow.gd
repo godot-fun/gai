@@ -69,10 +69,11 @@ func draw(canvas: Control, evolution: TaiChiEvolutionFlow) -> void:
 	if not active:
 		return
 	var center := canvas.size * 0.5
-	var orbit_radius := minf(canvas.size.x, canvas.size.y) * TaiChiHexagramCatalog.ORBIT_RADIUS_RATIO
+	var short_side := minf(canvas.size.x, canvas.size.y)
+	var orbit_radius := short_side * TaiChiHexagramCatalog.ORBIT_RADIUS_RATIO
 	for index in TaiChiHexagramCatalog.TRIGRAM_COUNT:
 		draw_moving_trigram(canvas, evolution, center, orbit_radius, index)
-	draw_frame(canvas, center, orbit_radius)
+	draw_frame(canvas, center, short_side)
 	pass
 
 
@@ -90,16 +91,17 @@ func draw_moving_trigram(canvas: Control, evolution: TaiChiEvolutionFlow, center
 	var position := source.lerp(target, ease(local, -1.3)) + arc_offset
 	var rotation := lerpf(0.0, angle + PI * 0.5, ease(local, -1.2))
 	var source_width := TaiChiEvolutionFlow.SYMBOL_WIDTH
-	var target_width := minf(76.0, canvas.size.y * 0.085)
+	var target_width := TaiChiHexagramCatalog.orbit_trigram_width(canvas.size.y)
 	var width := lerpf(source_width, target_width, local)
-	var line_gap := lerpf(7.0, 13.0, local)
-	var line_width := lerpf(3.0, 5.0, local)
+	var line_gap := lerpf(7.0, TaiChiHexagramCatalog.ORBIT_TRIGRAM_LINE_GAP, local)
+	var line_width := lerpf(3.0, TaiChiHexagramCatalog.ORBIT_TRIGRAM_LINE_WIDTH, local)
 	var alpha := lerpf(TaiChiTrigramDrawing.SOURCE_ALPHA, TaiChiTrigramDrawing.BASE_ALPHA, local)
 	draw_trigram(canvas, position, rotation, TaiChiHexagramCatalog.TRIGRAM_VALUES[index], width, line_gap, line_width, alpha, local)
-	var name_position := center + Vector2.from_angle(angle) * (orbit_radius + minf(72.0, canvas.size.y * 0.085))
+	var name_position := center + Vector2.from_angle(angle) * (
+		orbit_radius + TaiChiHexagramCatalog.orbit_label_gap(canvas.size.y))
 	var source_name_position := source - Vector2(0.0, 34.0)
 	var moving_name_position := source_name_position.lerp(name_position, ease(local, -1.3)) + arc_offset
-	var target_font_size := clampi(int(canvas.size.y * 0.035), 20, 36)
+	var target_font_size := TaiChiHexagramCatalog.orbit_label_font_size(canvas.size.y)
 	var font_size := int(round(lerpf(18.0, float(target_font_size), local)))
 	draw_centered_text(canvas, TaiChiHexagramCatalog.TRIGRAM_NAMES[index], moving_name_position, font_size,
 		lerpf(0.76, TaiChiTrigramDrawing.LABEL_BASE_ALPHA, local))
@@ -113,13 +115,17 @@ func draw_trigram(canvas: Control, center: Vector2, rotation: float, value: int,
 	pass
 
 
-func draw_frame(canvas: Control, center: Vector2, orbit_radius: float) -> void:
+func draw_frame(canvas: Control, center: Vector2, short_side: float) -> void:
 	var reveal := frame_progress()
 	if reveal <= 0.0:
 		return
-	canvas.draw_arc(center, orbit_radius * 1.27, -PI * 0.5, -PI * 0.5 + TAU * reveal, 160,
+	var orbit_radius := short_side * TaiChiHexagramCatalog.ORBIT_RADIUS_RATIO
+	var hexagram_radius := TaiChiHexagramCatalog.hexagram_ring_radius(short_side)
+	canvas.draw_arc(center, TaiChiHexagramCatalog.hexagram_inner_ring_radius(short_side),
+		-PI * 0.5, -PI * 0.5 + TAU * reveal, 160,
 		TaiChiGlowDrawing.outer_ring_color(reveal * 0.16), 1.4, true)
-	canvas.draw_arc(center, orbit_radius * 1.31, -PI * 0.5, -PI * 0.5 + TAU * reveal, 160,
+	canvas.draw_arc(center, TaiChiHexagramCatalog.hexagram_outer_ring_radius(short_side),
+		-PI * 0.5, -PI * 0.5 + TAU * reveal, 160,
 		TaiChiGlowDrawing.outer_ring_color(reveal * 0.09), 1.0, true)
 	canvas.draw_arc(center, orbit_radius * 0.63, -PI * 0.5, -PI * 0.5 + TAU * reveal, 120,
 		TaiChiGlowDrawing.inner_ring_color(reveal * 0.16), 1.2, true)
@@ -131,8 +137,8 @@ func draw_frame(canvas: Control, center: Vector2, orbit_radius: float) -> void:
 			break
 		var angle := -PI * 0.5 + TAU * float(tick) / float(TaiChiHexagramCatalog.HEXAGRAM_COUNT)
 		var length := 11.0 if tick % TaiChiHexagramCatalog.TRIGRAM_COUNT == 0 else 5.0
-		var outer := center + Vector2.from_angle(angle) * orbit_radius * 1.29
-		var inner := center + Vector2.from_angle(angle) * (orbit_radius * 1.29 - length)
+		var outer := center + Vector2.from_angle(angle) * hexagram_radius
+		var inner := center + Vector2.from_angle(angle) * (hexagram_radius - length)
 		canvas.draw_line(inner, outer, ThemeColor.alpha_theme_color(0.2 * reveal), 1.2, true)
 	pass
 

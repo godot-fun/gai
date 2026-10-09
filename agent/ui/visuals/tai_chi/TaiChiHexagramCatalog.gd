@@ -54,6 +54,15 @@ const TRIGRAM_VALUES := [7, 6, 5, 4, 3, 2, 1, 0]
 ## Clockwise from the top: 乾、巽、坎、艮、坤、震、离、兑.
 const COMPASS_ORDER := [0, 4, 5, 6, 7, 3, 2, 1]
 const ORBIT_RADIUS_RATIO := 0.34
+const HEXAGRAM_RING_RADIUS_RATIO := 0.438
+const HEXAGRAM_LINE_COUNT := 6
+const HEXAGRAM_HIGHLIGHT_SCALE := 1.18
+const ORBIT_TRIGRAM_MAX_WIDTH := 76.0
+const ORBIT_TRIGRAM_WIDTH_RATIO := 0.085
+const ORBIT_TRIGRAM_LINE_GAP := 13.0
+const ORBIT_TRIGRAM_LINE_WIDTH := 5.0
+const ORBIT_LABEL_MAX_GAP := 72.0
+const ORBIT_LABEL_GAP_RATIO := 0.085
 ## number, name, upper, lower, judgment, image, theme, interpretation, advice, avoid
 const ENTRIES := [
 	[1, "乾", 0, 0, "元亨利贞。", "天行健，君子以自强不息。", "主动开创，刚健有为", "能量充足、方向清楚，适合承担责任并推动重要事情。", "确立目标，持续行动", "自满冒进，刚愎独断"],
@@ -143,6 +152,36 @@ static func compass_position_from_trigram(index: int) -> int:
 
 static func compass_angle_from_trigram(index: int) -> float:
 	return -PI * 0.5 + TAU * float(compass_position_from_trigram(index)) / float(TRIGRAM_COUNT)
+
+
+static func hexagram_ring_radius(short_side: float) -> float:
+	return short_side * HEXAGRAM_RING_RADIUS_RATIO
+
+
+static func orbit_trigram_width(canvas_height: float) -> float:
+	return minf(ORBIT_TRIGRAM_MAX_WIDTH, canvas_height * ORBIT_TRIGRAM_WIDTH_RATIO)
+
+
+static func orbit_label_gap(canvas_height: float) -> float:
+	return minf(ORBIT_LABEL_MAX_GAP, canvas_height * ORBIT_LABEL_GAP_RATIO)
+
+
+static func orbit_label_font_size(canvas_height: float) -> int:
+	return clampi(int(canvas_height * 0.035), 20, 36)
+
+
+static func hexagram_ring_half_height(short_side: float) -> float:
+	var line_gap := clampf(short_side * 0.0048, 3.5, 5.5)
+	var symbol_half_height := float(HEXAGRAM_LINE_COUNT - 1) * 0.5 * line_gap * HEXAGRAM_HIGHLIGHT_SCALE
+	return symbol_half_height + clampf(short_side * 0.003, 2.5, 4.0)
+
+
+static func hexagram_inner_ring_radius(short_side: float) -> float:
+	return hexagram_ring_radius(short_side) - hexagram_ring_half_height(short_side)
+
+
+static func hexagram_outer_ring_radius(short_side: float) -> float:
+	return hexagram_ring_radius(short_side) + hexagram_ring_half_height(short_side)
 
 
 static func fuxi_position_from_value(value: int) -> int:

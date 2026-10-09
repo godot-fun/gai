@@ -202,6 +202,9 @@ func hexagram_catalog_contains_every_unique_identity_test() -> void:
 	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.trigram_statement(0) == "乾为天")
 	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.compass_position_from_trigram(5) == 2)
 	assert(is_equal_approx(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.compass_angle_from_trigram(0), -PI * 0.5))
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.orbit_trigram_width(1080.0) == 76.0)
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.orbit_label_gap(1080.0) == 72.0)
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.orbit_label_font_size(1080.0) == 36)
 	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.fuxi_position_from_value(63) == 0)
 	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.value_from_fuxi_position(0) == 63)
 	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.ENTRIES.size() == 64)
@@ -231,6 +234,11 @@ func hexagram_catalog_contains_every_unique_identity_test() -> void:
 
 func divination_spins_once_and_lands_on_forced_hexagram_test() -> void:
 	var flow = TAI_CHI_DIVINATION_FLOW_SCRIPT.new()
+	var short_side := 1080.0
+	var symbol_radius := TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.hexagram_ring_radius(short_side)
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.hexagram_inner_ring_radius(short_side) < symbol_radius)
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.hexagram_inner_ring_radius(short_side) > symbol_radius - 24.0)
+	assert(TAI_CHI_HEXAGRAM_CATALOG_SCRIPT.hexagram_outer_ring_radius(short_side) > symbol_radius)
 	flow.begin(34)
 	assert(flow.selected_value == 34)
 	assert(flow.spin_progress() == 0.0)
