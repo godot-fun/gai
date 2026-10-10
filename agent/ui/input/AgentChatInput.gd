@@ -1,13 +1,15 @@
 class_name AgentChatInput
 extends RefCounted
 
-## Floating chat input, right-aligned (Margin.ma_12 from the right, Margin.ma_4 from the bottom):
+## Floating chat input with symmetric horizontal clearance and a fixed bottom margin:
 ## collapse/expand, styling, and send button.
 
 ## Expanded panel height when empty or one line (wrap grows upward from bottom).
 const EXPANDED_HEIGHT_MIN: float = 88.0
 ## Cap auto-grow so long paste does not cover most of the chat area.
 const EXPANDED_HEIGHT_MAX_RATIO: float = 0.55
+## Symmetric side inset: the original margin plus roughly one send-button width.
+const SIDE_INSET: float = Margin.ma_12 + ControlSize.md
 var input_bar: Control
 var input_wrap: PanelContainer
 var input_inner: Control
@@ -429,8 +431,8 @@ func prepare_field_for_expand_measure() -> void:
 func get_wrap_width(is_expanded: bool) -> float:
 	var bar_width: float = maxf(input_bar.size.x, 1.0)
 	if not is_expanded:
-		return minf(ControlSize.xl, maxf(1.0, bar_width - Margin.ma_12))
-	return maxf(1.0, bar_width - Margin.ma_12 * 2.0)
+		return minf(ControlSize.xl, maxf(1.0, bar_width - SIDE_INSET))
+	return maxf(1.0, bar_width - SIDE_INSET * 2.0)
 
 
 func get_expanded_height_max() -> float:
@@ -458,6 +460,11 @@ func measure_field_content_height() -> float:
 func get_wrap_height(is_expanded: bool) -> float:
 	if not is_expanded:
 		return ControlSize.xl
+	# An empty editor is always the compact expanded height. During startup/theme changes TextEdit
+	# can briefly expose its allocated viewport height as its minimum, causing a full-screen flash.
+	if input_field.text.is_empty():
+		input_field.scroll_fit_content_height = true
+		return EXPANDED_HEIGHT_MIN
 	# Margin.ma_1 top + bottom on the wrap stylebox is padding, so it is not usable field height.
 	var min_inner: float = maxf(0.0, EXPANDED_HEIGHT_MIN - Margin.ma_2)
 	var max_inner: float = get_expanded_height_max() - Margin.ma_2
@@ -476,8 +483,9 @@ func layout_bar() -> void:
 	var bar_size: Vector2 = input_bar.size
 	var wrap_w: float = get_wrap_width(expanded)
 	var wrap_h: float = get_wrap_height(expanded)
-	input_wrap.offset_left = bar_size.x - Margin.ma_12 - wrap_w
-	input_wrap.offset_right = bar_size.x - Margin.ma_12
+	var wrap_right: float = bar_size.x - SIDE_INSET
+	input_wrap.offset_left = wrap_right - wrap_w
+	input_wrap.offset_right = wrap_right
 	input_wrap.offset_top = bar_size.y - Margin.ma_4 - wrap_h
 	input_wrap.offset_bottom = bar_size.y - Margin.ma_4
 	input_inner.custom_minimum_size = Vector2(0, maxf(0.0, wrap_h - Margin.ma_2))
@@ -541,7 +549,8 @@ func set_expanded(is_expanded: bool, animate: bool) -> void:
 	tween_target_h = get_wrap_height(is_expanded)
 	tween_bar_size = input_bar.size
 	tween_start_left = input_wrap.offset_left
-	tween_target_left = tween_bar_size.x - Margin.ma_12 - get_wrap_width(is_expanded)
+	var wrap_right: float = tween_bar_size.x - SIDE_INSET
+	tween_target_left = wrap_right - get_wrap_width(is_expanded)
 	tween_expand_target = is_expanded
 
 	layout_tween.tween_method(apply_input_tween_step, 0.0, 1.0, 0.22)
@@ -551,8 +560,9 @@ func set_expanded(is_expanded: bool, animate: bool) -> void:
 
 func apply_input_tween_step(value: float) -> void:
 	var height: float = lerpf(tween_start_h, tween_target_h, value)
+	var wrap_right: float = tween_bar_size.x - SIDE_INSET
 	input_wrap.offset_left = lerpf(tween_start_left, tween_target_left, value)
-	input_wrap.offset_right = tween_bar_size.x - Margin.ma_12
+	input_wrap.offset_right = wrap_right
 	input_wrap.offset_top = tween_bar_size.y - Margin.ma_4 - height
 	input_wrap.offset_bottom = tween_bar_size.y - Margin.ma_4
 	input_inner.custom_minimum_size.y = maxf(0.0, height - Margin.ma_2)
@@ -562,7 +572,7 @@ func apply_input_tween_step(value: float) -> void:
 		set_border_beam_to_wrap(
 			lerpf(tween_start_left, tween_target_left, value),
 			tween_bar_size.y - Margin.ma_4 - height,
-			tween_bar_size.x - Margin.ma_12,
+			wrap_right,
 			tween_bar_size.y - Margin.ma_4
 		)
 		border_beam.set_shape(tween_expand_target)
