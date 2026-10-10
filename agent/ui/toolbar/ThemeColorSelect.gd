@@ -49,26 +49,8 @@ func build_popup() -> void:
 
 func apply_theme() -> void:
 	AgentToolbarButton.style_round(button, I18n.t("agent.toolbar.theme_color"))
-	apply_equal_icon_margins(Margin.ma_1)
-	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	button.add_theme_constant_override("icon_max_width", ControlSize.xs)
-	button.add_theme_constant_override("icon_max_height", ControlSize.xs)
-	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	update_icon(button.is_hovered())
-	pass
-
-
-func apply_equal_icon_margins(margin: int) -> void:
-	for state_name: String in ["normal", "hover", "pressed", "hover_pressed", "focus", "disabled"]:
-		var box: StyleBoxFlat = button.get_theme_stylebox(state_name) as StyleBoxFlat
-		if box == null:
-			continue
-		box.content_margin_left = margin
-		box.content_margin_right = margin
-		box.content_margin_top = margin
-		box.content_margin_bottom = margin
 	pass
 
 

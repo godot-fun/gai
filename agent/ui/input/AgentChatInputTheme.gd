@@ -63,11 +63,7 @@ static func apply_send_button(send_button: Button, stop_action: bool = false) ->
 static func apply_queue_delete_button(delete_button: Button) -> void:
 	AgentToolbarButton.style_round(delete_button, delete_button.tooltip_text)
 	delete_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	var icon_size := ControlSize.xs
-	delete_button.icon = make_trash_icon(icon_size, ThemeColor.accent_theme_color())
-	delete_button.add_theme_constant_override("icon_max_width", icon_size)
-	delete_button.add_theme_constant_override("icon_max_height", icon_size)
-	delete_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	delete_button.icon = make_trash_icon(ControlSize.xs, ThemeColor.accent_theme_color())
 	pass
 
 

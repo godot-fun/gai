@@ -478,7 +478,8 @@ static func on_agent_end(session_id: int, error_message: String) -> void:
 	if session == null:
 		return
 	var session_index := get_session_index(session_id)
-	var stopped_by_user: bool = session_index != null and session_index.is_stop_requested()
+	# Capture before stop_running() nulls run — otherwise is_stop_requested() is always false.
+	var should_continue_queue := session_index != null and not session_index.is_stop_requested() and StringUtils.is_blank(error_message)
 	if StringUtils.is_not_blank(error_message):
 		add_chat_entry(session_id, ChatEntry.KIND_ERROR, ChatEntry.TITLE_ERROR, error_message)
 	await AgentCheckpoint.async_append_git_diff(session_id)
@@ -487,7 +488,7 @@ static func on_agent_end(session_id: int, error_message: String) -> void:
 	if session_index != null:
 		session_index.stop_running()
 	AgentEvents.events.session_stop.emit(session_id)
-	if not stopped_by_user and StringUtils.is_blank(error_message):
+	if should_continue_queue:
 		try_run_next.call_deferred(session_id)
 	pass
 

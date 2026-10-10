@@ -136,12 +136,6 @@ func build_popup() -> void:
 
 func apply_theme() -> void:
 	AgentToolbarButton.style_round(button, I18n.t("agent.search.tooltip"))
-	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	button.text = ""
-	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.add_theme_constant_override("icon_max_width", ControlSize.xs)
-	button.add_theme_constant_override("icon_max_height", ControlSize.xs)
 	update_icon(button.is_hovered())
 	popup_panel.add_theme_stylebox_override("panel", make_popup_style())
 	content_panel.add_theme_stylebox_override("panel", make_content_style())
