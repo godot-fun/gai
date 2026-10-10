@@ -149,7 +149,7 @@
     },
     "tokens": {
       "label": "{} tokens",
-      "tooltip": "Context: {} ({}%) · Completion: {} · Total: {} (last request)"
+      "tooltip": "Context: {} tokens ({}%) · Completion: {} tokens · Total: {} tokens (last request)"
     },
     "settings": {
       "appearance": "Appearance",

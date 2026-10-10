@@ -148,8 +148,8 @@
       "prompt_search_tooltip": "双击搜索结果插入系统提示词"
     },
     "tokens": {
-      "label": "{} 个令牌",
-      "tooltip": "上下文：{}（{}%）· 回复：{} · 总计：{}（上次请求）"
+      "label": "{} Token",
+      "tooltip": "上下文：{} Token（{}%）· 回复：{} Token · 总计：{} Token（上次请求）"
     },
     "settings": {
       "appearance": "外观",
