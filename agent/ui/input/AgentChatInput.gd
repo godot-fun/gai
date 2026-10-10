@@ -8,9 +8,8 @@ extends RefCounted
 const EXPANDED_HEIGHT_MIN: float = 88.0
 ## Cap auto-grow so long paste does not cover most of the chat area.
 const EXPANDED_HEIGHT_MAX_RATIO: float = 0.55
-## Symmetric side inset: keep the input visually centered after moving the send button inward.
-## The extra ControlSize.md is roughly one send-button width.
-const SIDE_INSET: float = Margin.ma_12 + ControlSize.md
+## Symmetric side inset: keep the input visually centered and clear of right-aligned actions.
+const SIDE_INSET: float = ControlSize.md * 5.0
 var input_bar: Control
 var input_wrap: PanelContainer
 var input_inner: Control
