@@ -8,6 +8,10 @@ static var runtimes: Dictionary[int, RuntimeState] = {}
 
 static func _static_init() -> void:
 	AgentEvents.events.session_resume.connect(on_session_resume)
+	AgentEvents.events.session_removed.connect(on_session_removed)
+	AgentEvents.events.session_queue_changed.connect(on_session_queue_changed)
+	AgentEvents.events.chat_entry_delete.connect(on_chat_entry_delete)
+	AgentEvents.events.turn_start.connect(on_turn_start)
 	pass
 
 
@@ -79,6 +83,26 @@ static func on_session_resume(session_id: int) -> void:
 	if session == null:
 		return
 	await run_agent(session)
+	pass
+
+
+static func on_session_removed(session_id: int) -> void:
+	request_stop(session_id)
+	pass
+
+
+static func on_session_queue_changed(session_id: int) -> void:
+	try_run_next.call_deferred(session_id)
+	pass
+
+
+static func on_chat_entry_delete(session_id: int) -> void:
+	request_stop(session_id)
+	pass
+
+
+static func on_turn_start(session_id: int) -> void:
+	clear_step_entries(session_id)
 	pass
 
 

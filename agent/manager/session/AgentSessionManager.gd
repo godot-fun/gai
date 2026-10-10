@@ -25,7 +25,6 @@ static func _static_init() -> void:
 	AgentEvents.events.agent_end.connect(on_agent_end)
 
 	# Turn & streaming
-	AgentEvents.events.turn_start.connect(on_turn_start)
 	AgentEvents.events.message_update.connect(on_message_update)
 	AgentEvents.events.message_complete.connect(on_message_complete)
 
@@ -89,9 +88,6 @@ static func create_session() -> AgentSession:
 static func delete_session(session_id: int) -> void:
 	if not has_index(session_id):
 		return
-	var session_index := get_session_index(session_id)
-	if session_index != null and RuntimeManager.is_running(session_id):
-		RuntimeManager.request_stop(session_id)
 
 	AgentSessionStore.delete_session(session_id)
 	remove_session_index(session_id)
@@ -255,7 +251,6 @@ static func enqueue_message(session_id: int, user_text: String) -> bool:
 	session.draft_text = ""
 	persist_session(session_id)
 	AgentEvents.events.session_queue_changed.emit(session_id)
-	RuntimeManager.try_run_next.call_deferred(session_id)
 	return true
 
 
@@ -322,8 +317,6 @@ static func delete_chat_from_entry(session_id: int, entry: ChatEntry) -> void:
 		persist_session(session_id)
 		AgentEvents.events.chat_entry_delete.emit(session_id)
 		return
-	if RuntimeManager.is_running(session_id):
-		RuntimeManager.request_stop(session_id)
 	var msg_idx := message_index_for_user_chat_entry(session, entry_idx)
 	session.chat_entries = session.chat_entries.slice(0, entry_idx)
 	session.messages = session.messages.slice(0, msg_idx)
@@ -392,13 +385,6 @@ static func on_agent_end(session_id: int, error_message: String) -> void:
 # ---------------------------------------------------------------------------
 # Event handlers — turn & streaming
 # ---------------------------------------------------------------------------
-
-static func on_turn_start(session_id: int) -> void:
-	if not has_index(session_id):
-		return
-	RuntimeManager.clear_step_entries(session_id)
-	pass
-
 
 static func on_message_update(session_id: int, chunk: String, stream_kind: String) -> void:
 	var entry := append_chat_entry_stream(session_id, stream_kind, chunk)
