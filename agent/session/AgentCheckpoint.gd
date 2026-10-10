@@ -5,12 +5,18 @@ extends RefCounted
 ##
 ## Every command uses an isolated [GitUtils.Git] context, so the user's own repository is never
 ## read or written. A snapshot is taken before each user turn and reverting restores that state.
-
 const CHECKPOINTS_SUBDIR := ".gai/checkpoints"
 const SHALLOW_FILE := "shallow"
 const COMMIT_MESSAGE := "gai checkpoint message"
 const MAX_CHECKPOINTS := 100
 const CHECKPOINTS_AFTER_CLEANUP := 50
+
+
+const DIFF_CACHE_SUBDIR := ".gai/cache/diff"
+const MAX_DIFF_CACHE_BYTES := 16 * FileUtils.BYTES_PER_MB
+static func _static_init() -> void:
+	WorkerThreadPool.add_task(func() -> void: FileUtils.cleanup_cache_folder(DIFF_CACHE_SUBDIR, MAX_DIFF_CACHE_BYTES))
+	pass
 
 # ---------------------------------------------------------------------------
 # Paths
@@ -181,7 +187,6 @@ static func async_restore(sha: String) -> bool:
 # Git change summary / Delta
 # ---------------------------------------------------------------------------
 
-const DIFF_CACHE_SUBDIR := ".gai/cache/diff"
 const GITHUB_LIGHT_BACKGROUND := "BackgroundColour=255,255,255" # #ffffff canvas-default
 const GITHUB_LIGHT_FOREGROUND := "ForegroundColour=31,35,40" # #1f2328 fg-default
 const GITHUB_LIGHT_CURSOR := "CursorColour=9,105,218" # #0969da accent-fg

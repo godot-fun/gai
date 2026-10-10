@@ -82,7 +82,7 @@ func cleanup_cache_folder_trims_oldest_files_test() -> void:
 			await gdf.gdf_node.get_tree().create_timer(1.1).timeout
 	FileUtils.cleanup_cache_folder(cache_dir, 8)
 	assert(not FileAccess.file_exists(oldest_path))
-	assert(FileAccess.file_exists(middle_path))
+	assert(not FileAccess.file_exists(middle_path))
 	assert(FileAccess.file_exists(newest_path))
 	FileUtils.delete_file_or_directory(cache_dir)
 	pass

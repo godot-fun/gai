@@ -222,9 +222,10 @@ static func get_newest_file_in_folder(folder_path: String) -> String:
 	return newest_path
 
 
-## Deletes the oldest files until [param folder_path] is no larger than [param max_bytes].
+## When [param folder_path] exceeds [param max_bytes], deletes the oldest files until its size is
+## no larger than [param max_bytes] multiplied by [param target_ratio].
 ## Non-recursive. Safe to run on a worker thread (file IO only).
-static func cleanup_cache_folder(folder_path: String, max_bytes: int) -> void:
+static func cleanup_cache_folder(folder_path: String, max_bytes: int, target_ratio: float = 0.8) -> void:
 	if max_bytes < 0 or not DirAccess.dir_exists_absolute(folder_path):
 		return
 	var cache_files := get_all_files_in_folder(folder_path)
@@ -233,6 +234,7 @@ static func cleanup_cache_folder(folder_path: String, max_bytes: int) -> void:
 		total_bytes += FileAccess.get_size(file_path)
 	if total_bytes <= max_bytes:
 		return
+	var target_bytes := int(float(max_bytes) * clampf(target_ratio, 0.0, 1.0))
 	cache_files.sort_custom(func(left: String, right: String) -> bool:
 		var left_modified := FileAccess.get_modified_time(left)
 		var right_modified := FileAccess.get_modified_time(right)
@@ -242,7 +244,7 @@ static func cleanup_cache_folder(folder_path: String, max_bytes: int) -> void:
 		var file_size := FileAccess.get_size(file_path)
 		if DirAccess.remove_absolute(file_path) == OK:
 			total_bytes -= file_size
-		if total_bytes <= max_bytes:
+		if total_bytes <= target_bytes:
 			break
 	pass
 
