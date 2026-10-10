@@ -1,11 +1,12 @@
 class_name AgentCheckpoint
 extends RefCounted
 
-## Workspace snapshots for chat revert — one shared shadow git repo under `.gai/checkpoints/`.
+## Workspace snapshots for chat revert — four shadow Git repositories under `.gai/checkpoints/`.
 ##
 ## Every command uses an isolated [GitUtils.Git] context, so the user's own repository is never
 ## read or written. A snapshot is taken before each user turn and reverting restores that state.
 const CHECKPOINTS_SUBDIR := ".gai/checkpoints"
+const CHECKPOINT_REPO_SHARD_COUNT := 4
 const SHALLOW_FILE := "shallow"
 const COMMIT_MESSAGE := "gai checkpoint message"
 const MAX_CHECKPOINTS := 100
@@ -16,19 +17,22 @@ const DIFF_CACHE_SUBDIR := ".gai/cache/diff"
 const MAX_DIFF_CACHE_BYTES := 16 * FileUtils.BYTES_PER_MB
 static func _static_init() -> void:
 	WorkerThreadPool.add_task(func() -> void: FileUtils.cleanup_cache_folder(DIFF_CACHE_SUBDIR, MAX_DIFF_CACHE_BYTES))
+	async_cleanup()
 	pass
 
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
 
-static func get_git_dir() -> String:
-	return AgentWorkspace.get_root().path_join(CHECKPOINTS_SUBDIR)
+static func create_git(session_id: int) -> GitUtils.Git:
+	var workspace_root := AgentWorkspace.get_root()
+	var repo_shard_index := posmod(session_id, CHECKPOINT_REPO_SHARD_COUNT)
+	var git_dir := workspace_root.path_join(CHECKPOINTS_SUBDIR).path_join(str(repo_shard_index))
+	return GitUtils.Git.new(git_dir, workspace_root)
 
 
-static func ensure_repo() -> bool:
-	var git_dir := get_git_dir()
-	var git := GitUtils.Git.new(git_dir, AgentWorkspace.get_root())
+static func ensure_repo(git: GitUtils.Git) -> bool:
+	var git_dir := git.git_dir
 	if DirAccess.dir_exists_absolute(git_dir):
 		# Supplying --work-tree makes Git report false even for a valid bare repository.
 		var check := await git.async_is_bare()
@@ -69,8 +73,9 @@ static func write_exclude_rules(git_dir: String) -> bool:
 
 ## Deletes only the exact shadow repository path after validation has declared it invalid.
 static func remove_checkpoint_repo(git_dir: String) -> bool:
-	var expected := AgentWorkspace.get_root().path_join(CHECKPOINTS_SUBDIR).simplify_path()
-	if git_dir.simplify_path() != expected:
+	var checkpoints_dir := AgentWorkspace.get_root().path_join(CHECKPOINTS_SUBDIR).simplify_path()
+	var relative_path := git_dir.simplify_path().trim_prefix(checkpoints_dir + "/")
+	if not relative_path.is_valid_int() or int(relative_path) < 0 or int(relative_path) >= CHECKPOINT_REPO_SHARD_COUNT:
 		Log.error("agent checkpoint refused unexpected delete path:[{}]", git_dir)
 		return false
 	if FileUtils.delete_file_or_directory(git_dir):
@@ -79,8 +84,7 @@ static func remove_checkpoint_repo(git_dir: String) -> bool:
 	return false
 
 
-static func stage_all() -> bool:
-	var git := GitUtils.Git.new(get_git_dir(), AgentWorkspace.get_root())
+static func stage_all(git: GitUtils.Git) -> bool:
 	var add := await git.async_stage_all()
 	if add.exit_code == 0:
 		return true
@@ -93,10 +97,10 @@ static func stage_all() -> bool:
 # ---------------------------------------------------------------------------
 
 ## Commits the current workspace state and returns the commit id; empty when unavailable.
-static func async_snapshot() -> String:
-	if not await ensure_repo() or not await stage_all():
+static func async_snapshot(session_id: int) -> String:
+	var git := create_git(session_id)
+	if not await ensure_repo(git) or not await stage_all(git):
 		return StringUtils.EMPTY
-	var git := GitUtils.Git.new(get_git_dir(), AgentWorkspace.get_root())
 	var previous_head := await git.async_get_head()
 	if previous_head.exit_code == 0:
 		var diff := await git.async_has_staged_changes()
@@ -114,46 +118,45 @@ static func async_snapshot() -> String:
 		Log.error("agent checkpoint head lookup failed:[{}]", head.output.build_string())
 		return StringUtils.EMPTY
 	var sha := head.output.build_string().strip_edges()
-	await async_cleanup(false)
 	return sha
 
 
-## When history exceeds [constant MAX_CHECKPOINTS], keeps the newest [constant CHECKPOINTS_AFTER_CLEANUP] commits.
-static func async_cleanup(force_gc: bool = true) -> void:
-	if not await ensure_repo():
-		return
-	var git := GitUtils.Git.new(get_git_dir(), AgentWorkspace.get_root())
-	var history := await git.async_list_commits(MAX_CHECKPOINTS + 1)
-	if history.exit_code != 0:
-		# An initialized repository without its first commit has nothing to clean.
-		return
-	var commits := history.output.build_string().strip_edges().split(FileUtils.NEWLINE_LF, false)
-	var truncated := commits.size() > MAX_CHECKPOINTS
-	if truncated:
-		var boundary := commits[CHECKPOINTS_AFTER_CLEANUP - 1].strip_edges()
-		if not FileUtils.write_string_to_file(get_git_dir().path_join(SHALLOW_FILE), boundary + FileUtils.NEWLINE_LF):
-			Log.error("agent checkpoint shallow boundary write failed:[{}]", boundary)
-			return
-	if not truncated and not force_gc:
-		return
-	var reflog := await git.async_expire_reflogs()
-	if reflog.exit_code != 0:
-		Log.error("agent checkpoint reflog cleanup failed:[{}]", reflog.output.build_string())
-		return
-	var gc := await git.async_gc_prune_now()
-	if gc.exit_code != 0:
-		Log.error("agent checkpoint gc failed:[{}]", gc.output.build_string())
+## At startup, trims every repository exceeding [constant MAX_CHECKPOINTS].
+static func async_cleanup() -> void:
+	var workspace_root := AgentWorkspace.get_root()
+	for repo_shard_index in range(CHECKPOINT_REPO_SHARD_COUNT):
+		var git_dir := workspace_root.path_join(CHECKPOINTS_SUBDIR).path_join(str(repo_shard_index))
+		var git := GitUtils.Git.new(git_dir, workspace_root)
+		if not await ensure_repo(git):
+			continue
+		var history := await git.async_list_commits(MAX_CHECKPOINTS + 1)
+		if history.exit_code != 0:
+			# An initialized repository without its first commit has nothing to clean.
+			continue
+		var commits := history.output.build_string().strip_edges().split(FileUtils.NEWLINE_LF, false)
+		if commits.size() > MAX_CHECKPOINTS:
+			var boundary := commits[CHECKPOINTS_AFTER_CLEANUP - 1].strip_edges()
+			if not FileUtils.write_string_to_file(git.git_dir.path_join(SHALLOW_FILE), boundary + FileUtils.NEWLINE_LF):
+				Log.error("agent checkpoint shallow boundary write failed:[{}]", boundary)
+				continue
+		var reflog := await git.async_expire_reflogs()
+		if reflog.exit_code != 0:
+			Log.error("agent checkpoint reflog cleanup failed:[{}]", reflog.output.build_string())
+			continue
+		var gc := await git.async_gc_prune_now()
+		if gc.exit_code != 0:
+			Log.error("agent checkpoint gc failed:[{}]", gc.output.build_string())
 	pass
 
 
 ## Reverts the workspace to [param sha]: files changed since then are put back, files created since are removed.
 ## Returns false when Git cannot complete the restore; callers must keep chat history intact on failure.
-static func async_restore(sha: String) -> bool:
-	if StringUtils.is_blank(sha) or not await ensure_repo():
+static func async_restore(session_id: int, sha: String) -> bool:
+	if StringUtils.is_blank(sha):
 		return false
-	if not await stage_all():
+	var git := create_git(session_id)
+	if not await ensure_repo(git) or not await stage_all(git):
 		return false
-	var git := GitUtils.Git.new(get_git_dir(), AgentWorkspace.get_root())
 	var diff := await git.async_get_staged_name_status(sha)
 	if diff.exit_code != 0:
 		Log.error("agent checkpoint restore diff failed:[{}]", diff.output.build_string())
@@ -213,10 +216,11 @@ static func async_append_git_diff(session_id: int) -> void:
 		if entry.kind == ChatEntry.KIND_USER:
 			reference = entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
 			break
-	var diff_file_stats := await async_diff_file_stats(reference)
+	var git := create_git(session_id)
+	var diff_file_stats := await async_diff_file_stats(git, reference)
 	if diff_file_stats.is_empty():
 		return
-	var patch_path := await async_cache_diff(reference)
+	var patch_path := await async_cache_diff(git, reference)
 	AgentSessionManager.add_chat_entry(
 			session_id,
 			ChatEntry.KIND_GIT_DIFF,
@@ -229,11 +233,10 @@ static func async_append_git_diff(session_id: int) -> void:
 
 ## Returns tab-separated path/additions/deletions records for an agent run Git diff.
 ## The shadow index is refreshed first so this also catches edits made outside file tools.
-static func async_diff_file_stats(reference: String) -> PackedStringArray:
+static func async_diff_file_stats(git: GitUtils.Git, reference: String) -> PackedStringArray:
 	var file_stats := PackedStringArray()
-	if StringUtils.is_blank(reference) or not await ensure_repo() or not await stage_all():
+	if StringUtils.is_blank(reference) or not await ensure_repo(git) or not await stage_all(git):
 		return file_stats
-	var git := GitUtils.Git.new(get_git_dir(), AgentWorkspace.get_root())
 	var diff := await git.async_get_staged_numstat(reference)
 	if diff.exit_code != 0:
 		Log.error("agent checkpoint diff stats lookup failed:[{}]", diff.output.build_string())
@@ -250,10 +253,9 @@ static func async_diff_file_stats(reference: String) -> PackedStringArray:
 
 
 ## Caches the completed agent run patch so later workspace changes cannot alter this bubble's diff.
-static func async_cache_diff(reference: String) -> String:
-	if StringUtils.is_blank(reference) or not await ensure_repo() or not await stage_all():
+static func async_cache_diff(git: GitUtils.Git, reference: String) -> String:
+	if StringUtils.is_blank(reference) or not await ensure_repo(git) or not await stage_all(git):
 		return StringUtils.EMPTY
-	var git := GitUtils.Git.new(get_git_dir(), AgentWorkspace.get_root())
 	var diff := await git.async_get_staged_diff(reference)
 	if diff.exit_code != 0 or StringUtils.is_blank(diff.output.build_string()):
 		return StringUtils.EMPTY

@@ -97,7 +97,6 @@ static func delete_session(session_id: int) -> void:
 		request_stop(session_id)
 
 	AgentSessionStore.delete_session(session_id)
-	AgentCheckpoint.async_cleanup()
 	remove_session_index(session_id)
 	AgentSessionIndexes.save_index(session_indexes)
 	AgentEvents.events.session_removed.emit(session_id)
@@ -270,7 +269,7 @@ static func async_send(session_id: int, user_text: String) -> void:
 	session.messages.append(ChatMessage.user(trimmed))
 	# Snapshot before the agent can touch the workspace. The bubble decides at build time whether to
 	# offer Revert, so the commit id must be known before the entry is created.
-	var checkpoint := await AgentCheckpoint.async_snapshot()
+	var checkpoint := await AgentCheckpoint.async_snapshot(session_id)
 	var details: Dictionary[String, String] = {}
 	if StringUtils.is_not_blank(checkpoint):
 		details[ChatEntry.DETAIL_CHECKPOINT] = checkpoint
@@ -398,7 +397,7 @@ static func revert_to_entry(session_id: int, entry: ChatEntry) -> void:
 	if entry == null:
 		return
 	var sha: String = entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
-	if not await AgentCheckpoint.async_restore(sha):
+	if not await AgentCheckpoint.async_restore(session_id, sha):
 		Alert.alert("Workspace restore failed; chat history was kept", ColorBase.error)
 		return
 	delete_chat_from_entry(session_id, entry)
