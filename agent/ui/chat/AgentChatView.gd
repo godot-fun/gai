@@ -210,6 +210,8 @@ func on_markdown_changed(_enabled: bool) -> void:
 				ChatBubblePreview.apply(rich_text, entry.body)
 			ChatEntry.KIND_FILE_TOOL:
 				FileBubble.refresh(rich_text, entry)
+			ChatEntry.KIND_GIT_DIFF:
+				GitDiffBubble.refresh(rich_text, entry)
 			ChatEntry.KIND_ERROR:
 				ErrorBubble.refresh(rich_text, entry)
 			_:
@@ -369,6 +371,13 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 					chat_list,
 					chat_entry,
 					build_bubble_style(ColorBase.warning_surface)
+			)
+			queue_scroll_to_bottom()
+		ChatEntry.KIND_GIT_DIFF:
+			rich_text = GitDiffBubble.append(
+					chat_list,
+					chat_entry,
+					build_bubble_style(ColorBase.surface)
 			)
 			queue_scroll_to_bottom()
 		ChatEntry.KIND_RESULT:

@@ -9,6 +9,7 @@ const KIND_AGENT := "agent"
 const KIND_THINKING := "thinking"
 const KIND_TOOL := "tool"
 const KIND_FILE_TOOL := "file_tool"
+const KIND_GIT_DIFF := "git_diff"
 const KIND_RESULT := "result"
 const KIND_ERROR := "error"
 
@@ -19,7 +20,10 @@ const TITLE_USER := "You"
 const TITLE_AGENT := "Agent"
 const TITLE_THINKING := "Thinking"
 const TITLE_RESULT := "Result"
+const TITLE_GIT_DIFF := "Git Diff"
 const TITLE_ERROR := "Error"
+
+const DETAIL_GIT_DIFF_PATCH := "git_diff_patch"
 
 var kind: String = ""
 var title: String = ""

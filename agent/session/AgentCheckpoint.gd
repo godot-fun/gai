@@ -175,3 +175,133 @@ static func async_restore(sha: String) -> bool:
 			Log.error("agent checkpoint restore delete failed path:[{}] error:[{}]", absolute_path, error)
 			return false
 	return true
+
+
+# ---------------------------------------------------------------------------
+# Git change summary / Delta
+# ---------------------------------------------------------------------------
+
+const DIFF_CACHE_SUBDIR := ".gai/cache/diff"
+const GITHUB_LIGHT_BACKGROUND := "BackgroundColour=255,255,255" # #ffffff canvas-default
+const GITHUB_LIGHT_FOREGROUND := "ForegroundColour=31,35,40" # #1f2328 fg-default
+const GITHUB_LIGHT_CURSOR := "CursorColour=9,105,218" # #0969da accent-fg
+const GITHUB_LIGHT_SELECTION_BACKGROUND := "HighlightBackgroundColour=9,105,218" # #0969da accent-fg
+const GITHUB_LIGHT_SELECTION_FOREGROUND := "HighlightForegroundColour=255,255,255"
+const GITHUB_DARK_BACKGROUND := "BackgroundColour=13,17,23" # #0d1117 canvas-default
+const GITHUB_DARK_FOREGROUND := "ForegroundColour=230,237,243" # #e6edf3 fg-default
+const GITHUB_DARK_CURSOR := "CursorColour=88,166,255" # #58a6ff accent-fg
+const GITHUB_DARK_SELECTION_BACKGROUND := "HighlightBackgroundColour=31,111,235" # #1f6feb accent-emphasis
+const GITHUB_DARK_SELECTION_FOREGROUND := "HighlightForegroundColour=255,255,255"
+const DELTA_DIFF_STYLES_LIGHT := "--minus-style='syntax #ffebe9' --minus-emph-style='syntax #ffcecb' --plus-style='syntax #dafbe1' --plus-emph-style='syntax #aceebb'"
+const DELTA_DIFF_STYLES_DARK := "--minus-style='syntax #2d1618' --minus-emph-style='syntax #8e2d35' --plus-style='syntax #12261e' --plus-emph-style='syntax #1f6f3d'"
+
+
+## Appends a git diff chat entry when the completed agent run changed files.
+static func async_append_git_diff(session_id: int) -> void:
+	var session := AgentSessionStore.load_session(session_id)
+	if session == null:
+		return
+	# Checkpoint SHA from the most recent user turn — the snapshot taken before that run started.
+	var reference := StringUtils.EMPTY
+	for i in range(session.chat_entries.size() - 1, -1, -1):
+		var entry: ChatEntry = session.chat_entries[i]
+		if entry.kind == ChatEntry.KIND_USER:
+			reference = entry.checkpoint
+			break
+	var diff_file_stats := await async_diff_file_stats(reference)
+	if diff_file_stats.is_empty():
+		return
+	var patch_path := await async_cache_diff(reference)
+	AgentSessionManager.add_chat_entry(
+			session_id,
+			ChatEntry.KIND_GIT_DIFF,
+			ChatEntry.TITLE_GIT_DIFF,
+			FileUtils.NEWLINE_LF.join(diff_file_stats),
+			{ChatEntry.DETAIL_GIT_DIFF_PATCH: patch_path},
+			reference
+	)
+	pass
+
+
+## Returns tab-separated path/additions/deletions records for an agent run Git diff.
+## The shadow index is refreshed first so this also catches edits made outside file tools.
+static func async_diff_file_stats(reference: String) -> PackedStringArray:
+	var file_stats := PackedStringArray()
+	if StringUtils.is_blank(reference) or not await ensure_repo() or not await stage_all():
+		return file_stats
+	var git := GitUtils.Git.new(get_git_dir(), AgentWorkspace.get_root())
+	var diff := await git.async_get_staged_numstat(reference)
+	if diff.exit_code != 0:
+		Log.error("agent checkpoint diff stats lookup failed:[{}]", diff.output.build_string())
+		return file_stats
+	for line in diff.output.build_string().split(FileUtils.NEWLINE_LF, false):
+		var parts := line.split("\t", false)
+		if parts.size() < 3:
+			continue
+		var path := parts[2].strip_edges()
+		if StringUtils.is_blank(path):
+			continue
+		file_stats.append(path + "\t" + parts[0].strip_edges() + "\t" + parts[1].strip_edges())
+	return file_stats
+
+
+## Caches the completed agent run patch so later workspace changes cannot alter this bubble's diff.
+static func async_cache_diff(reference: String) -> String:
+	if StringUtils.is_blank(reference) or not await ensure_repo() or not await stage_all():
+		return StringUtils.EMPTY
+	var git := GitUtils.Git.new(get_git_dir(), AgentWorkspace.get_root())
+	var diff := await git.async_get_staged_diff(reference)
+	if diff.exit_code != 0 or StringUtils.is_blank(diff.output.build_string()):
+		return StringUtils.EMPTY
+	var cache_dir := AgentWorkspace.get_root().path_join(DIFF_CACHE_SUBDIR)
+	if DirAccess.make_dir_recursive_absolute(cache_dir) != OK:
+		return StringUtils.EMPTY
+	var patch_path := cache_dir.path_join(str(IdUtils.uuid()) + ".patch")
+	if not FileUtils.write_string_to_file(patch_path, diff.output.build_string()):
+		return StringUtils.EMPTY
+	return patch_path
+
+
+## Opens a cached agent run patch in the bundled Delta terminal viewer.
+static func open_diff(patch_path: String) -> void:
+	if StringUtils.is_blank(patch_path) or not FileAccess.file_exists(patch_path):
+		Alert.alert("Git diff is unavailable", ColorBase.error)
+		return
+	var delta_path := ProjectSettings.globalize_path("res://.dependency/delta/delta.exe")
+	if not FileAccess.file_exists(delta_path):
+		Alert.alert("Delta executable not found", ColorBase.error)
+		return
+	var light_theme := ThemeColor.is_light_theme()
+	var delta_color_mode := "--light" if light_theme else "--dark"
+	var terminal_background := GITHUB_LIGHT_BACKGROUND if light_theme else GITHUB_DARK_BACKGROUND
+	var terminal_foreground := GITHUB_LIGHT_FOREGROUND if light_theme else GITHUB_DARK_FOREGROUND
+	var terminal_cursor := GITHUB_LIGHT_CURSOR if light_theme else GITHUB_DARK_CURSOR
+	var selection_background := GITHUB_LIGHT_SELECTION_BACKGROUND if light_theme else GITHUB_DARK_SELECTION_BACKGROUND
+	var selection_foreground := GITHUB_LIGHT_SELECTION_FOREGROUND if light_theme else GITHUB_DARK_SELECTION_FOREGROUND
+	var syntax_theme := "GitHub" if light_theme else "Visual Studio Dark+"
+	var diff_styles := DELTA_DIFF_STYLES_LIGHT if light_theme else DELTA_DIFF_STYLES_DARK
+	var escaped_patch_path := patch_path.replace("'", "'\\''")
+	var escaped_delta_path := delta_path.replace("'", "'\\''")
+	var command := StringUtils.format("/usr/bin/sleep 0.2; /usr/bin/cat '{}' | '{}' --side-by-side --width=-2 --syntax-theme '{}' {} {} --paging=always; exec /bin/bash --login -i", escaped_patch_path, escaped_delta_path, syntax_theme, diff_styles, delta_color_mode)
+	var encoded_command := Marshalls.raw_to_base64(command.to_utf8_buffer())
+	var bash_command := StringUtils.format("/bin/bash --noprofile --norc <(printf %s {} | /usr/bin/base64 --decode)", encoded_command)
+	var mintty_path := GitUtils.find_windows_git_mintty()
+	var pid := OS.create_process(
+			mintty_path,
+			PackedStringArray([
+				"--window", "max",
+				"--title", "Git Diff",
+				"--option", terminal_background,
+				"--option", terminal_foreground,
+				"--option", terminal_cursor,
+				"--option", selection_background,
+				"--option", selection_foreground,
+				"--option", "KeyFunctions=Esc:close",
+				"--option", "ConfirmExit=no",
+				"/usr/bin/bash", "--noprofile", "--norc", "-c", bash_command
+			]),
+			false
+	)
+	if pid <= 0:
+		Alert.alert("Cannot open Delta", ColorBase.error)
+	pass

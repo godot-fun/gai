@@ -433,6 +433,7 @@ static func on_agent_end(session_id: int, error_message: String) -> void:
 		return
 	if StringUtils.is_not_blank(error_message):
 		add_chat_entry(session_id, ChatEntry.KIND_ERROR, ChatEntry.TITLE_ERROR, error_message)
+	await AgentCheckpoint.async_append_git_diff(session_id)
 	persist_session(session_id)
 
 	var session_index := get_session_index(session_id)

@@ -54,6 +54,13 @@ class Git:
 	func async_get_staged_name_status(reference: String) -> OSUtils.ExecResult:
 		return await async_execute(StringUtils.format("diff --cached --name-status {}", reference))
 
+	func async_get_staged_numstat(reference: String) -> OSUtils.ExecResult:
+		# Treat renames as one deleted and one added path so every displayed path remains clickable.
+		return await async_execute(StringUtils.format("diff --cached --numstat --no-renames {} --", reference))
+
+	func async_get_staged_diff(reference: String) -> OSUtils.ExecResult:
+		return await async_execute(StringUtils.format("diff --cached --binary {} --", reference))
+
 	func async_checkout_tree(reference: String) -> OSUtils.ExecResult:
 		return await async_execute(StringUtils.format("checkout {} -- :/", reference))
 
@@ -93,6 +100,7 @@ static func get_download_url() -> String:
 
 # ----------------------------------------------------------------------------------------------------------------------
 static var windows_git_bash_path := ""
+static var windows_git_mintty_path := ""
 
 static func find_windows_git_bash() -> String:
 	if StringUtils.is_not_blank(windows_git_bash_path):
@@ -123,3 +131,17 @@ static func find_windows_git_bash() -> String:
 			return windows_git_bash_path
 	windows_git_bash_path = "bash.exe"
 	return windows_git_bash_path
+
+
+## Finds the Mintty terminal bundled with Git for Windows.
+static func find_windows_git_mintty() -> String:
+	if StringUtils.is_not_blank(windows_git_mintty_path):
+		return windows_git_mintty_path
+	var bash_path := find_windows_git_bash().replace("\\", "/")
+	var git_root := bash_path.get_base_dir().get_base_dir()
+	var candidate := git_root.path_join("usr/bin/mintty.exe")
+	if FileAccess.file_exists(candidate):
+		windows_git_mintty_path = candidate
+		return windows_git_mintty_path
+	windows_git_mintty_path = "mintty.exe"
+	return windows_git_mintty_path
