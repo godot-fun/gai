@@ -186,7 +186,7 @@ func on_theme_changed() -> void:
 func on_visual_type_changed(_visual_type: int) -> void:
 	mount_selected_effect()
 	var effect := get_selected_effect()
-	if effect == null or running_session_id == 0 or not AgentSessionManager.is_running(running_session_id):
+	if effect == null or running_session_id == 0 or not RuntimeManager.is_running(running_session_id):
 		return
 	effect.reset_visual()
 	effect.on_agent_start(running_session_id)

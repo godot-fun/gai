@@ -8,39 +8,10 @@ const INDEX_FILE := "index.gai"
 var pinned_indexes: Array[SessionIndex] = []
 var indexes: Array[SessionIndex] = []
 
-class RunState:
-	var stop_requested: bool = false
-	var step_thinking_entry: ChatEntry = null
-	var step_agent_entry: ChatEntry = null
-	pass
-
-
 class SessionIndex:
 	var id: int = -1
 	var title: String = ""
-	## Active run state; null when idle.
-	var run: RunState = null
-
-
-	func is_running() -> bool:
-		return run != null
-
-
-	func stop_running() -> void:
-		run = null
-		pass
-
-
-	func clear_run_state() -> void:
-		if run == null:
-			return
-		run.step_thinking_entry = null
-		run.step_agent_entry = null
-		pass
-
-
-	func is_stop_requested() -> bool:
-		return run != null and run.stop_requested
+	pass
 
 
 static func get_index_path() -> String:
@@ -52,9 +23,6 @@ static func load_index() -> AgentSessionIndexes:
 	if StringUtils.is_not_blank(text):
 		var session_indexes: AgentSessionIndexes = JsonUtils.json_to_object(text, AgentSessionIndexes)
 		if session_indexes != null:
-			for list: Array[SessionIndex] in [session_indexes.pinned_indexes, session_indexes.indexes]:
-				for session_index: SessionIndex in list:
-					session_index.run = null
 			return session_indexes
 	return AgentSessionIndexes.new()
 

@@ -205,7 +205,7 @@ func on_chat_input_prefill(text: String) -> void:
 
 func refresh_from_active_session() -> void:
 	var session: AgentSession = AgentSessionStore.load_session(AgentSessionManager.active_session_id)
-	var running: bool = AgentSessionManager.is_running(AgentSessionManager.active_session_id)
+	var running: bool = RuntimeManager.is_running(AgentSessionManager.active_session_id)
 	var no_history: bool = session != null and not AgentSessionManager.has_chat_history(session.id)
 	input_field.text = session.draft_text if session != null else ""
 	refresh_state(running, no_history)
@@ -333,7 +333,7 @@ func refresh_queue() -> void:
 	title.add_theme_font_override("font", Fonts.semibold())
 	title.add_theme_color_override("font_color", ColorBase.secondary_text)
 	header.add_child(title)
-	if not AgentSessionManager.is_running(session.id):
+	if not RuntimeManager.is_running(session.id):
 		var continue_button := Button.new()
 		continue_button.tooltip_text = I18n.t("agent.input.continue_queue")
 		continue_button.custom_minimum_size = Vector2(ControlSize.sm, ControlSize.sm)
@@ -423,7 +423,7 @@ func on_global_input(event: InputEvent) -> void:
 
 func is_stop_action() -> bool:
 	return (expanded
-		and AgentSessionManager.is_running(AgentSessionManager.active_session_id)
+		and RuntimeManager.is_running(AgentSessionManager.active_session_id)
 		and get_trimmed_text().is_empty())
 
 

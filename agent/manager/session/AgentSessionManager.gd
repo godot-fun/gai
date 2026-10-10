@@ -1,5 +1,5 @@
 class_name AgentSessionManager
-extends RefCounted
+extends Object
 
 ## Manages multiple agent sessions and the active selection.
 
@@ -11,9 +11,6 @@ const DEFAULT_TITLE := "New Chat"
 static var session_indexes := AgentSessionIndexes.new()
 ## Selected session. 0 only before [method load_from_disk]; from then on this is always a live session id.
 static var active_session_id: int = 0
-## In-flight run cancel scopes keyed by session id (see [method request_stop]).
-## Deliberately kept off [AgentSessionIndexes.RunState] so persisted index JSON never sees them.
-static var session_cancel_scopes: Dictionary[int, CancelScope] = {}
 
 
 # ---------------------------------------------------------------------------
@@ -45,6 +42,7 @@ static func _static_init() -> void:
 
 ## Boot: reload the index of the current workspace, then select the first session (create one if the list is empty).
 static func load_from_disk() -> void:
+	RuntimeManager.clear()
 	AgentSessionStore.sessions.clear()
 	session_indexes = AgentSessionIndexes.load_index()
 	select_default_session()
@@ -93,7 +91,7 @@ static func delete_session(session_id: int) -> void:
 	if not has_index(session_id):
 		return
 	var session_index := get_session_index(session_id)
-	if session_index != null and session_index.is_running():
+	if session_index != null and RuntimeManager.is_running(session_id):
 		request_stop(session_id)
 
 	AgentSessionStore.delete_session(session_id)
@@ -212,11 +210,6 @@ static func is_active(session_id: int) -> bool:
 	return active_session_id == session_id
 
 
-static func is_running(session_id: int) -> bool:
-	var session_index := get_session_index(session_id)
-	return session_index != null and session_index.is_running()
-
-
 static func has_chat_history(session_id: int) -> bool:
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null:
@@ -270,13 +263,13 @@ static func enqueue_message(session_id: int, user_text: String) -> bool:
 ## Starts the FIFO head when the session is idle. Errors and manual stops leave later items queued.
 static func try_run_next(session_id: int) -> void:
 	var session_index := get_session_index(session_id)
-	if session_index == null or session_index.is_running():
+	if session_index == null or RuntimeManager.is_running(session_id):
 		return
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null or session.pending_messages.is_empty():
 		return
 	# Mark the session busy before the checkpoint await so a second dispatcher cannot consume it.
-	session_index.run = AgentSessionIndexes.RunState.new()
+	RuntimeManager.start(session_id)
 	AgentEvents.events.session_queue_changed.emit(session_id)
 	var queued: String = session.pending_messages[0]
 	# The first prompt names the chat; later turns find a title that is no longer the default —
@@ -285,12 +278,12 @@ static func try_run_next(session_id: int) -> void:
 	session_index = get_session_index(session_id)
 	session = AgentSessionStore.load_session(session_id)
 	if session_index == null or session == null or session.pending_messages.is_empty():
+		RuntimeManager.stop(session_id)
 		if session_index != null:
-			session_index.stop_running()
 			AgentEvents.events.session_stop.emit(session_id)
 		return
 	if session.pending_messages[0] != queued:
-		session_index.stop_running()
+		RuntimeManager.stop(session_id)
 		AgentEvents.events.session_stop.emit(session_id)
 		try_run_next.call_deferred(session_id)
 		return
@@ -326,7 +319,7 @@ static func async_resume(session_id: int) -> void:
 	var session_index := get_session_index(session_id)
 	if session_index == null:
 		return
-	if session_index.is_running():
+	if RuntimeManager.is_running(session_id):
 		Alert.alert("session is busy", ColorBase.error)
 		return
 	var session := AgentSessionStore.load_session(session_id)
@@ -340,16 +333,11 @@ static func run_agent(session: AgentSession) -> void:
 	var session_index := get_session_index(session.id)
 	if session_index == null:
 		return
-	if session_index.run == null:
-		session_index.run = AgentSessionIndexes.RunState.new()
-	# One scope per run: the loop's HTTP request and any tool subprocess register into it, so
-	# request_stop only stops this session's work.
-	var cancel_scope := CancelScope.new()
-	session_cancel_scopes[session.id] = cancel_scope
+	# One runtime per run: the loop's HTTP request and any tool subprocess share its cancel scope.
+	var runtime := RuntimeManager.get_or_start(session.id)
 	var ai_client := ApiSetting.get_client()
-	ai_client.cancel_scope = cancel_scope
+	ai_client.cancel_scope = runtime.cancel_scope
 	await AgentLoop.run(ai_client, session)
-	session_cancel_scopes.erase(session.id)
 	pass
 
 
@@ -361,31 +349,29 @@ static func request_stop(session_id: int) -> void:
 	var session_index := get_session_index(session_id)
 	if session_index == null:
 		return
-	if not session_index.is_running() or session_index.is_stop_requested():
+	if not RuntimeManager.is_running(session_id) or RuntimeManager.is_stop_requested(session_id):
 		return
-	session_index.run.stop_requested = true
-	var cancel_scope: CancelScope = session_cancel_scopes.get(session_id)
-	if cancel_scope != null:
-		cancel_scope.cancel()
+	RuntimeManager.request_stop(session_id)
 	pass
 
 static func is_stop_requested(session_id: int) -> bool:
 	var session_index := get_session_index(session_id)
 	if session_index == null:
 		return true
-	if not session_index.is_running():
+	if not RuntimeManager.is_running(session_id):
 		return true
-	return session_index.is_stop_requested()
+	return RuntimeManager.is_stop_requested(session_id)
 
 # ---------------------------------------------------------------------------
 # Chat Entry
 # ---------------------------------------------------------------------------
 
 static func append_chat_entry_stream(session_id: int, stream_kind: String, chunk: String) -> ChatEntry:
-	var session_index := get_session_index(session_id)
-	if session_index == null or session_index.run == null:
+	if not has_index(session_id):
 		return null
-	var run := session_index.run
+	var run := RuntimeManager.get_runtime(session_id)
+	if run == null:
+		return null
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
 		if run.step_thinking_entry == null:
 			run.step_thinking_entry = add_chat_entry(session_id, ChatEntry.KIND_THINKING, ChatEntry.TITLE_THINKING, chunk)
@@ -426,7 +412,7 @@ static func delete_chat_from_entry(session_id: int, entry: ChatEntry) -> void:
 		persist_session(session_id)
 		AgentEvents.events.chat_entry_delete.emit(session_id)
 		return
-	if is_running(session_id):
+	if RuntimeManager.is_running(session_id):
 		request_stop(session_id)
 	var msg_idx := message_index_for_user_chat_entry(session, entry_idx)
 	session.chat_entries = session.chat_entries.slice(0, entry_idx)
@@ -476,17 +462,17 @@ static func message_index_for_user_chat_entry(session: AgentSession, entry_idx: 
 static func on_agent_end(session_id: int, error_message: String) -> void:
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null:
+		RuntimeManager.stop(session_id)
 		return
 	var session_index := get_session_index(session_id)
-	# Capture before stop_running() nulls run — otherwise is_stop_requested() is always false.
-	var should_continue_queue := session_index != null and not session_index.is_stop_requested() and StringUtils.is_blank(error_message)
+	# Capture before removing the runtime; a missing runtime is treated as stopped.
+	var should_continue_queue := session_index != null and not RuntimeManager.is_stop_requested(session_id) and StringUtils.is_blank(error_message)
 	if StringUtils.is_not_blank(error_message):
 		add_chat_entry(session_id, ChatEntry.KIND_ERROR, ChatEntry.TITLE_ERROR, error_message)
 	await GitDiff.async_append_git_diff(session_id)
 	persist_session(session_id)
 
-	if session_index != null:
-		session_index.stop_running()
+	RuntimeManager.stop(session_id)
 	AgentEvents.events.session_stop.emit(session_id)
 	if should_continue_queue:
 		try_run_next.call_deferred(session_id)
@@ -498,10 +484,9 @@ static func on_agent_end(session_id: int, error_message: String) -> void:
 # ---------------------------------------------------------------------------
 
 static func on_turn_start(session_id: int) -> void:
-	var session_index := get_session_index(session_id)
-	if session_index == null:
+	if not has_index(session_id):
 		return
-	session_index.clear_run_state()
+	RuntimeManager.clear_step_entries(session_id)
 	pass
 
 

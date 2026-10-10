@@ -393,7 +393,7 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 					chat_entry,
 					build_bubble_style(ColorBase.surface),
 					session_id,
-					AgentSessionManager.is_running(session_id)
+					RuntimeManager.is_running(session_id)
 			)
 			queue_scroll_to_bottom()
 		_:
@@ -459,7 +459,7 @@ func refresh_error_resume_buttons() -> void:
 	var active_chat_list: VBoxContainer = get_active_chat_list()
 	if active_chat_list == null:
 		return
-	ErrorBubble.refresh_resume_buttons(active_chat_list, AgentSessionManager.is_running(AgentSessionManager.active_session_id))
+	ErrorBubble.refresh_resume_buttons(active_chat_list, RuntimeManager.is_running(AgentSessionManager.active_session_id))
 	pass
 
 
