@@ -43,13 +43,10 @@ static func apply_field(input_field: TextEdit) -> void:
 	pass
 
 
-static func apply_send_button(send_button: Button, stop_action: bool = false) -> void:
-	var base_color := ColorBase.error if stop_action else ThemeColor.accent_theme_color()
-	send_button.tooltip_text = I18n.t("agent.input.stop") if stop_action else I18n.t("agent.input.send")
-	var icon_size := ControlSize.xs
-	send_button.icon = make_stop_icon(icon_size, Color.WHITE) if stop_action else make_arrow_up_icon(icon_size, Color.WHITE)
-	send_button.add_theme_constant_override("icon_max_width", icon_size)
-	send_button.add_theme_constant_override("icon_max_height", icon_size)
+## [param queue_count] > 0: collapsed FAB shows the pending count instead of send/stop icon.
+static func apply_send_button(send_button: Button, stop_action: bool = false, queue_count: int = 0) -> void:
+	var show_queue_badge := queue_count > 0
+	var base_color := ColorBase.error if stop_action and not show_queue_badge else ThemeColor.accent_theme_color()
 	var radius: int = int(ControlSize.md * 0.5)
 	var normal := StyleBoxHelper.create_style_box_flat(base_color, radius, Margin.ma_1, Margin.ma_1)
 	ButtonStyle.apply(send_button, normal,
@@ -57,6 +54,22 @@ static func apply_send_button(send_button: Button, stop_action: bool = false) ->
 		ButtonStyle.filled(normal, base_color.darkened(0.08)),
 		ButtonStyle.filled(normal, base_color.darkened(0.25)))
 	send_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	send_button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if show_queue_badge:
+		send_button.tooltip_text = StringUtils.format(I18n.t("agent.input.queued"), queue_count)
+		send_button.icon = null
+		send_button.text = str(queue_count)
+		send_button.add_theme_font_override("font", Fonts.semibold())
+		var font_size := Typography.label_large_size if queue_count < 10 else Typography.label_medium_size
+		send_button.add_theme_font_size_override("font_size", font_size)
+		ButtonStyle.apply_font_colors(send_button, Color.WHITE, Color.WHITE, Color.WHITE.darkened(0.05))
+		return
+	send_button.text = ""
+	send_button.tooltip_text = I18n.t("agent.input.stop") if stop_action else I18n.t("agent.input.send")
+	var icon_size := ControlSize.xs
+	send_button.icon = make_stop_icon(icon_size, Color.WHITE) if stop_action else make_arrow_up_icon(icon_size, Color.WHITE)
+	send_button.add_theme_constant_override("icon_max_width", icon_size)
+	send_button.add_theme_constant_override("icon_max_height", icon_size)
 	pass
 
 
@@ -68,8 +81,9 @@ static func apply_queue_delete_button(delete_button: Button) -> void:
 
 
 static func apply_queue_continue_button(continue_button: Button) -> void:
-	AgentToolbarButton.style(continue_button, I18n.t("agent.input.continue_queue"))
+	AgentToolbarButton.style_round(continue_button, continue_button.tooltip_text)
 	continue_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	continue_button.icon = make_play_icon(ControlSize.xs, ThemeColor.accent_theme_color())
 	pass
 
 

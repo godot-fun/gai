@@ -10,6 +10,8 @@ const EXPANDED_HEIGHT_MIN: float = 88.0
 const EXPANDED_HEIGHT_MAX_RATIO: float = 0.55
 ## Symmetric side inset: keep the input visually centered and clear of right-aligned actions.
 const SIDE_INSET: float = ControlSize.md * 5.0
+## Fade-in duration when the queue list appears after expand settles.
+const QUEUE_FADE_SECONDS: float = 0.2
 var input_bar: Control
 var input_wrap: PanelContainer
 var input_inner: Control
@@ -23,6 +25,7 @@ var file_input: AgentChatInputFile = AgentChatInputFile.new()
 var expanded: bool = false
 var force_expanded: bool = false
 var layout_tween: Tween = null
+var queue_tween: Tween = null
 
 var tween_start_h: float = 0.0
 var tween_target_h: float = 0.0
@@ -213,8 +216,22 @@ func refresh_from_active_session() -> void:
 func apply_theme() -> void:
 	AgentChatInputTheme.apply_wrap(input_wrap, expanded)
 	AgentChatInputTheme.apply_field(input_field)
-	AgentChatInputTheme.apply_send_button(send_button, is_stop_action())
+	refresh_send_button()
 	apply_queue_theme()
+	pass
+
+
+func get_pending_queue_count() -> int:
+	var session := AgentSessionStore.load_session(AgentSessionManager.active_session_id)
+	if session == null:
+		return 0
+	return session.pending_messages.size()
+
+
+## Collapsed + pending queue → count badge; else send / stop as before.
+func refresh_send_button() -> void:
+	var queue_count := 0 if expanded else get_pending_queue_count()
+	AgentChatInputTheme.apply_send_button(send_button, is_stop_action(), queue_count)
 	pass
 
 
@@ -249,13 +266,62 @@ func clear_text() -> void:
 	pass
 
 
+## Queue list only after expand has fully settled; collapsed FAB shows the count badge alone.
+func sync_queue_panel_visibility() -> void:
+	var session := AgentSessionStore.load_session(AgentSessionManager.active_session_id)
+	var should_show := expanded and layout_tween == null and session != null and not session.pending_messages.is_empty()
+	if should_show:
+		show_queue_panel()
+	else:
+		hide_queue_panel()
+	pass
+
+
+func hide_queue_panel() -> void:
+	if queue_tween != null:
+		queue_tween.kill()
+		queue_tween = null
+	queue_panel.visible = false
+	queue_panel.modulate.a = 1.0
+	pass
+
+
+func show_queue_panel() -> void:
+	var already_shown := queue_panel.visible and queue_panel.modulate.a > 0.01
+	queue_panel.visible = true
+	layout_queue_panel()
+	if already_shown:
+		if queue_tween == null:
+			queue_panel.modulate.a = 1.0
+		return
+	if queue_tween != null:
+		queue_tween.kill()
+		queue_tween = null
+	queue_panel.modulate.a = 0.0
+	if not input_bar.is_inside_tree():
+		queue_panel.modulate.a = 1.0
+		return
+	queue_tween = input_bar.create_tween()
+	queue_tween.set_trans(Tween.TRANS_CUBIC)
+	queue_tween.set_ease(Tween.EASE_OUT)
+	queue_tween.tween_property(queue_panel, "modulate:a", 1.0, QUEUE_FADE_SECONDS)
+	queue_tween.finished.connect(on_queue_tween_finished, CONNECT_ONE_SHOT)
+	pass
+
+
+func on_queue_tween_finished() -> void:
+	queue_tween = null
+	pass
+
+
 func refresh_queue() -> void:
 	for child in queue_rows.get_children():
 		queue_rows.remove_child(child)
 		child.queue_free()
 	var session := AgentSessionStore.load_session(AgentSessionManager.active_session_id)
-	queue_panel.visible = session != null and not session.pending_messages.is_empty()
-	if not queue_panel.visible:
+	if session == null or session.pending_messages.is_empty():
+		sync_queue_panel_visibility()
+		refresh_send_button()
 		layout_queue_panel()
 		return
 
@@ -269,7 +335,8 @@ func refresh_queue() -> void:
 	header.add_child(title)
 	if not AgentSessionManager.is_running(session.id):
 		var continue_button := Button.new()
-		continue_button.text = I18n.t("agent.input.continue_queue")
+		continue_button.tooltip_text = I18n.t("agent.input.continue_queue")
+		continue_button.custom_minimum_size = Vector2(ControlSize.sm, ControlSize.sm)
 		continue_button.focus_mode = Control.FOCUS_NONE
 		AgentChatInputTheme.apply_queue_continue_button(continue_button)
 		continue_button.pressed.connect(AgentSessionManager.try_run_next.bind(session.id))
@@ -295,6 +362,8 @@ func refresh_queue() -> void:
 		row.add_child(delete_button)
 		queue_rows.add_child(row)
 	apply_queue_theme()
+	sync_queue_panel_visibility()
+	refresh_send_button()
 	layout_queue_panel.call_deferred()
 	pass
 
@@ -390,7 +459,7 @@ func on_field_text_changed() -> void:
 	var session := AgentSessionStore.load_session(AgentSessionManager.active_session_id)
 	if session != null:
 		session.draft_text = input_field.text
-	AgentChatInputTheme.apply_send_button(send_button, is_stop_action())
+	refresh_send_button()
 	relayout_if_height_changed()
 	pass
 
@@ -616,6 +685,7 @@ func layout_bar() -> void:
 		input_field.scroll_fit_content_height = true
 	input_wrap.tooltip_text = "" if expanded else I18n.t("agent.input.click_to_ask")
 	layout_send_button()
+	sync_queue_panel_visibility()
 	layout_queue_panel()
 	AgentChatInputTheme.apply_wrap(input_wrap, expanded)
 	layout_border_beam()
@@ -638,7 +708,7 @@ func layout_send_button() -> void:
 	send_button.offset_right = -inset
 	send_button.offset_bottom = -inset
 	send_button.z_index = 2
-	AgentChatInputTheme.apply_send_button(send_button, is_stop_action())
+	refresh_send_button()
 	pass
 
 
@@ -654,10 +724,13 @@ func set_expanded(is_expanded: bool, animate: bool) -> void:
 	if not animate or not input_bar.is_inside_tree():
 		layout_bar()
 		return
-
+	# Flip badge ↔ icon immediately. Queue list stays hidden until expand tween finishes.
+	refresh_send_button()
 	if layout_tween != null:
 		layout_tween.kill()
 		layout_tween = null
+	# Collapse: hide list immediately. Expand: keep hidden until tween finishes, then fade in.
+	hide_queue_panel()
 	layout_tween = input_bar.create_tween()
 	layout_tween.set_trans(Tween.TRANS_CUBIC)
 	layout_tween.set_ease(Tween.EASE_OUT)
