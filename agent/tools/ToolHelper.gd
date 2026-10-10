@@ -1,4 +1,4 @@
-class_name AgentHelper
+class_name ToolHelper
 extends Object
 
 

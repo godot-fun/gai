@@ -14,6 +14,8 @@ static func _static_init() -> void:
 	AgentEvents.events.turn_start.connect(on_turn_start)
 	AgentEvents.events.agent_end.connect(on_agent_end)
 	AgentEvents.events.message_update.connect(on_message_update)
+	AgentEvents.events.tool_execution_start.connect(on_tool_execution_start)
+	AgentEvents.events.tool_execution_end.connect(on_tool_execution_end)
 	pass
 
 
@@ -153,6 +155,48 @@ static func append_chat_entry_stream(session_id: int, stream_kind: String, chunk
 	else:
 		runtime.step_agent_entry.body += chunk
 	return runtime.step_agent_entry
+
+
+static func on_tool_execution_start(session_id: int, _tool_call_id: String, tool_name: String, args: Dictionary[String, Variant]) -> void:
+	if ToolHelper.is_file_tool(tool_name):
+		return
+	var body := ""
+	match tool_name:
+		GrepTool.NAME:
+			body = str(args.get(GrepTool.ARG_PATTERN, ""))
+		GlobTool.NAME:
+			body = str(args.get(GlobTool.ARG_PATTERN, ""))
+		ListDirTool.NAME:
+			body = str(args.get(ListDirTool.ARG_PATH, ""))
+		BashTool.NAME:
+			body = str(args.get(BashTool.ARG_COMMAND, ""))
+		ImageToTextTool.NAME:
+			body = str(args.get(ImageToTextTool.ARG_PATH, "")) + FileUtils.NEWLINE_LF + str(args.get(ImageToTextTool.ARG_PROMPT, ""))
+		AudioToTextTool.NAME:
+			body = str(args.get(AudioToTextTool.ARG_PATH, ""))
+		WebSearchToolProxy.NAME, WebSearchToolBing.NAME:
+			body = str(args.get(WebSearchToolProxy.ARG_QUERY, ""))
+		WebFetchTool.NAME:
+			body = str(args.get(WebFetchTool.ARG_URL, ""))
+		_:
+			for key: Variant in args.keys():
+				var value := str(args[key])
+				if StringUtils.is_not_blank(value):
+					body = value
+					break
+	AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_TOOL, tool_name, body)
+	pass
+
+
+static func on_tool_execution_end(session_id: int, _tool_call_id: String, tool_name: String, agent_tool_result: AgentToolResult) -> void:
+	if ToolHelper.is_file_tool(tool_name):
+		var path: String = agent_tool_result.details.get(AgentToolResult.DETAIL_FILE_PATH, "")
+		AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_FILE_TOOL, tool_name, path, agent_tool_result.details)
+		return
+	var title: String = agent_tool_result.details.get(AgentToolResult.DETAIL_TITLE, "")
+	var body: String = agent_tool_result.details.get(AgentToolResult.DETAIL_BODY, "")
+	AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_RESULT, title, body, agent_tool_result.details)
+	pass
 
 
 static func run_agent(session: AgentSession) -> void:
