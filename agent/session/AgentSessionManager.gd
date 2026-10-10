@@ -281,7 +281,7 @@ static func try_run_next(session_id: int) -> void:
 	var queued: String = session.pending_messages[0]
 	# The first prompt names the chat; later turns find a title that is no longer the default —
 	# and a name picked in the sidebar survives for the same reason.
-	var checkpoint := await AgentCheckpoint.async_snapshot(session_id)
+	var checkpoint := await GitHelper.async_snapshot(session_id)
 	session_index = get_session_index(session_id)
 	session = AgentSessionStore.load_session(session_id)
 	if session_index == null or session == null or session.pending_messages.is_empty():
@@ -442,7 +442,7 @@ static func revert_to_entry(session_id: int, entry: ChatEntry) -> void:
 	if entry == null:
 		return
 	var sha: String = entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
-	if not await AgentCheckpoint.async_restore(session_id, sha):
+	if not await GitHelper.async_restore(session_id, sha):
 		Alert.alert("Workspace restore failed; chat history was kept", ColorBase.error)
 		return
 	delete_chat_from_entry(session_id, entry)
@@ -482,7 +482,7 @@ static func on_agent_end(session_id: int, error_message: String) -> void:
 	var should_continue_queue := session_index != null and not session_index.is_stop_requested() and StringUtils.is_blank(error_message)
 	if StringUtils.is_not_blank(error_message):
 		add_chat_entry(session_id, ChatEntry.KIND_ERROR, ChatEntry.TITLE_ERROR, error_message)
-	await AgentCheckpoint.async_append_git_diff(session_id)
+	await GitHelper.async_append_git_diff(session_id)
 	persist_session(session_id)
 
 	if session_index != null:

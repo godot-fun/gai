@@ -1,4 +1,4 @@
-class_name AgentCheckpoint
+class_name GitHelper
 extends RefCounted
 
 ## Workspace snapshots for chat revert — four shadow Git repositories under `.gai/checkpoints/`.
@@ -9,8 +9,8 @@ const CHECKPOINTS_SUBDIR := ".gai/checkpoints"
 const CHECKPOINT_REPO_SHARD_COUNT := 4
 const SHALLOW_FILE := "shallow"
 const COMMIT_MESSAGE := "gai checkpoint message"
-const MAX_CHECKPOINTS := 100
-const CHECKPOINTS_AFTER_CLEANUP := 50
+const MAX_CHECKPOINTS := 64
+const CHECKPOINTS_AFTER_CLEANUP := 32
 
 
 const DIFF_CACHE_SUBDIR := ".gai/cache/diff"
