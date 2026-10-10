@@ -24,6 +24,7 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	header.add_child(title_label)
 
+	var file_path: String = entry.details.get(AgentToolResult.DETAIL_FILE_PATH, "")
 	var file_lines_added: int = int(entry.details.get(AgentToolResult.DETAIL_FILE_LINES_ADDED, "0"))
 	var file_lines_removed: int = int(entry.details.get(AgentToolResult.DETAIL_FILE_LINES_REMOVED, "0"))
 	var file_message: String = entry.details.get(AgentToolResult.DETAIL_FILE_MESSAGE, "")
@@ -33,16 +34,17 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 		header.add_child(create_file_detail_label(StringUtils.format("-{}", file_lines_removed), ColorBase.error))
 	if StringUtils.is_not_blank(file_message):
 		header.add_child(create_file_detail_label(file_message, ColorBase.error))
+	if StringUtils.is_not_blank(file_path):
+		header.add_child(create_file_path_button(file_path))
 	vbox.add_child(header)
 
-	var rich_text: RichTextLabel = MarkdownHelper.create_plain_rich_text_label(ColorBase.secondary_text)
-	rich_text.meta_clicked.connect(open_file)
-	rich_text.tooltip_text = "Open file"
+	var rich_text: RichTextLabel = RichTextLabel.new()
+	rich_text.visible = false
 	vbox.add_child(rich_text)
 	wrapper.set_meta(AgentChatView.META_BUBBLE_RICH_TEXT, rich_text)
 
 	chat_list.add_child(wrapper)
-	refresh(rich_text, entry)
+	# refresh(rich_text, entry)
 	return rich_text
 
 
@@ -68,3 +70,14 @@ static func create_file_detail_label(text: String, color: Color) -> Label:
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_font_size_override("font_size", Typography.label_small_size)
 	return label
+
+
+static func create_file_path_button(file_path: String) -> LinkButton:
+	var button: LinkButton = LinkButton.new()
+	button.text = file_path
+	button.tooltip_text = "Open file"
+	button.add_theme_color_override("font_color", ColorBase.secondary_text)
+	button.add_theme_font_override("font", Fonts.regular())
+	button.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	button.pressed.connect(open_file.bind(file_path))
+	return button
