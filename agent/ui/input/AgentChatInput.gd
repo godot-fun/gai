@@ -615,7 +615,7 @@ func layout_bar() -> void:
 	if not expanded:
 		input_field.scroll_fit_content_height = true
 	input_wrap.tooltip_text = "" if expanded else I18n.t("agent.input.click_to_ask")
-	layout_send_button(expanded)
+	layout_send_button()
 	layout_queue_panel()
 	AgentChatInputTheme.apply_wrap(input_wrap, expanded)
 	layout_border_beam()
@@ -623,25 +623,20 @@ func layout_bar() -> void:
 	pass
 
 
-func layout_send_button(is_expanded: bool) -> void:
+func layout_send_button() -> void:
 	send_button.visible = true
-	# Control grows towards GROW_DIRECTION_BEGIN when a stylebox/content margin pushes the minimum
-	# size past the offsets above, which silently shifts the circle. Grow both ways instead.
+	# Always pin bottom-right. Switching to CENTER when collapsed moves the button because the
+	# wrap right edge stays fixed while the center of a shrinking circle drifts left.
+	# Inset = (xl - 2 * wrap content margin - md) / 2 so the collapsed FAB stays centered.
 	send_button.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	send_button.grow_vertical = Control.GROW_DIRECTION_BOTH
-	var half: float = ControlSize.md * 0.5
-	if is_expanded:
-		send_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
-		send_button.offset_left = -ControlSize.md - Margin.ma_2
-		send_button.offset_top = -ControlSize.md - Margin.ma_2
-		send_button.offset_right = -Margin.ma_2
-		send_button.offset_bottom = -Margin.ma_2
-	else:
-		send_button.set_anchors_preset(Control.PRESET_CENTER)
-		send_button.offset_left = -half
-		send_button.offset_top = -half
-		send_button.offset_right = half
-		send_button.offset_bottom = half
+	send_button.custom_minimum_size = Vector2(ControlSize.md, ControlSize.md)
+	send_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	var inset: float = Margin.ma_1
+	send_button.offset_left = -ControlSize.md - inset
+	send_button.offset_top = -ControlSize.md - inset
+	send_button.offset_right = -inset
+	send_button.offset_bottom = -inset
 	send_button.z_index = 2
 	AgentChatInputTheme.apply_send_button(send_button, is_stop_action())
 	pass
@@ -691,8 +686,7 @@ func apply_input_tween_step(value: float) -> void:
 	input_wrap.offset_top = tween_bar_size.y - Margin.ma_4 - height
 	input_wrap.offset_bottom = tween_bar_size.y - Margin.ma_4
 	input_inner.custom_minimum_size.y = maxf(0.0, height - Margin.ma_2)
-	# Bottom-right until tween ends; center preset mid-shrink looks like the button slides left.
-	layout_send_button(true)
+	# Send button stays pinned via fixed BOTTOM_RIGHT offsets; no per-frame re-layout.
 	if border_beam != null:
 		set_border_beam_to_wrap(
 			lerpf(tween_start_left, tween_target_left, value),
