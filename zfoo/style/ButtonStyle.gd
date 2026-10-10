@@ -85,7 +85,7 @@ static func apply(
 ##
 ## [param disabled_color] defaults to [param base_color] at half alpha.
 static func apply_font_colors(
-	button: Button,
+	button: BaseButton,
 	base_color: Color,
 	hover_color: Color,
 	pressed_color: Color,
