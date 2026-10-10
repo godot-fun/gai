@@ -16,8 +16,8 @@ const MAX_CONTEXT_TOKENS: int = 1_000_000
 const THRESHOLD_WARN: float = 0.50
 const THRESHOLD_CAUTION: float = 0.75
 const THRESHOLD_CRITICAL: float = 0.90
-const RING_WIDTH: float = 2.5
-const RING_INSET: float = 1.5
+const RING_WIDTH: float = 3.5
+const RING_INSET: float = 2.0
 
 var wrap: PanelContainer
 var label: Label
@@ -83,7 +83,7 @@ func apply_theme() -> void:
 func draw_ring() -> void:
 	var center := label.size * 0.5
 	var radius: float = minf(label.size.x, label.size.y) * 0.5 - RING_INSET
-	label.draw_arc(center, radius, 0.0, TAU, 48, Color(ColorBase.secondary_text, 0.22), RING_WIDTH, true)
+	label.draw_arc(center, radius, 0.0, TAU, 48, ColorBase.control_surface, RING_WIDTH, true)
 	if usage_ratio <= 0.0:
 		return
 	var start_angle: float = -PI * 0.5
