@@ -8,7 +8,8 @@ extends RefCounted
 const EXPANDED_HEIGHT_MIN: float = 88.0
 ## Cap auto-grow so long paste does not cover most of the chat area.
 const EXPANDED_HEIGHT_MAX_RATIO: float = 0.55
-## Symmetric side inset: the original margin plus roughly one send-button width.
+## Symmetric side inset: keep the input visually centered after moving the send button inward.
+## The extra ControlSize.md is roughly one send-button width.
 const SIDE_INSET: float = Margin.ma_12 + ControlSize.md
 var input_bar: Control
 var input_wrap: PanelContainer
@@ -431,7 +432,9 @@ func prepare_field_for_expand_measure() -> void:
 func get_wrap_width(is_expanded: bool) -> float:
 	var bar_width: float = maxf(input_bar.size.x, 1.0)
 	if not is_expanded:
+		# The collapsed control remains a fixed circle, only its right edge moves inward.
 		return minf(ControlSize.xl, maxf(1.0, bar_width - SIDE_INSET))
+	# Expanded input uses the same inset on both sides, so its horizontal margins stay symmetric.
 	return maxf(1.0, bar_width - SIDE_INSET * 2.0)
 
 
@@ -460,8 +463,9 @@ func measure_field_content_height() -> float:
 func get_wrap_height(is_expanded: bool) -> float:
 	if not is_expanded:
 		return ControlSize.xl
-	# An empty editor is always the compact expanded height. During startup/theme changes TextEdit
-	# can briefly expose its allocated viewport height as its minimum, causing a full-screen flash.
+	# An empty editor is always the compact expanded height. Do not ask TextEdit for its minimum here:
+	# during startup/theme changes it can briefly return the allocated viewport height instead of one
+	# text line, making the input flash at nearly full-screen height before the next layout pass.
 	if input_field.text.is_empty():
 		input_field.scroll_fit_content_height = true
 		return EXPANDED_HEIGHT_MIN
@@ -560,6 +564,7 @@ func set_expanded(is_expanded: bool, animate: bool) -> void:
 
 func apply_input_tween_step(value: float) -> void:
 	var height: float = lerpf(tween_start_h, tween_target_h, value)
+	# Keep the right edge fixed throughout the tween; only the left edge and height are animated.
 	var wrap_right: float = tween_bar_size.x - SIDE_INSET
 	input_wrap.offset_left = lerpf(tween_start_left, tween_target_left, value)
 	input_wrap.offset_right = wrap_right
