@@ -3,7 +3,6 @@ extends RefCounted
 
 ## Circular toolbar button with an SVG paintbrush icon and ColorPicker popup.
 
-const ICON_SIZE: int = 14
 const BRUSH_ICON_PATH: String = "res://agent/asset/image/icon/brush.svg"
 const SVG_HANDLE_COLOR: String = "#8B949E"
 const SVG_ACCENT_COLOR: String = "#2DD4BF"
@@ -53,8 +52,8 @@ func apply_theme() -> void:
 	apply_equal_icon_margins(Margin.ma_1)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	button.add_theme_constant_override("icon_max_width", ICON_SIZE)
-	button.add_theme_constant_override("icon_max_height", ICON_SIZE)
+	button.add_theme_constant_override("icon_max_width", ControlSize.xs)
+	button.add_theme_constant_override("icon_max_height", ControlSize.xs)
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	update_icon(button.is_hovered())

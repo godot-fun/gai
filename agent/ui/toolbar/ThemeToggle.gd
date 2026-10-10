@@ -36,8 +36,8 @@ func apply_theme() -> void:
 	button.text = ""
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	button.add_theme_constant_override("icon_max_width", Typography.title_small_size)
-	button.add_theme_constant_override("icon_max_height", Typography.title_small_size)
+	button.add_theme_constant_override("icon_max_width", ControlSize.xs)
+	button.add_theme_constant_override("icon_max_height", ControlSize.xs)
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	update_icon(button.is_hovered())
 	pass

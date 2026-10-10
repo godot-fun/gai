@@ -118,7 +118,10 @@
       "placeholder": "Ask gai Code Agent to read, edit, or run commands…  (Enter to send, Shift+Enter for newline)",
       "click_to_ask": "Click to ask gai Code Agent…",
       "stop": "Stop",
-      "send": "Send (Enter)"
+      "send": "Send (Enter)",
+      "queued": "Queued ({})",
+      "continue_queue": "Continue",
+      "delete_queued": "Delete queued message"
     },
     "sense": {
       "pick_title": "Pick",

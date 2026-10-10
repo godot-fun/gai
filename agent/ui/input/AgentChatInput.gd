@@ -15,6 +15,8 @@ var input_wrap: PanelContainer
 var input_inner: Control
 var input_field: TextEdit
 var send_button: Button
+var queue_panel: PanelContainer
+var queue_rows: VBoxContainer
 var border_beam: AccentBorderBeamLayer
 var file_input: AgentChatInputFile = AgentChatInputFile.new()
 
@@ -46,6 +48,7 @@ func setup(
 	input_inner = p_input_inner
 	input_field = p_input_field
 	send_button = p_send_button
+	setup_queue_controls()
 
 	input_wrap.set_anchor(SIDE_LEFT, 0.0)
 	input_wrap.set_anchor(SIDE_TOP, 0.0)
@@ -69,11 +72,29 @@ func setup(
 	gdf.events.theme_color_changed.connect(on_ui_theme_changed)
 	gdf.events.locale_changed.connect(on_ui_theme_changed)
 	AgentEvents.events.session_selected.connect(on_session_selected)
+	AgentEvents.events.session_queue_changed.connect(on_session_queue_changed)
 	AgentEvents.events.chat_input_prefill.connect(on_chat_input_prefill)
 	setup_border_beam()
 	AgentEvents.events.agent_start.connect(on_agent_start)
 	AgentEvents.events.session_stop.connect(on_session_stop)
 	apply_theme()
+	refresh_from_active_session()
+	pass
+
+
+func setup_queue_controls() -> void:
+	queue_panel = PanelContainer.new()
+	queue_panel.name = "PendingMessages"
+	queue_panel.z_index = 3
+	queue_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	input_bar.add_child(queue_panel)
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	queue_panel.add_child(scroll)
+	queue_rows = VBoxContainer.new()
+	queue_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	queue_rows.add_theme_constant_override("separation", Margin.ma_1)
+	scroll.add_child(queue_rows)
 	pass
 
 
@@ -135,8 +156,17 @@ func refresh_border_beam() -> void:
 	pass
 
 
-func on_session_selected(_session_id: int, _previous_session_id: int) -> void:
+func on_session_selected(_session_id: int, previous_session_id: int) -> void:
+	var previous_session := AgentSessionStore.load_session(previous_session_id)
+	if previous_session != null:
+		previous_session.draft_text = input_field.text
 	refresh_from_active_session()
+	pass
+
+
+func on_session_queue_changed(session_id: int) -> void:
+	if AgentSessionManager.is_active(session_id):
+		refresh_queue()
 	pass
 
 
@@ -159,6 +189,9 @@ func on_chat_input_prefill(text: String) -> void:
 	if StringUtils.is_blank(text):
 		return
 	input_field.text = text
+	var session := AgentSessionStore.load_session(AgentSessionManager.active_session_id)
+	if session != null:
+		session.draft_text = text
 	force_expanded = false
 	expand_if_collapsed()
 	# Setting .text does not emit text_changed, so ask for the (possibly capped) height by hand.
@@ -171,23 +204,24 @@ func refresh_from_active_session() -> void:
 	var session: AgentSession = AgentSessionStore.load_session(AgentSessionManager.active_session_id)
 	var running: bool = AgentSessionManager.is_running(AgentSessionManager.active_session_id)
 	var no_history: bool = session != null and not AgentSessionManager.has_chat_history(session.id)
+	input_field.text = session.draft_text if session != null else ""
 	refresh_state(running, no_history)
+	refresh_queue()
 	pass
 
 
 func apply_theme() -> void:
 	AgentChatInputTheme.apply_wrap(input_wrap, expanded)
 	AgentChatInputTheme.apply_field(input_field)
-	var running: bool = AgentSessionManager.is_running(AgentSessionManager.active_session_id)
-	AgentChatInputTheme.apply_send_button(send_button, running)
+	AgentChatInputTheme.apply_send_button(send_button, is_stop_action())
+	apply_queue_theme()
 	pass
 
 
 func refresh_state(running: bool, no_history: bool = false) -> void:
 	force_expanded = no_history and not running
-	var enabling: bool = not input_field.editable and not running
-	AgentChatInputTheme.apply_send_button(send_button, running)
-	input_field.editable = not running
+	AgentChatInputTheme.apply_field(input_field)
+	input_field.editable = true
 	if force_expanded:
 		set_expanded(true, false)
 		focus_input_field.call_deferred()
@@ -197,8 +231,6 @@ func refresh_state(running: bool, no_history: bool = false) -> void:
 		set_expanded(false, true)
 	else:
 		layout_bar()
-	if enabling and not force_expanded:
-		restore_caret.call_deferred()
 	pass
 
 
@@ -208,9 +240,87 @@ func get_trimmed_text() -> String:
 
 func clear_text() -> void:
 	input_field.text = ""
+	var session := AgentSessionStore.load_session(AgentSessionManager.active_session_id)
+	if session != null:
+		session.draft_text = ""
 	# Setting .text does not emit text_changed, so re-measure by hand. Deferred: a send collapses
 	# right after this, and that tween should still start from the current (capped) height.
 	relayout_if_height_changed.call_deferred()
+	pass
+
+
+func refresh_queue() -> void:
+	for child in queue_rows.get_children():
+		queue_rows.remove_child(child)
+		child.queue_free()
+	var session := AgentSessionStore.load_session(AgentSessionManager.active_session_id)
+	queue_panel.visible = session != null and not session.pending_messages.is_empty()
+	if not queue_panel.visible:
+		layout_queue_panel()
+		return
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", Margin.ma_2)
+	var title := Label.new()
+	title.text = StringUtils.format(I18n.t("agent.input.queued"), session.pending_messages.size())
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title.add_theme_font_override("font", Fonts.semibold())
+	title.add_theme_color_override("font_color", ColorBase.secondary_text)
+	header.add_child(title)
+	if not AgentSessionManager.is_running(session.id):
+		var continue_button := Button.new()
+		continue_button.text = I18n.t("agent.input.continue_queue")
+		continue_button.focus_mode = Control.FOCUS_NONE
+		AgentChatInputTheme.apply_queue_continue_button(continue_button)
+		continue_button.pressed.connect(AgentSessionManager.try_run_next.bind(session.id))
+		header.add_child(continue_button)
+	queue_rows.add_child(header)
+
+	for queued: String in session.pending_messages:
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", Margin.ma_2)
+		var label := Label.new()
+		label.text = queued.replace(FileUtils.NEWLINE_LF, " ")
+		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		label.tooltip_text = queued
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		label.add_theme_color_override("font_color", ColorBase.primary_text)
+		row.add_child(label)
+		var delete_button := Button.new()
+		delete_button.tooltip_text = I18n.t("agent.input.delete_queued")
+		delete_button.custom_minimum_size = Vector2(ControlSize.sm, ControlSize.sm)
+		delete_button.focus_mode = Control.FOCUS_NONE
+		AgentChatInputTheme.apply_queue_delete_button(delete_button)
+		delete_button.pressed.connect(AgentSessionManager.delete_pending_message.bind(session.id, queued))
+		row.add_child(delete_button)
+		queue_rows.add_child(row)
+	apply_queue_theme()
+	layout_queue_panel.call_deferred()
+	pass
+
+
+func apply_queue_theme() -> void:
+	# Match the expanded composer surface and rounding, without stacking another floating shadow.
+	var style := AgentChatInputTheme.build_wrap_style(true)
+	style.shadow_color = Color.TRANSPARENT
+	style.shadow_size = 0
+	style.shadow_offset = Vector2.ZERO
+	style.content_margin_left = Margin.ma_3
+	style.content_margin_top = Margin.ma_2
+	style.content_margin_right = Margin.ma_3
+	style.content_margin_bottom = Margin.ma_2
+	queue_panel.add_theme_stylebox_override("panel", style)
+	pass
+
+
+func layout_queue_panel() -> void:
+	if not queue_panel.visible:
+		return
+	var width := get_wrap_width(true)
+	var content_height := minf(queue_rows.get_combined_minimum_size().y + Margin.ma_4, 220.0)
+	var right := input_bar.size.x - SIDE_INSET
+	queue_panel.position = Vector2(right - width, input_wrap.offset_top - content_height - Margin.ma_2)
+	queue_panel.size = Vector2(width, content_height)
 	pass
 
 
@@ -242,11 +352,17 @@ func on_global_input(event: InputEvent) -> void:
 # Event handlers
 # ---------------------------------------------------------------------------
 
+func is_stop_action() -> bool:
+	return (expanded
+		and AgentSessionManager.is_running(AgentSessionManager.active_session_id)
+		and get_trimmed_text().is_empty())
+
+
 func on_input_action_pressed() -> void:
 	var session: AgentSession = AgentSessionStore.load_session(AgentSessionManager.active_session_id)
 	if session == null:
 		return
-	if AgentSessionManager.is_running(session.id):
+	if is_stop_action():
 		AgentSessionManager.request_stop(session.id)
 		return
 	var text: String = get_trimmed_text()
@@ -256,10 +372,9 @@ func on_input_action_pressed() -> void:
 		return
 	if not AgentChatInputDependencyGuard.ensure_git_installed(session.id):
 		return
-	AgentChatInputDependencyGuard.append_python_install_message(session)
-	clear_text()
-	collapse_after_send()
-	await AgentSessionManager.async_send(session.id, text)
+	if AgentSessionManager.enqueue_message(session.id, text):
+		clear_text()
+		collapse_after_send()
 	pass
 
 
@@ -272,6 +387,10 @@ func on_field_minimum_size_changed() -> void:
 ## While the panel is capped the field keeps the stylebox-only minimum height, so
 ## minimum_size_changed never fires and a big delete (or clear) would never shrink the panel.
 func on_field_text_changed() -> void:
+	var session := AgentSessionStore.load_session(AgentSessionManager.active_session_id)
+	if session != null:
+		session.draft_text = input_field.text
+	AgentChatInputTheme.apply_send_button(send_button, is_stop_action())
 	relayout_if_height_changed()
 	pass
 
@@ -415,7 +534,7 @@ func can_collapse() -> bool:
 # ---------------------------------------------------------------------------
 
 func is_point_inside(global_pos: Vector2) -> bool:
-	return input_wrap.get_global_rect().has_point(global_pos)
+	return input_wrap.get_global_rect().has_point(global_pos) or (queue_panel.visible and queue_panel.get_global_rect().has_point(global_pos))
 
 
 func wrap_offset_height() -> float:
@@ -497,6 +616,7 @@ func layout_bar() -> void:
 		input_field.scroll_fit_content_height = true
 	input_wrap.tooltip_text = "" if expanded else I18n.t("agent.input.click_to_ask")
 	layout_send_button(expanded)
+	layout_queue_panel()
 	AgentChatInputTheme.apply_wrap(input_wrap, expanded)
 	layout_border_beam()
 	refresh_border_beam()
@@ -523,6 +643,7 @@ func layout_send_button(is_expanded: bool) -> void:
 		send_button.offset_right = half
 		send_button.offset_bottom = half
 	send_button.z_index = 2
+	AgentChatInputTheme.apply_send_button(send_button, is_stop_action())
 	pass
 
 

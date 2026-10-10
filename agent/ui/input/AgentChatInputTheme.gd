@@ -3,6 +3,8 @@ extends Object
 
 ## Theme styling and generated icons for the floating chat input.
 
+const TRASH_ICON_PATH := "res://agent/asset/image/icon/trash.svg"
+
 static func apply_wrap(input_wrap: PanelContainer, expanded: bool) -> void:
 	input_wrap.add_theme_stylebox_override("panel", build_wrap_style(expanded))
 	pass
@@ -41,12 +43,13 @@ static func apply_field(input_field: TextEdit) -> void:
 	pass
 
 
-static func apply_send_button(send_button: Button, running: bool) -> void:
-	var base_color := ColorBase.error if running else ThemeColor.accent_theme_color()
-	send_button.tooltip_text = I18n.t("agent.input.stop") if running else I18n.t("agent.input.send")
-	send_button.icon = make_stop_icon(16, Color.WHITE) if running else make_arrow_up_icon(16, Color.WHITE)
-	send_button.add_theme_constant_override("icon_max_width", 16)
-	send_button.add_theme_constant_override("icon_max_height", 16)
+static func apply_send_button(send_button: Button, stop_action: bool = false) -> void:
+	var base_color := ColorBase.error if stop_action else ThemeColor.accent_theme_color()
+	send_button.tooltip_text = I18n.t("agent.input.stop") if stop_action else I18n.t("agent.input.send")
+	var icon_size := ControlSize.xs
+	send_button.icon = make_stop_icon(icon_size, Color.WHITE) if stop_action else make_arrow_up_icon(icon_size, Color.WHITE)
+	send_button.add_theme_constant_override("icon_max_width", icon_size)
+	send_button.add_theme_constant_override("icon_max_height", icon_size)
 	var radius: int = int(ControlSize.md * 0.5)
 	var normal := StyleBoxHelper.create_style_box_flat(base_color, radius, Margin.ma_1, Margin.ma_1)
 	ButtonStyle.apply(send_button, normal,
@@ -55,6 +58,32 @@ static func apply_send_button(send_button: Button, running: bool) -> void:
 		ButtonStyle.filled(normal, base_color.darkened(0.25)))
 	send_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	pass
+
+
+static func apply_queue_delete_button(delete_button: Button) -> void:
+	AgentToolbarButton.style_round(delete_button, delete_button.tooltip_text)
+	delete_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var icon_size := ControlSize.xs
+	delete_button.icon = make_trash_icon(icon_size, ThemeColor.accent_theme_color())
+	delete_button.add_theme_constant_override("icon_max_width", icon_size)
+	delete_button.add_theme_constant_override("icon_max_height", icon_size)
+	delete_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pass
+
+
+static func apply_queue_continue_button(continue_button: Button) -> void:
+	AgentToolbarButton.style(continue_button, I18n.t("agent.input.continue_queue"))
+	continue_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	pass
+
+
+static func make_trash_icon(size: int, color: Color) -> ImageTexture:
+	var svg := FileAccess.get_file_as_string(TRASH_ICON_PATH)
+	svg = svg.replace("#ffffff", "#" + color.to_html(false))
+	var image := Image.new()
+	if image.load_svg_from_string(svg, float(size) / 16.0) != OK:
+		return ImageTexture.new()
+	return ImageTexture.create_from_image(image)
 
 
 static func make_arrow_up_icon(size: int, color: Color) -> ImageTexture:

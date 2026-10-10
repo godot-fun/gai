@@ -37,8 +37,8 @@ func apply_theme() -> void:
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.expand_icon = false
-	button.add_theme_constant_override("icon_max_width", Margin.ma_6)
-	button.add_theme_constant_override("icon_max_height", Margin.ma_6)
+	button.add_theme_constant_override("icon_max_width", ControlSize.xs)
+	button.add_theme_constant_override("icon_max_height", ControlSize.xs)
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	update_popup_items()

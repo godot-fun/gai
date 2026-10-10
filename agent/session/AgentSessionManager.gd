@@ -249,32 +249,76 @@ static func set_title(session_id: int, title: String) -> void:
 # User actions — send, stop
 # ---------------------------------------------------------------------------
 
-static func async_send(session_id: int, user_text: String) -> void:
+static func enqueue_message(session_id: int, user_text: String) -> bool:
 	var session_index := get_session_index(session_id)
 	if session_index == null:
-		return
-	if session_index.is_running():
-		Alert.alert("session is busy", ColorBase.error)
-		return
+		return false
 	if StringUtils.is_blank(user_text):
-		return
+		return false
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null:
-		return
+		return false
 	var trimmed := user_text.strip_edges()
+	session.pending_messages.append(trimmed)
+	session.draft_text = ""
+	persist_session(session_id)
+	AgentEvents.events.session_queue_changed.emit(session_id)
+	try_run_next.call_deferred(session_id)
+	return true
+
+
+## Starts the FIFO head when the session is idle. Errors and manual stops leave later items queued.
+static func try_run_next(session_id: int) -> void:
+	var session_index := get_session_index(session_id)
+	if session_index == null or session_index.is_running():
+		return
+	var session := AgentSessionStore.load_session(session_id)
+	if session == null or session.pending_messages.is_empty():
+		return
+	# Mark the session busy before the checkpoint await so a second dispatcher cannot consume it.
+	session_index.run = AgentSessionIndexes.RunState.new()
+	AgentEvents.events.session_queue_changed.emit(session_id)
+	var queued: String = session.pending_messages[0]
 	# The first prompt names the chat; later turns find a title that is no longer the default —
 	# and a name picked in the sidebar survives for the same reason.
-	if get_title(session_id) == DEFAULT_TITLE:
-		set_title(session_id, trimmed)
-	session.messages.append(ChatMessage.user(trimmed))
-	# Snapshot before the agent can touch the workspace. The bubble decides at build time whether to
-	# offer Revert, so the commit id must be known before the entry is created.
 	var checkpoint := await AgentCheckpoint.async_snapshot(session_id)
+	session_index = get_session_index(session_id)
+	session = AgentSessionStore.load_session(session_id)
+	if session_index == null or session == null or session.pending_messages.is_empty():
+		if session_index != null:
+			session_index.stop_running()
+			AgentEvents.events.session_stop.emit(session_id)
+		return
+	if session.pending_messages[0] != queued:
+		session_index.stop_running()
+		AgentEvents.events.session_stop.emit(session_id)
+		try_run_next.call_deferred(session_id)
+		return
+	session.pending_messages.pop_front()
+	AgentEvents.events.session_queue_changed.emit(session_id)
+	AgentChatInputDependencyGuard.append_python_install_message(session)
+	if get_title(session_id) == DEFAULT_TITLE:
+		set_title(session_id, queued)
+	session.messages.append(ChatMessage.user(queued))
 	var details: Dictionary[String, String] = {}
 	if StringUtils.is_not_blank(checkpoint):
 		details[ChatEntry.DETAIL_CHECKPOINT] = checkpoint
-	add_chat_entry(session_id, ChatEntry.KIND_USER, ChatEntry.TITLE_USER, trimmed, details)
+	add_chat_entry(session_id, ChatEntry.KIND_USER, ChatEntry.TITLE_USER, queued, details)
+	persist_session(session_id)
 	await run_agent(session)
+	pass
+
+
+static func delete_pending_message(session_id: int, message: String) -> void:
+	var session := AgentSessionStore.load_session(session_id)
+	if session == null:
+		return
+	var index := session.pending_messages.find(message)
+	if index < 0:
+		return
+	session.pending_messages.remove_at(index)
+	persist_session(session_id)
+	AgentEvents.events.session_queue_changed.emit(session_id)
 	pass
 
 
@@ -296,7 +340,8 @@ static func run_agent(session: AgentSession) -> void:
 	var session_index := get_session_index(session.id)
 	if session_index == null:
 		return
-	session_index.run = AgentSessionIndexes.RunState.new()
+	if session_index.run == null:
+		session_index.run = AgentSessionIndexes.RunState.new()
 	# One scope per run: the loop's HTTP request and any tool subprocess register into it, so
 	# request_stop only stops this session's work.
 	var cancel_scope := CancelScope.new()
@@ -432,15 +477,18 @@ static func on_agent_end(session_id: int, error_message: String) -> void:
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null:
 		return
+	var session_index := get_session_index(session_id)
+	var stopped_by_user: bool = session_index != null and session_index.is_stop_requested()
 	if StringUtils.is_not_blank(error_message):
 		add_chat_entry(session_id, ChatEntry.KIND_ERROR, ChatEntry.TITLE_ERROR, error_message)
 	await AgentCheckpoint.async_append_git_diff(session_id)
 	persist_session(session_id)
 
-	var session_index := get_session_index(session_id)
 	if session_index != null:
 		session_index.stop_running()
 	AgentEvents.events.session_stop.emit(session_id)
+	if not stopped_by_user and StringUtils.is_blank(error_message):
+		try_run_next.call_deferred(session_id)
 	pass
 
 

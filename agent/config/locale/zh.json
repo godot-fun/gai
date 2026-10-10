@@ -118,7 +118,10 @@
       "placeholder": "让 gai Code Agent 读取、编辑文件或运行命令…（Enter 发送，Shift+Enter 换行）",
       "click_to_ask": "点击询问 gai Code Agent…",
       "stop": "停止",
-      "send": "发送（Enter）"
+      "send": "发送（Enter）",
+      "queued": "排队中（{}）",
+      "continue_queue": "继续",
+      "delete_queued": "删除排队消息"
     },
     "sense": {
       "pick_title": "选文",
