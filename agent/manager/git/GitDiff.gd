@@ -3,6 +3,7 @@ extends Object
 
 const DIFF_CACHE_SUBDIR := ".gai/cache/diff"
 const MAX_DIFF_CACHE_BYTES := 16 * FileUtils.BYTES_PER_MB
+const DELTA_EXECUTABLE_PATH := ".dependency/delta/delta.exe"
 
 const GITHUB_LIGHT_BACKGROUND := "BackgroundColour=255,255,255" # #ffffff canvas-default
 const GITHUB_LIGHT_FOREGROUND := "ForegroundColour=31,35,40" # #1f2328 fg-default
@@ -19,7 +20,8 @@ const DELTA_DIFF_STYLES_DARK := "--minus-style='syntax #2d1618' --minus-emph-sty
 
 
 static func _static_init() -> void:
-	WorkerThreadPool.add_task(func() -> void: FileUtils.cleanup_cache_folder(DIFF_CACHE_SUBDIR, MAX_DIFF_CACHE_BYTES))
+	var cache_dir := AgentWorkspace.get_root().path_join(DIFF_CACHE_SUBDIR)
+	WorkerThreadPool.add_task(func() -> void: FileUtils.cleanup_cache_folder(cache_dir, MAX_DIFF_CACHE_BYTES))
 	pass
 
 
@@ -96,7 +98,7 @@ static func open_diff(patch_path: String) -> void:
 	if StringUtils.is_blank(patch_path) or not FileAccess.file_exists(patch_path):
 		Alert.alert("Git diff is unavailable", ColorBase.error)
 		return
-	var delta_path := ProjectSettings.globalize_path("res://.dependency/delta/delta.exe")
+	var delta_path := FileUtils.globalize_writable_path(DELTA_EXECUTABLE_PATH)
 	if not FileAccess.file_exists(delta_path):
 		Alert.alert("Delta executable not found", ColorBase.error)
 		return
