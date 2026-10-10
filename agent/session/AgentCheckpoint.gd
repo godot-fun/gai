@@ -285,10 +285,16 @@ static func open_diff(patch_path: String) -> void:
 	var command := StringUtils.format("/usr/bin/sleep 0.2; /usr/bin/cat '{}' | '{}' --side-by-side --width=-2 --syntax-theme '{}' {} {} --paging=always; exec /bin/bash --login -i", escaped_patch_path, escaped_delta_path, syntax_theme, diff_styles, delta_color_mode)
 	var encoded_command := Marshalls.raw_to_base64(command.to_utf8_buffer())
 	var bash_command := StringUtils.format("/bin/bash --noprofile --norc <(printf %s {} | /usr/bin/base64 --decode)", encoded_command)
+	# `--window max` expands on the monitor that owns the initial position; without
+	# `--pos` Windows often places mintty on the primary (left) screen.
+	var screen := DisplayServer.window_get_current_screen(DisplayServer.MAIN_WINDOW_ID)
+	var usable := DisplayServer.screen_get_usable_rect(screen)
+	var mintty_pos := str(usable.position.x) + "," + str(usable.position.y)
 	var mintty_path := GitUtils.find_windows_git_mintty()
 	var pid := OS.create_process(
 			mintty_path,
 			PackedStringArray([
+				"--pos", mintty_pos,
 				"--window", "max",
 				"--title", "Git Diff",
 				"--option", terminal_background,
