@@ -1,5 +1,5 @@
 class_name GitManager
-extends RefCounted
+extends Object
 
 ## Workspace snapshots for chat revert — four shadow Git repositories under `.gai/checkpoints/`.
 ##
@@ -53,22 +53,7 @@ static func ensure_repo(git: GitUtils.Git) -> bool:
 	if init.exit_code != 0:
 		Log.error("agent checkpoint init failed:[{}]", init.output.build_string())
 		return false
-	return write_exclude_rules(git_dir)
-
-
-static func write_exclude_rules(git_dir: String) -> bool:
-	var project_rules := FileUtils.read_file_to_string(AgentWorkspace.get_root().path_join(".gitignore"))
-	var exclude_rules := project_rules
-	if not exclude_rules.is_empty() and not exclude_rules.ends_with(FileUtils.NEWLINE_LF):
-		exclude_rules += FileUtils.NEWLINE_LF
-	## `.git` is the user's real repository — snapshots must never swallow it.
-	## Mandatory rules come last so project negation rules cannot re-include these directories.
-	exclude_rules += ".git/\n.gai/\n.godot/\n"
-	var git_exclude_path := git_dir.path_join("info/exclude")
-	if FileUtils.write_string_to_file(git_exclude_path, exclude_rules):
-		return true
-	Log.error("agent checkpoint exclude write failed:[{}]", git_exclude_path)
-	return false
+	return GitIgnore.write_exclude_rules(git_dir)
 
 
 ## Deletes only the exact shadow repository path after validation has declared it invalid.
