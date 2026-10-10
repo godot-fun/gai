@@ -3,11 +3,7 @@ extends RefCounted
 
 ## Toolbar button for selecting the visual presentation used during agent runs.
 
-const RING_COUNT: int = 3
-## Radii on the 24 px ([constant Margin.ma_6]) canvas. An even-sized canvas has its centre on a half pixel
-## ((size - 1) / 2), so the radii stay half integers: an integer radius would push the rings
-## one texel to the bottom right of the canvas and off centre inside the round button.
-const RING_RADII: Array[float] = [2.5, 7.5, 11.5]
+const SPARKLE_ICON_PATH: String = "res://agent/asset/image/icon/sparkle.svg"
 
 var button: Button
 var popup: PopupMenu
@@ -44,7 +40,7 @@ func apply_theme() -> void:
 	button.add_theme_constant_override("icon_max_width", Margin.ma_6)
 	button.add_theme_constant_override("icon_max_height", Margin.ma_6)
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	button.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	update_popup_items()
 	style_popup()
 	update_icon(button.is_hovered())
@@ -112,7 +108,7 @@ func update_icon(hovered: bool) -> void:
 			icon_color = icon_color.lightened(0.12)
 	elif hovered:
 		icon_color = ColorBase.primary_text
-	button.icon = make_concentric_rings_icon(Margin.ma_6, icon_color)
+	button.icon = make_sparkle_icon(icon_color)
 	pass
 
 
@@ -136,24 +132,10 @@ func on_visual_selected(id: int) -> void:
 	pass
 
 
-func make_concentric_rings_icon(size: int, color: Color) -> ImageTexture:
-	var img: Image = Image.create(size, size, false, Image.FORMAT_RGBA8)
-	img.fill(Color(0, 0, 0, 0))
-	var center: float = (size - 1) / 2.0
-	for ring_index in range(RING_COUNT):
-		draw_circle_outline(img, center, RING_RADII[ring_index], color)
-	return ImageTexture.create_from_image(img)
-
-
-## 1 px ring: keep every texel whose centre falls inside the radius band. Drawing from the
-## texel centre keeps the outline symmetric for both even and odd canvas sizes.
-func draw_circle_outline(img: Image, center: float, radius: float, col: Color) -> void:
-	if radius <= 0.0:
-		return
-	for y in range(img.get_height()):
-		for x in range(img.get_width()):
-			var dx: float = x - center
-			var dy: float = y - center
-			if absf(sqrt(dx * dx + dy * dy) - radius) <= 0.5:
-				img.set_pixel(x, y, col)
-	pass
+func make_sparkle_icon(color: Color) -> ImageTexture:
+	var svg: String = FileAccess.get_file_as_string(SPARKLE_ICON_PATH)
+	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
+	var image := Image.new()
+	if image.load_svg_from_string(svg, 2.0) != OK:
+		return ImageTexture.new()
+	return ImageTexture.create_from_image(image)
