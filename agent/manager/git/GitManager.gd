@@ -1,4 +1,4 @@
-class_name GitHelper
+class_name GitManager
 extends RefCounted
 
 ## Workspace snapshots for chat revert — four shadow Git repositories under `.gai/checkpoints/`.
@@ -37,7 +37,7 @@ static func ensure_repo(git: GitUtils.Git) -> bool:
 		# Supplying --work-tree makes Git report false even for a valid bare repository.
 		var check := await git.async_is_bare()
 		if check.exit_code == 0 and check.output.build_string().strip_edges() == "true":
-			return write_exclude_rules(git_dir)
+			return true
 		# A missing Git executable is an environment failure, not repository corruption.
 		if check.exit_code < 0:
 			Log.error("agent checkpoint validation failed to start git:[{}]", check.output.build_string())

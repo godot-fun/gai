@@ -77,11 +77,11 @@ static func refresh(rich_text: RichTextLabel, entry: ChatEntry) -> void:
 
 static func open_file_diff(meta: Variant, patch_path: String) -> void:
 	var relative_path := str(meta)
-	if not GitHelper.open_file_diff(patch_path, relative_path):
+	if not GitManager.open_file_diff(patch_path, relative_path):
 		Alert.alert(StringUtils.format("Git diff is unavailable: {}", relative_path), ColorBase.error)
 	pass
 
 
 static func on_diff_pressed(patch_path: String) -> void:
-	GitHelper.open_diff(patch_path)
+	GitManager.open_diff(patch_path)
 	pass
