@@ -76,6 +76,7 @@ static func create_file_path_button(file_path: String) -> LinkButton:
 	var button: LinkButton = LinkButton.new()
 	button.text = file_path
 	button.tooltip_text = "Open file"
+	button.underline = LinkButton.UNDERLINE_MODE_NEVER
 	button.add_theme_color_override("font_color", ColorBase.secondary_text)
 	button.add_theme_font_override("font", Fonts.regular())
 	button.add_theme_font_size_override("font_size", Typography.label_medium_size)
