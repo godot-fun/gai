@@ -75,7 +75,7 @@ static func apply_queue_continue_button(continue_button: Button) -> void:
 
 static func make_trash_icon(size: int, color: Color) -> ImageTexture:
 	var svg := FileAccess.get_file_as_string(TRASH_ICON_PATH)
-	svg = svg.replace("#ffffff", "#" + color.to_html(false))
+	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
 	var image := Image.new()
 	if image.load_svg_from_string(svg, float(size) / 16.0) != OK:
 		return ImageTexture.new()
