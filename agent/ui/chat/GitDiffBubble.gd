@@ -38,6 +38,7 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 
 	var rich_text := MarkdownHelper.create_plain_rich_text_label(ColorBase.secondary_text)
 	rich_text.meta_clicked.connect(open_file_diff.bind(patch_path))
+	rich_text.tooltip_text = "Open file diff"
 	vbox.add_child(rich_text)
 	wrapper.set_meta(AgentChatView.META_BUBBLE_RICH_TEXT, rich_text)
 	chat_list.add_child(wrapper)
