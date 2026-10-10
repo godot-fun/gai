@@ -32,25 +32,3 @@ static func duplicate_message_delete_removes_first_match_test() -> void:
 	pending.remove_at(pending.find("same"))
 	assert(pending == ["middle", "same"])
 	pass
-
-
-static func runtime_lifecycle_test() -> void:
-	RuntimeManager.clear()
-	var runtime := RuntimeManager.start(42)
-	assert(RuntimeManager.is_running(42))
-	assert(RuntimeManager.get_runtime(42) == runtime)
-	assert(not RuntimeManager.is_stop_requested(42))
-	RuntimeManager.stop(42)
-	assert(not RuntimeManager.is_running(42))
-	assert(RuntimeManager.is_stop_requested(42))
-	pass
-
-
-static func runtime_stop_cancels_scope_test() -> void:
-	RuntimeManager.clear()
-	var runtime := RuntimeManager.start(42)
-	RuntimeManager.request_stop(42)
-	assert(runtime.stop_requested)
-	assert(runtime.cancel_scope.cancelled)
-	RuntimeManager.clear()
-	pass

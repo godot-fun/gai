@@ -9,7 +9,7 @@ static func run(ai_client: OpenAiClient, session: AgentSession) -> void:
 	AgentEvents.events.agent_start.emit(session.id)
 	while turn < MAX_TURNS:
 		turn += 1
-		if AgentSessionManager.is_stop_requested(session.id):
+		if RuntimeManager.is_stop_requested(session.id):
 			AgentEvents.events.agent_end.emit(session.id, "Stop.")
 			return
 		
@@ -18,7 +18,7 @@ static func run(ai_client: OpenAiClient, session: AgentSession) -> void:
 		var completion := await ai_client.async_chat_messages_stream(session.messages, AgentToolRegistry.schemas, ApiSetting.get_proxy_address(), on_chunk)
 		AgentEvents.events.message_complete.emit(session.id, completion.usage)
 
-		if AgentSessionManager.is_stop_requested(session.id):
+		if RuntimeManager.is_stop_requested(session.id):
 			AgentEvents.events.agent_end.emit(session.id, "Stop..")
 			return
 		if completion.has_error():
@@ -35,7 +35,7 @@ static func run(ai_client: OpenAiClient, session: AgentSession) -> void:
 
 		session.messages.append(ChatMessage.assistant_tool_calls(tool_calls, content, completion.reasoning_content))
 		for tool_call: OpenAiToolCall in tool_calls:
-			if AgentSessionManager.is_stop_requested(session.id):
+			if RuntimeManager.is_stop_requested(session.id):
 				AgentEvents.events.agent_end.emit(session.id, "Stop...")
 				return
 			var tool_name := tool_call.function.name

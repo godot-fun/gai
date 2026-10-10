@@ -23,7 +23,6 @@ static func _static_init() -> void:
 
 	# Agent run lifecycle
 	AgentEvents.events.agent_end.connect(on_agent_end)
-	AgentEvents.events.session_resume.connect(on_session_resume)
 
 	# Turn & streaming
 	AgentEvents.events.turn_start.connect(on_turn_start)
@@ -92,7 +91,7 @@ static func delete_session(session_id: int) -> void:
 		return
 	var session_index := get_session_index(session_id)
 	if session_index != null and RuntimeManager.is_running(session_id):
-		request_stop(session_id)
+		RuntimeManager.request_stop(session_id)
 
 	AgentSessionStore.delete_session(session_id)
 	remove_session_index(session_id)
@@ -256,50 +255,8 @@ static func enqueue_message(session_id: int, user_text: String) -> bool:
 	session.draft_text = ""
 	persist_session(session_id)
 	AgentEvents.events.session_queue_changed.emit(session_id)
-	try_run_next.call_deferred(session_id)
+	RuntimeManager.try_run_next.call_deferred(session_id)
 	return true
-
-
-## Starts the FIFO head when the session is idle. Errors and manual stops leave later items queued.
-static func try_run_next(session_id: int) -> void:
-	var session_index := get_session_index(session_id)
-	if session_index == null or RuntimeManager.is_running(session_id):
-		return
-	var session := AgentSessionStore.load_session(session_id)
-	if session == null or session.pending_messages.is_empty():
-		return
-	# Mark the session busy before the checkpoint await so a second dispatcher cannot consume it.
-	RuntimeManager.start(session_id)
-	AgentEvents.events.session_queue_changed.emit(session_id)
-	var queued: String = session.pending_messages[0]
-	# The first prompt names the chat; later turns find a title that is no longer the default —
-	# and a name picked in the sidebar survives for the same reason.
-	var checkpoint := await GitManager.async_snapshot(session_id)
-	session_index = get_session_index(session_id)
-	session = AgentSessionStore.load_session(session_id)
-	if session_index == null or session == null or session.pending_messages.is_empty():
-		RuntimeManager.stop(session_id)
-		if session_index != null:
-			AgentEvents.events.session_stop.emit(session_id)
-		return
-	if session.pending_messages[0] != queued:
-		RuntimeManager.stop(session_id)
-		AgentEvents.events.session_stop.emit(session_id)
-		try_run_next.call_deferred(session_id)
-		return
-	session.pending_messages.pop_front()
-	AgentEvents.events.session_queue_changed.emit(session_id)
-	AgentChatInputDependencyGuard.append_python_install_message(session)
-	if get_title(session_id) == DEFAULT_TITLE:
-		set_title(session_id, queued)
-	session.messages.append(ChatMessage.user(queued))
-	var details: Dictionary[String, String] = {}
-	if StringUtils.is_not_blank(checkpoint):
-		details[ChatEntry.DETAIL_CHECKPOINT] = checkpoint
-	add_chat_entry(session_id, ChatEntry.KIND_USER, ChatEntry.TITLE_USER, queued, details)
-	persist_session(session_id)
-	await run_agent(session)
-	pass
 
 
 static func delete_pending_message(session_id: int, message: String) -> void:
@@ -314,53 +271,6 @@ static func delete_pending_message(session_id: int, message: String) -> void:
 	AgentEvents.events.session_queue_changed.emit(session_id)
 	pass
 
-
-static func async_resume(session_id: int) -> void:
-	var session_index := get_session_index(session_id)
-	if session_index == null:
-		return
-	if RuntimeManager.is_running(session_id):
-		Alert.alert("session is busy", ColorBase.error)
-		return
-	var session := AgentSessionStore.load_session(session_id)
-	if session == null:
-		return
-	await run_agent(session)
-	pass
-
-
-static func run_agent(session: AgentSession) -> void:
-	var session_index := get_session_index(session.id)
-	if session_index == null:
-		return
-	# One runtime per run: the loop's HTTP request and any tool subprocess share its cancel scope.
-	var runtime := RuntimeManager.get_or_start(session.id)
-	var ai_client := ApiSetting.get_client()
-	ai_client.cancel_scope = runtime.cancel_scope
-	await AgentLoop.run(ai_client, session)
-	pass
-
-
-static func on_session_resume(session_id: int) -> void:
-	await async_resume(session_id)
-	pass
-
-static func request_stop(session_id: int) -> void:
-	var session_index := get_session_index(session_id)
-	if session_index == null:
-		return
-	if not RuntimeManager.is_running(session_id) or RuntimeManager.is_stop_requested(session_id):
-		return
-	RuntimeManager.request_stop(session_id)
-	pass
-
-static func is_stop_requested(session_id: int) -> bool:
-	var session_index := get_session_index(session_id)
-	if session_index == null:
-		return true
-	if not RuntimeManager.is_running(session_id):
-		return true
-	return RuntimeManager.is_stop_requested(session_id)
 
 # ---------------------------------------------------------------------------
 # Chat Entry
@@ -413,7 +323,7 @@ static func delete_chat_from_entry(session_id: int, entry: ChatEntry) -> void:
 		AgentEvents.events.chat_entry_delete.emit(session_id)
 		return
 	if RuntimeManager.is_running(session_id):
-		request_stop(session_id)
+		RuntimeManager.request_stop(session_id)
 	var msg_idx := message_index_for_user_chat_entry(session, entry_idx)
 	session.chat_entries = session.chat_entries.slice(0, entry_idx)
 	session.messages = session.messages.slice(0, msg_idx)
@@ -475,7 +385,7 @@ static func on_agent_end(session_id: int, error_message: String) -> void:
 	RuntimeManager.stop(session_id)
 	AgentEvents.events.session_stop.emit(session_id)
 	if should_continue_queue:
-		try_run_next.call_deferred(session_id)
+		RuntimeManager.try_run_next.call_deferred(session_id)
 	pass
 
 
