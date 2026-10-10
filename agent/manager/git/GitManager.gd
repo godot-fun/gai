@@ -53,7 +53,8 @@ static func ensure_repo(git: GitUtils.Git) -> bool:
 	if init.exit_code != 0:
 		Log.error("agent checkpoint init failed:[{}]", init.output.build_string())
 		return false
-	return GitIgnore.write_exclude_rules(git_dir)
+	GitIgnore.ensure_exclude_rules(git_dir)
+	return true
 
 
 ## Deletes only the exact shadow repository path after validation has declared it invalid.
@@ -114,6 +115,7 @@ static func async_cleanup() -> void:
 		var git := GitUtils.Git.new(git_dir, workspace_root)
 		if not await ensure_repo(git):
 			continue
+		GitIgnore.ensure_exclude_rules(git_dir)
 		var history := await git.async_list_commits(MAX_CHECKPOINTS + 1)
 		if history.exit_code != 0:
 			# An initialized repository without its first commit has nothing to clean.

@@ -150,18 +150,22 @@ const MANDATORY_EXCLUDE_RULES := """
 """
 
 
-static func write_exclude_rules(git_dir: String) -> bool:
-	var project_rules := FileUtils.read_file_to_string(AgentWorkspace.get_root().path_join(".gitignore"))
-	var exclude_rules := project_rules
-	if not exclude_rules.is_empty() and not exclude_rules.ends_with(FileUtils.NEWLINE_LF):
-		exclude_rules += FileUtils.NEWLINE_LF
-	exclude_rules += COMMON_EXCLUDE_RULES
-	exclude_rules += LARGE_FILE_EXCLUDE_RULES
+static func ensure_exclude_rules(git_dir: String) -> void:
+	var project_gitignore_path := AgentWorkspace.get_root().path_join(".gitignore")
+	var project_gitignore_rules := FileUtils.read_file_to_string(project_gitignore_path)
+	var git_exclude_path := git_dir.path_join("info/exclude")
+	if FileAccess.file_exists(git_exclude_path):
+		var existing_rules := FileUtils.read_file_to_string(git_exclude_path)
+		if existing_rules.contains(project_gitignore_rules):
+			return
+	var build := StringBuilder.new()
+	build.append_if_not_empty(project_gitignore_rules)
+	build.append(COMMON_EXCLUDE_RULES)
+	build.append(LARGE_FILE_EXCLUDE_RULES)
 	## `.git` is the user's real repository — snapshots must never swallow it.
 	## Mandatory rules come last so project negation rules cannot re-include these directories.
-	exclude_rules += MANDATORY_EXCLUDE_RULES
-	var git_exclude_path := git_dir.path_join("info/exclude")
-	if FileUtils.write_string_to_file(git_exclude_path, exclude_rules):
-		return true
-	Log.error("agent checkpoint exclude write failed:[{}]", git_exclude_path)
-	return false
+	build.append(MANDATORY_EXCLUDE_RULES)
+	var exclude_rules := build.build_joined(FileUtils.NEWLINE_LF)
+	if not FileUtils.write_string_to_file(git_exclude_path, exclude_rules):
+		Log.error("agent checkpoint exclude write failed:[{}]", git_exclude_path)
+	pass
