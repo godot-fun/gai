@@ -52,7 +52,8 @@ static func append(
 	header.add_child(spacer)
 
 	# Revert is only offered when this turn has a workspace snapshot (older chats have none).
-	if StringUtils.is_not_blank(entry.checkpoint):
+	var checkpoint: String = entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
+	if StringUtils.is_not_blank(checkpoint):
 		var revert_button: Button = Button.new()
 		revert_button.name = "RevertButton"
 		revert_button.text = "Revert"

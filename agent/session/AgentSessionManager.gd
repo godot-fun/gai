@@ -271,7 +271,10 @@ static func async_send(session_id: int, user_text: String) -> void:
 	# Snapshot before the agent can touch the workspace. The bubble decides at build time whether to
 	# offer Revert, so the commit id must be known before the entry is created.
 	var checkpoint := await AgentCheckpoint.async_snapshot()
-	add_chat_entry(session_id, ChatEntry.KIND_USER, ChatEntry.TITLE_USER, trimmed, {}, checkpoint)
+	var details: Dictionary[String, String] = {}
+	if StringUtils.is_not_blank(checkpoint):
+		details[ChatEntry.DETAIL_CHECKPOINT] = checkpoint
+	add_chat_entry(session_id, ChatEntry.KIND_USER, ChatEntry.TITLE_USER, trimmed, details)
 	await run_agent(session)
 	pass
 
@@ -352,12 +355,11 @@ static func append_chat_entry_stream(session_id: int, stream_kind: String, chunk
 	return run.step_agent_entry
 
 
-static func add_chat_entry(session_id: int, kind: String, entry_title: String, body: String, details: Dictionary[String, String] = {}, checkpoint: String = "") -> ChatEntry:
+static func add_chat_entry(session_id: int, kind: String, entry_title: String, body: String, details: Dictionary[String, String] = {}) -> ChatEntry:
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null:
 		return null
 	var entry := ChatEntry.new(kind, entry_title, body, details)
-	entry.checkpoint = checkpoint
 	session.chat_entries.append(entry)
 	AgentEvents.events.chat_entry_add.emit(session_id, entry)
 	return entry
@@ -395,7 +397,7 @@ static func delete_chat_from_entry(session_id: int, entry: ChatEntry) -> void:
 static func revert_to_entry(session_id: int, entry: ChatEntry) -> void:
 	if entry == null:
 		return
-	var sha := entry.checkpoint
+	var sha: String = entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
 	if not await AgentCheckpoint.async_restore(sha):
 		Alert.alert("Workspace restore failed; chat history was kept", ColorBase.error)
 		return

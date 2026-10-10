@@ -23,14 +23,13 @@ const TITLE_RESULT := "Result"
 const TITLE_GIT_DIFF := "Git Diff"
 const TITLE_ERROR := "Error"
 
+const DETAIL_CHECKPOINT := "checkpoint"
 const DETAIL_GIT_DIFF_PATCH := "git_diff_patch"
 
 var kind: String = ""
 var title: String = ""
 var body: String = ""
 var details: Dictionary[String, String] = {}
-## Workspace snapshot taken before this turn (see AgentCheckpoint); empty when there is none.
-var checkpoint: String = ""
 
 
 ## Context entries are seeded into the LLM history (system prompt, skill index, AGENTS.md) instead of a chat turn.

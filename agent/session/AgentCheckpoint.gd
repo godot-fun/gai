@@ -206,7 +206,7 @@ static func async_append_git_diff(session_id: int) -> void:
 	for i in range(session.chat_entries.size() - 1, -1, -1):
 		var entry: ChatEntry = session.chat_entries[i]
 		if entry.kind == ChatEntry.KIND_USER:
-			reference = entry.checkpoint
+			reference = entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
 			break
 	var diff_file_stats := await async_diff_file_stats(reference)
 	if diff_file_stats.is_empty():
@@ -217,8 +217,7 @@ static func async_append_git_diff(session_id: int) -> void:
 			ChatEntry.KIND_GIT_DIFF,
 			ChatEntry.TITLE_GIT_DIFF,
 			FileUtils.NEWLINE_LF.join(diff_file_stats),
-			{ChatEntry.DETAIL_GIT_DIFF_PATCH: patch_path},
-			reference
+			{ChatEntry.DETAIL_GIT_DIFF_PATCH: patch_path}
 	)
 	pass
 
