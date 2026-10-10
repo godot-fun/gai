@@ -37,7 +37,7 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 	header.add_child(diff_button)
 
 	var rich_text := MarkdownHelper.create_plain_rich_text_label(ColorBase.secondary_text)
-	rich_text.meta_clicked.connect(open_file)
+	rich_text.meta_clicked.connect(open_file_diff.bind(patch_path))
 	vbox.add_child(rich_text)
 	wrapper.set_meta(AgentChatView.META_BUBBLE_RICH_TEXT, rich_text)
 	chat_list.add_child(wrapper)
@@ -74,11 +74,10 @@ static func refresh(rich_text: RichTextLabel, entry: ChatEntry) -> void:
 	pass
 
 
-static func open_file(meta: Variant) -> void:
+static func open_file_diff(meta: Variant, patch_path: String) -> void:
 	var relative_path := str(meta)
-	var absolute_path := AgentWorkspace.get_root().path_join(relative_path)
-	if FileUtils.open_file(absolute_path) != OK:
-		Alert.alert(StringUtils.format("File not found: {}", relative_path), ColorBase.error)
+	if not AgentCheckpoint.open_file_diff(patch_path, relative_path):
+		Alert.alert(StringUtils.format("Git diff is unavailable: {}", relative_path), ColorBase.error)
 	pass
 
 

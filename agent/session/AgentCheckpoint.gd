@@ -311,3 +311,31 @@ static func open_diff(patch_path: String) -> void:
 	if pid <= 0:
 		Alert.alert("Cannot open Delta", ColorBase.error)
 	pass
+
+
+## Opens only one file's section from a cached agent run patch.
+static func open_file_diff(patch_path: String, relative_path: String) -> bool:
+	if StringUtils.is_blank(patch_path) or not FileAccess.file_exists(patch_path):
+		return false
+	var file_patch_path := patch_path.get_basename() + "." + relative_path.sha256_text() + ".patch"
+	if not FileAccess.file_exists(file_patch_path):
+		var patch := FileAccess.get_file_as_string(patch_path)
+		var file_patch := StringUtils.EMPTY
+		var normalized_path := relative_path.replace("\\", "/")
+		# A Git patch stores every changed file in a separate section beginning with `diff --git`.
+		# The first condition handles ordinary edits where both header paths are the same. The remaining
+		# conditions inspect the old/new file markers and rename metadata so added, deleted, and renamed
+		# files are also found. Only the matching section is cached and later passed to Delta.
+		for section in patch.split("diff --git ", false):
+			var candidate := "diff --git " + section
+			if candidate.begins_with("diff --git a/" + normalized_path + " b/" + normalized_path + FileUtils.NEWLINE_LF) \
+					or candidate.contains(FileUtils.NEWLINE_LF + "--- a/" + normalized_path + FileUtils.NEWLINE_LF) \
+					or candidate.contains(FileUtils.NEWLINE_LF + "+++ b/" + normalized_path + FileUtils.NEWLINE_LF) \
+					or candidate.contains(FileUtils.NEWLINE_LF + "rename from " + normalized_path + FileUtils.NEWLINE_LF) \
+					or candidate.contains(FileUtils.NEWLINE_LF + "rename to " + normalized_path + FileUtils.NEWLINE_LF):
+				file_patch = candidate
+				break
+		if StringUtils.is_blank(file_patch) or not FileUtils.write_string_to_file(file_patch_path, file_patch):
+			return false
+	open_diff(file_patch_path)
+	return true
