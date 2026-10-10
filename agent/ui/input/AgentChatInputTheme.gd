@@ -4,6 +4,7 @@ extends Object
 ## Theme styling and generated icons for the floating chat input.
 
 const TRASH_ICON_PATH := "res://agent/asset/image/icon/trash.svg"
+const RESUME_ICON_PATH := "res://agent/asset/image/icon/resume.svg"
 
 static func apply_wrap(input_wrap: PanelContainer, expanded: bool) -> void:
 	input_wrap.add_theme_stylebox_override("panel", build_wrap_style(expanded))
@@ -83,12 +84,21 @@ static func apply_queue_delete_button(delete_button: Button) -> void:
 static func apply_queue_continue_button(continue_button: Button) -> void:
 	AgentToolbarButton.style_round(continue_button, continue_button.tooltip_text)
 	continue_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	continue_button.icon = make_play_icon(ControlSize.xs, ThemeColor.accent_theme_color())
+	continue_button.icon = make_resume_icon(ControlSize.xs, ThemeColor.accent_theme_color())
 	pass
 
 
 static func make_trash_icon(size: int, color: Color) -> ImageTexture:
-	var svg := FileAccess.get_file_as_string(TRASH_ICON_PATH)
+	return make_tint_svg_icon(TRASH_ICON_PATH, size, color)
+
+
+## Stroke resume mark (bar + triangle), same line weight as trash.
+static func make_resume_icon(size: int, color: Color) -> ImageTexture:
+	return make_tint_svg_icon(RESUME_ICON_PATH, size, color)
+
+
+static func make_tint_svg_icon(path: String, size: int, color: Color) -> ImageTexture:
+	var svg := FileAccess.get_file_as_string(path)
 	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
 	var image := Image.new()
 	if image.load_svg_from_string(svg, float(size) / 16.0) != OK:
@@ -127,3 +137,5 @@ static func make_stop_icon(size: int, color: Color) -> ImageTexture:
 		for x in range(left, left + square_size):
 			img.set_pixel(x, y, color)
 	return ImageTexture.create_from_image(img)
+
+
