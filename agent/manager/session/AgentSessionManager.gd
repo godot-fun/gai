@@ -22,10 +22,8 @@ static func _static_init() -> void:
 	AgentEvents.events.session_title_changed.connect(on_persist_session)
 
 	# Agent run lifecycle
-	AgentEvents.events.agent_end.connect(on_agent_end)
 
 	# Turn & streaming
-	AgentEvents.events.message_update.connect(on_message_update)
 	AgentEvents.events.message_complete.connect(on_message_complete)
 
 	# Tool execution
@@ -40,7 +38,6 @@ static func _static_init() -> void:
 
 ## Boot: reload the index of the current workspace, then select the first session (create one if the list is empty).
 static func load_from_disk() -> void:
-	RuntimeManager.clear()
 	AgentSessionStore.sessions.clear()
 	session_indexes = AgentSessionIndexes.load_index()
 	select_default_session()
@@ -271,25 +268,6 @@ static func delete_pending_message(session_id: int, message: String) -> void:
 # Chat Entry
 # ---------------------------------------------------------------------------
 
-static func append_chat_entry_stream(session_id: int, stream_kind: String, chunk: String) -> ChatEntry:
-	if not has_index(session_id):
-		return null
-	var run := RuntimeManager.get_runtime(session_id)
-	if run == null:
-		return null
-	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
-		if run.step_thinking_entry == null:
-			run.step_thinking_entry = add_chat_entry(session_id, ChatEntry.KIND_THINKING, ChatEntry.TITLE_THINKING, chunk)
-		else:
-			run.step_thinking_entry.body += chunk
-		return run.step_thinking_entry
-	if run.step_agent_entry == null:
-		run.step_agent_entry = add_chat_entry(session_id, ChatEntry.KIND_AGENT, ChatEntry.TITLE_AGENT, chunk)
-	else:
-		run.step_agent_entry.body += chunk
-	return run.step_agent_entry
-
-
 static func add_chat_entry(session_id: int, kind: String, entry_title: String, body: String, details: Dictionary[String, String] = {}) -> ChatEntry:
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null:
@@ -359,40 +337,8 @@ static func message_index_for_user_chat_entry(session: AgentSession, entry_idx: 
 	return session.messages.size()
 
 # ---------------------------------------------------------------------------
-# Event handlers — agent run
-# ---------------------------------------------------------------------------
-
-static func on_agent_end(session_id: int, error_message: String) -> void:
-	var session := AgentSessionStore.load_session(session_id)
-	if session == null:
-		RuntimeManager.stop(session_id)
-		return
-	var session_index := get_session_index(session_id)
-	# Capture before removing the runtime; a missing runtime is treated as stopped.
-	var should_continue_queue := session_index != null and not RuntimeManager.is_stop_requested(session_id) and StringUtils.is_blank(error_message)
-	if StringUtils.is_not_blank(error_message):
-		add_chat_entry(session_id, ChatEntry.KIND_ERROR, ChatEntry.TITLE_ERROR, error_message)
-	await GitDiff.async_append_git_diff(session_id)
-	persist_session(session_id)
-
-	RuntimeManager.stop(session_id)
-	AgentEvents.events.session_stop.emit(session_id)
-	if should_continue_queue:
-		RuntimeManager.try_run_next.call_deferred(session_id)
-	pass
-
-
-# ---------------------------------------------------------------------------
 # Event handlers — turn & streaming
 # ---------------------------------------------------------------------------
-
-static func on_message_update(session_id: int, chunk: String, stream_kind: String) -> void:
-	var entry := append_chat_entry_stream(session_id, stream_kind, chunk)
-	if entry == null:
-		return
-	AgentEvents.events.chat_entry_update.emit(session_id, entry, stream_kind)
-	pass
-
 
 static func on_message_complete(session_id: int, usage: OpenAiUsage) -> void:
 	if not usage.has_data():

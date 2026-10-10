@@ -115,11 +115,7 @@ func apply_locale() -> void:
 ## Sessions are stored under the workspace root, so switching workspace swaps the whole set.
 func reload_sessions() -> void:
 	AgentSessionManager.load_from_disk()
-	rebuild()
-	pass
-
-
-func rebuild() -> void:
+	RuntimeManager.clear()
 	clear()
 	for session_index: AgentSessionIndexes.SessionIndex in AgentSessionManager.session_indexes.pinned_indexes:
 		append_row(session_index.id, session_index.title, true)

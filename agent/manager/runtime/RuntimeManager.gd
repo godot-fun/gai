@@ -12,6 +12,8 @@ static func _static_init() -> void:
 	AgentEvents.events.session_queue_changed.connect(on_session_queue_changed)
 	AgentEvents.events.chat_entry_delete.connect(on_chat_entry_delete)
 	AgentEvents.events.turn_start.connect(on_turn_start)
+	AgentEvents.events.agent_end.connect(on_agent_end)
+	AgentEvents.events.message_update.connect(on_message_update)
 	pass
 
 
@@ -104,6 +106,53 @@ static func on_chat_entry_delete(session_id: int) -> void:
 static func on_turn_start(session_id: int) -> void:
 	clear_step_entries(session_id)
 	pass
+
+
+static func on_agent_end(session_id: int, error_message: String) -> void:
+	var session := AgentSessionStore.load_session(session_id)
+	if session == null:
+		stop(session_id)
+		return
+	var has_session_index := AgentSessionManager.has_index(session_id)
+	# Capture before removing the runtime; a missing runtime is treated as stopped.
+	var should_continue_queue := has_session_index and not is_stop_requested(session_id) and StringUtils.is_blank(error_message)
+	if StringUtils.is_not_blank(error_message):
+		AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_ERROR, ChatEntry.TITLE_ERROR, error_message)
+	await GitDiff.async_append_git_diff(session_id)
+	AgentSessionManager.persist_session(session_id)
+
+	stop(session_id)
+	AgentEvents.events.session_stop.emit(session_id)
+	if should_continue_queue:
+		try_run_next.call_deferred(session_id)
+	pass
+
+
+static func on_message_update(session_id: int, chunk: String, stream_kind: String) -> void:
+	var entry := append_chat_entry_stream(session_id, stream_kind, chunk)
+	if entry == null:
+		return
+	AgentEvents.events.chat_entry_update.emit(session_id, entry, stream_kind)
+	pass
+
+
+static func append_chat_entry_stream(session_id: int, stream_kind: String, chunk: String) -> ChatEntry:
+	if not AgentSessionManager.has_index(session_id):
+		return null
+	var runtime := get_runtime(session_id)
+	if runtime == null:
+		return null
+	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
+		if runtime.step_thinking_entry == null:
+			runtime.step_thinking_entry = AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_THINKING, ChatEntry.TITLE_THINKING, chunk)
+		else:
+			runtime.step_thinking_entry.body += chunk
+		return runtime.step_thinking_entry
+	if runtime.step_agent_entry == null:
+		runtime.step_agent_entry = AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_AGENT, ChatEntry.TITLE_AGENT, chunk)
+	else:
+		runtime.step_agent_entry.body += chunk
+	return runtime.step_agent_entry
 
 
 static func run_agent(session: AgentSession) -> void:
