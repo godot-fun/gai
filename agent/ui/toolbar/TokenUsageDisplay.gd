@@ -16,8 +16,8 @@ const MAX_CONTEXT_TOKENS: int = 1_000_000
 const THRESHOLD_WARN: float = 0.50
 const THRESHOLD_CAUTION: float = 0.75
 const THRESHOLD_CRITICAL: float = 0.90
-const RING_WIDTH: float = 3.5
-const RING_INSET: float = 4.0
+const RING_WIDTH: float = 3.0
+const RING_INSET: float = 3.0
 
 var wrap: PanelContainer
 var label: Label

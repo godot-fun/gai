@@ -102,8 +102,7 @@ func update_icon(hovered: bool) -> void:
 	var visual_type := AgentSetting.get_visual_type()
 	var icon_color: Color = ColorBase.secondary_text
 	if visual_type != VisualType.Type.NONE:
-		var theme_color: Color = ThemeColor.accent_theme_color()
-		icon_color = theme_color if ThemeColor.is_dark_theme() else theme_color.darkened(0.15)
+		icon_color = ThemeColor.accent_theme_color()
 		if hovered:
 			icon_color = icon_color.lightened(0.12)
 	elif hovered:
