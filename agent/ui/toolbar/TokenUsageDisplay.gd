@@ -17,7 +17,7 @@ const THRESHOLD_WARN: float = 0.50
 const THRESHOLD_CAUTION: float = 0.75
 const THRESHOLD_CRITICAL: float = 0.90
 const RING_WIDTH: float = 3.5
-const RING_INSET: float = 2.0
+const RING_INSET: float = 4.0
 
 var wrap: PanelContainer
 var label: Label
