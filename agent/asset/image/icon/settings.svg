@@ -2,18 +2,18 @@
   <defs>
     <mask id="hole">
       <rect width="16" height="16" fill="white"/>
-      <circle cx="8" cy="8" r="1.8" fill="black"/>
+      <circle cx="8" cy="8" r="2.1" fill="black"/>
     </mask>
   </defs>
-  <g fill="#FFFFFF" mask="url(#hole)">
-    <circle cx="8" cy="8" r="4.7"/>
-    <rect x="7" y="0.5" width="2" height="4" rx="0.6"/>
-    <rect x="7" y="0.5" width="2" height="4" rx="0.6" transform="rotate(45 8 8)"/>
-    <rect x="7" y="0.5" width="2" height="4" rx="0.6" transform="rotate(90 8 8)"/>
-    <rect x="7" y="0.5" width="2" height="4" rx="0.6" transform="rotate(135 8 8)"/>
-    <rect x="7" y="0.5" width="2" height="4" rx="0.6" transform="rotate(180 8 8)"/>
-    <rect x="7" y="0.5" width="2" height="4" rx="0.6" transform="rotate(225 8 8)"/>
-    <rect x="7" y="0.5" width="2" height="4" rx="0.6" transform="rotate(270 8 8)"/>
-    <rect x="7" y="0.5" width="2" height="4" rx="0.6" transform="rotate(315 8 8)"/>
+  <g fill="#ffffff" mask="url(#hole)">
+    <circle cx="8" cy="8" r="5.6"/>
+    <rect x="6.35" y="0" width="3.3" height="5.2" rx="0.7"/>
+    <rect x="6.35" y="0" width="3.3" height="5.2" rx="0.7" transform="rotate(45 8 8)"/>
+    <rect x="6.35" y="0" width="3.3" height="5.2" rx="0.7" transform="rotate(90 8 8)"/>
+    <rect x="6.35" y="0" width="3.3" height="5.2" rx="0.7" transform="rotate(135 8 8)"/>
+    <rect x="6.35" y="0" width="3.3" height="5.2" rx="0.7" transform="rotate(180 8 8)"/>
+    <rect x="6.35" y="0" width="3.3" height="5.2" rx="0.7" transform="rotate(225 8 8)"/>
+    <rect x="6.35" y="0" width="3.3" height="5.2" rx="0.7" transform="rotate(270 8 8)"/>
+    <rect x="6.35" y="0" width="3.3" height="5.2" rx="0.7" transform="rotate(315 8 8)"/>
   </g>
 </svg>
