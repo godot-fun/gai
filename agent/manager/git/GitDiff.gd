@@ -82,13 +82,20 @@ static func async_cache_diff(git: GitUtils.Git, reference: String) -> String:
 	if StringUtils.is_blank(reference):
 		return StringUtils.EMPTY
 	var diff := await git.async_get_staged_diff(reference)
-	if diff.exit_code != 0 or StringUtils.is_blank(diff.output.build_string()):
+	if diff.exit_code != 0:
+		Log.error("agent git diff lookup failed:[{}]", diff.output.build_string())
+		return StringUtils.EMPTY
+	var patch := diff.output.build_string()
+	if StringUtils.is_blank(patch):
 		return StringUtils.EMPTY
 	var cache_dir := AgentWorkspace.get_root().path_join(DIFF_CACHE_SUBDIR)
-	if DirAccess.make_dir_recursive_absolute(cache_dir) != OK:
+	var mkdir_error := DirAccess.make_dir_recursive_absolute(cache_dir)
+	if mkdir_error != OK:
+		Log.error("agent git diff cache directory create failed path:[{}] error:[{}]", cache_dir, mkdir_error)
 		return StringUtils.EMPTY
 	var patch_path := cache_dir.path_join(str(IdUtils.uuid()) + ".patch")
-	if not FileUtils.write_string_to_file(patch_path, diff.output.build_string()):
+	if not FileUtils.write_string_to_file(patch_path, patch):
+		Log.error("agent git diff cache write failed path:[{}]", patch_path)
 		return StringUtils.EMPTY
 	return patch_path
 
@@ -98,7 +105,7 @@ static func open_diff(patch_path: String) -> void:
 	if StringUtils.is_blank(patch_path) or not FileAccess.file_exists(patch_path):
 		Alert.alert("Git diff is unavailable", ColorBase.error)
 		return
-	var delta_path := FileUtils.globalize_writable_path(DELTA_EXECUTABLE_PATH)
+	var delta_path := FileUtils.get_project_root_path().path_join(DELTA_EXECUTABLE_PATH)
 	if not FileAccess.file_exists(delta_path):
 		Alert.alert("Delta executable not found", ColorBase.error)
 		return
