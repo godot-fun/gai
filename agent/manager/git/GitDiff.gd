@@ -35,7 +35,11 @@ static func async_append_git_diff(session_id: int) -> void:
 		if entry.kind == ChatEntry.KIND_USER:
 			reference = entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
 			break
+	if StringUtils.is_blank(reference):
+		return
 	var git := GitManager.create_git(session_id)
+	if not await GitManager.ensure_repo(git) or not await GitManager.stage_all(git):
+		return
 	var diff_file_stats := await async_diff_file_stats(git, reference)
 	if diff_file_stats.is_empty():
 		return
@@ -51,10 +55,10 @@ static func async_append_git_diff(session_id: int) -> void:
 
 
 ## Returns tab-separated path/additions/deletions records for an agent run Git diff.
-## The shadow index is refreshed first so this also catches edits made outside file tools.
+## The caller must refresh the shadow index first so edits made outside file tools are included.
 static func async_diff_file_stats(git: GitUtils.Git, reference: String) -> PackedStringArray:
 	var file_stats := PackedStringArray()
-	if StringUtils.is_blank(reference) or not await GitManager.ensure_repo(git) or not await GitManager.stage_all(git):
+	if StringUtils.is_blank(reference):
 		return file_stats
 	var diff := await git.async_get_staged_numstat(reference)
 	if diff.exit_code != 0:
@@ -73,7 +77,7 @@ static func async_diff_file_stats(git: GitUtils.Git, reference: String) -> Packe
 
 ## Caches the completed agent run patch so later workspace changes cannot alter this bubble's diff.
 static func async_cache_diff(git: GitUtils.Git, reference: String) -> String:
-	if StringUtils.is_blank(reference) or not await GitManager.ensure_repo(git) or not await GitManager.stage_all(git):
+	if StringUtils.is_blank(reference):
 		return StringUtils.EMPTY
 	var diff := await git.async_get_staged_diff(reference)
 	if diff.exit_code != 0 or StringUtils.is_blank(diff.output.build_string()):
