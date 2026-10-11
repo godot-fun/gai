@@ -12,7 +12,7 @@ const EXPANDED_HEIGHT_MAX_RATIO: float = 0.55
 const SIDE_INSET: float = ControlSize.md * 5.0
 ## Fade-in duration when the queue list appears after expand settles.
 const QUEUE_FADE_SECONDS: float = 0.2
-const ACTIVITY_SPINNER_SHADER := preload("res://agent/ui/input/ActivitySpinner.gdshader")
+const SEND_BUTTON_ACTIVE_SHADER := preload("res://agent/ui/input/SendButtonActive.gdshader")
 const SEND_BUTTON_EFFECT_SHADER := preload("res://agent/ui/input/SendButtonEffect.gdshader")
 var input_bar: Control
 var input_wrap: PanelContainer
@@ -20,7 +20,7 @@ var input_inner: Control
 var input_field: TextEdit
 var send_button: Button
 var send_effect: ColorRect
-var activity_spinner: ColorRect
+var send_active_effect: ColorRect
 var queue_badge: Label
 var queue_panel: PanelContainer
 var queue_rows: VBoxContainer
@@ -60,7 +60,7 @@ func setup(
 	input_field = p_input_field
 	send_button = p_send_button
 	setup_send_effect()
-	setup_activity_spinner()
+	setup_send_active_effect()
 	setup_queue_badge()
 	setup_queue_controls()
 
@@ -132,20 +132,20 @@ func setup_queue_badge() -> void:
 	pass
 
 
-func setup_activity_spinner() -> void:
-	activity_spinner = ColorRect.new()
-	activity_spinner.name = "ActivitySpinner"
-	activity_spinner.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	activity_spinner.set_anchors_preset(Control.PRESET_CENTER)
-	activity_spinner.offset_left = -ControlSize.sm * 0.5
-	activity_spinner.offset_top = -ControlSize.sm * 0.5
-	activity_spinner.offset_right = ControlSize.sm * 0.5
-	activity_spinner.offset_bottom = ControlSize.sm * 0.5
+func setup_send_active_effect() -> void:
+	send_active_effect = ColorRect.new()
+	send_active_effect.name = "SendButtonActive"
+	send_active_effect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	send_active_effect.set_anchors_preset(Control.PRESET_CENTER)
+	send_active_effect.offset_left = -ControlSize.md * 0.5
+	send_active_effect.offset_top = -ControlSize.md * 0.5
+	send_active_effect.offset_right = ControlSize.md * 0.5
+	send_active_effect.offset_bottom = ControlSize.md * 0.5
 	var material := ShaderMaterial.new()
-	material.shader = ACTIVITY_SPINNER_SHADER
-	activity_spinner.material = material
-	activity_spinner.visible = false
-	send_button.add_child(activity_spinner)
+	material.shader = SEND_BUTTON_ACTIVE_SHADER
+	send_active_effect.material = material
+	send_active_effect.visible = false
+	send_button.add_child(send_active_effect)
 	pass
 
 
@@ -313,7 +313,7 @@ func refresh_send_button() -> void:
 	var stop_action := is_stop_action()
 	send_effect.visible = not show_activity and not stop_action
 	(send_effect.material as ShaderMaterial).set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
-	activity_spinner.visible = show_activity
+	send_active_effect.visible = show_activity
 	AgentChatInputTheme.apply_send_button(send_button, stop_action, show_activity, compacting)
 	AgentChatInputTheme.apply_queue_badge(queue_badge, not expanded, get_pending_queue_count())
 	pass
