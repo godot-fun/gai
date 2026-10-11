@@ -1,4 +1,4 @@
-class_name TokenUsageDisplay
+class_name CompactButton
 extends RefCounted
 
 ## Circular toolbar progress for the current context length from the latest LLM request.
