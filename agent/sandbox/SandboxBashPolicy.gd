@@ -18,8 +18,11 @@ static var rules: Array[Rule] = []
 static var unquote_mark_regex: RegEx
 
 ## Anchors a command name at the line start or right after a shell separator, allowing an
-## absolute `/usr/bin/`-style prefix and the common wrappers in front of it.
-const CMD := r"(?i)(^|[;&|()\n]\s*)(?:(?:[\w./~:-]*[\\/])?s?bin[\\/]|(?:command|exec|builtin|nohup|env|time|nice|busybox|setsid)\s+){0,4}"
+## absolute `/usr/bin/`-style prefix and common wrappers in front of it. Wrapper arguments
+## are deliberately narrow: these cover normal invocation forms without consuming the wrapped
+## command as an arbitrary option value.
+const COMMAND_WRAPPER := r"(?:command(?:\s+(?:--|-p))?|exec|builtin|nohup|busybox|setsid|time(?:\s+-p)?|nice(?:\s+(?:-n\s*[+-]?\d+|-[0-9]+|--adjustment(?:=|\s+)[+-]?\d+))?|env(?:\s+(?:--|-i|--ignore-environment|-u\s+[A-Za-z_][A-Za-z0-9_]*|--unset(?:=|\s+)[A-Za-z_][A-Za-z0-9_]*|[A-Za-z_][A-Za-z0-9_]*=[^\s]+))*)\s+"
+const CMD := r"(?i)(^|[;&|()\n]\s*)(?:" + COMMAND_WRAPPER + r"){0,4}(?:(?:[\w./~:-]*[\\/])?s?bin[\\/])?"
 
 ## Paths outside the workspace. Relative escapes and home are matched anywhere, while drive
 ## letters and system directories need a token boundary, so URLs (`https://host/etc/x`) are
@@ -171,8 +174,9 @@ static func build_file_rules(result: Array[Rule]) -> void:
 	add_rule(result, CMD + r"find\b[^\n;&|]*?-delete\b", REASON_RECURSIVE_DELETE)
 	add_rule(result, CMD + r"find\b[^\n;&|]*?-exec(?:dir)?\s+(?:[\w./~:-]*[\\/])?(?:rm|shred)\b", REASON_RECURSIVE_DELETE)
 	add_rule(result, r"(?i)\bxargs\s+[^\n;&|]*\b(?:[\w./~:-]*[\\/])?rm\s+[^\n;&|]*-[a-z]*r", REASON_RECURSIVE_DELETE)
-	add_rule(result, CMD + r"rm\s+(?:-[^\s]+\s+)*(?:\.|\.\.)(?:[\s;&|]|$)", REASON_WORKSPACE_DELETE)
-	add_rule(result, CMD + r"rm\s+(?:-[^\s]+\s+)*\*(?:[\s;&|]|$)", REASON_WORKSPACE_DELETE)
+	# A recursive delete does not need `--force` to destroy the workspace. Treat spelling
+	# variants of the root itself and a root-level wildcard as the same destructive target.
+	add_rule(result, CMD + r"rm\s+(?:-[^\s]+\s+)*(?:\.(?:[\\/]+\*?)?|\.\.(?:[\\/]+)?|\*)(?:[\s;&|]|$)", REASON_WORKSPACE_DELETE)
 	add_rule(result, CMD + r"rm\s+(?:-[^\s]+\s+)*\.git(?:[\s;&|]|$|[/\\])", REASON_WORKSPACE_DELETE)
 	add_rule(result, CMD + r"(?:chmod|chown|chgrp)\s+[^\n;&|]*(?:-[a-z]*r|--recursive)(?:\s|$)", REASON_PERMISSION_CHANGE)
 	add_rule(result, CMD + r"chmod\s+[^\n;&|]*(?:\+s\b|[42][0-7]{3}\b)", REASON_PERMISSION_CHANGE)
