@@ -77,7 +77,7 @@ static func clear() -> void:
 
 ## Starts the FIFO head when the session is idle. Errors and manual stops leave later items queued.
 static func try_run_next_message(session_id: int) -> void:
-	if not AgentSessionManager.has_index(session_id) or is_running(session_id):
+	if not AgentSessionManager.has_index(session_id) or is_running(session_id) or AgentCompactionManager.is_compacting(session_id):
 		return
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null or session.pending_messages.is_empty():

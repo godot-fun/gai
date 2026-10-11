@@ -99,12 +99,16 @@ static func refresh(rich_text: RichTextLabel, entry: ChatEntry, wrapper: PanelCo
 		expand_button.visible = can_expand
 		if can_expand:
 			if expanded:
-				expand_button.text = "Collapse"
-				expand_button.tooltip_text = "Show first 8 lines"
+				expand_button.text = I18n.t("agent.common.collapse")
+				expand_button.tooltip_text = I18n.t("agent.common.collapse_tooltip")
 			else:
 				var hidden: int = hidden_line_count(entry.body)
-				expand_button.text = StringUtils.format("Expand (+{} line{})", hidden, "" if hidden == 1 else "s")
-				expand_button.tooltip_text = "Show full context"
+				expand_button.text = StringUtils.format(
+					I18n.t("agent.common.expand_lines"),
+					hidden,
+					"" if hidden == 1 else "s"
+				)
+				expand_button.tooltip_text = I18n.t("agent.common.expand_tooltip")
 	pass
 
 

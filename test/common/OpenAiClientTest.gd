@@ -15,6 +15,14 @@ func consume_sse_buffer_test() -> void:
 	pass
 
 
+func consume_sse_buffer_without_callback_test() -> void:
+	var remainder := client.consume_sse_buffer(
+		"data: {\"choices\":[{\"delta\":{\"content\":\"compact summary\"}}]}\n"
+	)
+	assert(remainder == StringUtils.EMPTY)
+	pass
+
+
 func consume_sse_buffer_partial_line_test() -> void:
 	var deltas: Array[String] = []
 	var on_delta := func(delta: String, stream_kind: String) -> void:

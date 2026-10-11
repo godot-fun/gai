@@ -45,8 +45,9 @@ static func apply_field(input_field: TextEdit) -> void:
 
 
 ## [param queue_count] > 0: collapsed FAB shows the pending count instead of send/stop icon.
-static func apply_send_button(send_button: Button, stop_action: bool = false, queue_count: int = 0) -> void:
-	var show_queue_badge := queue_count > 0
+static func apply_send_button(send_button: Button, stop_action: bool = false, queue_count: int = 0,
+		compacting: bool = false, spinner_angle: float = 0.0) -> void:
+	var show_queue_badge := queue_count > 0 and not compacting
 	var base_color := ColorBase.error if stop_action and not show_queue_badge else ThemeColor.accent_theme_color()
 	var radius: int = int(ControlSize.md * 0.5)
 	var normal := StyleBoxHelper.create_style_box_flat(base_color, radius, Margin.ma_1, Margin.ma_1)
@@ -56,6 +57,15 @@ static func apply_send_button(send_button: Button, stop_action: bool = false, qu
 		ButtonStyle.filled(normal, base_color.darkened(0.25)))
 	send_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	send_button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	send_button.disabled = compacting
+	if compacting:
+		send_button.text = ""
+		send_button.tooltip_text = I18n.t("agent.input.compacting")
+		var icon_size := ControlSize.xs
+		send_button.icon = make_spinner_icon(icon_size, Color.WHITE, spinner_angle)
+		send_button.add_theme_constant_override("icon_max_width", icon_size)
+		send_button.add_theme_constant_override("icon_max_height", icon_size)
+		return
 	if show_queue_badge:
 		send_button.tooltip_text = StringUtils.format(I18n.t("agent.input.queued"), queue_count)
 		send_button.icon = null
@@ -138,4 +148,21 @@ static func make_stop_icon(size: int, color: Color) -> ImageTexture:
 			img.set_pixel(x, y, color)
 	return ImageTexture.create_from_image(img)
 
+
+static func make_spinner_icon(size: int, color: Color, angle: float) -> ImageTexture:
+	var image := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	image.fill(Color.TRANSPARENT)
+	var center := Vector2(float(size - 1), float(size - 1)) * 0.5
+	var radius := float(size) * 0.34
+	var thickness := maxf(1.0, float(size) * 0.11)
+	for y in size:
+		for x in size:
+			var delta := Vector2(float(x), float(y)) - center
+			var distance := delta.length()
+			if absf(distance - radius) > thickness:
+				continue
+			var pixel_angle := fposmod(atan2(delta.y, delta.x) - angle, TAU)
+			if pixel_angle <= PI * 1.45:
+				image.set_pixel(x, y, color)
+	return ImageTexture.create_from_image(image)
 

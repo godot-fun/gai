@@ -32,3 +32,28 @@ static func duplicate_message_delete_removes_first_match_test() -> void:
 	pending.remove_at(pending.find("same"))
 	assert(pending == ["middle", "same"])
 	pass
+
+
+static func compaction_keeps_only_context_entries_test() -> void:
+	var entries: Array[ChatEntry] = [
+		ChatEntry.new(ChatEntry.KIND_SYSTEM, ChatEntry.TITLE_SYSTEM, "system"),
+		ChatEntry.new(ChatEntry.KIND_USER, ChatEntry.TITLE_USER, "question"),
+		ChatEntry.new(ChatEntry.KIND_AGENT, ChatEntry.TITLE_AGENT, "answer"),
+		ChatEntry.new(ChatEntry.KIND_COMPACTION, ChatEntry.TITLE_COMPACTION, "old summary"),
+	]
+	var compacted := AgentCompactionManager.collect_context_entries(entries)
+	assert(compacted.size() == 1)
+	assert(compacted[0].kind == ChatEntry.KIND_SYSTEM)
+	pass
+
+
+static func compaction_replaces_previous_summary_message_test() -> void:
+	var messages: Array[ChatMessage] = [
+		ChatMessage.system("system"),
+		ChatMessage.system(AgentCompactionManager.SUMMARY_PREFIX + "\nold summary"),
+		ChatMessage.user("new question"),
+	]
+	var context := AgentCompactionManager.collect_context_messages(messages)
+	assert(context.size() == 1)
+	assert(context[0].content == "system")
+	pass

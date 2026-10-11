@@ -18,26 +18,34 @@ const THRESHOLD_CAUTION: float = 0.75
 const THRESHOLD_CRITICAL: float = 0.90
 const RING_WIDTH: float = 3.0
 const RING_INSET: float = 3.0
+const SPINNER_ARC: float = PI * 1.35
 
 var wrap: PanelContainer
 var label: Label
 var usage_ratio: float = 0.0
 var usage_color: Color
+var compacting: bool = false
+var spinner_angle: float = 0.0
+var spinner_tween: Tween = null
 
 
 func setup(p_wrap: PanelContainer) -> void:
 	wrap = p_wrap
 	label = wrap.get_child(0) as Label
 	wrap.mouse_filter = Control.MOUSE_FILTER_STOP
+	wrap.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	wrap.custom_minimum_size = ControlSize.square(ControlSize.sm)
 	label.custom_minimum_size = ControlSize.square(ControlSize.sm)
 	label.text = ""
 	label.draw.connect(draw_ring)
+	wrap.gui_input.connect(on_gui_input)
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(apply_theme)
 	AgentEvents.events.session_selected.connect(refresh)
 	AgentEvents.events.message_complete.connect(on_message_complete)
+	AgentEvents.events.compaction_start.connect(on_compaction_start)
+	AgentEvents.events.compaction_end.connect(on_compaction_end)
 	apply_theme()
 	pass
 
@@ -51,6 +59,7 @@ func on_message_complete(session_id: int, _usage: OpenAiUsage) -> void:
 func refresh(_session_id: int = 0, _previous_session_id: int = 0) -> void:
 	if label == null or wrap == null:
 		return
+	sync_compaction_state()
 	var session: AgentSession = AgentSessionStore.load_session(AgentSessionManager.active_session_id)
 	if session == null:
 		return
@@ -65,6 +74,84 @@ func refresh(_session_id: int = 0, _previous_session_id: int = 0) -> void:
 		usage.completion_tokens,
 		usage.total_tokens
 	)
+	if compacting:
+		wrap.tooltip_text = I18n.t("agent.tokens.compacting")
+	label.queue_redraw()
+	pass
+
+
+func sync_compaction_state() -> void:
+	var should_compact := AgentCompactionManager.is_compacting(AgentSessionManager.active_session_id)
+	if should_compact == compacting:
+		return
+	compacting = should_compact
+	wrap.mouse_default_cursor_shape = Control.CURSOR_ARROW if compacting else Control.CURSOR_POINTING_HAND
+	if compacting:
+		start_spinner()
+	else:
+		stop_spinner()
+	pass
+
+
+func on_gui_input(event: InputEvent) -> void:
+	if not event is InputEventMouseButton:
+		return
+	var mouse := event as InputEventMouseButton
+	if not mouse.pressed or mouse.button_index != MOUSE_BUTTON_LEFT:
+		return
+	AgentCompactionManager.request_compaction(AgentSessionManager.active_session_id)
+	wrap.get_viewport().set_input_as_handled()
+	pass
+
+
+func on_compaction_start(session_id: int) -> void:
+	if not AgentSessionManager.is_active(session_id):
+		return
+	compacting = true
+	wrap.mouse_default_cursor_shape = Control.CURSOR_ARROW
+	wrap.tooltip_text = I18n.t("agent.tokens.compacting")
+	start_spinner()
+	pass
+
+
+func on_compaction_end(session_id: int, success: bool, error_code: String) -> void:
+	if not AgentSessionManager.is_active(session_id):
+		return
+	compacting = false
+	wrap.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	stop_spinner()
+	refresh()
+	if success:
+		Alert.alert(I18n.t("agent.tokens.compact_success"), ColorBase.success)
+	elif error_code == AgentCompactionManager.ERROR_RUNNING:
+		Alert.alert(I18n.t("agent.tokens.compact_running"), ColorBase.warning)
+	elif error_code == AgentCompactionManager.ERROR_EMPTY:
+		Alert.alert(I18n.t("agent.tokens.compact_empty"), ColorBase.warning)
+	else:
+		Alert.alert(I18n.t("agent.tokens.compact_failed"), ColorBase.error)
+	pass
+
+
+func start_spinner() -> void:
+	if spinner_tween != null:
+		spinner_tween.kill()
+	spinner_angle = 0.0
+	spinner_tween = wrap.create_tween().set_loops()
+	spinner_tween.tween_method(set_spinner_angle, 0.0, TAU, 0.8)
+	pass
+
+
+func stop_spinner() -> void:
+	if spinner_tween != null:
+		spinner_tween.kill()
+		spinner_tween = null
+	spinner_angle = 0.0
+	label.queue_redraw()
+	pass
+
+
+func set_spinner_angle(angle: float) -> void:
+	spinner_angle = angle
 	label.queue_redraw()
 	pass
 
@@ -84,6 +171,10 @@ func draw_ring() -> void:
 	var center := label.size * 0.5
 	var radius: float = minf(label.size.x, label.size.y) * 0.5 - RING_INSET
 	label.draw_arc(center, radius, 0.0, TAU, 48, ColorBase.control_surface, RING_WIDTH, true)
+	if compacting:
+		var spinner_color := ThemeColor.accent_theme_color()
+		label.draw_arc(center, radius, spinner_angle, spinner_angle + SPINNER_ARC, 32, spinner_color, RING_WIDTH, true)
+		return
 	if usage_ratio <= 0.0:
 		return
 	var start_angle: float = -PI * 0.5

@@ -4,7 +4,11 @@
     "common": {
       "select": "Select",
       "show": "Show",
-      "hide": "Hide"
+      "hide": "Hide",
+      "expand_lines": "Expand (+{} line{})",
+      "collapse": "Collapse",
+      "expand_tooltip": "Show full context",
+      "collapse_tooltip": "Show the first 8 lines"
     },
     "visuals": {
       "error": "ERROR",
@@ -119,6 +123,7 @@
       "click_to_ask": "Click to ask gai Code Agent…",
       "stop": "Stop",
       "send": "Send (Enter)",
+      "compacting": "Compacting context…",
       "queued": "Queued ({})",
       "continue_queue": "Continue",
       "delete_queued": "Delete queued message"
@@ -152,7 +157,16 @@
     },
     "tokens": {
       "label": "{} tokens",
-      "tooltip": "Context: {} tokens ({}%) · Completion: {} tokens · Total: {} tokens (last request)"
+      "tooltip": "Context: {} tokens ({}%) · Completion: {} tokens · Total: {} tokens (last request)",
+      "compacting": "Compacting context…",
+      "compact_success": "Context compacted",
+      "compact_running": "Wait for the current task to finish before compacting",
+      "compact_empty": "There is no conversation to compact",
+      "compact_failed": "Context compaction failed. Try again",
+      "summary_expand": "Expand (+{} line{})",
+      "summary_collapse": "Collapse",
+      "summary_expand_tooltip": "Show full summary",
+      "summary_collapse_tooltip": "Show the first 8 lines"
     },
     "settings": {
       "appearance": "Appearance",

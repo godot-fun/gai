@@ -26,6 +26,9 @@ var expanded: bool = false
 var force_expanded: bool = false
 var layout_tween: Tween = null
 var queue_tween: Tween = null
+var compact_spinner_tween: Tween = null
+var compact_spinner_angle: float = 0.0
+var compact_spinner_frame: int = -1
 
 var tween_start_h: float = 0.0
 var tween_target_h: float = 0.0
@@ -80,6 +83,8 @@ func setup(
 	setup_border_beam()
 	AgentEvents.events.agent_start.connect(on_agent_start)
 	AgentEvents.events.session_stop.connect(on_session_stop)
+	AgentEvents.events.compaction_start.connect(on_compaction_start)
+	AgentEvents.events.compaction_end.connect(on_compaction_end)
 	apply_theme()
 	refresh_from_active_session()
 	pass
@@ -187,6 +192,22 @@ func on_session_stop(session_id: int) -> void:
 	pass
 
 
+func on_compaction_start(session_id: int) -> void:
+	if not AgentSessionManager.is_active(session_id):
+		return
+	start_compact_spinner()
+	refresh_send_button()
+	pass
+
+
+func on_compaction_end(session_id: int, _success: bool, _error_code: String) -> void:
+	if not AgentSessionManager.is_active(session_id):
+		return
+	stop_compact_spinner()
+	refresh_send_button()
+	pass
+
+
 ## A deleted / reverted bubble hands its body back here so it can be edited and resent.
 func on_chat_input_prefill(text: String) -> void:
 	if StringUtils.is_blank(text):
@@ -204,12 +225,22 @@ func on_chat_input_prefill(text: String) -> void:
 
 
 func refresh_from_active_session() -> void:
+	refresh_compaction_animation()
 	var session: AgentSession = AgentSessionStore.load_session(AgentSessionManager.active_session_id)
 	var running: bool = RuntimeManager.is_running(AgentSessionManager.active_session_id)
 	var no_history: bool = session != null and not AgentSessionManager.has_chat_history(session.id)
 	input_field.text = session.draft_text if session != null else ""
 	refresh_state(running, no_history)
 	refresh_queue()
+	pass
+
+
+func refresh_compaction_animation() -> void:
+	var compacting := AgentCompactionManager.is_compacting(AgentSessionManager.active_session_id)
+	if compacting and compact_spinner_tween == null:
+		start_compact_spinner()
+	elif not compacting and compact_spinner_tween != null:
+		stop_compact_spinner()
 	pass
 
 
@@ -231,7 +262,36 @@ func get_pending_queue_count() -> int:
 ## Collapsed + pending queue → count badge; else send / stop as before.
 func refresh_send_button() -> void:
 	var queue_count := 0 if expanded else get_pending_queue_count()
-	AgentChatInputTheme.apply_send_button(send_button, is_stop_action(), queue_count)
+	var compacting := AgentCompactionManager.is_compacting(AgentSessionManager.active_session_id)
+	AgentChatInputTheme.apply_send_button(send_button, is_stop_action(), queue_count, compacting, compact_spinner_angle)
+	pass
+
+
+func start_compact_spinner() -> void:
+	if compact_spinner_tween != null:
+		compact_spinner_tween.kill()
+	compact_spinner_angle = 0.0
+	compact_spinner_tween = input_bar.create_tween().set_loops()
+	compact_spinner_tween.tween_method(set_compact_spinner_angle, 0.0, TAU, 0.8)
+	pass
+
+
+func stop_compact_spinner() -> void:
+	if compact_spinner_tween != null:
+		compact_spinner_tween.kill()
+		compact_spinner_tween = null
+	compact_spinner_angle = 0.0
+	compact_spinner_frame = -1
+	pass
+
+
+func set_compact_spinner_angle(angle: float) -> void:
+	var frame := int(floor(angle / TAU * 12.0)) % 12
+	if frame == compact_spinner_frame:
+		return
+	compact_spinner_frame = frame
+	compact_spinner_angle = TAU * float(frame) / 12.0
+	refresh_send_button()
 	pass
 
 
@@ -430,6 +490,8 @@ func is_stop_action() -> bool:
 func on_input_action_pressed() -> void:
 	var session: AgentSession = AgentSessionStore.load_session(AgentSessionManager.active_session_id)
 	if session == null:
+		return
+	if AgentCompactionManager.is_compacting(session.id):
 		return
 	if is_stop_action():
 		RuntimeManager.request_stop(session.id)

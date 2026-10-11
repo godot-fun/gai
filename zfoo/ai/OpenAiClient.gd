@@ -148,7 +148,7 @@ func consume_sse_buffer(buffer: String, on_delta: Callable = Callable()) -> Stri
 		if chunk == null or chunk.choices.is_empty():
 			continue
 		var choice := chunk.choices[0]
-		if choice.delta != null:
+		if choice.delta != null and on_delta.is_valid():
 			if StringUtils.is_not_empty(choice.delta.content):
 				on_delta.call(choice.delta.content, STREAM_KIND_CONTENT)
 			if StringUtils.is_not_empty(choice.delta.reasoning_content):

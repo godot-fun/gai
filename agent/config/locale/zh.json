@@ -4,7 +4,11 @@
     "common": {
       "select": "选择",
       "show": "显示",
-      "hide": "隐藏"
+      "hide": "隐藏",
+      "expand_lines": "展开（+{} 行）",
+      "collapse": "收起",
+      "expand_tooltip": "显示完整上下文",
+      "collapse_tooltip": "仅显示前 8 行"
     },
     "visuals": {
       "error": "错误",
@@ -119,6 +123,7 @@
       "click_to_ask": "点击询问 gai Code Agent…",
       "stop": "停止",
       "send": "发送（Enter）",
+      "compacting": "正在压缩上下文…",
       "queued": "排队中（{}）",
       "continue_queue": "继续",
       "delete_queued": "删除排队消息"
@@ -152,7 +157,16 @@
     },
     "tokens": {
       "label": "{} Token",
-      "tooltip": "上下文：{} Token（{}%）· 回复：{} Token · 总计：{} Token（上次请求）"
+      "tooltip": "上下文：{} Token（{}%）· 回复：{} Token · 总计：{} Token（上次请求）",
+      "compacting": "正在压缩上下文…",
+      "compact_success": "上下文已压缩",
+      "compact_running": "请等待当前任务完成后再压缩",
+      "compact_empty": "当前没有可压缩的对话",
+      "compact_failed": "上下文压缩失败，请重试",
+      "summary_expand": "展开（+{} 行）",
+      "summary_collapse": "收起",
+      "summary_expand_tooltip": "显示完整摘要",
+      "summary_collapse_tooltip": "仅显示前 8 行"
     },
     "settings": {
       "appearance": "外观",

@@ -55,6 +55,9 @@ class Events:
 
 	# Session run control
 	signal session_stop(session_id: int)
+	## Manual context compaction lifecycle.
+	signal compaction_start(session_id: int)
+	signal compaction_end(session_id: int, success: bool, error_code: String)
 
 	# Pending message queue
 	## Pending user messages changed for one session.

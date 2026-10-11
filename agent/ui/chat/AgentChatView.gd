@@ -46,6 +46,7 @@ func setup(
 	chat_scroll.get_window().window_input.connect(on_chat_window_input)
 	gdf.events.theme_changed.connect(on_theme_changed)
 	gdf.events.theme_color_changed.connect(on_theme_color_changed)
+	gdf.events.locale_changed.connect(on_locale_changed)
 	AgentEvents.events.markdown_changed.connect(on_markdown_changed)
 	AgentEvents.events.skill_context_changed.connect(on_agent_context_changed)
 	AgentEvents.events.agent_context_changed.connect(on_agent_context_changed)
@@ -53,6 +54,7 @@ func setup(
 	AgentEvents.events.session_removed.connect(on_session_removed)
 	AgentEvents.events.agent_start.connect(on_agent_start)
 	AgentEvents.events.session_stop.connect(on_session_stop)
+	AgentEvents.events.compaction_end.connect(on_compaction_end)
 	AgentEvents.events.chat_entry_add.connect(on_chat_entry_add)
 	AgentEvents.events.chat_entry_update.connect(on_chat_entry_update)
 	AgentEvents.events.chat_bubble_flushed.connect(on_chat_bubble_flushed)
@@ -90,6 +92,18 @@ func on_agent_start(session_id: int) -> void:
 		return
 	reset_stick_to_bottom()
 	refresh_error_resume_buttons()
+	pass
+
+
+func on_compaction_end(session_id: int, success: bool, _error_code: String) -> void:
+	if not success:
+		return
+	var is_active := AgentSessionManager.is_active(session_id)
+	if is_active:
+		reset_stick_to_bottom()
+	clear_bubble_list(session_id)
+	if is_active:
+		show_session(session_id)
 	pass
 
 
@@ -208,6 +222,8 @@ func on_markdown_changed(_enabled: bool) -> void:
 		match entry.kind:
 			ChatEntry.KIND_THINKING, ChatEntry.KIND_RESULT:
 				ChatBubblePreview.apply(rich_text, entry.body)
+			ChatEntry.KIND_COMPACTION:
+				CompactionBubble.refresh(rich_text, entry)
 			ChatEntry.KIND_FILE_TOOL:
 				FileBubble.refresh(rich_text, entry)
 			ChatEntry.KIND_GIT_DIFF:
@@ -222,6 +238,11 @@ func on_markdown_changed(_enabled: bool) -> void:
 
 func on_theme_changed() -> void:
 	ScrollBarStyle.apply(chat_scroll.get_v_scroll_bar())
+	rebuild(AgentSessionManager.active_session_id)
+	pass
+
+
+func on_locale_changed() -> void:
 	rebuild(AgentSessionManager.active_session_id)
 	pass
 
@@ -394,6 +415,13 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 					build_bubble_style(ColorBase.surface),
 					session_id,
 					RuntimeManager.is_running(session_id)
+			)
+			queue_scroll_to_bottom()
+		ChatEntry.KIND_COMPACTION:
+			rich_text = CompactionBubble.append(
+				chat_list,
+				chat_entry,
+				build_bubble_style(ThemeColor.alpha_theme_color(0.08))
 			)
 			queue_scroll_to_bottom()
 		_:
