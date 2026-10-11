@@ -2,15 +2,22 @@ extends RefCounted
 
 
 static func path_boundary_test() -> void:
+	var was_enabled := SandboxPolicy.is_enabled()
+	SandboxPolicy.set_enabled(true)
 	var workspace_root := AgentWorkspace.get_root()
 	assert(SandboxPolicy.check_path_access(workspace_root))
 	assert(SandboxPolicy.check_path_access(workspace_root.path_join("agent/tools/ReadTool.gd")))
 	assert(not SandboxPolicy.check_path_access(workspace_root.get_base_dir()))
 	assert(not SandboxPolicy.check_path_access(workspace_root.path_join("../outside.txt")))
+	SandboxPolicy.set_enabled(false)
+	assert(SandboxPolicy.check_path_access(workspace_root.path_join("../outside.txt")))
+	SandboxPolicy.set_enabled(was_enabled)
 	pass
 
 
 static func file_tools_reject_outside_workspace_test() -> void:
+	var was_enabled := SandboxPolicy.is_enabled()
+	SandboxPolicy.set_enabled(true)
 	var outside_path := AgentWorkspace.get_root().path_join("../sandbox-outside.txt").simplify_path()
 	var tool_args: Array[Array] = [
 		[ReadTool.new(), {ReadTool.ARG_PATH: outside_path}],
@@ -30,4 +37,5 @@ static func file_tools_reject_outside_workspace_test() -> void:
 		var result := await tool.async_execute(args)
 		assert(result.is_error)
 		assert(result.content.contains("sandbox denied path outside workspace"))
+	SandboxPolicy.set_enabled(was_enabled)
 	pass

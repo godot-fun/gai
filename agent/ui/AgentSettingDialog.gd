@@ -15,6 +15,7 @@ var dialog: ConfirmationDialog
 var content_panel: PanelContainer
 var content_scroll: ScrollContainer
 var appearance_heading_label: Label
+var agent_behavior_heading_label: Label
 var notification_heading_label: Label
 var language_select: OptionButton
 var heading_label: Label
@@ -24,6 +25,7 @@ var api_url_edit: LineEdit
 var model_edit: LineEdit
 var api_token_edit: LineEdit
 var proxy_address_edit: LineEdit
+var sandbox_toggle_button: CheckButton
 var toast_toggle_button: CheckButton
 var sound_toggle_button: CheckButton
 var sound_seconds_group: HBoxContainer
@@ -118,6 +120,16 @@ func build_dialog() -> void:
 	proxy_address_edit = add_field(fields, I18n.t("agent.settings.proxy"), "http://127.0.0.1:10809", I18n.t("agent.settings.proxy_help"))
 	for edit: LineEdit in [api_url_edit, model_edit, api_token_edit, proxy_address_edit]:
 		bind_auto_save(edit, save_api_settings)
+	add_separator(fields)
+	agent_behavior_heading_label = Label.new()
+	agent_behavior_heading_label.text = I18n.t("agent.settings.agent_behavior")
+	agent_behavior_heading_label.add_theme_font_size_override("font_size", Typography.title_large_size)
+	fields.add_child(agent_behavior_heading_label)
+	sandbox_toggle_button = add_check_button(
+		make_option_row(fields, Margin.ma_2), I18n.t("agent.settings.sandbox_mode"), SandboxPolicy.is_enabled()
+	)
+	sandbox_toggle_button.tooltip_text = I18n.t("agent.settings.sandbox_mode_help")
+	sandbox_toggle_button.toggled.connect(on_sandbox_toggled)
 	add_separator(fields)
 	notification_heading_label = Label.new()
 	notification_heading_label.text = I18n.t("agent.settings.notification")
@@ -393,6 +405,7 @@ func on_button_pressed() -> void:
 	api_token_edit.secret = true
 	refresh_check_button(toast_toggle_button, AgentSetting.get_notification_window())
 	refresh_check_button(sound_toggle_button, AgentSetting.get_notification_sound())
+	refresh_check_button(sandbox_toggle_button, SandboxPolicy.is_enabled())
 	update_sound_options_visible(sound_toggle_button.button_pressed)
 	sound_seconds_spin.set_value_no_signal(AgentSetting.get_notification_sound_seconds())
 	sound_folder_edit.text = AgentSetting.get_notification_sound_folder()
@@ -424,6 +437,11 @@ func on_provider_selected(selected_index: int) -> void:
 
 func on_toast_toggled(enabled: bool) -> void:
 	AgentSetting.set_notification_window(enabled)
+	pass
+
+
+func on_sandbox_toggled(enabled: bool) -> void:
+	SandboxPolicy.set_enabled(enabled)
 	pass
 
 
@@ -516,6 +534,7 @@ func check_dialog_focus() -> void:
 
 func apply_locale() -> void:
 	appearance_heading_label.text = I18n.t("agent.settings.appearance")
+	agent_behavior_heading_label.text = I18n.t("agent.settings.agent_behavior")
 	notification_heading_label.text = I18n.t("agent.settings.notification")
 	heading_label.text = I18n.t("agent.settings.heading")
 	description_label.text = I18n.t("agent.settings.description")
@@ -532,6 +551,8 @@ func apply_locale() -> void:
 	help_labels[3].text = I18n.t("agent.settings.token_help")
 	help_labels[4].text = I18n.t("agent.settings.proxy_help")
 	provider_select.set_item_text(0, I18n.t("agent.settings.custom_provider"))
+	sandbox_toggle_button.text = I18n.t("agent.settings.sandbox_mode")
+	sandbox_toggle_button.tooltip_text = I18n.t("agent.settings.sandbox_mode_help")
 	toast_toggle_button.text = I18n.t("agent.settings.notification_window")
 	sound_toggle_button.text = I18n.t("agent.settings.notification_sound")
 	sound_folder_edit.tooltip_text = I18n.t("agent.settings.sound_folder_help")
@@ -590,6 +611,7 @@ func style_dialog() -> void:
 	dialog.add_theme_constant_override("buttons_separation", Margin.ma_0)
 	content_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	appearance_heading_label.add_theme_color_override("font_color", ColorBase.primary_text)
+	agent_behavior_heading_label.add_theme_color_override("font_color", ColorBase.primary_text)
 	notification_heading_label.add_theme_color_override("font_color", ColorBase.primary_text)
 	heading_label.add_theme_color_override("font_color", ColorBase.primary_text)
 	description_label.add_theme_color_override("font_color", ColorBase.secondary_text)
@@ -607,6 +629,7 @@ func style_dialog() -> void:
 	style_option_button(provider_select)
 	style_option_button(language_select)
 	style_spin_box(sound_seconds_spin)
+	style_check_button(sandbox_toggle_button)
 	style_check_button(toast_toggle_button)
 	style_check_button(sound_toggle_button)
 	pass
