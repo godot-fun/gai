@@ -35,7 +35,8 @@ static func check_bash(command: String) -> String:
 static func build_rules() -> Array[Rule]:
 	var result: Array[Rule] = []
 	var cmd := r"(?i)(^|[;&|()\n]\s*)"
-	var outside := r"(?:\.\.[\\/]|~[\\/]|\$\{?HOME\}?[\\/]|[a-z]:[\\/]|/(?:etc|home|root|usr|var|boot|dev|proc|sys)(?:[\\/]|$))"
+	var outside := r"(?:\.\.[\\/]|~[\\/]|\$\{?HOME\}?[\\/]|[a-z]:[\\/]|/(?:etc|home|root|usr|var|boot|proc|sys)(?:[\\/]|$))"
+	var block_device := r"/dev/(?:sd[a-z]|hd[a-z]|nvme\d+|vd[a-z]|xvd[a-z]|mmcblk\d+)"
 	var reason_system_command := "system administration commands are not allowed"
 	var reason_privilege_escalation := "privilege escalation is not allowed"
 	var reason_recursive_delete := "recursive forced deletion is not allowed"
@@ -44,6 +45,9 @@ static func build_rules() -> Array[Rule]:
 	var reason_remote_execution := "downloading content directly into a shell is not allowed"
 	var reason_nested_shell := "nested shell execution is not allowed"
 	var reason_outside_write := "writing outside the workspace is not allowed"
+	var reason_broadcast_kill := "broadcast process termination is not allowed"
+	var reason_reverse_shell := "reverse shell commands are not allowed"
+	var reason_block_device := "writing to block devices is not allowed"
 	var reason_fork_bomb := "process fork bombs are not allowed"
 	add_rule(result, cmd + r"(shutdown|reboot|poweroff|halt|mkfs(?:\.[a-z0-9]+)?|fdisk|parted|mount|umount|dd|shred|diskpart|format|systemctl|service|launchctl|crontab|schtasks)(\s|$)", reason_system_command)
 	add_rule(result, cmd + r"(sudo|su|runas)(\s|$)", reason_privilege_escalation)
@@ -51,17 +55,23 @@ static func build_rules() -> Array[Rule]:
 	add_rule(result, cmd + r"find\b[^\n;&|]*?(?:-delete|-exec\s+rm\b)", reason_recursive_delete)
 	add_rule(result, r"(?i)\bxargs\s+[^\n;&|]*\brm\s+[^\n;&|]*-[a-z]*r", reason_recursive_delete)
 	add_rule(result, cmd + r"(chmod|chown)\s+[^\n;&|]*(?:-[a-z]*r|--recursive)(\s|$)", reason_permission_change)
-	add_rule(result, cmd + r"git\s+(?:-[^\s]+\s+)*(?:reset\s+--hard|clean\s+(?:-[a-z]*f[a-z]*|--force)|checkout\s+--|(?-i:branch\s+-D)|filter-branch|filter-repo|push\b[^\n;&|]*?(?:--force(?:-with-lease)?|\s-f(?:\s|$)|--delete))", reason_destructive_git)
+	add_rule(result, cmd + r"git\s+(?:-[^\s]+\s+)*(?:reset\s+--hard|clean\s+(?:-[a-z]*f[a-z]*|--force)|checkout\s+--|(?-i:branch\s+-D)|filter-branch|filter-repo|update-ref\s+-d|push\b[^\n;&|]*?(?:--force(?:-with-lease)?|\s-f(?:\s|$)|--delete|--mirror))", reason_destructive_git)
 	add_rule(result, r"(?i)(curl|wget)\b[^\n|]*\|\s*(?:bash|sh|zsh|fish|python3?|node|perl|ruby)(\s|$)", reason_remote_execution)
 	add_rule(result, r"(?i)(?:bash|sh|zsh|fish|source)\s+<\(\s*(?:curl|wget)\b", reason_remote_execution)
 	add_rule(result, cmd + r"\.\s+<\(\s*(?:curl|wget)\b", reason_remote_execution)
 	add_rule(result, cmd + r"eval\s+[\"']?\$\((?:curl|wget)\b", reason_remote_execution)
 	add_rule(result, r"(?i)(?:\|\s*)?base64\s+(?:-d|--decode)\b[^\n|]*\|\s*(?:bash|sh|zsh|fish)(\s|$)", reason_remote_execution)
+	add_rule(result, r"(?i)/dev/tcp/", reason_reverse_shell)
+	add_rule(result, cmd + r"(?:nc|ncat|netcat)\b[^\n;&|]*\s-e\b", reason_reverse_shell)
+	add_rule(result, cmd + r"socat\b[^\n;&|]*(?:EXEC:|SYSTEM:)", reason_reverse_shell)
 	add_rule(result, cmd + r"(bash|sh|zsh|fish)\s+[^\n;&|]*-[a-z]*c(\s|$)", reason_nested_shell)
 	add_rule(result, cmd + r"(powershell(?:\.exe)?|pwsh(?:\.exe)?|cmd(?:\.exe)?)\s+", reason_nested_shell)
 	add_rule(result, r"(?i)(?:^|\s)(?:>|>>)\s*[\"']?" + outside, reason_outside_write)
 	add_rule(result, cmd + r"tee\b[^\n;&|]*?" + outside, reason_outside_write)
 	add_rule(result, cmd + r"(?:cp|mv)\b[^\n;&|]*?\s+[\"']?" + outside, reason_outside_write)
+	add_rule(result, r"(?i)(?:of\s*=\s*|(?:^|\s)(?:>|>>)\s*[\"']?)" + block_device, reason_block_device)
+	add_rule(result, cmd + r"kill\b[^\n;&|]*-(?:9|KILL)\s+-1(\s|$)", reason_broadcast_kill)
+	add_rule(result, cmd + r"(?:killall|pkill)\b[^\n;&|]*-(?:9|KILL)\b", reason_broadcast_kill)
 	add_rule(result, r":\s*\(\s*\)\s*\{\s*:\s*\|\s*:\s*&\s*\}\s*;\s*:", reason_fork_bomb)
 	return result
 
