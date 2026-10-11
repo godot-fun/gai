@@ -27,6 +27,17 @@ func FileUtils_read_write_test() -> void:
 	pass
 
 
+func is_relative_to_test() -> void:
+	assert(FileUtils.is_relative_to("C:/workspace", "C:/workspace"))
+	assert(FileUtils.is_relative_to("C:/workspace/src/main.gd", "C:/workspace"))
+	assert(FileUtils.is_relative_to("C:\\workspace\\src\\main.gd", "C:/workspace/"))
+	assert(not FileUtils.is_relative_to("C:/workspace/../secret.txt", "C:/workspace"))
+	assert(not FileUtils.is_relative_to("C:/workspace-other/file.txt", "C:/workspace"))
+	assert(not FileUtils.is_relative_to("", "C:/workspace"))
+	assert(not FileUtils.is_relative_to("C:/workspace", ""))
+	pass
+
+
 func read_file_to_string_rejects_nul_test() -> void:
 	var path := ProjectSettings.globalize_path("user://fileutils_nul_test.bin")
 	var file := FileAccess.open(path, FileAccess.WRITE)

@@ -54,6 +54,27 @@ static func get_project_root_path() -> String:
 	return ProjectSettings.globalize_path("res://")
 
 
+## Returns whether [param path] is [param base_path] itself or one of its descendants.
+## Paths are simplified before comparison; Windows comparisons are case-insensitive.
+## This is a lexical check and does not resolve symbolic links or directory junctions.
+static func is_relative_to(path: String, base_path: String) -> bool:
+	if StringUtils.is_blank(path) or StringUtils.is_blank(base_path):
+		return false
+	var current := path.replace("\\", "/").simplify_path()
+	var base := base_path.replace("\\", "/").simplify_path()
+	if OSUtils.is_windows():
+		current = current.to_lower()
+		base = base.to_lower()
+	while true:
+		if current == base:
+			return true
+		var next := current.get_base_dir()
+		if next == current:
+			return false
+		current = next
+	return false
+
+
 # ---------------------------------------------------------------------------
 # File read / write / delete
 # ---------------------------------------------------------------------------
