@@ -63,7 +63,7 @@ static func append(
 	var delete_button: Button = Button.new()
 	delete_button.name = "DeleteButton"
 	delete_button.text = "Delete"
-	AgentBubble.style_header_button(delete_button, panel_style.bg_color, "Delete this context entry", 52.0)
+	AgentBubble.style_header_button(delete_button, panel_style.bg_color, "Delete from here", 52.0)
 	delete_button.pressed.connect(on_delete_pressed.bind(session_id, entry))
 	header.add_child(delete_button)
 
