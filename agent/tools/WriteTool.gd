@@ -23,6 +23,8 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 	var path := AgentWorkspace.resolve_path(str(args.get(ARG_PATH, "")))
 	if StringUtils.is_blank(path):
 		return AgentToolResult.error("error: path is required", AgentToolResult.ui_file_details_message("", "path is required"))
+	if not SandboxPolicy.check_path_access(path):
+		return AgentToolResult.error(StringUtils.format("error: sandbox denied path outside workspace: {}", path), AgentToolResult.ui_file_details_message(path, "path outside workspace"))
 	var content := str(args.get(ARG_CONTENT, ""))
 	var previous_content := FileUtils.read_file_to_string(path)
 	if not FileUtils.write_string_to_file(path, content):

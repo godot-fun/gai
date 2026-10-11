@@ -26,6 +26,8 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 	var path := AgentWorkspace.resolve_path(str(args.get(ARG_PATH, "")))
 	if StringUtils.is_blank(path):
 		return AgentToolResult.error("error: path is required")
+	if not SandboxPolicy.check_path_access(path):
+		return AgentToolResult.error(StringUtils.format("error: sandbox denied path outside workspace: {}", path))
 	if not FileAccess.file_exists(path):
 		return AgentToolResult.error(StringUtils.format("error: image not found: {}", path))
 	if StringUtils.is_blank(ImageHelper.get_image_format(path, StringUtils.EMPTY)):

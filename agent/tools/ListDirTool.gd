@@ -23,6 +23,8 @@ func get_parameters() -> OpenAiToolDef.Parameters:
 
 func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
 	var search_root := AgentWorkspace.resolve_path(str(args.get(ARG_PATH, "")))
+	if not SandboxPolicy.check_path_access(search_root):
+		return AgentToolResult.error(StringUtils.format("error: sandbox denied path outside workspace: {}", search_root), AgentToolResult.ui_file_details_message(search_root, "path outside workspace"))
 	if not DirAccess.dir_exists_absolute(search_root):
 		return AgentToolResult.error("error: directory not found", AgentToolResult.ui_file_details_message(search_root, "directory not found"))
 	var recursive := NumberUtils.parse_bool(args.get(ARG_RECURSIVE, false))

@@ -19,6 +19,8 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 	var path := AgentWorkspace.resolve_path(str(args.get(ARG_PATH, "")))
 	if StringUtils.is_blank(path):
 		return AgentToolResult.error("error: path is required", AgentToolResult.ui_file_details_message("", "path is required"))
+	if not SandboxPolicy.check_path_access(path):
+		return AgentToolResult.error(StringUtils.format("error: sandbox denied path outside workspace: {}", path), AgentToolResult.ui_file_details_message(path, "path outside workspace"))
 	if DirAccess.dir_exists_absolute(path):
 		var error_message := StringUtils.format("error: path is a directory (not deleted): {}", path)
 		return AgentToolResult.error(error_message, AgentToolResult.ui_file_details_message(path, "can not delete directory"))

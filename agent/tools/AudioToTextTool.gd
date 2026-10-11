@@ -26,6 +26,8 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 	if StringUtils.is_blank(raw_path):
 		return AgentToolResult.error("error: path is required")
 	var path := AgentWorkspace.resolve_path(raw_path)
+	if not SandboxPolicy.check_path_access(path):
+		return AgentToolResult.error(StringUtils.format("error: sandbox denied path outside workspace: {}", path))
 	var result := await async_audio_to_text(path)
 	if result.is_error:
 		return AgentToolResult.error(result.content, AgentToolResult.ui_file_details_message(path, "transcription failed"))
