@@ -54,14 +54,25 @@ static func get_project_root_path() -> String:
 	return ProjectSettings.globalize_path("res://")
 
 
+## Returns a simplified absolute resource path or normalized filesystem path.
+## Display casing is preserved; Windows case-insensitive comparison belongs to the caller.
+static func normalize_path(path: String) -> String:
+	var normalized := path.strip_edges()
+	if normalized.is_empty():
+		return StringUtils.EMPTY
+	if normalized.begins_with("res://") or normalized.begins_with("user://"):
+		normalized = ProjectSettings.globalize_path(normalized)
+	return normalized.replace("\\", "/").simplify_path()
+
+
 ## Returns whether [param path] is [param base_path] itself or one of its descendants.
 ## Paths are simplified before comparison; Windows comparisons are case-insensitive.
 ## This is a lexical check and does not resolve symbolic links or directory junctions.
 static func is_relative_to(path: String, base_path: String) -> bool:
 	if StringUtils.is_blank(path) or StringUtils.is_blank(base_path):
 		return false
-	var current := path.replace("\\", "/").simplify_path()
-	var base := base_path.replace("\\", "/").simplify_path()
+	var current := normalize_path(path)
+	var base := normalize_path(base_path)
 	if OSUtils.is_windows():
 		current = current.to_lower()
 		base = base.to_lower()

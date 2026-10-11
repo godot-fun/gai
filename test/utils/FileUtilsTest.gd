@@ -118,3 +118,10 @@ static func create_fixture_tree() -> String:
 static func remove_fixture_tree(root: String) -> void:
 	FileUtils.delete_file_or_directory(root)
 	pass
+
+
+static func normalize_path_test() -> void:
+	assert(FileUtils.normalize_path(" C:\\workspace\\project\\..\\project\\ ") == "C:/workspace/project")
+	assert(FileUtils.normalize_path(StringUtils.EMPTY) == StringUtils.EMPTY)
+	assert(FileUtils.normalize_path("res://zfoo/../zfoo") == FileUtils.get_project_root_path().path_join("zfoo").replace("\\", "/").simplify_path())
+	pass
