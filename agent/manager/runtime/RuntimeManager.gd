@@ -175,44 +175,28 @@ static func on_agent_end(session_id: int, error_message: String) -> void:
 # ---------------------------------------------------------------------------
 
 static func on_turn_start(session_id: int) -> void:
-	clear_step_entries(session_id)
-	pass
-
-
-static func clear_step_entries(session_id: int) -> void:
 	var runtime := get_runtime(session_id)
 	if runtime == null:
 		return
-	runtime.step_thinking_entry = null
-	runtime.step_agent_entry = null
+	runtime.step_entry = null
 	pass
 
 
 static func on_message_update(session_id: int, chunk: String, stream_kind: String) -> void:
-	var entry := append_chat_entry_stream(session_id, stream_kind, chunk)
-	if entry == null:
-		return
-	AgentEvents.events.chat_entry_update.emit(session_id, entry, stream_kind)
-	pass
-
-
-static func append_chat_entry_stream(session_id: int, stream_kind: String, chunk: String) -> ChatEntry:
 	if not AgentSessionManager.has_index(session_id):
-		return null
+		return
 	var runtime := get_runtime(session_id)
 	if runtime == null:
-		return null
-	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
-		if runtime.step_thinking_entry == null:
-			runtime.step_thinking_entry = AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_THINKING, ChatEntry.TITLE_THINKING, chunk)
-		else:
-			runtime.step_thinking_entry.body += chunk
-		return runtime.step_thinking_entry
-	if runtime.step_agent_entry == null:
-		runtime.step_agent_entry = AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_AGENT, ChatEntry.TITLE_AGENT, chunk)
+		return
+	var is_reasoning := stream_kind == OpenAiClient.STREAM_KIND_REASONING
+	var entry_kind := ChatEntry.KIND_THINKING if is_reasoning else ChatEntry.KIND_AGENT
+	var entry_title := ChatEntry.TITLE_THINKING if is_reasoning else ChatEntry.TITLE_AGENT
+	if runtime.step_entry == null or runtime.step_entry.kind != entry_kind:
+		runtime.step_entry = AgentSessionManager.add_chat_entry(session_id, entry_kind, entry_title, chunk)
 	else:
-		runtime.step_agent_entry.body += chunk
-	return runtime.step_agent_entry
+		runtime.step_entry.body += chunk
+	AgentEvents.events.chat_entry_update.emit(session_id, runtime.step_entry, stream_kind)
+	pass
 
 
 # ---------------------------------------------------------------------------
