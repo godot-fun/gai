@@ -22,6 +22,9 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 	var command := str(args.get(ARG_COMMAND, "")).strip_edges()
 	if command.is_empty():
 		return AgentToolResult.error("error: command is required")
+	var deny_reason := SandboxBashPolicy.check_bash(command)
+	if not deny_reason.is_empty():
+		return AgentToolResult.error(StringUtils.format("error: sandbox denied: {}", deny_reason))
 	var timeout := TimeUtils.MILLIS_PER_MINUTE * 3 if command.contains("timeout") else TimeUtils.MILLIS_PER_SECOND * 30
 	var argv := build_argv_from_command(command)
 	var exec_result := await OSUtils.async_execute(argv, false, timeout, cancel_scope)
