@@ -290,11 +290,18 @@ static func add_chat_entry(session_id: int, kind: String, entry_title: String, b
 	return entry
 
 
-## Deletes chat from the selected entry. User entries truncate the following chat and matching
-## LLM history; error entries only remove themselves because they are not model messages.
+## Deletes the selected entry while keeping its chat-entry and LLM-message representations in sync.
+## User entries truncate everything after them; errors only remove themselves; context entries
+## remove their matching system message.
 ## Chat only — workspace files are left untouched.
 static func delete_chat_from_entry(session_id: int, entry: ChatEntry) -> void:
-	if entry == null or entry.kind not in [ChatEntry.KIND_USER, ChatEntry.KIND_ERROR]:
+	var deletable_kinds: Array[String] = [
+		ChatEntry.KIND_USER,
+		ChatEntry.KIND_ERROR,
+		ChatEntry.KIND_SKILL,
+		ChatEntry.KIND_AGENT_PROMPT,
+	]
+	if entry == null or entry.kind not in deletable_kinds:
 		return
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null:
@@ -302,24 +309,34 @@ static func delete_chat_from_entry(session_id: int, entry: ChatEntry) -> void:
 	var entry_idx := session.chat_entries.find(entry)
 	if entry_idx < 0:
 		return
-	if entry.kind == ChatEntry.KIND_ERROR:
+	var message_idx := message_index_for_chat_entry(session, entry_idx)
+	if entry.kind == ChatEntry.KIND_USER:
+		session.chat_entries = session.chat_entries.slice(0, entry_idx)
+		session.messages = session.messages.slice(0, message_idx)
+	else:
 		session.chat_entries.remove_at(entry_idx)
-		persist_session(session_id)
-		AgentEvents.events.chat_entry_delete.emit(session_id)
-		return
-	var msg_idx := message_index_for_user_chat_entry(session, entry_idx)
-	session.chat_entries = session.chat_entries.slice(0, entry_idx)
-	session.messages = session.messages.slice(0, msg_idx)
+		if message_idx >= 0:
+			session.messages.remove_at(message_idx)
 	persist_session(session_id)
 	AgentEvents.events.chat_entry_delete.emit(session_id)
 	pass
 
 
-static func message_index_for_user_chat_entry(session: AgentSession, entry_idx: int) -> int:
+## Resolves a deletable UI entry to its backing LLM message. Returns -1 when the entry has no
+## message representation, such as an error entry.
+static func message_index_for_chat_entry(session: AgentSession, entry_idx: int) -> int:
 	if entry_idx < 0 or entry_idx >= session.chat_entries.size():
-		return session.messages.size()
-	if session.chat_entries[entry_idx].kind != ChatEntry.KIND_USER:
-		return session.messages.size()
+		return -1
+	var entry: ChatEntry = session.chat_entries[entry_idx]
+	if entry.kind == ChatEntry.KIND_SKILL or entry.kind == ChatEntry.KIND_AGENT_PROMPT:
+		for message_idx in range(session.messages.size()):
+			var message: ChatMessage = session.messages[message_idx]
+			var matches: bool = SkillPrompt.is_skill_context_message(message) if entry.kind == ChatEntry.KIND_SKILL else AgentPrompt.is_agent_context_message(message)
+			if matches:
+				return message_idx
+		return -1
+	if entry.kind != ChatEntry.KIND_USER:
+		return -1
 	var user_slot := 0
 	for i in range(entry_idx):
 		if session.chat_entries[i].kind == ChatEntry.KIND_USER:

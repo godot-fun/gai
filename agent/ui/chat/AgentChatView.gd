@@ -352,6 +352,7 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 		ChatEntry.KIND_SKILL, ChatEntry.KIND_AGENT_PROMPT:
 			rich_text = ContextBubble.append(
 					chat_list,
+					session_id,
 					chat_entry,
 					build_bubble_style(ColorBase.info_surface)
 			)

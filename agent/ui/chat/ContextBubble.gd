@@ -26,6 +26,7 @@ static func hidden_line_count(body: String) -> int:
 
 static func append(
 	chat_list: VBoxContainer,
+	session_id: int,
 	entry: ChatEntry,
 	panel_style: StyleBoxFlat
 ) -> RichTextLabel:
@@ -54,6 +55,18 @@ static func append(
 	header.add_child(expand_button)
 	wrapper.set_meta(META_EXPAND_BUTTON, expand_button)
 
+	var spacer: Control = Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	header.add_child(spacer)
+
+	var delete_button: Button = Button.new()
+	delete_button.name = "DeleteButton"
+	delete_button.text = "Delete"
+	AgentBubble.style_header_button(delete_button, panel_style.bg_color, "Delete this context entry", 52.0)
+	delete_button.pressed.connect(on_delete_pressed.bind(session_id, entry))
+	header.add_child(delete_button)
+
 	vbox.add_child(header)
 
 	var rich_text: RichTextLabel = MarkdownHelper.create_rich_text_label(
@@ -67,6 +80,11 @@ static func append(
 	chat_list.add_child(wrapper)
 	refresh(rich_text, entry, wrapper)
 	return rich_text
+
+
+static func on_delete_pressed(session_id: int, entry: ChatEntry) -> void:
+	AgentSessionManager.delete_chat_from_entry(session_id, entry)
+	pass
 
 
 static func on_expand_pressed(wrapper: PanelContainer, entry: ChatEntry) -> void:
