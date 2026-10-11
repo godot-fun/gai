@@ -74,8 +74,11 @@ static func is_resumable(message: String) -> bool:
 
 
 static func on_resume_pressed(session_id: int, entry: ChatEntry) -> void:
+	if RuntimeManager.is_running(session_id):
+		Alert.alert("session is busy", ColorBase.error)
+		return
 	AgentSessionManager.delete_chat_from_entry(session_id, entry)
-	RuntimeManager.resume_session(session_id)
+	RuntimeManager.resume_agent(session_id)
 	pass
 
 

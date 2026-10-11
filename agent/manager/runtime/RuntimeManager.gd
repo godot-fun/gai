@@ -136,12 +136,9 @@ static func run_agent(session: AgentSession) -> void:
 	pass
 
 
-## Resumes an idle session after the UI has prepared its chat history.
-static func resume_session(session_id: int) -> void:
+## Resumes agent execution after the UI has prepared an idle session's chat history.
+static func resume_agent(session_id: int) -> void:
 	if not AgentSessionManager.has_index(session_id):
-		return
-	if is_running(session_id):
-		Alert.alert("session is busy", ColorBase.error)
 		return
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null:
