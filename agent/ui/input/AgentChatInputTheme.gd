@@ -46,9 +46,8 @@ static func apply_field(input_field: TextEdit) -> void:
 
 static func apply_send_button(send_button: Button, stop_action: bool, show_activity: bool,
 		compacting: bool) -> void:
-	var show_send_effect := not stop_action and not show_activity
-	var base_color := Color.TRANSPARENT if show_send_effect else (
-		ColorBase.error if stop_action else ThemeColor.accent_theme_color())
+	var show_shader_effect := not show_activity
+	var base_color := Color.TRANSPARENT if show_shader_effect else ThemeColor.accent_theme_color()
 	var radius: int = int(ControlSize.md * 0.5)
 	var normal := StyleBoxHelper.create_style_box_flat(base_color, radius, Margin.ma_1, Margin.ma_1)
 	ButtonStyle.apply(send_button, normal,
@@ -65,10 +64,7 @@ static func apply_send_button(send_button: Button, stop_action: bool, show_activ
 		return
 	send_button.text = ""
 	send_button.tooltip_text = I18n.t("agent.input.stop") if stop_action else I18n.t("agent.input.send")
-	var icon_size := ControlSize.xs
-	send_button.icon = make_stop_icon(icon_size, Color.WHITE) if stop_action else null
-	send_button.add_theme_constant_override("icon_max_width", icon_size)
-	send_button.add_theme_constant_override("icon_max_height", icon_size)
+	send_button.icon = null
 	pass
 
 
@@ -116,15 +112,3 @@ static func make_tint_svg_icon(path: String, size: int, color: Color) -> ImageTe
 	if image.load_svg_from_string(svg, float(size) / 16.0) != OK:
 		return ImageTexture.new()
 	return ImageTexture.create_from_image(image)
-
-
-static func make_stop_icon(size: int, color: Color) -> ImageTexture:
-	var img: Image = Image.create(size, size, false, Image.FORMAT_RGBA8)
-	img.fill(Color(0, 0, 0, 0))
-	var square_size: int = maxi(4, int(size * 0.56))
-	var left: int = (size - square_size) / 2
-	var top: int = (size - square_size) / 2
-	for y in range(top, top + square_size):
-		for x in range(left, left + square_size):
-			img.set_pixel(x, y, color)
-	return ImageTexture.create_from_image(img)

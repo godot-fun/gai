@@ -14,13 +14,14 @@ const SIDE_INSET: float = ControlSize.md * 5.0
 const QUEUE_FADE_SECONDS: float = 0.2
 const SEND_BUTTON_ACTIVE_SHADER := preload("res://agent/ui/input/SendButtonActive.gdshader")
 const SEND_BUTTON_EFFECT_SHADER := preload("res://agent/ui/input/SendButtonEffect.gdshader")
+const SEND_BUTTON_STOP_SHADER := preload("res://agent/ui/input/SendButtonStop.gdshader")
+enum SendEffectState { READY, ACTIVE, STOP }
 var input_bar: Control
 var input_wrap: PanelContainer
 var input_inner: Control
 var input_field: TextEdit
 var send_button: Button
 var send_effect: ColorRect
-var send_active_effect: ColorRect
 var queue_badge: Label
 var queue_panel: PanelContainer
 var queue_rows: VBoxContainer
@@ -32,8 +33,8 @@ var force_expanded: bool = false
 var layout_tween: Tween = null
 var queue_tween: Tween = null
 var send_effect_tween: Tween = null
-var send_launch_tween: Tween = null
 var send_effect_hover: float = 0.0
+var send_effect_state: int = -1
 
 var tween_start_h: float = 0.0
 var tween_target_h: float = 0.0
@@ -60,7 +61,6 @@ func setup(
 	input_field = p_input_field
 	send_button = p_send_button
 	setup_send_effect()
-	setup_send_active_effect()
 	setup_queue_badge()
 	setup_queue_controls()
 
@@ -132,33 +132,14 @@ func setup_queue_badge() -> void:
 	pass
 
 
-func setup_send_active_effect() -> void:
-	send_active_effect = ColorRect.new()
-	send_active_effect.name = "SendButtonActive"
-	send_active_effect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	send_active_effect.set_anchors_preset(Control.PRESET_CENTER)
-	send_active_effect.offset_left = -ControlSize.md * 0.5
-	send_active_effect.offset_top = -ControlSize.md * 0.5
-	send_active_effect.offset_right = ControlSize.md * 0.5
-	send_active_effect.offset_bottom = ControlSize.md * 0.5
-	var material := ShaderMaterial.new()
-	material.shader = SEND_BUTTON_ACTIVE_SHADER
-	send_active_effect.material = material
-	send_active_effect.visible = false
-	send_button.add_child(send_active_effect)
-	pass
-
-
 func setup_send_effect() -> void:
 	send_effect = ColorRect.new()
 	send_effect.name = "SendButtonEffect"
-	send_effect.show_behind_parent = true
 	send_effect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	send_effect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var material := ShaderMaterial.new()
 	material.shader = SEND_BUTTON_EFFECT_SHADER
 	send_effect.material = material
-	send_effect.visible = false
 	send_button.add_child(send_effect)
 	pass
 
@@ -311,55 +292,104 @@ func refresh_send_button() -> void:
 	var compacting := AgentCompactionManager.is_compacting(session_id)
 	var show_activity := compacting or (not expanded and running)
 	var stop_action := is_stop_action()
-	send_effect.visible = not show_activity and not stop_action
-	(send_effect.material as ShaderMaterial).set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
-	send_active_effect.visible = show_activity
+	var effect_state: int = SendEffectState.ACTIVE if show_activity else (
+		SendEffectState.STOP if stop_action else SendEffectState.READY)
+	set_send_effect_state(effect_state)
 	AgentChatInputTheme.apply_send_button(send_button, stop_action, show_activity, compacting)
 	AgentChatInputTheme.apply_queue_badge(queue_badge, not expanded, get_pending_queue_count())
 	pass
 
 
 func on_send_button_mouse_entered() -> void:
-	tween_send_effect_hover(1.0)
-	start_send_launch()
+	match send_effect_state:
+		SendEffectState.READY:
+			play_send_launch()
+		SendEffectState.STOP:
+			play_stop_containment()
 	pass
 
 
 func on_send_button_mouse_exited() -> void:
-	tween_send_effect_hover(0.0)
-	if send_launch_tween != null:
-		send_launch_tween.kill()
-		send_launch_tween = null
-	(send_effect.material as ShaderMaterial).set_shader_parameter("launch_progress", 0.0)
+	var material := send_effect.material as ShaderMaterial
+	if send_effect_state == SendEffectState.READY:
+		material.set_shader_parameter("launch_progress", 0.0)
+	elif send_effect_state == SendEffectState.STOP:
+		material.set_shader_parameter("containment_progress", 0.0)
+	else:
+		return
+	var tween := create_send_effect_tween()
+	tween.tween_method(set_send_effect_hover, send_effect_hover, 0.0, 0.18).set_trans(
+		Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	pass
 
 
-func tween_send_effect_hover(target: float) -> void:
+func create_send_effect_tween() -> Tween:
 	if send_effect_tween != null:
 		send_effect_tween.kill()
 	send_effect_tween = input_bar.create_tween()
-	send_effect_tween.set_trans(Tween.TRANS_CUBIC)
-	send_effect_tween.set_ease(Tween.EASE_OUT)
-	send_effect_tween.tween_method(set_send_effect_hover, send_effect_hover, target, 0.18)
-	pass
+	send_effect_tween.set_parallel()
+	return send_effect_tween
 
 
 func set_send_effect_hover(value: float) -> void:
 	send_effect_hover = value
-	(send_effect.material as ShaderMaterial).set_shader_parameter("hover_strength", value)
+	if send_effect_state != SendEffectState.ACTIVE:
+		(send_effect.material as ShaderMaterial).set_shader_parameter("hover_strength", value)
 	pass
 
 
-func start_send_launch() -> void:
-	if send_launch_tween != null:
-		send_launch_tween.kill()
+func set_send_effect_state(state: int) -> void:
+	var material := send_effect.material as ShaderMaterial
+	if send_effect_state != state:
+		if send_effect_tween != null:
+			send_effect_tween.kill()
+			send_effect_tween = null
+		send_effect_state = state
+		match state:
+			SendEffectState.READY:
+				send_effect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+				material.shader = SEND_BUTTON_EFFECT_SHADER
+			SendEffectState.ACTIVE:
+				send_effect.set_anchors_preset(Control.PRESET_CENTER)
+				send_effect.offset_left = -ControlSize.md * 0.5
+				send_effect.offset_top = -ControlSize.md * 0.5
+				send_effect.offset_right = ControlSize.md * 0.5
+				send_effect.offset_bottom = ControlSize.md * 0.5
+				material.shader = SEND_BUTTON_ACTIVE_SHADER
+			SendEffectState.STOP:
+				send_effect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+				material.shader = SEND_BUTTON_STOP_SHADER
+	match state:
+		SendEffectState.READY:
+			material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
+			material.set_shader_parameter("hover_strength", send_effect_hover)
+		SendEffectState.STOP:
+			material.set_shader_parameter("error_color", ColorBase.error)
+			material.set_shader_parameter("hover_strength", send_effect_hover)
+	pass
+
+
+func play_send_launch() -> void:
 	var material := send_effect.material as ShaderMaterial
 	material.set_shader_parameter("launch_progress", 0.0)
-	send_launch_tween = input_bar.create_tween()
-	send_launch_tween.set_trans(Tween.TRANS_CUBIC)
-	send_launch_tween.set_ease(Tween.EASE_OUT)
-	send_launch_tween.tween_method(func(value: float) -> void:
-		material.set_shader_parameter("launch_progress", value), 0.0, 1.0, 0.55)
+	var tween := create_send_effect_tween()
+	tween.tween_method(set_send_effect_hover, send_effect_hover, 1.0, 0.18).set_trans(
+		Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_method(func(value: float) -> void:
+		material.set_shader_parameter("launch_progress", value), 0.0, 1.0, 0.55).set_trans(
+		Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	pass
+
+
+func play_stop_containment() -> void:
+	var material := send_effect.material as ShaderMaterial
+	material.set_shader_parameter("containment_progress", 0.0)
+	var tween := create_send_effect_tween()
+	tween.tween_method(set_send_effect_hover, send_effect_hover, 1.0, 0.18).set_trans(
+		Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_method(func(value: float) -> void:
+		material.set_shader_parameter("containment_progress", value), 0.0, 1.0, 0.48).set_trans(
+		Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	pass
 
 
