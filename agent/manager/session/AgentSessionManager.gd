@@ -75,10 +75,11 @@ static func create_session() -> AgentSession:
 	return session
 
 
-## Deleting the active session falls back to the first remaining one (or a fresh session).
+## Deleting the active session selects the next displayed session, then falls back to the default.
 static func delete_session(session_id: int) -> void:
 	if not has_index(session_id):
 		return
+	var next_session_id := get_next_session_id(session_id) if active_session_id == session_id else 0
 
 	AgentSessionStore.delete_session(session_id)
 	remove_session_index(session_id)
@@ -86,7 +87,10 @@ static func delete_session(session_id: int) -> void:
 	AgentEvents.events.session_removed.emit(session_id)
 
 	if active_session_id == session_id:
-		select_default_session()
+		if next_session_id != 0:
+			select_session(next_session_id)
+		else:
+			select_default_session()
 	pass
 
 
@@ -148,6 +152,18 @@ static func is_pinned(session_id: int) -> bool:
 
 static func has_index(session_id: int) -> bool:
 	return get_session_index(session_id) != null
+
+
+## Returns the session displayed immediately after [param session_id] across pinned and normal lists.
+static func get_next_session_id(session_id: int) -> int:
+	var found := false
+	for list: Array[AgentSessionIndexes.SessionIndex] in [session_indexes.pinned_indexes, session_indexes.indexes]:
+		for session_index: AgentSessionIndexes.SessionIndex in list:
+			if found:
+				return session_index.id
+			if session_index.id == session_id:
+				found = true
+	return 0
 
 
 static func add_session_index(session: AgentSession) -> void:
