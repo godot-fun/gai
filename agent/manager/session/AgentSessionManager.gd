@@ -299,20 +299,6 @@ static func delete_chat_from_entry(session_id: int, entry: ChatEntry) -> void:
 	pass
 
 
-## Truncates the chat from [param entry] and reverts the workspace to the snapshot taken before that turn.
-## Entries without a snapshot (older chats, checkpoints unavailable) just truncate.
-static func revert_to_entry(session_id: int, entry: ChatEntry) -> void:
-	if entry == null:
-		return
-	var sha: String = entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
-	if not await GitManager.async_restore(session_id, sha):
-		Alert.alert("Workspace restore failed; chat history was kept", ColorBase.error)
-		return
-	delete_chat_from_entry(session_id, entry)
-	Alert.alert("Workspace restored", ColorBase.success)
-	pass
-
-
 static func message_index_for_user_chat_entry(session: AgentSession, entry_idx: int) -> int:
 	if entry_idx < 0 or entry_idx >= session.chat_entries.size():
 		return session.messages.size()

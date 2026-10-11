@@ -108,7 +108,12 @@ static func on_delete_from_here_pressed(session_id: int, entry: ChatEntry) -> vo
 ## Delete plus a workspace revert to the snapshot taken before this turn.
 static func on_revert_pressed(session_id: int, entry: ChatEntry) -> void:
 	AgentEvents.events.chat_input_prefill.emit(entry.body)
-	AgentSessionManager.revert_to_entry(session_id, entry)
+	var sha: String = entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
+	if not await GitManager.async_restore(session_id, sha):
+		Alert.alert("Workspace restore failed; chat history was kept", ColorBase.error)
+		return
+	AgentSessionManager.delete_chat_from_entry(session_id, entry)
+	Alert.alert("Workspace restored", ColorBase.success)
 	pass
 
 static func sync_layout(host: Control, panel: PanelContainer, beam: AccentBorderBeamLayer) -> void:
