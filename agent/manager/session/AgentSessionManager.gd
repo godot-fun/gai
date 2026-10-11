@@ -20,17 +20,13 @@ static var active_session_id: int = 0
 static func _static_init() -> void:
 	# Session persistence — auto-save when title changes
 	AgentEvents.events.session_title_changed.connect(on_persist_session)
-
-	# Agent run lifecycle
-
 	# Turn & streaming
 	AgentEvents.events.message_complete.connect(on_message_complete)
-
 	pass
 
 
 # ---------------------------------------------------------------------------
-# Persistence — load / save
+# Persistence
 # ---------------------------------------------------------------------------
 
 ## Boot: reload the index of the current workspace, then select the first session (create one if the list is empty).
@@ -49,13 +45,14 @@ static func persist_session(session_id: int) -> void:
 	AgentSessionIndexes.save_index(session_indexes)
 	pass
 
+
 static func on_persist_session(session_id: int, _arg: Variant = null) -> void:
 	persist_session(session_id)
 	pass
 
 
 # ---------------------------------------------------------------------------
-# Session registry — create, delete
+# Session lifecycle
 # ---------------------------------------------------------------------------
 
 ## New session is prepended to the index; it is not selected here — [method select_default_session]
@@ -94,12 +91,12 @@ static func delete_session(session_id: int) -> void:
 
 
 # ---------------------------------------------------------------------------
-# Selection
+# Session selection
 # ---------------------------------------------------------------------------
 
 ## Selects the first pinned or normal entry, creating a session when the index is empty.
 static func select_default_session() -> void:
-	var session_index_id: = 0
+	var session_index_id := 0
 	if not session_indexes.pinned_indexes.is_empty():
 		session_index_id = session_indexes.pinned_indexes[0].id
 	elif not session_indexes.indexes.is_empty():
@@ -107,6 +104,7 @@ static func select_default_session() -> void:
 	else:
 		session_index_id = create_session().id
 	select_session(session_index_id)
+	pass
 
 
 ## Selects [param session_id]; ids missing from the index are ignored.
@@ -120,10 +118,15 @@ static func select_session(session_id: int) -> void:
 	var previous_session_id := active_session_id
 	active_session_id = session_id
 	AgentEvents.events.session_selected.emit(session_id, previous_session_id)
+	pass
+
+
+static func is_active(session_id: int) -> bool:
+	return active_session_id == session_id
 
 
 # ---------------------------------------------------------------------------
-# Query
+# Session index management
 # ---------------------------------------------------------------------------
 
 static func get_session_index(session_id: int) -> AgentSessionIndexes.SessionIndex:
@@ -145,13 +148,6 @@ static func is_pinned(session_id: int) -> bool:
 
 static func has_index(session_id: int) -> bool:
 	return get_session_index(session_id) != null
-
-
-static func get_title(session_id: int) -> String:
-	var session_index := get_session_index(session_id)
-	if session_index == null:
-		return ""
-	return session_index.title
 
 
 static func add_session_index(session: AgentSession) -> void:
@@ -195,23 +191,16 @@ static func transfer_session_index(session_id: int, to_pinned: bool, to_index: i
 	pass
 
 
-static func is_active(session_id: int) -> bool:
-	return active_session_id == session_id
-
-
-static func has_chat_history(session_id: int) -> bool:
-	var session := AgentSessionStore.load_session(session_id)
-	if session == null:
-		return false
-	for entry in session.chat_entries:
-		if not ChatEntry.is_context_kind(entry.kind):
-			return true
-	return false
-
-
 # ---------------------------------------------------------------------------
-# Title
+# Session title
 # ---------------------------------------------------------------------------
+
+static func get_title(session_id: int) -> String:
+	var session_index := get_session_index(session_id)
+	if session_index == null:
+		return ""
+	return session_index.title
+
 
 ## Writes the sidebar title and persists it via [signal AgentEvents.events.session_title_changed].
 ## Trimmed to one line and capped to [constant MAX_TITLE_LENGTH] (no ellipsis suffix) so a long
@@ -228,7 +217,7 @@ static func set_title(session_id: int, title: String) -> void:
 
 
 # ---------------------------------------------------------------------------
-# User actions — send, stop
+# Pending message queue
 # ---------------------------------------------------------------------------
 
 static func enqueue_message(session_id: int, user_text: String) -> bool:
@@ -262,8 +251,18 @@ static func delete_pending_message(session_id: int, message: String) -> void:
 
 
 # ---------------------------------------------------------------------------
-# Chat Entry
+# Chat history
 # ---------------------------------------------------------------------------
+
+static func has_chat_history(session_id: int) -> bool:
+	var session := AgentSessionStore.load_session(session_id)
+	if session == null:
+		return false
+	for entry in session.chat_entries:
+		if not ChatEntry.is_context_kind(entry.kind):
+			return true
+	return false
+
 
 static func add_chat_entry(session_id: int, kind: String, entry_title: String, body: String, details: Dictionary[String, String] = {}) -> ChatEntry:
 	var session := AgentSessionStore.load_session(session_id)
@@ -334,7 +333,7 @@ static func message_index_for_user_chat_entry(session: AgentSession, entry_idx: 
 	return session.messages.size()
 
 # ---------------------------------------------------------------------------
-# Event handlers — turn & streaming
+# Event handlers
 # ---------------------------------------------------------------------------
 
 static func on_message_complete(session_id: int, usage: OpenAiUsage) -> void:

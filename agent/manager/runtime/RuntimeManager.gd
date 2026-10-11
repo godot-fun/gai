@@ -6,18 +6,29 @@ extends Object
 static var runtimes: Dictionary[int, RuntimeState] = {}
 
 
+# ---------------------------------------------------------------------------
+# Event wiring
+# ---------------------------------------------------------------------------
+
 static func _static_init() -> void:
-	AgentEvents.events.session_resume.connect(on_session_resume)
-	AgentEvents.events.session_removed.connect(on_session_removed)
+	# Pending message queue and agent run lifecycle
 	AgentEvents.events.session_queue_changed.connect(on_session_queue_changed)
-	AgentEvents.events.chat_entry_delete.connect(on_chat_entry_delete)
-	AgentEvents.events.turn_start.connect(on_turn_start)
+	AgentEvents.events.session_resume.connect(on_session_resume)
 	AgentEvents.events.agent_end.connect(on_agent_end)
+	# Turn streaming and tool entries
+	AgentEvents.events.turn_start.connect(on_turn_start)
 	AgentEvents.events.message_update.connect(on_message_update)
 	AgentEvents.events.tool_execution_start.connect(on_tool_execution_start)
 	AgentEvents.events.tool_execution_end.connect(on_tool_execution_end)
+	# Session invalidation
+	AgentEvents.events.session_removed.connect(on_session_removed)
+	AgentEvents.events.chat_entry_delete.connect(on_chat_entry_delete)
 	pass
 
+
+# ---------------------------------------------------------------------------
+# Runtime state
+# ---------------------------------------------------------------------------
 
 static func start(session_id: int) -> RuntimeState:
 	var runtime := RuntimeState.new()
@@ -39,6 +50,36 @@ static func get_or_start(session_id: int) -> RuntimeState:
 static func is_running(session_id: int) -> bool:
 	return runtimes.has(session_id)
 
+
+static func request_stop(session_id: int) -> void:
+	var runtime := get_runtime(session_id)
+	if runtime == null or runtime.stop_requested:
+		return
+	runtime.stop_requested = true
+	runtime.cancel_scope.cancel()
+	pass
+
+
+static func is_stop_requested(session_id: int) -> bool:
+	var runtime := get_runtime(session_id)
+	return runtime == null or runtime.stop_requested
+
+
+static func stop(session_id: int) -> void:
+	runtimes.erase(session_id)
+	pass
+
+
+static func clear() -> void:
+	for runtime: RuntimeState in runtimes.values():
+		runtime.cancel_scope.cancel()
+	runtimes.clear()
+	pass
+
+
+# ---------------------------------------------------------------------------
+# Pending message queue
+# ---------------------------------------------------------------------------
 
 ## Starts the FIFO head when the session is idle. Errors and manual stops leave later items queued.
 static func try_run_next(session_id: int) -> void:
@@ -77,6 +118,25 @@ static func try_run_next(session_id: int) -> void:
 	pass
 
 
+static func on_session_queue_changed(session_id: int) -> void:
+	try_run_next.call_deferred(session_id)
+	pass
+
+
+# ---------------------------------------------------------------------------
+# Agent run lifecycle
+# ---------------------------------------------------------------------------
+
+static func run_agent(session: AgentSession) -> void:
+	if not AgentSessionManager.has_index(session.id):
+		return
+	var runtime := get_or_start(session.id)
+	var ai_client := ApiSetting.get_client()
+	ai_client.cancel_scope = runtime.cancel_scope
+	await AgentLoop.run(ai_client, session)
+	pass
+
+
 static func on_session_resume(session_id: int) -> void:
 	if not AgentSessionManager.has_index(session_id):
 		return
@@ -87,26 +147,6 @@ static func on_session_resume(session_id: int) -> void:
 	if session == null:
 		return
 	await run_agent(session)
-	pass
-
-
-static func on_session_removed(session_id: int) -> void:
-	request_stop(session_id)
-	pass
-
-
-static func on_session_queue_changed(session_id: int) -> void:
-	try_run_next.call_deferred(session_id)
-	pass
-
-
-static func on_chat_entry_delete(session_id: int) -> void:
-	request_stop(session_id)
-	pass
-
-
-static func on_turn_start(session_id: int) -> void:
-	clear_step_entries(session_id)
 	pass
 
 
@@ -127,6 +167,24 @@ static func on_agent_end(session_id: int, error_message: String) -> void:
 	AgentEvents.events.session_stop.emit(session_id)
 	if should_continue_queue:
 		try_run_next.call_deferred(session_id)
+	pass
+
+
+# ---------------------------------------------------------------------------
+# Turn streaming
+# ---------------------------------------------------------------------------
+
+static func on_turn_start(session_id: int) -> void:
+	clear_step_entries(session_id)
+	pass
+
+
+static func clear_step_entries(session_id: int) -> void:
+	var runtime := get_runtime(session_id)
+	if runtime == null:
+		return
+	runtime.step_thinking_entry = null
+	runtime.step_agent_entry = null
 	pass
 
 
@@ -157,9 +215,18 @@ static func append_chat_entry_stream(session_id: int, stream_kind: String, chunk
 	return runtime.step_agent_entry
 
 
+# ---------------------------------------------------------------------------
+# Tool execution entries
+# ---------------------------------------------------------------------------
+
 static func on_tool_execution_start(session_id: int, _tool_call_id: String, tool_name: String, args: Dictionary[String, Variant]) -> void:
 	if ToolHelper.is_file_tool(tool_name):
 		return
+	AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_TOOL, tool_name, get_tool_entry_body(tool_name, args))
+	pass
+
+
+static func get_tool_entry_body(tool_name: String, args: Dictionary[String, Variant]) -> String:
 	var body := ""
 	match tool_name:
 		GrepTool.NAME:
@@ -184,8 +251,7 @@ static func on_tool_execution_start(session_id: int, _tool_call_id: String, tool
 				if StringUtils.is_not_blank(value):
 					body = value
 					break
-	AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_TOOL, tool_name, body)
-	pass
+	return body
 
 
 static func on_tool_execution_end(session_id: int, _tool_call_id: String, tool_name: String, agent_tool_result: AgentToolResult) -> void:
@@ -199,46 +265,15 @@ static func on_tool_execution_end(session_id: int, _tool_call_id: String, tool_n
 	pass
 
 
-static func run_agent(session: AgentSession) -> void:
-	if not AgentSessionManager.has_index(session.id):
-		return
-	var runtime := get_or_start(session.id)
-	var ai_client := ApiSetting.get_client()
-	ai_client.cancel_scope = runtime.cancel_scope
-	await AgentLoop.run(ai_client, session)
+# ---------------------------------------------------------------------------
+# Session invalidation
+# ---------------------------------------------------------------------------
+
+static func on_session_removed(session_id: int) -> void:
+	request_stop(session_id)
 	pass
 
 
-static func request_stop(session_id: int) -> void:
-	var runtime := get_runtime(session_id)
-	if runtime == null or runtime.stop_requested:
-		return
-	runtime.stop_requested = true
-	runtime.cancel_scope.cancel()
-	pass
-
-
-static func is_stop_requested(session_id: int) -> bool:
-	var runtime := get_runtime(session_id)
-	return runtime == null or runtime.stop_requested
-
-
-static func clear_step_entries(session_id: int) -> void:
-	var runtime := get_runtime(session_id)
-	if runtime == null:
-		return
-	runtime.step_thinking_entry = null
-	runtime.step_agent_entry = null
-	pass
-
-
-static func stop(session_id: int) -> void:
-	runtimes.erase(session_id)
-	pass
-
-
-static func clear() -> void:
-	for runtime: RuntimeState in runtimes.values():
-		runtime.cancel_scope.cancel()
-	runtimes.clear()
+static func on_chat_entry_delete(session_id: int) -> void:
+	request_stop(session_id)
 	pass

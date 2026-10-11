@@ -39,31 +39,41 @@ class Events:
 	signal session_removed(session_id: int)
 	signal session_selected(session_id: int, previous_session_id: int)
 	signal session_title_changed(session_id: int, title: String)
+
+	# Session run control
 	signal session_resume(session_id: int)
 	signal session_stop(session_id: int)
+
+	# Pending message queue
 	## Pending user messages changed for one session.
 	signal session_queue_changed(session_id: int)
+
+	# Chat entries
+	signal chat_entry_add(session_id: int, entry: ChatEntry)
+	signal chat_entry_update(session_id: int, entry: ChatEntry, stream_kind: String)
+	signal chat_entry_delete(session_id: int)
+	## Emitted after ChatBubbleFlusher applies a pending batch (every ~100 ms while streaming).
+	signal chat_bubble_flushed
+
+	# Chat navigation and input
+	## A search result requests that the transcript reveal a specific persisted entry.
+	signal chat_search_result_selected(session_id: int, entry_index: int)
+	## A bubble handed its body back to the chat input (delete / revert) for re-editing.
+	signal chat_input_prefill(text: String)
+
+	# Session context
+	signal skill_context_changed(session_id: int)
+	## AGENTS.md project prompt added to / removed from a session (see AgentPromptToggle).
+	signal agent_context_changed(session_id: int)
+
+	# Appearance
+	## Markdown bubble rendering switched (see [method AgentSetting.set_markdown_enabled]).
+	signal markdown_changed(enabled: bool)
+	## Active run visual changed (see [method AgentSetting.set_visual_type]).
+	signal visual_type_changed(visual_type: int)
 
 	# Workspace
 	## Workspace root switched (see [method AgentWorkspace.set_root]) — sessions and file
 	## paths now resolve under the new root, so listeners reload their state.
 	signal workspace_changed(path: String)
-
-	# UI configuration
-	signal chat_entry_add(session_id: int, entry: ChatEntry)
-	signal chat_entry_update(session_id: int, entry: ChatEntry, stream_kind: String)
-	signal chat_entry_delete(session_id: int)
-	## A search result requests that the transcript reveal a specific persisted entry.
-	signal chat_search_result_selected(session_id: int, entry_index: int)
-	## Emitted after ChatBubbleFlusher applies a pending batch (every ~100 ms while streaming).
-	signal chat_bubble_flushed
-	## A bubble handed its body back to the chat input (delete / revert) for re-editing.
-	signal chat_input_prefill(text: String)
-	## Markdown bubble rendering switched (see [method AgentSetting.set_markdown_enabled]).
-	signal markdown_changed(enabled: bool)
-	## Active run visual changed (see [method AgentSetting.set_visual_type]).
-	signal visual_type_changed(visual_type: int)
-	signal skill_context_changed(session_id: int)
-	## AGENTS.md project prompt added to / removed from a session (see AgentPromptToggle).
-	signal agent_context_changed(session_id: int)
 	pass
