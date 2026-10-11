@@ -41,7 +41,6 @@ class Events:
 	signal session_title_changed(session_id: int, title: String)
 
 	# Session run control
-	signal session_resume(session_id: int)
 	signal session_stop(session_id: int)
 
 	# Pending message queue

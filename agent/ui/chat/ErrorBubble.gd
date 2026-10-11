@@ -75,7 +75,7 @@ static func is_resumable(message: String) -> bool:
 
 static func on_resume_pressed(session_id: int, entry: ChatEntry) -> void:
 	AgentSessionManager.delete_chat_from_entry(session_id, entry)
-	AgentEvents.events.session_resume.emit(session_id)
+	RuntimeManager.resume_session(session_id)
 	pass
 
 

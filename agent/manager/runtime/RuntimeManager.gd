@@ -13,7 +13,6 @@ static var runtimes: Dictionary[int, RuntimeState] = {}
 static func _static_init() -> void:
 	# Pending message queue and agent run lifecycle
 	AgentEvents.events.session_queue_changed.connect(on_session_queue_changed)
-	AgentEvents.events.session_resume.connect(on_session_resume)
 	AgentEvents.events.agent_end.connect(on_agent_end)
 	# Turn streaming and tool entries
 	AgentEvents.events.turn_start.connect(on_turn_start)
@@ -137,7 +136,8 @@ static func run_agent(session: AgentSession) -> void:
 	pass
 
 
-static func on_session_resume(session_id: int) -> void:
+## Resumes an idle session after the UI has prepared its chat history.
+static func resume_session(session_id: int) -> void:
 	if not AgentSessionManager.has_index(session_id):
 		return
 	if is_running(session_id):
