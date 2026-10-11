@@ -3,9 +3,9 @@ extends RefCounted
 
 ## Maps cumulative streamed text volume to orb density (neurons, particles, keywords).
 
-const NEURON_MIN := 260
-const NEURON_MAX := 1000
-const NEURON_REBUILD_STEP := 180
+const NEURON_MIN := 128
+const NEURON_MAX := 512
+const NEURON_REBUILD_STEP := 96
 
 const PARTICLE_CAP_MIN := 80
 const PARTICLE_CAP_MAX := 280
