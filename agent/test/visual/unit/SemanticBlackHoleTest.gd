@@ -63,14 +63,14 @@ static func tool_badge_follows_visual_lifecycle_test() -> void:
 	effect.tool_status_label = Label.new()
 	effect.on_tool_execution_start("call", "web_search", {})
 	assert(effect.tool_name_label.text == "WEB SEARCH")
-	assert(effect.tool_status_label.text == "CONNECTING")
+	assert(effect.tool_badge_state == SemanticBlackHole.ToolBadgeState.CONNECTING)
 	assert(effect.target_tool_badge_alpha == 1.0)
 	effect.on_tool_execution_end("call", "web_search", AgentToolResult.ok("ok"))
-	assert(effect.tool_status_label.text == "RETURNING")
+	assert(effect.tool_badge_state == SemanticBlackHole.ToolBadgeState.RETURNING)
 	effect.success_return_progress = 1.0
 	effect.success_absorb_time = SemanticBlackHole.SUCCESS_ABSORB_SECONDS
 	effect.advance_success_return(0.2)
-	assert(effect.tool_status_label.text == "COMPLETE")
+	assert(effect.tool_badge_state == SemanticBlackHole.ToolBadgeState.COMPLETE)
 	assert(effect.tool_badge_hold_seconds == SemanticBlackHole.COMPLETE_LABEL_SECONDS)
 	effect.tool_badge.free()
 	effect.tool_name_label.free()

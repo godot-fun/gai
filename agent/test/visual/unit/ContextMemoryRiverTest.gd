@@ -38,9 +38,9 @@ static func delivered_item_expires_test() -> void:
 static func saturated_stream_preserves_in_flight_items_test() -> void:
 	var effect := ContextMemoryRiver.new()
 	for index in range(ContextMemoryRiver.MAX_ITEMS):
-		effect.add_item(ContextMemoryRiver.StreamType.REASONING, "THOUGHT", 0.5)
+		effect.add_item(ContextMemoryRiver.StreamType.ANSWER, "ANSWER", 0.5)
 	var oldest := effect.items[0]
-	effect.add_item(ContextMemoryRiver.StreamType.REASONING, "NEW", 0.5)
+	effect.add_item(ContextMemoryRiver.StreamType.ANSWER, "NEW", 0.5)
 	assert(effect.items.size() == ContextMemoryRiver.MAX_ITEMS)
 	assert(effect.items[0] == oldest)
 	effect.free()
@@ -74,7 +74,8 @@ static func visible_text_items_are_bounded_test() -> void:
 static func absorption_spawns_one_output_mote_test() -> void:
 	var effect := ContextMemoryRiver.new()
 	effect.add_item(ContextMemoryRiver.StreamType.TOOL, "READ", 0.5)
-	effect.add_absorption_effect(effect.items[0])
+	var item: ContextMemoryRiver.StreamItem = effect.items.pop_front()
+	effect.add_absorption_effect(item)
 	effect.visible = true
 	effect._process(ContextMemoryRiver.ABSORPTION_DURATION * 0.51)
 	assert(effect.output_motes.size() == 1)

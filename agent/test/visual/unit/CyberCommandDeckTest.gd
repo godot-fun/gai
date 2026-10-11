@@ -25,7 +25,7 @@ func concurrent_tool_pods_test() -> void:
 	effect.on_tool_execution_end("read-1", "read", AgentToolResult.ok("done"))
 	assert(int(effect.pods[0]["state"]) == CyberCommandDeck.PodState.EXECUTING)
 	effect._process(CyberCommandDeck.MIN_EXECUTION_SECONDS)
-	assert(CyberCommandDeck.pod_status(effect.pods[0]["state"]) == "COMPLETE")
+	assert(int(effect.pods[0]["state"]) == CyberCommandDeck.PodState.COMPLETE)
 	assert(effect.active_pod_count() == 1)
 	effect.free()
 	pass

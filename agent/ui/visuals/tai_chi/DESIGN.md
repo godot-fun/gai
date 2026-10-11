@@ -308,7 +308,7 @@ FillLayer 从太极成形阶段一直复用到最终圆阵。
 测试场景：
 
 ```text
-res://agent/test/visual/unit/TaiChiTest.tscn
+res://agent/test/visual/unit/VisualUnitTest.tscn
 ```
 
 关键断言包括：
@@ -325,7 +325,7 @@ res://agent/test/visual/unit/TaiChiTest.tscn
 修改动画后至少执行：
 
 ```powershell
-godot --headless --path . res://agent/test/visual/unit/TaiChiTest.tscn
+godot --headless --path . res://agent/test/visual/unit/VisualUnitTest.tscn
 ```
 
 新增脚本或修改复杂绘制函数时，还应显式检查脚本解析：

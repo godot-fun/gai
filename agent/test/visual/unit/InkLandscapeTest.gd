@@ -33,12 +33,13 @@ func tool_bird_tracks_result_test() -> void:
 	var args: Dictionary[String, Variant] = {"path": "res://project.godot"}
 	effect.on_tool_execution_start("tool-1", ReadTool.NAME, args)
 	assert(effect.birds.size() == 1)
-	assert(effect.active_birds.has("tool-1"))
-	assert(int(effect.birds[0]["phase"]) == InkLandscape.BirdPhase.ENTERING)
-	assert(int(effect.birds[0]["result"]) == InkLandscape.BirdResult.ACTIVE)
+	var bird := effect.find_active_bird("tool-1")
+	assert(bird != null)
+	assert(bird.phase == InkLandscape.BirdPhase.ENTERING)
+	assert(bird.result == InkLandscape.BirdResult.ACTIVE)
 	effect.on_tool_execution_end("tool-1", ReadTool.NAME, AgentToolResult.ok("done"))
-	assert(not effect.active_birds.has("tool-1"))
-	assert(int(effect.birds[0]["result"]) == InkLandscape.BirdResult.SUCCESS)
+	assert(effect.find_active_bird("tool-1") == null)
+	assert(bird.result == InkLandscape.BirdResult.SUCCESS)
 	effect.free()
 	pass
 
@@ -53,11 +54,11 @@ func repeated_tools_retire_old_birds_without_abrupt_removal_test() -> void:
 	assert(effect.birds.size() >= InkLandscape.MAX_BIRDS)
 	assert(effect.bird_serial == 24)
 	var positions: Dictionary[Vector2, bool] = {}
-	for bird: Dictionary in effect.birds:
-		var position := InkLandscape.bird_position(int(bird["serial"]), float(bird["seed"]))
+	for bird: InkLandscape.BirdState in effect.birds:
+		var position := InkLandscape.bird_position(bird.serial, bird.seed)
 		positions[position] = true
 	assert(positions.size() == effect.birds.size())
-	assert(effect.birds.any(func(bird: Dictionary) -> bool: return int(bird["result"]) != InkLandscape.BirdResult.ACTIVE))
+	assert(effect.birds.any(func(bird: InkLandscape.BirdState) -> bool: return bird.result != InkLandscape.BirdResult.ACTIVE))
 	effect.free()
 	pass
 
@@ -68,12 +69,12 @@ func capacity_retirement_waits_for_entering_bird_test() -> void:
 	var args: Dictionary[String, Variant] = {}
 	for index in range(InkLandscape.MAX_BIRDS + 1):
 		effect.on_tool_execution_start("capacity-%d" % index, ReadTool.NAME, args)
-	var retiring_bird: Dictionary = effect.birds[0]
-	assert(int(retiring_bird["result"]) == InkLandscape.BirdResult.SUCCESS)
-	assert(int(retiring_bird["phase"]) == InkLandscape.BirdPhase.ENTERING)
-	assert(float(retiring_bird["entry"]) < 1.0)
+	var retiring_bird: InkLandscape.BirdState = effect.birds[0]
+	assert(retiring_bird.result == InkLandscape.BirdResult.SUCCESS)
+	assert(retiring_bird.phase == InkLandscape.BirdPhase.ENTERING)
+	assert(retiring_bird.entry < 1.0)
 	effect._process(1.0)
-	assert(float(retiring_bird["departure"]) == 0.0)
+	assert(retiring_bird.departure == 0.0)
 	effect.free()
 	pass
 
@@ -117,10 +118,10 @@ func tool_bird_crosses_and_exits_screen_test() -> void:
 	var effect := InkLandscape.new()
 	var args: Dictionary[String, Variant] = {}
 	effect.on_tool_execution_start("cross-screen", ReadTool.NAME, args)
-	var bird: Dictionary = effect.birds[0]
-	var target := InkLandscape.bird_exit_position(int(bird["serial"]), float(bird["seed"]))
-	var spawn := InkLandscape.bird_spawn_position(target.x, int(bird["serial"]))
-	var control := InkLandscape.bird_entry_control(spawn, target, int(bird["serial"]), float(bird["seed"]))
+	var bird: InkLandscape.BirdState = effect.birds[0]
+	var target := InkLandscape.bird_exit_position(bird.serial, bird.seed)
+	var spawn := InkLandscape.bird_spawn_position(target.x, bird.serial)
+	var control := InkLandscape.bird_entry_control(spawn, target, bird.serial, bird.seed)
 	var middle := InkLandscape.bird_entry_position(spawn, control, target, 0.5)
 	var finish := InkLandscape.bird_entry_position(spawn, control, target, 1.0)
 	assert(spawn.y < 0.0)
@@ -258,24 +259,24 @@ func gliding_bird_finishes_flap_cycle_before_locking_test() -> void:
 	var effect := InkLandscape.new()
 	effect.visible = true
 	effect.on_tool_execution_start("glide-anchor", ReadTool.NAME, {})
-	var bird: Dictionary = effect.birds[0]
-	bird["entry"] = 1.0
+	var bird: InkLandscape.BirdState = effect.birds[0]
+	bird.entry = 1.0
 	effect.on_tool_execution_end("glide-anchor", ReadTool.NAME, AgentToolResult.ok("done"))
-	var phase_before := float(bird["wing"])
+	var phase_before := bird.wing
 	effect._process(0.01)
-	assert(int(bird["phase"]) == InkLandscape.BirdPhase.FINISHING)
-	assert(float(bird["wing"]) > phase_before)
-	assert(float(bird["departure"]) == 0.0)
+	assert(bird.phase == InkLandscape.BirdPhase.FINISHING)
+	assert(bird.wing > phase_before)
+	assert(bird.departure == 0.0)
 	for _frame in range(180):
 		effect._process(1.0 / 60.0)
-		if int(bird["phase"]) == InkLandscape.BirdPhase.DEPARTING:
+		if bird.phase == InkLandscape.BirdPhase.DEPARTING:
 			break
-	assert(int(bird["phase"]) == InkLandscape.BirdPhase.DEPARTING)
-	var locked_phase := float(bird["wing"])
+	assert(bird.phase == InkLandscape.BirdPhase.DEPARTING)
+	var locked_phase := bird.wing
 	assert(is_equal_approx(sin(locked_phase), 3.0 / 11.0))
 	effect._process(0.1)
-	assert(is_equal_approx(float(bird["wing"]), locked_phase))
-	assert(float(bird["departure"]) > 0.0)
+	assert(is_equal_approx(bird.wing, locked_phase))
+	assert(bird.departure > 0.0)
 	effect.free()
 	pass
 
@@ -317,10 +318,13 @@ func completed_tool_keeps_flapping_until_entry_finishes_test() -> void:
 func completed_tool_bird_departs_after_glide_test() -> void:
 	var effect := InkLandscape.new()
 	effect.on_tool_execution_start("departing-tool", ReadTool.NAME, {})
-	effect.birds[0]["entry"] = 1.0
+	effect.birds[0].entry = 1.0
 	effect.on_tool_execution_end("departing-tool", ReadTool.NAME, AgentToolResult.ok("done"))
 	effect.visible = true
-	effect._process(6.0)
+	for _frame in range(600):
+		effect._process(1.0 / 60.0)
+		if effect.birds.is_empty():
+			break
 	assert(effect.birds.is_empty())
 	effect.free()
 	pass
@@ -349,12 +353,11 @@ func perspective_strictly_controls_size_test() -> void:
 
 
 func mountain_canvas_is_cropped_to_its_bounds_test() -> void:
-	var mountain := {
-		"center": 0.5,
-		"width": 0.04,
-		"base": 0.62,
-		"height": 0.18,
-	}
+	var mountain := InkLandscape.MountainState.new()
+	mountain.center = 0.5
+	mountain.width = 0.04
+	mountain.base = 0.62
+	mountain.height = 0.18
 	var bounds := InkLandscape.mountain_bounds(mountain)
 	assert(bounds.size.x < 1.0)
 	assert(bounds.size.y < 1.0)
