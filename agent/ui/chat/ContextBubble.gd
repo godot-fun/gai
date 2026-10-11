@@ -1,13 +1,13 @@
-class_name SkillBubble
+class_name ContextBubble
 extends RefCounted
 
-## Skill index / AGENTS.md context chat bubble 鈥?expand/collapse with Markdown preview.
+## Context chat bubble for skill index / AGENTS.md — expand/collapse with Markdown preview.
 ## Session / toolbar toggles live in SkillToggle and AgentPromptToggle.
 
 
 const PREVIEW_LINES: int = 8
-const META_EXPANDED: String = "skill_bubble_expanded"
-const META_EXPAND_BUTTON: String = "skill_bubble_expand_button"
+const META_EXPANDED: String = "context_bubble_expanded"
+const META_EXPAND_BUTTON: String = "context_bubble_expand_button"
 
 
 static func preview(body: String) -> String:
