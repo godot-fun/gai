@@ -5,6 +5,10 @@
 # Skills
 .cursor/
 
+# Python bytecode (written next to skill and build scripts that import their siblings)
+__pycache__/
+*.pyc
+
 # godot-cpp build intermediates (shared libraries under cpp/bin/ are kept)
 cpp/**/*.obj
 cpp/**/*.os
@@ -43,8 +47,18 @@ mono_crash.*.json
 # Editor directories and files
 .idea
 .vscode
+.vs
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
+*.slnx
+
+# OS and patch leftovers
+.DS_Store
+Thumbs.db
+desktop.ini
+*.bak
+*.orig
+*.rej
 *.sw?

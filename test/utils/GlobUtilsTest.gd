@@ -206,14 +206,15 @@ func glob_match_repo_gitignore_rules_stay_in_sync_test() -> void:
 		if not rule.is_empty() and not rule.begins_with("#"):
 			actual_rules.append(rule)
 	var expected_rules: Array[String] = [
-		".gai/", ".dependency/", ".cursor/",
+		".gai/", ".dependency/", ".cursor/", "__pycache__/", "*.pyc",
 		"cpp/**/*.obj", "cpp/**/*.os", "cpp/**/*.o", "cpp/**/*.a", "cpp/**/*.lib",
 		"cpp/**/*.exp", "cpp/**/*.ilk", "cpp/**/*.pdb",
 		"cpp/.sconsign.dblite", "cpp/.sconsign.dblite.*", "cpp/bin/**/~*",
 		".godot/**", "!.godot/extension_list.cfg", ".nomedia",
 		".import/", "export.cfg", "export_credentials.cfg", "*.tmp",
 		"*.translation", ".mono/", "data_*/", "mono_crash.*.json",
-		".idea", ".vscode", "*.suo", "*.ntvs*", "*.njsproj", "*.sln", "*.sw?",
+		".idea", ".vscode", ".vs", "*.suo", "*.ntvs*", "*.njsproj", "*.sln", "*.slnx",
+		".DS_Store", "Thumbs.db", "desktop.ini", "*.bak", "*.orig", "*.rej", "*.sw?",
 	]
 	assert(actual_rules == expected_rules)
 	pass
@@ -224,6 +225,8 @@ func glob_match_repo_gitignore_positive_cases_test() -> void:
 		[".gai/", ".gai/cache/state.json"],
 		[".dependency/", "src/.dependency/vendor/lib.bin"],
 		[".cursor/", ".cursor/skills/humanizer/SKILL.md"],
+		["__pycache__/", ".ai/common/__pycache__/output_utils.cpython-314.pyc"],
+		["*.pyc", "cpp/__pycache__/methods.pyc"],
 		["cpp/**/*.obj", "cpp/src/global_hotkey.windows.template_debug.x86_64.obj"],
 		["cpp/**/*.lib", "cpp/bin/windows/gai_cpp.windows.template_debug.x86_64.lib"],
 		["cpp/.sconsign.dblite", "cpp/.sconsign.dblite"],
@@ -242,10 +245,18 @@ func glob_match_repo_gitignore_positive_cases_test() -> void:
 		["mono_crash.*.json", "logs/mono_crash.2026.json"],
 		[".idea", "editor/.idea/workspace.xml"],
 		[".vscode", ".vscode/settings.json"],
+		[".vs", "editor/.vs/FileContentIndex/cache.vsidx"],
 		["*.suo", "solution/user.suo"],
 		["*.ntvs*", "solution/project.ntvs_analysis"],
 		["*.njsproj", "web/app.njsproj"],
 		["*.sln", "game.sln"],
+		["*.slnx", "gai.slnx"],
+		[".DS_Store", "mac/folder/.DS_Store"],
+		["Thumbs.db", "image/Thumbs.db"],
+		["desktop.ini", "asset/desktop.ini"],
+		["*.bak", "src/main.gd.bak"],
+		["*.orig", "src/main.gd.orig"],
+		["*.rej", "patch.rej"],
 		["*.sw?", "library.swf"],
 	]
 	for row in cases:

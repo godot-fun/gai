@@ -28,7 +28,7 @@ static func run(ai_client: OpenAiClient, session: AgentSession) -> void:
 		var content := completion.content
 		var tool_calls := completion.tool_calls
 
-		if tool_calls.is_empty() and StringUtils.is_not_blank(content):
+		if tool_calls.is_empty():
 			session.messages.append(ChatMessage.assistant(content, completion.reasoning_content))
 			AgentEvents.events.agent_end.emit(session.id, StringUtils.EMPTY)
 			return

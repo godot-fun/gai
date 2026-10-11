@@ -32,14 +32,16 @@ func build_headers(stream: bool = false) -> PackedStringArray:
 	return headers
 
 
-func validate_messages(messages: Array[ChatMessage]) -> bool:
+## Empty when the request can be sent; otherwise why it cannot, so the failure names its real cause.
+## Without this the user sees a generic "invalid messages" while a blank API key is only in the log.
+func check_request(messages: Array[ChatMessage]) -> String:
 	if StringUtils.is_blank(api_key):
 		Log.error("OpenAI api_key is empty")
-		return false
+		return "OpenAI api key is empty"
 	if messages.is_empty():
 		Log.error("OpenAI messages is empty")
-		return false
-	return true
+		return "OpenAI messages is empty"
+	return StringUtils.EMPTY
 
 
 func build_request_json(request: OpenAiRequest) -> String:
@@ -51,7 +53,7 @@ func async_chat(prompt: String, system_prompt: String = "", proxy: String = "", 
 	return await async_chat_messages(build_messages(prompt, system_prompt), proxy, response_format)
 
 func async_chat_messages(messages: Array[ChatMessage], proxy: String = "", response_format: String = "") -> String:
-	if not validate_messages(messages):
+	if StringUtils.is_not_blank(check_request(messages)):
 		return StringUtils.EMPTY
 	var request := OpenAiRequest.new(model, messages, false)
 	# DeepSeek V4 enables thinking by default; non-stream short replies (e.g. Sense) stay non-thinking.
@@ -91,12 +93,12 @@ func async_chat_messages(messages: Array[ChatMessage], proxy: String = "", respo
 ## on_delta(delta, stream_kind) — stream_kind is STREAM_KIND_CONTENT or STREAM_KIND_REASONING.
 func async_chat_messages_stream(messages: Array[ChatMessage], tools: Array[OpenAiToolDef] = [], proxy: String = "", on_delta: Callable = Callable()) -> OpenAiCompletion:
 	var result := OpenAiCompletion.new()
-	if not validate_messages(messages):
-		result.error = "invalid messages"
+	var request_error := check_request(messages)
+	if StringUtils.is_not_blank(request_error):
+		result.error = request_error
 		return result
 	var request := OpenAiRequest.new(model, messages, true)
 	request.tools = tools
-	request.max_tokens = 8192
 	var pending_build := StringBuilder.new()
 	var utf8_decoder := Utf8StreamDecoder.new()
 	var on_chunk := func(chunk: PackedByteArray) -> void:
@@ -123,6 +125,23 @@ func async_chat_messages_stream(messages: Array[ChatMessage], tools: Array[OpenA
 	result.tool_calls = extract_stream_tool_calls(chunks)
 	result.finish_reason = extract_finish_reason(chunks)
 	result.usage = extract_stream_usage(chunks)
+	# A turn the loop cannot act on must be reported instead of silently looking like a finished answer.
+	# `stop` / `end` / `tool_calls` / `function_call` are the normal ends; anything else names the raw
+	# value so an unrecognized provider reason stays visible. Missing values are left alone: not every
+	# endpoint sends one, and a false failure would be worse than a silent one.
+	match result.finish_reason:
+		"", "stop", "end", "tool_calls", "function_call":
+			pass
+		"length":
+			result.error = "response truncated by the output token limit"
+		"content_filter":
+			result.error = "response stopped by the provider content filter"
+		"network_error":
+			result.error = "provider reported a network error"
+		_:
+			result.error = StringUtils.format("unhandled finish_reason: {}", result.finish_reason)
+	if StringUtils.is_not_blank(result.error):
+		Log.error("OpenAI stream failed:[{}]", result.error)
 	return result
 
 # ----------------------------------------------------------------------------------------------------------------------
