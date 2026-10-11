@@ -62,7 +62,7 @@ func async_chat_messages(messages: Array[ChatMessage], proxy: String = "", respo
 	var body := response.get_body_string()
 	Log.info("OpenAI response body:[{}]", StringUtils.truncate(body, 512))
 	if not response.success or response.code != 200:
-		Log.error("OpenAI request failed code:[{}] body:[{}]", response.code, StringUtils.truncate(body, 512))
+		Log.error("OpenAI request failed, http code:[{}], {}", response.code, StringUtils.truncate(response.get_error_string(), 512))
 		return StringUtils.EMPTY
 	var chat_response: OpenAiResponse = JsonUtils.json_to_object(body, OpenAiResponse)
 	if chat_response == null or chat_response.choices.is_empty():
@@ -111,8 +111,8 @@ func async_chat_messages_stream(messages: Array[ChatMessage], tools: Array[OpenA
 	## all come from that one string instead of being accumulated during streaming.
 	var body := response.get_body_string()
 	if not response.success or response.code != 200:
-		Log.error("OpenAI stream failed code:[{}] body:[{}]", response.code, StringUtils.truncate(body, 512))
-		result.error = body
+		result.error = StringUtils.format("request failed, http code:[{}], {}", response.code, response.get_error_string())
+		Log.error("OpenAI stream failed:[{}]", StringUtils.truncate(result.error, 512))
 		return result
 	var tail := pending_build.build_string() + utf8_decoder.flush()
 	if StringUtils.is_not_empty(tail):

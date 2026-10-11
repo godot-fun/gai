@@ -3,14 +3,38 @@ extends RefCounted
 
 
 var success: bool = false
-## HTTP status code (200, 404, 500, ...)
+## HTTP status code (200, 404, 500, ...); 0 when the request never reached the server, and the code the
+## server reported when a failure happened after it answered (a stalled or truncated body).
 var code: int = 0
 var headers: Dictionary = {}
 var body: PackedByteArray = PackedByteArray()
+## Why a failed request failed. A transport failure (timeout, DNS, refused, TLS, cancelled) carries
+## no status code and no body, so readers must use this text instead of the body.
+var error: String = ""
+
+
+## Builds the response of a request that never reached the server, so callers can return a failed
+## response without leaving [member error] empty.
+static func failure(message: String) -> HttpResponse:
+	var response := HttpResponse.new()
+	response.error = message
+	return response
 
 
 func get_body_string() -> String:
 	return body.get_string_from_utf8()
+
+
+## Reason text of a failed request: the body when the server answered with one (an API error
+## payload such as `401 {"error":{"message":"..."}}`, where [member error] stays empty), otherwise
+## [member error] (a transport failure, which has no status code and no body). Never blank.
+func get_error_string() -> String:
+	var body_text := get_body_string().strip_edges()
+	if StringUtils.is_not_blank(body_text):
+		return body_text
+	if StringUtils.is_not_blank(error):
+		return error
+	return "no response"
 
 
 func get_body_json() -> Variant:
