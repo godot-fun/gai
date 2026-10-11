@@ -29,20 +29,15 @@ static func _static_init() -> void:
 # Runtime state
 # ---------------------------------------------------------------------------
 
-static func start(session_id: int) -> RuntimeState:
-	var runtime := RuntimeState.new()
-	runtimes[session_id] = runtime
-	return runtime
-
-
 static func get_runtime(session_id: int) -> RuntimeState:
 	return runtimes.get(session_id)
 
 
-static func get_or_start(session_id: int) -> RuntimeState:
+static func get_or_create_runtime(session_id: int) -> RuntimeState:
 	var runtime := get_runtime(session_id)
 	if runtime == null:
-		runtime = start(session_id)
+		runtime = RuntimeState.new()
+		runtimes[session_id] = runtime
 	return runtime
 
 
@@ -59,12 +54,12 @@ static func request_stop(session_id: int) -> void:
 	pass
 
 
-static func is_stop_requested(session_id: int) -> bool:
+static func should_stop(session_id: int) -> bool:
 	var runtime := get_runtime(session_id)
 	return runtime == null or runtime.stop_requested
 
 
-static func stop(session_id: int) -> void:
+static func remove_runtime(session_id: int) -> void:
 	runtimes.erase(session_id)
 	pass
 
@@ -81,26 +76,26 @@ static func clear() -> void:
 # ---------------------------------------------------------------------------
 
 ## Starts the FIFO head when the session is idle. Errors and manual stops leave later items queued.
-static func try_run_next(session_id: int) -> void:
+static func try_run_next_message(session_id: int) -> void:
 	if not AgentSessionManager.has_index(session_id) or is_running(session_id):
 		return
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null or session.pending_messages.is_empty():
 		return
-	start(session_id)
+	get_or_create_runtime(session_id)
 	AgentEvents.events.session_queue_changed.emit(session_id)
 	var queued: String = session.pending_messages[0]
 	var checkpoint := await GitManager.async_snapshot(session_id)
 	session = AgentSessionStore.load_session(session_id)
 	if not AgentSessionManager.has_index(session_id) or session == null or session.pending_messages.is_empty():
-		stop(session_id)
+		remove_runtime(session_id)
 		if AgentSessionManager.has_index(session_id):
 			AgentEvents.events.session_stop.emit(session_id)
 		return
 	if session.pending_messages[0] != queued:
-		stop(session_id)
+		remove_runtime(session_id)
 		AgentEvents.events.session_stop.emit(session_id)
-		try_run_next.call_deferred(session_id)
+		try_run_next_message.call_deferred(session_id)
 		return
 	session.pending_messages.pop_front()
 	AgentEvents.events.session_queue_changed.emit(session_id)
@@ -118,7 +113,7 @@ static func try_run_next(session_id: int) -> void:
 
 
 static func on_session_queue_changed(session_id: int) -> void:
-	try_run_next.call_deferred(session_id)
+	try_run_next_message.call_deferred(session_id)
 	pass
 
 
@@ -129,7 +124,7 @@ static func on_session_queue_changed(session_id: int) -> void:
 static func run_agent(session: AgentSession) -> void:
 	if not AgentSessionManager.has_index(session.id):
 		return
-	var runtime := get_or_start(session.id)
+	var runtime := get_or_create_runtime(session.id)
 	var ai_client := ApiSetting.get_client()
 	ai_client.cancel_scope = runtime.cancel_scope
 	await AgentLoop.run(ai_client, session)
@@ -150,20 +145,20 @@ static func resume_agent(session_id: int) -> void:
 static func on_agent_end(session_id: int, error_message: String) -> void:
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null:
-		stop(session_id)
+		remove_runtime(session_id)
 		return
 	var has_session_index := AgentSessionManager.has_index(session_id)
 	# Capture before removing the runtime; a missing runtime is treated as stopped.
-	var should_continue_queue := has_session_index and not is_stop_requested(session_id) and StringUtils.is_blank(error_message)
+	var should_continue_queue := has_session_index and not should_stop(session_id) and StringUtils.is_blank(error_message)
 	if StringUtils.is_not_blank(error_message):
 		AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_ERROR, ChatEntry.TITLE_ERROR, error_message)
 	await GitDiff.async_append_git_diff(session_id)
 	AgentSessionManager.persist_session(session_id)
 
-	stop(session_id)
+	remove_runtime(session_id)
 	AgentEvents.events.session_stop.emit(session_id)
 	if should_continue_queue:
-		try_run_next.call_deferred(session_id)
+		try_run_next_message.call_deferred(session_id)
 	pass
 
 

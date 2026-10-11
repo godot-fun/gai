@@ -335,12 +335,12 @@ func mark_running() -> bool:
 	var session_index := AgentSessionManager.get_session_index(demo_session_id)
 	if session_index == null:
 		return false
-	RuntimeManager.start(demo_session_id)
+	RuntimeManager.get_or_create_runtime(demo_session_id)
 	return true
 
 
 func clear_running() -> void:
-	RuntimeManager.stop(demo_session_id)
+	RuntimeManager.remove_runtime(demo_session_id)
 	pass
 
 

@@ -339,7 +339,7 @@ func refresh_queue() -> void:
 		continue_button.custom_minimum_size = Vector2(ControlSize.sm, ControlSize.sm)
 		continue_button.focus_mode = Control.FOCUS_NONE
 		AgentChatInputTheme.apply_queue_continue_button(continue_button)
-		continue_button.pressed.connect(RuntimeManager.try_run_next.bind(session.id))
+		continue_button.pressed.connect(RuntimeManager.try_run_next_message.bind(session.id))
 		header.add_child(continue_button)
 	queue_rows.add_child(header)
 
