@@ -46,7 +46,9 @@ static func apply_field(input_field: TextEdit) -> void:
 
 static func apply_send_button(send_button: Button, stop_action: bool, show_activity: bool,
 		compacting: bool) -> void:
-	var base_color := ColorBase.error if stop_action else ThemeColor.accent_theme_color()
+	var show_send_effect := not stop_action and not show_activity
+	var base_color := Color.TRANSPARENT if show_send_effect else (
+		ColorBase.error if stop_action else ThemeColor.accent_theme_color())
 	var radius: int = int(ControlSize.md * 0.5)
 	var normal := StyleBoxHelper.create_style_box_flat(base_color, radius, Margin.ma_1, Margin.ma_1)
 	ButtonStyle.apply(send_button, normal,
@@ -64,7 +66,7 @@ static func apply_send_button(send_button: Button, stop_action: bool, show_activ
 	send_button.text = ""
 	send_button.tooltip_text = I18n.t("agent.input.stop") if stop_action else I18n.t("agent.input.send")
 	var icon_size := ControlSize.xs
-	send_button.icon = make_stop_icon(icon_size, Color.WHITE) if stop_action else make_arrow_up_icon(icon_size, Color.WHITE)
+	send_button.icon = make_stop_icon(icon_size, Color.WHITE) if stop_action else null
 	send_button.add_theme_constant_override("icon_max_width", icon_size)
 	send_button.add_theme_constant_override("icon_max_height", icon_size)
 	pass
@@ -116,27 +118,6 @@ static func make_tint_svg_icon(path: String, size: int, color: Color) -> ImageTe
 	return ImageTexture.create_from_image(image)
 
 
-static func make_arrow_up_icon(size: int, color: Color) -> ImageTexture:
-	var img: Image = Image.create(size, size, false, Image.FORMAT_RGBA8)
-	img.fill(Color(0, 0, 0, 0))
-	var cx: int = size / 2
-	var top: int = int(size * 0.12)
-	var bottom: int = int(size * 0.72)
-	var half_w: int = int(size * 0.34)
-	for y in range(top, bottom + 1):
-		var progress: float = float(y - top) / float(bottom - top)
-		var half_width: int = int(float(half_w) * progress)
-		for x in range(cx - half_width, cx + half_width + 1):
-			img.set_pixel(x, y, color)
-	var stem_w: int = maxi(1, int(size * 0.12))
-	var stem_left: int = cx - stem_w / 2
-	var stem_right: int = stem_left + stem_w - 1
-	for y in range(bottom, size):
-		for x in range(stem_left, stem_right + 1):
-			img.set_pixel(x, y, color)
-	return ImageTexture.create_from_image(img)
-
-
 static func make_stop_icon(size: int, color: Color) -> ImageTexture:
 	var img: Image = Image.create(size, size, false, Image.FORMAT_RGBA8)
 	img.fill(Color(0, 0, 0, 0))
@@ -147,4 +128,3 @@ static func make_stop_icon(size: int, color: Color) -> ImageTexture:
 		for x in range(left, left + square_size):
 			img.set_pixel(x, y, color)
 	return ImageTexture.create_from_image(img)
-

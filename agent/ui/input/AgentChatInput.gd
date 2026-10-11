@@ -13,11 +13,13 @@ const SIDE_INSET: float = ControlSize.md * 5.0
 ## Fade-in duration when the queue list appears after expand settles.
 const QUEUE_FADE_SECONDS: float = 0.2
 const ACTIVITY_SPINNER_SHADER := preload("res://agent/ui/input/ActivitySpinner.gdshader")
+const SEND_BUTTON_EFFECT_SHADER := preload("res://agent/ui/input/SendButtonEffect.gdshader")
 var input_bar: Control
 var input_wrap: PanelContainer
 var input_inner: Control
 var input_field: TextEdit
 var send_button: Button
+var send_effect: ColorRect
 var activity_spinner: ColorRect
 var queue_badge: Label
 var queue_panel: PanelContainer
@@ -29,6 +31,9 @@ var expanded: bool = false
 var force_expanded: bool = false
 var layout_tween: Tween = null
 var queue_tween: Tween = null
+var send_effect_tween: Tween = null
+var send_launch_tween: Tween = null
+var send_effect_hover: float = 0.0
 
 var tween_start_h: float = 0.0
 var tween_target_h: float = 0.0
@@ -54,6 +59,7 @@ func setup(
 	input_inner = p_input_inner
 	input_field = p_input_field
 	send_button = p_send_button
+	setup_send_effect()
 	setup_activity_spinner()
 	setup_queue_badge()
 	setup_queue_controls()
@@ -67,6 +73,8 @@ func setup(
 	input_field.scroll_fit_content_height = true
 
 	send_button.pressed.connect(on_input_action_pressed)
+	send_button.mouse_entered.connect(on_send_button_mouse_entered)
+	send_button.mouse_exited.connect(on_send_button_mouse_exited)
 	input_field.gui_input.connect(on_field_gui_input)
 	input_field.minimum_size_changed.connect(on_field_minimum_size_changed)
 	input_field.text_changed.connect(on_field_text_changed)
@@ -138,6 +146,20 @@ func setup_activity_spinner() -> void:
 	activity_spinner.material = material
 	activity_spinner.visible = false
 	send_button.add_child(activity_spinner)
+	pass
+
+
+func setup_send_effect() -> void:
+	send_effect = ColorRect.new()
+	send_effect.name = "SendButtonEffect"
+	send_effect.show_behind_parent = true
+	send_effect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	send_effect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var material := ShaderMaterial.new()
+	material.shader = SEND_BUTTON_EFFECT_SHADER
+	send_effect.material = material
+	send_effect.visible = false
+	send_button.add_child(send_effect)
 	pass
 
 
@@ -288,9 +310,56 @@ func refresh_send_button() -> void:
 	var running := RuntimeManager.is_running(session_id)
 	var compacting := AgentCompactionManager.is_compacting(session_id)
 	var show_activity := compacting or (not expanded and running)
+	var stop_action := is_stop_action()
+	send_effect.visible = not show_activity and not stop_action
+	(send_effect.material as ShaderMaterial).set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
 	activity_spinner.visible = show_activity
-	AgentChatInputTheme.apply_send_button(send_button, is_stop_action(), show_activity, compacting)
+	AgentChatInputTheme.apply_send_button(send_button, stop_action, show_activity, compacting)
 	AgentChatInputTheme.apply_queue_badge(queue_badge, not expanded, get_pending_queue_count())
+	pass
+
+
+func on_send_button_mouse_entered() -> void:
+	tween_send_effect_hover(1.0)
+	start_send_launch()
+	pass
+
+
+func on_send_button_mouse_exited() -> void:
+	tween_send_effect_hover(0.0)
+	if send_launch_tween != null:
+		send_launch_tween.kill()
+		send_launch_tween = null
+	(send_effect.material as ShaderMaterial).set_shader_parameter("launch_progress", 0.0)
+	pass
+
+
+func tween_send_effect_hover(target: float) -> void:
+	if send_effect_tween != null:
+		send_effect_tween.kill()
+	send_effect_tween = input_bar.create_tween()
+	send_effect_tween.set_trans(Tween.TRANS_CUBIC)
+	send_effect_tween.set_ease(Tween.EASE_OUT)
+	send_effect_tween.tween_method(set_send_effect_hover, send_effect_hover, target, 0.18)
+	pass
+
+
+func set_send_effect_hover(value: float) -> void:
+	send_effect_hover = value
+	(send_effect.material as ShaderMaterial).set_shader_parameter("hover_strength", value)
+	pass
+
+
+func start_send_launch() -> void:
+	if send_launch_tween != null:
+		send_launch_tween.kill()
+	var material := send_effect.material as ShaderMaterial
+	material.set_shader_parameter("launch_progress", 0.0)
+	send_launch_tween = input_bar.create_tween()
+	send_launch_tween.set_trans(Tween.TRANS_CUBIC)
+	send_launch_tween.set_ease(Tween.EASE_OUT)
+	send_launch_tween.tween_method(func(value: float) -> void:
+		material.set_shader_parameter("launch_progress", value), 0.0, 1.0, 0.55)
 	pass
 
 
