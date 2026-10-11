@@ -89,22 +89,22 @@ const CODE_BLOCK_RIGHT_GUTTER := "0,0,16,0"
 # left the box close to the neighbouring words.
 const INLINE_CODE_MARGIN := "\u2009\u2009"
 # Dest allows one `(...)` nest (Wikipedia). Title is optional `"..."` / `'...'`.
-const LINK_DEST := "((?:<[^>]+>|[^()\\s]+|\\([^)]*\\))+)"
-const LINK_TITLE := "(?:\\s+(?:\"[^\"]*\"|'[^']*'))?"
+const LINK_DEST := r"((?:<[^>]+>|[^()\s]+|\([^)]*\))+)"
+const LINK_TITLE := r"""(?:\s+(?:"[^"]*"|'[^']*'))?"""
 
 # Flanking: marker must touch the word (`*em*`), so `3 * 4 * 5` stays plain.
-static var re_inline_code: RegEx = compile_regex("`([^`\\n]+)`") # `code` → [bgcolor][code]
-static var re_image: RegEx = compile_regex("!\\[([^\\]]*)\\]\\(" + LINK_DEST + LINK_TITLE + "\\)") # ![alt](url) → [img]
-static var re_link: RegEx = compile_regex("\\[([^\\]]+)\\]\\(" + LINK_DEST + LINK_TITLE + "\\)") # [label](url) → [url]
+static var re_inline_code: RegEx = compile_regex(r"`([^`\n]+)`") # `code` → [bgcolor][code]
+static var re_image: RegEx = compile_regex(r"!\[([^\]]*)\]\(" + LINK_DEST + LINK_TITLE + r"\)") # ![alt](url) → [img]
+static var re_link: RegEx = compile_regex(r"\[([^\]]+)\]\(" + LINK_DEST + LINK_TITLE + r"\)") # [label](url) → [url]
 static var re_dunder: RegEx = compile_regex("(?<![A-Za-z0-9])__[A-Za-z_][A-Za-z0-9_]*__(?![A-Za-z0-9])") # keep __init__
-static var re_bold_italic: RegEx = compile_regex("(?<!\\*)\\*\\*\\*(?!\\*|\\s)([^\\n]+?)(?<!\\s)\\*\\*\\*(?!\\*)") # ***both***
-static var re_bold: RegEx = compile_regex("(?<!\\*)\\*\\*(?!\\*|\\s)([^\\n]+?)(?<!\\s)\\*\\*(?!\\*)") # **bold**
-static var re_bold_underscore: RegEx = compile_regex("(?<![A-Za-z0-9])__(?![\\s_])([^_\\n]+)(?<![\\s_])__(?![A-Za-z0-9])") # __bold__
-static var re_strike: RegEx = compile_regex("~~(?!\\s)([^~\\n]+)(?<!\\s)~~") # ~~strike~~
-static var re_italic: RegEx = compile_regex("(?<!\\*)\\*(?!\\*|\\s)([^\\n]+?)(?<!\\s|\\*)\\*(?!\\*)") # *italic*
-static var re_italic_underscore: RegEx = compile_regex("(?<![A-Za-z0-9])_(?![\\s_])([^_\\n]+)(?<![\\s_])_(?![A-Za-z0-9])") # _italic_
-static var re_html_underline: RegEx = compile_regex("(?i)<u>([^<\\n]+)</u>") # <u>html underline</u>
-static var re_table_separator_cell: RegEx = compile_regex("^\\s*:?-+:?\\s*$") # --- / :---:
+static var re_bold_italic: RegEx = compile_regex(r"(?<!\*)\*\*\*(?!\*|\s)([^\n]+?)(?<!\s)\*\*\*(?!\*)") # ***both***
+static var re_bold: RegEx = compile_regex(r"(?<!\*)\*\*(?!\*|\s)([^\n]+?)(?<!\s)\*\*(?!\*)") # **bold**
+static var re_bold_underscore: RegEx = compile_regex(r"(?<![A-Za-z0-9])__(?![\s_])([^_\n]+)(?<![\s_])__(?![A-Za-z0-9])") # __bold__
+static var re_strike: RegEx = compile_regex(r"~~(?!\s)([^~\n]+)(?<!\s)~~") # ~~strike~~
+static var re_italic: RegEx = compile_regex(r"(?<!\*)\*(?!\*|\s)([^\n]+?)(?<!\s|\*)\*(?!\*)") # *italic*
+static var re_italic_underscore: RegEx = compile_regex(r"(?<![A-Za-z0-9])_(?![\s_])([^_\n]+)(?<![\s_])_(?![A-Za-z0-9])") # _italic_
+static var re_html_underline: RegEx = compile_regex(r"(?i)<u>([^<\n]+)</u>") # <u>html underline</u>
+static var re_table_separator_cell: RegEx = compile_regex(r"^\s*:?-+:?\s*$") # --- / :---:
 
 enum InlineReplacement {
 	INLINE_CODE,

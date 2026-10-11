@@ -75,7 +75,7 @@ static func parse_results(html: String, query: String, max_results: int) -> Resu
 
 static func parse_result_block(block: String) -> Hit:
 	var link_regex := RegEx.new()
-	link_regex.compile("<h2[^>]*>\\s*<a[^>]*href=\"([^\"]+)\"[^>]*>([\\s\\S]*?)</a>")
+	link_regex.compile(r'<h2[^>]*>\s*<a[^>]*href="([^"]+)"[^>]*>([\s\S]*?)</a>')
 	var link_match := link_regex.search(block)
 	if link_match == null:
 		return Hit.new()
@@ -83,7 +83,7 @@ static func parse_result_block(block: String) -> Hit:
 	var title := strip_html(link_match.get_string(2)).strip_edges()
 	var snippet := StringUtils.EMPTY
 	var snippet_regex := RegEx.new()
-	snippet_regex.compile("<div class=\"b_caption\"><p[^>]*>([\\s\\S]*?)</p>")
+	snippet_regex.compile(r'<div class="b_caption"><p[^>]*>([\s\S]*?)</p>')
 	var snippet_match := snippet_regex.search(block)
 	if snippet_match != null:
 		snippet = decode_html_entities(strip_html(snippet_match.get_string(1))).strip_edges()
@@ -105,7 +105,7 @@ static func decode_html_entities(text: String) -> String:
 	decoded = decoded.replace("&gt;", ">")
 	decoded = decoded.replace("&quot;", "\"")
 	var num_regex := RegEx.new()
-	num_regex.compile("&#(\\d+);")
+	num_regex.compile(r"&#(\d+);")
 	for match_result: RegExMatch in num_regex.search_all(decoded):
 		var code := int(match_result.get_string(1))
 		decoded = decoded.replace(match_result.get_string(0), char(code))

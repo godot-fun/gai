@@ -88,7 +88,7 @@ static func decode_basic_entities(text: String) -> String:
 
 static func collapse_whitespace(text: String) -> String:
 	var spaces := RegEx.new()
-	spaces.compile("\\s+")
+	spaces.compile(r"\s+")
 	var lines: PackedStringArray = PackedStringArray()
 	for line in text.split(FileUtils.NEWLINE_LF, false):
 		var trimmed := line.strip_edges()

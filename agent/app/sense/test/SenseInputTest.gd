@@ -112,7 +112,7 @@ func parse_compose_json_test() -> void:
 	assert(legacy.correct == "fixed")
 	assert(legacy.optimize == "polished")
 	assert(legacy.expand == "")
-	var escaped := SenseInput.parse_compose_json('{"correct":"say \\"hi\\"","optimize":"line\\n2","expand":"ok"}')
+	var escaped := SenseInput.parse_compose_json(r'{"correct":"say \"hi\"","optimize":"line\n2","expand":"ok"}')
 	assert(escaped.correct == "say \"hi\"")
 	assert(escaped.optimize == "line\n2")
 	assert(escaped.expand == "ok")

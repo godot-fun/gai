@@ -6,7 +6,7 @@ const MIN_INT: int = -2147483648
 const MAX_INT: int = 2147483647
 
 # Letters, digits and the common English symbols (printable ASCII without whitespace).
-const RANDOM_STRING_CHARS: String = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+const RANDOM_STRING_CHARS: String = r"""abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~"""
 
 static func random_boolean() -> bool:
 	return 1 == randi_range(0, 2)

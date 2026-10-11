@@ -325,17 +325,17 @@ func local_markdown_image_test() -> void:
 
 
 func dropped_file_markdown_test() -> void:
-	assert(MarkdownHelper.format_file_as_markdown("C:\\My Files\\notes.md") == "[notes.md](<C:/My Files/notes.md>)")
-	assert(MarkdownHelper.format_file_as_markdown("C:\\My Files\\voice.WAV") == "[voice.WAV](<C:/My Files/voice.WAV>)")
-	assert(MarkdownHelper.format_file_as_markdown("C:\\My Files\\photo.png") == "![photo.png](<C:/My Files/photo.png>)")
-	assert(MarkdownHelper.format_file_as_markdown("C:\\My Files\\demo.MP4") == "![demo.MP4](<C:/My Files/demo.MP4>)")
+	assert(MarkdownHelper.format_file_as_markdown(r"C:\My Files\notes.md") == "[notes.md](<C:/My Files/notes.md>)")
+	assert(MarkdownHelper.format_file_as_markdown(r"C:\My Files\voice.WAV") == "[voice.WAV](<C:/My Files/voice.WAV>)")
+	assert(MarkdownHelper.format_file_as_markdown(r"C:\My Files\photo.png") == "![photo.png](<C:/My Files/photo.png>)")
+	assert(MarkdownHelper.format_file_as_markdown(r"C:\My Files\demo.MP4") == "![demo.MP4](<C:/My Files/demo.MP4>)")
 	pass
 
 
 func local_file_link_prefix_test() -> void:
 	var folder_path := ProjectSettings.globalize_path("res://zfoo/markdown").replace("\\", "/")
-	var file_bbcode := MarkdownParser.inline_to_bbcode(MarkdownHelper.format_file_as_markdown("C:\\My Files\\notes.bin"))
-	var audio_bbcode := MarkdownParser.inline_to_bbcode(MarkdownHelper.format_file_as_markdown("C:\\My Files\\voice.WAV"))
+	var file_bbcode := MarkdownParser.inline_to_bbcode(MarkdownHelper.format_file_as_markdown(r"C:\My Files\notes.bin"))
+	var audio_bbcode := MarkdownParser.inline_to_bbcode(MarkdownHelper.format_file_as_markdown(r"C:\My Files\voice.WAV"))
 	var folder_bbcode := MarkdownParser.inline_to_bbcode(MarkdownHelper.format_file_as_markdown(folder_path))
 	var config_bbcode := MarkdownParser.inline_to_bbcode("[settings.json](<C:/My Files/settings.json>)")
 	var document_bbcode := MarkdownParser.inline_to_bbcode("[README.md](<C:/My Files/README.md>)")

@@ -30,7 +30,7 @@ func FileUtils_read_write_test() -> void:
 func is_relative_to_test() -> void:
 	assert(FileUtils.is_relative_to("C:/workspace", "C:/workspace"))
 	assert(FileUtils.is_relative_to("C:/workspace/src/main.gd", "C:/workspace"))
-	assert(FileUtils.is_relative_to("C:\\workspace\\src\\main.gd", "C:/workspace/"))
+	assert(FileUtils.is_relative_to(r"C:\workspace\src\main.gd", "C:/workspace/"))
 	assert(not FileUtils.is_relative_to("C:/workspace/../secret.txt", "C:/workspace"))
 	assert(not FileUtils.is_relative_to("C:/workspace-other/file.txt", "C:/workspace"))
 	assert(not FileUtils.is_relative_to("", "C:/workspace"))
@@ -121,7 +121,7 @@ static func remove_fixture_tree(root: String) -> void:
 
 
 static func normalize_path_test() -> void:
-	assert(FileUtils.normalize_path(" C:\\workspace\\project\\..\\project\\ ") == "C:/workspace/project")
+	assert(FileUtils.normalize_path(r" C:\workspace\project\..\project\ ") == "C:/workspace/project")
 	assert(FileUtils.normalize_path(StringUtils.EMPTY) == StringUtils.EMPTY)
 	assert(FileUtils.normalize_path("res://zfoo/../zfoo") == FileUtils.get_project_root_path().path_join("zfoo").replace("\\", "/").simplify_path())
 	pass

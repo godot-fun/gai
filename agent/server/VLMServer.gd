@@ -212,7 +212,7 @@ static func gpu_has_enough_memory(executable: String) -> bool:
 	if result.exit_code != 0:
 		return false
 	var regex := RegEx.new()
-	if regex.compile("\\((\\d+) MiB,\\s*(\\d+) MiB free\\)") != OK:
+	if regex.compile(r"\((\d+) MiB,\s*(\d+) MiB free\)") != OK:
 		return false
 	for regex_result in regex.search_all(result.output.build_string()):
 		if int(regex_result.get_string(2)) >= MIN_GPU_FREE_MEMORY_MIB:

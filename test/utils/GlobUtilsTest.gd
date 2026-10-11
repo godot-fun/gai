@@ -194,8 +194,8 @@ func glob_match_wildcard_with_slash_test() -> void:
 
 
 func glob_match_backslash_normalization_test() -> void:
-	assert(GlobUtils.glob_match(".dependency\\", ".dependency\\cache\\x"))
-	assert(GlobUtils.glob_match(".cursor/skills/humanizer", ".cursor\\skills\\humanizer\\a.gd"))
+	assert(GlobUtils.glob_match(".dependency\\", r".dependency\cache\x"))
+	assert(GlobUtils.glob_match(".cursor/skills/humanizer", r".cursor\skills\humanizer\a.gd"))
 	pass
 
 

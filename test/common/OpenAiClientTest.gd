@@ -193,7 +193,7 @@ func build_request_json_escapes_control_characters_test() -> void:
 	var request := OpenAiRequest.new("test-model", messages, true)
 	var json := client.build_request_json(request)
 	assert(JSON.parse_string(json) != null)
-	assert(json.contains("\\u001b"))
+	assert(json.contains(r"\u001b"))
 	assert(not json.contains(char(0x1B)))
 	pass
 

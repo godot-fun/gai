@@ -5,17 +5,17 @@ const EMPTY: String = ""
 const EMPTY_JSON: String = "{}"
 
 const SPACE: String = " "
-const SPACE_REGEX: String = "\\s+"
+const SPACE_REGEX: String = r"\s+"
 
 const TAB: String = "    "
 const TAB_ASCII: String = "\t"
 
 const COMMA: String = "," # [com·ma || 'kɒmə] n. comma
 const COMMA_REGEX: String = ",|，"
-const COMMON_SPLIT_REGEX: String = "[,，\\s]+"
+const COMMON_SPLIT_REGEX: String = r"[,，\s]+"
 
 const PERIOD: String = "." # period
-const PERIOD_REGEX: String = "\\."
+const PERIOD_REGEX: String = r"\."
 
 const LEFT_SQUARE_BRACKET: String = "[" # left square bracket
 const RIGHT_SQUARE_BRACKET: String = "]" # right square bracket
@@ -37,10 +37,10 @@ const EQUAL: String = "=" # equal sign
 const BACK_SLASH: String = "\\" # back slash
 
 const VERTICAL_BAR: String = "|" # vertical bar
-const VERTICAL_BAR_REGEX: String = "\\|"
+const VERTICAL_BAR_REGEX: String = r"\|"
 
 const SHARP: String = "#"
-const SHARP_REGEX: String = "\\#"
+const SHARP_REGEX: String = r"\#"
 
 const DOLLAR: String = "$" # dollar sign
 

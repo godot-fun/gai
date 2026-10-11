@@ -261,7 +261,7 @@ static func await_pid_count(expected: int) -> void:
 
 static func utf8_fixture_command() -> String:
 	if OSUtils.is_windows():
-		return "type test\\asset\\Utf8OutputFixture.txt"
+		return r"type test\asset\Utf8OutputFixture.txt"
 	return "cat test/asset/Utf8OutputFixture.txt"
 
 

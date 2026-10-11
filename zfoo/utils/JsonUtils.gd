@@ -88,11 +88,11 @@ static func quote_json_string(text: String) -> String:
 	while i < quoted.length():
 		var code := quoted.unicode_at(i)
 		if code == 0x5C and i + 1 < quoted.length() and quoted.unicode_at(i + 1) == 0x76:
-			builder.append("\\u000b")
+			builder.append(r"\u000b")
 			i += 2
 			continue
 		if code < 0x20:
-			builder.append("\\u%04x" % code)
+			builder.append(r"\u%04x" % code)
 		else:
 			builder.append(char(code))
 		i += 1

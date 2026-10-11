@@ -109,7 +109,7 @@ static func build_gpu_context() -> String:
 	var video_memory_total := 0
 	if OSUtils.is_windows():
 		# The registry exposes the full 64-bit VRAM size; Win32_VideoController may truncate it to 4 GiB.
-		var command := "$values = Get-ItemProperty 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Video\\*\\0000' -Name 'HardwareInformation.qwMemorySize' -ErrorAction SilentlyContinue | ForEach-Object { $_.'HardwareInformation.qwMemorySize' }; ($values | Measure-Object -Maximum).Maximum"
+		var command := r"$values = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Video\*\0000' -Name 'HardwareInformation.qwMemorySize' -ErrorAction SilentlyContinue | ForEach-Object { $_.'HardwareInformation.qwMemorySize' }; ($values | Measure-Object -Maximum).Maximum"
 		var result := OSUtils.execute(PackedStringArray(["powershell.exe", "-NoProfile", "-Command", command]), false)
 		if result.exit_code == 0:
 			video_memory_total = int(result.output.build_string().strip_edges())
