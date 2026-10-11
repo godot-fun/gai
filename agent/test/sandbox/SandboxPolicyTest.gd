@@ -151,6 +151,8 @@ static func bash_policy_blocks_common_dangerous_commands_test() -> void:
 		"bash <<< 'rm -rf /'",
 		"az vm delete -n vm -g group",
 		"docker compose down -v",
+		"cp build/out.txt C:\\tmp\\out.txt",
+		"cat \"C:\\Users\\me\\.ssh\\id_rsa\"",
 	]
 	for command: String in blocked_commands:
 		assert(not SandboxBashPolicyClass.check_bash(command).is_empty(), command)
@@ -240,6 +242,18 @@ static func bash_policy_normalizes_obfuscated_commands_test() -> void:
 	assert(SandboxBashPolicyClass.normalize_command("rm$IFS-rf /etc") == "rm -rf /etc")
 	assert(SandboxBashPolicyClass.normalize_command("\"/bin/rm\" -rf /etc") == "/bin/rm -rf /etc")
 	assert(SandboxBashPolicyClass.normalize_command("rg -n 'rm -rf' .") == "rg -n 'rm -rf' .")
+	pass
+
+
+static func bash_policy_unquote_mark_chars_test() -> void:
+	# Marks only count as obfuscation in front of a word or path character, so this set is part of
+	# the policy contract: pin it instead of leaving it to a hand-written character range.
+	for mark: String in ["a", "z", "0", "9", "_", "-", "/"]:
+		assert(SandboxBashPolicyClass.is_unquote_char(mark.unicode_at(0)), mark)
+	for mark: String in [" ", "\t", "\n", "\"", "'", "\\", "$", "*", ".", "=", "&", "|", ";", "~", "@", ":"]:
+		assert(not SandboxBashPolicyClass.is_unquote_char(mark.unicode_at(0)), mark)
+	assert(SandboxBashPolicyClass.normalize_command("echo a\\ b") == "echo a\\ b")
+	assert(SandboxBashPolicyClass.normalize_command("echo a\\tb") == "echo atb")
 	pass
 
 

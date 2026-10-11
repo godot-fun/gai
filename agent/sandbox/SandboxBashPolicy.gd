@@ -15,6 +15,7 @@ class Rule:
 
 
 static var rules: Array[Rule] = []
+static var unquote_mark_regex: RegEx
 
 ## Anchors a command name at the line start or right after a shell separator, allowing an
 ## absolute `/usr/bin/`-style prefix and the common wrappers in front of it.
@@ -28,6 +29,10 @@ const OUTSIDE_ABSOLUTE := r"(?:/(?:etc|home|root|usr|var|boot|proc|sys|opt|tmp|s
 const OUTSIDE_ANY := "(?:" + OUTSIDE_ROOT + "|" + OUTSIDE_ABSOLUTE + ")"
 const OUTSIDE := "(?:" + OUTSIDE_ROOT + r"|(?:^|[\s\"'=(,])" + OUTSIDE_ABSOLUTE + ")"
 const BLOCK_DEVICE := r"/dev/(?:sd[a-z]|hd[a-z]|nvme\d+|vd[a-z]|xvd[a-z]|mmcblk\d+)"
+
+## Word and path characters that a quote or a backslash can be hiding (`r\m`, `r"m"`, `/us\r/bin`).
+## A mark in front of anything else is real shell syntax (`echo a\ b`), so it has to stay in place.
+const UNQUOTE_MARK := r"[A-Za-z0-9_/-]"
 
 const REASON_ACCOUNT_CHANGE := "user account changes are not allowed"
 const REASON_BLOCK_DEVICE := "writing to block devices is not allowed"
@@ -53,6 +58,15 @@ const REASON_UPLOAD := "uploading local files to a remote host is not allowed"
 const REASON_WORKSPACE_DELETE := "deleting the workspace root or repository metadata is not allowed"
 
 
+## Compiles the rule regexes and the mark pattern on first use. Deliberately lazy: a session that
+## never enables the sandbox should not pay for the compilation at startup.
+static func ensure_initialized() -> void:
+	if not rules.is_empty():
+		return
+	rules = build_rules()
+	unquote_mark_regex = RegEx.new()
+	unquote_mark_regex.compile(UNQUOTE_MARK)
+	pass
 
 
 ## Returns an empty string when the command is allowed or sandbox is off, otherwise a human-readable reason.
@@ -62,13 +76,15 @@ static func check_bash(command: String) -> String:
 	var text := command.replace("\r\n", "\n").replace("\r", "\n").strip_edges()
 	if text.is_empty():
 		return "command is required"
-	if rules.is_empty():
-		rules = build_rules()
+	ensure_initialized()
 	var normalized := normalize_command(text)
+	# Stripping the marks can also hide a match (`C:\tmp` loses its separator), so each rule is
+	# tested against the raw text as well. Skipping that pass is what the flag guards.
+	var needs_raw_pass := normalized != text
 	for rule: Rule in rules:
 		if rule.regex.search(normalized) != null:
 			return rule.reason
-		if normalized != text and rule.regex.search(text) != null:
+		if needs_raw_pass and rule.regex.search(text) != null:
 			return rule.reason
 	return StringUtils.EMPTY
 
@@ -76,11 +92,17 @@ static func check_bash(command: String) -> String:
 ## Removes the cheap obfuscation used to hide a command from a regex: `r""m`, `"rm"`, `r\m`,
 ## `rm$IFS-rf` and backslash line continuations.
 static func normalize_command(command: String) -> String:
-	if !(command.contains("'") || command.contains("\"") || command.contains("\\") || command.contains("$")):
+	if not has_obfuscation(command):
 		return command
 	var text := command.replace("\\\n", " ")
 	text = text.replace("${IFS}", " ").replace("$IFS", " ")
 	return strip_obfuscation(text)
+
+
+## Whether [param command] contains a mark that can hide it from a plain regex: `r""m`, `r\m`
+## and `rm$IFS-rf` all carry one, so this gates the normalization work.
+static func has_obfuscation(command: String) -> bool:
+	return command.contains("\\") or command.contains("'") or command.contains("\"") or command.contains("$")
 
 
 ## Drops quotes around space-free tokens (`r"m"` -> `rm`) and backslash escapes (`r\m` -> `rm`).
@@ -115,11 +137,11 @@ static func strip_obfuscation(text: String) -> String:
 	return build.build_string()
 
 
-## Quoting and backslash escapes only matter in front of word or path characters.
+## Whether the character with [param code] is one a quote or a backslash can hide. The pattern is
+## compiled by [method ensure_initialized] and only ever runs for the handful of marks in a command.
 static func is_unquote_char(code: int) -> bool:
-	if (code >= 48 and code <= 57) or (code >= 65 and code <= 90) or (code >= 97 and code <= 122):
-		return true
-	return code == 95 or code == 45 or code == 47
+	ensure_initialized()
+	return unquote_mark_regex.search(char(code)) != null
 
 
 static func build_rules() -> Array[Rule]:
