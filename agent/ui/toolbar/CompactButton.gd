@@ -115,12 +115,6 @@ func on_compaction_start(session_id: int) -> void:
 
 
 func on_compaction_end(session_id: int, success: bool, error_code: String) -> void:
-	if not AgentSessionManager.is_active(session_id):
-		return
-	compacting = false
-	wrap.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	stop_spinner()
-	refresh()
 	if success:
 		Alert.alert(I18n.t("agent.tokens.compact_success"), ColorBase.success)
 	elif error_code == AgentCompactionManager.ERROR_RUNNING:
@@ -129,6 +123,12 @@ func on_compaction_end(session_id: int, success: bool, error_code: String) -> vo
 		Alert.alert(I18n.t("agent.tokens.compact_empty"), ColorBase.warning)
 	else:
 		Alert.alert(I18n.t("agent.tokens.compact_failed"), ColorBase.error)
+	if not AgentSessionManager.is_active(session_id):
+		return
+	compacting = false
+	wrap.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	stop_spinner()
+	refresh()
 	pass
 
 
