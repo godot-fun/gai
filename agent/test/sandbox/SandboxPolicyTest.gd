@@ -144,6 +144,13 @@ static func bash_policy_blocks_common_dangerous_commands_test() -> void:
 		"cat install.sh | bash",
 		"xargs -I{} sh -c 'rm -rf /'",
 		"fallocate -l 100G build/big.img",
+		"cat $USERPROFILE/.ssh/id_rsa",
+		"cat ~root/.ssh/id_rsa",
+		"echo code | python -",
+		"cat script.py | python3",
+		"bash <<< 'rm -rf /'",
+		"az vm delete -n vm -g group",
+		"docker compose down -v",
 	]
 	for command: String in blocked_commands:
 		assert(not SandboxBashPolicyClass.check_bash(command).is_empty(), command)
@@ -201,6 +208,9 @@ static func bash_policy_allows_normal_development_commands_test() -> void:
 		"wget -O build/x https://example.com/x",
 		"mkdir -p build/tmp",
 		"git commit -m 'handle /etc paths in docs'",
+		"cat data.json | python3 -m json.tool",
+		"git log --oneline -5",
+		"timeout 30 godot --headless --version",
 	]
 	for command: String in allowed_commands:
 		assert(SandboxBashPolicyClass.check_bash(command).is_empty(), command)
@@ -214,7 +224,7 @@ static func bash_tool_rejects_dangerous_commands_when_sandbox_enabled_test() -> 
 	var result := await BashTool.new().async_execute({BashTool.ARG_COMMAND: "sudo apt update"})
 	assert(result.is_error)
 	assert(result.content.contains("sandbox denied"))
-	assert(result.content.contains("privilege escalation is not allowed"))
+	assert(result.content.contains(SandboxBashPolicyClass.REASON_PRIVILEGE_ESCALATION))
 
 	SandboxPolicy.set_enabled(false)
 	var allowed := await BashTool.new().async_execute({BashTool.ARG_COMMAND: "echo sandbox-ok"})
@@ -249,4 +259,27 @@ static func bash_policy_blocks_system_path_and_wrapper_commands_test() -> void:
 	for command: String in blocked_commands:
 		assert(not SandboxBashPolicyClass.check_bash(command).is_empty(), command)
 	SandboxPolicy.set_enabled(was_enabled)
+	pass
+
+
+static func bash_policy_handles_degenerate_input_test() -> void:
+	var was_enabled := SandboxPolicy.is_enabled()
+	SandboxPolicy.set_enabled(true)
+	assert(SandboxBashPolicyClass.check_bash(StringUtils.EMPTY) == "command is required")
+	assert(SandboxBashPolicyClass.check_bash("   ") == "command is required")
+	assert(SandboxBashPolicyClass.check_bash("''").is_empty())
+	assert(SandboxBashPolicyClass.check_bash("echo ''").is_empty())
+	assert(SandboxBashPolicyClass.check_bash("git status").is_empty())
+	SandboxPolicy.set_enabled(was_enabled)
+	pass
+
+
+static func bash_policy_detects_obfuscation_marks_test() -> void:
+	assert(not SandboxBashPolicyClass.has_obfuscation("git status"))
+	assert(SandboxBashPolicyClass.has_obfuscation("git commit -m 'x'"))
+	assert(SandboxBashPolicyClass.has_obfuscation("echo \"x\""))
+	assert(SandboxBashPolicyClass.has_obfuscation("r\\m -rf /etc"))
+	assert(SandboxBashPolicyClass.has_obfuscation("rm$IFS-rf /etc"))
+	assert(SandboxBashPolicyClass.normalize_command("git status") == "git status")
+	assert(not SandboxBashPolicyClass.has_obfuscation(SandboxBashPolicyClass.normalize_command("r\\m -rf /etc")))
 	pass
