@@ -125,6 +125,8 @@ func build_dialog() -> void:
 	agent_behavior_heading_label.text = I18n.t("agent.settings.agent_behavior")
 	agent_behavior_heading_label.add_theme_font_size_override("font_size", Typography.title_large_size)
 	fields.add_child(agent_behavior_heading_label)
+	# Safety mode enforces workspace boundaries for file tools. Bash cannot be fully sandboxed
+	# here, so its commands receive a heuristic safety check instead of OS-level isolation.
 	sandbox_toggle_button = add_check_button(
 		make_option_row(fields, Margin.ma_2), I18n.t("agent.settings.sandbox_mode"), SandboxPolicy.is_enabled()
 	)

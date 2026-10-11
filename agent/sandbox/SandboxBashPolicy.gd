@@ -1,8 +1,9 @@
 class_name SandboxBashPolicy
 extends RefCounted
 
-## Lightweight guard against common destructive Bash commands. This is intentionally
-## heuristic: it prevents accidents, but it is not an operating-system security boundary.
+## Bash command check used by safety mode. This is intentionally heuristic: it blocks common
+## unsafe operations to prevent accidents, but Bash is not isolated by an operating-system
+## sandbox and this policy must not be treated as a security boundary.
 
 class Rule:
 	var reason: String
@@ -62,7 +63,7 @@ const REASON_WORKSPACE_DELETE := "deleting the workspace root or repository meta
 
 
 ## Compiles the rule regexes and the mark pattern on first use. Deliberately lazy: a session that
-## never enables the sandbox should not pay for the compilation at startup.
+## never enables safety mode should not pay for the compilation at startup.
 static func ensure_initialized() -> void:
 	if not rules.is_empty():
 		return
@@ -72,7 +73,7 @@ static func ensure_initialized() -> void:
 	pass
 
 
-## Returns an empty string when the command is allowed or sandbox is off, otherwise a human-readable reason.
+## Returns an empty string when the command is allowed or safety mode is off, otherwise a human-readable reason.
 static func check_bash(command: String) -> String:
 	if not SandboxPolicy.is_enabled():
 		return StringUtils.EMPTY

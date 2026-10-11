@@ -1,7 +1,10 @@
 class_name SandboxPolicy
 extends RefCounted
 
-const ENABLED_SETTING_KEY := "agent_sandbox_enabled"
+## Policy backing the user-facing safety mode. File tools use it to enforce a lexical workspace
+## boundary; Bash uses a separate heuristic command check and is not isolated by an OS sandbox.
+
+const ENABLED_SETTING_KEY := "agent_safety_enabled"
 
 
 static func is_enabled() -> bool:
