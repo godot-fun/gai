@@ -12,11 +12,14 @@ const EXPANDED_HEIGHT_MAX_RATIO: float = 0.55
 const SIDE_INSET: float = ControlSize.md * 5.0
 ## Fade-in duration when the queue list appears after expand settles.
 const QUEUE_FADE_SECONDS: float = 0.2
+const ACTIVITY_SPINNER_SHADER := preload("res://agent/ui/input/ActivitySpinner.gdshader")
 var input_bar: Control
 var input_wrap: PanelContainer
 var input_inner: Control
 var input_field: TextEdit
 var send_button: Button
+var activity_spinner: ColorRect
+var queue_badge: Label
 var queue_panel: PanelContainer
 var queue_rows: VBoxContainer
 var border_beam: AccentBorderBeamLayer
@@ -26,9 +29,6 @@ var expanded: bool = false
 var force_expanded: bool = false
 var layout_tween: Tween = null
 var queue_tween: Tween = null
-var compact_spinner_tween: Tween = null
-var compact_spinner_angle: float = 0.0
-var compact_spinner_frame: int = -1
 
 var tween_start_h: float = 0.0
 var tween_target_h: float = 0.0
@@ -54,6 +54,8 @@ func setup(
 	input_inner = p_input_inner
 	input_field = p_input_field
 	send_button = p_send_button
+	setup_activity_spinner()
+	setup_queue_badge()
 	setup_queue_controls()
 
 	input_wrap.set_anchor(SIDE_LEFT, 0.0)
@@ -103,6 +105,39 @@ func setup_queue_controls() -> void:
 	queue_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	queue_rows.add_theme_constant_override("separation", Margin.ma_1)
 	scroll.add_child(queue_rows)
+	pass
+
+
+func setup_queue_badge() -> void:
+	queue_badge = Label.new()
+	queue_badge.name = "QueueBadge"
+	queue_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	queue_badge.z_index = 1
+	queue_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	queue_badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	queue_badge.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	queue_badge.offset_left = 2
+	queue_badge.offset_top = -Margin.ma_5
+	queue_badge.offset_right = Margin.ma_5
+	queue_badge.offset_bottom = -2
+	send_button.add_child(queue_badge)
+	pass
+
+
+func setup_activity_spinner() -> void:
+	activity_spinner = ColorRect.new()
+	activity_spinner.name = "ActivitySpinner"
+	activity_spinner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	activity_spinner.set_anchors_preset(Control.PRESET_CENTER)
+	activity_spinner.offset_left = -ControlSize.sm * 0.5
+	activity_spinner.offset_top = -ControlSize.sm * 0.5
+	activity_spinner.offset_right = ControlSize.sm * 0.5
+	activity_spinner.offset_bottom = ControlSize.sm * 0.5
+	var material := ShaderMaterial.new()
+	material.shader = ACTIVITY_SPINNER_SHADER
+	activity_spinner.material = material
+	activity_spinner.visible = false
+	send_button.add_child(activity_spinner)
 	pass
 
 
@@ -195,7 +230,6 @@ func on_session_stop(session_id: int) -> void:
 func on_compaction_start(session_id: int) -> void:
 	if not AgentSessionManager.is_active(session_id):
 		return
-	start_compact_spinner()
 	refresh_send_button()
 	pass
 
@@ -203,7 +237,6 @@ func on_compaction_start(session_id: int) -> void:
 func on_compaction_end(session_id: int, _success: bool, _error_code: String) -> void:
 	if not AgentSessionManager.is_active(session_id):
 		return
-	stop_compact_spinner()
 	refresh_send_button()
 	pass
 
@@ -225,22 +258,12 @@ func on_chat_input_prefill(text: String) -> void:
 
 
 func refresh_from_active_session() -> void:
-	refresh_compaction_animation()
 	var session: AgentSession = AgentSessionStore.load_session(AgentSessionManager.active_session_id)
 	var running: bool = RuntimeManager.is_running(AgentSessionManager.active_session_id)
 	var no_history: bool = session != null and not AgentSessionManager.has_chat_history(session.id)
 	input_field.text = session.draft_text if session != null else ""
 	refresh_state(running, no_history)
 	refresh_queue()
-	pass
-
-
-func refresh_compaction_animation() -> void:
-	var compacting := AgentCompactionManager.is_compacting(AgentSessionManager.active_session_id)
-	if compacting and compact_spinner_tween == null:
-		start_compact_spinner()
-	elif not compacting and compact_spinner_tween != null:
-		stop_compact_spinner()
 	pass
 
 
@@ -259,39 +282,15 @@ func get_pending_queue_count() -> int:
 	return session.pending_messages.size()
 
 
-## Collapsed + pending queue → count badge; else send / stop as before.
+## Collapsed state shows runtime activity with an optional pending-message badge.
 func refresh_send_button() -> void:
-	var queue_count := 0 if expanded else get_pending_queue_count()
-	var compacting := AgentCompactionManager.is_compacting(AgentSessionManager.active_session_id)
-	AgentChatInputTheme.apply_send_button(send_button, is_stop_action(), queue_count, compacting, compact_spinner_angle)
-	pass
-
-
-func start_compact_spinner() -> void:
-	if compact_spinner_tween != null:
-		compact_spinner_tween.kill()
-	compact_spinner_angle = 0.0
-	compact_spinner_tween = input_bar.create_tween().set_loops()
-	compact_spinner_tween.tween_method(set_compact_spinner_angle, 0.0, TAU, 0.8)
-	pass
-
-
-func stop_compact_spinner() -> void:
-	if compact_spinner_tween != null:
-		compact_spinner_tween.kill()
-		compact_spinner_tween = null
-	compact_spinner_angle = 0.0
-	compact_spinner_frame = -1
-	pass
-
-
-func set_compact_spinner_angle(angle: float) -> void:
-	var frame := int(floor(angle / TAU * 12.0)) % 12
-	if frame == compact_spinner_frame:
-		return
-	compact_spinner_frame = frame
-	compact_spinner_angle = TAU * float(frame) / 12.0
-	refresh_send_button()
+	var session_id := AgentSessionManager.active_session_id
+	var running := RuntimeManager.is_running(session_id)
+	var compacting := AgentCompactionManager.is_compacting(session_id)
+	var show_activity := compacting or (not expanded and running)
+	activity_spinner.visible = show_activity
+	AgentChatInputTheme.apply_send_button(send_button, is_stop_action(), show_activity, compacting)
+	AgentChatInputTheme.apply_queue_badge(queue_badge, not expanded, get_pending_queue_count())
 	pass
 
 
@@ -484,6 +483,7 @@ func on_global_input(event: InputEvent) -> void:
 func is_stop_action() -> bool:
 	return (expanded
 		and RuntimeManager.is_running(AgentSessionManager.active_session_id)
+		and not AgentCompactionManager.is_compacting(AgentSessionManager.active_session_id)
 		and get_trimmed_text().is_empty())
 
 

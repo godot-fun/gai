@@ -44,11 +44,9 @@ static func apply_field(input_field: TextEdit) -> void:
 	pass
 
 
-## [param queue_count] > 0: collapsed FAB shows the pending count instead of send/stop icon.
-static func apply_send_button(send_button: Button, stop_action: bool = false, queue_count: int = 0,
-		compacting: bool = false, spinner_angle: float = 0.0) -> void:
-	var show_queue_badge := queue_count > 0 and not compacting
-	var base_color := ColorBase.error if stop_action and not show_queue_badge else ThemeColor.accent_theme_color()
+static func apply_send_button(send_button: Button, stop_action: bool, show_activity: bool,
+		compacting: bool) -> void:
+	var base_color := ColorBase.error if stop_action else ThemeColor.accent_theme_color()
 	var radius: int = int(ControlSize.md * 0.5)
 	var normal := StyleBoxHelper.create_style_box_flat(base_color, radius, Margin.ma_1, Margin.ma_1)
 	ButtonStyle.apply(send_button, normal,
@@ -58,22 +56,10 @@ static func apply_send_button(send_button: Button, stop_action: bool = false, qu
 	send_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	send_button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	send_button.disabled = compacting
-	if compacting:
+	if show_activity:
 		send_button.text = ""
-		send_button.tooltip_text = I18n.t("agent.input.compacting")
-		var icon_size := ControlSize.xs
-		send_button.icon = make_spinner_icon(icon_size, Color.WHITE, spinner_angle)
-		send_button.add_theme_constant_override("icon_max_width", icon_size)
-		send_button.add_theme_constant_override("icon_max_height", icon_size)
-		return
-	if show_queue_badge:
-		send_button.tooltip_text = StringUtils.format(I18n.t("agent.input.queued"), queue_count)
+		send_button.tooltip_text = I18n.t("agent.input.compacting") if compacting else I18n.t("agent.visuals.running")
 		send_button.icon = null
-		send_button.text = str(queue_count)
-		send_button.add_theme_font_override("font", Fonts.semibold())
-		var font_size := Typography.label_large_size if queue_count < 10 else Typography.label_medium_size
-		send_button.add_theme_font_size_override("font_size", font_size)
-		ButtonStyle.apply_font_colors(send_button, Color.WHITE, Color.WHITE, Color.WHITE.darkened(0.05))
 		return
 	send_button.text = ""
 	send_button.tooltip_text = I18n.t("agent.input.stop") if stop_action else I18n.t("agent.input.send")
@@ -81,6 +67,20 @@ static func apply_send_button(send_button: Button, stop_action: bool = false, qu
 	send_button.icon = make_stop_icon(icon_size, Color.WHITE) if stop_action else make_arrow_up_icon(icon_size, Color.WHITE)
 	send_button.add_theme_constant_override("icon_max_width", icon_size)
 	send_button.add_theme_constant_override("icon_max_height", icon_size)
+	pass
+
+
+static func apply_queue_badge(badge: Label, collapsed: bool, queue_count: int) -> void:
+	badge.visible = collapsed and queue_count > 0
+	if not badge.visible:
+		return
+	badge.text = "9+" if queue_count > 9 else str(queue_count)
+	badge.add_theme_font_override("font", Fonts.semibold())
+	badge.add_theme_font_size_override("font_size", Typography.label_small_size)
+	badge.add_theme_color_override("font_color", Color.WHITE)
+	var badge_color := ColorBase.error.lerp(ColorBase.surface, 0.15)
+	badge.add_theme_stylebox_override("normal", StyleBoxHelper.create_style_box_flat(
+		badge_color, Margin.ma_2 + 1, 0, 0))
 	pass
 
 
@@ -147,22 +147,4 @@ static func make_stop_icon(size: int, color: Color) -> ImageTexture:
 		for x in range(left, left + square_size):
 			img.set_pixel(x, y, color)
 	return ImageTexture.create_from_image(img)
-
-
-static func make_spinner_icon(size: int, color: Color, angle: float) -> ImageTexture:
-	var image := Image.create(size, size, false, Image.FORMAT_RGBA8)
-	image.fill(Color.TRANSPARENT)
-	var center := Vector2(float(size - 1), float(size - 1)) * 0.5
-	var radius := float(size) * 0.34
-	var thickness := maxf(1.0, float(size) * 0.11)
-	for y in size:
-		for x in size:
-			var delta := Vector2(float(x), float(y)) - center
-			var distance := delta.length()
-			if absf(distance - radius) > thickness:
-				continue
-			var pixel_angle := fposmod(atan2(delta.y, delta.x) - angle, TAU)
-			if pixel_angle <= PI * 1.45:
-				image.set_pixel(x, y, color)
-	return ImageTexture.create_from_image(image)
 
