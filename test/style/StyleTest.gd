@@ -174,7 +174,9 @@ func card_components_test() -> void:
 	assert(toast_card.border_color == snackbar.border_color)
 	assert(toast_card.border_width_left == roundi(ControlSize.border_md * scale))
 	assert(toast_card.border_width_right == 0)
-	assert(toast_card.get_margin(SIDE_RIGHT) == Margin.ma_5 * scale)
+	# StyleBox stores margins as engine floats, so a non-integer display scale can round-trip with
+	# slightly different precision when this scene follows native-window integration tests.
+	assert(is_equal_approx(toast_card.get_margin(SIDE_RIGHT), Margin.ma_5 * scale))
 	toast.free()
 	pass
 
