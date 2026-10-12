@@ -10,8 +10,8 @@ const EXPANDED_HEIGHT_MIN: float = 88.0
 const EXPANDED_HEIGHT_MAX_RATIO: float = 0.55
 ## Symmetric side inset: keep the input visually centered and clear of right-aligned actions.
 const SIDE_INSET: float = ControlSize.md * 5.0
-## Fade-in duration when the queue list appears after expand settles.
-const QUEUE_FADE_SECONDS: float = 0.5
+## Bottom-up reveal duration when the queue list appears after expand settles.
+const QUEUE_FADE_SECONDS: float = 0.25
 ## Keep the pending-message panel quieter and shorter than the composer below it.
 const QUEUE_WIDTH_RATIO: float = 0.5
 const SEND_BUTTON_ACTIVE_SHADER := preload("res://agent/ui/input/SendButtonActive.gdshader")
@@ -463,6 +463,7 @@ func hide_queue_panel() -> void:
 		queue_tween = null
 	queue_panel.visible = false
 	queue_panel.modulate.a = 1.0
+	queue_panel.scale = Vector2.ONE
 	pass
 
 
@@ -473,24 +474,31 @@ func show_queue_panel() -> void:
 	if already_shown:
 		if queue_tween == null:
 			queue_panel.modulate.a = 1.0
+			queue_panel.scale = Vector2.ONE
 		return
 	if queue_tween != null:
 		queue_tween.kill()
 		queue_tween = null
 	queue_panel.modulate.a = 0.0
+	queue_panel.pivot_offset = Vector2(0.0, queue_panel.size.y)
+	queue_panel.scale = Vector2(1.0, 0.0)
 	if not input_bar.is_inside_tree():
 		queue_panel.modulate.a = 1.0
+		queue_panel.scale = Vector2.ONE
 		return
-	queue_tween = input_bar.create_tween()
+	queue_tween = input_bar.create_tween().set_parallel(true)
 	queue_tween.set_trans(Tween.TRANS_CUBIC)
 	queue_tween.set_ease(Tween.EASE_OUT)
 	queue_tween.tween_property(queue_panel, "modulate:a", 1.0, QUEUE_FADE_SECONDS)
+	queue_tween.tween_property(queue_panel, "scale:y", 1.0, QUEUE_FADE_SECONDS)
 	queue_tween.finished.connect(on_queue_tween_finished, CONNECT_ONE_SHOT)
 	pass
 
 
 func on_queue_tween_finished() -> void:
 	queue_tween = null
+	queue_panel.modulate.a = 1.0
+	queue_panel.scale = Vector2.ONE
 	pass
 
 
@@ -554,7 +562,7 @@ func layout_queue_panel() -> void:
 	var width := wrap_width * QUEUE_WIDTH_RATIO
 	var content_height := minf(queue_scroll.get_combined_minimum_size().y + Margin.ma_2, 220.0)
 	var right := input_bar.size.x - SIDE_INSET
-	queue_panel.position = Vector2(right - width, input_wrap.offset_top - content_height - Margin.ma_2)
+	queue_panel.position = Vector2(right - width, input_wrap.offset_top - content_height - Margin.ma_5)
 	queue_panel.size = Vector2(width, content_height)
 	pass
 
