@@ -28,9 +28,9 @@ func blockquote_multiline_test() -> void:
 	var bbcode := MarkdownParser.to_bbcode("> line one\n> line two").bbcode
 	assert("[indent]" in bbcode)
 	assert("[table=2]" in bbcode)
-	assert(bbcode.count("bg=" + MarkdownParser.to_bbcode_color(ColorMarkdown.blockquote_bar_color)) == 2)
+	assert(bbcode.count("bg=" + MarkdownParser.to_bbcode_color(Colors.info)) == 2)
 	assert(bbcode.count("[/cell]") == 4)
-	assert("[color=" + MarkdownParser.to_bbcode_color(ColorMarkdown.blockquote_text_color) + "]" in bbcode)
+	assert("[color=" + MarkdownParser.to_bbcode_color(Colors.secondary_text) + "]" in bbcode)
 	assert("[/table][/indent]" in bbcode)
 	assert("[bgcolor=" not in bbcode)
 	assert("line one" in bbcode and "line two" in bbcode)
@@ -41,7 +41,7 @@ func blockquote_single_line_test() -> void:
 	var bbcode := MarkdownParser.to_bbcode("> 快乐韭菜网使用的 chatgpt 3.5 模型").bbcode
 	assert("[indent]" in bbcode)
 	assert("[table=2]" in bbcode)
-	assert("bg=" + MarkdownParser.to_bbcode_color(ColorMarkdown.blockquote_bar_color) in bbcode)
+	assert("bg=" + MarkdownParser.to_bbcode_color(Colors.info) in bbcode)
 	assert("快乐韭菜网" in bbcode)
 	pass
 
@@ -110,10 +110,10 @@ func code_fence_blank_lines_test() -> void:
 	pass
 
 
-## The fence fill follows the theme accent instead of a hex the caller passes in.
+## The fence fill follows the shared theme palette instead of a hex the caller passes in.
 func code_block_bg_themed_test() -> void:
 	var bbcode := MarkdownParser.to_bbcode("```\nx\n```").bbcode
-	assert("bg=" + MarkdownParser.to_bbcode_color(ColorMarkdown.code_block_bg) in bbcode)
+	assert("bg=" + MarkdownParser.to_bbcode_color(Colors.app_background) in bbcode)
 	pass
 
 
@@ -128,7 +128,7 @@ func inline_code_tinted_test() -> void:
 	var bbcode := MarkdownParser.inline_to_bbcode("`x`")
 	assert(bbcode.begins_with(MarkdownParser.INLINE_CODE_MARGIN))
 	assert(bbcode.ends_with(MarkdownParser.INLINE_CODE_MARGIN))
-	assert("[bgcolor=" + MarkdownParser.to_bbcode_color(ColorMarkdown.inline_code_bg) + "]" in bbcode)
+	assert("[bgcolor=" + MarkdownParser.to_bbcode_color(Colors.hover_surface) + "]" in bbcode)
 	assert("[code]x[/code]" in bbcode)
 	assert("[table=" not in bbcode)
 	pass
@@ -223,7 +223,7 @@ func link_label_blue_test() -> void:
 	var bbcode := MarkdownParser.inline_to_bbcode("[hi](https://a.com)")
 	assert("🔗 " in bbcode)
 	assert("[color=%s]🔗 [/color]" % MarkdownParser.to_bbcode_color(Colors.info) in bbcode)
-	assert("[color=%s]" % MarkdownParser.to_bbcode_color(ColorMarkdown.link_color) in bbcode)
+	assert("[color=%s]" % MarkdownParser.to_bbcode_color(Colors.info) in bbcode)
 	var bold_label := MarkdownParser.inline_to_bbcode("[**hi**](https://a.com)")
 	assert("[b]hi[/b]" in bold_label)
 	assert("[/color][/url]" in bold_label)

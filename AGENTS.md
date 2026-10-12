@@ -262,7 +262,7 @@ label.text = I18n.t("settings.title")
 - `ThemeColor`: Manages dark/light mode, the user accent color, and colors derived from the active theme.
 - `ColorBase`: Provides theme-aware semantic colors for surfaces, text, borders, and status feedback.
 - `ColorFile`: Provides theme-aware colors for audio, image, video, text, and folder types.
-- `ColorMarkdown`: Provides theme-aware colors used by Markdown rendering.
+- `Colors`: Provides theme-aware semantic and surface colors used by Markdown rendering.
 
 Avoid hard-coded fonts, sizes, spacing, radii, and colors when a matching shared token exists.
 

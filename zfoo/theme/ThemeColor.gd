@@ -121,12 +121,11 @@ static func accent_theme_color() -> Color:
 static func alpha_theme_color(alpha: float) -> Color:
 	return Color(theme_color, alpha)
 
-## Refresh every palette derived from the active appearance. Cards follow the accent hue; semantic,
-## markdown and file colors select their hand-tuned dark or light variants.
+## Refresh every palette derived from the active appearance. Cards follow the accent hue; semantic
+## and file colors select their hand-tuned dark or light variants.
 static func refresh_derived_colors() -> void:
 	Colors.refresh()
 	refresh_theme_colors()
-	ColorMarkdown.refresh()
 	ColorFile.refresh()
 	pass
 
