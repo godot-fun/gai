@@ -482,7 +482,7 @@ static func get_admonition_color(kind: String) -> Color:
 	match kind:
 		"WARNING": return Colors.warning
 		"TIP": return Colors.success
-		"IMPORTANT": return Colors.purple
+		"IMPORTANT": return Colors.info
 		"CAUTION": return Colors.error
 		_: return Colors.info
 
@@ -768,7 +768,7 @@ static func get_link_prefix(path: String) -> String:
 	if HttpUtils.is_valid_http_url(path):
 		return format_link_prefix(WEB_PREFIX, Colors.info)
 	if path.to_lower().begins_with("mailto:"):
-		return format_link_prefix(EMAIL_PREFIX, Colors.purple)
+		return format_link_prefix(EMAIL_PREFIX, Colors.info)
 	if not (path.is_absolute_path() or path.begins_with("res://") or path.begins_with("user://")):
 		return StringUtils.EMPTY
 	if DirAccess.dir_exists_absolute(path):

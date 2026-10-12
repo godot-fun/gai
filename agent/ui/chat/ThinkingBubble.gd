@@ -25,7 +25,7 @@ static func append(
 
 	var title_label: Label = Label.new()
 	title_label.text = entry.title
-	title_label.add_theme_color_override("font_color", Colors.purple)
+	title_label.add_theme_color_override("font_color", Colors.info)
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	header.add_child(title_label)
 
@@ -57,11 +57,11 @@ static func style_view_button(button: Button) -> void:
 	button.tooltip_text = "View full thinking"
 	button.custom_minimum_size = Vector2(22, 18)
 	button.add_theme_font_size_override("font_size", Typography.label_small_size)
-	ButtonStyle.apply_font_colors(button, Colors.purple, ButtonStyle.hover_color(Colors.purple, 0.12), ButtonStyle.press_color(Colors.purple, 0.08))
+	ButtonStyle.apply_font_colors(button, Colors.info, ButtonStyle.hover_color(Colors.info, 0.12), ButtonStyle.press_color(Colors.info, 0.08))
 
-	var border := ButtonStyle.press_color(Colors.purple)
+	var border := ButtonStyle.press_color(Colors.info)
 	var normal := StyleBoxHelper.create_style_box_flat(ButtonStyle.hover_color(Colors.purple_surface, 0.08), 4, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
 	ButtonStyle.apply(button, normal,
-		ButtonStyle.filled(normal, ButtonStyle.hover_color(Colors.purple_surface, 0.16), Colors.purple),
-		ButtonStyle.filled(normal, ButtonStyle.press_color(Colors.purple_surface, 0.06), Colors.purple))
+		ButtonStyle.filled(normal, ButtonStyle.hover_color(Colors.purple_surface, 0.16), Colors.info),
+		ButtonStyle.filled(normal, ButtonStyle.press_color(Colors.purple_surface, 0.06), Colors.info))
 	pass

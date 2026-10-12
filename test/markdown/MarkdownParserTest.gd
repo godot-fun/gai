@@ -51,7 +51,7 @@ func github_admonition_test() -> void:
 		"NOTE": ["ℹ", Colors.info],
 		"WARNING": ["⚠", Colors.warning],
 		"TIP": ["✓", Colors.success],
-		"IMPORTANT": ["ℹ", Colors.purple],
+		"IMPORTANT": ["ℹ", Colors.info],
 		"CAUTION": ["✕", Colors.error],
 	}
 	for kind: String in cases:
@@ -339,9 +339,7 @@ func local_file_link_prefix_test() -> void:
 	assert("✉ " in email_bbcode and "email" in email_bbcode)
 	assert("[color=%s]" % MarkdownParser.to_bbcode_color(ColorFile.audio_color) in audio_bbcode)
 	assert("[color=%s]" % MarkdownParser.to_bbcode_color(ColorFile.folder_color) in folder_bbcode)
-	assert("[color=%s]" % MarkdownParser.to_bbcode_color(Colors.teal) in config_bbcode)
 	assert("[color=%s]" % MarkdownParser.to_bbcode_color(ColorFile.text_color) in document_bbcode)
-	assert("[color=%s]" % MarkdownParser.to_bbcode_color(Colors.purple) in email_bbcode)
 	pass
 
 

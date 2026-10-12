@@ -61,7 +61,7 @@ const LIGHT_PURPLE := Color(0.49, 0.23, 0.93)
 ## Semantic surfaces keep status/category fills readable without using strong text colors as fills.
 const DARK_STRONG_INFO_SURFACE := Color(0.16, 0.22, 0.32)
 const DARK_INFO_SURFACE := Color(0.10, 0.13, 0.19)
-const DARK_PURPLE_SURFACE := Color(0.17, 0.13, 0.22)
+const DARK_PURPLE_SURFACE := Color(0.19, 0.18, 0.30)
 const DARK_SUCCESS_SURFACE := Color(0.14, 0.20, 0.16)
 const DARK_WARNING_SURFACE := Color(0.22, 0.16, 0.10)
 const DARK_NEUTRAL_SURFACE := Color(0.13, 0.16, 0.20)
@@ -133,7 +133,6 @@ static func refresh() -> void:
 	info = DARK_INFO if dark else LIGHT_INFO
 	warning = DARK_WARNING if dark else LIGHT_WARNING
 	success = DARK_SUCCESS if dark else LIGHT_SUCCESS
-	purple = DARK_PURPLE if dark else LIGHT_PURPLE
 	strong_info_surface = DARK_STRONG_INFO_SURFACE if dark else LIGHT_STRONG_INFO_SURFACE
 	info_surface = DARK_INFO_SURFACE if dark else LIGHT_INFO_SURFACE
 	purple_surface = DARK_PURPLE_SURFACE if dark else LIGHT_PURPLE_SURFACE
