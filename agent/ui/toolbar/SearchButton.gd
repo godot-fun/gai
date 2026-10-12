@@ -32,6 +32,7 @@ var debounce_timer: Timer
 
 func setup(p_button: Button) -> void:
 	button = p_button
+	button.shortcut = make_shortcut(KEY_F, true)
 	build_popup()
 	button.pressed.connect(on_button_pressed)
 	button.mouse_entered.connect(on_mouse_entered)
@@ -41,6 +42,15 @@ func setup(p_button: Button) -> void:
 	gdf.events.locale_changed.connect(apply_locale)
 	apply_locale()
 	pass
+
+
+func make_shortcut(keycode: Key, ctrl_pressed: bool = false) -> Shortcut:
+	var key_event := InputEventKey.new()
+	key_event.keycode = keycode
+	key_event.ctrl_pressed = ctrl_pressed
+	var shortcut := Shortcut.new()
+	shortcut.events = [key_event]
+	return shortcut
 
 
 func build_popup() -> void:
@@ -267,6 +277,11 @@ func search(raw_query: String) -> void:
 		status_label.text = I18n.t("agent.search.empty")
 		return
 	var session_ids := session_indexes.collect_session_ids()
+	var active_index := session_ids.find(AgentSessionManager.active_session_id)
+	if active_index > 0:
+		var active_session_id: int = session_ids[active_index]
+		session_ids.remove_at(active_index)
+		session_ids.push_front(active_session_id)
 	# Returns at once on a warm cache; while it decodes, the read-only box keeps this the only search in
 	# flight, and clearing afterwards drops rows an older search may have left behind.
 	var restore_query_focus := query_edit.has_focus()
