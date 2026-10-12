@@ -101,7 +101,21 @@ static func apply_queue_row(row: PanelContainer, title: Label, action_button: Bu
 	title.add_theme_font_override("font", Fonts.semibold() if header else Fonts.regular())
 	title.add_theme_color_override("font_color",
 		Colors.primary_text if hovered or not header else Colors.secondary_text)
-	AgentToolbarButton.style_round(action_button, action_button.tooltip_text)
+	apply_queue_action_button(action_button)
+	pass
+
+
+static func apply_queue_action_button(button: Button) -> void:
+	button.text = ""
+	button.custom_minimum_size = ControlSize.square(ControlSize.sm)
+	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	button.flat = false
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	button.add_theme_constant_override("icon_max_width", ControlSize.xs)
+	button.add_theme_constant_override("icon_max_height", ControlSize.xs)
+	var normal := StyleBoxHelper.create_style_box_flat(	Color.TRANSPARENT, ControlSize.sm / 2, Margin.ma_1, Margin.ma_1)
+	ButtonStyle.apply(button, normal, ButtonStyle.filled(normal, ThemeColor.selected_surface), ButtonStyle.filled(normal, ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), Colors.am_2)))
 	pass
 
 
