@@ -330,7 +330,7 @@ static func format_code_fence_bbcode(code: String, language: String = StringUtil
 	if StringUtils.is_not_empty(language):
 		title = StringUtils.format(
 				"[color={}]{}{}[/color]\n",
-				to_bbcode_color(ThemeColor.accent_theme_color().lightened(Colors.light_3)), CODE_LANGUAGE_PREFIX, escape_bbcode_literals(language)
+				to_bbcode_color(ThemeColor.accent_theme_color().lightened(Colors.am_3)), CODE_LANGUAGE_PREFIX, escape_bbcode_literals(language)
 		)
 	var block := StringUtils.format(
 			"[table=1][cell shrink=false expand=1 bg={} padding={}]{}{}[/cell][/table]",

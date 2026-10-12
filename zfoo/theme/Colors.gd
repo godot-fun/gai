@@ -2,18 +2,19 @@ class_name Colors
 extends Object
 
 ## Shared adjustment ratios for [method Color.lightened] and [method Color.darkened].
-## Lightening ratios, from a subtle state change to a strong highlight.
-const light_1: float = 0.10
-const light_2: float = 0.20
-const light_3: float = 0.30
-const light_4: float = 0.40
-const light_5: float = 0.50
-## Darkening ratios, from a subtle state change to a strong shadow.
-const dark_1: float = 0.10
-const dark_2: float = 0.20
-const dark_3: float = 0.30
-const dark_4: float = 0.40
-const dark_5: float = 0.50
+const am_0: float = 0.00
+const am_1: float = 0.05
+const am_2: float = 0.10
+const am_3: float = 0.15
+const am_4: float = 0.20
+const am_5: float = 0.25
+const am_6: float = 0.30
+const am_7: float = 0.35
+const am_8: float = 0.40
+const am_9: float = 0.45
+const am_10: float = 0.50
+const am_11: float = 0.55
+const am_12: float = 0.60
 
 ## Shared foundation for neutral and semantic colors used by framework palettes and application
 ## themes. Component and business-specific colors belong in their own palette.
@@ -104,8 +105,6 @@ static var subtle_border: Color = DARK_SUBTLE_BORDER
 static var primary_text: Color = DARK_TEXT
 static var secondary_text: Color = DARK_MUTED
 
-## Strong blue information fill, used where an information surface needs extra emphasis.
-static var strong_info_surface: Color = DARK_STRONG_INFO_SURFACE
 ## Low-emphasis semantic fills paired with their matching foreground colors above.
 static var info_surface: Color = DARK_INFO_SURFACE
 static var purple_surface: Color = DARK_PURPLE_SURFACE
@@ -132,7 +131,6 @@ static func refresh() -> void:
 	info = DARK_INFO if dark else LIGHT_INFO
 	warning = DARK_WARNING if dark else LIGHT_WARNING
 	success = DARK_SUCCESS if dark else LIGHT_SUCCESS
-	strong_info_surface = DARK_STRONG_INFO_SURFACE if dark else LIGHT_STRONG_INFO_SURFACE
 	info_surface = DARK_INFO_SURFACE if dark else LIGHT_INFO_SURFACE
 	purple_surface = DARK_PURPLE_SURFACE if dark else LIGHT_PURPLE_SURFACE
 	success_surface = DARK_SUCCESS_SURFACE if dark else LIGHT_SUCCESS_SURFACE
