@@ -12,6 +12,8 @@ const EXPANDED_HEIGHT_MAX_RATIO: float = 0.55
 const SIDE_INSET: float = ControlSize.md * 5.0
 ## Fade-in duration when the queue list appears after expand settles.
 const QUEUE_FADE_SECONDS: float = 0.2
+## Keep the pending-message panel quieter and shorter than the composer below it.
+const QUEUE_WIDTH_RATIO: float = 0.5
 const SEND_BUTTON_ACTIVE_SHADER := preload("res://agent/ui/input/SendButtonActive.gdshader")
 const SEND_BUTTON_EFFECT_SHADER := preload("res://agent/ui/input/SendButtonEffect.gdshader")
 const SEND_BUTTON_STOP_SHADER := preload("res://agent/ui/input/SendButtonStop.gdshader")
@@ -111,7 +113,7 @@ func setup_queue_controls() -> void:
 	queue_panel.add_child(scroll)
 	queue_rows = VBoxContainer.new()
 	queue_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	queue_rows.add_theme_constant_override("separation", Margin.ma_1)
+	queue_rows.add_theme_constant_override("separation", Margin.ma_0)
 	scroll.add_child(queue_rows)
 	pass
 
@@ -512,7 +514,7 @@ func refresh_queue() -> void:
 	if not RuntimeManager.is_running(session.id):
 		var continue_button := Button.new()
 		continue_button.tooltip_text = I18n.t("agent.input.continue_queue")
-		continue_button.custom_minimum_size = Vector2(ControlSize.sm, ControlSize.sm)
+		continue_button.custom_minimum_size = ControlSize.square(ControlSize.xs)
 		continue_button.focus_mode = Control.FOCUS_NONE
 		AgentChatInputTheme.apply_queue_continue_button(continue_button)
 		continue_button.pressed.connect(RuntimeManager.try_run_next_message.bind(session.id))
@@ -531,7 +533,7 @@ func refresh_queue() -> void:
 		row.add_child(label)
 		var delete_button := Button.new()
 		delete_button.tooltip_text = I18n.t("agent.input.delete_queued")
-		delete_button.custom_minimum_size = Vector2(ControlSize.sm, ControlSize.sm)
+		delete_button.custom_minimum_size = ControlSize.square(ControlSize.xs)
 		delete_button.focus_mode = Control.FOCUS_NONE
 		AgentChatInputTheme.apply_queue_delete_button(delete_button)
 		delete_button.pressed.connect(AgentSessionManager.delete_pending_message.bind(session.id, queued))
@@ -545,15 +547,16 @@ func refresh_queue() -> void:
 
 
 func apply_queue_theme() -> void:
-	# Match the expanded composer surface and rounding, without stacking another floating shadow.
+	# Keep the queue visually quieter than the composer, without stacking another floating shadow.
 	var style := AgentChatInputTheme.build_wrap_style(true)
+	style.bg_color = ThemeColor.emphasize(Colors.info_surface, Colors.am_2)
 	style.shadow_color = Color.TRANSPARENT
 	style.shadow_size = 0
 	style.shadow_offset = Vector2.ZERO
 	style.content_margin_left = Margin.ma_3
-	style.content_margin_top = Margin.ma_2
+	style.content_margin_top = Margin.ma_1
 	style.content_margin_right = Margin.ma_3
-	style.content_margin_bottom = Margin.ma_2
+	style.content_margin_bottom = Margin.ma_1
 	queue_panel.add_theme_stylebox_override("panel", style)
 	pass
 
@@ -561,8 +564,9 @@ func apply_queue_theme() -> void:
 func layout_queue_panel() -> void:
 	if not queue_panel.visible:
 		return
-	var width := get_wrap_width(true)
-	var content_height := minf(queue_rows.get_combined_minimum_size().y + Margin.ma_4, 220.0)
+	var wrap_width := get_wrap_width(true)
+	var width := wrap_width * QUEUE_WIDTH_RATIO
+	var content_height := minf(queue_rows.get_combined_minimum_size().y + Margin.ma_2, 220.0)
 	var right := input_bar.size.x - SIDE_INSET
 	queue_panel.position = Vector2(right - width, input_wrap.offset_top - content_height - Margin.ma_2)
 	queue_panel.size = Vector2(width, content_height)
