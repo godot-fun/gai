@@ -80,7 +80,7 @@ func on_session_removed(session_id: int) -> void:
 	pass
 
 
-func on_session_stop(session_id: int) -> void:
+func on_session_stop(session_id: int, error_message: String) -> void:
 	if AgentSessionManager.is_active(session_id):
 		refresh_error_resume_buttons()
 	chat_bubble_flusher.flush_now()

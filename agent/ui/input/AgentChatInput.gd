@@ -227,7 +227,7 @@ func on_agent_start(session_id: int) -> void:
 	pass
 
 
-func on_session_stop(session_id: int) -> void:
+func on_session_stop(session_id: int, error_message: String) -> void:
 	if not AgentSessionManager.is_active(session_id):
 		return
 	refresh_from_active_session()

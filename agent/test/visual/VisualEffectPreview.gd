@@ -165,7 +165,7 @@ func stop_demo(status_text: String, as_error: bool = false) -> void:
 	demo_generation += 1
 	demo_running = false
 	clear_running()
-	if as_error and demo_session_id != 0 and visual_control.running_session_id == demo_session_id:
+	if as_error and demo_session_id != 0:
 		AgentEvents.events.agent_end.emit(demo_session_id, "Stop.")
 	if StringUtils.is_not_blank(status_text):
 		set_status(status_text)

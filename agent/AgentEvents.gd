@@ -54,7 +54,7 @@ class Events:
 	signal session_title_changed(session_id: int, title: String)
 
 	# Session run control
-	signal session_stop(session_id: int)
+	signal session_stop(session_id: int, error_message: String)
 	## Manual context compaction lifecycle.
 	signal compaction_start(session_id: int)
 	signal compaction_end(session_id: int, success: bool, error_code: String)

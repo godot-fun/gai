@@ -3,13 +3,10 @@ extends Control
 
 const TAI_CHI_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChi.gd")
 
-## Single event bridge that routes an agent run to the selected visual effect.
-## Only one effect instance and one owning session are supported at a time. A newer
-## agent run replaces the previous animation; late events from the old run are ignored.
+## Single event bridge that routes all concurrent agent runs to the selected visual effect.
+## The shared effect remains visible until every active session has finished.
 
 
-## Session whose run is currently represented; 0 while no run is tracked.
-var running_session_id: int = 0
 var current_effect: VisualEffect
 
 
@@ -81,7 +78,6 @@ func connect_visual_events() -> void:
 	gdf.events.theme_changed.connect(on_theme_changed)
 	gdf.events.theme_color_changed.connect(on_theme_changed)
 	AgentEvents.events.agent_start.connect(on_agent_start)
-	AgentEvents.events.agent_end.connect(on_agent_end)
 	AgentEvents.events.session_stop.connect(on_session_stop)
 	AgentEvents.events.turn_start.connect(on_turn_start)
 	AgentEvents.events.turn_end.connect(on_turn_end)
@@ -95,36 +91,27 @@ func connect_visual_events() -> void:
 
 
 func on_agent_start(session_id: int) -> void:
-	# Newest run always owns the single effect. There is intentionally no animation queue.
-	if running_session_id != 0:
-		mount_selected_effect()
-	running_session_id = session_id
 	var effect := get_selected_effect()
 	if effect == null:
 		return
-	effect.reset_visual()
+	if not has_visible_effect():
+		effect.reset_visual()
 	effect.on_agent_start(session_id)
-	effect.set_visual_visible(true, true)
+	if not has_visible_effect():
+		effect.set_visual_visible(true, true)
 	pass
 
 
-func on_agent_end(session_id: int, error_message: String) -> void:
-	if session_id != running_session_id:
+func on_session_stop(_session_id: int, error_message: String) -> void:
+	if not RuntimeManager.runtimes.is_empty():
 		return
 	var effect := get_selected_effect()
 	if is_instance_valid(effect):
 		await effect.on_agent_end(error_message)
-	if running_session_id == session_id:
-		if is_instance_valid(effect):
-			effect.set_visual_visible(false, true)
-		running_session_id = 0
-	pass
-
-
-func on_session_stop(session_id: int) -> void:
-	if session_id != running_session_id or has_visible_effect():
+	if not RuntimeManager.runtimes.is_empty():
 		return
-	running_session_id = 0
+	if is_instance_valid(effect):
+		effect.set_visual_visible(false, true)
 	pass
 
 
@@ -186,10 +173,11 @@ func on_theme_changed() -> void:
 func on_visual_type_changed(_visual_type: int) -> void:
 	mount_selected_effect()
 	var effect := get_selected_effect()
-	if effect == null or running_session_id == 0 or not RuntimeManager.is_running(running_session_id):
+	if effect == null or RuntimeManager.runtimes.is_empty():
 		return
+	var session_id := int(RuntimeManager.runtimes.keys()[0])
 	effect.reset_visual()
-	effect.on_agent_start(running_session_id)
+	effect.on_agent_start(session_id)
 	effect.set_visual_visible(true, true)
 	pass
 
@@ -201,9 +189,7 @@ func get_selected_effect() -> VisualEffect:
 
 
 func get_running_effect(session_id: int) -> VisualEffect:
-	# Reject late events from a run whose animation was replaced by a newer session.
-	# Selecting another chat does not affect ownership; only agent_start transfers it.
-	if session_id != running_session_id:
+	if not RuntimeManager.is_running(session_id):
 		return null
 	var effect := get_selected_effect()
 	return effect if effect != null and effect.visible else null

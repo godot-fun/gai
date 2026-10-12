@@ -90,11 +90,11 @@ static func try_run_next_message(session_id: int) -> void:
 	if not AgentSessionManager.has_index(session_id) or session == null or session.pending_messages.is_empty():
 		remove_runtime(session_id)
 		if AgentSessionManager.has_index(session_id):
-			AgentEvents.events.session_stop.emit(session_id)
+			AgentEvents.events.session_stop.emit(session_id, "")
 		return
 	if session.pending_messages[0] != queued:
 		remove_runtime(session_id)
-		AgentEvents.events.session_stop.emit(session_id)
+		AgentEvents.events.session_stop.emit(session_id, "")
 		try_run_next_message.call_deferred(session_id)
 		return
 	session.pending_messages.pop_front()
@@ -156,7 +156,7 @@ static func on_agent_end(session_id: int, error_message: String) -> void:
 	AgentSessionManager.persist_session(session_id)
 
 	remove_runtime(session_id)
-	AgentEvents.events.session_stop.emit(session_id)
+	AgentEvents.events.session_stop.emit(session_id, error_message)
 	if should_continue_queue:
 		try_run_next_message.call_deferred(session_id)
 	pass
