@@ -11,7 +11,7 @@ const EXPANDED_HEIGHT_MAX_RATIO: float = 0.55
 ## Symmetric side inset: keep the input visually centered and clear of right-aligned actions.
 const SIDE_INSET: float = ControlSize.md * 5.0
 ## Fade-in duration when the queue list appears after expand settles.
-const QUEUE_FADE_SECONDS: float = 0.2
+const QUEUE_FADE_SECONDS: float = 0.5
 ## Keep the pending-message panel quieter and shorter than the composer below it.
 const QUEUE_WIDTH_RATIO: float = 0.5
 const SEND_BUTTON_ACTIVE_SHADER := preload("res://agent/ui/input/SendButtonActive.gdshader")
