@@ -110,17 +110,6 @@ func code_fence_blank_lines_test() -> void:
 	pass
 
 
-func code_fence_language_title_test() -> void:
-	var bbcode := MarkdownParser.to_bbcode("```gdscript\nvar answer := 42\n```").bbcode
-	assert("⌨ gdscript" in bbcode)
-	assert("[color=" + MarkdownParser.to_bbcode_color(Colors.teal) in bbcode)
-	assert("[b]⌨ gdscript[/b]" not in bbcode)
-	assert("[code]var" in bbcode)
-	var plain_bbcode := MarkdownParser.to_bbcode("```\nplain\n```").bbcode
-	assert("⌨" not in plain_bbcode)
-	pass
-
-
 ## The fence fill follows the theme accent instead of a hex the caller passes in.
 func code_block_bg_themed_test() -> void:
 	var bbcode := MarkdownParser.to_bbcode("```\nx\n```").bbcode

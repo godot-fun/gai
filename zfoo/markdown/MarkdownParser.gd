@@ -777,7 +777,7 @@ static func get_link_prefix(path: String) -> String:
 	if ResourceHelper.AUDIO_EXTENSIONS.has(extension):
 		return format_link_prefix(AUDIO_PREFIX, ColorFile.audio_color)
 	if EXECUTABLE_CONFIG_EXTENSIONS.has(extension):
-		return format_link_prefix(EXECUTABLE_CONFIG_PREFIX, Colors.teal)
+		return format_link_prefix(EXECUTABLE_CONFIG_PREFIX, ColorFile.video_color)
 	if TEXT_DOCUMENT_EXTENSIONS.has(extension):
 		return format_link_prefix(TEXT_DOCUMENT_PREFIX, ColorFile.text_color)
 	return format_link_prefix(FILE_PREFIX, ColorFile.text_color)

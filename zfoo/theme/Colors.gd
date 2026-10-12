@@ -78,7 +78,6 @@ static var error: Color = DARK_ERROR
 static var info: Color = DARK_INFO
 static var warning: Color = DARK_WARNING
 static var success: Color = DARK_SUCCESS
-static var teal: Color = DARK_TEAL
 static var purple: Color = DARK_PURPLE
 
 ## Main application canvas behind panels and content.
@@ -134,7 +133,6 @@ static func refresh() -> void:
 	info = DARK_INFO if dark else LIGHT_INFO
 	warning = DARK_WARNING if dark else LIGHT_WARNING
 	success = DARK_SUCCESS if dark else LIGHT_SUCCESS
-	teal = DARK_TEAL if dark else LIGHT_TEAL
 	purple = DARK_PURPLE if dark else LIGHT_PURPLE
 	strong_info_surface = DARK_STRONG_INFO_SURFACE if dark else LIGHT_STRONG_INFO_SURFACE
 	info_surface = DARK_INFO_SURFACE if dark else LIGHT_INFO_SURFACE
