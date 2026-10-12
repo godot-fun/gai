@@ -77,6 +77,16 @@ func ColorBase_follow_theme_test() -> void:
 	pass
 
 
+func ThemeColor_emphasize_test() -> void:
+	var original := ThemeColor.current_theme
+	ThemeColor.current_theme = ThemeColor.ThemeEnum.DARK
+	assert(ThemeColor.emphasize(GRAY, Colors.am_2) == GRAY.lightened(Colors.am_2))
+	ThemeColor.current_theme = ThemeColor.ThemeEnum.LIGHT
+	assert(ThemeColor.emphasize(GRAY, Colors.am_2) == GRAY.darkened(Colors.am_2))
+	ThemeColor.current_theme = original
+	pass
+
+
 ## The whole point of the helper: the same call keeps contrast on both themes.
 func ButtonStyle_color_direction_test() -> void:
 	var original: ThemeColor.ThemeEnum = ThemeColor.current_theme

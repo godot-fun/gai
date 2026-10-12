@@ -121,6 +121,14 @@ static func accent_theme_color() -> Color:
 static func alpha_theme_color(alpha: float) -> Color:
 	return Color(theme_color, alpha)
 
+
+## Increase a color's visual emphasis against the active theme background.
+## Dark themes lighten the color; light themes darken it. [param amount] uses the same `0.0` to
+## `1.0` adjustment ratio as [method Color.lightened] and [method Color.darkened].
+static func emphasize(color: Color, amount: float) -> Color:
+	return color.lightened(amount) if is_dark_theme() else color.darkened(amount)
+
+
 ## Refresh every palette derived from the active appearance. Cards follow the accent hue; semantic
 ## and file colors select their hand-tuned dark or light variants.
 static func refresh_derived_colors() -> void:
