@@ -1,6 +1,20 @@
 class_name Colors
 extends Object
 
+## Shared adjustment ratios for [method Color.lightened] and [method Color.darkened].
+## Lightening ratios, from a subtle state change to a strong highlight.
+const light_1: float = 0.10
+const light_2: float = 0.20
+const light_3: float = 0.30
+const light_4: float = 0.40
+const light_5: float = 0.50
+## Darkening ratios, from a subtle state change to a strong shadow.
+const dark_1: float = 0.10
+const dark_2: float = 0.20
+const dark_3: float = 0.30
+const dark_4: float = 0.40
+const dark_5: float = 0.50
+
 ## Shared foundation for neutral and semantic colors used by framework palettes and application
 ## themes. Component and business-specific colors belong in their own palette.
 const DARK_BACKGROUND := Color(0.07, 0.08, 0.10)
