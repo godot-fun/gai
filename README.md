@@ -12,7 +12,7 @@ Complete the full loop from request to verification in a native Godot desktop in
 
 - Stream responses, command output, and file changes in real time
 - Use built-in `read`, `write`, `edit`, `delete`, `list_dir`, `glob`, `grep`, `bash`, `web_search`, and `web_fetch` tools
-- Run an agentic model loop that plans, calls tools, evaluates their results, and continues until the task is complete
+- Run a model loop that calls tools, feeds their results back to the model, and repeats until it stops asking for tools or you end the run
 - Run multiple independent sessions and switch between them while agents are working
 - Preserve conversation history and pin frequently used sessions
 - Create workspace checkpoints before changes, with support for reverting conversations and files
