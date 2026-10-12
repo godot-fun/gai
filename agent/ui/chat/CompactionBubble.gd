@@ -38,7 +38,7 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 	wrapper.set_meta(META_EXPAND_BUTTON, expand_button)
 
 	var rich_text := MarkdownHelper.create_rich_text_label(
-		ColorBase.secondary_text,
+		Colors.secondary_text,
 		StringUtils.EMPTY,
 		MarkdownToggle.markdown_enabled_for_entry(entry)
 	)

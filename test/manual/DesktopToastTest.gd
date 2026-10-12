@@ -15,6 +15,6 @@ func _input(event: InputEvent) -> void:
 	# Event modifier flags stay false for the key being pressed itself; query Input state instead.
 	if not (Input.is_key_pressed(KEY_CTRL) and Input.is_key_pressed(KEY_ALT) and Input.is_key_pressed(KEY_META)):
 		return
-	DesktopToast.show_toast("DesktopToast", "Ctrl+Win+Alt manual test", ColorBase.success)
+	DesktopToast.show_toast("DesktopToast", "Ctrl+Win+Alt manual test", Colors.success)
 	get_viewport().set_input_as_handled()
 	pass

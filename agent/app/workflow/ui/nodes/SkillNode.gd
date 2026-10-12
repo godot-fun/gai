@@ -49,7 +49,7 @@ func add_output_port_row(port: PortDef) -> int:
 	var row: Label = Label.new()
 	row.text = tr("workflow.node.output_arrow").format([port.display_label(node_def.catalog_id())], StringUtils.EMPTY_JSON)
 	row.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	style_label(row, ColorBase.secondary_text)
+	style_label(row, Colors.secondary_text)
 	add_child(row)
 
 	output_slot_indices[port.id] = slot_index
@@ -72,13 +72,13 @@ func create_connect_only_row(label_text: String) -> HBoxContainer:
 	var label: Label = Label.new()
 	label.text = label_text
 	label.custom_minimum_size.x = LABEL_WIDTH
-	style_label(label, ColorBase.primary_text)
+	style_label(label, Colors.primary_text)
 	row.add_child(label)
 
 	var hint: Label = Label.new()
 	hint.text = tr("workflow.node.connect_upstream")
 	hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	style_label(hint, ColorBase.secondary_text)
+	style_label(hint, Colors.secondary_text)
 	row.add_child(hint)
 
 	return row
@@ -91,7 +91,7 @@ func create_text_row(port_id: String, label_text: String, placeholder: String) -
 	var label: Label = Label.new()
 	label.text = label_text
 	label.custom_minimum_size.x = LABEL_WIDTH
-	style_label(label, ColorBase.primary_text)
+	style_label(label, Colors.primary_text)
 	row.add_child(label)
 
 	var field: LineEdit = LineEdit.new()
@@ -222,13 +222,13 @@ func set_highlight(running: bool) -> void:
 
 
 func apply_theme(running: bool = false) -> void:
-	var background := ColorBase.surface.lerp(ColorBase.success, 0.12) if running else ColorBase.surface
-	var border := ColorBase.success if running else ColorBase.border
+	var background := Colors.surface.lerp(Colors.success, 0.12) if running else Colors.surface
+	var border := Colors.success if running else Colors.border
 	var border_width := ControlSize.border_sm if running else ControlSize.border_xs
 	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(background, ControlSize.radius_lg, Margin.ma_3, Margin.ma_2, border, border_width))
 	add_theme_color_override(
 		"title_color",
-		ColorBase.success if running else ColorBase.primary_text,
+		Colors.success if running else Colors.primary_text,
 	)
 	add_theme_font_size_override("title_font_size", Typography.title_medium_size)
 	for field: LineEdit in input_fields.values():
@@ -247,21 +247,21 @@ func style_label(label: Label, color: Color) -> void:
 func style_field(field: LineEdit) -> void:
 	field.custom_minimum_size.y = ControlSize.md
 	field.add_theme_font_size_override("font_size", Typography.body_medium_size)
-	field.add_theme_color_override("font_color", ColorBase.primary_text)
-	field.add_theme_color_override("font_placeholder_color", ColorBase.secondary_text)
+	field.add_theme_color_override("font_color", Colors.primary_text)
+	field.add_theme_color_override("font_placeholder_color", Colors.secondary_text)
 	field.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
 	field.caret_blink = true
-	field.add_theme_stylebox_override("normal", StyleBoxHelper.create_style_box_flat(ColorBase.control_surface, ControlSize.radius_md, Margin.ma_3, Margin.ma_2, ColorBase.subtle_border, ControlSize.border_xs))
-	field.add_theme_stylebox_override("focus", StyleBoxHelper.create_style_box_flat(ColorBase.control_surface, ControlSize.radius_md, Margin.ma_3, Margin.ma_2, ThemeColor.accent_theme_color(), ControlSize.border_xs))
+	field.add_theme_stylebox_override("normal", StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_3, Margin.ma_2, Colors.subtle_border, ControlSize.border_xs))
+	field.add_theme_stylebox_override("focus", StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_3, Margin.ma_2, ThemeColor.accent_theme_color(), ControlSize.border_xs))
 	pass
 
 
 func style_node_button(button: Button) -> void:
 	button.custom_minimum_size.y = ControlSize.md
 	button.add_theme_font_size_override("font_size", Typography.body_medium_size)
-	ButtonStyle.apply_font_colors(button, ColorBase.secondary_text, ColorBase.primary_text, ColorBase.primary_text)
-	var normal := StyleBoxHelper.create_style_box_flat(ColorBase.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_2, ColorBase.subtle_border, ControlSize.border_xs)
+	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, Colors.primary_text)
+	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_2, Colors.subtle_border, ControlSize.border_xs)
 	ButtonStyle.apply(button, normal,
-		ButtonStyle.filled(normal, ColorBase.hover_surface),
+		ButtonStyle.filled(normal, Colors.hover_surface),
 		ButtonStyle.filled(normal, ThemeColor.selected_surface))
 	pass

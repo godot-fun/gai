@@ -348,72 +348,72 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 	var rich_text: RichTextLabel = null
 	match chat_entry.kind:
 		ChatEntry.KIND_SYSTEM:
-			rich_text = append_bubble(chat_list, chat_entry, ColorBase.secondary_text, ColorBase.info_surface, ColorBase.info)
+			rich_text = append_bubble(chat_list, chat_entry, Colors.secondary_text, Colors.info_surface, Colors.info)
 		ChatEntry.KIND_SKILL, ChatEntry.KIND_AGENT_PROMPT:
 			rich_text = ContextBubble.append(
 					chat_list,
 					session_id,
 					chat_entry,
-					build_bubble_style(ColorBase.info_surface)
+					build_bubble_style(Colors.info_surface)
 			)
 		ChatEntry.KIND_USER:
 			rich_text = UserBubble.append(
 					chat_list,
 					session_id,
 					chat_entry,
-					build_bubble_style(ColorBase.strong_info_surface, true),
-					ColorBase.primary_text
+					build_bubble_style(Colors.strong_info_surface, true),
+					Colors.primary_text
 			)
 			queue_scroll_to_bottom()
 		ChatEntry.KIND_THINKING:
 			rich_text = ThinkingBubble.append(
 					chat_list,
 					chat_entry,
-					build_bubble_style(ColorBase.purple_surface)
+					build_bubble_style(Colors.purple_surface)
 			)
 			queue_scroll_to_bottom()
 		ChatEntry.KIND_AGENT:
 			rich_text = AgentBubble.append(
 					chat_list,
 					chat_entry,
-					build_bubble_style(ColorBase.surface),
-					ColorBase.primary_text
+					build_bubble_style(Colors.surface),
+					Colors.primary_text
 			)
 			queue_scroll_to_bottom()
 		ChatEntry.KIND_TOOL:
 			rich_text = append_bubble(
 					chat_list,
 					chat_entry,
-					ColorBase.success,
-					ColorBase.success_surface,
-					ColorBase.success
+					Colors.success,
+					Colors.success_surface,
+					Colors.success
 			)
 		ChatEntry.KIND_FILE_TOOL:
 			rich_text = FileBubble.append(
 					chat_list,
 					chat_entry,
-					build_bubble_style(ColorBase.warning_surface)
+					build_bubble_style(Colors.warning_surface)
 			)
 			queue_scroll_to_bottom()
 		ChatEntry.KIND_GIT_DIFF:
 			rich_text = GitDiffBubble.append(
 					chat_list,
 					chat_entry,
-					build_bubble_style(ColorBase.surface)
+					build_bubble_style(Colors.surface)
 			)
 			queue_scroll_to_bottom()
 		ChatEntry.KIND_RESULT:
 			rich_text = ResultBubble.append(
 					chat_list,
 					chat_entry,
-					build_bubble_style(ColorBase.neutral_surface)
+					build_bubble_style(Colors.neutral_surface)
 			)
 			queue_scroll_to_bottom()
 		ChatEntry.KIND_ERROR:
 			rich_text = ErrorBubble.append(
 					chat_list,
 					chat_entry,
-					build_bubble_style(ColorBase.surface),
+					build_bubble_style(Colors.surface),
 					session_id,
 					RuntimeManager.is_running(session_id)
 			)
@@ -426,11 +426,11 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 			)
 			queue_scroll_to_bottom()
 		_:
-			rich_text = append_bubble(chat_list, chat_entry, ColorBase.secondary_text, ColorBase.surface)
+			rich_text = append_bubble(chat_list, chat_entry, Colors.secondary_text, Colors.surface)
 	return rich_text
 
 
-func append_bubble(chat_list: VBoxContainer, entry: ChatEntry, text_color: Color, bg_color: Color, title_color: Color = ColorBase.secondary_text) -> RichTextLabel:
+func append_bubble(chat_list: VBoxContainer, entry: ChatEntry, text_color: Color, bg_color: Color, title_color: Color = Colors.secondary_text) -> RichTextLabel:
 	var wrapper: PanelContainer = PanelContainer.new()
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wrapper.add_theme_stylebox_override("panel", build_bubble_style(bg_color))
@@ -463,7 +463,7 @@ func append_bubble(chat_list: VBoxContainer, entry: ChatEntry, text_color: Color
 func build_bubble_style(bg_color: Color, user_beam: bool = false) -> StyleBoxFlat:
 	var style := StyleBoxHelper.create_style_box_flat(bg_color, 8, Margin.ma_3, Margin.ma_3)
 	if not user_beam and ThemeColor.is_light_theme():
-		style.border_color = ColorBase.border
+		style.border_color = Colors.border
 		style.set_border_width_all(ControlSize.border_xs)
 		style.shadow_color = Color(0, 0, 0, 0.04)
 		style.shadow_size = 6

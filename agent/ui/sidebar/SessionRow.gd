@@ -269,7 +269,7 @@ func build_drag_preview() -> Control:
 	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_CHAR
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	SessionSidebarTheme.copy_font(label, title_button)
-	label.add_theme_color_override("font_color", ColorBase.primary_text)
+	label.add_theme_color_override("font_color", Colors.primary_text)
 	ghost.add_child(label)
 
 	# The engine moves `preview` to the cursor, so offset the ghost by the grab point — the cursor

@@ -20,7 +20,7 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 
 	var title_label: Label = Label.new()
 	title_label.text = entry.title
-	title_label.add_theme_color_override("font_color", ColorBase.warning)
+	title_label.add_theme_color_override("font_color", Colors.warning)
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	header.add_child(title_label)
 
@@ -29,11 +29,11 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 	var file_lines_removed: int = int(entry.details.get(AgentToolResult.DETAIL_FILE_LINES_REMOVED, "0"))
 	var file_message: String = entry.details.get(AgentToolResult.DETAIL_FILE_MESSAGE, "")
 	if file_lines_added > 0:
-		header.add_child(create_file_detail_label(StringUtils.format("+{}", file_lines_added), ColorBase.success))
+		header.add_child(create_file_detail_label(StringUtils.format("+{}", file_lines_added), Colors.success))
 	if file_lines_removed > 0:
-		header.add_child(create_file_detail_label(StringUtils.format("-{}", file_lines_removed), ColorBase.error))
+		header.add_child(create_file_detail_label(StringUtils.format("-{}", file_lines_removed), Colors.error))
 	if StringUtils.is_not_blank(file_message):
-		header.add_child(create_file_detail_label(file_message, ColorBase.error))
+		header.add_child(create_file_detail_label(file_message, Colors.error))
 	if StringUtils.is_not_blank(file_path):
 		header.add_child(create_file_path_button(file_path))
 	vbox.add_child(header)
@@ -60,7 +60,7 @@ static func refresh(rich_text: RichTextLabel, entry: ChatEntry) -> void:
 static func open_file(meta: Variant) -> void:
 	var path: String = str(meta)
 	if FileUtils.open_file(path) != OK:
-		Alert.alert(StringUtils.format("File not found: {}", path), ColorBase.error)
+		Alert.alert(StringUtils.format("File not found: {}", path), Colors.error)
 	pass
 
 
@@ -77,7 +77,7 @@ static func create_file_path_button(file_path: String) -> LinkButton:
 	button.text = file_path
 	button.tooltip_text = "Open file"
 	button.underline = LinkButton.UNDERLINE_MODE_NEVER
-	ButtonStyle.apply_font_colors(button, ColorBase.secondary_text, ColorBase.primary_text, ColorBase.primary_text)
+	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, Colors.primary_text)
 	button.add_theme_font_override("font", Fonts.regular())
 	button.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	button.pressed.connect(open_file.bind(file_path))

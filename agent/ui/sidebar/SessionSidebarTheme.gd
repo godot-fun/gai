@@ -14,8 +14,8 @@ const RENAME_CORNER_RADIUS: int = 5
 
 ## Sidebar background plus the hairline against the chat area.
 static func sidebar_panel() -> StyleBoxFlat:
-	var style := StyleBoxHelper.create_style_box_flat(ColorBase.chrome_surface)
-	style.border_color = ColorBase.muted_border
+	var style := StyleBoxHelper.create_style_box_flat(Colors.chrome_surface)
+	style.border_color = Colors.muted_border
 	style.set_border_width(SIDE_RIGHT, ControlSize.border_xs)
 	return style
 
@@ -35,7 +35,7 @@ static func apply_new_session_button(button: Button) -> void:
 	var theme_color: Color = ThemeColor.accent_theme_color()
 	button.flat = false
 	button.focus_mode = Control.FOCUS_NONE
-	ButtonStyle.apply_font_colors(button, theme_color, ButtonStyle.hover_color(theme_color, 0.08), ButtonStyle.press_color(theme_color, 0.06), ColorBase.secondary_text)
+	ButtonStyle.apply_font_colors(button, theme_color, ButtonStyle.hover_color(theme_color, 0.08), ButtonStyle.press_color(theme_color, 0.06), Colors.secondary_text)
 
 	var border := ThemeColor.alpha_theme_color(0.55 if ThemeColor.is_dark_theme() else 0.45)
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ROW_CORNER_RADIUS, Margin.ma_3, Margin.ma_2, border, ControlSize.border_xs)
@@ -56,20 +56,20 @@ static func row(selected: bool, hovered: bool) -> StyleBoxFlat:
 	if selected:
 		style.bg_color = ThemeColor.selected_surface
 	elif hovered:
-		style.bg_color = ColorBase.hover_surface
+		style.bg_color = Colors.hover_surface
 	return style
 
 
 ## Title / close button colors for the current row state.
 static func apply_row_colors(title_button: Button, delete_button: Button, selected: bool, hovered: bool) -> void:
-	var text_color: Color = ColorBase.primary_text if selected or hovered else ColorBase.secondary_text
+	var text_color: Color = Colors.primary_text if selected or hovered else Colors.secondary_text
 	title_button.add_theme_font_size_override("font_size", Typography.title_medium_size)
 	title_button.add_theme_color_override("font_color", text_color)
 	title_button.add_theme_color_override("font_hover_color", text_color)
 	title_button.add_theme_color_override("font_pressed_color", text_color)
-	delete_button.add_theme_color_override("font_color", ColorBase.secondary_text)
-	delete_button.add_theme_color_override("font_hover_color", ColorBase.error)
-	delete_button.add_theme_color_override("font_pressed_color", ColorBase.error)
+	delete_button.add_theme_color_override("font_color", Colors.secondary_text)
+	delete_button.add_theme_color_override("font_hover_color", Colors.error)
+	delete_button.add_theme_color_override("font_pressed_color", Colors.error)
 	pass
 
 
@@ -93,8 +93,8 @@ static func drag_ghost() -> StyleBoxFlat:
 ## The field takes over the title's slot, so it mirrors the title's resolved font.
 static func apply_rename_field(edit: LineEdit, title_button: Button) -> void:
 	copy_font(edit, title_button)
-	edit.add_theme_color_override("font_color", ColorBase.primary_text)
-	edit.add_theme_color_override("font_placeholder_color", ColorBase.secondary_text)
+	edit.add_theme_color_override("font_color", Colors.primary_text)
+	edit.add_theme_color_override("font_placeholder_color", Colors.secondary_text)
 	edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
 	edit.add_theme_color_override("font_selected_color", ThemeColor.title_color)
 	edit.add_theme_color_override("selection_color", ThemeColor.selection_color)
@@ -108,7 +108,7 @@ static func apply_rename_field(edit: LineEdit, title_button: Button) -> void:
 static func rename_field() -> StyleBoxFlat:
 	var theme_color: Color = ThemeColor.accent_theme_color()
 	var border := ThemeColor.alpha_theme_color(0.75 if ThemeColor.is_dark_theme() else 0.55)
-	return StyleBoxHelper.create_style_box_flat(ColorBase.surface, RENAME_CORNER_RADIUS, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
+	return StyleBoxHelper.create_style_box_flat(Colors.surface, RENAME_CORNER_RADIUS, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
 
 
 ## Mirrors a resolved font onto another control (rename field, drag ghost).

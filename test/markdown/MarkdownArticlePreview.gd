@@ -245,7 +245,7 @@ The visual review passes when heading hierarchy, inline styles, lists, task boxe
 
 
 func _ready() -> void:
-	background.color = ColorBase.app_background
+	background.color = Colors.app_background
 	page_margin.add_theme_constant_override("margin_left", Margin.ma_12)
 	page_margin.add_theme_constant_override("margin_top", Margin.ma_8)
 	page_margin.add_theme_constant_override("margin_right", Margin.ma_12)
@@ -257,5 +257,5 @@ func _ready() -> void:
 
 
 func render_article() -> void:
-	article_body.add_child(MarkdownHelper.create_rich_text_label(ColorBase.primary_text, ARTICLE, true))
+	article_body.add_child(MarkdownHelper.create_rich_text_label(Colors.primary_text, ARTICLE, true))
 	pass

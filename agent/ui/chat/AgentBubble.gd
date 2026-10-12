@@ -9,7 +9,7 @@ static func append(
 	entry: ChatEntry,
 	panel_style: StyleBoxFlat,
 	text_color: Color,
-	title_color: Color = ColorBase.secondary_text
+	title_color: Color = Colors.secondary_text
 ) -> RichTextLabel:
 	var wrapper: PanelContainer = PanelContainer.new()
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -60,7 +60,7 @@ static func on_copy_pressed(entry: ChatEntry) -> void:
 	if entry == null or StringUtils.is_blank(entry.body):
 		return
 	MarkdownHelper.copy_to_clipboard(entry.body)
-	Alert.alert("Copied", ColorBase.success)
+	Alert.alert("Copied", Colors.success)
 	pass
 
 

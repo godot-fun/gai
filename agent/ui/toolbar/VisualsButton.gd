@@ -82,13 +82,13 @@ func on_mouse_exited() -> void:
 
 func update_icon(hovered: bool) -> void:
 	var visual_type := AgentSetting.get_visual_type()
-	var icon_color: Color = ColorBase.secondary_text
+	var icon_color: Color = Colors.secondary_text
 	if visual_type != VisualType.Type.NONE:
 		icon_color = ThemeColor.accent_theme_color()
 		if hovered:
 			icon_color = icon_color.lightened(0.12)
 	elif hovered:
-		icon_color = ColorBase.primary_text
+		icon_color = Colors.primary_text
 	button.icon = make_sparkle_icon(icon_color)
 	pass
 

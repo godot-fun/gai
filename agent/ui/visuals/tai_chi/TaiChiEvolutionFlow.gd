@@ -124,7 +124,7 @@ func draw_departing_caption(canvas: Control) -> void:
 	var subtitle_width := subtitle_font.get_string_size(DEPARTING_SUBTITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, subtitle_size).x
 	TaiChiGlowDrawing.draw_text(canvas, subtitle_font,
 		position + Vector2(-subtitle_width * 0.5, float(font_size) * 1.25), DEPARTING_SUBTITLE,
-		subtitle_size, opacity * 0.58, ColorBase.secondary_text)
+		subtitle_size, opacity * 0.58, Colors.secondary_text)
 	pass
 
 

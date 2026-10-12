@@ -646,7 +646,7 @@ func draw_tool_motif(motif: Dictionary, center: Vector2, radius: float, sides: i
 	var edge := center + Vector2.from_angle(angle) * radius * 0.78
 	var growth: float = motif["growth"]
 	var state: int = motif["state"]
-	var color := ThemeColor.accent_theme_color() if state != ToolState.FAILED else ColorBase.error
+	var color := ThemeColor.accent_theme_color() if state != ToolState.FAILED else Colors.error
 	var from := center.lerp(edge, growth)
 	if state == ToolState.FAILED:
 		var normal := (edge - center).normalized().orthogonal() * radius * 0.08
@@ -668,7 +668,7 @@ func draw_tool_motif(motif: Dictionary, center: Vector2, radius: float, sides: i
 
 
 func draw_completion_wave(center: Vector2) -> void:
-	var color := ColorBase.error if ended_with_error else ThemeColor.accent_theme_color()
+	var color := Colors.error if ended_with_error else ThemeColor.accent_theme_color()
 	var max_radius := center.length()
 	var radius := max_radius * completion
 	var alpha := sin(completion * PI) * 0.48

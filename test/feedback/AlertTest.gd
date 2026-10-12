@@ -2,7 +2,7 @@
 
 ## [method Alert.show_alert] builds a single-line card: accent-tinted surface, semantic stripe, app font.
 func Alert_create_card_test() -> void:
-	var card := Alert.create_alert("feedback", ColorBase.success)
+	var card := Alert.create_alert("feedback", Colors.success)
 	assert(card.label != null)
 	assert(card.label.text == "feedback")
 	assert(card.label.get_theme_font_size("font_size") == Typography.body_large_size)
@@ -12,7 +12,7 @@ func Alert_create_card_test() -> void:
 	assert(card.mouse_filter == Control.MOUSE_FILTER_IGNORE)
 	var style := card.get_theme_stylebox("panel") as StyleBoxFlat
 	assert(style.bg_color == ThemeColor.accent_surface)
-	assert(style.border_color == ColorBase.success)
+	assert(style.border_color == Colors.success)
 	assert(style.border_width_left == ControlSize.border_md)
 	assert(style.border_width_right == ControlSize.border_md)
 	assert(style.border_width_top == 0 and style.border_width_bottom == 0)
@@ -26,7 +26,7 @@ func Alert_create_card_test() -> void:
 ## Display text is resolved through [TranslationServer]; unknown text remains unchanged.
 func Alert_i18n_text_test() -> void:
 	var translation := feedback_test_translation("feedback.alert", "Translated alert")
-	var card := Alert.create_alert("feedback.alert", ColorBase.success)
+	var card := Alert.create_alert("feedback.alert", Colors.success)
 	assert(card.label.text == "Translated alert")
 	card.free()
 	TranslationServer.remove_translation(translation)
@@ -35,20 +35,20 @@ func Alert_i18n_text_test() -> void:
 
 ## [method Alert.resize_to_text] hugs short text and caps long text at [constant Alert.text_max_width].
 func Alert_single_line_test() -> void:
-	var card := Alert.create_alert("feedback", ColorBase.info)
+	var card := Alert.create_alert("feedback", Colors.info)
 	var style: StyleBox = card.get_theme_stylebox("panel")
 	var padding: float = style.get_margin(SIDE_LEFT) + style.get_margin(SIDE_RIGHT)
 	var text_height: float = style.get_margin(SIDE_TOP) + style.get_margin(SIDE_BOTTOM) + Alert.make_font().get_height(Typography.body_large_size)
 	assert(is_equal_approx(card.size.y, text_height))
 	assert(card.size.x > padding and card.size.x < Alert.text_max_width)
-	var long_card := Alert.create_alert("feedback ".repeat(40), ColorBase.info)
+	var long_card := Alert.create_alert("feedback ".repeat(40), Colors.info)
 	assert(is_equal_approx(long_card.size.x, Alert.text_max_width + padding))
 	pass
 
 
 ## [method Alert.slide_to] tweens the card into its slot instead of snapping there on the first frame.
 func Alert_slide_to_test() -> void:
-	var card := Alert.create_alert("feedback", ColorBase.info)
+	var card := Alert.create_alert("feedback", Colors.info)
 	gdf.gdf_layer.add_child(card)
 	card.position = Vector2(100.0, 100.0)
 	card.slide_to(Vector2(100.0, 300.0))
@@ -61,7 +61,7 @@ func Alert_slide_to_test() -> void:
 
 ## [method Alert.drop_in] falls from the top edge of the screen into the top-center slot — a short drop.
 func Alert_drop_in_test() -> void:
-	var card := Alert.create_alert("feedback", ColorBase.info)
+	var card := Alert.create_alert("feedback", Colors.info)
 	gdf.gdf_layer.add_child(card)
 	Alert.alerts.append(card)
 	card.modulate.a = 0.0
@@ -83,7 +83,7 @@ func Alert_drop_in_test() -> void:
 ## [method Alert.alert] mounts a hidden card at the top edge, drops it into the top-center slot, then frees it.
 func Alert_alert_test() -> void:
 	var existing := live_alerts()
-	Alert.alert("feedback alert test", ColorBase.success)
+	Alert.alert("feedback alert test", Colors.success)
 	var card := top_alert()
 	assert(card != null and !existing.has(card))
 	assert(card.label.text == "feedback alert test")
@@ -106,9 +106,9 @@ func Alert_alert_test() -> void:
 ## A card arriving while another is still fading in must not freeze that one half-transparent: the
 ## re-stacking move retargets the motion only and leaves the entry fade running.
 func Alert_interrupted_entry_test() -> void:
-	Alert.alert("interrupted first", ColorBase.info)
+	Alert.alert("interrupted first", Colors.info)
 	var first := top_alert()
-	Alert.alert("interrupted second", ColorBase.success)
+	Alert.alert("interrupted second", Colors.success)
 	var second := top_alert()
 	assert(first != second)
 	assert(first.modulate.a < 1.0)
@@ -123,9 +123,9 @@ func Alert_interrupted_entry_test() -> void:
 func Alert_stack_test() -> void:
 	var existing := live_alerts()
 	var stacked := Alert.alerts.size()
-	Alert.alert("stack first", ColorBase.info)
+	Alert.alert("stack first", Colors.info)
 	var first := top_alert()
-	Alert.alert("stack second", ColorBase.success)
+	Alert.alert("stack second", Colors.success)
 	var second := top_alert()
 	# The older card is only tweened downward, so compare the slots it is heading for.
 	assert(is_equal_approx(second.slot_position().y, Margin.ma_6))

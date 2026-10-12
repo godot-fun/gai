@@ -48,11 +48,11 @@ func blockquote_single_line_test() -> void:
 
 func github_admonition_test() -> void:
 	var cases := {
-		"NOTE": ["ℹ", ColorBase.info],
-		"WARNING": ["⚠", ColorBase.warning],
-		"TIP": ["✓", ColorBase.success],
-		"IMPORTANT": ["ℹ", ColorBase.purple],
-		"CAUTION": ["✕", ColorBase.error],
+		"NOTE": ["ℹ", Colors.info],
+		"WARNING": ["⚠", Colors.warning],
+		"TIP": ["✓", Colors.success],
+		"IMPORTANT": ["ℹ", Colors.purple],
+		"CAUTION": ["✕", Colors.error],
 	}
 	for kind: String in cases:
 		var bbcode := MarkdownParser.to_bbcode("> [!%s]\n> **body**" % kind).bbcode
@@ -113,7 +113,7 @@ func code_fence_blank_lines_test() -> void:
 func code_fence_language_title_test() -> void:
 	var bbcode := MarkdownParser.to_bbcode("```gdscript\nvar answer := 42\n```").bbcode
 	assert("⌨ gdscript" in bbcode)
-	assert("[color=" + MarkdownParser.to_bbcode_color(ColorBase.teal) in bbcode)
+	assert("[color=" + MarkdownParser.to_bbcode_color(Colors.teal) in bbcode)
 	assert("[b]⌨ gdscript[/b]" not in bbcode)
 	assert("[code]var" in bbcode)
 	var plain_bbcode := MarkdownParser.to_bbcode("```\nplain\n```").bbcode
@@ -233,7 +233,7 @@ func url_with_parens_test() -> void:
 func link_label_blue_test() -> void:
 	var bbcode := MarkdownParser.inline_to_bbcode("[hi](https://a.com)")
 	assert("🔗 " in bbcode)
-	assert("[color=%s]🔗 [/color]" % MarkdownParser.to_bbcode_color(ColorBase.info) in bbcode)
+	assert("[color=%s]🔗 [/color]" % MarkdownParser.to_bbcode_color(Colors.info) in bbcode)
 	assert("[color=%s]" % MarkdownParser.to_bbcode_color(ColorMarkdown.link_color) in bbcode)
 	var bold_label := MarkdownParser.inline_to_bbcode("[**hi**](https://a.com)")
 	assert("[b]hi[/b]" in bold_label)
@@ -350,9 +350,9 @@ func local_file_link_prefix_test() -> void:
 	assert("✉ " in email_bbcode and "email" in email_bbcode)
 	assert("[color=%s]" % MarkdownParser.to_bbcode_color(ColorFile.audio_color) in audio_bbcode)
 	assert("[color=%s]" % MarkdownParser.to_bbcode_color(ColorFile.folder_color) in folder_bbcode)
-	assert("[color=%s]" % MarkdownParser.to_bbcode_color(ColorBase.teal) in config_bbcode)
+	assert("[color=%s]" % MarkdownParser.to_bbcode_color(Colors.teal) in config_bbcode)
 	assert("[color=%s]" % MarkdownParser.to_bbcode_color(ColorFile.text_color) in document_bbcode)
-	assert("[color=%s]" % MarkdownParser.to_bbcode_color(ColorBase.purple) in email_bbcode)
+	assert("[color=%s]" % MarkdownParser.to_bbcode_color(Colors.purple) in email_bbcode)
 	pass
 
 

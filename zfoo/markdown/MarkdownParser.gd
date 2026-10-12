@@ -330,7 +330,7 @@ static func format_code_fence_bbcode(code: String, language: String = StringUtil
 	if StringUtils.is_not_empty(language):
 		title = StringUtils.format(
 				"[color={}]{}{}[/color]\n",
-				to_bbcode_color(ColorBase.teal), CODE_LANGUAGE_PREFIX, escape_bbcode_literals(language)
+				to_bbcode_color(ThemeColor.accent_theme_color()), CODE_LANGUAGE_PREFIX, escape_bbcode_literals(language)
 		)
 	var block := StringUtils.format(
 			"[table=1][cell shrink=false expand=1 bg={} padding={}]{}{}[/cell][/table]",
@@ -480,11 +480,11 @@ static func get_admonition_icon(kind: String) -> String:
 
 static func get_admonition_color(kind: String) -> Color:
 	match kind:
-		"WARNING": return ColorBase.warning
-		"TIP": return ColorBase.success
-		"IMPORTANT": return ColorBase.purple
-		"CAUTION": return ColorBase.error
-		_: return ColorBase.info
+		"WARNING": return Colors.warning
+		"TIP": return Colors.success
+		"IMPORTANT": return Colors.purple
+		"CAUTION": return Colors.error
+		_: return Colors.info
 
 
 # ---------------------------------------------------------------------------
@@ -766,9 +766,9 @@ static func replace_inline_match(
 ## Adds a theme-colored visual marker based on the link destination type.
 static func get_link_prefix(path: String) -> String:
 	if HttpUtils.is_valid_http_url(path):
-		return format_link_prefix(WEB_PREFIX, ColorBase.info)
+		return format_link_prefix(WEB_PREFIX, Colors.info)
 	if path.to_lower().begins_with("mailto:"):
-		return format_link_prefix(EMAIL_PREFIX, ColorBase.purple)
+		return format_link_prefix(EMAIL_PREFIX, Colors.purple)
 	if not (path.is_absolute_path() or path.begins_with("res://") or path.begins_with("user://")):
 		return StringUtils.EMPTY
 	if DirAccess.dir_exists_absolute(path):
@@ -777,7 +777,7 @@ static func get_link_prefix(path: String) -> String:
 	if ResourceHelper.AUDIO_EXTENSIONS.has(extension):
 		return format_link_prefix(AUDIO_PREFIX, ColorFile.audio_color)
 	if EXECUTABLE_CONFIG_EXTENSIONS.has(extension):
-		return format_link_prefix(EXECUTABLE_CONFIG_PREFIX, ColorBase.teal)
+		return format_link_prefix(EXECUTABLE_CONFIG_PREFIX, Colors.teal)
 	if TEXT_DOCUMENT_EXTENSIONS.has(extension):
 		return format_link_prefix(TEXT_DOCUMENT_PREFIX, ColorFile.text_color)
 	return format_link_prefix(FILE_PREFIX, ColorFile.text_color)

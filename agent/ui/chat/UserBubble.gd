@@ -18,7 +18,7 @@ static func append(
 	entry: ChatEntry,
 	panel_style: StyleBoxFlat,
 	text_color: Color,
-	title_color: Color = ColorBase.secondary_text
+	title_color: Color = Colors.secondary_text
 ) -> RichTextLabel:
 	var host: Control = Control.new()
 	host.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -100,7 +100,7 @@ static func append(
 ## (via AgentEvents.events.chat_input_prefill, see AgentChatInput).
 static func on_delete_from_here_pressed(session_id: int, entry: ChatEntry) -> void:
 	AgentEvents.events.chat_input_prefill.emit(entry.body)
-	Alert.alert("Message moved to the input box", ColorBase.success)
+	Alert.alert("Message moved to the input box", Colors.success)
 	AgentSessionManager.delete_chat_from_entry(session_id, entry)
 	pass
 
@@ -110,10 +110,10 @@ static func on_revert_pressed(session_id: int, entry: ChatEntry) -> void:
 	AgentEvents.events.chat_input_prefill.emit(entry.body)
 	var sha: String = entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
 	if not await GitManager.async_restore(session_id, sha):
-		Alert.alert("Workspace restore failed; chat history was kept", ColorBase.error)
+		Alert.alert("Workspace restore failed; chat history was kept", Colors.error)
 		return
 	AgentSessionManager.delete_chat_from_entry(session_id, entry)
-	Alert.alert("Workspace restored", ColorBase.success)
+	Alert.alert("Workspace restored", Colors.success)
 	pass
 
 static func sync_layout(host: Control, panel: PanelContainer, beam: AccentBorderBeamLayer) -> void:

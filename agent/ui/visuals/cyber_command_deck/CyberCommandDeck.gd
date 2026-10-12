@@ -401,7 +401,7 @@ func draw_core_hex_underlay(center: Vector2) -> void:
 	var radius := CORE_RADIUS * core_scale
 	var visibility := 1.0 - collapse
 	var core_hex := polygon_points(center, radius, 6, PI / 6.0)
-	draw_colored_polygon(core_hex, Color(ColorBase.deep_surface, 0.96))
+	draw_colored_polygon(core_hex, Color(Colors.deep_surface, 0.96))
 	for index in range(6):
 		var facet := PackedVector2Array([center, core_hex[index], core_hex[(index + 1) % 6]])
 		draw_colored_polygon(facet, Color(neon_blue() if index % 2 else neon_cyan(), 0.018 + index * 0.005))
@@ -534,7 +534,7 @@ func draw_tool_pod(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
 	if is_executing:
 		for glow in range(4, 0, -1):
 			draw_polyline(outset_polyline(panel, float(glow) * 3.0), Color(color, (0.018 + active_breath * 0.012) * float(5 - glow)), 4.0, true)
-	draw_colored_polygon(panel, Color(color, 0.075 + active_breath * 0.025) if is_executing else Color(ColorBase.deep_surface, 0.94))
+	draw_colored_polygon(panel, Color(color, 0.075 + active_breath * 0.025) if is_executing else Color(Colors.deep_surface, 0.94))
 	if radar_feedback > 0.0:
 		draw_colored_polygon(panel, Color(color, radar_feedback * 0.13))
 		var scan_x := lerpf(shown.position.x, shown.end.x, radar_feedback)
@@ -551,7 +551,7 @@ func draw_tool_pod(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
 	draw_rect(Rect2(shown.position + Vector2(15.0, 17.0), Vector2(34.0, 34.0)), Color(color, 0.08), true)
 	draw_rect(Rect2(shown.position + Vector2(15.0, 17.0), Vector2(34.0, 34.0)), Color(color, 0.58), false, 1.0)
 	draw_centered_text(shown.position + Vector2(32.0, 40.0), glyph, Fonts.bold(), Typography.label_medium_size, color)
-	draw_string(Fonts.semibold(), shown.position + Vector2(59.0, 27.0), title.to_upper(), HORIZONTAL_ALIGNMENT_LEFT, shown.size.x - 80.0, Typography.label_medium_size, ColorBase.primary_text)
+	draw_string(Fonts.semibold(), shown.position + Vector2(59.0, 27.0), title.to_upper(), HORIZONTAL_ALIGNMENT_LEFT, shown.size.x - 80.0, Typography.label_medium_size, Colors.primary_text)
 	draw_string(Fonts.medium(), shown.position + Vector2(59.0, 49.0), "// " + pod_status(state), HORIZONTAL_ALIGNMENT_LEFT, shown.size.x - 80.0, Typography.label_small_size, color)
 	draw_string(Fonts.regular(), shown.position + Vector2(shown.size.x - 62.0, 49.0), "%02d" % int(pod["slot"]), HORIZONTAL_ALIGNMENT_RIGHT, 45.0, Typography.label_small_size, Color(color, 0.7))
 	if is_executing:
@@ -726,9 +726,9 @@ static func pod_status(state: int) -> String:
 static func pod_color(state: int) -> Color:
 	match state:
 		PodState.COMPLETE:
-			return ColorBase.success
+			return Colors.success
 		PodState.FAILED:
-			return ColorBase.error
+			return Colors.error
 		PodState.CONNECTING:
 			return neon_magenta()
 	return neon_cyan()

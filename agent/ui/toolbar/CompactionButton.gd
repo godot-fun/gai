@@ -116,13 +116,13 @@ func on_compaction_start(session_id: int) -> void:
 
 func on_compaction_end(session_id: int, success: bool, error_code: String) -> void:
 	if success:
-		Alert.alert(I18n.t("agent.tokens.compact_success"), ColorBase.success)
+		Alert.alert(I18n.t("agent.tokens.compact_success"), Colors.success)
 	elif error_code == AgentCompactionManager.ERROR_RUNNING:
-		Alert.alert(I18n.t("agent.tokens.compact_running"), ColorBase.warning)
+		Alert.alert(I18n.t("agent.tokens.compact_running"), Colors.warning)
 	elif error_code == AgentCompactionManager.ERROR_EMPTY:
-		Alert.alert(I18n.t("agent.tokens.compact_empty"), ColorBase.warning)
+		Alert.alert(I18n.t("agent.tokens.compact_empty"), Colors.warning)
 	else:
-		Alert.alert(I18n.t("agent.tokens.compact_failed"), ColorBase.error)
+		Alert.alert(I18n.t("agent.tokens.compact_failed"), Colors.error)
 	if not AgentSessionManager.is_active(session_id):
 		return
 	compacting = false
@@ -170,7 +170,7 @@ func apply_theme() -> void:
 func draw_ring() -> void:
 	var center := label.size * 0.5
 	var radius: float = minf(label.size.x, label.size.y) * 0.5 - RING_INSET
-	label.draw_arc(center, radius, 0.0, TAU, 48, ColorBase.control_surface, RING_WIDTH, true)
+	label.draw_arc(center, radius, 0.0, TAU, 48, Colors.control_surface, RING_WIDTH, true)
 	if compacting:
 		var spinner_color := ThemeColor.accent_theme_color()
 		label.draw_arc(center, radius, spinner_angle, spinner_angle + SPINNER_ARC, 32, spinner_color, RING_WIDTH, true)
@@ -204,9 +204,9 @@ static func token_ratio(n: int) -> float:
 static func text_color_for_tokens(n: int) -> Color:
 	var ratio: float = token_ratio(n)
 	if ratio >= THRESHOLD_CRITICAL:
-		return ColorBase.error
+		return Colors.error
 	if ratio >= THRESHOLD_CAUTION:
-		return ColorBase.warning
+		return Colors.warning
 	if ratio >= THRESHOLD_WARN:
 		return Color(0.94, 0.84, 0.35) if ThemeColor.is_dark_theme() else Color("#CA8A04")
 	return ThemeColor.accent_theme_color()

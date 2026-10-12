@@ -26,12 +26,12 @@ static func append(
 
 	var title_label: Label = Label.new()
 	title_label.text = entry.title
-	title_label.add_theme_color_override("font_color", ColorBase.secondary_text)
+	title_label.add_theme_color_override("font_color", Colors.secondary_text)
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	vbox.add_child(title_label)
 
 	var rich_text: RichTextLabel = MarkdownHelper.create_rich_text_label(
-			ColorBase.error,
+			Colors.error,
 			StringUtils.first_lines(entry.body, MAX_LINES),
 			AgentSetting.get_markdown_enabled()
 	)
@@ -75,7 +75,7 @@ static func is_resumable(message: String) -> bool:
 
 static func on_resume_pressed(session_id: int, entry: ChatEntry) -> void:
 	if RuntimeManager.is_running(session_id):
-		Alert.alert("session is busy", ColorBase.error)
+		Alert.alert("session is busy", Colors.error)
 		return
 	AgentSessionManager.delete_chat_from_entry(session_id, entry)
 	RuntimeManager.resume_agent(session_id)

@@ -1,4 +1,4 @@
-class_name ColorBase
+class_name Colors
 extends Object
 
 ## Shared foundation for neutral and semantic colors used by framework palettes and application

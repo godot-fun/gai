@@ -29,7 +29,7 @@ func add_input_port_row(port: PortDef, allow_manual: bool = true) -> int:
 	var row := create_path_row(port.id, port.display_label(node_def.catalog_id()), port.port_type) if allow_manual else create_connect_only_row(port.display_label(node_def.catalog_id()))
 	add_child(row)
 	input_slot_indices[port.id] = slot_index
-	configure_slot(slot_index, true, port.port_type, port_color(port.port_type), false, 0, ColorBase.primary_text)
+	configure_slot(slot_index, true, port.port_type, port_color(port.port_type), false, 0, Colors.primary_text)
 	return slot_index
 
 
@@ -41,7 +41,7 @@ func create_path_row(port_id: String, label_text: String, port_type: int) -> HBo
 	var label := Label.new()
 	label.text = label_text
 	label.custom_minimum_size.x = LABEL_WIDTH
-	style_label(label, ColorBase.primary_text)
+	style_label(label, Colors.primary_text)
 	row.add_child(label)
 
 	var field := LineEdit.new()
@@ -61,10 +61,10 @@ func create_path_row(port_id: String, label_text: String, port_type: int) -> HBo
 	browse.text = "…"
 	browse.custom_minimum_size = ControlSize.square(ControlSize.md)
 	browse.add_theme_font_size_override("font_size", Typography.label_large_size)
-	ButtonStyle.apply_font_colors(browse, ColorBase.secondary_text, ColorBase.primary_text, ColorBase.primary_text)
-	var normal := StyleBoxHelper.create_style_box_flat(ColorBase.control_surface, ControlSize.radius_md, Margin.ma_1, Margin.ma_1, ColorBase.subtle_border, ControlSize.border_xs)
+	ButtonStyle.apply_font_colors(browse, Colors.secondary_text, Colors.primary_text, Colors.primary_text)
+	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_1, Margin.ma_1, Colors.subtle_border, ControlSize.border_xs)
 	ButtonStyle.apply(browse, normal,
-		ButtonStyle.filled(normal, ColorBase.hover_surface),
+		ButtonStyle.filled(normal, Colors.hover_surface),
 		ButtonStyle.filled(normal, ThemeColor.selected_surface))
 	browse.pressed.connect(func() -> void: open_browse(port_id, port_type))
 	row.add_child(browse)

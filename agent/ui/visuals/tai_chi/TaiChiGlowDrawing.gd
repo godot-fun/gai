@@ -17,12 +17,12 @@ static func outer_ring_color(alpha: float) -> Color:
 
 
 static func inner_ring_color(alpha: float) -> Color:
-	var color := ThemeColor.accent_theme_color().lerp(ColorBase.primary_text, INNER_RING_FOREGROUND_MIX)
+	var color := ThemeColor.accent_theme_color().lerp(Colors.primary_text, INNER_RING_FOREGROUND_MIX)
 	return Color(color, alpha)
 
 
 static func draw_text(canvas: Control, font: Font, baseline: Vector2, text: String, font_size: int,
-		alpha: float, foreground: Color = ColorBase.primary_text) -> void:
+		alpha: float, foreground: Color = Colors.primary_text) -> void:
 	var near_width := clampi(int(round(float(font_size) * 0.09)), 2, 7)
 	var far_width := clampi(int(round(float(font_size) * 0.17)), 4, 13)
 	canvas.draw_string_outline(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size,
@@ -35,7 +35,7 @@ static func draw_text(canvas: Control, font: Font, baseline: Vector2, text: Stri
 
 
 static func draw_centered_text(canvas: Control, font: Font, text: String, position: Vector2,
-		font_size: int, alpha: float, foreground: Color = ColorBase.primary_text) -> void:
+		font_size: int, alpha: float, foreground: Color = Colors.primary_text) -> void:
 	var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 	var baseline := position + Vector2(-text_size.x * 0.5, text_size.y * 0.34)
 	draw_text(canvas, font, baseline, text, font_size, alpha, foreground)
@@ -48,7 +48,7 @@ static func draw_line(canvas: Control, start: Vector2, finish: Vector2, line_wid
 		line_width * 5.0, true)
 	canvas.draw_line(start, finish, ThemeColor.alpha_theme_color(alpha * LINE_NEAR_GLOW_ALPHA),
 		line_width * 2.8, true)
-	canvas.draw_line(start, finish, Color(ColorBase.primary_text, alpha), line_width, true)
+	canvas.draw_line(start, finish, Color(Colors.primary_text, alpha), line_width, true)
 	pass
 
 
@@ -63,7 +63,7 @@ static func draw_tapered_line(canvas: Control, start: Vector2, finish: Vector2,
 	draw_tapered_layer(canvas, start, finish, normal, start_width * 2.8, finish_width * 2.8,
 		ThemeColor.alpha_theme_color(alpha * LINE_NEAR_GLOW_ALPHA))
 	draw_tapered_layer(canvas, start, finish, normal, start_width, finish_width,
-		Color(ColorBase.primary_text, alpha))
+		Color(Colors.primary_text, alpha))
 	pass
 
 
@@ -85,7 +85,7 @@ static func draw_polyline(canvas: Control, points: PackedVector2Array, line_widt
 		line_width * 5.0, true)
 	canvas.draw_polyline(points, ThemeColor.alpha_theme_color(alpha * LINE_NEAR_GLOW_ALPHA),
 		line_width * 2.8, true)
-	canvas.draw_polyline(points, Color(ColorBase.primary_text, alpha), line_width, true)
+	canvas.draw_polyline(points, Color(Colors.primary_text, alpha), line_width, true)
 	pass
 
 
@@ -95,5 +95,5 @@ static func draw_circle(canvas: Control, center: Vector2, radius: float, line_wi
 		false, line_width * 5.0, true)
 	canvas.draw_circle(center, radius, ThemeColor.alpha_theme_color(alpha * LINE_NEAR_GLOW_ALPHA),
 		false, line_width * 2.8, true)
-	canvas.draw_circle(center, radius, Color(ColorBase.primary_text, alpha), false, line_width, true)
+	canvas.draw_circle(center, radius, Color(Colors.primary_text, alpha), false, line_width, true)
 	pass

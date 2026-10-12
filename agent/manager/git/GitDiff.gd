@@ -103,11 +103,11 @@ static func async_cache_diff(git: GitUtils.Git, reference: String) -> String:
 ## Opens a cached agent run patch in the bundled Delta terminal viewer.
 static func open_diff(patch_path: String) -> void:
 	if StringUtils.is_blank(patch_path) or not FileAccess.file_exists(patch_path):
-		Alert.alert("Git diff is unavailable", ColorBase.error)
+		Alert.alert("Git diff is unavailable", Colors.error)
 		return
 	var delta_path := FileUtils.get_project_root_path().path_join(DELTA_EXECUTABLE_PATH)
 	if not FileAccess.file_exists(delta_path):
-		Alert.alert("Delta executable not found", ColorBase.error)
+		Alert.alert("Delta executable not found", Colors.error)
 		return
 	var light_theme := ThemeColor.is_light_theme()
 	var delta_color_mode := "--light" if light_theme else "--dark"
@@ -147,7 +147,7 @@ static func open_diff(patch_path: String) -> void:
 			false
 	)
 	if pid <= 0:
-		Alert.alert("Cannot open Delta", ColorBase.error)
+		Alert.alert("Cannot open Delta", Colors.error)
 	pass
 
 

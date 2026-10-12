@@ -35,7 +35,7 @@ func create_item_type_row() -> HBoxContainer:
 	var label := Label.new()
 	label.text = tr("workflow.batch.output_type")
 	label.custom_minimum_size.x = LABEL_WIDTH
-	style_label(label, ColorBase.primary_text)
+	style_label(label, Colors.primary_text)
 	row.add_child(label)
 
 	item_type_option = OptionButton.new()

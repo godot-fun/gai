@@ -36,13 +36,13 @@ static func append(
 	header.add_child(view_button)
 
 	var line_label: Label = Label.new()
-	line_label.add_theme_color_override("font_color", ColorBase.secondary_text)
+	line_label.add_theme_color_override("font_color", Colors.secondary_text)
 	line_label.add_theme_font_size_override("font_size", Typography.label_small_size)
 	header.add_child(line_label)
 
 	vbox.add_child(header)
 
-	var rich_text: RichTextLabel = MarkdownHelper.create_plain_rich_text_label(ColorBase.secondary_text)
+	var rich_text: RichTextLabel = MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
 	vbox.add_child(rich_text)
 
 	wrapper.set_meta(AgentChatView.META_BUBBLE_RICH_TEXT, rich_text)
@@ -54,20 +54,20 @@ static func append(
 
 static func title_color_for(entry: ChatEntry) -> Color:
 	if not entry.title.begins_with("exit_code:"):
-		return ColorBase.secondary_text
+		return Colors.secondary_text
 	var exit_code: int = int(StringUtils.substring_after(entry.title, "exit_code:"))
-	return ColorBase.secondary_text if exit_code == 0 else ColorBase.error
+	return Colors.secondary_text if exit_code == 0 else Colors.error
 
 
 static func style_view_button(button: Button) -> void:
 	button.tooltip_text = "View full result"
 	button.custom_minimum_size = Vector2(22, 18)
 	button.add_theme_font_size_override("font_size", Typography.label_small_size)
-	ButtonStyle.apply_font_colors(button, ColorBase.secondary_text, ButtonStyle.hover_color(ColorBase.primary_text, 0.08), ButtonStyle.press_color(ColorBase.secondary_text, 0.08))
+	ButtonStyle.apply_font_colors(button, Colors.secondary_text, ButtonStyle.hover_color(Colors.primary_text, 0.08), ButtonStyle.press_color(Colors.secondary_text, 0.08))
 
-	var border := ButtonStyle.press_color(ColorBase.secondary_text)
-	var normal := StyleBoxHelper.create_style_box_flat(ButtonStyle.hover_color(ColorBase.neutral_surface, 0.08), 4, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
+	var border := ButtonStyle.press_color(Colors.secondary_text)
+	var normal := StyleBoxHelper.create_style_box_flat(ButtonStyle.hover_color(Colors.neutral_surface, 0.08), 4, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
 	ButtonStyle.apply(button, normal,
-		ButtonStyle.filled(normal, ButtonStyle.hover_color(ColorBase.neutral_surface, 0.16), ColorBase.secondary_text),
-		ButtonStyle.filled(normal, ButtonStyle.press_color(ColorBase.neutral_surface, 0.06), ColorBase.secondary_text))
+		ButtonStyle.filled(normal, ButtonStyle.hover_color(Colors.neutral_surface, 0.16), Colors.secondary_text),
+		ButtonStyle.filled(normal, ButtonStyle.press_color(Colors.neutral_surface, 0.06), Colors.secondary_text))
 	pass

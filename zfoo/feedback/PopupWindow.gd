@@ -44,7 +44,7 @@ func apply_theme() -> void:
 	add_theme_color_override("title_color", ThemeColor.title_color)
 	add_theme_font_override("title_font", Fonts.semibold())
 	add_theme_font_size_override("title_font_size", Typography.title_medium_size)
-	add_theme_icon_override("close_pressed", tint_theme_icon("close_pressed", ColorBase.error))
+	add_theme_icon_override("close_pressed", tint_theme_icon("close_pressed", Colors.error))
 	style_text_edit()
 	pass
 

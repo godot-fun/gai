@@ -297,7 +297,7 @@ func draw_qpu_core() -> void:
 	# while tools occupy the surrounding operating ring.
 	var center := Vector2(size.x * 0.72, size.y * 0.53)
 	var base_radius := minf(size.x, size.y) * 0.17
-	var core_color := ColorBase.error if ended_with_error else ColorBase.success if completing else phase_tint
+	var core_color := Colors.error if ended_with_error else Colors.success if completing else phase_tint
 	for layer in range(12, 0, -1):
 		var radius := base_radius * (0.3 + layer * 0.085)
 		draw_circle(center, radius, Color(core_color, 0.0025 * (13 - layer)))
@@ -348,7 +348,7 @@ func draw_entanglements(center_y: float) -> void:
 		var color := phase_tint if index % 2 else circuit_tint
 		draw_line(Vector2(x, upper_y), Vector2(x, lower_y), Color(color, 0.16), 1.0, true)
 		draw_circle(Vector2(x, upper_y), 3.2, Color(color, 0.78))
-		draw_circle(Vector2(x, lower_y), 6.5, Color(ColorBase.surface, 0.82))
+		draw_circle(Vector2(x, lower_y), 6.5, Color(Colors.surface, 0.82))
 		draw_arc(Vector2(x, lower_y), 6.0, 0.0, TAU, 24, Color(color, 0.72), 1.0, true)
 		var packet_y := lerpf(upper_y, lower_y, 0.5 + 0.5 * sin(elapsed * 2.4 + index))
 		draw_circle(Vector2(x, packet_y), 1.8, Color(color, 0.9))
@@ -394,7 +394,7 @@ func draw_quantum_readout(center_y: float) -> void:
 func draw_header() -> void:
 	# Top bar (rule + live / superposition labels) removed — it competed with the
 	# register. Keep only the footer cue.
-	draw_string(Fonts.regular(), Vector2(38.0, size.y - 27.0), I18n.t("agent.visuals.reasoning_bus"), HORIZONTAL_ALIGNMENT_LEFT, 260.0, Typography.label_small_size, Color(ColorBase.secondary_text, 0.62))
+	draw_string(Fonts.regular(), Vector2(38.0, size.y - 27.0), I18n.t("agent.visuals.reasoning_bus"), HORIZONTAL_ALIGNMENT_LEFT, 260.0, Typography.label_small_size, Color(Colors.secondary_text, 0.62))
 	pass
 
 
@@ -419,7 +419,7 @@ func draw_wire(wire: Dictionary, wire_index: int, y: float) -> void:
 			var packet_x := lerpf(left, right, packet_phase)
 			draw_circle(Vector2(packet_x, y), 1.3 + packet * 0.65, Color(circuit_tint, 0.7 - packet * 0.18))
 	draw_string(Fonts.medium(), Vector2(34.0, y + 5.0), "q%02d" % int(wire["turn"]), HORIZONTAL_ALIGNMENT_LEFT, 48.0, Typography.label_small_size, Color(circuit_tint, 0.58))
-	draw_ket(Vector2(right + 24.0, y), "|1>" if collapse > 0.68 and not ended_with_error else "|?>", ColorBase.success if collapse > 0.68 else phase_tint)
+	draw_ket(Vector2(right + 24.0, y), "|1>" if collapse > 0.68 and not ended_with_error else "|?>", Colors.success if collapse > 0.68 else phase_tint)
 	var gates: Array = wire["gates"]
 	for gate_index in range(gates.size()):
 		var gate: Dictionary = gates[gate_index]
@@ -521,7 +521,7 @@ func draw_decoherent_wire(left: float, right: float, y: float, amount: float, se
 		var x := lerpf(left, right, float(index) / 38.0)
 		var current := Vector2(x, y + sin(index * 5.13 + seed * 2.7 + elapsed * 18.0) * amount * 7.0)
 		if index % 7 != 0:
-			draw_line(previous, current, Color(ColorBase.error, 0.25 + amount * 0.5), 1.1, true)
+			draw_line(previous, current, Color(Colors.error, 0.25 + amount * 0.5), 1.1, true)
 		previous = current
 	pass
 
@@ -531,7 +531,7 @@ func draw_gate(gate: Dictionary, position: Vector2, decoherence: float) -> void:
 	var kind := int(gate["kind"])
 	var arrival := clampf(float(gate["age"]) / GATE_TRAVEL_SECONDS, 0.0, 1.0)
 	var radius := (15.0 if kind != GateKind.TOOL else 22.0) * ease(arrival, -2.0)
-	var color := ColorBase.error if state == GateState.FAILED else ColorBase.success if state == GateState.MEASURED else tool_tint if kind == GateKind.TOOL else circuit_tint
+	var color := Colors.error if state == GateState.FAILED else Colors.success if state == GateState.MEASURED else tool_tint if kind == GateKind.TOOL else circuit_tint
 	var spin := elapsed * (2.8 if state == GateState.RUNNING else 1.35) + float(gate["spin"])
 	var wake_length := 34.0 + minf(float(gate["age"]) * 16.0, 80.0)
 	for wake in range(3, 0, -1):
@@ -592,7 +592,7 @@ func draw_noise(position: Vector2, age: float, amount: float) -> void:
 		var angle := index * 2.19 + elapsed * (2.0 + index % 3)
 		var radius := 18.0 + fmod(index * 17.0 + age * 48.0, 52.0)
 		var p := position + Vector2.from_angle(angle) * radius
-		draw_line(p - Vector2(3.0, 0.0), p + Vector2(3.0 + amount * 5.0, 0.0), Color(ColorBase.error, 0.5), 1.0)
+		draw_line(p - Vector2(3.0, 0.0), p + Vector2(3.0 + amount * 5.0, 0.0), Color(Colors.error, 0.5), 1.0)
 	pass
 
 
@@ -601,7 +601,7 @@ func draw_noise(position: Vector2, age: float, amount: float) -> void:
 ## the measurement node — no per-wire spike fan on the right edge.
 func draw_collapse(center_y: float) -> void:
 	var progress := smoothstep(0.15, 1.0, collapse)
-	var color := ColorBase.error if ended_with_error else ColorBase.success
+	var color := Colors.error if ended_with_error else Colors.success
 	var merge_x := size.x - 130.0
 	var measure := Vector2(size.x - 94.0, center_y)
 	var settle := smoothstep(0.18, 0.82, collapse)

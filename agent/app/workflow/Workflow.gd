@@ -71,9 +71,9 @@ func _ready() -> void:
 
 
 func apply_theme() -> void:
-	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ColorBase.app_background))
-	toolbar.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ColorBase.deep_surface, 0, 0, 0, ColorBase.muted_border, ControlSize.border_xs))
-	sidebar.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ColorBase.chrome_surface, 0, 0, 0, ColorBase.muted_border, ControlSize.border_xs))
+	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
+	toolbar.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.deep_surface, 0, 0, 0, Colors.muted_border, ControlSize.border_xs))
+	sidebar.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.chrome_surface, 0, 0, 0, Colors.muted_border, ControlSize.border_xs))
 	apply_layout_tokens()
 	apply_text_tokens()
 	style_toolbar_buttons()
@@ -109,11 +109,11 @@ func apply_text_tokens() -> void:
 	var logo_color := ThemeColor.accent_theme_color()
 	logo_label.add_theme_color_override("font_color", logo_color if ThemeColor.is_dark_theme() else logo_color.darkened(0.08))
 	title_label.add_theme_font_size_override("font_size", Typography.title_medium_size)
-	title_label.add_theme_color_override("font_color", ColorBase.primary_text)
+	title_label.add_theme_color_override("font_color", Colors.primary_text)
 	palette_title.add_theme_font_size_override("font_size", Typography.title_medium_size)
-	palette_title.add_theme_color_override("font_color", ColorBase.primary_text)
+	palette_title.add_theme_color_override("font_color", Colors.primary_text)
 	palette_hint.add_theme_font_size_override("font_size", Typography.body_small_size)
-	palette_hint.add_theme_color_override("font_color", ColorBase.secondary_text)
+	palette_hint.add_theme_color_override("font_color", Colors.secondary_text)
 	pass
 
 
@@ -137,18 +137,18 @@ func style_palette_tree() -> void:
 	ScrollBarStyle.apply(palette_scroll.get_v_scroll_bar())
 	style_internal_scroll_bars(palette_tree)
 	palette_tree.add_theme_font_size_override("font_size", Typography.title_medium_size)
-	palette_tree.add_theme_color_override("font_color", ColorBase.primary_text)
-	palette_tree.add_theme_color_override("font_hovered_color", ColorBase.primary_text)
-	palette_tree.add_theme_color_override("font_selected_color", ColorBase.primary_text)
-	palette_tree.add_theme_color_override("font_hovered_selected_color", ColorBase.primary_text)
-	palette_tree.add_theme_color_override("guide_color", ColorBase.muted_border)
+	palette_tree.add_theme_color_override("font_color", Colors.primary_text)
+	palette_tree.add_theme_color_override("font_hovered_color", Colors.primary_text)
+	palette_tree.add_theme_color_override("font_selected_color", Colors.primary_text)
+	palette_tree.add_theme_color_override("font_hovered_selected_color", Colors.primary_text)
+	palette_tree.add_theme_color_override("guide_color", Colors.muted_border)
 	palette_tree.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT))
 	var selected := StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1)
 	palette_tree.add_theme_stylebox_override("selected", selected)
 	palette_tree.add_theme_stylebox_override("selected_focus", selected.duplicate() as StyleBoxFlat)
 	palette_tree.add_theme_stylebox_override("hovered_selected", selected.duplicate() as StyleBoxFlat)
 	palette_tree.add_theme_stylebox_override("hovered_selected_focus", selected.duplicate() as StyleBoxFlat)
-	palette_tree.add_theme_stylebox_override("hovered", StyleBoxHelper.create_style_box_flat(ColorBase.hover_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1))
+	palette_tree.add_theme_stylebox_override("hovered", StyleBoxHelper.create_style_box_flat(Colors.hover_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1))
 	pass
 
 
@@ -203,7 +203,7 @@ func apply_ui_locale() -> void:
 		run_button.text = tr("workflow.toolbar.run")
 	palette_title.text = tr("workflow.palette.title")
 	palette_hint.text = tr("workflow.palette.hint")
-	palette_hint.add_theme_color_override("font_color", ColorBase.secondary_text)
+	palette_hint.add_theme_color_override("font_color", Colors.secondary_text)
 	save_dialog.title = tr("workflow.dialog.save_title")
 	save_dialog.ok_button_text = tr("workflow.toolbar.save")
 	save_dialog.filters = PackedStringArray([
@@ -379,7 +379,7 @@ func on_pipeline_stopped() -> void:
 	set_run_button_running(false)
 	var message := tr("pipeline.stopped")
 	Log.info(message)
-	Alert.alert(message, ColorBase.warning)
+	Alert.alert(message, Colors.warning)
 	pass
 
 
@@ -388,28 +388,28 @@ func on_pipeline_finished(success: bool, message: String) -> void:
 	set_run_button_running(false)
 	if success:
 		Log.info(message)
-		Alert.alert(message, ColorBase.success)
+		Alert.alert(message, Colors.success)
 	else:
 		Log.error(message)
-		Alert.alert(message, ColorBase.error)
+		Alert.alert(message, Colors.error)
 	pass
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 func set_run_button_running(running: bool) -> void:
 	if running:
-		apply_run_button_style(ColorBase.error)
+		apply_run_button_style(Colors.error)
 		run_button.icon = make_stop_icon(Typography.title_small_size, Color.WHITE)
 		run_button.text = tr("workflow.toolbar.stop")
 	else:
-		apply_run_button_style(ColorBase.success)
+		apply_run_button_style(Colors.success)
 		run_button.icon = make_play_icon(Typography.title_small_size, Color.WHITE)
 		run_button.text = tr("workflow.toolbar.run")
 	pass
 
 
 func style_run_button() -> void:
-	apply_run_button_style(ColorBase.success)
+	apply_run_button_style(Colors.success)
 	run_button.custom_minimum_size = ControlSize.square(ControlSize.sm)
 	run_button.add_theme_font_size_override("font_size", Typography.label_small_size)
 	ButtonStyle.apply_font_colors(run_button, Color.WHITE, Color.WHITE, Color.WHITE)

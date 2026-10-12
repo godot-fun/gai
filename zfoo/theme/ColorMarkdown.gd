@@ -11,12 +11,12 @@ extends Object
 
 ## The dark set doubles as the fallback until `refresh()` runs for the first time (see `ThemeColor`),
 ## so it is defined once here: the constants are the fallback initializers *and* the dark palette.
-const DARK_CODE_BLOCK_BG := ColorBase.DARK_BACKGROUND
+const DARK_CODE_BLOCK_BG := Colors.DARK_BACKGROUND
 const DARK_TABLE_GRID := Color(0.35, 0.36, 0.41)
 const DARK_TABLE_HEADER_BG := Color(1.0, 1.0, 1.0, 0.08)
 const DARK_INLINE_CODE_BG := Color(0.45, 0.47, 0.52, 0.18)
 const DARK_LINK := Color(0.35, 0.65, 0.95)
-const DARK_BLOCKQUOTE_TEXT := ColorBase.DARK_MUTED
+const DARK_BLOCKQUOTE_TEXT := Colors.DARK_MUTED
 
 static var code_block_bg: Color = DARK_CODE_BLOCK_BG
 static var table_grid_color: Color = DARK_TABLE_GRID
@@ -67,5 +67,5 @@ static func apply_light_palette() -> void:
 	inline_code_bg = Color(0.96, 0.965, 0.97)
 	link_color = Color(0.15, 0.39, 0.92)
 	blockquote_bar_color = link_color
-	blockquote_text_color = ColorBase.LIGHT_MUTED
+	blockquote_text_color = Colors.LIGHT_MUTED
 	pass

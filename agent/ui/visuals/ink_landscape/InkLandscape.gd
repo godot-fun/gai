@@ -405,7 +405,7 @@ func update_shader_theme() -> void:
 		var material := mountain.material
 		if material != null:
 			material.set_shader_parameter("ink_color", ink_color())
-			material.set_shader_parameter("background_color", ColorBase.app_background)
+			material.set_shader_parameter("background_color", Colors.app_background)
 			material.set_shader_parameter("dark_theme", 1.0 if ThemeColor.is_dark_theme() else 0.0)
 	pass
 
@@ -419,7 +419,7 @@ func mount_mountain(mountain: MountainState) -> void:
 	var material := ShaderMaterial.new()
 	material.shader = load(MOUNTAIN_SHADER_PATH)
 	material.set_shader_parameter("ink_color", ink_color())
-	material.set_shader_parameter("background_color", ColorBase.app_background)
+	material.set_shader_parameter("background_color", Colors.app_background)
 	material.set_shader_parameter("center", mountain.center)
 	material.set_shader_parameter("mountain_width", mountain.width)
 	material.set_shader_parameter("mountain_height", mountain.height)

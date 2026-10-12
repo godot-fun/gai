@@ -186,5 +186,5 @@ func draw_caption(canvas: Control, position: Vector2, reveal: float) -> void:
 	var subtitle_width := subtitle_font.get_string_size(SUBTITLE, HORIZONTAL_ALIGNMENT_LEFT, -1, subtitle_size).x
 	TaiChiGlowDrawing.draw_text(canvas, subtitle_font,
 		position + Vector2(-subtitle_width * 0.5, font_size * 1.25), SUBTITLE, subtitle_size,
-		title_reveal * 0.58, ColorBase.secondary_text)
+		title_reveal * 0.58, Colors.secondary_text)
 	pass

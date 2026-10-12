@@ -636,7 +636,7 @@ func draw_context_window(center: Vector2) -> void:
 	var accent := ThemeColor.accent_theme_color()
 	var absorption := absorption_activity()
 	var ratio := context_ratio()
-	var capacity_color := ColorBase.error if ratio >= 0.9 else (ColorBase.warning if ratio >= 0.72 else accent)
+	var capacity_color := Colors.error if ratio >= 0.9 else (Colors.warning if ratio >= 0.72 else accent)
 	# A transparent lens replaces the previous solid dashboard. The input collapse
 	# and output braid remain visible through it, making the center read as a
 	# transformation point instead of a separate widget.
@@ -648,11 +648,11 @@ func draw_context_window(center: Vector2) -> void:
 	if lens_closing:
 		var closing_wave_radius := lerpf(CONTEXT_RING_RADIUS, CONTEXT_RING_RADIUS + 30.0, close_eased)
 		draw_arc(center, closing_wave_radius, 0.0, TAU, 64, Color(capacity_color, sin(close_eased * PI) * 0.1), 1.2, true)
-	draw_arc(center, gauge_radius, 0.0, TAU, 72, Color(ColorBase.subtle_border, 0.34 * lens_alpha), 1.0, true)
+	draw_arc(center, gauge_radius, 0.0, TAU, 72, Color(Colors.subtle_border, 0.34 * lens_alpha), 1.0, true)
 	if ratio > 0.0:
 		draw_arc(center, gauge_radius, -PI * 0.5, -PI * 0.5 + TAU * ratio, maxi(2, int(72.0 * ratio)), Color(capacity_color, 0.92 * lens_alpha), 2.2, true)
 	var text_alpha := 1.0 - smoothstep(0.0, 0.55, lens_close_progress)
-	draw_centered_text(center + Vector2(0.0, 72.0), I18n.t("agent.visuals.context"), Fonts.semibold(), Typography.label_small_size, Color(ColorBase.primary_text, 0.82 * text_alpha))
+	draw_centered_text(center + Vector2(0.0, 72.0), I18n.t("agent.visuals.context"), Fonts.semibold(), Typography.label_small_size, Color(Colors.primary_text, 0.82 * text_alpha))
 	draw_centered_text(center + Vector2(0.0, 88.0), token_label(), Fonts.regular(), Typography.label_small_size, Color(capacity_color, 0.82 * text_alpha))
 	pass
 

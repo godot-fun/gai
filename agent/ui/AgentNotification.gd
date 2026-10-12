@@ -36,7 +36,7 @@ func on_agent_end(session_id: int, error_message: String) -> void:
 	# bubble for a failed run, otherwise it is the agent reply.
 	var entry: ChatEntry = session.chat_entries.back()
 	if AgentSetting.get_notification_window():
-		var accent := ColorBase.error if entry.kind == ChatEntry.KIND_ERROR else ColorBase.success
+		var accent := Colors.error if entry.kind == ChatEntry.KIND_ERROR else Colors.success
 		var corner := Corner.CORNER_TOP_RIGHT if DisplayServer.window_is_focused(DisplayServer.MAIN_WINDOW_ID) else Corner.CORNER_BOTTOM_RIGHT
 		DesktopToast.show_toast(entry.title, entry.body, accent, corner)
 	if AgentSetting.get_notification_sound():

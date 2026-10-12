@@ -264,7 +264,7 @@ func _draw() -> void:
 func draw_stage() -> void:
 	var accent := ThemeColor.accent_theme_color()
 	draw_oval(Vector2(220.0, 205.0), Vector2(88.0, 16.0), Color(0.0, 0.0, 0.0, 0.16))
-	draw_line(Vector2(22.0, 211.0), Vector2(318.0, 211.0), Color(ColorBase.subtle_border, 0.55), 2.0, true)
+	draw_line(Vector2(22.0, 211.0), Vector2(318.0, 211.0), Color(Colors.subtle_border, 0.55), 2.0, true)
 	draw_line(Vector2(46.0, 215.0), Vector2(307.0, 215.0), Color(accent, 0.08), 5.0, true)
 	pass
 
@@ -466,13 +466,13 @@ func draw_effects() -> void:
 		CatState.TOOL_WAITING:
 			draw_tool_button(true)
 		CatState.TOOL_SUCCESS:
-			draw_status_burst(ColorBase.success, I18n.t("agent.visuals.ok"))
+			draw_status_burst(Colors.success, I18n.t("agent.visuals.ok"))
 		CatState.TOOL_FAILED:
-			draw_status_burst(ColorBase.error, "!")
+			draw_status_burst(Colors.error, "!")
 		CatState.SUCCESS:
-			draw_result_card(ColorBase.success, I18n.t("agent.visuals.result_ready"), true)
+			draw_result_card(Colors.success, I18n.t("agent.visuals.result_ready"), true)
 		CatState.FAILED:
-			draw_result_card(ColorBase.error, I18n.t("agent.visuals.error"), false)
+			draw_result_card(Colors.error, I18n.t("agent.visuals.error"), false)
 		CatState.CANCELLED:
 			draw_cancel_sweep()
 	pass
@@ -500,11 +500,11 @@ func draw_tool_button(loading: bool) -> void:
 	var accent := ThemeColor.accent_theme_color()
 	var center := Vector2(88.0, 173.0)
 	draw_paw_print(center + Vector2(2.0, 4.0), 1.05, Color(0.0, 0.0, 0.0, 0.2), Color.TRANSPARENT)
-	draw_paw_print(center, 1.0, Color(ColorBase.control_surface, 0.96), Color(accent, 0.86))
-	draw_centered_text(center + Vector2(0.0, 12.0), VisualToolFormatter.glyph(active_tool_name), Fonts.semibold(), Typography.title_medium_size, ColorBase.primary_text)
+	draw_paw_print(center, 1.0, Color(Colors.control_surface, 0.96), Color(accent, 0.86))
+	draw_centered_text(center + Vector2(0.0, 12.0), VisualToolFormatter.glyph(active_tool_name), Fonts.semibold(), Typography.title_medium_size, Colors.primary_text)
 	if loading:
 		draw_yarn_loader(center, accent)
-	draw_centered_text(center + Vector2(0.0, 56.0), compact_label(VisualToolFormatter.title_name(active_tool_name), 15), Fonts.medium(), Typography.label_small_size, ColorBase.secondary_text)
+	draw_centered_text(center + Vector2(0.0, 56.0), compact_label(VisualToolFormatter.title_name(active_tool_name), 15), Fonts.medium(), Typography.label_small_size, Colors.secondary_text)
 	pass
 
 
@@ -542,10 +542,10 @@ func draw_paw_alert(color: Color) -> void:
 func draw_result_card(color: Color, title: String, succeeded: bool) -> void:
 	var progress := minf(1.0, state_seconds / 0.48)
 	var center := Vector2(108.0, 151.0).lerp(Vector2(77.0, 123.0), 1.0 - progress)
-	draw_paw_print(center, 1.18 * progress, Color(ColorBase.control_surface, 0.98), Color(color, 0.9))
+	draw_paw_print(center, 1.18 * progress, Color(Colors.control_surface, 0.98), Color(color, 0.9))
 	draw_centered_text(center + Vector2(0.0, 10.0), "✓" if succeeded else "!", Fonts.bold(), Typography.title_medium_size, color)
-	draw_centered_text(center + Vector2(0.0, 57.0), title, Fonts.semibold(), Typography.label_medium_size, ColorBase.primary_text)
-	draw_centered_text(center + Vector2(0.0, 76.0), compact_label(card_text, 17), Fonts.regular(), Typography.label_small_size, ColorBase.secondary_text)
+	draw_centered_text(center + Vector2(0.0, 57.0), title, Fonts.semibold(), Typography.label_medium_size, Colors.primary_text)
+	draw_centered_text(center + Vector2(0.0, 76.0), compact_label(card_text, 17), Fonts.regular(), Typography.label_small_size, Colors.secondary_text)
 	pass
 
 
@@ -554,8 +554,8 @@ func draw_cancel_sweep() -> void:
 	for index in range(5):
 		var start := Vector2(50.0 + index * 27.0, 178.0 - float(index % 2) * 16.0)
 		var position := start + Vector2(-190.0 * progress, -45.0 * progress * progress + sin(float(index)) * 12.0)
-		draw_paw_print(position, 0.28, Color(ColorBase.control_surface, 0.88), Color(ColorBase.subtle_border, 0.7), -0.5 - progress)
-	draw_text(Vector2(42.0, 68.0), I18n.t("agent.visuals.clean_slate"), Fonts.semibold(), Typography.label_medium_size, Color(ColorBase.secondary_text, 1.0 - progress * 0.7))
+		draw_paw_print(position, 0.28, Color(Colors.control_surface, 0.88), Color(Colors.subtle_border, 0.7), -0.5 - progress)
+	draw_text(Vector2(42.0, 68.0), I18n.t("agent.visuals.clean_slate"), Fonts.semibold(), Typography.label_medium_size, Color(Colors.secondary_text, 1.0 - progress * 0.7))
 	pass
 
 

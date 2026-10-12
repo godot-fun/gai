@@ -128,7 +128,7 @@ func set_entry(index: int, text: String) -> void:
 		body_labels[index].text = value if entry_ready[index] else I18n.t("agent.sense.pick_pending")
 		body_labels[index].add_theme_color_override(
 			"font_color",
-			ThemeColor.body_color if entry_ready[index] else ColorBase.secondary_text)
+			ThemeColor.body_color if entry_ready[index] else Colors.secondary_text)
 		entry_rows[index].mouse_default_cursor_shape = (
 			Control.CURSOR_POINTING_HAND if entry_ready[index] else Control.CURSOR_ARROW)
 		refresh_entry_row_style(index)
@@ -147,7 +147,7 @@ func skip_entry(index: int) -> void:
 	entry_skipped[index] = true
 	if body_labels.size() > index:
 		body_labels[index].text = I18n.t("agent.sense.pick_skipped")
-		body_labels[index].add_theme_color_override("font_color", ColorBase.secondary_text)
+		body_labels[index].add_theme_color_override("font_color", Colors.secondary_text)
 		entry_rows[index].mouse_default_cursor_shape = Control.CURSOR_ARROW
 		refresh_entry_row_style(index)
 	if selected_index == index:
@@ -332,7 +332,7 @@ func make_entry_row(index: int, label_size: int, body_size: int, body_font: Font
 	var row := PanelContainer.new()
 	var radius := roundi(ControlSize.radius_sm * screen_scale)
 	var row_bg := Color(ThemeColor.card_surface, ROW_ALPHA)
-	var normal := StyleBoxHelper.create_style_box_flat(row_bg, radius, Margin.ma_4, Margin.ma_3, ColorBase.subtle_border, ControlSize.border_xs)
+	var normal := StyleBoxHelper.create_style_box_flat(row_bg, radius, Margin.ma_4, Margin.ma_3, Colors.subtle_border, ControlSize.border_xs)
 	var hover := StyleBoxHelper.create_style_box_flat(ButtonStyle.hover_color(row_bg, 0.08), radius, Margin.ma_4, Margin.ma_3, ThemeColor.accent_theme_color(), ControlSize.border_xs)
 	var selected := StyleBoxHelper.create_style_box_flat(ButtonStyle.hover_color(row_bg, 0.14), radius, Margin.ma_4, Margin.ma_3, ThemeColor.accent_theme_color(), ControlSize.border_sm)
 	row_normal_styles.append(normal)
@@ -376,7 +376,7 @@ func make_entry_row(index: int, label_size: int, body_size: int, body_font: Font
 	body.text = I18n.t("agent.sense.pick_pending")
 	body.add_theme_font_override("font", body_font)
 	body.add_theme_font_size_override("font_size", body_size)
-	body.add_theme_color_override("font_color", ColorBase.secondary_text)
+	body.add_theme_color_override("font_color", Colors.secondary_text)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.max_lines_visible = MAX_BODY_LINES
 	body.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -405,7 +405,7 @@ func make_cancel_row(label_size: int) -> PanelContainer:
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_override("font", Fonts.regular())
 	label.add_theme_font_size_override("font_size", label_size)
-	label.add_theme_color_override("font_color", ColorBase.secondary_text)
+	label.add_theme_color_override("font_color", Colors.secondary_text)
 	row.add_child(label)
 	cancel_row = row
 	cancel_label = label
@@ -492,7 +492,7 @@ func refresh_cancel_row_style() -> void:
 	if cancel_row == null or cancel_label == null:
 		return
 	var style: StyleBoxFlat = cancel_normal_style
-	var font_color := ColorBase.secondary_text
+	var font_color := Colors.secondary_text
 	if selected_index == SLOT_CANCEL:
 		style = cancel_selected_style
 		font_color = ThemeColor.body_color

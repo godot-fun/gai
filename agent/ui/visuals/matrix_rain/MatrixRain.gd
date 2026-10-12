@@ -415,9 +415,9 @@ func matrix_color() -> Color:
 static func tool_color(state: ToolState) -> Color:
 	match state:
 		ToolState.SUCCESS:
-			return ColorBase.success
+			return Colors.success
 		ToolState.FAILED:
-			return ColorBase.error
+			return Colors.error
 	return ThemeColor.accent_theme_color()
 
 

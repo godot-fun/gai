@@ -20,7 +20,7 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 
 	var title_label := Label.new()
 	title_label.text = ChatEntry.TITLE_GIT_DIFF
-	title_label.add_theme_color_override("font_color", ColorBase.secondary_text)
+	title_label.add_theme_color_override("font_color", Colors.secondary_text)
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	header.add_child(title_label)
 
@@ -36,7 +36,7 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 	AgentBubble.style_header_button(diff_button, panel_style.bg_color, "Open this run in Delta", 52.0)
 	header.add_child(diff_button)
 
-	var rich_text := MarkdownHelper.create_plain_rich_text_label(ColorBase.secondary_text)
+	var rich_text := MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
 	rich_text.meta_clicked.connect(open_file_diff.bind(patch_path))
 	rich_text.tooltip_text = "Open file diff"
 	vbox.add_child(rich_text)
@@ -63,11 +63,11 @@ static func refresh(rich_text: RichTextLabel, entry: ChatEntry) -> void:
 		var added := parts[1].strip_edges() if parts.size() > 1 else "0"
 		var removed := parts[2].strip_edges() if parts.size() > 2 else "0"
 		rich_text.add_text("  ")
-		rich_text.push_color(ColorBase.success)
+		rich_text.push_color(Colors.success)
 		rich_text.add_text("+" + ("?" if added == "-" else added))
 		rich_text.pop()
 		rich_text.add_text("  ")
-		rich_text.push_color(ColorBase.error)
+		rich_text.push_color(Colors.error)
 		rich_text.add_text("-" + ("?" if removed == "-" else removed))
 		rich_text.pop()
 		if i < paths.size() - 1:
@@ -78,7 +78,7 @@ static func refresh(rich_text: RichTextLabel, entry: ChatEntry) -> void:
 static func open_file_diff(meta: Variant, patch_path: String) -> void:
 	var relative_path := str(meta)
 	if not GitDiff.open_file_diff(patch_path, relative_path):
-		Alert.alert(StringUtils.format("Git diff is unavailable: {}", relative_path), ColorBase.error)
+		Alert.alert(StringUtils.format("Git diff is unavailable: {}", relative_path), Colors.error)
 	pass
 
 

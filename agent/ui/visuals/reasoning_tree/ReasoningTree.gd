@@ -201,10 +201,10 @@ func update_particle_colors() -> void:
 	var gradient := Gradient.new()
 	gradient.offsets = PackedFloat32Array([0.0, 0.32, 0.72, 1.0])
 	gradient.colors = PackedColorArray([
-		Color(ColorBase.primary_text, 0.95),
+		Color(Colors.primary_text, 0.95),
 		Color(ThemeColor.accent_theme_color(), 0.92),
-		Color(ColorBase.success, 0.72),
-		Color(ColorBase.success, 0.0),
+		Color(Colors.success, 0.72),
+		Color(Colors.success, 0.0),
 	])
 	var color_ramp := GradientTexture1D.new()
 	color_ramp.gradient = gradient
@@ -299,10 +299,10 @@ func draw_branch(branch: Dictionary, base: Vector2, segment_height: float) -> vo
 	var elbow := parent_curve[-1]
 	var state: int = branch["state"]
 	var accent := ThemeColor.accent_theme_color()
-	var color := accent if state == BranchState.RUNNING else (ColorBase.success if state == BranchState.SUCCESS else ColorBase.error)
+	var color := accent if state == BranchState.RUNNING else (Colors.success if state == BranchState.SUCCESS else Colors.error)
 	# The tool's parent branch keeps one identity color throughout execution. Completion state is
 	# communicated by the child twig and its tip instead of repainting the whole branch.
-	var parent_color := ColorBase.secondary_text if state == BranchState.FAILED else accent
+	var parent_color := Colors.secondary_text if state == BranchState.FAILED else accent
 	var parent_alpha := BRANCH_ALPHA_FAILED if state == BranchState.FAILED else (BRANCH_ALPHA_SUCCESS if state == BranchState.SUCCESS else BRANCH_ALPHA_RUNNING)
 	var pulse := running_pulse(visual_time, float(branch["animation_phase"])) if state == BranchState.RUNNING else 1.0
 	var parent_width := (2.5 if state == BranchState.FAILED else 3.0) + (pulse - 1.0)
@@ -364,7 +364,7 @@ func draw_success_leaves(tip: Vector2, direction: float, branch: Dictionary, com
 	var phase: float = branch["animation_phase"]
 	var sway := sin(visual_time * 1.35 + phase * TAU) * 0.075
 	var accent := ThemeColor.accent_theme_color()
-	var leaf_color := ColorBase.success.lerp(accent, 0.08 + float(variant) * 0.055)
+	var leaf_color := Colors.success.lerp(accent, 0.08 + float(variant) * 0.055)
 	if pulse_glow > 0.0:
 		draw_circle(tip, 18.0 + pulse_glow * 9.0, Color(leaf_color, pulse_glow * 0.12))
 		draw_circle(tip, 9.0 + pulse_glow * 4.0, Color(leaf_color, pulse_glow * 0.20))
@@ -455,7 +455,7 @@ func draw_tree_pulse_at_distance(base: Vector2, segment_height: float, color: Co
 		var completion_vector := get_completion_vector(branch, state, completion_length)
 		var completion_control := branch_curve_control(elbow, elbow + completion_vector, completion_length * 0.45)
 		var completion_progress := completion_distance / completion_length
-		var pulse_color := ColorBase.error if state == BranchState.FAILED else ColorBase.success
+		var pulse_color := Colors.error if state == BranchState.FAILED else Colors.success
 		draw_pulse_light(quadratic_curve_point(elbow, completion_control, elbow + completion_vector, completion_progress), pulse_color)
 	pass
 
@@ -514,7 +514,7 @@ func draw_crown(base: Vector2, segment_height: float, accent: Color) -> void:
 	if radius < 1.5:
 		return
 	var pulse_glow := get_crown_pulse_intensity(segment_height)
-	var crown_color := ColorBase.success.lerp(accent, 0.18)
+	var crown_color := Colors.success.lerp(accent, 0.18)
 	if pulse_glow > 0.0:
 		draw_circle(center, radius * 0.48 + pulse_glow * 14.0, Color(crown_color, pulse_glow * 0.07))
 	# A compact seven-leaf terminal bud replaces the old bubble cloud. Outer leaves establish the
@@ -549,7 +549,7 @@ func draw_status(base: Vector2) -> void:
 	var font := Fonts.semibold()
 	var font_size := Typography.title_small_size
 	var text_width := font.get_string_size(phase_label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	draw_string(font, Vector2(base.x - text_width * 0.5, size.y - Margin.ma_3), phase_label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, ColorBase.primary_text)
+	draw_string(font, Vector2(base.x - text_width * 0.5, size.y - Margin.ma_3), phase_label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Colors.primary_text)
 	pass
 
 

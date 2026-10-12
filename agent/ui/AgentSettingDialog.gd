@@ -368,11 +368,11 @@ func add_check_button(parent: Container, label_text: String, enabled: bool) -> C
 
 ## Check button: the switch is the built-in toggle icon, tinted with the CheckButton theme colors.
 func style_check_button(check: CheckButton) -> void:
-	check.add_theme_color_override("font_color", ColorBase.primary_text)
-	check.add_theme_color_override("font_hover_color", ColorBase.primary_text)
-	check.add_theme_color_override("font_focus_color", ColorBase.primary_text)
-	check.add_theme_color_override("font_pressed_color", ColorBase.primary_text)
-	check.add_theme_color_override("font_hover_pressed_color", ColorBase.primary_text)
+	check.add_theme_color_override("font_color", Colors.primary_text)
+	check.add_theme_color_override("font_hover_color", Colors.primary_text)
+	check.add_theme_color_override("font_focus_color", Colors.primary_text)
+	check.add_theme_color_override("font_pressed_color", Colors.primary_text)
+	check.add_theme_color_override("font_hover_pressed_color", Colors.primary_text)
 	# Only the "on" track takes the theme color — the "off" one keeps the theme default.
 	check.add_theme_color_override("button_checked_color", ThemeColor.accent_theme_color())
 	check.add_theme_constant_override("h_separation", Margin.ma_2)
@@ -584,7 +584,7 @@ func on_mouse_exited() -> void:
 
 
 func update_icon(hovered: bool) -> void:
-	var icon_color := ColorBase.primary_text if hovered else ColorBase.secondary_text
+	var icon_color := Colors.primary_text if hovered else Colors.secondary_text
 	button.icon = make_icon(icon_color)
 	pass
 
@@ -612,15 +612,15 @@ func style_dialog() -> void:
 	dialog.add_theme_constant_override("resize_margin", Margin.ma_0)
 	dialog.add_theme_constant_override("buttons_separation", Margin.ma_0)
 	content_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-	appearance_heading_label.add_theme_color_override("font_color", ColorBase.primary_text)
-	agent_behavior_heading_label.add_theme_color_override("font_color", ColorBase.primary_text)
-	notification_heading_label.add_theme_color_override("font_color", ColorBase.primary_text)
-	heading_label.add_theme_color_override("font_color", ColorBase.primary_text)
-	description_label.add_theme_color_override("font_color", ColorBase.secondary_text)
+	appearance_heading_label.add_theme_color_override("font_color", Colors.primary_text)
+	agent_behavior_heading_label.add_theme_color_override("font_color", Colors.primary_text)
+	notification_heading_label.add_theme_color_override("font_color", Colors.primary_text)
+	heading_label.add_theme_color_override("font_color", Colors.primary_text)
+	description_label.add_theme_color_override("font_color", Colors.secondary_text)
 	for label: Label in field_labels:
-		label.add_theme_color_override("font_color", ColorBase.primary_text)
+		label.add_theme_color_override("font_color", Colors.primary_text)
 	for help: Label in help_labels:
-		help.add_theme_color_override("font_color", ColorBase.secondary_text)
+		help.add_theme_color_override("font_color", Colors.secondary_text)
 	var separator_style := StyleBoxLine.new()
 	separator_style.color = ThemeColor.accent_theme_color()
 	separator_style.thickness = 1
@@ -640,7 +640,7 @@ func style_dialog() -> void:
 func style_option_button(select: OptionButton) -> void:
 	# Every font state, focus included: the dialog hands the focus to this select when it pops up,
 	# and the engine's focus text is near white.
-	ButtonStyle.apply_font_colors(select, ColorBase.primary_text, ColorBase.primary_text, ColorBase.primary_text)
+	ButtonStyle.apply_font_colors(select, Colors.primary_text, Colors.primary_text, Colors.primary_text)
 	var normal: StyleBoxFlat = make_input_style()
 	var hover: StyleBoxFlat = normal.duplicate() as StyleBoxFlat
 	hover.border_color = ThemeColor.accent_theme_color()
@@ -658,8 +658,8 @@ func style_provider_popup(popup: PopupMenu) -> void:
 
 
 func style_line_edit(edit: LineEdit) -> void:
-	edit.add_theme_color_override("font_color", ColorBase.primary_text)
-	edit.add_theme_color_override("font_placeholder_color", ColorBase.secondary_text.darkened(0.08))
+	edit.add_theme_color_override("font_color", Colors.primary_text)
+	edit.add_theme_color_override("font_placeholder_color", Colors.secondary_text.darkened(0.08))
 	edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
 	edit.caret_blink = true
 	var normal: StyleBoxFlat = make_input_style()
@@ -680,10 +680,10 @@ func make_input_style() -> StyleBoxFlat:
 ## Spin box: theme-color arrows on the shared field background.
 func style_spin_box(spin: SpinBox) -> void:
 	style_line_edit(spin.get_line_edit())
-	spin.add_theme_color_override("font_color", ColorBase.primary_text)
-	spin.add_theme_color_override("font_placeholder_color", ColorBase.secondary_text)
-	spin.add_theme_color_override("up_icon_modulate", ColorBase.primary_text)
-	spin.add_theme_color_override("down_icon_modulate", ColorBase.primary_text)
+	spin.add_theme_color_override("font_color", Colors.primary_text)
+	spin.add_theme_color_override("font_placeholder_color", Colors.secondary_text)
+	spin.add_theme_color_override("up_icon_modulate", Colors.primary_text)
+	spin.add_theme_color_override("down_icon_modulate", Colors.primary_text)
 	spin.add_theme_color_override("up_hover_icon_modulate", ThemeColor.accent_theme_color())
 	spin.add_theme_color_override("down_hover_icon_modulate", ThemeColor.accent_theme_color())
 	spin.add_theme_color_override("up_pressed_icon_modulate", ThemeColor.accent_theme_color())
@@ -691,7 +691,7 @@ func style_spin_box(spin: SpinBox) -> void:
 	var normal: StyleBoxFlat = make_input_style()
 	normal.content_margin_left = Margin.ma_0
 	normal.content_margin_right = Margin.ma_0
-	var hover := ButtonStyle.filled(normal, ColorBase.hover_surface)
+	var hover := ButtonStyle.filled(normal, Colors.hover_surface)
 	for side: String in ["up", "down"]:
 		spin.add_theme_stylebox_override(side + "_background", normal)
 		spin.add_theme_stylebox_override(side + "_background_hovered", hover)

@@ -43,9 +43,9 @@ static func color_for(phase: Phase) -> Color:
 		Phase.TOOL_EXEC:
 			return phase_color_from_theme(0.12, 0.9, 1.05)
 		Phase.SUCCESS:
-			return ThemeColor.accent_theme_color().lerp(ColorBase.success, 0.45)
+			return ThemeColor.accent_theme_color().lerp(Colors.success, 0.45)
 		Phase.ERROR:
-			return ThemeColor.accent_theme_color().lerp(ColorBase.error, 0.55)
+			return ThemeColor.accent_theme_color().lerp(Colors.error, 0.55)
 		Phase.AWAKE, Phase.TURN_COOLDOWN:
 			return phase_color_from_theme()
 		Phase.IDLE:

@@ -56,10 +56,10 @@ func apply_theme() -> void:
 
 func update_icon(hovered: bool) -> void:
 	var theme_color: Color = ThemeColor.accent_theme_color()
-	var handle: Color = ColorBase.secondary_text
+	var handle: Color = Colors.secondary_text
 	if hovered:
 		theme_color = theme_color.lightened(0.10)
-		handle = ColorBase.primary_text
+		handle = Colors.primary_text
 	button.icon = make_brush_icon(theme_color, handle)
 	pass
 

@@ -280,9 +280,9 @@ func apply_theme() -> void:
 	dialog.add_theme_constant_override("resize_margin", Margin.ma_0)
 	dialog.add_theme_constant_override("buttons_separation", Margin.ma_0)
 	content_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-	title_label.add_theme_color_override("font_color", ColorBase.primary_text)
+	title_label.add_theme_color_override("font_color", Colors.primary_text)
 	for label in field_labels:
-		label.add_theme_color_override("font_color", ColorBase.primary_text)
+		label.add_theme_color_override("font_color", Colors.primary_text)
 	var separator_style := StyleBoxLine.new()
 	separator_style.color = ThemeColor.accent_theme_color()
 	separator_style.thickness = 1
@@ -357,8 +357,8 @@ func style_line_edit(edit: LineEdit) -> void:
 
 
 func style_text_edit(edit: TextEdit) -> void:
-	edit.add_theme_color_override("font_color", ColorBase.primary_text)
-	edit.add_theme_color_override("font_placeholder_color", ColorBase.secondary_text.darkened(0.08))
+	edit.add_theme_color_override("font_color", Colors.primary_text)
+	edit.add_theme_color_override("font_placeholder_color", Colors.secondary_text.darkened(0.08))
 	edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
 	edit.add_theme_color_override("selection_color", ThemeColor.selected_surface)
 	edit.caret_blink = true
@@ -373,7 +373,7 @@ func style_text_edit(edit: TextEdit) -> void:
 
 
 func style_option_button(select: OptionButton) -> void:
-	ButtonStyle.apply_font_colors(select, ColorBase.primary_text, ColorBase.primary_text, ColorBase.primary_text)
+	ButtonStyle.apply_font_colors(select, Colors.primary_text, Colors.primary_text, Colors.primary_text)
 	var normal: StyleBoxFlat = make_input_style()
 	var hover: StyleBoxFlat = normal.duplicate() as StyleBoxFlat
 	hover.border_color = ThemeColor.accent_theme_color()
@@ -391,8 +391,8 @@ func style_option_popup(popup: PopupMenu) -> void:
 
 
 func style_check_button(check: CheckButton) -> void:
-	check.add_theme_color_override("font_color", ColorBase.primary_text)
-	check.add_theme_color_override("font_hover_color", ColorBase.primary_text)
+	check.add_theme_color_override("font_color", Colors.primary_text)
+	check.add_theme_color_override("font_hover_color", Colors.primary_text)
 	check.add_theme_color_override("button_checked_color", ThemeColor.accent_theme_color())
 	var normal := StyleBoxEmpty.new()
 	check.add_theme_stylebox_override("normal", normal)
@@ -404,7 +404,7 @@ func style_check_button(check: CheckButton) -> void:
 
 
 func style_button(control: Button) -> void:
-	ButtonStyle.apply_font_colors(control, ColorBase.primary_text, ColorBase.primary_text, ThemeColor.accent_theme_color())
+	ButtonStyle.apply_font_colors(control, Colors.primary_text, Colors.primary_text, ThemeColor.accent_theme_color())
 	var normal := make_input_style()
 	var hover := ButtonStyle.filled(normal, ButtonStyle.hover_color(ThemeColor.inset_surface, 0.08))
 	ButtonStyle.apply(control, normal, hover, ButtonStyle.filled(normal, ThemeColor.selected_surface))

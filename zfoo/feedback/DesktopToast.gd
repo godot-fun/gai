@@ -24,7 +24,7 @@ var body_label: Label
 ## Card title and body text; `*_text` because [member Window.title] is already taken by the native [Window] base.
 var title_text: String = ""
 var body_text: String = ""
-var accent: Color = ColorBase.info
+var accent: Color = Colors.info
 var toast_corner: Corner = Corner.CORNER_BOTTOM_RIGHT
 
 

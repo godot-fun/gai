@@ -25,9 +25,9 @@ func apply_theme() -> void:
 	toolbar_panel.add_theme_stylebox_override("panel", build_toolbar_style())
 	toolbar_panel.queue_redraw()
 	apply_logo_theme()
-	project_button.add_theme_color_override("font_color", ColorBase.secondary_text)
-	project_button.add_theme_color_override("font_hover_color", ColorBase.primary_text)
-	project_button.add_theme_color_override("font_pressed_color", ColorBase.primary_text)
+	project_button.add_theme_color_override("font_color", Colors.secondary_text)
+	project_button.add_theme_color_override("font_hover_color", Colors.primary_text)
+	project_button.add_theme_color_override("font_pressed_color", Colors.primary_text)
 	pass
 
 
@@ -47,8 +47,8 @@ func apply_logo_theme() -> void:
 
 func build_toolbar_style() -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
-	style.bg_color = ColorBase.deep_surface
-	style.border_color = ColorBase.subtle_border
+	style.bg_color = Colors.deep_surface
+	style.border_color = Colors.subtle_border
 	style.content_margin_left = Margin.ma_3
 	style.set_border_width(SIDE_BOTTOM, ControlSize.border_xs)
 	if ThemeColor.is_light_theme():

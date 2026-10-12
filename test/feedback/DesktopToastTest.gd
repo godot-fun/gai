@@ -35,7 +35,7 @@ func DesktopToast_build_card_test() -> void:
 	var toast: DesktopToast = DesktopToast.new()
 	toast.title_text = "feedback toast"
 	toast.body_text = "feedback toast body"
-	toast.accent = ColorBase.success
+	toast.accent = Colors.success
 	toast.build_card()
 	assert(toast.card != null)
 	assert(toast.size.x == roundi(DesktopToast.CARD_WIDTH * scale))
@@ -48,7 +48,7 @@ func DesktopToast_build_card_test() -> void:
 	assert(toast.body_label.text == "feedback toast body")
 	assert(toast.body_label.max_lines_visible == DesktopToast.MAX_BODY_LINES)
 	var style: StyleBoxFlat = toast.card.get_theme_stylebox("panel") as StyleBoxFlat
-	assert(style.border_color == ColorBase.success)
+	assert(style.border_color == Colors.success)
 	assert(style.border_width_left == roundi(ControlSize.border_md * scale))
 	assert(style.bg_color == ThemeColor.accent_surface)
 	toast.free()
@@ -72,7 +72,7 @@ func DesktopToast_i18n_text_test() -> void:
 	var translation := feedback_test_translation("feedback.toast.title", "Translated toast")
 	translation.add_message("feedback.toast.body", "Translated body")
 	var before := DesktopToast.toasts.size()
-	DesktopToast.show_toast("feedback.toast.title", "feedback.toast.body", ColorBase.success)
+	DesktopToast.show_toast("feedback.toast.title", "feedback.toast.body", Colors.success)
 	var toast := DesktopToast.toasts[before]
 	assert(toast.title_text == "Translated toast")
 	assert(toast.body_text == "Translated body")
@@ -115,12 +115,12 @@ func DesktopToast_relayout_test() -> void:
 ## [method DesktopToast.show_toast] mounts the toast window, [method DesktopToast.close_toast] retires it.
 func DesktopToast_show_toast_test() -> void:
 	var before: int = DesktopToast.toasts.size()
-	DesktopToast.show_toast("feedback toast", "run finished", ColorBase.success)
+	DesktopToast.show_toast("feedback toast", "run finished", Colors.success)
 	assert(DesktopToast.toasts.size() == before + 1)
 	var toast: DesktopToast = DesktopToast.toasts[before]
 	assert(toast.title_text == "feedback toast")
 	assert(toast.body_text == "run finished")
-	assert(toast.accent == ColorBase.success)
+	assert(toast.accent == Colors.success)
 	assert(toast.toast_corner == Corner.CORNER_BOTTOM_RIGHT)
 	assert(toast.is_inside_tree())
 	assert(toast.size.x == roundi(DesktopToast.CARD_WIDTH * DisplayScale.compute_ui_scale()))
@@ -140,7 +140,7 @@ func DesktopToast_show_toast_test() -> void:
 ## The optional fourth argument selects a corner without changing the bottom-right default.
 func DesktopToast_show_toast_in_corner_test() -> void:
 	var before: int = DesktopToast.toasts.size()
-	DesktopToast.show_toast("feedback toast", "run finished", ColorBase.success, Corner.CORNER_TOP_LEFT)
+	DesktopToast.show_toast("feedback toast", "run finished", Colors.success, Corner.CORNER_TOP_LEFT)
 	var toast: DesktopToast = DesktopToast.toasts[before]
 	assert(toast.toast_corner == Corner.CORNER_TOP_LEFT)
 	assert(toast.position == DesktopToast.corner_position(toast.size, Corner.CORNER_TOP_LEFT))
@@ -151,7 +151,7 @@ func DesktopToast_show_toast_in_corner_test() -> void:
 ## The toast must stay out of the native popup list: a display-server popup redirects every key event
 ## to itself and swallows clicks landing on the app window, so the app looks frozen while it lives.
 func DesktopToast_no_popup_window_test() -> void:
-	DesktopToast.show_toast("feedback toast", "run finished", ColorBase.success)
+	DesktopToast.show_toast("feedback toast", "run finished", Colors.success)
 	var toast: DesktopToast = DesktopToast.toasts.back()
 	await ThreadUtils.async_sleep(100)
 	assert(!toast.popup_window)

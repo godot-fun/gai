@@ -80,9 +80,9 @@ static func decode_image(bytes: PackedByteArray) -> Image:
 # ----------------------------------------------------------------------------------------------------------------------
 ## Creates a theme-aware image card shown while remote content is loading.
 static func create_placeholder_texture(width: int = 160, height: int = 90) -> ImageTexture:
-	var background := ColorBase.control_surface.to_html(false)
-	var border := ColorBase.subtle_border.to_html(false)
-	var icon := ColorBase.secondary_text.to_html(false)
+	var background := Colors.control_surface.to_html(false)
+	var border := Colors.subtle_border.to_html(false)
+	var icon := Colors.secondary_text.to_html(false)
 	var svg_template := """
 	<svg xmlns="http://www.w3.org/2000/svg" width="{}" height="{}" viewBox="0 0 160 90">
 	<rect x="0.5" y="0.5" width="159" height="89" rx="8" fill="#{}" stroke="#{}"/>
@@ -96,5 +96,5 @@ static func create_placeholder_texture(width: int = 160, height: int = 90) -> Im
 	var image := Image.new()
 	if image.load_svg_from_buffer(svg.to_utf8_buffer()) != OK:
 		image = Image.create(width, height, false, Image.FORMAT_RGBA8)
-		image.fill(ColorBase.control_surface)
+		image.fill(Colors.control_surface)
 	return ImageTexture.create_from_image(image)

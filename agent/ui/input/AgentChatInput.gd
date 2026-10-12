@@ -372,7 +372,7 @@ func set_send_effect_state(state: int) -> void:
 			material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
 			material.set_shader_parameter("hover_strength", send_effect_hover)
 		SendEffectState.STOP:
-			material.set_shader_parameter("error_color", ColorBase.error)
+			material.set_shader_parameter("error_color", Colors.error)
 			material.set_shader_parameter("hover_strength", send_effect_hover)
 	pass
 
@@ -507,7 +507,7 @@ func refresh_queue() -> void:
 	title.text = StringUtils.format(I18n.t("agent.input.queued"), session.pending_messages.size())
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_theme_font_override("font", Fonts.semibold())
-	title.add_theme_color_override("font_color", ColorBase.secondary_text)
+	title.add_theme_color_override("font_color", Colors.secondary_text)
 	header.add_child(title)
 	if not RuntimeManager.is_running(session.id):
 		var continue_button := Button.new()
@@ -527,7 +527,7 @@ func refresh_queue() -> void:
 		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		label.tooltip_text = queued
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		label.add_theme_color_override("font_color", ColorBase.primary_text)
+		label.add_theme_color_override("font_color", Colors.primary_text)
 		row.add_child(label)
 		var delete_button := Button.new()
 		delete_button.tooltip_text = I18n.t("agent.input.delete_queued")

@@ -89,8 +89,8 @@ func on_workspace_changed(_path: String) -> void:
 
 func apply_theme() -> void:
 	sidebar_panel.add_theme_stylebox_override("panel", SessionSidebarTheme.sidebar_panel())
-	pinned_header.add_theme_color_override("font_color", ColorBase.secondary_text)
-	normal_header.add_theme_color_override("font_color", ColorBase.secondary_text)
+	pinned_header.add_theme_color_override("font_color", Colors.secondary_text)
+	normal_header.add_theme_color_override("font_color", Colors.secondary_text)
 	pinned_separator.add_theme_stylebox_override("separator", SessionSidebarTheme.pinned_separator())
 	ScrollBarStyle.apply(session_list_scroll.get_v_scroll_bar())
 	SessionSidebarTheme.apply_new_session_button(new_session_button)

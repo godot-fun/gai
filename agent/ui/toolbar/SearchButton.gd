@@ -183,7 +183,7 @@ func on_mouse_exited() -> void:
 
 
 func update_icon(hovered: bool) -> void:
-	button.icon = make_icon(SEARCH_ICON_PATH, ColorBase.primary_text if hovered else ColorBase.secondary_text)
+	button.icon = make_icon(SEARCH_ICON_PATH, Colors.primary_text if hovered else Colors.secondary_text)
 	pass
 
 
@@ -355,9 +355,9 @@ func style_close_button() -> void:
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, int(ControlSize.lg * 0.5))
 	ButtonStyle.apply(close_button, normal, normal.duplicate() as StyleBoxFlat, normal.duplicate() as StyleBoxFlat)
 	close_button.add_theme_color_override("icon_normal_color", Color(ThemeColor.body_color, 0.75))
-	close_button.add_theme_color_override("icon_hover_color", Color(ColorBase.error, 0.70))
-	close_button.add_theme_color_override("icon_pressed_color", ColorBase.error)
-	close_button.add_theme_color_override("icon_hover_pressed_color", ColorBase.error)
+	close_button.add_theme_color_override("icon_hover_color", Color(Colors.error, 0.70))
+	close_button.add_theme_color_override("icon_pressed_color", Colors.error)
+	close_button.add_theme_color_override("icon_hover_pressed_color", Colors.error)
 	pass
 
 

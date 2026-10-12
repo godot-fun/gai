@@ -217,7 +217,7 @@ func paint_canvas(node: Control) -> void:
 	var h := float(WAVE_HEIGHT) * s
 	var mid_y := h * 0.5
 	var max_amp := h * 0.5 - 2.0 * s
-	var accent := ThemeColor.accent_theme_color() if phase == Phase.RECORDING else ColorBase.info
+	var accent := ThemeColor.accent_theme_color() if phase == Phase.RECORDING else Colors.info
 	var a := fade
 	var k := TAU * float(WAVE_CYCLES) / w
 	var points := PackedVector2Array()

@@ -259,8 +259,8 @@ func apply_theme() -> void:
 	if shader_material == null:
 		return
 	shader_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
-	shader_material.set_shader_parameter("success_color", ColorBase.success)
-	shader_material.set_shader_parameter("error_color", ColorBase.error)
+	shader_material.set_shader_parameter("success_color", Colors.success)
+	shader_material.set_shader_parameter("error_color", Colors.error)
 	tool_name_label.add_theme_font_override("font", Fonts.semibold())
 	tool_name_label.add_theme_font_size_override("font_size", Typography.label_large_size)
 	tool_status_label.add_theme_font_override("font", Fonts.medium())
@@ -288,7 +288,7 @@ func apply_tool_badge_style() -> void:
 	if tool_badge == null:
 		return
 	var state_color := tool_badge_color()
-	var panel_style := StyleBoxHelper.create_style_box_flat(Color(ColorBase.deep_surface, 0.82), ControlSize.radius_md, Margin.ma_3, Margin.ma_2, Color(state_color, 0.52), ControlSize.border_xs)
+	var panel_style := StyleBoxHelper.create_style_box_flat(Color(Colors.deep_surface, 0.82), ControlSize.radius_md, Margin.ma_3, Margin.ma_2, Color(state_color, 0.52), ControlSize.border_xs)
 	tool_badge.add_theme_stylebox_override("panel", panel_style)
 	tool_name_label.add_theme_color_override("font_color", state_color)
 	tool_status_label.add_theme_color_override("font_color", Color(state_color, 0.78))
@@ -298,9 +298,9 @@ func apply_tool_badge_style() -> void:
 func tool_badge_color() -> Color:
 	match tool_badge_state:
 		ToolBadgeState.RETURNING, ToolBadgeState.COMPLETE:
-			return ColorBase.success
+			return Colors.success
 		ToolBadgeState.FAILED:
-			return ColorBase.error
+			return Colors.error
 	return ThemeColor.accent_theme_color()
 
 

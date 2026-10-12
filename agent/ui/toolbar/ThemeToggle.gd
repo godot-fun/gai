@@ -67,10 +67,10 @@ func update_icon(hovered: bool) -> void:
 			moon_color = moon_color.lightened(0.12)
 		button.icon = make_moon_icon(moon_color)
 		return
-	var body: Color = ColorBase.secondary_text
+	var body: Color = Colors.secondary_text
 	var rays: Color = ThemeColor.accent_theme_color().darkened(0.18)
 	if hovered:
-		body = ColorBase.primary_text
+		body = Colors.primary_text
 		rays = rays.lightened(0.12)
 	button.icon = make_sun_icon(body, rays)
 	pass

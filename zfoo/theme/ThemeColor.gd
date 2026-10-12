@@ -82,7 +82,7 @@ const SELECTION_MIX := 0.30
 ## User-selected accent color; its alpha is preserved for translucent theme effects.
 static var theme_color: Color = DEFAULT_THEME_COLOR
 ## Background for floating windows and outer panels.
-static var accent_surface: Color = ColorBase.DARK_SURFACE
+static var accent_surface: Color = Colors.DARK_SURFACE
 ## Background for content areas inside those panels.
 static var inset_surface := Color(0.09, 0.10, 0.12)
 ## Background for cards inside a content area.
@@ -90,9 +90,9 @@ static var card_surface := Color(0.14, 0.15, 0.18)
 ## Large-area surface color for selected rows, nodes and pressed controls.
 static var selected_surface: Color = DARK_SELECTED_SURFACE_BASE
 ## High-contrast primary text color displayed on accent-derived card surfaces.
-static var title_color: Color = ColorBase.DARK_TEXT
+static var title_color: Color = Colors.DARK_TEXT
 ## Lower-emphasis secondary text and resting control color on accent-derived surfaces.
-static var body_color: Color = ColorBase.DARK_MUTED
+static var body_color: Color = Colors.DARK_MUTED
 ## Text-selection background color used by editable and selectable text controls.
 static var selection_color := Color(0.12, 0.29, 0.25)
 
@@ -124,7 +124,7 @@ static func alpha_theme_color(alpha: float) -> Color:
 ## Refresh every palette derived from the active appearance. Cards follow the accent hue; semantic,
 ## markdown and file colors select their hand-tuned dark or light variants.
 static func refresh_derived_colors() -> void:
-	ColorBase.refresh()
+	Colors.refresh()
 	refresh_theme_colors()
 	ColorMarkdown.refresh()
 	ColorFile.refresh()

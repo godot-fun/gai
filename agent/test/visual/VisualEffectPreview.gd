@@ -112,24 +112,24 @@ func make_effect_button(label: String, visual_type: int, turn_count: int, large:
 
 
 func apply_theme() -> void:
-	background.color = ColorBase.app_background
+	background.color = Colors.app_background
 	title_label.add_theme_font_override("font", Fonts.semibold())
 	title_label.add_theme_font_size_override("font_size", Typography.title_large_size)
-	title_label.add_theme_color_override("font_color", ColorBase.primary_text)
+	title_label.add_theme_color_override("font_color", Colors.primary_text)
 	for label: Label in [hint_label, status_label, small_row_label, large_row_label]:
 		label.add_theme_font_override("font", Fonts.regular())
 		label.add_theme_font_size_override("font_size", Typography.body_medium_size)
-		label.add_theme_color_override("font_color", ColorBase.secondary_text)
+		label.add_theme_color_override("font_color", Colors.secondary_text)
 	var buttons: Array[Button] = [stop_button]
 	buttons.append_array(play_buttons)
 	for button: Button in buttons:
 		button.add_theme_font_override("font", Fonts.medium())
 		button.add_theme_font_size_override("font_size", Typography.label_large_size)
-		var normal := StyleBoxHelper.create_style_box_flat(ColorBase.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1, ColorBase.subtle_border, ControlSize.border_xs)
+		var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1, Colors.subtle_border, ControlSize.border_xs)
 		ButtonStyle.apply(button, normal,
-			ButtonStyle.filled(normal, ButtonStyle.hover_color(ColorBase.control_surface)),
-			ButtonStyle.filled(normal, ButtonStyle.press_color(ColorBase.control_surface)))
-		ButtonStyle.apply_font_colors(button, ColorBase.secondary_text, ColorBase.primary_text, ThemeColor.accent_theme_color())
+			ButtonStyle.filled(normal, ButtonStyle.hover_color(Colors.control_surface)),
+			ButtonStyle.filled(normal, ButtonStyle.press_color(Colors.control_surface)))
+		ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, ThemeColor.accent_theme_color())
 	pass
 
 

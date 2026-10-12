@@ -78,7 +78,7 @@ func draw_labels(canvas: Control, center: Vector2, half_width: float, yang_y: fl
 
 func draw_centered_label(canvas: Control, font: Font, text: String, position: Vector2, font_size: int, alpha: float) -> void:
 	TaiChiGlowDrawing.draw_centered_text(canvas, font, text, position, font_size, alpha * 0.72,
-		ColorBase.secondary_text)
+		Colors.secondary_text)
 	pass
 
 

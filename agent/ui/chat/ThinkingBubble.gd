@@ -25,7 +25,7 @@ static func append(
 
 	var title_label: Label = Label.new()
 	title_label.text = entry.title
-	title_label.add_theme_color_override("font_color", ColorBase.purple)
+	title_label.add_theme_color_override("font_color", Colors.purple)
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	header.add_child(title_label)
 
@@ -36,13 +36,13 @@ static func append(
 	header.add_child(view_button)
 
 	var line_label: Label = Label.new()
-	line_label.add_theme_color_override("font_color", ColorBase.secondary_text)
+	line_label.add_theme_color_override("font_color", Colors.secondary_text)
 	line_label.add_theme_font_size_override("font_size", Typography.label_small_size)
 	header.add_child(line_label)
 
 	vbox.add_child(header)
 
-	var rich_text: RichTextLabel = MarkdownHelper.create_plain_rich_text_label(ColorBase.secondary_text)
+	var rich_text: RichTextLabel = MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
 	ChatBubblePreview.enable_fixed_height_at_limit(rich_text)
 	vbox.add_child(rich_text)
 
@@ -57,11 +57,11 @@ static func style_view_button(button: Button) -> void:
 	button.tooltip_text = "View full thinking"
 	button.custom_minimum_size = Vector2(22, 18)
 	button.add_theme_font_size_override("font_size", Typography.label_small_size)
-	ButtonStyle.apply_font_colors(button, ColorBase.purple, ButtonStyle.hover_color(ColorBase.purple, 0.12), ButtonStyle.press_color(ColorBase.purple, 0.08))
+	ButtonStyle.apply_font_colors(button, Colors.purple, ButtonStyle.hover_color(Colors.purple, 0.12), ButtonStyle.press_color(Colors.purple, 0.08))
 
-	var border := ButtonStyle.press_color(ColorBase.purple)
-	var normal := StyleBoxHelper.create_style_box_flat(ButtonStyle.hover_color(ColorBase.purple_surface, 0.08), 4, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
+	var border := ButtonStyle.press_color(Colors.purple)
+	var normal := StyleBoxHelper.create_style_box_flat(ButtonStyle.hover_color(Colors.purple_surface, 0.08), 4, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
 	ButtonStyle.apply(button, normal,
-		ButtonStyle.filled(normal, ButtonStyle.hover_color(ColorBase.purple_surface, 0.16), ColorBase.purple),
-		ButtonStyle.filled(normal, ButtonStyle.press_color(ColorBase.purple_surface, 0.06), ColorBase.purple))
+		ButtonStyle.filled(normal, ButtonStyle.hover_color(Colors.purple_surface, 0.16), Colors.purple),
+		ButtonStyle.filled(normal, ButtonStyle.press_color(Colors.purple_surface, 0.06), Colors.purple))
 	pass

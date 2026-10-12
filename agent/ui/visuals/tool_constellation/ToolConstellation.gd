@@ -363,7 +363,7 @@ func draw_constellation_links(center: Vector2, fade: float) -> void:
 		if group.size() < 2:
 			continue
 		var current_turn := turn == turn_index
-		var link_color := accent if current_turn else ColorBase.secondary_text
+		var link_color := accent if current_turn else Colors.secondary_text
 		var alpha := (0.22 if current_turn else 0.1) * fade
 		var points := angled_constellation_points(group, center)
 		for edge in range(points.size()):
@@ -406,8 +406,8 @@ func draw_core(center: Vector2, fade: float) -> void:
 		var halo_radius := TERMINAL_SIZE.x * (0.54 + float(halo_index) * 0.07)
 		draw_arc(center, halo_radius, -PI * 0.86, PI * 0.16, 72, Color(accent, (0.13 - halo_index * 0.045) * fade), 1.2, true)
 	if absorb_flash > 0.02:
-		draw_rect(terminal_rect.grow(8.0 + (1.0 - absorb_flash) * 12.0), Color(ColorBase.success, 0.26 * absorb_flash * fade), false, 2.0)
-	draw_rect(terminal_rect, Color(ColorBase.deep_surface, 0.98 * fade))
+		draw_rect(terminal_rect.grow(8.0 + (1.0 - absorb_flash) * 12.0), Color(Colors.success, 0.26 * absorb_flash * fade), false, 2.0)
+	draw_rect(terminal_rect, Color(Colors.deep_surface, 0.98 * fade))
 	draw_rect(terminal_rect, Color(accent, (0.72 + breath * 0.18) * fade), false, 2.0)
 	var title_rect := Rect2(terminal_rect.position, Vector2(terminal_rect.size.x, 25.0))
 	draw_rect(title_rect, Color(accent, 0.1 * fade))
@@ -435,20 +435,20 @@ func draw_terminal_content(rect: Rect2, accent: Color, fade: float, glitch_stren
 	draw_string(font, text_origin + Vector2(0.0, 18.0), lines[0], HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 24.0, font_size, Color(accent, 0.76 * fade))
 	draw_string(font, text_origin + Vector2(0.0, 35.0), "%s%s" % [lines[1], "▋" if cursor_on else " "], HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 24.0, font_size, Color(accent, 0.86 * fade))
 	var card_rect := Rect2(rect.position + Vector2(10.0, 92.0), Vector2(rect.size.x - 20.0, 66.0))
-	var card_color := ColorBase.error if glitch_strength > 0.0 else accent
+	var card_color := Colors.error if glitch_strength > 0.0 else accent
 	draw_rect(card_rect, Color(card_color, (0.08 + glitch_strength * 0.12) * fade))
 	draw_rect(card_rect, Color(card_color, 0.48 * fade), false, 1.0)
 	draw_string(Fonts.semibold(), card_rect.position + Vector2(9.0, 18.0), "$ %s" % current_tool_name(), HORIZONTAL_ALIGNMENT_LEFT, card_rect.size.x - 76.0, font_size, Color(card_color, 0.92 * fade))
 	draw_string(Fonts.semibold(), card_rect.position + Vector2(-9.0, 18.0), current_tool_status(), HORIZONTAL_ALIGNMENT_RIGHT, card_rect.size.x, font_size, Color(card_color, 0.86 * fade))
 	draw_line(card_rect.position + Vector2(9.0, 27.0), card_rect.position + Vector2(card_rect.size.x - 9.0, 27.0), Color(card_color, 0.24 * fade), 1.0)
-	draw_string(font, card_rect.position + Vector2(9.0, 47.0), current_command_arguments(), HORIZONTAL_ALIGNMENT_LEFT, card_rect.size.x - 18.0, font_size, Color(ColorBase.primary_text, 0.82 * fade))
+	draw_string(font, card_rect.position + Vector2(9.0, 47.0), current_command_arguments(), HORIZONTAL_ALIGNMENT_LEFT, card_rect.size.x - 18.0, font_size, Color(Colors.primary_text, 0.82 * fade))
 	if glitch_strength > 0.0:
 		# These deterministic moving slices mimic horizontal sync loss without introducing
 		# random state, which keeps previews and tests reproducible.
 		for slice_index in range(3):
 			var y := rect.position.y + 34.0 + fmod(elapsed * 173.0 + slice_index * 29.0, rect.size.y - 38.0)
 			var offset := sin(elapsed * 83.0 + slice_index) * 12.0 * glitch_strength
-			draw_line(Vector2(rect.position.x + offset, y), Vector2(rect.end.x + offset, y), Color(ColorBase.error, 0.48 * fade), 2.0 + slice_index, true)
+			draw_line(Vector2(rect.position.x + offset, y), Vector2(rect.end.x + offset, y), Color(Colors.error, 0.48 * fade), 2.0 + slice_index, true)
 	pass
 
 
@@ -467,7 +467,7 @@ func draw_crt_vignette(rect: Rect2, fade: float) -> void:
 	# Layered top/bottom strips approximate curved glass without a shader or extra CanvasItem.
 	for edge_index in range(4):
 		var inset := float(edge_index) * 3.0
-		var shade := Color(ColorBase.deep_surface, (0.22 - edge_index * 0.04) * fade)
+		var shade := Color(Colors.deep_surface, (0.22 - edge_index * 0.04) * fade)
 		draw_rect(Rect2(rect.position + Vector2(inset, inset), Vector2(rect.size.x - inset * 2.0, 3.0)), shade)
 		draw_rect(Rect2(Vector2(rect.position.x + inset, rect.end.y - inset - 3.0), Vector2(rect.size.x - inset * 2.0, 3.0)), shade)
 	pass
@@ -549,7 +549,7 @@ func draw_connection(node: Dictionary, center: Vector2, position: Vector2, fade:
 	var growth: float = node["growth"]
 	var state: int = node["state"]
 	var accent := ThemeColor.accent_theme_color()
-	var color := accent if state == ExecutionState.RUNNING else (ColorBase.success if state == ExecutionState.SUCCESS else ColorBase.error)
+	var color := accent if state == ExecutionState.RUNNING else (Colors.success if state == ExecutionState.SUCCESS else Colors.error)
 	var points := curved_path(center, position, int(node["sequence"]))
 	var visible_points := partial_path(points, growth)
 	if state == ExecutionState.FAILED:
@@ -568,7 +568,7 @@ func draw_connection(node: Dictionary, center: Vector2, position: Vector2, fade:
 			var progress := fmod(elapsed * 0.55 + float(packet_index) / float(PACKET_COUNT), 1.0)
 			draw_packet_streak(points, progress * growth, Color(accent, fade), true)
 	elif state == ExecutionState.SUCCESS and float(node["settle"]) < 0.98:
-		draw_packet_streak(points, 1.0 - clampf(float(node["settle"]), 0.0, 1.0), Color(ColorBase.success, fade), false)
+		draw_packet_streak(points, 1.0 - clampf(float(node["settle"]), 0.0, 1.0), Color(Colors.success, fade), false)
 	pass
 
 
@@ -596,7 +596,7 @@ func draw_failure_sparks(points: PackedVector2Array, color: Color, fade: float) 
 func draw_tool_node(node: Dictionary, position: Vector2, center: Vector2, fade: float) -> void:
 	var state: int = node["state"]
 	var accent := ThemeColor.accent_theme_color()
-	var state_color := accent if state == ExecutionState.RUNNING else (ColorBase.success if state == ExecutionState.SUCCESS else ColorBase.error)
+	var state_color := accent if state == ExecutionState.RUNNING else (Colors.success if state == ExecutionState.SUCCESS else Colors.error)
 	var growth: float = node["growth"]
 	var node_radius := NODE_RADIUS * growth
 	if state != ExecutionState.RUNNING:
@@ -613,7 +613,7 @@ func draw_tool_node(node: Dictionary, position: Vector2, center: Vector2, fade: 
 	elif highlight > 0.05:
 		draw_circle(position, node_radius + 10.0, Color(accent, 0.06 * highlight * alpha))
 	var hex := hexagon_points(position, node_radius)
-	draw_colored_polygon(hex, Color(ColorBase.deep_surface, 0.97 * alpha))
+	draw_colored_polygon(hex, Color(Colors.deep_surface, 0.97 * alpha))
 	# Motif owns the hex interior; glyph sits above so letters and icons no longer fight.
 	draw_family_motif(position, node_radius * 0.78, int(node["family"]), state_color, alpha * 0.88)
 	var outline := PackedVector2Array(hex)
@@ -632,11 +632,11 @@ func draw_tool_node(node: Dictionary, position: Vector2, center: Vector2, fade: 
 			draw_circle(position + Vector2.from_angle(satellite_angle) * (node_radius + 15.0), 2.6, Color(state_color, 0.85 * alpha))
 	draw_centered_text(position + Vector2(0.0, -node_radius - Margin.ma_2), VisualToolFormatter.glyph(String(node["name"])), Fonts.semibold(), Typography.label_small_size, Color(state_color, 0.85 * alpha))
 	var label_position := position + Vector2(0.0, node_radius + Margin.ma_5)
-	draw_centered_text(label_position, VisualToolFormatter.title_name(String(node["name"])), Fonts.semibold(), Typography.label_medium_size, Color(ColorBase.primary_text, alpha))
+	draw_centered_text(label_position, VisualToolFormatter.title_name(String(node["name"])), Fonts.semibold(), Typography.label_medium_size, Color(Colors.primary_text, alpha))
 	if state == ExecutionState.RUNNING:
 		draw_centered_text(label_position + Vector2(0.0, Margin.ma_4), I18n.t("agent.visuals.running"), Fonts.medium(), Typography.label_small_size, Color(state_color, 0.9 * alpha))
 		if int(node["arg_count"]) > 0:
-			draw_centered_text(label_position + Vector2(0.0, Margin.ma_8), StringUtils.format(I18n.t("agent.visuals.args"), int(node["arg_count"])), Fonts.regular(), Typography.label_small_size, Color(ColorBase.secondary_text, alpha))
+			draw_centered_text(label_position + Vector2(0.0, Margin.ma_8), StringUtils.format(I18n.t("agent.visuals.args"), int(node["arg_count"])), Fonts.regular(), Typography.label_small_size, Color(Colors.secondary_text, alpha))
 	elif state == ExecutionState.FAILED:
 		draw_centered_text(label_position + Vector2(0.0, Margin.ma_4), I18n.t("agent.visuals.failed"), Fonts.medium(), Typography.label_small_size, Color(state_color, 0.9 * alpha))
 	pass
@@ -694,7 +694,7 @@ func draw_family_motif(center: Vector2, radius: float, family: int, color: Color
 
 
 func draw_completion_dust(center: Vector2) -> void:
-	var accent := ThemeColor.accent_theme_color() if not ended_with_error else ColorBase.error
+	var accent := ThemeColor.accent_theme_color() if not ended_with_error else Colors.error
 	var ease := completion * completion
 	for index in range(DUST_COUNT):
 		var angle := float(index) * GOLDEN_ANGLE + elapsed * 0.2

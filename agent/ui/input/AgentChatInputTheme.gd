@@ -13,7 +13,7 @@ static func apply_wrap(input_wrap: PanelContainer, expanded: bool) -> void:
 
 static func build_wrap_style(expanded: bool) -> StyleBoxFlat:
 	var radius := 16 if expanded else int(ControlSize.xl / 2)
-	var wrap_style := StyleBoxHelper.create_style_box_flat(ColorBase.surface, radius, Margin.ma_1, Margin.ma_1)
+	var wrap_style := StyleBoxHelper.create_style_box_flat(Colors.surface, radius, Margin.ma_1, Margin.ma_1)
 	if ThemeColor.is_dark_theme():
 		wrap_style.shadow_color = Color(0, 0, 0, 0.40)
 		wrap_style.shadow_size = 16 if expanded else 10
@@ -32,9 +32,9 @@ static func apply_field(input_field: TextEdit) -> void:
 	input_field.add_theme_stylebox_override("focus", input_style.duplicate())
 	input_field.add_theme_stylebox_override("read_only", input_style.duplicate())
 	input_field.add_theme_font_override("font", Fonts.regular())
-	input_field.add_theme_color_override("font_color", ColorBase.primary_text)
-	input_field.add_theme_color_override("font_placeholder_color", ColorBase.secondary_text)
-	input_field.add_theme_color_override("font_readonly_color", ColorBase.secondary_text)
+	input_field.add_theme_color_override("font_color", Colors.primary_text)
+	input_field.add_theme_color_override("font_placeholder_color", Colors.secondary_text)
+	input_field.add_theme_color_override("font_readonly_color", Colors.secondary_text)
 	input_field.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
 	input_field.add_theme_color_override("font_selected_color", ThemeColor.title_color)
 	input_field.add_theme_color_override("selection_color", ThemeColor.selection_color)
@@ -76,7 +76,7 @@ static func apply_queue_badge(badge: Label, collapsed: bool, queue_count: int) -
 	badge.add_theme_font_override("font", Fonts.semibold())
 	badge.add_theme_font_size_override("font_size", Typography.label_small_size)
 	badge.add_theme_color_override("font_color", Color.WHITE)
-	var badge_color := ColorBase.error.lerp(ColorBase.surface, 0.15)
+	var badge_color := Colors.error.lerp(Colors.surface, 0.15)
 	badge.add_theme_stylebox_override("normal", StyleBoxHelper.create_style_box_flat(
 		badge_color, Margin.ma_2 + 1, 0, 0))
 	pass

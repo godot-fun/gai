@@ -8,11 +8,11 @@ const RADIO_ICON_SIZE: int = Margin.ma_4
 
 static func apply(popup: PopupMenu) -> void:
 	popup.add_theme_font_override("font", Fonts.regular())
-	popup.add_theme_color_override("font_color", ColorBase.primary_text)
-	popup.add_theme_color_override("font_hover_color", ColorBase.primary_text)
-	popup.add_theme_color_override("font_accelerator_color", ColorBase.secondary_text)
-	popup.add_theme_color_override("font_disabled_color", ColorBase.secondary_text)
-	popup.add_theme_color_override("font_separator_color", ColorBase.secondary_text)
+	popup.add_theme_color_override("font_color", Colors.primary_text)
+	popup.add_theme_color_override("font_hover_color", Colors.primary_text)
+	popup.add_theme_color_override("font_accelerator_color", Colors.secondary_text)
+	popup.add_theme_color_override("font_disabled_color", Colors.secondary_text)
+	popup.add_theme_color_override("font_separator_color", Colors.secondary_text)
 	popup.add_theme_font_size_override("font_size", Typography.label_large_size)
 	popup.add_theme_constant_override("v_separation", Margin.ma_2)
 	popup.add_theme_constant_override("item_start_padding", Margin.ma_3)
@@ -20,7 +20,7 @@ static func apply(popup: PopupMenu) -> void:
 	popup.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, ControlSize.radius_lg, Margin.ma_1, Margin.ma_1, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs))
 	popup.add_theme_stylebox_override("hover", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, ControlSize.radius_md, Margin.ma_2, 0))
 	popup.add_theme_icon_override("radio_checked", make_radio_icon(true, ThemeColor.accent_theme_color()))
-	popup.add_theme_icon_override("radio_unchecked", make_radio_icon(false, ColorBase.secondary_text))
+	popup.add_theme_icon_override("radio_unchecked", make_radio_icon(false, Colors.secondary_text))
 	pass
 
 
