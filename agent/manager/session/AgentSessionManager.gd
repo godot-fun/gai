@@ -310,11 +310,13 @@ static func delete_chat_from_entry(session_id: int, entry: ChatEntry) -> void:
 	if entry_idx < 0:
 		return
 	var message_idx := message_index_for_chat_entry(session, entry_idx)
-	if message_idx >= 0:
+	if entry.kind == ChatEntry.KIND_USER:
 		session.chat_entries = session.chat_entries.slice(0, entry_idx)
 		session.messages = session.messages.slice(0, message_idx)
 	else:
 		session.chat_entries.remove_at(entry_idx)
+		if message_idx >= 0:
+			session.messages.remove_at(message_idx)
 	persist_session(session_id)
 	AgentEvents.events.chat_entry_delete.emit(session_id)
 	pass
