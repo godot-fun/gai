@@ -30,7 +30,6 @@ func setup(text: String, tooltip: String, icon: Texture2D, is_header: bool) -> v
 	action_button = Button.new()
 	action_button.icon = icon
 	action_button.tooltip_text = tooltip
-	action_button.custom_minimum_size = ControlSize.square(ControlSize.xs)
 	action_button.focus_mode = Control.FOCUS_NONE
 	action_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	action_button.pressed.connect(action_pressed.emit)
@@ -39,12 +38,13 @@ func setup(text: String, tooltip: String, icon: Texture2D, is_header: bool) -> v
 	for control: Control in [self, content, title, action_button]:
 		control.mouse_entered.connect(on_mouse_entered)
 		control.mouse_exited.connect(on_mouse_exited)
+	AgentChatInputTheme.apply_queue_action_button(action_button)
 	apply_theme()
 	pass
 
 
 func apply_theme() -> void:
-	AgentChatInputTheme.apply_queue_row(self, title, action_button, header, hovered)
+	AgentChatInputTheme.apply_queue_row(self, title, header, hovered)
 	pass
 
 

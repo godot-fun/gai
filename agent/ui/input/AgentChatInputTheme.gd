@@ -89,8 +89,7 @@ static func apply_queue_scroll(scroll: ScrollContainer) -> void:
 	pass
 
 
-static func apply_queue_row(row: PanelContainer, title: Label, action_button: Button,
-		header: bool, hovered: bool) -> void:
+static func apply_queue_row(row: PanelContainer, title: Label, header: bool, hovered: bool) -> void:
 	var guide_color := Color(Colors.border, 0.65)
 	var row_style := StyleBoxHelper.create_style_box_flat(
 		Colors.hover_surface if hovered else Color.TRANSPARENT, ControlSize.radius_md,
@@ -101,7 +100,6 @@ static func apply_queue_row(row: PanelContainer, title: Label, action_button: Bu
 	title.add_theme_font_override("font", Fonts.semibold() if header else Fonts.regular())
 	title.add_theme_color_override("font_color",
 		Colors.primary_text if hovered or not header else Colors.secondary_text)
-	apply_queue_action_button(action_button)
 	pass
 
 
@@ -114,8 +112,10 @@ static func apply_queue_action_button(button: Button) -> void:
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.add_theme_constant_override("icon_max_width", ControlSize.xs)
 	button.add_theme_constant_override("icon_max_height", ControlSize.xs)
-	var normal := StyleBoxHelper.create_style_box_flat(	Color.TRANSPARENT, ControlSize.sm / 2, Margin.ma_1, Margin.ma_1)
-	ButtonStyle.apply(button, normal, ButtonStyle.filled(normal, ThemeColor.selected_surface), ButtonStyle.filled(normal, ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), Colors.am_2)))
+	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.sm / 2, Margin.ma_1, Margin.ma_1)
+	ButtonStyle.apply(button, normal,
+		ButtonStyle.filled(normal, ThemeColor.selected_surface),
+		ButtonStyle.filled(normal, ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), Colors.am_2)))
 	pass
 
 

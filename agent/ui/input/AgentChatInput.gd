@@ -117,7 +117,6 @@ func setup_queue_controls() -> void:
 	queue_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	queue_rows.add_theme_constant_override("separation", Margin.ma_0)
 	queue_scroll.add_child(queue_rows)
-	AgentChatInputTheme.apply_queue_scroll(queue_scroll)
 	pass
 
 
@@ -506,7 +505,8 @@ func refresh_queue() -> void:
 		layout_queue_panel()
 		return
 
-	queue_scroll.custom_minimum_size.y = minf((session.pending_messages.size() + 1) * ControlSize.lg, ControlSize.lg * 5)
+	queue_scroll.custom_minimum_size.y = mini(
+		session.pending_messages.size() + 1, 5) * ControlSize.lg
 	var header := AgentQueueRow.new()
 	header.setup(
 		StringUtils.format(I18n.t("agent.input.queued"), session.pending_messages.size()),
@@ -529,6 +529,8 @@ func refresh_queue() -> void:
 	refresh_send_button()
 	layout_queue_panel.call_deferred()
 	pass
+
+
 func apply_queue_theme() -> void:
 	# Keep the queue visually quieter than the composer, without stacking another floating shadow.
 	var style := AgentChatInputTheme.build_wrap_style(true)
