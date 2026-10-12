@@ -78,7 +78,6 @@ static var error: Color = DARK_ERROR
 static var info: Color = DARK_INFO
 static var warning: Color = DARK_WARNING
 static var success: Color = DARK_SUCCESS
-static var purple: Color = DARK_PURPLE
 
 ## Main application canvas behind panels and content.
 static var app_background: Color = DARK_BACKGROUND
