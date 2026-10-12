@@ -82,17 +82,26 @@ static func apply_queue_badge(badge: Label, collapsed: bool, queue_count: int) -
 	pass
 
 
-static func apply_queue_delete_button(delete_button: Button) -> void:
-	AgentToolbarButton.style_round(delete_button, delete_button.tooltip_text)
-	delete_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	delete_button.icon = make_trash_icon(ControlSize.xs, ThemeColor.accent_theme_color())
+static func apply_queue_scroll(scroll: ScrollContainer) -> void:
+	var empty := StyleBoxEmpty.new()
+	scroll.add_theme_stylebox_override("panel", empty)
+	ScrollBarStyle.apply(scroll.get_v_scroll_bar())
 	pass
 
 
-static func apply_queue_continue_button(continue_button: Button) -> void:
-	AgentToolbarButton.style_round(continue_button, continue_button.tooltip_text)
-	continue_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	continue_button.icon = make_resume_icon(ControlSize.xs, ThemeColor.accent_theme_color())
+static func apply_queue_row(row: PanelContainer, title: Label, action_button: Button,
+		header: bool, hovered: bool) -> void:
+	var guide_color := Color(Colors.border, 0.65)
+	var row_style := StyleBoxHelper.create_style_box_flat(
+		Colors.hover_surface if hovered else Color.TRANSPARENT, ControlSize.radius_md,
+		Margin.ma_1, Margin.ma_1)
+	row_style.border_color = guide_color
+	row_style.set_border_width(SIDE_BOTTOM, ControlSize.border_xs)
+	row.add_theme_stylebox_override("panel", row_style)
+	title.add_theme_font_override("font", Fonts.semibold() if header else Fonts.regular())
+	title.add_theme_color_override("font_color",
+		Colors.primary_text if hovered or not header else Colors.secondary_text)
+	AgentToolbarButton.style_round(action_button, action_button.tooltip_text)
 	pass
 
 

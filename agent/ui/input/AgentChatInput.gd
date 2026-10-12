@@ -26,6 +26,7 @@ var send_button: Button
 var send_effect: ColorRect
 var queue_badge: Label
 var queue_panel: PanelContainer
+var queue_scroll: ScrollContainer
 var queue_rows: VBoxContainer
 var border_beam: AccentBorderBeamLayer
 var file_input: AgentChatInputFile = AgentChatInputFile.new()
@@ -108,13 +109,15 @@ func setup_queue_controls() -> void:
 	queue_panel.z_index = 3
 	queue_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	input_bar.add_child(queue_panel)
-	var scroll := ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	queue_panel.add_child(scroll)
+	queue_scroll = ScrollContainer.new()
+	queue_scroll.name = "QueueScroll"
+	queue_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	queue_panel.add_child(queue_scroll)
 	queue_rows = VBoxContainer.new()
 	queue_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	queue_rows.add_theme_constant_override("separation", Margin.ma_0)
-	scroll.add_child(queue_rows)
+	queue_scroll.add_child(queue_rows)
+	AgentChatInputTheme.apply_queue_scroll(queue_scroll)
 	pass
 
 
@@ -503,49 +506,29 @@ func refresh_queue() -> void:
 		layout_queue_panel()
 		return
 
-	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", Margin.ma_2)
-	var title := Label.new()
-	title.text = StringUtils.format(I18n.t("agent.input.queued"), session.pending_messages.size())
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_override("font", Fonts.semibold())
-	title.add_theme_color_override("font_color", Colors.secondary_text)
-	header.add_child(title)
+	queue_scroll.custom_minimum_size.y = minf((session.pending_messages.size() + 1) * ControlSize.lg, ControlSize.lg * 5)
+	var header := AgentQueueRow.new()
+	header.setup(
+		StringUtils.format(I18n.t("agent.input.queued"), session.pending_messages.size()),
+		I18n.t("agent.input.continue_queue"),
+		AgentChatInputTheme.make_resume_icon(ControlSize.xs, ThemeColor.accent_theme_color()), true)
 	if not RuntimeManager.is_running(session.id):
-		var continue_button := Button.new()
-		continue_button.tooltip_text = I18n.t("agent.input.continue_queue")
-		continue_button.custom_minimum_size = ControlSize.square(ControlSize.xs)
-		continue_button.focus_mode = Control.FOCUS_NONE
-		AgentChatInputTheme.apply_queue_continue_button(continue_button)
-		continue_button.pressed.connect(RuntimeManager.try_run_next_message.bind(session.id))
-		header.add_child(continue_button)
+		header.action_pressed.connect(RuntimeManager.try_run_next_message.bind(session.id))
+	else:
+		header.action_button.visible = false
 	queue_rows.add_child(header)
-
+	var delete_icon := AgentChatInputTheme.make_trash_icon(
+		ControlSize.xs, ThemeColor.accent_theme_color())
 	for queued: String in session.pending_messages:
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", Margin.ma_2)
-		var label := Label.new()
-		label.text = queued.replace(FileUtils.NEWLINE_LF, " ")
-		label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		label.tooltip_text = queued
-		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		label.add_theme_color_override("font_color", Colors.primary_text)
-		row.add_child(label)
-		var delete_button := Button.new()
-		delete_button.tooltip_text = I18n.t("agent.input.delete_queued")
-		delete_button.custom_minimum_size = ControlSize.square(ControlSize.xs)
-		delete_button.focus_mode = Control.FOCUS_NONE
-		AgentChatInputTheme.apply_queue_delete_button(delete_button)
-		delete_button.pressed.connect(AgentSessionManager.delete_pending_message.bind(session.id, queued))
-		row.add_child(delete_button)
+		var row := AgentQueueRow.new()
+		row.setup(queued.replace(FileUtils.NEWLINE_LF, " "), I18n.t("agent.input.delete_queued"), delete_icon, false)
+		row.action_pressed.connect(AgentSessionManager.delete_pending_message.bind(session.id, queued))
 		queue_rows.add_child(row)
 	apply_queue_theme()
 	sync_queue_panel_visibility()
 	refresh_send_button()
 	layout_queue_panel.call_deferred()
 	pass
-
-
 func apply_queue_theme() -> void:
 	# Keep the queue visually quieter than the composer, without stacking another floating shadow.
 	var style := AgentChatInputTheme.build_wrap_style(true)
@@ -558,6 +541,7 @@ func apply_queue_theme() -> void:
 	style.content_margin_right = Margin.ma_3
 	style.content_margin_bottom = Margin.ma_1
 	queue_panel.add_theme_stylebox_override("panel", style)
+	AgentChatInputTheme.apply_queue_scroll(queue_scroll)
 	pass
 
 
@@ -566,7 +550,7 @@ func layout_queue_panel() -> void:
 		return
 	var wrap_width := get_wrap_width(true)
 	var width := wrap_width * QUEUE_WIDTH_RATIO
-	var content_height := minf(queue_rows.get_combined_minimum_size().y + Margin.ma_2, 220.0)
+	var content_height := minf(queue_scroll.get_combined_minimum_size().y + Margin.ma_2, 220.0)
 	var right := input_bar.size.x - SIDE_INSET
 	queue_panel.position = Vector2(right - width, input_wrap.offset_top - content_height - Margin.ma_2)
 	queue_panel.size = Vector2(width, content_height)
