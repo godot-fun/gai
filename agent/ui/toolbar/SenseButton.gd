@@ -422,5 +422,5 @@ func style_results() -> void:
 	results.add_theme_stylebox_override("hovered", StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 6))
 	results.add_theme_stylebox_override("selected", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, 6))
 	results.add_theme_stylebox_override("selected_focus", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, 6, 0, 0, Color(ThemeColor.accent_theme_color(), 0.72), ControlSize.border_xs))
-	ScrollBarStyle.apply_custom(results.get_v_scroll_bar(), ScrollBarStyle.thickness_md, Color(ThemeColor.body_color, 0.45), ThemeColor.accent_theme_color(), true)
+	ScrollBarStyle.apply_custom(results.get_v_scroll_bar(), ScrollBarStyle.thickness_md, ThemeColor.body_color, ThemeColor.emphasize(ThemeColor.theme_color, Colors.am_8), ThemeColor.emphasize(ThemeColor.theme_color, Colors.am_4), true)
 	pass

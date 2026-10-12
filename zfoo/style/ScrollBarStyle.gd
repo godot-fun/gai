@@ -16,12 +16,12 @@ const thickness_xxl: int = 6
 
 ## Shared default used by popup, transcript and sidebar surfaces.
 static func apply(bar: ScrollBar) -> void:
-	apply_custom(bar, thickness_xxl, ThemeColor.body_color, ThemeColor.accent_theme_color(), false)
+	apply_custom(bar, thickness_xxl, ThemeColor.body_color, ThemeColor.emphasize(ThemeColor.theme_color, Colors.am_8), ThemeColor.emphasize(ThemeColor.theme_color, Colors.am_4), false)
 	pass
 
 
 ## Configurable variant for controls whose scrollbar intentionally differs from the shared default.
-static func apply_custom(bar: ScrollBar, thickness: int, resting_color: Color, hover_color: Color, rounded: bool = false) -> void:
+static func apply_custom(bar: ScrollBar, thickness: int, grabber_color: Color, grabber_highlight_color: Color, grabber_pressed_color: Color, rounded: bool = false) -> void:
 	var scroll := bar.get_theme_stylebox("scroll").duplicate() as StyleBoxFlat
 	scroll.bg_color = Color(0, 0, 0, 0)
 	bar.add_theme_stylebox_override("scroll", scroll)
@@ -29,13 +29,13 @@ static func apply_custom(bar: ScrollBar, thickness: int, resting_color: Color, h
 	scroll_focus.bg_color = Color(0, 0, 0, 0)
 	bar.add_theme_stylebox_override("scroll_focus", scroll_focus)
 	var grabber := bar.get_theme_stylebox("grabber").duplicate() as StyleBoxFlat
-	grabber.bg_color = resting_color
+	grabber.bg_color = grabber_color
 	bar.add_theme_stylebox_override("grabber", grabber)
 	var grabber_highlight := bar.get_theme_stylebox("grabber_highlight").duplicate() as StyleBoxFlat
-	grabber_highlight.bg_color = hover_color
+	grabber_highlight.bg_color = grabber_highlight_color
 	bar.add_theme_stylebox_override("grabber_highlight", grabber_highlight)
 	var grabber_pressed := bar.get_theme_stylebox("grabber_pressed").duplicate() as StyleBoxFlat
-	grabber_pressed.bg_color = ThemeColor.accent_theme_color()
+	grabber_pressed.bg_color = grabber_pressed_color
 	bar.add_theme_stylebox_override("grabber_pressed", grabber_pressed)
 	var half_thickness := maxi(thickness, 1) * 0.5
 	if rounded:
