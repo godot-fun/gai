@@ -1,22 +1,43 @@
 shader_type canvas_item;
 
-uniform vec4 wave_color : source_color = vec4(1.0);
-uniform float amplitude : hint_range(0.02, 0.3) = 0.13;
-uniform float frequency : hint_range(0.5, 4.0) = 1.5;
-uniform float thickness : hint_range(0.005, 0.1) = 0.025;
-uniform float speed = 0.85;
+uniform vec4 ring_color : source_color = vec4(1.0);
+uniform float radius : hint_range(0.1, 0.5) = 0.34;
+uniform float thickness : hint_range(0.01, 0.2) = 0.035;
+uniform float arc_length : hint_range(0.1, 0.95) = 0.68;
+uniform float track_opacity : hint_range(0.0, 1.0) = 0.1;
+uniform float tail_opacity : hint_range(0.0, 1.0) = 0.2;
+uniform float speed = 1.1;
+uniform float containment_progress : hint_range(0.0, 1.0) = 0.0;
 
 void fragment() {
-	float phase = (UV.x * frequency - TIME * speed) * 6.28318530718;
-	float wave_y = 0.5 + sin(phase) * amplitude;
-	float distance_to_wave = abs(UV.y - wave_y);
-	float edge = fwidth(distance_to_wave);
-	float core = 1.0 - smoothstep(thickness, thickness + edge, distance_to_wave);
-	float glow = 1.0 - smoothstep(thickness + 0.075,
-		thickness + 0.075 + edge, distance_to_wave);
-	float edge_fade = smoothstep(0.02, 0.16, UV.x)
-		* (1.0 - smoothstep(0.84, 0.98, UV.x));
-	float energy = 0.72 + 0.28 * (sin(phase - 0.8) * 0.5 + 0.5);
-	float alpha = max(core * energy, glow * 0.12) * edge_fade;
-	COLOR = vec4(wave_color.rgb, wave_color.a * alpha);
+	vec2 point = UV - vec2(0.5);
+	float raw_angle = atan(point.y, point.x);
+	float turn = raw_angle / 6.28318530718;
+	float distance_to_ring = abs(length(point) - radius);
+	float ring_edge = fwidth(distance_to_ring);
+	float ring = 1.0 - smoothstep(thickness, thickness + ring_edge, distance_to_ring);
+
+	float phase = fract(turn - TIME * speed);
+	float arc_edge = fwidth(phase);
+	float arc_start = smoothstep(0.0, arc_edge * 2.0, phase);
+	float arc_end = 1.0 - smoothstep(arc_length - arc_edge * 2.0, arc_length, phase);
+	float arc = arc_start * arc_end;
+	float trail = mix(tail_opacity, 1.0, smoothstep(0.0, arc_length, phase));
+	float active_arc = ring * arc * trail;
+
+	float head_angle = (TIME * speed + arc_length) * 6.28318530718;
+	vec2 head_center = vec2(cos(head_angle), sin(head_angle)) * radius;
+	float head_distance = length(point - head_center);
+	float head_edge = fwidth(head_distance);
+	float head = 1.0 - smoothstep(thickness, thickness + head_edge, head_distance);
+	float alpha = max(ring * track_opacity, max(active_arc, head));
+
+	float containment_radius = mix(0.43, 0.15, containment_progress);
+	float containment_distance = abs(length(point) - containment_radius);
+	float containment_edge = fwidth(containment_distance);
+	float containment_ring = 1.0 - smoothstep(0.012, 0.012 + containment_edge, containment_distance);
+	float containment_fade = sin(containment_progress * 3.14159265359);
+	alpha = max(alpha, containment_ring * containment_fade * 0.72);
+
+	COLOR = vec4(ring_color.rgb, ring_color.a * alpha);
 }

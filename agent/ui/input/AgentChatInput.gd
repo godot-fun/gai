@@ -304,6 +304,8 @@ func on_send_button_mouse_entered() -> void:
 	match send_effect_state:
 		SendEffectState.READY:
 			play_send_launch()
+		SendEffectState.ACTIVE:
+			play_active_containment()
 		SendEffectState.STOP:
 			play_stop_containment()
 	pass
@@ -313,6 +315,12 @@ func on_send_button_mouse_exited() -> void:
 	var material := send_effect.material as ShaderMaterial
 	if send_effect_state == SendEffectState.READY:
 		material.set_shader_parameter("launch_progress", 0.0)
+	elif send_effect_state == SendEffectState.ACTIVE:
+		if send_effect_tween != null:
+			send_effect_tween.kill()
+			send_effect_tween = null
+		material.set_shader_parameter("containment_progress", 0.0)
+		return
 	elif send_effect_state == SendEffectState.STOP:
 		material.set_shader_parameter("containment_progress", 0.0)
 	else:
@@ -387,6 +395,16 @@ func play_stop_containment() -> void:
 	var tween := create_send_effect_tween()
 	tween.tween_method(set_send_effect_hover, send_effect_hover, 1.0, 0.18).set_trans(
 		Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_method(func(value: float) -> void:
+		material.set_shader_parameter("containment_progress", value), 0.0, 1.0, 0.48).set_trans(
+		Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	pass
+
+
+func play_active_containment() -> void:
+	var material := send_effect.material as ShaderMaterial
+	material.set_shader_parameter("containment_progress", 0.0)
+	var tween := create_send_effect_tween()
 	tween.tween_method(func(value: float) -> void:
 		material.set_shader_parameter("containment_progress", value), 0.0, 1.0, 0.48).set_trans(
 		Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
