@@ -129,11 +129,12 @@ static func emphasize(color: Color, amount: float) -> Color:
 	return color.lightened(amount) if is_dark_theme() else color.darkened(amount)
 
 
-## Refresh every palette derived from the active appearance. Cards follow the accent hue; semantic
-## and file colors select their hand-tuned dark or light variants.
+## Refresh every palette derived from the active appearance. Cards follow the accent hue; semantic,
+## markdown and file colors select their hand-tuned dark or light variants.
 static func refresh_derived_colors() -> void:
 	refresh_theme_colors()
 	Colors.refresh()
+	MarkdownColors.refresh()
 	FileColors.refresh()
 	pass
 
