@@ -121,15 +121,15 @@ func configure_slot(
 func port_color(port_type: int) -> Color:
 	match port_type:
 		PortDef.TYPE_AUDIO:
-			return ColorFile.audio_color
+			return FileColors.audio_color
 		PortDef.TYPE_IMAGE:
-			return ColorFile.image_color
+			return FileColors.image_color
 		PortDef.TYPE_VIDEO:
-			return ColorFile.video_color
+			return FileColors.video_color
 		PortDef.TYPE_TEXT:
-			return ColorFile.text_color
+			return FileColors.text_color
 		PortDef.TYPE_FOLDER:
-			return ColorFile.folder_color
+			return FileColors.folder_color
 		_:
 			return ThemeColor.body_color
 

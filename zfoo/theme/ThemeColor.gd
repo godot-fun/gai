@@ -132,9 +132,9 @@ static func emphasize(color: Color, amount: float) -> Color:
 ## Refresh every palette derived from the active appearance. Cards follow the accent hue; semantic
 ## and file colors select their hand-tuned dark or light variants.
 static func refresh_derived_colors() -> void:
-	Colors.refresh()
 	refresh_theme_colors()
-	ColorFile.refresh()
+	Colors.refresh()
+	FileColors.refresh()
 	pass
 
 

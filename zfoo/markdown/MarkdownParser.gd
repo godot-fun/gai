@@ -771,15 +771,15 @@ static func get_link_prefix(path: String) -> String:
 	if not (path.is_absolute_path() or path.begins_with("res://") or path.begins_with("user://")):
 		return StringUtils.EMPTY
 	if DirAccess.dir_exists_absolute(path):
-		return format_link_prefix(FOLDER_PREFIX, ColorFile.folder_color)
+		return format_link_prefix(FOLDER_PREFIX, FileColors.folder_color)
 	var extension := path.get_extension().to_lower()
 	if ResourceHelper.AUDIO_EXTENSIONS.has(extension):
-		return format_link_prefix(AUDIO_PREFIX, ColorFile.audio_color)
+		return format_link_prefix(AUDIO_PREFIX, FileColors.audio_color)
 	if EXECUTABLE_CONFIG_EXTENSIONS.has(extension):
-		return format_link_prefix(EXECUTABLE_CONFIG_PREFIX, ColorFile.video_color)
+		return format_link_prefix(EXECUTABLE_CONFIG_PREFIX, FileColors.video_color)
 	if TEXT_DOCUMENT_EXTENSIONS.has(extension):
-		return format_link_prefix(TEXT_DOCUMENT_PREFIX, ColorFile.text_color)
-	return format_link_prefix(FILE_PREFIX, ColorFile.text_color)
+		return format_link_prefix(TEXT_DOCUMENT_PREFIX, FileColors.text_color)
+	return format_link_prefix(FILE_PREFIX, FileColors.text_color)
 
 
 static func format_link_prefix(prefix: String, color: Color) -> String:

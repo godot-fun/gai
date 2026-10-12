@@ -337,9 +337,9 @@ func local_file_link_prefix_test() -> void:
 	assert("📝 " in document_bbcode and "README.md" in document_bbcode)
 	assert("🔗 " in website_bbcode and "website" in website_bbcode)
 	assert("✉ " in email_bbcode and "email" in email_bbcode)
-	assert("[color=%s]" % MarkdownParser.to_bbcode_color(ColorFile.audio_color) in audio_bbcode)
-	assert("[color=%s]" % MarkdownParser.to_bbcode_color(ColorFile.folder_color) in folder_bbcode)
-	assert("[color=%s]" % MarkdownParser.to_bbcode_color(ColorFile.text_color) in document_bbcode)
+	assert("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.audio_color) in audio_bbcode)
+	assert("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.folder_color) in folder_bbcode)
+	assert("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.text_color) in document_bbcode)
 	pass
 
 
