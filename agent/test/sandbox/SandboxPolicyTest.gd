@@ -24,7 +24,7 @@ static func file_tools_reject_outside_workspace_test() -> void:
 	var tool_args: Array[Array] = [
 		[ReadTool.new(), {ReadTool.ARG_PATH: outside_path}],
 		[WriteTool.new(), {WriteTool.ARG_PATH: outside_path, WriteTool.ARG_CONTENT: "blocked"}],
-		[EditTool.new(), {EditTool.ARG_FILE_PATH: outside_path, EditTool.ARG_OLD_STRING: "old", EditTool.ARG_NEW_STRING: "new"}],
+		[EditTool.new(), {EditTool.ARG_PATH: outside_path, EditTool.ARG_OLD_STRING: "old", EditTool.ARG_NEW_STRING: "new"}],
 		[DeleteTool.new(), {DeleteTool.ARG_PATH: outside_path}],
 		[ListDirTool.new(), {ListDirTool.ARG_PATH: outside_path}],
 		[GlobTool.new(), {GlobTool.ARG_PATTERN: "*", GlobTool.ARG_PATH: outside_path}],
@@ -49,11 +49,11 @@ static func edit_tool_replace_all_test() -> void:
 	var original := "before middle before"
 	assert(FileUtils.write_string_to_file(path, original))
 	var tool := EditTool.new()
-	var unique_result := await tool.async_execute({EditTool.ARG_FILE_PATH: path, EditTool.ARG_OLD_STRING: "before", EditTool.ARG_NEW_STRING: "after"})
+	var unique_result := await tool.async_execute({EditTool.ARG_PATH: path, EditTool.ARG_OLD_STRING: "before", EditTool.ARG_NEW_STRING: "after"})
 	var unique_rejected := unique_result.is_error and FileUtils.read_file_to_string(path) == original
-	var replace_all_result := await tool.async_execute({EditTool.ARG_FILE_PATH: path, EditTool.ARG_OLD_STRING: "before", EditTool.ARG_NEW_STRING: "after", EditTool.ARG_REPLACE_ALL: true})
+	var replace_all_result := await tool.async_execute({EditTool.ARG_PATH: path, EditTool.ARG_OLD_STRING: "before", EditTool.ARG_NEW_STRING: "after", EditTool.ARG_REPLACE_ALL: true})
 	var all_replaced := not replace_all_result.is_error and FileUtils.read_file_to_string(path) == "after middle after"
-	var empty_result := await tool.async_execute({EditTool.ARG_FILE_PATH: path, EditTool.ARG_OLD_STRING: "", EditTool.ARG_NEW_STRING: "invalid"})
+	var empty_result := await tool.async_execute({EditTool.ARG_PATH: path, EditTool.ARG_OLD_STRING: "", EditTool.ARG_NEW_STRING: "invalid"})
 	var empty_rejected := empty_result.is_error and empty_result.content.contains("old_string must not be empty")
 	DirAccess.remove_absolute(path)
 	assert(unique_rejected)

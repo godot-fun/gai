@@ -2,7 +2,7 @@ class_name EditTool
 extends AgentTool
 
 const NAME := "edit"
-const ARG_FILE_PATH := "path"
+const ARG_PATH := "path"
 const ARG_OLD_STRING := "old_string"
 const ARG_NEW_STRING := "new_string"
 const ARG_REPLACE_ALL := "replace_all"
@@ -16,7 +16,7 @@ func _init() -> void:
 # AgentTool-Interface-Implement-Start
 func get_parameters() -> OpenAiToolDef.Parameters:
 	var params := OpenAiToolDef.Parameters.object()
-	params.string_prop(ARG_FILE_PATH, "Path to the file to edit (relative or absolute).", true)
+	params.string_prop(ARG_PATH, "Path to the file to edit (relative or absolute).", true)
 	params.string_prop(ARG_OLD_STRING, "Exact text to replace. Must appear exactly once unless replace_all is true.", true)
 	params.string_prop(ARG_NEW_STRING, "Text to replace old_string with. Use an empty string to delete it.", true)
 	params.boolean_prop(ARG_REPLACE_ALL, "Replace every occurrence of old_string. Defaults to false.", false)
@@ -24,7 +24,7 @@ func get_parameters() -> OpenAiToolDef.Parameters:
 
 
 func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
-	var raw_path := str(args.get(ARG_FILE_PATH, ""))
+	var raw_path := str(args.get(ARG_PATH, ""))
 	if StringUtils.is_blank(raw_path):
 		return AgentToolResult.error("error: path is required", AgentToolResult.ui_file_details_message("", "path is required"))
 	var path := AgentWorkspace.resolve_path(raw_path)
