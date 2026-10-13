@@ -124,7 +124,7 @@ func diff_viewer_builds_test() -> void:
 	assert((viewer.revert_button.get_theme_stylebox("hover") as StyleBoxFlat).border_color == ThemeColor.accent_theme_color())
 	assert(not viewer.left_edit.editable)
 	assert(viewer.right_edit.editable)
-	assert(viewer.split_container.split_offset == 0)
+	assert(GitDiffViewer.initial_split_offset(1000.0) == -50)
 	assert(viewer.content_panel.offset_left == -ControlSize.border_xs)
 	assert(viewer.content_panel.offset_top == -ControlSize.border_xs)
 	assert(viewer.content_panel.offset_right == ControlSize.border_xs)

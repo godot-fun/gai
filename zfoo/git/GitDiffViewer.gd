@@ -5,6 +5,8 @@ extends Window
 ## loads the current workspace file and saves only if it has not changed again while being edited.
 
 const SCREEN_SIZE_RATIO := 0.80
+## Give the editable current-file pane slightly more room than the read-only original pane.
+const INITIAL_LEFT_PANE_RATIO := 0.45
 const CHANGED_LINE_ALPHA := 0.22
 const BORDER_ALPHA := 0.18
 const BORDER_ALPHA_UNFOCUSED := 0.08
@@ -192,11 +194,16 @@ func build_ui() -> void:
 
 
 func reset_split() -> void:
-	# Split offset is relative to the center, not the left edge. Run after popup layout so zero
-	# reliably produces two equal panes at the final 80%-of-screen window size.
-	split_container.split_offset = 0
+	# Split offset is relative to the center. Run after popup layout so the initial 45/55 balance
+	# uses the final window width; users can still drag the separator afterward.
+	split_container.split_offset = initial_split_offset(split_container.size.x)
 	sync_heading_widths()
 	pass
+
+
+## Converts the desired left-pane ratio into HSplitContainer's center-relative pixel offset.
+static func initial_split_offset(split_width: float) -> int:
+	return roundi(split_width * (INITIAL_LEFT_PANE_RATIO - 0.5))
 
 
 func add_heading_panel(parent: Container, heading: String) -> PanelContainer:
@@ -591,7 +598,6 @@ func apply_theme() -> void:
 		edit.add_theme_color_override("selection_color", ThemeColor.selection_color)
 		edit.add_theme_color_override("current_line_color", Color(ThemeColor.accent_theme_color(), 0.10))
 		edit.add_theme_font_override("font", Fonts.regular())
-		edit.add_theme_font_size_override("font_size", Typography.body_medium_size)
 		ScrollBarStyle.apply(edit.get_v_scroll_bar())
 		ScrollBarStyle.apply(edit.get_h_scroll_bar())
 	if not files.is_empty():
