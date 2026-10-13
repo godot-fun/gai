@@ -64,7 +64,7 @@ diff --git a/folder/second file.gd b/folder/second file.gd
 -left
 +right
 """
-	var section := GitDiffParser.extract_file_patch(patch, "folder\\second file.gd")
+	var section := GitDiffParser.extract_file_patch(patch, r"folder\second file.gd")
 	assert(section.begins_with("diff --git a/folder/second file.gd"))
 	assert(section.contains("+right"))
 	assert(not section.contains("+new"))
@@ -123,7 +123,24 @@ static func code_highlighter_recognizes_gdscript_test() -> void:
 	var highlighter := GitCodeHighlighter.create("scripts/player.gd")
 	assert(highlighter.get_keyword_color("func").a > 0.0)
 	assert(highlighter.get_keyword_color("Vector2").a > 0.0)
+	assert(highlighter.get_keyword_color("@export_range") == CodeColors.declaration)
 	assert(highlighter.has_color_region("#"))
+	pass
+
+
+static func code_highlighter_recognizes_extended_languages_test() -> void:
+	var shader := GitCodeHighlighter.create("effects/water.gdshader")
+	assert(shader.get_keyword_color("shader_type") == CodeColors.declaration)
+	assert(shader.get_keyword_color("sampler2D") == CodeColors.type)
+	var sql := GitCodeHighlighter.create("schema.sql")
+	assert(sql.get_keyword_color("SELECT") == CodeColors.keyword)
+	assert(sql.has_color_region("--"))
+	var typescript := GitCodeHighlighter.create("app.ts")
+	assert(typescript.get_keyword_color("satisfies") == CodeColors.keyword)
+	assert(typescript.has_color_region("`"))
+	var sconstruct := GitCodeHighlighter.create("SConstruct")
+	assert(sconstruct.get_keyword_color("lambda") == CodeColors.keyword)
+	assert(sconstruct.has_color_region("#"))
 	pass
 
 
