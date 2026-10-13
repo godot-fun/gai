@@ -83,3 +83,20 @@ func diff_viewer_builds_test() -> void:
 	assert(viewer.content_panel.offset_bottom == ControlSize.border_xs)
 	viewer.free()
 	pass
+
+
+func diff_viewer_revert_restores_left_snapshot_test() -> void:
+	var file := GitDiffFile.new()
+	file.old_path = "demo.gd"
+	file.new_path = "demo.gd"
+	file.old_text = "left version"
+	file.new_text = "right version"
+	file.new_exists = true
+	var viewer := GitDiffViewer.new()
+	viewer.files = [file]
+	viewer.load_selected_file()
+	viewer.right_edit.text = "manual edit"
+	viewer.revert_current()
+	assert(viewer.right_edit.text == file.old_text)
+	viewer.free()
+	pass

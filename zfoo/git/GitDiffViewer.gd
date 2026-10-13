@@ -26,7 +26,6 @@ var position_label: Label
 var status_label: Label
 var previous_button: Button
 var next_button: Button
-var save_button: Button
 var revert_button: Button
 var content_panel: PanelContainer
 var toolbar_panel: PanelContainer
@@ -34,7 +33,6 @@ var heading_container: HBoxContainer
 var split_container: HSplitContainer
 var left_edit: CodeEdit
 var right_edit: CodeEdit
-var discard_dialog: ConfirmationDialog
 var heading_labels: Array[Label] = []
 var left_heading_panel: PanelContainer
 var right_heading_panel: PanelContainer
@@ -114,12 +112,9 @@ func build_ui() -> void:
 	toolbar.add_child(status_label)
 	position_label = Label.new()
 	toolbar.add_child(position_label)
-	revert_button = make_button("Revert", "Discard edits in the right pane")
+	revert_button = make_button("Revert", "Restore the right pane to the left pane's version")
 	revert_button.pressed.connect(revert_current)
 	toolbar.add_child(revert_button)
-	save_button = make_button("Save", "Save the right pane to the workspace (Ctrl+S)")
-	save_button.pressed.connect(save_current)
-	toolbar.add_child(save_button)
 
 	# Headings must not be children of the editor SplitContainer. Otherwise its grabber extends up
 	# through the heading row; a plain HBox mirrors the editor widths without drawing a divider.
@@ -127,7 +122,7 @@ func build_ui() -> void:
 	heading_container.add_theme_constant_override("separation", 0)
 	root.add_child(heading_container)
 	left_heading_panel = add_heading_panel(heading_container, "Original · read only")
-	right_heading_panel = add_heading_panel(heading_container, "Updated · editable")
+	right_heading_panel = add_heading_panel(heading_container, "Current · editable")
 
 	split_container = HSplitContainer.new()
 	split_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -143,12 +138,6 @@ func build_ui() -> void:
 	split_container.add_child(left_edit)
 	split_container.add_child(right_edit)
 
-	discard_dialog = ConfirmationDialog.new()
-	discard_dialog.title = "Discard changes?"
-	discard_dialog.dialog_text = "The right pane has unsaved changes. Discard them and close?"
-	discard_dialog.ok_button_text = "Discard"
-	discard_dialog.confirmed.connect(queue_free)
-	add_child(discard_dialog)
 	apply_theme()
 	pass
 
@@ -278,7 +267,6 @@ func is_dirty() -> bool:
 
 func refresh_actions() -> void:
 	var editable := files[selected_index].can_edit()
-	save_button.disabled = not editable or not is_dirty()
 	revert_button.disabled = not editable or not is_dirty()
 	pass
 
@@ -303,7 +291,7 @@ func select_relative(offset: int) -> void:
 
 func revert_current() -> void:
 	suppress_text_changed = true
-	right_edit.text = baseline_text
+	right_edit.text = left_edit.text
 	suppress_text_changed = false
 	refresh_actions()
 	paint_changed_lines()
@@ -312,29 +300,29 @@ func revert_current() -> void:
 
 ## Writes the editable snapshot only when the workspace still matches the post-run cache. This is
 ## optimistic concurrency control: an older chat diff must never overwrite a later agent/user edit.
-func save_current() -> void:
+func save_current() -> bool:
 	var file := files[selected_index]
 	if not file.can_edit() or not is_dirty():
-		return
+		return true
 	var target := FileUtils.normalize_path(workspace_root.path_join(file.new_path))
 	if not FileUtils.is_relative_to(target, workspace_root):
 		Alert.alert("Cannot save outside the workspace", Colors.error)
-		return
+		return false
 	var exists_now := FileAccess.file_exists(target)
 	var current_text := FileUtils.read_file_to_string(target) if exists_now else StringUtils.EMPTY
 	if exists_now != file.new_exists or current_text.sha256_text() != file.new_hash:
 		Alert.alert("Workspace file changed after this diff was created; save was cancelled", Colors.warning)
-		return
+		return false
 	if not FileUtils.write_string_to_file(target, right_edit.text):
 		Alert.alert("Cannot save file: " + file.new_path, Colors.error)
-		return
+		return false
 	baseline_text = right_edit.text
 	file.new_text = baseline_text
 	file.new_hash = baseline_text.sha256_text()
 	file.new_exists = true
 	refresh_actions()
 	Alert.alert("Saved successfully", Colors.success)
-	pass
+	return true
 
 
 func on_left_scroll(value: float) -> void:
@@ -363,17 +351,15 @@ func sync_vertical_scroll(source: CodeEdit, target: CodeEdit, value: float) -> v
 
 
 func request_close() -> void:
-	if is_dirty():
-		discard_dialog.popup_centered()
+	if not save_current():
 		return
 	queue_free()
 	pass
 
 
 func _notification(what: int) -> void:
-	# Match PopupWindow: clicking outside dismisses a clean viewer. Dirty edits still go through the
-	# discard confirmation so focus loss can never destroy work silently.
-	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT and visible and not discard_dialog.visible:
+	# Match PopupWindow: clicking outside closes the viewer after saving any right-pane edits.
+	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT and visible:
 		request_close.call_deferred()
 	pass
 
@@ -408,7 +394,7 @@ func apply_theme() -> void:
 		label.add_theme_font_override("font", Fonts.regular())
 	for label in heading_labels:
 		label.add_theme_color_override("font_color", ThemeColor.body_color)
-	for button in [previous_button, next_button, save_button, revert_button]:
+	for button in [previous_button, next_button, revert_button]:
 		style_compact_button(button)
 	var editor_style := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 0, Margin.ma_2, Margin.ma_2)
 	for edit in [left_edit, right_edit]:
@@ -427,7 +413,6 @@ func apply_theme() -> void:
 		edit.add_theme_font_size_override("font_size", Typography.body_medium_size)
 		ScrollBarStyle.apply(edit.get_v_scroll_bar())
 		ScrollBarStyle.apply(edit.get_h_scroll_bar())
-	style_discard_dialog()
 	if not files.is_empty():
 		paint_changed_lines()
 	pass
@@ -466,52 +451,4 @@ func style_compact_button(button: Button) -> void:
 	var pressed := ButtonStyle.filled(normal, ThemeColor.accent_surface, ThemeColor.accent_theme_color())
 	var disabled := ButtonStyle.filled(normal, ThemeColor.inset_surface)
 	ButtonStyle.apply(button, normal, hover, pressed, disabled)
-	pass
-
-
-func style_discard_dialog() -> void:
-	if discard_dialog == null:
-		return
-	# The dialog is a second visual elevation above the diff. Neutral elevated content, warning
-	# chrome, and a shadow keep it distinct without hard-coding light/dark colors.
-	var panel_style := StyleBoxHelper.create_style_box_flat(Colors.elevated_surface, ControlSize.radius_md, Margin.ma_4, Margin.ma_3, Colors.warning, ControlSize.border_sm)
-	panel_style.shadow_color = Color(0.0, 0.0, 0.0, 0.34 if ThemeColor.is_dark_theme() else 0.22)
-	panel_style.shadow_size = Margin.ma_3
-	panel_style.shadow_offset = Vector2(0, Margin.ma_1)
-	discard_dialog.add_theme_stylebox_override("panel", panel_style)
-	discard_dialog.add_theme_stylebox_override("embedded_border", make_discard_dialog_border(BORDER_ALPHA))
-	discard_dialog.add_theme_stylebox_override("embedded_unfocused_border", make_discard_dialog_border(BORDER_ALPHA_UNFOCUSED))
-	discard_dialog.add_theme_color_override("title_color", Colors.primary_text)
-	discard_dialog.add_theme_font_override("title_font", Fonts.semibold())
-	discard_dialog.add_theme_font_size_override("title_font_size", Typography.title_medium_size)
-	discard_dialog.add_theme_icon_override("close_pressed", tint_theme_icon("close_pressed", Colors.error))
-	var body_label := discard_dialog.get_label()
-	body_label.add_theme_color_override("font_color", Colors.primary_text)
-	body_label.add_theme_font_override("font", Fonts.regular())
-	body_label.add_theme_font_size_override("font_size", Typography.body_medium_size)
-	style_discard_button(discard_dialog.get_ok_button())
-	style_compact_button(discard_dialog.get_cancel_button())
-	pass
-
-
-func make_discard_dialog_border(border_alpha: float) -> StyleBoxFlat:
-	var style: StyleBoxFlat = get_theme_stylebox("embedded_border").duplicate() as StyleBoxFlat
-	# The embedded border also paints the native title band. A semantic surface keeps that band
-	# distinct from the elevated content panel below it in both light and dark themes.
-	style.bg_color = Colors.warning_surface
-	style.set_corner_radius_all(ControlSize.radius_md)
-	style.border_color = Color(Colors.warning, maxf(border_alpha, 0.55))
-	style.set_border_width_all(ControlSize.border_sm)
-	style.shadow_color = Color(0.0, 0.0, 0.0, 0.34 if ThemeColor.is_dark_theme() else 0.22)
-	style.shadow_size = Margin.ma_3
-	style.shadow_offset = Vector2(0, Margin.ma_1)
-	return style
-
-
-func style_discard_button(button: Button) -> void:
-	ButtonStyle.apply_font_colors(button, Colors.error, Colors.primary_text, Colors.primary_text)
-	var normal := StyleBoxHelper.create_style_box_flat(Colors.warning_surface, ControlSize.radius_sm, Margin.ma_2, Margin.ma_1, Colors.error, ControlSize.border_xs)
-	var hover := ButtonStyle.filled(normal, ButtonStyle.hover_color(Colors.warning_surface, Colors.am_2), Colors.error)
-	var pressed := ButtonStyle.filled(normal, Colors.error, Colors.error)
-	ButtonStyle.apply(button, normal, hover, pressed)
 	pass
