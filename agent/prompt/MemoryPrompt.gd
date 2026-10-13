@@ -12,11 +12,16 @@ static var memory_context: String = ""
 
 
 static func _static_init() -> void:
-	var path := AgentWorkspace.resolve_path(MEMORY_README_PATH)
-	if not FileAccess.file_exists(path):
-		return
-	memory_context = FileUtils.read_file_to_string(path)
+	reload_memory_context()
 	pass
+
+
+static func reload_memory_context() -> String:
+	memory_context = ""
+	var path := AgentWorkspace.resolve_path(MEMORY_README_PATH)
+	if FileAccess.file_exists(path):
+		memory_context = FileUtils.read_file_to_string(path)
+	return memory_context
 
 
 static func get_memory_context() -> String:
