@@ -33,7 +33,7 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 	var patch_path: String = entry.details.get(ChatEntry.DETAIL_GIT_DIFF_PATCH, "")
 	diff_button.disabled = StringUtils.is_blank(patch_path)
 	diff_button.pressed.connect(on_diff_pressed.bind(patch_path))
-	AgentBubble.style_header_button(diff_button, panel_style.bg_color, "Open this run in Delta", 52.0)
+	AgentBubble.style_header_button(diff_button, panel_style.bg_color, "Open side-by-side diff", 52.0)
 	header.add_child(diff_button)
 
 	var rich_text := MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)

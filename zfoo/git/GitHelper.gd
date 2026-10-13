@@ -19,16 +19,18 @@ class Git:
 		pass
 
 	func async_execute(command: String, include_work_tree: bool = true) -> OSUtils.ExecResult:
-		var full_command := "git"
+		return await async_execute_args(OSUtils.split_command_line(command), include_work_tree)
+
+	func async_execute_args(command_args: PackedStringArray, include_work_tree: bool = true) -> OSUtils.ExecResult:
+		var argv := PackedStringArray(["git"])
 		if StringUtils.is_not_blank(git_dir):
-			full_command += StringUtils.format(' --git-dir "{}"', git_dir)
+			argv.append_array(PackedStringArray(["--git-dir", git_dir]))
 		if include_work_tree and StringUtils.is_not_blank(work_tree):
-			full_command += StringUtils.format(' --work-tree "{}"', work_tree)
+			argv.append_array(PackedStringArray(["--work-tree", work_tree]))
 		if StringUtils.is_not_blank(config):
-			full_command += " " + config
-		if StringUtils.is_not_blank(command):
-			full_command += " " + command
-		return await OSUtils.async_execute(OSUtils.split_command_line(full_command), false)
+			argv.append_array(OSUtils.split_command_line(config))
+		argv.append_array(command_args)
+		return await OSUtils.async_execute(argv, false)
 
 	func async_init_bare() -> OSUtils.ExecResult:
 		return await GitHelper.async_execute(StringUtils.format('init --bare --quiet "{}"', git_dir))
@@ -60,6 +62,9 @@ class Git:
 
 	func async_get_staged_diff(reference: String) -> OSUtils.ExecResult:
 		return await async_execute(StringUtils.format("diff --cached --binary {} --", reference))
+
+	func async_get_file_at_reference(reference: String, relative_path: String) -> OSUtils.ExecResult:
+		return await async_execute_args(PackedStringArray(["show", reference + ":" + relative_path]))
 
 	func async_checkout_tree(reference: String) -> OSUtils.ExecResult:
 		return await async_execute(StringUtils.format("checkout {} -- :/", reference))
@@ -100,7 +105,6 @@ static func get_download_url() -> String:
 
 # ----------------------------------------------------------------------------------------------------------------------
 static var windows_git_bash_path := ""
-static var windows_git_mintty_path := ""
 
 static func find_windows_git_bash() -> String:
 	if StringUtils.is_not_blank(windows_git_bash_path):
@@ -131,17 +135,3 @@ static func find_windows_git_bash() -> String:
 			return windows_git_bash_path
 	windows_git_bash_path = "bash.exe"
 	return windows_git_bash_path
-
-
-## Finds the Mintty terminal bundled with Git for Windows.
-static func find_windows_git_mintty() -> String:
-	if StringUtils.is_not_blank(windows_git_mintty_path):
-		return windows_git_mintty_path
-	var bash_path := find_windows_git_bash().replace("\\", "/")
-	var git_root := bash_path.get_base_dir().get_base_dir()
-	var candidate := git_root.path_join("usr/bin/mintty.exe")
-	if FileAccess.file_exists(candidate):
-		windows_git_mintty_path = candidate
-		return windows_git_mintty_path
-	windows_git_mintty_path = "mintty.exe"
-	return windows_git_mintty_path

@@ -3,20 +3,7 @@ extends Object
 
 const DIFF_CACHE_SUBDIR := ".gai/cache/diff"
 const MAX_DIFF_CACHE_BYTES := 16 * FileUtils.BYTES_PER_MB
-const DELTA_EXECUTABLE_PATH := ".dependency/delta/delta.exe"
-
-const GITHUB_LIGHT_BACKGROUND := "BackgroundColour=255,255,255" # #ffffff canvas-default
-const GITHUB_LIGHT_FOREGROUND := "ForegroundColour=31,35,40" # #1f2328 fg-default
-const GITHUB_LIGHT_CURSOR := "CursorColour=9,105,218" # #0969da accent-fg
-const GITHUB_LIGHT_SELECTION_BACKGROUND := "HighlightBackgroundColour=9,105,218" # #0969da accent-fg
-const GITHUB_LIGHT_SELECTION_FOREGROUND := "HighlightForegroundColour=255,255,255"
-const GITHUB_DARK_BACKGROUND := "BackgroundColour=13,17,23" # #0d1117 canvas-default
-const GITHUB_DARK_FOREGROUND := "ForegroundColour=230,237,243" # #e6edf3 fg-default
-const GITHUB_DARK_CURSOR := "CursorColour=88,166,255" # #58a6ff accent-fg
-const GITHUB_DARK_SELECTION_BACKGROUND := "HighlightBackgroundColour=31,111,235" # #1f6feb accent-emphasis
-const GITHUB_DARK_SELECTION_FOREGROUND := "HighlightForegroundColour=255,255,255"
-const DELTA_DIFF_STYLES_LIGHT := "--minus-style='syntax #ffebe9' --minus-emph-style='syntax #ffcecb' --plus-style='syntax #dafbe1' --plus-emph-style='syntax #aceebb'"
-const DELTA_DIFF_STYLES_DARK := "--minus-style='syntax #2d1618' --minus-emph-style='syntax #8e2d35' --plus-style='syntax #12261e' --plus-emph-style='syntax #1f6f3d'"
+const DIFF_BUNDLE_VERSION := 2
 
 
 static func _static_init() -> void:
@@ -45,7 +32,7 @@ static func async_append_git_diff(session_id: int) -> void:
 	var diff_file_stats := await async_diff_file_stats(git, reference)
 	if diff_file_stats.is_empty():
 		return
-	var patch_path := await async_cache_diff(git, reference)
+	var patch_path := await async_cache_diff(git, reference, diff_file_stats)
 	AgentSessionManager.add_chat_entry(
 			session_id,
 			ChatEntry.KIND_GIT_DIFF,
@@ -78,7 +65,7 @@ static func async_diff_file_stats(git: GitHelper.Git, reference: String) -> Pack
 
 
 ## Caches the completed agent run patch so later workspace changes cannot alter this bubble's diff.
-static func async_cache_diff(git: GitHelper.Git, reference: String) -> String:
+static func async_cache_diff(git: GitHelper.Git, reference: String, file_stats: PackedStringArray) -> String:
 	if StringUtils.is_blank(reference):
 		return StringUtils.EMPTY
 	var diff := await git.async_get_staged_diff(reference)
@@ -93,87 +80,139 @@ static func async_cache_diff(git: GitHelper.Git, reference: String) -> String:
 	if mkdir_error != OK:
 		Log.error("agent git diff cache directory create failed path:[{}] error:[{}]", cache_dir, mkdir_error)
 		return StringUtils.EMPTY
-	var patch_path := cache_dir.path_join(str(IdUtils.uuid()) + ".patch")
-	if not FileUtils.write_string_to_file(patch_path, patch):
-		Log.error("agent git diff cache write failed path:[{}]", patch_path)
+	var files: Array[Dictionary] = []
+	for stat_line in file_stats:
+		var parts := stat_line.split("\t", false)
+		if parts.is_empty():
+			continue
+		var relative_path := parts[0].strip_edges().replace("\\", "/")
+		var file_patch := GitDiffParser.extract_file_patch(patch, relative_path)
+		var is_binary := file_patch.contains("GIT binary patch") or file_patch.contains("Binary files ")
+		var old_result := await git.async_get_file_at_reference(reference, relative_path) if not is_binary else null
+		var old_exists := old_result != null and old_result.exit_code == 0
+		var old_text := old_result.output.build_string() if old_exists else StringUtils.EMPTY
+		var absolute_path := AgentWorkspace.get_root().path_join(relative_path)
+		var new_exists := FileAccess.file_exists(absolute_path)
+		var new_bytes := FileUtils.read_file_to_byte_array(absolute_path) if new_exists else PackedByteArray()
+		is_binary = is_binary or new_bytes.find(0) >= 0
+		var new_text := FileUtils.read_file_to_string(absolute_path) if new_exists and not is_binary else StringUtils.EMPTY
+		is_binary = is_binary or (not new_bytes.is_empty() and new_text.to_utf8_buffer() != new_bytes)
+		if is_binary:
+			new_text = StringUtils.EMPTY
+		var status := GitDiffFile.STATUS_MODIFIED
+		if not old_exists and new_exists:
+			status = GitDiffFile.STATUS_ADDED
+		elif old_exists and not new_exists:
+			status = GitDiffFile.STATUS_DELETED
+		var changed := GitDiffParser.changed_lines(file_patch)
+		var file := GitDiffFile.new()
+		file.old_path = relative_path if old_exists else StringUtils.EMPTY
+		file.new_path = relative_path if new_exists else StringUtils.EMPTY
+		file.old_text = StringUtils.EMPTY if is_binary else old_text
+		file.new_text = new_text
+		file.new_hash = new_text.sha256_text()
+		file.new_exists = new_exists
+		file.status = status
+		file.binary = is_binary
+		file.old_changed_lines = changed["old"]
+		file.new_changed_lines = changed["new"]
+		files.append(file.to_dictionary())
+	var bundle := {"version": DIFF_BUNDLE_VERSION, "patch": patch, "files": files}
+	var patch_path := cache_dir.path_join(str(IdUtils.uuid()) + ".json")
+	if not FileUtils.write_string_to_file(patch_path, JSON.stringify(bundle)):
+		Log.error("agent git diff bundle cache write failed path:[{}]", patch_path)
 		return StringUtils.EMPTY
 	return patch_path
 
 
-## Opens a cached agent run patch in the bundled Delta terminal viewer.
+## Opens a cached agent run in the side-by-side CodeEdit viewer.
 static func open_diff(patch_path: String) -> void:
 	if StringUtils.is_blank(patch_path) or not FileAccess.file_exists(patch_path):
 		Alert.alert("Git diff is unavailable", Colors.error)
 		return
-	var delta_path := FileUtils.get_project_root_path().path_join(DELTA_EXECUTABLE_PATH)
-	if not FileAccess.file_exists(delta_path):
-		Alert.alert("Delta executable not found", Colors.error)
+	var files := load_diff_files(patch_path)
+	if files.is_empty():
+		Alert.alert("Git diff is unavailable", Colors.error)
 		return
-	var light_theme := ThemeColor.is_light_theme()
-	var delta_color_mode := "--light" if light_theme else "--dark"
-	var terminal_background := GITHUB_LIGHT_BACKGROUND if light_theme else GITHUB_DARK_BACKGROUND
-	var terminal_foreground := GITHUB_LIGHT_FOREGROUND if light_theme else GITHUB_DARK_FOREGROUND
-	var terminal_cursor := GITHUB_LIGHT_CURSOR if light_theme else GITHUB_DARK_CURSOR
-	var selection_background := GITHUB_LIGHT_SELECTION_BACKGROUND if light_theme else GITHUB_DARK_SELECTION_BACKGROUND
-	var selection_foreground := GITHUB_LIGHT_SELECTION_FOREGROUND if light_theme else GITHUB_DARK_SELECTION_FOREGROUND
-	var syntax_theme := "GitHub" if light_theme else "Visual Studio Dark+"
-	var diff_styles := DELTA_DIFF_STYLES_LIGHT if light_theme else DELTA_DIFF_STYLES_DARK
-	var escaped_patch_path := patch_path.replace("'", "'\\''")
-	var escaped_delta_path := delta_path.replace("'", "'\\''")
-	var command := StringUtils.format("/usr/bin/sleep 0.2; /usr/bin/cat '{}' | '{}' --side-by-side --width=-2 --syntax-theme '{}' {} {} --paging=always; exec /bin/bash --login -i", escaped_patch_path, escaped_delta_path, syntax_theme, diff_styles, delta_color_mode)
-	var encoded_command := Marshalls.raw_to_base64(command.to_utf8_buffer())
-	var bash_command := StringUtils.format("/bin/bash --noprofile --norc <(printf %s {} | /usr/bin/base64 --decode)", encoded_command)
-	# `--window max` expands on the monitor that owns the initial position; without
-	# `--pos` Windows often places mintty on the primary (left) screen.
-	var screen := DisplayServer.window_get_current_screen(DisplayServer.MAIN_WINDOW_ID)
-	var usable := DisplayServer.screen_get_usable_rect(screen)
-	var mintty_pos := str(usable.position.x) + "," + str(usable.position.y)
-	var mintty_path := GitHelper.find_windows_git_mintty()
-	var pid := OS.create_process(
-			mintty_path,
-			PackedStringArray([
-				"--pos", mintty_pos,
-				"--window", "max",
-				"--title", "Git Diff",
-				"--option", terminal_background,
-				"--option", terminal_foreground,
-				"--option", terminal_cursor,
-				"--option", selection_background,
-				"--option", selection_foreground,
-				"--option", "KeyFunctions=Esc:close",
-				"--option", "ConfirmExit=no",
-				"/usr/bin/bash", "--noprofile", "--norc", "-c", bash_command
-			]),
-			false
-	)
-	if pid <= 0:
-		Alert.alert("Cannot open Delta", Colors.error)
+	GitDiffViewer.show_files(files, AgentWorkspace.get_root())
 	pass
 
 
-## Opens only one file's section from a cached agent run patch.
+## Opens one file selected in a cached agent run.
 static func open_file_diff(patch_path: String, relative_path: String) -> bool:
 	if StringUtils.is_blank(patch_path) or not FileAccess.file_exists(patch_path):
 		return false
-	var file_patch_path := patch_path.get_basename() + "." + relative_path.sha256_text() + ".patch"
-	if not FileAccess.file_exists(file_patch_path):
-		var patch := FileAccess.get_file_as_string(patch_path)
-		var file_patch := StringUtils.EMPTY
-		var normalized_path := relative_path.replace("\\", "/")
-		# A Git patch stores every changed file in a separate section beginning with `diff --git`.
-		# The first condition handles ordinary edits where both header paths are the same. The remaining
-		# conditions inspect the old/new file markers and rename metadata so added, deleted, and renamed
-		# files are also found. Only the matching section is cached and later passed to Delta.
-		for section in patch.split("diff --git ", false):
-			var candidate := "diff --git " + section
-			if candidate.begins_with("diff --git a/" + normalized_path + " b/" + normalized_path + FileUtils.NEWLINE_LF) \
-					or candidate.contains(FileUtils.NEWLINE_LF + "--- a/" + normalized_path + FileUtils.NEWLINE_LF) \
-					or candidate.contains(FileUtils.NEWLINE_LF + "+++ b/" + normalized_path + FileUtils.NEWLINE_LF) \
-					or candidate.contains(FileUtils.NEWLINE_LF + "rename from " + normalized_path + FileUtils.NEWLINE_LF) \
-					or candidate.contains(FileUtils.NEWLINE_LF + "rename to " + normalized_path + FileUtils.NEWLINE_LF):
-				file_patch = candidate
-				break
-		if StringUtils.is_blank(file_patch) or not FileUtils.write_string_to_file(file_patch_path, file_patch):
-			return false
-	open_diff(file_patch_path)
+	var files := load_diff_files(patch_path)
+	if files.is_empty():
+		return false
+	var normalized_path := relative_path.replace("\\", "/")
+	var found := false
+	for file in files:
+		if file.old_path == normalized_path or file.new_path == normalized_path:
+			found = true
+			break
+	if not found:
+		return false
+	GitDiffViewer.show_files(files, AgentWorkspace.get_root(), normalized_path)
 	return true
+
+
+static func load_diff_files(cache_path: String) -> Array[GitDiffFile]:
+	var text := FileUtils.read_file_to_string(cache_path)
+	var parsed: Variant = null
+	if cache_path.get_extension().to_lower() == "json":
+		var json := JSON.new()
+		if json.parse(text) == OK:
+			parsed = json.data
+	var files: Array[GitDiffFile] = []
+	if parsed is Dictionary:
+		for value: Variant in (parsed as Dictionary).get("files", []):
+			if value is Dictionary:
+				files.append(GitDiffFile.from_dictionary(value))
+		return files
+	return load_legacy_patch(text)
+
+
+## Older chat entries only contain hunk text. They remain viewable but cannot be saved.
+static func load_legacy_patch(patch: String) -> Array[GitDiffFile]:
+	var files: Array[GitDiffFile] = []
+	for raw_section in FileUtils.normalize_line_endings_to_lf(patch).split("diff --git ", false):
+		var section := "diff --git " + raw_section
+		var old_builder := StringBuilder.new()
+		var new_builder := StringBuilder.new()
+		var old_changed := PackedInt32Array()
+		var new_changed := PackedInt32Array()
+		var old_display_line := 0
+		var new_display_line := 0
+		var in_hunk := false
+		var path := StringUtils.EMPTY
+		for line in section.split(FileUtils.NEWLINE_LF, true):
+			if line.begins_with("+++ b/"):
+				path = line.trim_prefix("+++ b/")
+			elif line.begins_with("--- a/") and path.is_empty():
+				path = line.trim_prefix("--- a/")
+			elif line.begins_with("@@ "):
+				in_hunk = true
+			elif in_hunk and not line.is_empty():
+				if line[0] == " " or line[0] == "-":
+					old_builder.append(line.substr(1) + FileUtils.NEWLINE_LF)
+					old_display_line += 1
+					if line[0] == "-":
+						old_changed.append(old_display_line)
+				if line[0] == " " or line[0] == "+":
+					new_builder.append(line.substr(1) + FileUtils.NEWLINE_LF)
+					new_display_line += 1
+					if line[0] == "+":
+						new_changed.append(new_display_line)
+		if path.is_empty():
+			continue
+		var file := GitDiffFile.new()
+		file.old_path = path
+		file.new_path = path
+		file.old_text = old_builder.build_string().trim_suffix(FileUtils.NEWLINE_LF)
+		file.new_text = new_builder.build_string().trim_suffix(FileUtils.NEWLINE_LF)
+		file.complete = false
+		file.old_changed_lines = old_changed
+		file.new_changed_lines = new_changed
+		files.append(file)
+	return files

@@ -1,0 +1,81 @@
+## Git unified-patch parsing and cached file model tests.
+
+
+static func changed_lines_test() -> void:
+	var patch := """diff --git a/demo.gd b/demo.gd
+--- a/demo.gd
++++ b/demo.gd
+@@ -2,4 +2,5 @@
+ same
+-old one
+-old two
++new one
++new two
++new three
+ tail
+"""
+	var changed := GitDiffParser.changed_lines(patch)
+	assert(changed["old"] == PackedInt32Array([3, 4]))
+	assert(changed["new"] == PackedInt32Array([3, 4, 5]))
+	pass
+
+
+static func extract_file_patch_test() -> void:
+	var patch := """diff --git a/first.gd b/first.gd
+--- a/first.gd
++++ b/first.gd
+@@ -1 +1 @@
+-old
++new
+diff --git a/folder/second file.gd b/folder/second file.gd
+--- a/folder/second file.gd
++++ b/folder/second file.gd
+@@ -1 +1 @@
+-left
++right
+"""
+	var section := GitDiffParser.extract_file_patch(patch, "folder\\second file.gd")
+	assert(section.begins_with("diff --git a/folder/second file.gd"))
+	assert(section.contains("+right"))
+	assert(not section.contains("+new"))
+	assert(GitDiffParser.extract_file_patch(patch, "missing.gd").is_empty())
+	pass
+
+
+static func diff_file_round_trip_test() -> void:
+	var source := GitDiffFile.new()
+	source.old_path = "old.gd"
+	source.new_path = "new.gd"
+	source.old_text = "old"
+	source.new_text = "new"
+	source.new_hash = source.new_text.sha256_text()
+	source.new_exists = true
+	source.old_changed_lines = PackedInt32Array([1])
+	source.new_changed_lines = PackedInt32Array([1, 2])
+	var restored := GitDiffFile.from_dictionary(source.to_dictionary())
+	assert(restored.old_path == source.old_path)
+	assert(restored.new_path == source.new_path)
+	assert(restored.new_hash == source.new_hash)
+	assert(restored.old_changed_lines == source.old_changed_lines)
+	assert(restored.new_changed_lines == source.new_changed_lines)
+	assert(restored.can_edit())
+	pass
+
+
+static func deleted_file_is_not_editable_test() -> void:
+	var file := GitDiffFile.new()
+	file.old_path = "deleted.gd"
+	file.new_path = ""
+	file.status = GitDiffFile.STATUS_DELETED
+	assert(not file.can_edit())
+	pass
+
+
+func diff_viewer_builds_test() -> void:
+	var viewer := GitDiffViewer.new()
+	assert(viewer.left_edit != null)
+	assert(not viewer.left_edit.editable)
+	assert(viewer.right_edit.editable)
+	assert(viewer.split_container.split_offset == 0)
+	viewer.free()
+	pass
