@@ -18,6 +18,7 @@ extends Control
 @onready var chat_scroll: ScrollContainer = $Root/Body/ChatArea/ChatScroll
 @onready var chat_host: MarginContainer = $Root/Body/ChatArea/ChatScroll/ChatMargin
 @onready var token_usage_wrap: PanelContainer = $Root/Toolbar/ToolbarRow/TokenUsageWrap
+@onready var memory_toggle_button: Button = $Root/Toolbar/ToolbarRow/MemoryToggleWrap/MemoryToggleButton
 @onready var visuals_button_node: Button = $Root/Toolbar/ToolbarRow/VisualsButtonWrap/VisualsButton
 @onready var agent_prompt_toggle_button: Button = $Root/Toolbar/ToolbarRow/AgentPromptToggleWrap/AgentPromptToggleButton
 @onready var skill_toggle_button: Button = $Root/Toolbar/ToolbarRow/SkillToggleWrap/SkillToggleButton
@@ -51,6 +52,7 @@ var visuals_button: VisualsButton = VisualsButton.new()
 var skill_toggle: SkillToggle = SkillToggle.new()
 var agent_prompt_toggle: AgentPromptToggle = AgentPromptToggle.new()
 var compaction_button: CompactionButton = CompactionButton.new()
+var memory_toggle: MemoryToggle = MemoryToggle.new()
 var markdown_toggle: MarkdownToggle = MarkdownToggle.new()
 var agent_setting_dialog: AgentSettingDialog = AgentSettingDialog.new()
 var session_sidebar: AgentSessionSidebar = AgentSessionSidebar.new()
@@ -71,6 +73,7 @@ func _ready() -> void:
 	session_sidebar.setup(pinned_header, pinned_list, pinned_separator,
 			normal_header, normal_list, session_list_scroll, new_session_button, sidebar_panel)
 	compaction_button.setup(token_usage_wrap)
+	memory_toggle.setup(memory_toggle_button)
 	visuals_button.setup(visuals_button_node)
 	skill_toggle.setup(skill_toggle_button)
 	agent_prompt_toggle.setup(agent_prompt_toggle_button)

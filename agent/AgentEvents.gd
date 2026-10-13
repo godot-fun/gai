@@ -93,6 +93,8 @@ class Events:
 
 	# Session context controls
 	signal skill_context_changed(session_id: int)
+	## Project memory index added to / removed from a session (see MemoryToggle).
+	signal memory_context_changed(session_id: int)
 	## AGENTS.md project prompt added to / removed from a session (see AgentPromptToggle).
 	signal agent_context_changed(session_id: int)
 	pass

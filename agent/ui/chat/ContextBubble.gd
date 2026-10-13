@@ -1,7 +1,7 @@
 class_name ContextBubble
 extends RefCounted
 
-## Context chat bubble for skill index / AGENTS.md — expand/collapse with Markdown preview.
+## Context chat bubble for skills / memory / AGENTS.md — expand/collapse with Markdown preview.
 ## Session / toolbar toggles live in SkillToggle and AgentPromptToggle.
 
 

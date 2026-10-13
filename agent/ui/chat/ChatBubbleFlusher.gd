@@ -74,7 +74,7 @@ static func refresh_rich_text(rich_text: RichTextLabel, entry: ChatEntry) -> voi
 	if entry.kind == ChatEntry.KIND_GIT_DIFF:
 		GitDiffBubble.refresh(rich_text, entry)
 		return
-	if entry.kind == ChatEntry.KIND_SKILL or entry.kind == ChatEntry.KIND_AGENT_PROMPT:
+	if entry.kind == ChatEntry.KIND_SKILL or entry.kind == ChatEntry.KIND_MEMORY or entry.kind == ChatEntry.KIND_AGENT_PROMPT:
 		ContextBubble.refresh(rich_text, entry)
 		return
 	rich_text.visible = StringUtils.is_not_blank(entry.body)

@@ -737,7 +737,7 @@ static func stream_type_for_entry(entry: ChatEntry) -> int:
 	match entry.kind:
 		ChatEntry.KIND_USER:
 			return StreamType.USER
-		ChatEntry.KIND_SYSTEM, ChatEntry.KIND_SKILL, ChatEntry.KIND_AGENT_PROMPT:
+		ChatEntry.KIND_SYSTEM, ChatEntry.KIND_SKILL, ChatEntry.KIND_MEMORY, ChatEntry.KIND_AGENT_PROMPT:
 			return StreamType.SYSTEM
 		ChatEntry.KIND_FILE_TOOL:
 			return StreamType.FILE

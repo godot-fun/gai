@@ -75,6 +75,8 @@
       "markdown": "将 Markdown 渲染为 BBCode",
       "add_skills": "将技能索引加入当前对话",
       "remove_skills": "从当前对话移除技能索引",
+      "add_memory": "将记忆加入当前对话",
+      "remove_memory": "从当前对话移除记忆",
       "add_agents": "将 AGENTS.md 加入当前对话",
       "remove_agents": "从当前对话移除 AGENTS.md",
       "hide_animation": "隐藏运行动画",

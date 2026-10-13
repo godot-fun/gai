@@ -3,6 +3,7 @@ extends RefCounted
 
 const KIND_SYSTEM := "system"
 const KIND_SKILL := "skill"
+const KIND_MEMORY := "memory"
 const KIND_AGENT_PROMPT := "agent_prompt"
 const KIND_USER := "user"
 const KIND_AGENT := "agent"
@@ -16,6 +17,7 @@ const KIND_COMPACTION := "compaction"
 
 const TITLE_SYSTEM := "System"
 const TITLE_SKILL := "Skills"
+const TITLE_MEMORY := "Memory"
 const TITLE_AGENT_PROMPT := "AGENTS.md"
 const TITLE_USER := "You"
 const TITLE_AGENT := "Agent"
@@ -34,9 +36,9 @@ var body: String = ""
 var details: Dictionary[String, String] = {}
 
 
-## Context entries are seeded into the LLM history (system prompt, skill index, AGENTS.md) instead of a chat turn.
+## Context entries are seeded into the LLM history (system, skills, memory, AGENTS.md) instead of a chat turn.
 static func is_context_kind(entry_kind: String) -> bool:
-	return entry_kind == KIND_SYSTEM or entry_kind == KIND_SKILL or entry_kind == KIND_AGENT_PROMPT
+	return entry_kind == KIND_SYSTEM or entry_kind == KIND_SKILL or entry_kind == KIND_MEMORY or entry_kind == KIND_AGENT_PROMPT
 
 
 func _init(

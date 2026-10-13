@@ -2,7 +2,7 @@ class_name AgentSetting
 extends RefCounted
 
 ## Persisted agent preferences — notification behavior for finished runs plus the toolbar toggles
-## (Jarvis orb, Markdown rendering, skill index / AGENTS.md prompts).
+## (Jarvis orb, Markdown rendering, skill index / memory / AGENTS.md prompts).
 ##
 ## Behavior lives in [AgentNotification] and the matching `agent/ui/toolbar` toggle; the fields are
 ## edited by [AgentSettingDialog].
@@ -19,6 +19,8 @@ const VISUAL_TYPE_KEY := "agent_visual_type"
 const MARKDOWN_ENABLED_KEY := "agent_markdown_enabled"
 ## [SkillToggle] — keep the skill index system message inside new sessions.
 const SKILL_IN_PROMPT_ENABLED_KEY := "agent_skill_in_prompt_enabled"
+## [MemoryToggle] — keep the project memory index inside new sessions.
+const MEMORY_IN_PROMPT_ENABLED_KEY := "agent_memory_in_prompt_enabled"
 ## [AgentPromptToggle] — keep the AGENTS.md project prompt inside new sessions.
 const AGENT_PROMPT_IN_PROMPT_ENABLED_KEY := "agent_agents_md_in_prompt_enabled"
 
@@ -60,6 +62,16 @@ static func get_skill_in_prompt_enabled() -> bool:
 
 static func set_skill_in_prompt_enabled(enabled: bool) -> void:
 	Setting.set_bool(SKILL_IN_PROMPT_ENABLED_KEY, enabled)
+	Setting.save()
+	pass
+
+
+static func get_memory_in_prompt_enabled() -> bool:
+	return Setting.get_bool(MEMORY_IN_PROMPT_ENABLED_KEY, true)
+
+
+static func set_memory_in_prompt_enabled(enabled: bool) -> void:
+	Setting.set_bool(MEMORY_IN_PROMPT_ENABLED_KEY, enabled)
 	Setting.save()
 	pass
 

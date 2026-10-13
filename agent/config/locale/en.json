@@ -75,6 +75,8 @@
       "markdown": "Render Markdown as BBCode",
       "add_skills": "Add skill index to this chat",
       "remove_skills": "Remove skill index from this chat",
+      "add_memory": "Add memory to this chat",
+      "remove_memory": "Remove memory from this chat",
       "add_agents": "Add AGENTS.md to this chat",
       "remove_agents": "Remove AGENTS.md from this chat",
       "hide_animation": "Hide run animation",

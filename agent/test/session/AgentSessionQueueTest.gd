@@ -34,16 +34,25 @@ static func duplicate_message_delete_removes_first_match_test() -> void:
 	pass
 
 
+static func memory_prompt_reads_workspace_memory_test() -> void:
+	assert(MemoryPrompt.MEMORY_README_PATH == ".memory/README.md")
+	assert(MemoryPrompt.has_memory_context())
+	assert(MemoryPrompt.get_memory_context() == FileUtils.read_file_to_string(AgentWorkspace.resolve_path(MemoryPrompt.MEMORY_README_PATH)))
+	pass
+
+
 static func compaction_keeps_only_context_entries_test() -> void:
 	var entries: Array[ChatEntry] = [
 		ChatEntry.new(ChatEntry.KIND_SYSTEM, ChatEntry.TITLE_SYSTEM, "system"),
+		ChatEntry.new(ChatEntry.KIND_MEMORY, ChatEntry.TITLE_MEMORY, "memory"),
 		ChatEntry.new(ChatEntry.KIND_USER, ChatEntry.TITLE_USER, "question"),
 		ChatEntry.new(ChatEntry.KIND_AGENT, ChatEntry.TITLE_AGENT, "answer"),
 		ChatEntry.new(ChatEntry.KIND_COMPACTION, ChatEntry.TITLE_COMPACTION, "old summary"),
 	]
 	var compacted := AgentCompactionManager.collect_context_entries(entries)
-	assert(compacted.size() == 1)
+	assert(compacted.size() == 2)
 	assert(compacted[0].kind == ChatEntry.KIND_SYSTEM)
+	assert(compacted[1].kind == ChatEntry.KIND_MEMORY)
 	pass
 
 

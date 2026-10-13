@@ -49,6 +49,7 @@ func setup(
 	gdf.events.locale_changed.connect(on_locale_changed)
 	AgentEvents.events.markdown_changed.connect(on_markdown_changed)
 	AgentEvents.events.skill_context_changed.connect(on_agent_context_changed)
+	AgentEvents.events.memory_context_changed.connect(on_agent_context_changed)
 	AgentEvents.events.agent_context_changed.connect(on_agent_context_changed)
 	AgentEvents.events.session_selected.connect(on_session_selected)
 	AgentEvents.events.session_removed.connect(on_session_removed)
@@ -200,7 +201,7 @@ func reveal_entry(entry_index: int) -> void:
 # AgentEvents — appearance
 # ---------------------------------------------------------------------------
 
-## Re-render the transcript after a context prompt (skill index / AGENTS.md) is added or removed.
+## Re-render the transcript after a context prompt (skills / memory / AGENTS.md) is added or removed.
 func on_agent_context_changed(session_id: int) -> void:
 	var is_active: bool = AgentSessionManager.is_active(session_id)
 	if is_active:
@@ -349,7 +350,7 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 	match chat_entry.kind:
 		ChatEntry.KIND_SYSTEM:
 			rich_text = append_bubble(chat_list, chat_entry, Colors.secondary_text, Colors.info_surface, Colors.info)
-		ChatEntry.KIND_SKILL, ChatEntry.KIND_AGENT_PROMPT:
+		ChatEntry.KIND_SKILL, ChatEntry.KIND_MEMORY, ChatEntry.KIND_AGENT_PROMPT:
 			rich_text = ContextBubble.append(
 					chat_list,
 					session_id,

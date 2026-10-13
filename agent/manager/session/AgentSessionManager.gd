@@ -299,6 +299,7 @@ static func delete_chat_from_entry(session_id: int, entry: ChatEntry) -> void:
 		ChatEntry.KIND_USER,
 		ChatEntry.KIND_ERROR,
 		ChatEntry.KIND_SKILL,
+		ChatEntry.KIND_MEMORY,
 		ChatEntry.KIND_AGENT_PROMPT,
 	]
 	if entry == null or entry.kind not in deletable_kinds:
@@ -328,10 +329,16 @@ static func message_index_for_chat_entry(session: AgentSession, entry_idx: int) 
 	if entry_idx < 0 or entry_idx >= session.chat_entries.size():
 		return -1
 	var entry: ChatEntry = session.chat_entries[entry_idx]
-	if entry.kind == ChatEntry.KIND_SKILL or entry.kind == ChatEntry.KIND_AGENT_PROMPT:
+	if entry.kind == ChatEntry.KIND_SKILL or entry.kind == ChatEntry.KIND_MEMORY or entry.kind == ChatEntry.KIND_AGENT_PROMPT:
 		for message_idx in range(session.messages.size()):
 			var message: ChatMessage = session.messages[message_idx]
-			var matches: bool = SkillPrompt.is_skill_context_message(message) if entry.kind == ChatEntry.KIND_SKILL else AgentPrompt.is_agent_context_message(message)
+			var matches := false
+			if entry.kind == ChatEntry.KIND_SKILL:
+				matches = SkillPrompt.is_skill_context_message(message)
+			elif entry.kind == ChatEntry.KIND_MEMORY:
+				matches = MemoryPrompt.is_memory_context_message(message)
+			else:
+				matches = AgentPrompt.is_agent_context_message(message)
 			if matches:
 				return message_idx
 		return -1

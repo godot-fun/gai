@@ -1,13 +1,4 @@
----
-name: memory-readme
-description: Entry point and index for the memory system. Read this file first to discover available memory areas, decide which files are relevant, and follow the shared rules for reading and updating memory.
----
-
-# Memory Index
-
-[English](README.md) | [简体中文](README_CN.md)
-
-> `README.md` is the single source of truth for memory-system rules. Translations are provided for reference only; if any translation differs from this document, this document takes precedence.
+# Memory
 
 > This directory is the persistent memory of the system. Use this index to locate relevant memories instead of loading every file by default.
 
