@@ -177,7 +177,12 @@ func build_ui() -> void:
 	split_container.add_child(left_edit)
 	var right_side := HBoxContainer.new()
 	right_side.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Match the left CodeEdit height inside the split: claim leftover vertical space and fill it.
+	right_side.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right_side.add_theme_constant_override("separation", 0)
+	# Same vertical fill so the connector lane and right editor stay the same height.
+	connector.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	right_edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right_side.add_child(connector)
 	right_side.add_child(right_edit)
 	split_container.add_child(right_side)

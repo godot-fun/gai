@@ -162,7 +162,29 @@ func draw_compact_connector(old_rect: Dictionary, new_rect: Dictionary, color: C
 
 
 func block_rect(edit: CodeEdit, one_based_start: int, line_count: int) -> Dictionary:
+	# Map into connector space. Editors and the connector share a top edge inside the split, but
+	# global delta stays correct if a style/margin ever shifts one side.
+	var y_offset := edit.global_position.y - global_position.y
 	var line_height := float(edit.get_line_height())
-	var top := (float(one_based_start - 1) - edit.scroll_vertical) * line_height
-	var height := maxf(float(line_count) * line_height, line_height * 0.32)
-	return {"start": top, "end": top + height}
+	var total_lines := edit.get_line_count()
+	var start_line := maxi(one_based_start - 1, 0)
+	if total_lines <= 0:
+		return {"start": y_offset, "end": y_offset + maxf(float(maxi(line_count, 1)) * line_height * 0.32, line_height * 0.32)}
+	start_line = mini(start_line, total_lines - 1)
+	if line_count <= 0:
+		var gap_top := line_top(edit, start_line) + y_offset
+		return {"start": gap_top, "end": gap_top + line_height * 0.32}
+	var end_line := clampi(start_line + line_count - 1, start_line, total_lines - 1)
+	var top := line_top(edit, start_line) + y_offset
+	var bottom := line_top(edit, end_line) + line_height + y_offset
+	return {"start": top, "end": bottom}
+
+
+## Prefer TextEdit's laid-out line rect so stylebox top margin and scroll match line backgrounds.
+func line_top(edit: CodeEdit, zero_based_line: int) -> float:
+	var rect := edit.get_rect_at_line_column(zero_based_line, 0)
+	if rect.position.y >= 0:
+		return float(rect.position.y)
+	var style := edit.get_theme_stylebox("normal")
+	var top_margin := style.get_margin(SIDE_TOP) if style != null else 0.0
+	return top_margin + (float(zero_based_line) - edit.scroll_vertical) * float(edit.get_line_height())
