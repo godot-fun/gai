@@ -20,12 +20,29 @@ class DiffHunk extends RefCounted:
 
 
 class ChangedLines extends RefCounted:
-	var old_lines: PackedInt32Array
-	var new_lines: PackedInt32Array
+	var old_lines: Array[int]
+	var new_lines: Array[int]
 
-	func _init(p_old_lines: PackedInt32Array = PackedInt32Array(), p_new_lines: PackedInt32Array = PackedInt32Array()) -> void:
+	func _init(p_old_lines: Array[int] = [], p_new_lines: Array[int] = []) -> void:
 		old_lines = p_old_lines
 		new_lines = p_new_lines
+		pass
+
+
+class ParsedDiff extends RefCounted:
+	var hunks: Array[DiffHunk]
+	var changed_lines: ChangedLines
+
+	func _init(p_hunks: Array[DiffHunk]) -> void:
+		hunks = p_hunks
+		var old_lines: Array[int] = []
+		var new_lines: Array[int] = []
+		for hunk: DiffHunk in hunks:
+			for line in hunk.old_lines:
+				old_lines.append(line)
+			for line in hunk.new_lines:
+				new_lines.append(line)
+		changed_lines = ChangedLines.new(old_lines, new_lines)
 		pass
 
 static var hunk_regex: RegEx
@@ -40,17 +57,17 @@ static func _static_init() -> void:
 ## Returns one-based old/new line numbers affected by each hunk. Header markers (`---` / `+++`)
 ## are outside hunks and therefore never get mistaken for deleted/added source lines.
 static func changed_lines(file_patch: String) -> ChangedLines:
-	var old_lines := PackedInt32Array()
-	var new_lines := PackedInt32Array()
-	for hunk: DiffHunk in parse_hunks(file_patch):
-		old_lines.append_array(hunk.old_lines)
-		new_lines.append_array(hunk.new_lines)
-	return ChangedLines.new(old_lines, new_lines)
+	return parse(file_patch).changed_lines
 
 
 ## Parses complete hunk geometry as well as changed line numbers. Counts are required by the
 ## side-by-side viewer to map scroll positions and draw connectors between unequal blocks.
 static func parse_hunks(file_patch: String) -> Array[DiffHunk]:
+	return parse(file_patch).hunks
+
+
+## Parses a patch once when callers need both hunk geometry and flattened changed line numbers.
+static func parse(file_patch: String) -> ParsedDiff:
 	var hunks: Array[DiffHunk] = []
 	var current: DiffHunk
 	var old_line := 0
@@ -84,7 +101,7 @@ static func parse_hunks(file_patch: String) -> Array[DiffHunk]:
 			current = null
 	if current != null:
 		hunks.append(current)
-	return hunks
+	return ParsedDiff.new(hunks)
 
 
 ## Extracts one `diff --git` section. Checking file markers and rename metadata covers additions,

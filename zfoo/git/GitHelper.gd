@@ -48,7 +48,7 @@ class Git:
 		return await async_execute(StringUtils.format("diff --cached --quiet {} --", reference))
 
 	func async_commit(message: String) -> OSUtils.ExecResult:
-		return await async_execute(StringUtils.format('commit --quiet -m "{}"', message))
+		return await async_execute_args(PackedStringArray(["commit", "--quiet", "-m", message]))
 
 	func async_list_commits(max_count: int) -> OSUtils.ExecResult:
 		return await async_execute(StringUtils.format("rev-list --max-count={} HEAD", max_count))

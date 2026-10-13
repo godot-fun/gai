@@ -47,7 +47,7 @@ static func create(file_path: String) -> CodeHighlighter:
 		configure_c_style(highlighter, extension)
 	elif extension in SHADER_EXTENSIONS:
 		configure_shader(highlighter)
-	elif extension in DATA_EXTENSIONS or file_name in PackedStringArray(["dockerfile", "makefile", ".gitignore", ".gitattributes", ".editorconfig"]):
+	elif extension in DATA_EXTENSIONS or file_name in ["dockerfile", "makefile", ".gitignore", ".gitattributes", ".editorconfig"]:
 		configure_data(highlighter, extension, file_name)
 	elif extension in MARKUP_EXTENSIONS:
 		configure_markup(highlighter, extension)
@@ -59,7 +59,7 @@ static func create(file_path: String) -> CodeHighlighter:
 		configure_diff(highlighter)
 	elif extension in LATEX_EXTENSIONS:
 		configure_latex(highlighter)
-	elif file_name in PackedStringArray(["sconstruct", "sconscript"]):
+	elif file_name in ["sconstruct", "sconscript"]:
 		configure_script(highlighter, "py")
 	elif file_name == "cmakelists.txt" or extension == "cmake":
 		configure_cmake(highlighter)
@@ -113,7 +113,7 @@ static func configure_c_style(highlighter: CodeHighlighter, extension: String) -
 	if extension in JS_EXTENSIONS:
 		add_keywords(highlighter, JS_KEYWORDS, CodeColors.keyword)
 		highlighter.add_color_region("`", "`", CodeColors.string)
-		if extension in PackedStringArray(["jsx", "tsx"]):
+		if extension in ["jsx", "tsx"]:
 			highlighter.add_color_region("<", ">", CodeColors.tag)
 	else:
 		highlighter.add_color_region("#", "", CodeColors.declaration, true)
@@ -139,26 +139,26 @@ static func configure_shader(highlighter: CodeHighlighter) -> void:
 
 
 static func configure_data(highlighter: CodeHighlighter, extension: String, file_name: String) -> void:
-	add_keywords(highlighter, PackedStringArray(["true", "false", "null", "yes", "no", "on", "off"]), CodeColors.type)
+	add_keywords(highlighter, ["true", "false", "null", "yes", "no", "on", "off"], CodeColors.type)
 	add_quoted_strings(highlighter, CodeColors.string)
-	if extension in PackedStringArray(["jsonc", "json5"]):
+	if extension in ["jsonc", "json5"]:
 		highlighter.add_color_region("//", "", CodeColors.comment, true)
 		highlighter.add_color_region("/*", "*/", CodeColors.comment)
-	elif extension in PackedStringArray(["ini", "cfg", "conf", "properties", "godot", "tscn", "tres", "gdextension", "import"]):
+	elif extension in ["ini", "cfg", "conf", "properties", "godot", "tscn", "tres", "gdextension", "import"]:
 		highlighter.add_color_region(";", "", CodeColors.comment, true)
 		highlighter.add_color_region("#", "", CodeColors.comment, true)
 	else:
 		highlighter.add_color_region("#", "", CodeColors.comment, true)
 	if file_name == "dockerfile":
-		add_keywords(highlighter, PackedStringArray(["FROM", "RUN", "CMD", "LABEL", "EXPOSE", "ENV", "ADD", "COPY", "ENTRYPOINT", "VOLUME", "USER", "WORKDIR", "ARG", "ONBUILD", "STOPSIGNAL", "HEALTHCHECK", "SHELL"]), CodeColors.declaration)
+		add_keywords(highlighter, ["FROM", "RUN", "CMD", "LABEL", "EXPOSE", "ENV", "ADD", "COPY", "ENTRYPOINT", "VOLUME", "USER", "WORKDIR", "ARG", "ONBUILD", "STOPSIGNAL", "HEALTHCHECK", "SHELL"], CodeColors.declaration)
 	elif file_name == "makefile":
-		add_keywords(highlighter, PackedStringArray(["define", "else", "endef", "endif", "export", "ifdef", "ifeq", "ifndef", "ifneq", "include", "override", "private", "sinclude", "undefine", "unexport", "vpath"]), CodeColors.keyword)
+		add_keywords(highlighter, ["define", "else", "endef", "endif", "export", "ifdef", "ifeq", "ifndef", "ifneq", "include", "override", "private", "sinclude", "undefine", "unexport", "vpath"], CodeColors.keyword)
 	pass
 
 
 static func configure_markup(highlighter: CodeHighlighter, extension: String) -> void:
 	add_quoted_strings(highlighter, CodeColors.string)
-	if extension in PackedStringArray(["md", "markdown", "mdx"]):
+	if extension in ["md", "markdown", "mdx"]:
 		add_keywords(highlighter, MARKDOWN_KEYWORDS, CodeColors.declaration)
 		# Fenced blocks before single backticks so ```…``` wins over nested `.
 		highlighter.add_color_region("```", "```", CodeColors.string)
@@ -172,16 +172,16 @@ static func configure_markup(highlighter: CodeHighlighter, extension: String) ->
 	else:
 		highlighter.add_color_region("<!--", "-->", CodeColors.comment)
 		highlighter.add_color_region("<", ">", CodeColors.tag)
-	if extension in PackedStringArray(["css", "scss", "sass", "less"]):
+	if extension in ["css", "scss", "sass", "less"]:
 		highlighter.add_color_region("/*", "*/", CodeColors.comment)
 	pass
 
 
 static func configure_shell(highlighter: CodeHighlighter, extension: String) -> void:
 	add_keywords(highlighter, SHELL_KEYWORDS, CodeColors.keyword)
-	add_keywords(highlighter, PackedStringArray(["true", "false", "null"]), CodeColors.type)
+	add_keywords(highlighter, ["true", "false", "null"], CodeColors.type)
 	add_quoted_strings(highlighter, CodeColors.string)
-	if extension in PackedStringArray(["bat", "cmd"]):
+	if extension in ["bat", "cmd"]:
 		highlighter.add_color_region("REM ", "", CodeColors.comment, true)
 	else:
 		highlighter.add_color_region("#", "", CodeColors.comment, true)
@@ -190,7 +190,7 @@ static func configure_shell(highlighter: CodeHighlighter, extension: String) -> 
 
 static func configure_sql(highlighter: CodeHighlighter) -> void:
 	add_keywords(highlighter, SQL_KEYWORDS, CodeColors.keyword)
-	add_keywords(highlighter, PackedStringArray(["BOOLEAN", "CHAR", "DATE", "DECIMAL", "FLOAT", "INT", "INTEGER", "JSON", "NUMERIC", "REAL", "TEXT", "TIME", "TIMESTAMP", "UUID", "VARCHAR", "TRUE", "FALSE", "NULL"]), CodeColors.type)
+	add_keywords(highlighter, ["BOOLEAN", "CHAR", "DATE", "DECIMAL", "FLOAT", "INT", "INTEGER", "JSON", "NUMERIC", "REAL", "TEXT", "TIME", "TIMESTAMP", "UUID", "VARCHAR", "TRUE", "FALSE", "NULL"], CodeColors.type)
 	add_quoted_strings(highlighter, CodeColors.string)
 	highlighter.add_color_region("--", "", CodeColors.comment, true)
 	highlighter.add_color_region("/*", "*/", CodeColors.comment)
@@ -216,7 +216,7 @@ static func configure_latex(highlighter: CodeHighlighter) -> void:
 
 
 static func configure_cmake(highlighter: CodeHighlighter) -> void:
-	add_keywords(highlighter, PackedStringArray(["add_custom_command", "add_custom_target", "add_executable", "add_library", "cmake_minimum_required", "else", "elseif", "endforeach", "endfunction", "endif", "endmacro", "endwhile", "find_package", "foreach", "function", "if", "include", "install", "macro", "message", "option", "project", "return", "set", "target_compile_definitions", "target_compile_options", "target_include_directories", "target_link_libraries", "while"]), CodeColors.keyword)
+	add_keywords(highlighter, ["add_custom_command", "add_custom_target", "add_executable", "add_library", "cmake_minimum_required", "else", "elseif", "endforeach", "endfunction", "endif", "endmacro", "endwhile", "find_package", "foreach", "function", "if", "include", "install", "macro", "message", "option", "project", "return", "set", "target_compile_definitions", "target_compile_options", "target_include_directories", "target_link_libraries", "while"], CodeColors.keyword)
 	add_quoted_strings(highlighter, CodeColors.string)
 	highlighter.add_color_region("#", "", CodeColors.comment, true)
 	pass

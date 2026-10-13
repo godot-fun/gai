@@ -14,8 +14,8 @@ static func changed_lines_test() -> void:
  tail
 """
 	var changed := GitDiffParser.changed_lines(patch)
-	assert(changed.old_lines == PackedInt32Array([3, 4]))
-	assert(changed.new_lines == PackedInt32Array([3, 4, 5]))
+	assert(changed.old_lines == [3, 4])
+	assert(changed.new_lines == [3, 4, 5])
 	pass
 
 
@@ -29,13 +29,16 @@ static func parse_hunks_test() -> void:
 @@ -12,0 +14,1 @@
 +inserted
 """
-	var hunks := GitDiffParser.parse_hunks(patch)
+	var parsed := GitDiffParser.parse(patch)
+	var hunks := parsed.hunks
 	assert(hunks.size() == 2)
 	assert(hunks[0].old_start == 3)
 	assert(hunks[0].old_count == 2)
 	assert(hunks[0].new_count == 3)
 	assert(hunks[1].old_count == 0)
 	assert(hunks[1].new_start == 14)
+	assert(parsed.changed_lines.old_lines == [3, 4])
+	assert(parsed.changed_lines.new_lines == [3, 4, 5, 14])
 	pass
 
 
@@ -45,8 +48,8 @@ static func git_diff_texts_test() -> void:
 	var result := await GitHelper.async_diff_texts("same\nold\ntail", "same\nnew\ntail")
 	assert(result.exit_code == 1)
 	var changed := GitDiffParser.changed_lines(result.output.build_string())
-	assert(changed.old_lines == PackedInt32Array([2]))
-	assert(changed.new_lines == PackedInt32Array([2]))
+	assert(changed.old_lines == [2])
+	assert(changed.new_lines == [2])
 	pass
 
 
@@ -80,14 +83,20 @@ static func diff_file_round_trip_test() -> void:
 	source.new_text = "new"
 	source.new_hash = source.new_text.sha256_text()
 	source.new_exists = true
-	source.old_changed_lines = PackedInt32Array([1])
-	source.new_changed_lines = PackedInt32Array([1, 2])
-	var restored := GitDiffFile.from_dictionary(source.to_dictionary())
+	source.changed_lines = GitDiffParser.ChangedLines.new([1], [1, 2])
+	var bundle := GitDiffBundle.new()
+	bundle.version = 2
+	bundle.patch = "patch"
+	bundle.files = [source]
+	var restored_bundle: GitDiffBundle = JsonUtils.json_to_object(JsonUtils.object_to_json(bundle), GitDiffBundle)
+	var restored := restored_bundle.files[0]
+	assert(restored_bundle.version == bundle.version)
+	assert(restored_bundle.patch == bundle.patch)
 	assert(restored.old_path == source.old_path)
 	assert(restored.new_path == source.new_path)
 	assert(restored.new_hash == source.new_hash)
-	assert(restored.old_changed_lines == source.old_changed_lines)
-	assert(restored.new_changed_lines == source.new_changed_lines)
+	assert(restored.changed_lines.old_lines == source.changed_lines.old_lines)
+	assert(restored.changed_lines.new_lines == source.changed_lines.new_lines)
 	assert(restored.can_edit())
 	pass
 

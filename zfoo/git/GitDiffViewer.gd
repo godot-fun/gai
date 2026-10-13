@@ -322,7 +322,7 @@ func paint_changed_lines() -> void:
 	if file.complete and not file.binary:
 		run_current_git_diff()
 	else:
-		displayed_changed = GitDiffParser.ChangedLines.new(file.old_changed_lines, file.new_changed_lines)
+		displayed_changed = file.changed_lines
 		apply_changed_lines(displayed_changed)
 	pass
 
@@ -354,8 +354,9 @@ func run_current_git_diff() -> void:
 	if result.exit_code != 0 and result.exit_code != 1:
 		Log.error("live git diff failed exit:[{}] output:[{}]", result.exit_code, result.output.build_string())
 		return
-	displayed_changed = GitDiffParser.changed_lines(result.output.build_string())
-	displayed_hunks = GitDiffParser.parse_hunks(result.output.build_string())
+	var parsed_diff := GitDiffParser.parse(result.output.build_string())
+	displayed_changed = parsed_diff.changed_lines
+	displayed_hunks = parsed_diff.hunks
 	selected_hunk = -1 if displayed_hunks.is_empty() else clampi(selected_hunk, 0, displayed_hunks.size() - 1)
 	apply_changed_lines(displayed_changed)
 	refresh_hunk_controls()

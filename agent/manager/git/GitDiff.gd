@@ -82,7 +82,7 @@ static func async_cache_diff(git: GitHelper.Git, reference: String, file_stats: 
 	if mkdir_error != OK:
 		Log.error("agent git diff cache directory create failed path:[{}] error:[{}]", cache_dir, mkdir_error)
 		return StringUtils.EMPTY
-	var files: Array[Dictionary] = []
+	var files: Array[GitDiffFile] = []
 	for stat_line in file_stats:
 		var parts := stat_line.split("\t", false)
 		if parts.is_empty():
@@ -118,12 +118,14 @@ static func async_cache_diff(git: GitHelper.Git, reference: String, file_stats: 
 		file.new_exists = new_exists
 		file.status = status
 		file.binary = is_binary
-		file.old_changed_lines = changed.old_lines
-		file.new_changed_lines = changed.new_lines
-		files.append(file.to_dictionary())
-	var bundle := {"version": DIFF_BUNDLE_VERSION, "patch": patch, "files": files}
+		file.changed_lines = changed
+		files.append(file)
+	var bundle := GitDiffBundle.new()
+	bundle.version = DIFF_BUNDLE_VERSION
+	bundle.patch = patch
+	bundle.files = files
 	var patch_path := cache_dir.path_join(str(IdUtils.uuid()) + ".json")
-	if not FileUtils.write_string_to_file(patch_path, JSON.stringify(bundle)):
+	if not FileUtils.write_string_to_file(patch_path, JsonUtils.object_to_json(bundle)):
 		Log.error("agent git diff bundle cache write failed path:[{}]", patch_path)
 		return StringUtils.EMPTY
 	return patch_path
@@ -164,17 +166,12 @@ static func open_file_diff(patch_path: String, relative_path: String) -> bool:
 ## Loads current JSON bundles and transparently falls back to historical raw .patch entries.
 static func load_diff_files(cache_path: String) -> Array[GitDiffFile]:
 	var text := FileUtils.read_file_to_string(cache_path)
-	var parsed: Variant = null
+	var bundle: GitDiffBundle
 	if cache_path.get_extension().to_lower() == "json":
-		var json := JSON.new()
-		if json.parse(text) == OK:
-			parsed = json.data
+		bundle = JsonUtils.json_to_object(text, GitDiffBundle)
 	var files: Array[GitDiffFile] = []
-	if parsed is Dictionary:
-		for value: Variant in (parsed as Dictionary).get("files", []):
-			if value is Dictionary:
-				files.append(GitDiffFile.from_dictionary(value))
-		return files
+	if bundle != null:
+		return bundle.files
 	return load_legacy_patch(text)
 
 
@@ -185,8 +182,8 @@ static func load_legacy_patch(patch: String) -> Array[GitDiffFile]:
 		var section := "diff --git " + raw_section
 		var old_builder := StringBuilder.new()
 		var new_builder := StringBuilder.new()
-		var old_changed := PackedInt32Array()
-		var new_changed := PackedInt32Array()
+		var old_changed: Array[int] = []
+		var new_changed: Array[int] = []
 		var old_display_line := 0
 		var new_display_line := 0
 		var in_hunk := false
@@ -220,7 +217,6 @@ static func load_legacy_patch(patch: String) -> Array[GitDiffFile]:
 		file.old_text = old_builder.build_string().trim_suffix(FileUtils.NEWLINE_LF)
 		file.new_text = new_builder.build_string().trim_suffix(FileUtils.NEWLINE_LF)
 		file.complete = false
-		file.old_changed_lines = old_changed
-		file.new_changed_lines = new_changed
+		file.changed_lines = GitDiffParser.ChangedLines.new(old_changed, new_changed)
 		files.append(file)
 	return files
