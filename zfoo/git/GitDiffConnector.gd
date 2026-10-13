@@ -88,11 +88,11 @@ func _draw() -> void:
 		else:
 			draw_compact_connector(old_rect, new_rect, color, index == active_hunk)
 		if revert_enabled:
-			draw_revert_button(index, old_rect, new_rect)
+			draw_revert_button(index, old_rect)
 	pass
 
 
-func draw_revert_button(index: int, old_rect: LineBlock, _new_rect: LineBlock) -> void:
+func draw_revert_button(index: int, old_rect: LineBlock) -> void:
 	var button_size := float(ControlSize.xs)
 	var line_height := float(left_edit.get_line_height())
 	# Revert acts from left to right, so its stable anchor is the first row of the old block. Do not

@@ -1,6 +1,6 @@
 ## Git unified-patch parsing and cached file model tests.
 
-static func changed_lines_test() -> void:
+static func parse_changed_lines_test() -> void:
 	var patch := """diff --git a/demo.gd b/demo.gd
 --- a/demo.gd
 +++ b/demo.gd
@@ -13,13 +13,13 @@ static func changed_lines_test() -> void:
 +new three
  tail
 """
-	var changed := GitDiffParser.changed_lines(patch)
+	var changed := GitDiffParser.parse(patch).changed_lines
 	assert(changed.old_lines == [3, 4])
 	assert(changed.new_lines == [3, 4, 5])
 	pass
 
 
-static func parse_hunks_test() -> void:
+static func parse_hunks_and_lines_test() -> void:
 	var patch := """@@ -3,2 +3,3 @@
 -old one
 -old two
@@ -47,7 +47,7 @@ static func git_diff_texts_test() -> void:
 		return
 	var result := await GitHelper.async_diff_texts("same\nold\ntail", "same\nnew\ntail")
 	assert(result.exit_code == 1)
-	var changed := GitDiffParser.changed_lines(result.output.build_string())
+	var changed := GitDiffParser.parse(result.output.build_string()).changed_lines
 	assert(changed.old_lines == [2])
 	assert(changed.new_lines == [2])
 	pass
@@ -192,8 +192,6 @@ func diff_viewer_applies_file_highlighter_test() -> void:
 func diff_viewer_maps_lines_across_hunks_test() -> void:
 	var viewer := GitDiffViewer.new()
 	var hunk := GitDiffParser.DiffHunk.new(3, 2, 3, 4)
-	hunk.old_lines = PackedInt32Array([3, 4])
-	hunk.new_lines = PackedInt32Array([3, 4, 5, 6])
 	viewer.displayed_hunks = [hunk]
 	assert(viewer.map_diff_line(1.0, true) == 1.0)
 	assert(viewer.map_diff_line(2.0, true) == 2.0)

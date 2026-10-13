@@ -109,7 +109,7 @@ static func async_cache_diff(git: GitHelper.Git, reference: String, file_stats: 
 			status = GitDiffFile.STATUS_ADDED
 		elif old_exists and not new_exists:
 			status = GitDiffFile.STATUS_DELETED
-		var changed := GitDiffParser.changed_lines(file_patch)
+		var parsed_diff := GitDiffParser.parse(file_patch)
 		var file := GitDiffFile.new()
 		file.old_path = relative_path if old_exists else StringUtils.EMPTY
 		file.new_path = relative_path if new_exists else StringUtils.EMPTY
@@ -119,7 +119,7 @@ static func async_cache_diff(git: GitHelper.Git, reference: String, file_stats: 
 		file.new_exists = new_exists
 		file.status = status
 		file.binary = is_binary
-		file.changed_lines = changed
+		file.changed_lines = parsed_diff.changed_lines
 		files.append(file)
 	var bundle := GitDiffBundle.new()
 	bundle.files = files
@@ -188,7 +188,7 @@ static func load_legacy_patch(patch: String) -> Array[GitDiffFile]:
 		var path := StringUtils.EMPTY
 		# Rebuild only the visible hunk fragments. Their display-relative change numbers differ from
 		# real file line numbers, which is why they are counted while appending instead of reused from
-		# GitDiffParser.changed_lines(). GitDiffFile.complete=false disables unsafe saving.
+		# complete-file parsing. GitDiffFile.complete=false disables unsafe saving.
 		for line in section.split(FileUtils.NEWLINE_LF, true):
 			if line.begins_with("+++ b/"):
 				path = line.trim_prefix("+++ b/")
