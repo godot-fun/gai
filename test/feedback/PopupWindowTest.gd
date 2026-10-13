@@ -114,6 +114,7 @@ func PopupWindow_parent_test() -> void:
 	var windows := open_windows()
 	assert(windows.size() == 1)
 	assert(windows[0].get_parent() == gdf.gdf_node)
+	assert(is_equal_approx(windows[0].oversampling_override, DisplayScale.compute_ui_scale()))
 	# Hold the window open so a run with a display shows the popup.
 	await ThreadUtils.async_sleep(1500)
 	await close_window(windows[0])

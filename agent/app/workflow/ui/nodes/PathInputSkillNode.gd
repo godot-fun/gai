@@ -88,6 +88,7 @@ func open_browse(port_id: String, port_type: int) -> void:
 		_:
 			configure_file_dialog(["*.* ; All"])
 	browse_dialog.popup_centered()
+	browse_dialog.oversampling_override = DisplayScale.compute_ui_scale()
 	pass
 
 

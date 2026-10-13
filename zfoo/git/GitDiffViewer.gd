@@ -74,6 +74,8 @@ static func show_files(diff_files: Array[GitDiffFile], root_path: String, select
 	viewer.size = Vector2i(int(viewport_size.x * SCREEN_SIZE_RATIO), int(viewport_size.y * SCREEN_SIZE_RATIO))
 	viewer.load_selected_file()
 	viewer.popup_centered()
+	# Embedded Window fonts need the main-window stretch ratio; set once after popup embeds.
+	viewer.oversampling_override = DisplayScale.compute_ui_scale()
 	viewer.reset_split.call_deferred()
 	viewer.right_edit.grab_focus()
 	viewer.reset_editor_view.call_deferred()
@@ -570,17 +572,13 @@ func apply_theme() -> void:
 		label.add_theme_color_override("font_color", ThemeColor.body_color)
 	for button in [previous_button, next_button, previous_change_button, next_change_button, revert_button]:
 		style_compact_button(button)
-	var editor_style := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 0, Margin.ma_2, Margin.ma_2)
+	# Horizontal margins stay 0 so line highlights meet the connector and the VScrollBar sits flush
+	# (TextEdit insets the bar by content_margin_right). Keep a little vertical padding only.
+	var editor_style := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 0, 0, Margin.ma_2)
 	for edit in [left_edit, right_edit]:
-		var style := editor_style.duplicate() as StyleBoxFlat
-		# TextEdit insets the VScrollBar by content_margin_right, which leaves a blank strip past
-		# the thumb. Zero outer/connector-facing margins so highlights and scrollbars sit flush.
-		style.content_margin_right = 0
-		if edit == right_edit:
-			style.content_margin_left = 0
-		edit.add_theme_stylebox_override("normal", style)
-		edit.add_theme_stylebox_override("focus", style.duplicate())
-		edit.add_theme_stylebox_override("read_only", style.duplicate())
+		edit.add_theme_stylebox_override("normal", editor_style.duplicate())
+		edit.add_theme_stylebox_override("focus", editor_style.duplicate())
+		edit.add_theme_stylebox_override("read_only", editor_style.duplicate())
 		edit.add_theme_color_override("background_color", ThemeColor.inset_surface)
 		edit.add_theme_color_override("font_color", ThemeColor.title_color)
 		edit.add_theme_color_override("font_readonly_color", ThemeColor.title_color)

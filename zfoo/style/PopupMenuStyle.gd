@@ -21,6 +21,8 @@ static func apply(popup: PopupMenu) -> void:
 	popup.add_theme_stylebox_override("hover", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, ControlSize.radius_md, Margin.ma_2, 0))
 	popup.add_theme_icon_override("radio_checked", make_radio_icon(true, ThemeColor.accent_theme_color()))
 	popup.add_theme_icon_override("radio_unchecked", make_radio_icon(false, Colors.secondary_text))
+	# Embedded PopupMenu under canvas_items stretch — match main-window pixel ratio.
+	popup.oversampling_override = DisplayScale.compute_ui_scale()
 	pass
 
 

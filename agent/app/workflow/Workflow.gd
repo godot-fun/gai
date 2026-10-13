@@ -295,12 +295,14 @@ func on_save_pressed() -> void:
 			"{}{}", WorkflowManager.workflow_name, WorkflowManager.WORKFLOW_EXT
 		)
 	save_dialog.popup_centered()
+	save_dialog.oversampling_override = DisplayScale.compute_ui_scale()
 	pass
 
 
 func on_load_pressed() -> void:
 	load_dialog.current_dir = WorkflowManager.globalized_workflows_dir()
 	load_dialog.popup_centered()
+	load_dialog.oversampling_override = DisplayScale.compute_ui_scale()
 	pass
 
 

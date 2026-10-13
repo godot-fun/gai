@@ -179,6 +179,7 @@ func on_button_pressed() -> void:
 	load_prompt_entries()
 	refresh_results(search_edit.text)
 	dialog.popup_centered(DIALOG_SIZE)
+	dialog.oversampling_override = DisplayScale.compute_ui_scale()
 	pass
 
 

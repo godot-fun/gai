@@ -114,6 +114,8 @@ static func show_window(i18n_title: String, i18n_text: String, width_percent: in
 	)
 	window.set_body(I18n.t(i18n_text))
 	window.popup_centered()
+	# Embedded Window fonts need the main-window stretch ratio; set once after popup embeds.
+	window.oversampling_override = DisplayScale.compute_ui_scale()
 	# Keep keyboard navigation inside the popup instead of the previously focused
 	# control in the parent window.
 	window.text_edit.grab_focus()

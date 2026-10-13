@@ -174,6 +174,7 @@ func apply_locale() -> void:
 
 func on_button_pressed() -> void:
 	popup.popup_centered(calculate_popup_size())
+	popup.oversampling_override = DisplayScale.compute_ui_scale()
 	query_edit.grab_focus()
 	query_edit.select_all()
 	if StringUtils.is_not_blank(query_edit.text):

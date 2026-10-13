@@ -414,6 +414,7 @@ func on_button_pressed() -> void:
 	folder_field_typing = false
 	dialog.popup_centered(DIALOG_SIZE)
 	dialog.size = DIALOG_SIZE
+	dialog.oversampling_override = DisplayScale.compute_ui_scale()
 	pass
 
 
@@ -482,6 +483,7 @@ func open_sound_folder_dialog() -> void:
 	if not folder.begins_with("res://") and not folder.begins_with("user://") and DirAccess.dir_exists_absolute(folder):
 		sound_folder_dialog.current_dir = folder
 	sound_folder_dialog.popup_centered(FOLDER_DIALOG_SIZE)
+	sound_folder_dialog.oversampling_override = DisplayScale.compute_ui_scale()
 	pass
 
 

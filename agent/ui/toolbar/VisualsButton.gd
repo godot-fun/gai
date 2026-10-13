@@ -100,6 +100,7 @@ func on_pressed() -> void:
 	var button_center_x := int(button.global_position.x + button.size.x * 0.5)
 	var popup_position := Vector2i(button_center_x - int(popup_size.x * 0.5), int(button.global_position.y + button.size.y + Margin.ma_1))
 	popup.popup(Rect2i(popup_position, popup_size))
+	popup.oversampling_override = DisplayScale.compute_ui_scale()
 	pass
 
 

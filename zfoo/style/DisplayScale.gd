@@ -7,6 +7,18 @@ extends Object
 ## - [method compute_ui_scale]: main-window pixels per viewport unit (match in-app UI under stretch).
 ## - [method compute_screen_scale]: usable screen width vs 2K design ([constant REF_SCREEN_WIDTH]).
 ##
+## Embedded [Window] fonts (project stretch is [code]canvas_items[/code]):
+## Every embedded subwindow — [Window], [AcceptDialog], [ConfirmationDialog], [FileDialog],
+## [PopupMenu], [PopupPanel] — is its own Viewport. Auto oversampling stays at the Window's
+## content scale (usually 1), while the parent stretches that Viewport as a texture, so glyphs
+## look soft next to main-scene Labels. After [method Window.popup] / [method Window.popup_centered]
+## (or inside shared stylers like [PopupMenuStyle]), set:
+## [codeblock]
+## window.oversampling_override = DisplayScale.compute_ui_scale()
+## [/codeblock]
+## Skip this for [member Window.force_native] windows ([DesktopToast], Sense overlays): they are
+## real OS windows and already size fonts with [method compute_ui_scale] / [method compute_screen_scale].
+##
 ## Typical use:
 ## [codeblock]
 ## var unit := DisplayScale.compute_ui_scale()
