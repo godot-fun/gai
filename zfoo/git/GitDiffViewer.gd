@@ -161,7 +161,8 @@ func build_ui() -> void:
 	split_container = HSplitContainer.new()
 	split_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	split_container.split_offset = 0
-	split_container.add_theme_constant_override("separation", ControlSize.border_xs)
+	# No gap between left edit and connector; drag still works via the transparent grabber.
+	split_container.add_theme_constant_override("separation", 0)
 	# resized covers both window resize and split dragging once child sizes have settled.
 	split_container.resized.connect(sync_heading_widths)
 	root.add_child(split_container)
@@ -571,9 +572,15 @@ func apply_theme() -> void:
 		style_compact_button(button)
 	var editor_style := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 0, Margin.ma_2, Margin.ma_2)
 	for edit in [left_edit, right_edit]:
-		edit.add_theme_stylebox_override("normal", editor_style.duplicate())
-		edit.add_theme_stylebox_override("focus", editor_style.duplicate())
-		edit.add_theme_stylebox_override("read_only", editor_style.duplicate())
+		var style := editor_style.duplicate() as StyleBoxFlat
+		# TextEdit insets the VScrollBar by content_margin_right, which leaves a blank strip past
+		# the thumb. Zero outer/connector-facing margins so highlights and scrollbars sit flush.
+		style.content_margin_right = 0
+		if edit == right_edit:
+			style.content_margin_left = 0
+		edit.add_theme_stylebox_override("normal", style)
+		edit.add_theme_stylebox_override("focus", style.duplicate())
+		edit.add_theme_stylebox_override("read_only", style.duplicate())
 		edit.add_theme_color_override("background_color", ThemeColor.inset_surface)
 		edit.add_theme_color_override("font_color", ThemeColor.title_color)
 		edit.add_theme_color_override("font_readonly_color", ThemeColor.title_color)
