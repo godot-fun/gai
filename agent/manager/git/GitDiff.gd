@@ -118,8 +118,8 @@ static func async_cache_diff(git: GitHelper.Git, reference: String, file_stats: 
 		file.new_exists = new_exists
 		file.status = status
 		file.binary = is_binary
-		file.old_changed_lines = changed["old"]
-		file.new_changed_lines = changed["new"]
+		file.old_changed_lines = changed.old_lines
+		file.new_changed_lines = changed.new_lines
 		files.append(file.to_dictionary())
 	var bundle := {"version": DIFF_BUNDLE_VERSION, "patch": patch, "files": files}
 	var patch_path := cache_dir.path_join(str(IdUtils.uuid()) + ".json")

@@ -18,6 +18,16 @@ class DiffHunk extends RefCounted:
 		new_count = p_new_count
 		pass
 
+
+class ChangedLines extends RefCounted:
+	var old_lines: PackedInt32Array
+	var new_lines: PackedInt32Array
+
+	func _init(p_old_lines: PackedInt32Array = PackedInt32Array(), p_new_lines: PackedInt32Array = PackedInt32Array()) -> void:
+		old_lines = p_old_lines
+		new_lines = p_new_lines
+		pass
+
 static var hunk_regex: RegEx
 
 
@@ -29,13 +39,13 @@ static func _static_init() -> void:
 
 ## Returns one-based old/new line numbers affected by each hunk. Header markers (`---` / `+++`)
 ## are outside hunks and therefore never get mistaken for deleted/added source lines.
-static func changed_lines(file_patch: String) -> Dictionary:
+static func changed_lines(file_patch: String) -> ChangedLines:
 	var old_lines := PackedInt32Array()
 	var new_lines := PackedInt32Array()
 	for hunk: DiffHunk in parse_hunks(file_patch):
 		old_lines.append_array(hunk.old_lines)
 		new_lines.append_array(hunk.new_lines)
-	return {"old": old_lines, "new": new_lines}
+	return ChangedLines.new(old_lines, new_lines)
 
 
 ## Parses complete hunk geometry as well as changed line numbers. Counts are required by the

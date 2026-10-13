@@ -14,8 +14,8 @@ static func changed_lines_test() -> void:
  tail
 """
 	var changed := GitDiffParser.changed_lines(patch)
-	assert(changed["old"] == PackedInt32Array([3, 4]))
-	assert(changed["new"] == PackedInt32Array([3, 4, 5]))
+	assert(changed.old_lines == PackedInt32Array([3, 4]))
+	assert(changed.new_lines == PackedInt32Array([3, 4, 5]))
 	pass
 
 
@@ -45,8 +45,8 @@ static func git_diff_texts_test() -> void:
 	var result := await GitHelper.async_diff_texts("same\nold\ntail", "same\nnew\ntail")
 	assert(result.exit_code == 1)
 	var changed := GitDiffParser.changed_lines(result.output.build_string())
-	assert(changed["old"] == PackedInt32Array([2]))
-	assert(changed["new"] == PackedInt32Array([2]))
+	assert(changed.old_lines == PackedInt32Array([2]))
+	assert(changed.new_lines == PackedInt32Array([2]))
 	pass
 
 

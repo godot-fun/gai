@@ -18,7 +18,7 @@ var baseline_text := ""
 var suppress_text_changed := false
 ## Both scrollbars emit when assigned, so this guard prevents left/right signal recursion.
 var syncing_scroll := false
-var displayed_changed := {"old": PackedInt32Array(), "new": PackedInt32Array()}
+var displayed_changed := GitDiffParser.ChangedLines.new()
 
 var path_label: Label
 var position_label: Label
@@ -322,21 +322,21 @@ func paint_changed_lines() -> void:
 	if file.complete and not file.binary:
 		run_current_git_diff()
 	else:
-		displayed_changed = {"old": file.old_changed_lines, "new": file.new_changed_lines}
+		displayed_changed = GitDiffParser.ChangedLines.new(file.old_changed_lines, file.new_changed_lines)
 		apply_changed_lines(displayed_changed)
 	pass
 
 
-func apply_changed_lines(changed: Dictionary) -> void:
+func apply_changed_lines(changed: GitDiffParser.ChangedLines) -> void:
 	for line in left_edit.get_line_count():
 		left_edit.set_line_background_color(line, Color(0, 0, 0, 0))
 	for line in right_edit.get_line_count():
 		right_edit.set_line_background_color(line, Color(0, 0, 0, 0))
-	for line_number: int in changed["old"]:
+	for line_number: int in changed.old_lines:
 		var index := line_number - 1
 		if index >= 0 and index < left_edit.get_line_count():
 			left_edit.set_line_background_color(index, Color(Colors.error, CHANGED_LINE_ALPHA))
-	for line_number: int in changed["new"]:
+	for line_number: int in changed.new_lines:
 		var index := line_number - 1
 		if index >= 0 and index < right_edit.get_line_count():
 			right_edit.set_line_background_color(index, Color(Colors.success, CHANGED_LINE_ALPHA))

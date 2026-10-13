@@ -22,6 +22,16 @@ class RevertButton:
 		pass
 
 
+class LineBlock:
+	var start: float
+	var end: float
+
+	func _init(p_start: float, p_end: float) -> void:
+		start = p_start
+		end = p_end
+		pass
+
+
 var hunks: Array[GitDiffParser.DiffHunk] = []
 var active_hunk := -1
 var revert_enabled := false
@@ -82,7 +92,7 @@ func _draw() -> void:
 	pass
 
 
-func draw_revert_button(index: int, old_rect: Dictionary, _new_rect: Dictionary) -> void:
+func draw_revert_button(index: int, old_rect: LineBlock, _new_rect: LineBlock) -> void:
 	var button_size := float(ControlSize.xs)
 	var line_height := float(left_edit.get_line_height())
 	# Revert acts from left to right, so its stable anchor is the first row of the old block. Do not
@@ -131,7 +141,7 @@ func button_at(position: Vector2) -> int:
 	return -1
 
 
-func draw_filled_connector(old_rect: Dictionary, new_rect: Dictionary, color: Color) -> void:
+func draw_filled_connector(old_rect: LineBlock, new_rect: LineBlock, color: Color) -> void:
 	var right := maxf(size.x - float(ControlSize.border_xs), 0.0)
 	var points := PackedVector2Array([
 		Vector2(0.0, old_rect.start), Vector2(right, new_rect.start),
@@ -145,7 +155,7 @@ func draw_filled_connector(old_rect: Dictionary, new_rect: Dictionary, color: Co
 
 
 ## Distant blocks use a thin S-curve instead of a giant filled triangle that dominates the editor.
-func draw_compact_connector(old_rect: Dictionary, new_rect: Dictionary, color: Color, active: bool) -> void:
+func draw_compact_connector(old_rect: LineBlock, new_rect: LineBlock, color: Color, active: bool) -> void:
 	var old_center: float = (old_rect.start + old_rect.end) * 0.5
 	var new_center: float = (new_rect.start + new_rect.end) * 0.5
 	var points := PackedVector2Array()
@@ -161,19 +171,19 @@ func draw_compact_connector(old_rect: Dictionary, new_rect: Dictionary, color: C
 	pass
 
 
-func block_rect(edit: CodeEdit, one_based_start: int, line_count: int) -> Dictionary:
+func block_rect(edit: CodeEdit, one_based_start: int, line_count: int) -> LineBlock:
 	# Convert editor-local line Y into connector space (covers stylebox top margin + scroll).
 	var y_offset := edit.global_position.y - global_position.y
 	var line_height := float(edit.get_line_height())
 	var total_lines := edit.get_line_count()
 	if total_lines <= 0:
-		return {"start": y_offset, "end": y_offset + line_height * 0.32}
+		return LineBlock.new(y_offset, y_offset + line_height * 0.32)
 	var start_line := clampi(one_based_start - 1, 0, total_lines - 1)
 	var top := line_top(edit, start_line) + y_offset
 	if line_count <= 0:
-		return {"start": top, "end": top + line_height * 0.32}
+		return LineBlock.new(top, top + line_height * 0.32)
 	var end_line := clampi(start_line + line_count - 1, start_line, total_lines - 1)
-	return {"start": top, "end": line_top(edit, end_line) + line_height + y_offset}
+	return LineBlock.new(top, line_top(edit, end_line) + line_height + y_offset)
 
 
 func line_top(edit: CodeEdit, zero_based_line: int) -> float:
