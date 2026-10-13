@@ -62,6 +62,25 @@ static func edit_tool_replace_all_test() -> void:
 	pass
 
 
+static func required_file_tools_reject_missing_path_test() -> void:
+	var tool_args: Array[Array] = [
+		[ReadTool.new(), {}],
+		[WriteTool.new(), {WriteTool.ARG_CONTENT: "must not be written"}],
+		[EditTool.new(), {EditTool.ARG_OLD_STRING: "old", EditTool.ARG_NEW_STRING: "new"}],
+		[DeleteTool.new(), {}],
+		[ImageToTextTool.new(), {ImageToTextTool.ARG_PROMPT: "describe"}],
+		[AudioToTextTool.new(), {}],
+	]
+	for entry: Array in tool_args:
+		var tool: AgentTool = entry[0]
+		var args: Dictionary[String, Variant] = {}
+		args.assign(entry[1])
+		var result := await tool.async_execute(args)
+		assert(result.is_error)
+		assert(result.content.contains("required"))
+	pass
+
+
 static func bash_policy_blocks_common_dangerous_commands_test() -> void:
 	var was_enabled := SandboxPolicy.is_enabled()
 	SandboxPolicy.set_enabled(true)

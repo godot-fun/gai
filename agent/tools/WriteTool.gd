@@ -20,9 +20,10 @@ func get_parameters() -> OpenAiToolDef.Parameters:
 
 
 func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
-	var path := AgentWorkspace.resolve_path(str(args.get(ARG_PATH, "")))
-	if StringUtils.is_blank(path):
+	var raw_path := str(args.get(ARG_PATH, ""))
+	if StringUtils.is_blank(raw_path):
 		return AgentToolResult.error("error: path is required", AgentToolResult.ui_file_details_message("", "path is required"))
+	var path := AgentWorkspace.resolve_path(raw_path)
 	if not SandboxPolicy.check_path_access(path):
 		return AgentToolResult.error(StringUtils.format("error: sandbox denied path outside workspace: {}", path), AgentToolResult.ui_file_details_message(path, "path outside workspace"))
 	var content := str(args.get(ARG_CONTENT, ""))
