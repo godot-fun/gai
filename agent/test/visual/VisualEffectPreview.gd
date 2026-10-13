@@ -31,7 +31,7 @@ const EFFECT_SPECS: Array[Dictionary] = [
 const TOOL_CATALOG: Array[Dictionary] = [
 	{"name": ReadTool.NAME, "args": {"path": "res://project.godot"}},
 	{"name": WriteTool.NAME, "args": {"path": "res://agent/tmp_preview.gd", "content": "extends Node\n"}},
-	{"name": EditTool.NAME, "args": {"path": "res://agent/tmp_preview.gd", "old_string": "extends Node", "new_string": "extends Control"}},
+	{"name": EditTool.NAME, "args": {"file_path": "res://agent/tmp_preview.gd", "old_string": "extends Node", "new_string": "extends Control"}},
 	{"name": BashTool.NAME, "args": {"command": "echo visual-preview"}},
 	{"name": GrepTool.NAME, "args": {"pattern": "class_name", "glob": "*.gd"}},
 	{"name": GlobTool.NAME, "args": {"pattern": "**/*.tscn"}},
