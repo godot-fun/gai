@@ -14,14 +14,15 @@ const SQL_EXTENSIONS := ["sql", "psql", "ddl", "dml"]
 const DIFF_EXTENSIONS := ["diff", "patch", "rej"]
 const LATEX_EXTENSIONS := ["tex", "sty", "cls", "bib"]
 
-const COMMON_KEYWORDS := ["if", "else", "elif", "for", "while", "do", "match", "switch", "case", "break", "continue", "return", "class", "extends", "enum", "struct", "interface", "trait", "func", "function", "def", "fn", "var", "let", "const", "static", "public", "private", "protected", "internal", "async", "await", "yield", "try", "catch", "except", "finally", "throw", "raise", "import", "from", "export", "package", "namespace", "new", "delete", "this", "self", "super", "in", "is", "as", "and", "or", "not"]
+const COMMON_KEYWORDS := ["if", "else", "elif", "for", "while", "do", "match", "switch", "case", "break", "continue", "return", "class", "extends", "enum", "struct", "interface", "trait", "func", "function", "def", "fn", "var", "let", "const", "static", "public", "private", "protected", "internal", "async", "await", "yield", "try", "catch", "except", "finally", "throw", "raise", "import", "from", "export", "package", "namespace", "new", "delete", "this", "self", "super", "in", "is", "as", "and", "or", "not", "pass"]
 const TYPE_KEYWORDS := ["void", "bool", "boolean", "int", "uint", "float", "double", "char", "string", "String", "StringName", "Array", "Dictionary", "Variant", "Object", "Node", "Resource", "Vector2", "Vector2i", "Vector3", "Vector3i", "Color", "Callable", "Signal", "true", "false", "null", "nil", "None"]
 const DECLARATION_KEYWORDS := ["class_name", "extends", "signal", "enum", "const", "static", "var", "func", "@export", "@onready", "@tool", "@warning_ignore", "@rpc", "override", "virtual", "abstract", "readonly", "typedef", "using"]
 const SHELL_KEYWORDS := ["case", "do", "done", "elif", "else", "esac", "fi", "for", "foreach", "function", "if", "in", "select", "then", "until", "while", "param", "begin", "end", "process"]
-const GDSCRIPT_KEYWORDS := ["assert", "breakpoint", "class_name", "extends", "is_instance_of", "preload", "signal", "super", "when", "@export", "@export_category", "@export_color_no_alpha", "@export_custom", "@export_dir", "@export_enum", "@export_exp_easing", "@export_file", "@export_flags", "@export_flags_2d_navigation", "@export_flags_2d_physics", "@export_flags_2d_render", "@export_flags_3d_navigation", "@export_flags_3d_physics", "@export_flags_3d_render", "@export_global_dir", "@export_global_file", "@export_group", "@export_multiline", "@export_node_path", "@export_placeholder", "@export_range", "@export_storage", "@export_subgroup", "@icon", "@onready", "@rpc", "@static_unload", "@tool", "@warning_ignore", "@warning_ignore_start", "@warning_ignore_restore"]
-const GDSCRIPT_TYPES := ["AABB", "Basis", "NodePath", "PackedByteArray", "PackedColorArray", "PackedFloat32Array", "PackedFloat64Array", "PackedInt32Array", "PackedInt64Array", "PackedStringArray", "PackedVector2Array", "PackedVector3Array", "Plane", "Projection", "Quaternion", "Rect2", "Rect2i", "RID", "Transform2D", "Transform3D", "Vector4", "Vector4i"]
+const GDSCRIPT_KEYWORDS := ["assert", "breakpoint", "class_name", "extends", "is_instance_of", "preload", "signal", "super", "when", "@abstract", "@export", "@export_category", "@export_color_no_alpha", "@export_custom", "@export_dir", "@export_enum", "@export_exp_easing", "@export_file", "@export_file_path", "@export_flags", "@export_flags_2d_navigation", "@export_flags_2d_physics", "@export_flags_2d_render", "@export_flags_3d_navigation", "@export_flags_3d_physics", "@export_flags_3d_render", "@export_flags_avoidance", "@export_global_dir", "@export_global_file", "@export_group", "@export_multiline", "@export_node_path", "@export_placeholder", "@export_range", "@export_storage", "@export_subgroup", "@export_tool_button", "@icon", "@onready", "@rpc", "@static_unload", "@tool", "@warning_ignore", "@warning_ignore_start", "@warning_ignore_restore"]
+const GDSCRIPT_TYPES := ["AABB", "Basis", "NodePath", "PackedByteArray", "PackedColorArray", "PackedFloat32Array", "PackedFloat64Array", "PackedInt32Array", "PackedInt64Array", "PackedStringArray", "PackedVector2Array", "PackedVector3Array", "PackedVector4Array", "Plane", "Projection", "Quaternion", "Rect2", "Rect2i", "RID", "Transform2D", "Transform3D", "Vector4", "Vector4i", "PI", "TAU", "INF", "NAN"]
 const PYTHON_KEYWORDS := ["assert", "del", "except", "False", "finally", "global", "lambda", "nonlocal", "pass", "True", "with", "None", "__name__", "__main__"]
-const JS_KEYWORDS := ["constructor", "debugger", "default", "delete", "instanceof", "of", "typeof", "undefined", "NaN", "Infinity", "get", "set", "implements", "declare", "keyof", "satisfies", "unknown", "never", "any"]
+const JS_KEYWORDS := ["constructor", "debugger", "default", "delete", "instanceof", "of", "typeof", "undefined", "NaN", "Infinity", "get", "set", "implements", "declare", "keyof", "satisfies", "unknown", "never", "any", "type", "infer", "asserts", "with", "module", "bigint", "symbol", "globalThis"]
+const MARKDOWN_KEYWORDS := ["TODO", "FIXME", "NOTE", "WARNING", "IMPORTANT", "TIP", "CAUTION"]
 const CPP_KEYWORDS := ["alignas", "alignof", "asm", "auto", "constexpr", "consteval", "constinit", "decltype", "explicit", "extern", "friend", "inline", "mutable", "noexcept", "operator", "register", "requires", "sizeof", "template", "thread_local", "typename", "union", "volatile", "concept", "nullptr"]
 const RUST_KEYWORDS := ["crate", "dyn", "impl", "loop", "macro_rules", "mod", "move", "mut", "pub", "ref", "type", "unsafe", "use", "where", "Self", "Box", "Option", "Result", "Some", "None", "Ok", "Err"]
 const GO_KEYWORDS := ["chan", "defer", "fallthrough", "go", "goto", "map", "range", "select", "type", "interface", "package"]
@@ -86,6 +87,9 @@ static func configure_script(highlighter: CodeHighlighter, extension: String) ->
 		add_keywords(highlighter, GDSCRIPT_TYPES, CodeColors.type)
 		highlighter.add_color_region(r'"""', r'"""', CodeColors.string)
 		highlighter.add_color_region(r"'''", r"'''", CodeColors.string)
+		# StringName / NodePath literals: &"name", ^"path"
+		highlighter.add_color_region('&"', '"', CodeColors.string)
+		highlighter.add_color_region('^"', '"', CodeColors.string)
 	elif extension.begins_with("py"):
 		add_keywords(highlighter, PYTHON_KEYWORDS, CodeColors.keyword)
 		highlighter.add_color_region(r'"""', r'"""', CodeColors.string)
@@ -103,16 +107,20 @@ static func configure_c_style(highlighter: CodeHighlighter, extension: String) -
 	add_quoted_strings(highlighter, CodeColors.string)
 	highlighter.add_color_region("//", "", CodeColors.comment, true)
 	highlighter.add_color_region("/*", "*/", CodeColors.comment)
-	highlighter.add_color_region("#", "", CodeColors.declaration, true)
-	if extension in PackedStringArray(["c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx", "m", "mm"]):
-		add_keywords(highlighter, CPP_KEYWORDS, CodeColors.keyword)
-	elif extension in PackedStringArray(["js", "jsx", "mjs", "cjs", "ts", "tsx"]):
+	# JS/TS private fields use `#name`; only C-family preprocessors should own line `#`.
+	if extension in PackedStringArray(["js", "jsx", "mjs", "cjs", "ts", "tsx"]):
 		add_keywords(highlighter, JS_KEYWORDS, CodeColors.keyword)
 		highlighter.add_color_region("`", "`", CodeColors.string)
-	elif extension == "rs":
-		add_keywords(highlighter, RUST_KEYWORDS, CodeColors.keyword)
-	elif extension == "go":
-		add_keywords(highlighter, GO_KEYWORDS, CodeColors.keyword)
+		if extension in PackedStringArray(["jsx", "tsx"]):
+			highlighter.add_color_region("<", ">", CodeColors.tag)
+	else:
+		highlighter.add_color_region("#", "", CodeColors.declaration, true)
+		if extension in PackedStringArray(["c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx", "m", "mm"]):
+			add_keywords(highlighter, CPP_KEYWORDS, CodeColors.keyword)
+		elif extension == "rs":
+			add_keywords(highlighter, RUST_KEYWORDS, CodeColors.keyword)
+		elif extension == "go":
+			add_keywords(highlighter, GO_KEYWORDS, CodeColors.keyword)
 	pass
 
 
@@ -148,9 +156,17 @@ static func configure_data(highlighter: CodeHighlighter, extension: String, file
 
 static func configure_markup(highlighter: CodeHighlighter, extension: String) -> void:
 	add_quoted_strings(highlighter, CodeColors.string)
-	if extension in PackedStringArray(["md", "markdown"]):
+	if extension in PackedStringArray(["md", "markdown", "mdx"]):
+		add_keywords(highlighter, MARKDOWN_KEYWORDS, CodeColors.declaration)
+		# Fenced blocks before single backticks so ```…``` wins over nested `.
+		highlighter.add_color_region("```", "```", CodeColors.string)
 		highlighter.add_color_region("`", "`", CodeColors.string)
 		highlighter.add_color_region("<!--", "-->", CodeColors.comment)
+		highlighter.add_color_region("#", "", CodeColors.declaration, true)
+		highlighter.add_color_region("**", "**", CodeColors.keyword)
+		highlighter.add_color_region("~~", "~~", CodeColors.comment)
+		# Inline HTML (and JSX in MDX).
+		highlighter.add_color_region("<", ">", CodeColors.tag)
 	else:
 		highlighter.add_color_region("<!--", "-->", CodeColors.comment)
 		highlighter.add_color_region("<", ">", CodeColors.tag)
