@@ -2,8 +2,7 @@ class_name GitDiffViewer
 extends Window
 
 ## Side-by-side source comparison. The left CodeEdit is an immutable snapshot; the right CodeEdit
-## edits the complete post-change file and writes only after checking that the workspace did not
-## change since the cached diff was created.
+## loads the current workspace file and saves only if it has not changed again while being edited.
 
 const SCREEN_SIZE_RATIO := 0.80
 const CHANGED_LINE_ALPHA := 0.22
@@ -13,13 +12,13 @@ const BORDER_ALPHA_UNFOCUSED := 0.08
 var files: Array[GitDiffFile] = []
 var workspace_root: String = ""
 var selected_index := 0
-## Exact cached post-run text. Dirty checks compare against this instead of the live workspace;
-## live-workspace conflict detection happens separately in [method save_current].
+## Exact workspace text loaded when the current file was selected.
 var baseline_text := ""
 ## Programmatic text replacement emits CodeEdit.text_changed too; suppress it while loading/reverting.
 var suppress_text_changed := false
 ## Both scrollbars emit when assigned, so this guard prevents left/right signal recursion.
 var syncing_scroll := false
+var displayed_changed := {"old": PackedInt32Array(), "new": PackedInt32Array()}
 
 var path_label: Label
 var position_label: Label
@@ -217,12 +216,20 @@ func load_selected_file() -> void:
 	if files.is_empty():
 		return
 	var file := files[selected_index]
-	# Always load the cached snapshots. Reading the live workspace here would make historical diffs
-	# drift over time and would also invalidate the optimistic conflict check used by Save.
+	# The left side remains the historical pre-run snapshot. For complete editable entries, the right
+	# side follows the live workspace so reopening an old chat diff never presents stale file content.
+	var current_text := file.new_text
+	if file.complete and not file.binary and not file.new_path.is_empty():
+		var target := FileUtils.normalize_path(workspace_root.path_join(file.new_path))
+		if FileUtils.is_relative_to(target, workspace_root):
+			file.new_exists = FileAccess.file_exists(target)
+			current_text = FileUtils.read_file_to_string(target) if file.new_exists else StringUtils.EMPTY
+			file.new_text = current_text
+			file.new_hash = current_text.sha256_text()
 	suppress_text_changed = true
 	left_edit.text = file.old_text
-	right_edit.text = file.new_text
-	baseline_text = file.new_text
+	right_edit.text = current_text
+	baseline_text = current_text
 	suppress_text_changed = false
 	left_edit.editable = false
 	right_edit.editable = file.can_edit()
@@ -242,22 +249,47 @@ func load_selected_file() -> void:
 	pass
 
 
-## Paints line-level changes from the cached unified patch. CodeEdit holds complete source text, so
-## it remains a valid editable file; inserting visual padding rows would corrupt saved content.
+## Full snapshots are compared by Git. Legacy partial patches retain their cached display-relative
+## line numbers because they do not contain enough source to run a meaningful complete-file diff.
 func paint_changed_lines() -> void:
+	var file := files[selected_index]
+	if file.complete and not file.binary:
+		run_current_git_diff()
+	else:
+		displayed_changed = {"old": file.old_changed_lines, "new": file.new_changed_lines}
+		apply_changed_lines(displayed_changed)
+	pass
+
+
+func apply_changed_lines(changed: Dictionary) -> void:
 	for line in left_edit.get_line_count():
 		left_edit.set_line_background_color(line, Color(0, 0, 0, 0))
 	for line in right_edit.get_line_count():
 		right_edit.set_line_background_color(line, Color(0, 0, 0, 0))
-	var file := files[selected_index]
-	for line_number in file.old_changed_lines:
+	for line_number: int in changed["old"]:
 		var index := line_number - 1
 		if index >= 0 and index < left_edit.get_line_count():
 			left_edit.set_line_background_color(index, Color(Colors.error, CHANGED_LINE_ALPHA))
-	for line_number in file.new_changed_lines:
+	for line_number: int in changed["new"]:
 		var index := line_number - 1
 		if index >= 0 and index < right_edit.get_line_count():
 			right_edit.set_line_background_color(index, Color(Colors.success, CHANGED_LINE_ALPHA))
+	pass
+
+
+func run_current_git_diff() -> void:
+	if not is_inside_tree():
+		return
+	var old_text := left_edit.text
+	var new_text := right_edit.text
+	var result := await GitHelper.async_diff_texts(old_text, new_text)
+	if not is_inside_tree() or old_text != left_edit.text or new_text != right_edit.text:
+		return
+	if result.exit_code != 0 and result.exit_code != 1:
+		Log.error("live git diff failed exit:[{}] output:[{}]", result.exit_code, result.output.build_string())
+		return
+	displayed_changed = GitDiffParser.changed_lines(result.output.build_string())
+	apply_changed_lines(displayed_changed)
 	pass
 
 
@@ -277,12 +309,12 @@ func on_right_text_changed() -> void:
 		if line >= 0 and line < right_edit.get_line_count():
 			right_edit.set_line_background_color(line, Color(Colors.success, CHANGED_LINE_ALPHA))
 		refresh_actions()
+		run_current_git_diff()
 	pass
 
 
 func select_relative(offset: int) -> void:
-	if is_dirty():
-		Alert.alert("Save or revert the current file before switching", Colors.warning)
+	if not save_current():
 		return
 	selected_index = posmod(selected_index + offset, files.size())
 	load_selected_file()
@@ -414,7 +446,7 @@ func apply_theme() -> void:
 		ScrollBarStyle.apply(edit.get_v_scroll_bar())
 		ScrollBarStyle.apply(edit.get_h_scroll_bar())
 	if not files.is_empty():
-		paint_changed_lines()
+		apply_changed_lines(displayed_changed)
 	pass
 
 

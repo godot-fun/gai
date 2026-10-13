@@ -81,6 +81,24 @@ static func async_execute(command: String) -> OSUtils.ExecResult:
 	return await Git.new().async_execute(command)
 
 
+## Compares two in-memory texts through Git without depending on a repository or index.
+static func async_diff_texts(old_text: String, new_text: String) -> OSUtils.ExecResult:
+	var temp_prefix := "user://git-diff/" + str(IdUtils.uuid())
+	var old_user_path := temp_prefix + "-original.txt"
+	var new_user_path := temp_prefix + "-current.txt"
+	var old_path := ProjectSettings.globalize_path(old_user_path)
+	var new_path := ProjectSettings.globalize_path(new_user_path)
+	if not FileUtils.write_string_to_file(old_user_path, old_text) or not FileUtils.write_string_to_file(new_user_path, new_text):
+		DirAccess.remove_absolute(old_path)
+		DirAccess.remove_absolute(new_path)
+		return OSUtils.ExecResult.new()
+	var argv := PackedStringArray(["git", "--no-pager", "diff", "--no-index", "--unified=0", "--no-color", "--no-ext-diff", "--text", "--", old_path, new_path])
+	var result := await OSUtils.async_execute(argv, false, 30 * TimeUtils.MILLIS_PER_SECOND)
+	DirAccess.remove_absolute(old_path)
+	DirAccess.remove_absolute(new_path)
+	return result
+
+
 ## Cached positive probe — Git availability only changes across app restarts.
 static var git_installed := false
 

@@ -20,6 +20,17 @@ static func changed_lines_test() -> void:
 	pass
 
 
+static func git_diff_texts_test() -> void:
+	if not GitHelper.is_git_installed():
+		return
+	var result := await GitHelper.async_diff_texts("same\nold\ntail", "same\nnew\ntail")
+	assert(result.exit_code == 1)
+	var changed := GitDiffParser.changed_lines(result.output.build_string())
+	assert(changed["old"] == PackedInt32Array([2]))
+	assert(changed["new"] == PackedInt32Array([2]))
+	pass
+
+
 static func extract_file_patch_test() -> void:
 	var patch := """diff --git a/first.gd b/first.gd
 --- a/first.gd

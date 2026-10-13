@@ -1,8 +1,7 @@
 class_name GitDiffParser
 extends Object
 
-## Parses the line locations from a unified Git patch. Full source text is stored separately in the
-## diff bundle; the patch is used only to paint changed lines in the two CodeEdit panes.
+## Parses line locations from unified patches produced by Git.
 
 static var hunk_regex: RegEx
 
