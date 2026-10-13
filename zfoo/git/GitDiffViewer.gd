@@ -267,7 +267,7 @@ func is_dirty() -> bool:
 
 func refresh_actions() -> void:
 	var editable := files[selected_index].can_edit()
-	revert_button.disabled = not editable or not is_dirty()
+	revert_button.disabled = not editable or right_edit.text == left_edit.text
 	pass
 
 

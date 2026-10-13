@@ -95,8 +95,9 @@ func diff_viewer_revert_restores_left_snapshot_test() -> void:
 	var viewer := GitDiffViewer.new()
 	viewer.files = [file]
 	viewer.load_selected_file()
-	viewer.right_edit.text = "manual edit"
+	assert(not viewer.revert_button.disabled)
 	viewer.revert_current()
 	assert(viewer.right_edit.text == file.old_text)
+	assert(viewer.revert_button.disabled)
 	viewer.free()
 	pass
