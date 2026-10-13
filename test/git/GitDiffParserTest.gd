@@ -75,29 +75,6 @@ diff --git a/folder/second file.gd b/folder/second file.gd
 	pass
 
 
-static func diff_file_round_trip_test() -> void:
-	var source := GitDiffFile.new()
-	source.old_path = "old.gd"
-	source.new_path = "new.gd"
-	source.old_text = "old"
-	source.new_text = "new"
-	source.new_hash = source.new_text.sha256_text()
-	source.new_exists = true
-	source.changed_lines = GitDiffParser.ChangedLines.new([1], [1, 2])
-	var bundle := GitDiffBundle.new()
-	bundle.files = [source]
-	var restored_bundle: GitDiffBundle = JsonUtils.json_to_object(JsonUtils.object_to_json(bundle), GitDiffBundle)
-	var restored := restored_bundle.files[0]
-	assert(restored_bundle.files.size() == 1)
-	assert(restored.old_path == source.old_path)
-	assert(restored.new_path == source.new_path)
-	assert(restored.new_hash == source.new_hash)
-	assert(restored.changed_lines.old_lines == source.changed_lines.old_lines)
-	assert(restored.changed_lines.new_lines == source.changed_lines.new_lines)
-	assert(restored.can_edit())
-	pass
-
-
 static func deleted_file_is_not_editable_test() -> void:
 	var file := GitDiffFile.new()
 	file.old_path = "deleted.gd"

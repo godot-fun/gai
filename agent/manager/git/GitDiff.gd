@@ -1,6 +1,11 @@
 class_name GitDiff
 extends Object
 
+## JSON cache for the file comparisons produced by one agent run.
+class DiffBundle extends RefCounted:
+	var files: Array[GitDiffFile] = []
+
+
 ## Agent-run diff flow:
 ##
 ##   User turn queued
@@ -158,7 +163,7 @@ static func async_cache_diff(git: GitHelper.Git, reference: String, file_stats: 
 		file.binary = is_binary
 		file.changed_lines = parsed_diff.changed_lines
 		files.append(file)
-	var bundle := GitDiffBundle.new()
+	var bundle := DiffBundle.new()
 	bundle.files = files
 	var patch_path := cache_dir.path_join(str(IdUtils.uuid()) + "." + DIFF_CACHE_EXTENSION)
 	if not FileUtils.write_string_to_file(patch_path, JsonUtils.object_to_json(bundle)):
@@ -202,7 +207,7 @@ static func open_file_diff(patch_path: String, relative_path: String) -> bool:
 ## Loads the cached JSON bundle for one agent run.
 static func load_diff_files(cache_path: String) -> Array[GitDiffFile]:
 	var text := FileUtils.read_file_to_string(cache_path)
-	var bundle: GitDiffBundle = JsonUtils.json_to_object(text, GitDiffBundle)
+	var bundle: DiffBundle = JsonUtils.json_to_object(text, DiffBundle)
 	if bundle != null:
 		return bundle.files
 	return []
