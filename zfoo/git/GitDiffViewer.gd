@@ -25,6 +25,9 @@ var position_label: Label
 var status_label: Label
 var previous_button: Button
 var next_button: Button
+var previous_change_button: Button
+var next_change_button: Button
+var change_position_label: Label
 var revert_button: Button
 var content_panel: PanelContainer
 var toolbar_panel: PanelContainer
@@ -32,9 +35,12 @@ var heading_container: HBoxContainer
 var split_container: HSplitContainer
 var left_edit: CodeEdit
 var right_edit: CodeEdit
+var connector: GitDiffConnector
 var heading_labels: Array[Label] = []
 var left_heading_panel: PanelContainer
 var right_heading_panel: PanelContainer
+var displayed_hunks: Array[GitDiffParser.DiffHunk] = []
+var selected_hunk := -1
 
 
 func _init() -> void:
@@ -69,6 +75,20 @@ static func show_files(diff_files: Array[GitDiffFile], root_path: String, select
 	viewer.popup_centered()
 	viewer.reset_split.call_deferred()
 	viewer.right_edit.grab_focus()
+	viewer.reset_editor_view.call_deferred()
+	pass
+
+
+func reset_editor_view() -> void:
+	left_edit.set_caret_line(0)
+	right_edit.set_caret_line(0)
+	left_edit.set_caret_column(0)
+	right_edit.set_caret_column(0)
+	syncing_scroll = true
+	left_edit.scroll_vertical = 0.0
+	right_edit.scroll_vertical = 0.0
+	syncing_scroll = false
+	connector.queue_redraw()
 	pass
 
 
@@ -107,6 +127,16 @@ func build_ui() -> void:
 	path_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	path_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	toolbar.add_child(path_label)
+	previous_change_button = make_button("↑", "Previous difference")
+	style_navigation_button_size(previous_change_button)
+	previous_change_button.pressed.connect(select_relative_hunk.bind(-1))
+	toolbar.add_child(previous_change_button)
+	next_change_button = make_button("↓", "Next difference")
+	style_navigation_button_size(next_change_button)
+	next_change_button.pressed.connect(select_relative_hunk.bind(1))
+	toolbar.add_child(next_change_button)
+	change_position_label = Label.new()
+	toolbar.add_child(change_position_label)
 	status_label = Label.new()
 	toolbar.add_child(status_label)
 	position_label = Label.new()
@@ -131,11 +161,19 @@ func build_ui() -> void:
 	root.add_child(split_container)
 	left_edit = make_code_edit(false)
 	right_edit = make_code_edit(true)
+	connector = GitDiffConnector.new()
+	connector.set_editors(left_edit, right_edit)
+	connector.revert_requested.connect(revert_hunk)
 	left_edit.get_v_scroll_bar().value_changed.connect(on_left_scroll)
 	right_edit.get_v_scroll_bar().value_changed.connect(on_right_scroll)
 	right_edit.text_changed.connect(on_right_text_changed)
 	split_container.add_child(left_edit)
-	split_container.add_child(right_edit)
+	var right_side := HBoxContainer.new()
+	right_side.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_side.add_theme_constant_override("separation", 0)
+	right_side.add_child(connector)
+	right_side.add_child(right_edit)
+	split_container.add_child(right_side)
 
 	apply_theme()
 	pass
@@ -229,10 +267,15 @@ func load_selected_file() -> void:
 	suppress_text_changed = true
 	left_edit.text = file.old_text
 	right_edit.text = current_text
+	left_edit.set_caret_line(0)
+	right_edit.set_caret_line(0)
+	left_edit.set_caret_column(0)
+	right_edit.set_caret_column(0)
 	baseline_text = current_text
 	suppress_text_changed = false
 	left_edit.editable = false
 	right_edit.editable = file.can_edit()
+	connector.set_revert_enabled(file.can_edit())
 	left_edit.scroll_vertical = 0
 	right_edit.scroll_vertical = 0
 	path_label.text = file.old_path + " → " + file.new_path if file.old_path != file.new_path and not file.old_path.is_empty() and not file.new_path.is_empty() else file.display_path()
@@ -244,6 +287,10 @@ func load_selected_file() -> void:
 		status_label.text = "Historical patch · read only"
 	previous_button.disabled = files.size() <= 1
 	next_button.disabled = files.size() <= 1
+	displayed_hunks.clear()
+	selected_hunk = -1
+	refresh_hunk_controls()
+	connector.set_hunks(displayed_hunks, selected_hunk)
 	refresh_actions()
 	paint_changed_lines()
 	pass
@@ -289,7 +336,33 @@ func run_current_git_diff() -> void:
 		Log.error("live git diff failed exit:[{}] output:[{}]", result.exit_code, result.output.build_string())
 		return
 	displayed_changed = GitDiffParser.changed_lines(result.output.build_string())
+	displayed_hunks = GitDiffParser.parse_hunks(result.output.build_string())
+	selected_hunk = -1 if displayed_hunks.is_empty() else clampi(selected_hunk, 0, displayed_hunks.size() - 1)
 	apply_changed_lines(displayed_changed)
+	refresh_hunk_controls()
+	connector.set_hunks(displayed_hunks, selected_hunk)
+	pass
+
+
+func refresh_hunk_controls() -> void:
+	var has_hunks := not displayed_hunks.is_empty()
+	previous_change_button.disabled = not has_hunks
+	next_change_button.disabled = not has_hunks
+	change_position_label.text = "0 differences" if not has_hunks else str(selected_hunk + 1) + " / " + str(displayed_hunks.size()) + " differences"
+	pass
+
+
+func select_relative_hunk(offset: int) -> void:
+	if displayed_hunks.is_empty():
+		return
+	selected_hunk = posmod(selected_hunk + offset, displayed_hunks.size())
+	var hunk := displayed_hunks[selected_hunk]
+	syncing_scroll = true
+	left_edit.scroll_vertical = maxf(float(hunk.old_start) - 3.0, 0.0)
+	right_edit.scroll_vertical = maxf(float(hunk.new_start) - 3.0, 0.0)
+	syncing_scroll = false
+	refresh_hunk_controls()
+	connector.set_hunks(displayed_hunks, selected_hunk)
 	pass
 
 
@@ -328,6 +401,41 @@ func revert_current() -> void:
 	refresh_actions()
 	paint_changed_lines()
 	pass
+
+
+## Restores only one right-side hunk from the immutable left snapshot.
+func revert_hunk(hunk_index: int) -> void:
+	if hunk_index < 0 or hunk_index >= displayed_hunks.size() or not files[selected_index].can_edit():
+		return
+	var hunk := displayed_hunks[hunk_index]
+	suppress_text_changed = true
+	right_edit.text = revert_hunk_text(left_edit.text, right_edit.text, hunk)
+	suppress_text_changed = false
+	var caret_line := maxi(hunk.new_start - 1, 0)
+	right_edit.set_caret_line(mini(caret_line, right_edit.get_line_count() - 1))
+	right_edit.set_caret_column(0)
+	refresh_actions()
+	paint_changed_lines()
+	pass
+
+
+static func revert_hunk_text(old_text: String, new_text: String, hunk: GitDiffParser.DiffHunk) -> String:
+	var old_lines := old_text.split(FileUtils.NEWLINE_LF, true)
+	var new_lines := new_text.split(FileUtils.NEWLINE_LF, true)
+	var old_count := hunk.old_count
+	var new_count := hunk.new_count
+	var old_start := hunk.old_start - 1 if old_count > 0 else hunk.old_start
+	var new_start := hunk.new_start - 1 if new_count > 0 else hunk.new_start
+	var result := PackedStringArray()
+	for index in clampi(new_start, 0, new_lines.size()):
+		result.append(new_lines[index])
+	for offset in old_count:
+		var index := old_start + offset
+		if index >= 0 and index < old_lines.size():
+			result.append(old_lines[index])
+	for index in range(clampi(new_start + new_count, 0, new_lines.size()), new_lines.size()):
+		result.append(new_lines[index])
+	return FileUtils.NEWLINE_LF.join(result)
 
 
 ## Writes the editable snapshot only when the workspace still matches the post-run cache. This is
@@ -370,16 +478,28 @@ func on_right_scroll(value: float) -> void:
 func sync_vertical_scroll(source: CodeEdit, target: CodeEdit, value: float) -> void:
 	if syncing_scroll:
 		return
-	var source_bar := source.get_v_scroll_bar()
-	var target_bar := target.get_v_scroll_bar()
-	# Old/new files may have different line counts. Syncing their raw values would pin or overscroll
-	# one side, so map the source's normalized progress onto the target's scrollable range.
-	var source_range := maxf(source_bar.max_value - source_bar.page, 0.0)
-	var target_range := maxf(target_bar.max_value - target_bar.page, 0.0)
 	syncing_scroll = true
-	target.scroll_vertical = 0.0 if source_range <= 0.0 else value / source_range * target_range
+	target.scroll_vertical = map_diff_line(value, source == left_edit)
 	syncing_scroll = false
+	connector.queue_redraw()
 	pass
+
+
+## Maps a visible source line through each hunk instead of syncing unrelated file percentages.
+func map_diff_line(source_line: float, old_to_new: bool) -> float:
+	var delta := 0.0
+	for hunk: GitDiffParser.DiffHunk in displayed_hunks:
+		var source_start := float(hunk.old_start if old_to_new else hunk.new_start) - 1.0
+		var source_count := float(hunk.old_count if old_to_new else hunk.new_count)
+		var target_start := float(hunk.new_start if old_to_new else hunk.old_start) - 1.0
+		var target_count := float(hunk.new_count if old_to_new else hunk.old_count)
+		if source_line < source_start:
+			return maxf(source_line + delta, 0.0)
+		if source_count > 0.0 and source_line < source_start + source_count:
+			var progress := (source_line - source_start) / source_count
+			return maxf(target_start + progress * target_count, 0.0)
+		delta = target_start + target_count - (source_start + source_count)
+	return maxf(source_line + delta, 0.0)
 
 
 func request_close() -> void:
@@ -421,12 +541,12 @@ func apply_theme() -> void:
 	toolbar_panel.add_theme_stylebox_override("panel", header_style)
 	for panel in [left_heading_panel, right_heading_panel]:
 		panel.add_theme_stylebox_override("panel", header_style.duplicate())
-	for label in [path_label, position_label, status_label]:
+	for label in [path_label, position_label, status_label, change_position_label]:
 		label.add_theme_color_override("font_color", ThemeColor.title_color)
 		label.add_theme_font_override("font", Fonts.regular())
 	for label in heading_labels:
 		label.add_theme_color_override("font_color", ThemeColor.body_color)
-	for button in [previous_button, next_button, revert_button]:
+	for button in [previous_button, next_button, previous_change_button, next_change_button, revert_button]:
 		style_compact_button(button)
 	var editor_style := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 0, Margin.ma_2, Margin.ma_2)
 	for edit in [left_edit, right_edit]:
@@ -447,6 +567,7 @@ func apply_theme() -> void:
 		ScrollBarStyle.apply(edit.get_h_scroll_bar())
 	if not files.is_empty():
 		apply_changed_lines(displayed_changed)
+	connector.queue_redraw()
 	pass
 
 

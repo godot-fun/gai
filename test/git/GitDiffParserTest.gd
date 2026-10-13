@@ -1,6 +1,5 @@
 ## Git unified-patch parsing and cached file model tests.
 
-
 static func changed_lines_test() -> void:
 	var patch := """diff --git a/demo.gd b/demo.gd
 --- a/demo.gd
@@ -17,6 +16,26 @@ static func changed_lines_test() -> void:
 	var changed := GitDiffParser.changed_lines(patch)
 	assert(changed["old"] == PackedInt32Array([3, 4]))
 	assert(changed["new"] == PackedInt32Array([3, 4, 5]))
+	pass
+
+
+static func parse_hunks_test() -> void:
+	var patch := """@@ -3,2 +3,3 @@
+-old one
+-old two
++new one
++new two
++new three
+@@ -12,0 +14,1 @@
++inserted
+"""
+	var hunks := GitDiffParser.parse_hunks(patch)
+	assert(hunks.size() == 2)
+	assert(hunks[0].old_start == 3)
+	assert(hunks[0].old_count == 2)
+	assert(hunks[0].new_count == 3)
+	assert(hunks[1].old_count == 0)
+	assert(hunks[1].new_start == 14)
 	pass
 
 
@@ -85,6 +104,8 @@ static func deleted_file_is_not_editable_test() -> void:
 func diff_viewer_builds_test() -> void:
 	var viewer := GitDiffViewer.new()
 	assert(viewer.left_edit != null)
+	assert(viewer.connector != null)
+	assert(viewer.connector.clip_contents)
 	assert(not viewer.left_edit.editable)
 	assert(viewer.right_edit.editable)
 	assert(viewer.split_container.split_offset == 0)
@@ -93,6 +114,37 @@ func diff_viewer_builds_test() -> void:
 	assert(viewer.content_panel.offset_right == ControlSize.border_xs)
 	assert(viewer.content_panel.offset_bottom == ControlSize.border_xs)
 	viewer.free()
+	pass
+
+
+func diff_viewer_maps_lines_across_hunks_test() -> void:
+	var viewer := GitDiffViewer.new()
+	var hunk := GitDiffParser.DiffHunk.new(3, 2, 3, 4)
+	hunk.old_lines = PackedInt32Array([3, 4])
+	hunk.new_lines = PackedInt32Array([3, 4, 5, 6])
+	viewer.displayed_hunks = [hunk]
+	assert(viewer.map_diff_line(1.0, true) == 1.0)
+	assert(viewer.map_diff_line(2.0, true) == 2.0)
+	assert(viewer.map_diff_line(4.0, true) == 6.0)
+	assert(viewer.map_diff_line(6.0, false) == 4.0)
+	viewer.free()
+	pass
+
+
+static func diff_viewer_reverts_one_hunk_test() -> void:
+	var old_text := "same\nold one\nold two\ntail\nlater old\nend"
+	var new_text := "same\nnew one\nnew two\nnew three\ntail\nlater new\nend"
+	var first_hunk := GitDiffParser.DiffHunk.new(2, 2, 2, 3)
+	var reverted := GitDiffViewer.revert_hunk_text(old_text, new_text, first_hunk)
+	assert(reverted == "same\nold one\nold two\ntail\nlater new\nend")
+	pass
+
+
+static func diff_viewer_reverts_insert_and_delete_hunks_test() -> void:
+	var insertion := GitDiffParser.DiffHunk.new(1, 0, 2, 1)
+	assert(GitDiffViewer.revert_hunk_text("a\nb", "a\ninserted\nb", insertion) == "a\nb")
+	var deletion := GitDiffParser.DiffHunk.new(2, 1, 1, 0)
+	assert(GitDiffViewer.revert_hunk_text("a\nrestored\nb", "a\nb", deletion) == "a\nrestored\nb")
 	pass
 
 
