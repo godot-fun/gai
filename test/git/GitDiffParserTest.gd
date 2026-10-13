@@ -115,6 +115,7 @@ func diff_viewer_builds_test() -> void:
 	assert(viewer.connector.clip_contents)
 	assert(viewer.previous_change_button.focus_mode == Control.FOCUS_NONE)
 	assert(viewer.next_change_button.focus_mode == Control.FOCUS_NONE)
+	assert(viewer.revert_button.custom_minimum_size.y == viewer.previous_change_button.custom_minimum_size.y)
 	assert(not viewer.left_edit.editable)
 	assert(viewer.right_edit.editable)
 	assert(viewer.split_container.split_offset == 0)

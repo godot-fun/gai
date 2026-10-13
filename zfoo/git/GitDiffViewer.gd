@@ -145,6 +145,7 @@ func build_ui() -> void:
 	position_label = Label.new()
 	toolbar.add_child(position_label)
 	revert_button = make_button("Revert", "Restore the right pane to the left pane's version")
+	revert_button.custom_minimum_size.y = ControlSize.sm
 	revert_button.pressed.connect(revert_current)
 	toolbar.add_child(revert_button)
 
