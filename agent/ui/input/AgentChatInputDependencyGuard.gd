@@ -4,9 +4,9 @@ extends Object
 ## Dependency checks that may add explanatory chat messages before submission.
 
 static func ensure_git_installed(session_id: int) -> bool:
-	if GitUtils.is_git_installed():
+	if GitHelper.is_git_installed():
 		return true
-	var url: String = GitUtils.get_download_url()
+	var url: String = GitHelper.get_download_url()
 	AgentSessionManager.add_chat_entry(
 		session_id,
 		ChatEntry.KIND_AGENT,

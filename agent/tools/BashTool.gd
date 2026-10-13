@@ -44,7 +44,7 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 static func build_argv_from_command(command: String) -> PackedStringArray:
 	var bash := "/bin/bash"
 	if OSUtils.is_windows():
-		bash = GitUtils.find_windows_git_bash()
+		bash = GitHelper.find_windows_git_bash()
 	var working_directory := AgentWorkspace.get_root()
 	var bash_command := StringUtils.format("cd -- '{}' && {}", working_directory, command)
 	if OSUtils.is_windows():

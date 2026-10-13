@@ -21,14 +21,14 @@ static func _static_init() -> void:
 # Paths
 # ---------------------------------------------------------------------------
 
-static func create_git(session_id: int) -> GitUtils.Git:
+static func create_git(session_id: int) -> GitHelper.Git:
 	var workspace_root := AgentWorkspace.get_root()
 	var repo_shard_index := posmod(session_id, CHECKPOINT_REPO_SHARD_COUNT)
 	var git_dir := workspace_root.path_join(CHECKPOINTS_SUBDIR).path_join(str(repo_shard_index))
-	return GitUtils.Git.new(git_dir, workspace_root)
+	return GitHelper.Git.new(git_dir, workspace_root)
 
 
-static func ensure_repo(git: GitUtils.Git) -> bool:
+static func ensure_repo(git: GitHelper.Git) -> bool:
 	var git_dir := git.git_dir
 	if DirAccess.dir_exists_absolute(git_dir):
 		# Supplying --work-tree makes Git report false even for a valid bare repository.
@@ -67,7 +67,7 @@ static func remove_checkpoint_repo(git_dir: String) -> bool:
 	return false
 
 
-static func stage_all(git: GitUtils.Git) -> bool:
+static func stage_all(git: GitHelper.Git) -> bool:
 	var add := await git.async_stage_all()
 	if add.exit_code == 0:
 		return true
@@ -109,7 +109,7 @@ static func async_cleanup() -> void:
 	var workspace_root := AgentWorkspace.get_root()
 	for repo_shard_index in range(CHECKPOINT_REPO_SHARD_COUNT):
 		var git_dir := workspace_root.path_join(CHECKPOINTS_SUBDIR).path_join(str(repo_shard_index))
-		var git := GitUtils.Git.new(git_dir, workspace_root)
+		var git := GitHelper.Git.new(git_dir, workspace_root)
 		if not await ensure_repo(git):
 			continue
 		GitIgnore.ensure_exclude_rules(git_dir)

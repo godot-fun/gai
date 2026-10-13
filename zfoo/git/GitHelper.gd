@@ -1,4 +1,4 @@
-class_name GitUtils
+class_name GitHelper
 extends Object
 
 ## Ignores machine-level Git behavior and supplies a non-interactive local identity.
@@ -12,7 +12,7 @@ class Git:
 	var work_tree: String
 	var config: String
 
-	func _init(p_git_dir: String = "", p_work_tree: String = "", p_config: String = GitUtils.GIT_CONFIG) -> void:
+	func _init(p_git_dir: String = "", p_work_tree: String = "", p_config: String = GitHelper.GIT_CONFIG) -> void:
 		git_dir = p_git_dir
 		work_tree = p_work_tree
 		config = p_config
@@ -31,7 +31,7 @@ class Git:
 		return await OSUtils.async_execute(OSUtils.split_command_line(full_command), false)
 
 	func async_init_bare() -> OSUtils.ExecResult:
-		return await GitUtils.async_execute(StringUtils.format('init --bare --quiet "{}"', git_dir))
+		return await GitHelper.async_execute(StringUtils.format('init --bare --quiet "{}"', git_dir))
 
 	func async_is_bare() -> OSUtils.ExecResult:
 		return await async_execute("rev-parse --is-bare-repository", false)

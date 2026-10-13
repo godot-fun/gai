@@ -58,7 +58,7 @@ static func async_append_git_diff(session_id: int) -> void:
 
 ## Returns tab-separated path/additions/deletions records for an agent run Git diff.
 ## The caller must refresh the shadow index first so edits made outside file tools are included.
-static func async_diff_file_stats(git: GitUtils.Git, reference: String) -> PackedStringArray:
+static func async_diff_file_stats(git: GitHelper.Git, reference: String) -> PackedStringArray:
 	var file_stats := PackedStringArray()
 	if StringUtils.is_blank(reference):
 		return file_stats
@@ -78,7 +78,7 @@ static func async_diff_file_stats(git: GitUtils.Git, reference: String) -> Packe
 
 
 ## Caches the completed agent run patch so later workspace changes cannot alter this bubble's diff.
-static func async_cache_diff(git: GitUtils.Git, reference: String) -> String:
+static func async_cache_diff(git: GitHelper.Git, reference: String) -> String:
 	if StringUtils.is_blank(reference):
 		return StringUtils.EMPTY
 	var diff := await git.async_get_staged_diff(reference)
@@ -128,7 +128,7 @@ static func open_diff(patch_path: String) -> void:
 	var screen := DisplayServer.window_get_current_screen(DisplayServer.MAIN_WINDOW_ID)
 	var usable := DisplayServer.screen_get_usable_rect(screen)
 	var mintty_pos := str(usable.position.x) + "," + str(usable.position.y)
-	var mintty_path := GitUtils.find_windows_git_mintty()
+	var mintty_path := GitHelper.find_windows_git_mintty()
 	var pid := OS.create_process(
 			mintty_path,
 			PackedStringArray([
