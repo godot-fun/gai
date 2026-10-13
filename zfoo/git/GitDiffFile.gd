@@ -18,8 +18,6 @@ var new_hash: String = ""
 var new_exists: bool = true
 var status: String = STATUS_MODIFIED
 var binary: bool = false
-## False only for legacy .patch caches, whose partial hunk text is intentionally read-only.
-var complete: bool = true
 ## One-based real file line numbers parsed from the patch; CodeEdit APIs convert them to zero-based.
 var changed_lines := GitDiffParser.ChangedLines.new()
 
@@ -29,5 +27,5 @@ func display_path() -> String:
 
 
 func can_edit() -> bool:
-	# Deleted/binary/partial files have no complete UTF-8 target that can be written safely.
-	return complete and not binary and status != STATUS_DELETED and not new_path.is_empty()
+	# Deleted and binary files have no UTF-8 target that can be written safely.
+	return not binary and status != STATUS_DELETED and not new_path.is_empty()

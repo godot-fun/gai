@@ -1,8 +1,45 @@
 class_name GitDiff
 extends Object
 
+## Agent-run diff flow:
+##
+##   User turn queued
+##          |
+##          v
+##   Snapshot workspace ------> checkpoint SHA stored on the user chat entry
+##          |
+##          v
+##   Agent changes workspace
+##          |
+##          v
+##   Agent ends -> stage complete workspace -> diff against checkpoint
+##                                      |
+##                         +------------+------------+
+##                         |                         |
+##                    no changes               changed files
+##                         |                         |
+##                         v                         v
+##                       stop        numstat + patch + full text snapshots
+##                                                   |
+##                                                   v
+##                                      cache immutable `.gaidiff` bundle
+##                                                   |
+##                                                   v
+##                                         append Git Diff chat entry
+##                                                   |
+##                                                   v
+##                                          click file / Diff
+##                                                   |
+##                                                   v
+##                              GitDiffViewer: cached old text +
+##                              live workspace text -> edit/revert/save
+##                                                   |
+##                                                   v
+##                              existence/hash guard prevents stale saves
+
 const DIFF_CACHE_SUBDIR := ".gai/cache/diff"
-const MAX_DIFF_CACHE_BYTES := 16 * FileUtils.BYTES_PER_MB
+const DIFF_CACHE_EXTENSION := "gaidiff"
+const MAX_DIFF_CACHE_BYTES := 128 * FileUtils.BYTES_PER_MB
 
 
 static func _static_init() -> void:
@@ -123,7 +160,7 @@ static func async_cache_diff(git: GitHelper.Git, reference: String, file_stats: 
 		files.append(file)
 	var bundle := GitDiffBundle.new()
 	bundle.files = files
-	var patch_path := cache_dir.path_join(str(IdUtils.uuid()) + ".json")
+	var patch_path := cache_dir.path_join(str(IdUtils.uuid()) + "." + DIFF_CACHE_EXTENSION)
 	if not FileUtils.write_string_to_file(patch_path, JsonUtils.object_to_json(bundle)):
 		Log.error("agent git diff bundle cache write failed path:[{}]", patch_path)
 		return StringUtils.EMPTY
@@ -162,59 +199,10 @@ static func open_file_diff(patch_path: String, relative_path: String) -> bool:
 	return true
 
 
-## Loads current JSON bundles and transparently falls back to historical raw .patch entries.
+## Loads the cached JSON bundle for one agent run.
 static func load_diff_files(cache_path: String) -> Array[GitDiffFile]:
 	var text := FileUtils.read_file_to_string(cache_path)
-	var bundle: GitDiffBundle
-	if cache_path.get_extension().to_lower() == "json":
-		bundle = JsonUtils.json_to_object(text, GitDiffBundle)
+	var bundle: GitDiffBundle = JsonUtils.json_to_object(text, GitDiffBundle)
 	if bundle != null:
 		return bundle.files
-	return load_legacy_patch(text)
-
-
-## Older chat entries only contain hunk text. They remain viewable but cannot be saved.
-static func load_legacy_patch(patch: String) -> Array[GitDiffFile]:
-	var files: Array[GitDiffFile] = []
-	for raw_section in FileUtils.normalize_line_endings_to_lf(patch).split("diff --git ", false):
-		var section := "diff --git " + raw_section
-		var old_builder := StringBuilder.new()
-		var new_builder := StringBuilder.new()
-		var old_changed: Array[int] = []
-		var new_changed: Array[int] = []
-		var old_display_line := 0
-		var new_display_line := 0
-		var in_hunk := false
-		var path := StringUtils.EMPTY
-		# Rebuild only the visible hunk fragments. Their display-relative change numbers differ from
-		# real file line numbers, which is why they are counted while appending instead of reused from
-		# complete-file parsing. GitDiffFile.complete=false disables unsafe saving.
-		for line in section.split(FileUtils.NEWLINE_LF, true):
-			if line.begins_with("+++ b/"):
-				path = line.trim_prefix("+++ b/")
-			elif line.begins_with("--- a/") and path.is_empty():
-				path = line.trim_prefix("--- a/")
-			elif line.begins_with("@@ "):
-				in_hunk = true
-			elif in_hunk and not line.is_empty():
-				if line[0] == " " or line[0] == "-":
-					old_builder.append(line.substr(1) + FileUtils.NEWLINE_LF)
-					old_display_line += 1
-					if line[0] == "-":
-						old_changed.append(old_display_line)
-				if line[0] == " " or line[0] == "+":
-					new_builder.append(line.substr(1) + FileUtils.NEWLINE_LF)
-					new_display_line += 1
-					if line[0] == "+":
-						new_changed.append(new_display_line)
-		if path.is_empty():
-			continue
-		var file := GitDiffFile.new()
-		file.old_path = path
-		file.new_path = path
-		file.old_text = old_builder.build_string().trim_suffix(FileUtils.NEWLINE_LF)
-		file.new_text = new_builder.build_string().trim_suffix(FileUtils.NEWLINE_LF)
-		file.complete = false
-		file.changed_lines = GitDiffParser.ChangedLines.new(old_changed, new_changed)
-		files.append(file)
-	return files
+	return []

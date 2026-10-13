@@ -273,10 +273,10 @@ func load_selected_file() -> void:
 		return
 	var file := files[selected_index]
 	apply_syntax_highlighting(file.display_path())
-	# The left side remains the historical pre-run snapshot. For complete editable entries, the right
+	# The left side remains the historical pre-run snapshot. For editable entries, the right
 	# side follows the live workspace so reopening an old chat diff never presents stale file content.
 	var current_text := file.new_text
-	if file.complete and not file.binary and not file.new_path.is_empty():
+	if not file.binary and not file.new_path.is_empty():
 		var target := FileUtils.normalize_path(workspace_root.path_join(file.new_path))
 		if FileUtils.is_relative_to(target, workspace_root):
 			file.new_exists = FileAccess.file_exists(target)
@@ -302,8 +302,6 @@ func load_selected_file() -> void:
 	status_label.text = file.status.capitalize()
 	if file.binary:
 		status_label.text = "Binary file"
-	elif not file.complete:
-		status_label.text = "Historical patch · read only"
 	previous_button.disabled = files.size() <= 1
 	next_button.disabled = files.size() <= 1
 	displayed_hunks.clear()
@@ -323,11 +321,10 @@ func apply_syntax_highlighting(file_path: String) -> void:
 	pass
 
 
-## Full snapshots are compared by Git. Legacy partial patches retain their cached display-relative
-## line numbers because they do not contain enough source to run a meaningful complete-file diff.
+## Full text snapshots are compared by Git; binary entries keep their cached changed-line metadata.
 func paint_changed_lines() -> void:
 	var file := files[selected_index]
-	if file.complete and not file.binary:
+	if not file.binary:
 		run_current_git_diff()
 	else:
 		displayed_changed = file.changed_lines
