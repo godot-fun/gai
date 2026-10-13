@@ -154,8 +154,7 @@ func build_ui() -> void:
 	left_heading_panel = add_heading_panel(heading_container, "Original · read only")
 	heading_spacer = PanelContainer.new()
 	heading_spacer.custom_minimum_size.y = ControlSize.md
-	# Fixed width in sync_heading_widths(); only the two labels expand with the editors.
-	heading_spacer.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	heading_spacer.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN # width set in sync_heading_widths()
 	heading_container.add_child(heading_spacer)
 	right_heading_panel = add_heading_panel(heading_container, "Current · editable")
 
@@ -163,7 +162,7 @@ func build_ui() -> void:
 	split_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	split_container.split_offset = 0
 	split_container.add_theme_constant_override("separation", ControlSize.border_xs)
-	split_container.dragged.connect(on_split_dragged)
+	# resized covers both window resize and split dragging once child sizes have settled.
 	split_container.resized.connect(sync_heading_widths)
 	root.add_child(split_container)
 	left_edit = make_code_edit(false)
@@ -177,12 +176,9 @@ func build_ui() -> void:
 	split_container.add_child(left_edit)
 	var right_side := HBoxContainer.new()
 	right_side.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# Match the left CodeEdit height inside the split: claim leftover vertical space and fill it.
+	# Match left CodeEdit height in the split; HBox children then fill that height by default.
 	right_side.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right_side.add_theme_constant_override("separation", 0)
-	# Same vertical fill so the connector lane and right editor stay the same height.
-	connector.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	right_edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right_side.add_child(connector)
 	right_side.add_child(right_edit)
 	split_container.add_child(right_side)
@@ -214,12 +210,6 @@ func add_heading_panel(parent: Container, heading: String) -> PanelContainer:
 	heading_labels.append(label)
 	heading_panel.add_child(label)
 	return heading_panel
-
-
-func on_split_dragged(_offset: int) -> void:
-	# Split child sizes settle after the dragged signal; defer before reading them.
-	sync_heading_widths.call_deferred()
-	pass
 
 
 func sync_heading_widths() -> void:

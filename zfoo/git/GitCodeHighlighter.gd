@@ -6,6 +6,8 @@ extends Object
 
 const SCRIPT_EXTENSIONS := ["gd", "py", "pyw", "pyi", "rb", "rake", "lua", "r", "jl", "pl", "pm", "tcl"]
 const C_STYLE_EXTENSIONS := ["c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx", "m", "mm", "cs", "java", "js", "jsx", "mjs", "cjs", "ts", "tsx", "go", "rs", "swift", "kt", "kts", "dart", "scala", "groovy", "gradle", "php", "sol", "proto"]
+const JS_EXTENSIONS := ["js", "jsx", "mjs", "cjs", "ts", "tsx"]
+const CPP_EXTENSIONS := ["c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx", "m", "mm"]
 const SHADER_EXTENSIONS := ["gdshader", "gdshaderinc", "glsl", "vert", "frag", "geom", "tesc", "tese", "comp", "hlsl", "fx", "wgsl"]
 const DATA_EXTENSIONS := ["json", "jsonc", "json5", "yaml", "yml", "toml", "ini", "cfg", "conf", "env", "properties", "tscn", "tres", "godot", "gdextension", "import", "lock"]
 const MARKUP_EXTENSIONS := ["md", "markdown", "mdx", "html", "htm", "xhtml", "xml", "svg", "vue", "svelte", "css", "scss", "sass", "less"]
@@ -108,14 +110,14 @@ static func configure_c_style(highlighter: CodeHighlighter, extension: String) -
 	highlighter.add_color_region("//", "", CodeColors.comment, true)
 	highlighter.add_color_region("/*", "*/", CodeColors.comment)
 	# JS/TS private fields use `#name`; only C-family preprocessors should own line `#`.
-	if extension in PackedStringArray(["js", "jsx", "mjs", "cjs", "ts", "tsx"]):
+	if extension in JS_EXTENSIONS:
 		add_keywords(highlighter, JS_KEYWORDS, CodeColors.keyword)
 		highlighter.add_color_region("`", "`", CodeColors.string)
 		if extension in PackedStringArray(["jsx", "tsx"]):
 			highlighter.add_color_region("<", ">", CodeColors.tag)
 	else:
 		highlighter.add_color_region("#", "", CodeColors.declaration, true)
-		if extension in PackedStringArray(["c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx", "m", "mm"]):
+		if extension in CPP_EXTENSIONS:
 			add_keywords(highlighter, CPP_KEYWORDS, CodeColors.keyword)
 		elif extension == "rs":
 			add_keywords(highlighter, RUST_KEYWORDS, CodeColors.keyword)
