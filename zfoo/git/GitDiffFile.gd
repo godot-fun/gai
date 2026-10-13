@@ -10,13 +10,17 @@ const STATUS_MODIFIED := "modified"
 
 var old_path: String = ""
 var new_path: String = ""
+## Full snapshots, not unified-patch hunks. The right snapshot can therefore be saved as a file.
 var old_text: String = ""
 var new_text: String = ""
+## Hash/existence captured when the bundle was created and checked again immediately before Save.
 var new_hash: String = ""
 var new_exists: bool = true
 var status: String = STATUS_MODIFIED
 var binary: bool = false
+## False only for legacy .patch caches, whose partial hunk text is intentionally read-only.
 var complete: bool = true
+## One-based real file line numbers parsed from the patch; CodeEdit APIs convert them to zero-based.
 var old_changed_lines: PackedInt32Array = PackedInt32Array()
 var new_changed_lines: PackedInt32Array = PackedInt32Array()
 
@@ -60,4 +64,5 @@ func display_path() -> String:
 
 
 func can_edit() -> bool:
+	# Deleted/binary/partial files have no complete UTF-8 target that can be written safely.
 	return complete and not binary and status != STATUS_DELETED and not new_path.is_empty()

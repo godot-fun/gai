@@ -64,7 +64,9 @@ static func async_diff_file_stats(git: GitHelper.Git, reference: String) -> Pack
 	return file_stats
 
 
-## Caches the completed agent run patch so later workspace changes cannot alter this bubble's diff.
+## Caches a versioned JSON bundle so later workspace changes cannot alter this bubble's diff.
+## The unified patch supplies change locations, while complete old/new UTF-8 snapshots make the
+## viewer's right pane a real editor. Keeping both avoids reconstructing full files from partial hunks.
 static func async_cache_diff(git: GitHelper.Git, reference: String, file_stats: PackedStringArray) -> String:
 	if StringUtils.is_blank(reference):
 		return StringUtils.EMPTY
@@ -87,6 +89,8 @@ static func async_cache_diff(git: GitHelper.Git, reference: String, file_stats: 
 			continue
 		var relative_path := parts[0].strip_edges().replace("\\", "/")
 		var file_patch := GitDiffParser.extract_file_patch(patch, relative_path)
+		# Git's binary markers catch normal cases; the byte checks below also reject NUL data and text
+		# that cannot round-trip through UTF-8, preventing CodeEdit/Save from corrupting such files.
 		var is_binary := file_patch.contains("GIT binary patch") or file_patch.contains("Binary files ")
 		var old_result := await git.async_get_file_at_reference(reference, relative_path) if not is_binary else null
 		var old_exists := old_result != null and old_result.exit_code == 0
@@ -157,6 +161,7 @@ static func open_file_diff(patch_path: String, relative_path: String) -> bool:
 	return true
 
 
+## Loads current JSON bundles and transparently falls back to historical raw .patch entries.
 static func load_diff_files(cache_path: String) -> Array[GitDiffFile]:
 	var text := FileUtils.read_file_to_string(cache_path)
 	var parsed: Variant = null
@@ -186,6 +191,9 @@ static func load_legacy_patch(patch: String) -> Array[GitDiffFile]:
 		var new_display_line := 0
 		var in_hunk := false
 		var path := StringUtils.EMPTY
+		# Rebuild only the visible hunk fragments. Their display-relative change numbers differ from
+		# real file line numbers, which is why they are counted while appending instead of reused from
+		# GitDiffParser.changed_lines(). GitDiffFile.complete=false disables unsafe saving.
 		for line in section.split(FileUtils.NEWLINE_LF, true):
 			if line.begins_with("+++ b/"):
 				path = line.trim_prefix("+++ b/")

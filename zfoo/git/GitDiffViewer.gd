@@ -13,8 +13,12 @@ const BORDER_ALPHA_UNFOCUSED := 0.08
 var files: Array[GitDiffFile] = []
 var workspace_root: String = ""
 var selected_index := 0
+## Exact cached post-run text. Dirty checks compare against this instead of the live workspace;
+## live-workspace conflict detection happens separately in [method save_current].
 var baseline_text := ""
+## Programmatic text replacement emits CodeEdit.text_changed too; suppress it while loading/reverting.
 var suppress_text_changed := false
+## Both scrollbars emit when assigned, so this guard prevents left/right signal recursion.
 var syncing_scroll := false
 
 var path_label: Label
@@ -49,6 +53,8 @@ func _init() -> void:
 	pass
 
 
+## Opens one viewer for a cached run. There is deliberately no file sidebar: navigation stays in
+## the compact toolbar, while [param selected_path] lets a clicked chat-bubble path open directly.
 static func show_files(diff_files: Array[GitDiffFile], root_path: String, selected_path: String = "") -> void:
 	if diff_files.is_empty():
 		return
@@ -109,6 +115,8 @@ func build_ui() -> void:
 	save_button.pressed.connect(save_current)
 	toolbar.add_child(save_button)
 
+	# Headings must not be children of the editor SplitContainer. Otherwise its grabber extends up
+	# through the heading row; a plain HBox mirrors the editor widths without drawing a divider.
 	heading_container = HBoxContainer.new()
 	heading_container.add_theme_constant_override("separation", 0)
 	root.add_child(heading_container)
@@ -140,7 +148,8 @@ func build_ui() -> void:
 
 
 func reset_split() -> void:
-	# Split offset is relative to the center, so zero produces two equal panes after layout.
+	# Split offset is relative to the center, not the left edge. Run after popup layout so zero
+	# reliably produces two equal panes at the final 80%-of-screen window size.
 	split_container.split_offset = 0
 	sync_heading_widths()
 	pass
@@ -164,11 +173,13 @@ func add_heading_panel(parent: Container, heading: String) -> PanelContainer:
 
 
 func on_split_dragged(_offset: int) -> void:
+	# Split child sizes settle after the dragged signal; defer before reading them.
 	sync_heading_widths.call_deferred()
 	pass
 
 
 func sync_heading_widths() -> void:
+	# Stretch ratios keep heading labels aligned with their editors without adding a second grabber.
 	var total_width := left_edit.size.x + right_edit.size.x
 	if total_width <= 0.0:
 		return
@@ -211,6 +222,8 @@ func load_selected_file() -> void:
 	if files.is_empty():
 		return
 	var file := files[selected_index]
+	# Always load the cached snapshots. Reading the live workspace here would make historical diffs
+	# drift over time and would also invalidate the optimistic conflict check used by Save.
 	suppress_text_changed = true
 	left_edit.text = file.old_text
 	right_edit.text = file.new_text
@@ -234,6 +247,8 @@ func load_selected_file() -> void:
 	pass
 
 
+## Paints line-level changes from the cached unified patch. CodeEdit holds complete source text, so
+## it remains a valid editable file; inserting visual padding rows would corrupt saved content.
 func paint_changed_lines() -> void:
 	for line in left_edit.get_line_count():
 		left_edit.set_line_background_color(line, Color(0, 0, 0, 0))
@@ -289,6 +304,8 @@ func revert_current() -> void:
 	pass
 
 
+## Writes the editable snapshot only when the workspace still matches the post-run cache. This is
+## optimistic concurrency control: an older chat diff must never overwrite a later agent/user edit.
 func save_current() -> void:
 	var file := files[selected_index]
 	if not file.can_edit() or not is_dirty():
@@ -329,6 +346,8 @@ func sync_vertical_scroll(source: CodeEdit, target: CodeEdit, value: float) -> v
 		return
 	var source_bar := source.get_v_scroll_bar()
 	var target_bar := target.get_v_scroll_bar()
+	# Old/new files may have different line counts. Syncing their raw values would pin or overscroll
+	# one side, so map the source's normalized progress onto the target's scrollable range.
 	var source_range := maxf(source_bar.max_value - source_bar.page, 0.0)
 	var target_range := maxf(target_bar.max_value - target_bar.page, 0.0)
 	syncing_scroll = true
@@ -363,6 +382,8 @@ func on_window_input(event: InputEvent) -> void:
 	pass
 
 
+## Repaints every native Window/CodeEdit/Dialog surface. Theme changes happen while the viewer is
+## open, so no control should retain a color captured only during construction.
 func apply_theme() -> void:
 	add_theme_stylebox_override("embedded_border", make_embedded_border(BORDER_ALPHA))
 	add_theme_stylebox_override("embedded_unfocused_border", make_embedded_border(BORDER_ALPHA_UNFOCUSED))
@@ -416,6 +437,8 @@ func tint_theme_icon(icon_name: String, color: Color) -> ImageTexture:
 
 
 func make_transparent_grabber() -> ImageTexture:
+	# SplitContainer's stock grabber has its own minimum width. A 1px transparent icon leaves only
+	# the configured separation visible while preserving the native drag interaction.
 	var image := Image.create(ControlSize.border_xs, ControlSize.border_xs, false, Image.FORMAT_RGBA8)
 	image.fill(Color.TRANSPARENT)
 	return ImageTexture.create_from_image(image)
@@ -443,6 +466,8 @@ func style_compact_button(button: Button) -> void:
 func style_discard_dialog() -> void:
 	if discard_dialog == null:
 		return
+	# The dialog is a second visual elevation above the diff. Neutral elevated content, warning
+	# chrome, and a shadow keep it distinct without hard-coding light/dark colors.
 	var panel_style := StyleBoxHelper.create_style_box_flat(Colors.elevated_surface, ControlSize.radius_md, Margin.ma_4, Margin.ma_3, Colors.warning, ControlSize.border_sm)
 	panel_style.shadow_color = Color(0.0, 0.0, 0.0, 0.34 if ThemeColor.is_dark_theme() else 0.22)
 	panel_style.shadow_size = Margin.ma_3
