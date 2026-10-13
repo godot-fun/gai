@@ -302,7 +302,7 @@ static func parse_compose_json(raw: String) -> Dictionary:
 		"optimize": str(data.get("optimize", "")).strip_edges(),
 		"expand": str(data.get("expand", "")).strip_edges(),
 	}
-	if StringUtils.is_blank(parsed.correct) and StringUtils.is_blank(parsed.optimize) and StringUtils.is_blank(parsed.expand):
+	if StringUtils.is_blank(parsed.correct) or StringUtils.is_blank(parsed.optimize) or StringUtils.is_blank(parsed.expand):
 		if StringUtils.is_not_blank(text):
 			Log.info("SenseInput: compose fields missing raw:[{}]", StringUtils.truncate(text, LOG_BODY_MAX))
 		return empty
@@ -400,13 +400,13 @@ func async_fill_compose_local(picker: SensePicker, voice_text: String, remember_
 	var correct_raw := await VLMServer.async_chat(SensePromptLocal.correct_user_prompt(voice_text), SenseSetting.append_system_prompt(SensePromptLocal.correct_screen_system(screen_context)), SensePromptLocal.MAX_TOKENS_CORRECT)
 	if not is_picker_alive(picker):
 		return
-	var correct := SensePromptLocal.parse_step_reply(correct_raw, SensePromptLocal.KEY_CORRECT)
+	var correct := SensePromptLocal.parse_step_reply(correct_raw)
 	if SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_CORRECT, voice_text, correct):
 		Log.info("SenseInput: correct output drift; retry with ASR only source:[{}] result:[{}]", voice_text.length(), correct.length())
 		correct_raw = await VLMServer.async_chat(SensePromptLocal.correct_user_prompt(voice_text), SenseSetting.append_system_prompt(SensePromptLocal.correct_system()), SensePromptLocal.MAX_TOKENS_CORRECT)
 		if not is_picker_alive(picker):
 			return
-		correct = SensePromptLocal.parse_step_reply(correct_raw, SensePromptLocal.KEY_CORRECT)
+		correct = SensePromptLocal.parse_step_reply(correct_raw)
 	if SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_CORRECT, voice_text, correct):
 		Log.info("SenseInput: correct output drift after retry; use ASR source:[{}] result:[{}]", voice_text.length(), correct.length())
 		correct = voice_text
@@ -416,13 +416,13 @@ func async_fill_compose_local(picker: SensePicker, voice_text: String, remember_
 	var optimize_raw := await VLMServer.async_chat(SensePromptLocal.optimize_user_prompt(correct), SenseSetting.append_system_prompt(SensePromptLocal.optimize_screen_system(screen_context)), SensePromptLocal.MAX_TOKENS_OPTIMIZE)
 	if not is_picker_alive(picker):
 		return
-	var optimize := SensePromptLocal.parse_step_reply(optimize_raw, SensePromptLocal.KEY_OPTIMIZE)
+	var optimize := SensePromptLocal.parse_step_reply(optimize_raw)
 	if SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_OPTIMIZE, correct, optimize):
 		Log.info("SenseInput: optimize output drift; retry without screen source:[{}] result:[{}]", correct.length(), optimize.length())
 		optimize_raw = await VLMServer.async_chat(SensePromptLocal.optimize_user_prompt(correct), SenseSetting.append_system_prompt(SensePromptLocal.optimize_system()), SensePromptLocal.MAX_TOKENS_OPTIMIZE)
 		if not is_picker_alive(picker):
 			return
-		optimize = SensePromptLocal.parse_step_reply(optimize_raw, SensePromptLocal.KEY_OPTIMIZE)
+		optimize = SensePromptLocal.parse_step_reply(optimize_raw)
 	if SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_OPTIMIZE, correct, optimize):
 		Log.info("SenseInput: optimize output drift after retry; use correct source:[{}] result:[{}]", correct.length(), optimize.length())
 		optimize = correct
@@ -430,13 +430,13 @@ func async_fill_compose_local(picker: SensePicker, voice_text: String, remember_
 	var expand_raw := await VLMServer.async_chat(SensePromptLocal.expand_user_prompt(optimize), SenseSetting.append_system_prompt(SensePromptLocal.expand_screen_system(screen_context)), SensePromptLocal.MAX_TOKENS_EXPAND)
 	if not is_picker_alive(picker):
 		return
-	var expand := SensePromptLocal.parse_step_reply(expand_raw, SensePromptLocal.KEY_EXPAND)
+	var expand := SensePromptLocal.parse_step_reply(expand_raw)
 	if SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_EXPAND, optimize, expand):
 		Log.info("SenseInput: expand output drift; retry without screen source:[{}] result:[{}]", optimize.length(), expand.length())
 		expand_raw = await VLMServer.async_chat(SensePromptLocal.expand_user_prompt(optimize), SenseSetting.append_system_prompt(SensePromptLocal.expand_system()), SensePromptLocal.MAX_TOKENS_EXPAND)
 		if not is_picker_alive(picker):
 			return
-		expand = SensePromptLocal.parse_step_reply(expand_raw, SensePromptLocal.KEY_EXPAND)
+		expand = SensePromptLocal.parse_step_reply(expand_raw)
 	if SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_EXPAND, optimize, expand):
 		Log.info("SenseInput: expand output drift after retry; use optimize source:[{}] result:[{}]", optimize.length(), expand.length())
 		expand = optimize
@@ -444,13 +444,13 @@ func async_fill_compose_local(picker: SensePicker, voice_text: String, remember_
 	var diverge_raw := await VLMServer.async_chat(SensePromptLocal.diverge_simple_user_prompt(expand), SenseSetting.append_system_prompt(SensePromptLocal.diverge_system(screen_context)), SensePromptLocal.MAX_TOKENS_DIVERGE)
 	if not is_picker_alive(picker):
 		return
-	var diverge := SensePromptLocal.parse_step_reply(diverge_raw, SensePromptLocal.KEY_DIVERGE)
+	var diverge := SensePromptLocal.parse_step_reply(diverge_raw)
 	if SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_DIVERGE, expand, diverge):
 		Log.info("SenseInput: diverge output drift; retry without screen source:[{}] result:[{}]", expand.length(), diverge.length())
 		diverge_raw = await VLMServer.async_chat(SensePromptLocal.diverge_simple_user_prompt(expand), SenseSetting.append_system_prompt(SensePromptLocal.diverge_simple_system()), SensePromptLocal.MAX_TOKENS_DIVERGE)
 		if not is_picker_alive(picker):
 			return
-		diverge = SensePromptLocal.parse_step_reply(diverge_raw, SensePromptLocal.KEY_DIVERGE)
+		diverge = SensePromptLocal.parse_step_reply(diverge_raw)
 	if SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_DIVERGE, expand, diverge):
 		Log.info("SenseInput: diverge output drift after retry; use expand source:[{}] result:[{}]", expand.length(), diverge.length())
 		diverge = expand

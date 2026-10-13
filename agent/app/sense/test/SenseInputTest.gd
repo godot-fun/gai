@@ -108,10 +108,10 @@ func parse_compose_json_test() -> void:
 	assert(wrapped.correct == "x")
 	assert(wrapped.optimize == "y")
 	assert(wrapped.expand == "z")
-	var legacy := SenseInput.parse_compose_json('{"correct":"fixed","optimize":"polished"}')
-	assert(legacy.correct == "fixed")
-	assert(legacy.optimize == "polished")
-	assert(legacy.expand == "")
+	var incomplete := SenseInput.parse_compose_json('{"correct":"fixed","optimize":"polished"}')
+	assert(incomplete.correct == "")
+	assert(incomplete.optimize == "")
+	assert(incomplete.expand == "")
 	var escaped := SenseInput.parse_compose_json(r'{"correct":"say \"hi\"","optimize":"line\n2","expand":"ok"}')
 	assert(escaped.correct == "say \"hi\"")
 	assert(escaped.optimize == "line\n2")
@@ -330,14 +330,11 @@ func sense_prompt_local_diverge_length_deviation_test() -> void:
 	pass
 
 
-## [method SensePromptLocal.parse_step_reply] reads plain text and remains compatible with old JSON replies.
+## [method SensePromptLocal.parse_step_reply] reads plain text and strips optional text fences.
 func sense_prompt_local_parse_step_reply_test() -> void:
-	assert(SensePromptLocal.parse_step_reply("直接回复", SensePromptLocal.KEY_CORRECT) == "直接回复")
-	assert(SensePromptLocal.parse_step_reply("```text\npolished\n```", SensePromptLocal.KEY_OPTIMIZE) == "polished")
-	assert(SensePromptLocal.parse_step_reply('{"correct":"fixed"}', SensePromptLocal.KEY_CORRECT) == "fixed")
-	assert(SensePromptLocal.parse_step_reply('Here: {"optimize":"polished"} ok', SensePromptLocal.KEY_OPTIMIZE) == "polished")
-	assert(SensePromptLocal.parse_step_reply('{"other":"x"}', SensePromptLocal.KEY_CORRECT) == "")
-	assert(SensePromptLocal.parse_step_reply("保留 {name} 占位符", SensePromptLocal.KEY_CORRECT) == "保留 {name} 占位符")
+	assert(SensePromptLocal.parse_step_reply("直接回复") == "直接回复")
+	assert(SensePromptLocal.parse_step_reply("```text\npolished\n```") == "polished")
+	assert(SensePromptLocal.parse_step_reply("保留 {name} 占位符") == "保留 {name} 占位符")
 	pass
 
 

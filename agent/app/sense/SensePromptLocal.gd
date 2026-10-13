@@ -239,18 +239,11 @@ static func is_output_deviated(step: String, source_text: String, result_text: S
 	return is_length_deviated(step, source_text, result_text) or is_language_deviated(source_text, result_text)
 
 
-## Reads a plain-text local reply, while accepting the former JSON format during upgrades.
-static func parse_step_reply(raw: String, key: String) -> String:
-	if StringUtils.is_blank(raw) or StringUtils.is_blank(key):
+## Reads a plain-text local reply and removes an optional Markdown text fence.
+static func parse_step_reply(raw: String) -> String:
+	if StringUtils.is_blank(raw):
 		return StringUtils.EMPTY
 	var text := raw.strip_edges()
-	if text.contains("{") or text.contains("}"):
-		var data := JsonUtils.parse_object_lenient(text, PackedStringArray([key]))
-		var legacy_text := str(data.get(key, "")).strip_edges()
-		if StringUtils.is_not_blank(legacy_text):
-			return legacy_text
-		if not data.is_empty():
-			return StringUtils.EMPTY
 	if text.begins_with("```") and text.ends_with("```"):
 		text = text.trim_prefix("```").trim_suffix("```").strip_edges()
 		if text.begins_with("text\n"):

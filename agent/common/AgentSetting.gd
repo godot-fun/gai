@@ -15,8 +15,6 @@ extends RefCounted
 
 ## [VisualsButton] — visual presentation shown while an agent run is working.
 const VISUAL_TYPE_KEY := "agent_visual_type"
-## Legacy toggle retained so existing preferences can be migrated to [constant VISUAL_TYPE_KEY].
-const JARVIS_ORB_ENABLED_KEY := "agent_jarvis_orb_enabled"
 ## [MarkdownToggle] — render chat bubble bodies as BBCode instead of raw text.
 const MARKDOWN_ENABLED_KEY := "agent_markdown_enabled"
 ## [SkillToggle] — keep the skill index system message inside new sessions.
@@ -26,10 +24,7 @@ const AGENT_PROMPT_IN_PROMPT_ENABLED_KEY := "agent_agents_md_in_prompt_enabled"
 
 
 static func get_visual_type() -> VisualType.Type:
-	var stored_value := Setting.get_string(VISUAL_TYPE_KEY)
-	if stored_value.is_empty():
-		return VisualType.Type.JARVIS if Setting.get_bool(JARVIS_ORB_ENABLED_KEY, true) else VisualType.Type.NONE
-	var visual_type: VisualType.Type = int(stored_value)
+	var visual_type: VisualType.Type = Setting.get_int(VISUAL_TYPE_KEY, VisualType.Type.JARVIS)
 	return visual_type if VisualType.is_valid(visual_type) else VisualType.Type.JARVIS
 
 
