@@ -38,6 +38,7 @@ var right_edit: CodeEdit
 var connector: GitDiffConnector
 var heading_labels: Array[Label] = []
 var left_heading_panel: PanelContainer
+var heading_spacer: PanelContainer
 var right_heading_panel: PanelContainer
 var displayed_hunks: Array[GitDiffParser.DiffHunk] = []
 var selected_hunk := -1
@@ -146,11 +147,16 @@ func build_ui() -> void:
 	toolbar.add_child(revert_button)
 
 	# Headings must not be children of the editor SplitContainer. Otherwise its grabber extends up
-	# through the heading row; a plain HBox mirrors the editor widths without drawing a divider.
+	# through the heading row; a plain HBox mirrors left edit | connector | right edit widths.
 	heading_container = HBoxContainer.new()
 	heading_container.add_theme_constant_override("separation", 0)
 	root.add_child(heading_container)
 	left_heading_panel = add_heading_panel(heading_container, "Original · read only")
+	heading_spacer = PanelContainer.new()
+	heading_spacer.custom_minimum_size.y = ControlSize.md
+	# Fixed width in sync_heading_widths(); only the two labels expand with the editors.
+	heading_spacer.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	heading_container.add_child(heading_spacer)
 	right_heading_panel = add_heading_panel(heading_container, "Current · editable")
 
 	split_container = HSplitContainer.new()
@@ -158,6 +164,7 @@ func build_ui() -> void:
 	split_container.split_offset = 0
 	split_container.add_theme_constant_override("separation", ControlSize.border_xs)
 	split_container.dragged.connect(on_split_dragged)
+	split_container.resized.connect(sync_heading_widths)
 	root.add_child(split_container)
 	left_edit = make_code_edit(false)
 	right_edit = make_code_edit(true)
@@ -211,12 +218,16 @@ func on_split_dragged(_offset: int) -> void:
 
 
 func sync_heading_widths() -> void:
-	# Stretch ratios keep heading labels aligned with their editors without adding a second grabber.
-	var total_width := left_edit.size.x + right_edit.size.x
-	if total_width <= 0.0:
+	# Mirror left edit | split separation + connector | right edit so "Current" starts on the
+	# right editor, not over the connector lane.
+	var left_width := left_edit.size.x
+	var middle_width := float(split_container.get_theme_constant("separation")) + connector.size.x
+	var right_width := right_edit.size.x
+	if left_width <= 0.0 or right_width <= 0.0:
 		return
-	left_heading_panel.size_flags_stretch_ratio = left_edit.size.x / total_width
-	right_heading_panel.size_flags_stretch_ratio = right_edit.size.x / total_width
+	heading_spacer.custom_minimum_size.x = middle_width
+	left_heading_panel.size_flags_stretch_ratio = left_width
+	right_heading_panel.size_flags_stretch_ratio = right_width
 	pass
 
 
@@ -554,7 +565,7 @@ func apply_theme() -> void:
 	split_container.add_theme_icon_override("grabber", make_transparent_grabber())
 	var header_style := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 0, Margin.ma_1, Margin.ma_0)
 	toolbar_panel.add_theme_stylebox_override("panel", header_style)
-	for panel in [left_heading_panel, right_heading_panel]:
+	for panel in [left_heading_panel, heading_spacer, right_heading_panel]:
 		panel.add_theme_stylebox_override("panel", header_style.duplicate())
 	for label in [path_label, position_label, status_label, change_position_label]:
 		label.add_theme_color_override("font_color", ThemeColor.title_color)

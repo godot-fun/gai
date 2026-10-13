@@ -105,6 +105,7 @@ func diff_viewer_builds_test() -> void:
 	var viewer := GitDiffViewer.new()
 	assert(viewer.left_edit != null)
 	assert(viewer.connector != null)
+	assert(viewer.heading_spacer != null)
 	assert(viewer.connector.clip_contents)
 	assert(viewer.previous_change_button.focus_mode == Control.FOCUS_NONE)
 	assert(viewer.next_change_button.focus_mode == Control.FOCUS_NONE)
