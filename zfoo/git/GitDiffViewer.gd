@@ -629,10 +629,10 @@ func make_embedded_border(border_alpha: float) -> StyleBoxFlat:
 
 
 func style_compact_button(button: Button) -> void:
-	ButtonStyle.apply_font_colors(button, ThemeColor.title_color, ThemeColor.title_color, ThemeColor.title_color, ThemeColor.body_color)
-	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, ControlSize.radius_sm, Margin.ma_1, Margin.ma_0, Color(ThemeColor.title_color, 0.16), ControlSize.border_xs)
+	ButtonStyle.apply_font_colors(button, Colors.primary_text, Colors.primary_text, Colors.primary_text, Colors.secondary_text)
+	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_sm, Margin.ma_1, Margin.ma_0, Colors.subtle_border, ControlSize.border_xs)
 	var hover := ButtonStyle.filled(normal, ThemeColor.selected_surface, ThemeColor.accent_theme_color())
-	var pressed := ButtonStyle.filled(normal, ThemeColor.accent_surface, ThemeColor.accent_theme_color())
-	var disabled := ButtonStyle.filled(normal, ThemeColor.inset_surface)
+	var pressed := ButtonStyle.filled(normal, ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), Colors.am_2), ThemeColor.accent_theme_color())
+	var disabled := ButtonStyle.filled(normal, Colors.surface, Colors.subtle_border)
 	ButtonStyle.apply(button, normal, hover, pressed, disabled)
 	pass
