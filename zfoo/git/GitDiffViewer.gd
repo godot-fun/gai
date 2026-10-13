@@ -557,35 +557,36 @@ func on_window_input(event: InputEvent) -> void:
 func apply_theme() -> void:
 	add_theme_stylebox_override("embedded_border", make_embedded_border(BORDER_ALPHA))
 	add_theme_stylebox_override("embedded_unfocused_border", make_embedded_border(BORDER_ALPHA_UNFOCUSED))
-	add_theme_color_override("title_color", ThemeColor.title_color)
+	add_theme_color_override("title_color", Colors.primary_text)
 	add_theme_font_override("title_font", Fonts.semibold())
 	add_theme_font_size_override("title_font_size", Typography.title_medium_size)
 	add_theme_icon_override("close_pressed", tint_theme_icon("close_pressed", Colors.error))
-	content_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ThemeColor.accent_surface))
+	content_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.surface))
 	split_container.add_theme_icon_override("grabber", make_transparent_grabber())
-	var header_style := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 0, Margin.ma_1, Margin.ma_0)
-	toolbar_panel.add_theme_stylebox_override("panel", header_style)
+	var toolbar_style := StyleBoxHelper.create_style_box_flat(Colors.surface, 0, Margin.ma_1, Margin.ma_0)
+	toolbar_panel.add_theme_stylebox_override("panel", toolbar_style)
+	var heading_style := StyleBoxHelper.create_style_box_flat(Colors.chrome_surface, 0, Margin.ma_1, Margin.ma_0)
 	for panel in [left_heading_panel, heading_spacer, right_heading_panel]:
-		panel.add_theme_stylebox_override("panel", header_style.duplicate())
+		panel.add_theme_stylebox_override("panel", heading_style.duplicate())
 	for label in [path_label, position_label, status_label, change_position_label]:
-		label.add_theme_color_override("font_color", ThemeColor.title_color)
+		label.add_theme_color_override("font_color", Colors.primary_text)
 		label.add_theme_font_override("font", Fonts.regular())
 	for label in heading_labels:
-		label.add_theme_color_override("font_color", ThemeColor.body_color)
+		label.add_theme_color_override("font_color", Colors.secondary_text)
 	for button in [previous_button, next_button, previous_change_button, next_change_button, revert_button]:
 		style_compact_button(button)
 	# Horizontal margins stay 0 so line highlights meet the connector and the VScrollBar sits flush
 	# (TextEdit insets the bar by content_margin_right). Keep a little vertical padding only.
-	var editor_style := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 0, 0, Margin.ma_2)
+	var editor_style := StyleBoxHelper.create_style_box_flat(Colors.app_background, 0, 0, Margin.ma_2)
 	for edit in [left_edit, right_edit]:
 		edit.add_theme_stylebox_override("normal", editor_style.duplicate())
 		edit.add_theme_stylebox_override("focus", editor_style.duplicate())
 		edit.add_theme_stylebox_override("read_only", editor_style.duplicate())
-		edit.add_theme_color_override("background_color", ThemeColor.inset_surface)
-		edit.add_theme_color_override("font_color", ThemeColor.title_color)
-		edit.add_theme_color_override("font_readonly_color", ThemeColor.title_color)
-		edit.add_theme_color_override("font_selected_color", ThemeColor.title_color)
-		edit.add_theme_color_override("line_number_color", ThemeColor.body_color)
+		edit.add_theme_color_override("background_color", Colors.app_background)
+		edit.add_theme_color_override("font_color", Colors.primary_text)
+		edit.add_theme_color_override("font_readonly_color", Colors.primary_text)
+		edit.add_theme_color_override("font_selected_color", Colors.primary_text)
+		edit.add_theme_color_override("line_number_color", Colors.secondary_text)
 		edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
 		edit.add_theme_color_override("selection_color", ThemeColor.selection_color)
 		edit.add_theme_color_override("current_line_color", Color(ThemeColor.accent_theme_color(), 0.10))
@@ -620,9 +621,9 @@ func make_transparent_grabber() -> ImageTexture:
 
 func make_embedded_border(border_alpha: float) -> StyleBoxFlat:
 	var style: StyleBoxFlat = get_theme_stylebox("embedded_border").duplicate() as StyleBoxFlat
-	style.bg_color = ThemeColor.accent_surface
+	style.bg_color = Colors.surface
 	style.set_corner_radius_all(ControlSize.radius_md)
-	style.border_color = Color(ThemeColor.title_color, border_alpha)
+	style.border_color = Color(Colors.primary_text, border_alpha)
 	style.set_border_width_all(ControlSize.border_xs)
 	return style
 
