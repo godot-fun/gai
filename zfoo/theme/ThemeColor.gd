@@ -135,6 +135,7 @@ static func refresh_derived_colors() -> void:
 	refresh_theme_colors()
 	Colors.refresh()
 	MarkdownColors.refresh()
+	CodeColors.refresh()
 	FileColors.refresh()
 	pass
 

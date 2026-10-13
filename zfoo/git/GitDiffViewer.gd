@@ -255,6 +255,7 @@ func load_selected_file() -> void:
 	if files.is_empty():
 		return
 	var file := files[selected_index]
+	apply_syntax_highlighting(file.display_path())
 	# The left side remains the historical pre-run snapshot. For complete editable entries, the right
 	# side follows the live workspace so reopening an old chat diff never presents stale file content.
 	var current_text := file.new_text
@@ -294,6 +295,14 @@ func load_selected_file() -> void:
 	connector.set_hunks(displayed_hunks, selected_hunk)
 	refresh_actions()
 	paint_changed_lines()
+	pass
+
+
+## Both panes use independently-owned highlighters because a SyntaxHighlighter can belong to only
+## one TextEdit. Rebuilding on theme changes also refreshes every syntax color.
+func apply_syntax_highlighting(file_path: String) -> void:
+	left_edit.syntax_highlighter = GitCodeHighlighter.create(file_path)
+	right_edit.syntax_highlighter = GitCodeHighlighter.create(file_path)
 	pass
 
 
@@ -571,6 +580,8 @@ func apply_theme() -> void:
 		edit.add_theme_font_size_override("font_size", Typography.body_medium_size)
 		ScrollBarStyle.apply(edit.get_v_scroll_bar())
 		ScrollBarStyle.apply(edit.get_h_scroll_bar())
+	if not files.is_empty():
+		apply_syntax_highlighting(files[selected_index].display_path())
 	if not files.is_empty():
 		apply_changed_lines(displayed_changed)
 	connector.queue_redraw()

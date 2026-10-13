@@ -119,6 +119,30 @@ func diff_viewer_builds_test() -> void:
 	pass
 
 
+static func code_highlighter_recognizes_gdscript_test() -> void:
+	var highlighter := GitCodeHighlighter.create("scripts/player.gd")
+	assert(highlighter.get_keyword_color("func").a > 0.0)
+	assert(highlighter.get_keyword_color("Vector2").a > 0.0)
+	assert(highlighter.has_color_region("#"))
+	pass
+
+
+func diff_viewer_applies_file_highlighter_test() -> void:
+	var file := GitDiffFile.new()
+	file.old_path = "demo.gd"
+	file.new_path = "demo.gd"
+	file.old_text = "func old() -> void:\n\tpass"
+	file.new_text = "func current() -> void:\n\tpass"
+	var viewer := GitDiffViewer.new()
+	viewer.files = [file]
+	viewer.load_selected_file()
+	assert(viewer.left_edit.syntax_highlighter is CodeHighlighter)
+	assert(viewer.right_edit.syntax_highlighter is CodeHighlighter)
+	assert(viewer.left_edit.syntax_highlighter != viewer.right_edit.syntax_highlighter)
+	viewer.free()
+	pass
+
+
 func diff_viewer_maps_lines_across_hunks_test() -> void:
 	var viewer := GitDiffViewer.new()
 	var hunk := GitDiffParser.DiffHunk.new(3, 2, 3, 4)
