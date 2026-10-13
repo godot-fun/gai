@@ -32,6 +32,12 @@ func _init() -> void:
 	text_edit.editable = false
 	text_edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
 	text_edit.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# Cover fractional canvas-scaling remainders on every edge. The Window viewport clips the
+	# one-pixel overlap, while sizes that round the content down no longer expose the frame beneath.
+	text_edit.offset_left = -ControlSize.border_xs
+	text_edit.offset_top = -ControlSize.border_xs
+	text_edit.offset_right = ControlSize.border_xs
+	text_edit.offset_bottom = ControlSize.border_xs
 	add_child(text_edit)
 	apply_theme()
 	pass

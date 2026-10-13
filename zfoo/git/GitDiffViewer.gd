@@ -78,6 +78,12 @@ static func show_files(diff_files: Array[GitDiffFile], root_path: String, select
 func build_ui() -> void:
 	content_panel = PanelContainer.new()
 	content_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# Cover fractional canvas-scaling remainders on every edge. The Window viewport clips the
+	# one-pixel overlap so its clear color cannot show through at particular viewer sizes.
+	content_panel.offset_left = -ControlSize.border_xs
+	content_panel.offset_top = -ControlSize.border_xs
+	content_panel.offset_right = ControlSize.border_xs
+	content_panel.offset_bottom = ControlSize.border_xs
 	add_child(content_panel)
 	var root := VBoxContainer.new()
 	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
