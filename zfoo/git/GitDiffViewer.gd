@@ -443,17 +443,44 @@ func style_compact_button(button: Button) -> void:
 func style_discard_dialog() -> void:
 	if discard_dialog == null:
 		return
-	discard_dialog.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ThemeColor.accent_surface, ControlSize.radius_md, Margin.ma_4, Margin.ma_3, Color(ThemeColor.title_color, BORDER_ALPHA), ControlSize.border_xs))
-	discard_dialog.add_theme_stylebox_override("embedded_border", make_embedded_border(BORDER_ALPHA))
-	discard_dialog.add_theme_stylebox_override("embedded_unfocused_border", make_embedded_border(BORDER_ALPHA_UNFOCUSED))
-	discard_dialog.add_theme_color_override("title_color", ThemeColor.title_color)
+	var panel_style := StyleBoxHelper.create_style_box_flat(Colors.elevated_surface, ControlSize.radius_md, Margin.ma_4, Margin.ma_3, Colors.warning, ControlSize.border_sm)
+	panel_style.shadow_color = Color(0.0, 0.0, 0.0, 0.34 if ThemeColor.is_dark_theme() else 0.22)
+	panel_style.shadow_size = Margin.ma_3
+	panel_style.shadow_offset = Vector2(0, Margin.ma_1)
+	discard_dialog.add_theme_stylebox_override("panel", panel_style)
+	discard_dialog.add_theme_stylebox_override("embedded_border", make_discard_dialog_border(BORDER_ALPHA))
+	discard_dialog.add_theme_stylebox_override("embedded_unfocused_border", make_discard_dialog_border(BORDER_ALPHA_UNFOCUSED))
+	discard_dialog.add_theme_color_override("title_color", Colors.primary_text)
 	discard_dialog.add_theme_font_override("title_font", Fonts.semibold())
 	discard_dialog.add_theme_font_size_override("title_font_size", Typography.title_medium_size)
 	discard_dialog.add_theme_icon_override("close_pressed", tint_theme_icon("close_pressed", Colors.error))
 	var body_label := discard_dialog.get_label()
-	body_label.add_theme_color_override("font_color", ThemeColor.title_color)
+	body_label.add_theme_color_override("font_color", Colors.primary_text)
 	body_label.add_theme_font_override("font", Fonts.regular())
 	body_label.add_theme_font_size_override("font_size", Typography.body_medium_size)
-	style_compact_button(discard_dialog.get_ok_button())
+	style_discard_button(discard_dialog.get_ok_button())
 	style_compact_button(discard_dialog.get_cancel_button())
+	pass
+
+
+func make_discard_dialog_border(border_alpha: float) -> StyleBoxFlat:
+	var style: StyleBoxFlat = get_theme_stylebox("embedded_border").duplicate() as StyleBoxFlat
+	# The embedded border also paints the native title band. A semantic surface keeps that band
+	# distinct from the elevated content panel below it in both light and dark themes.
+	style.bg_color = Colors.warning_surface
+	style.set_corner_radius_all(ControlSize.radius_md)
+	style.border_color = Color(Colors.warning, maxf(border_alpha, 0.55))
+	style.set_border_width_all(ControlSize.border_sm)
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.34 if ThemeColor.is_dark_theme() else 0.22)
+	style.shadow_size = Margin.ma_3
+	style.shadow_offset = Vector2(0, Margin.ma_1)
+	return style
+
+
+func style_discard_button(button: Button) -> void:
+	ButtonStyle.apply_font_colors(button, Colors.error, Colors.primary_text, Colors.primary_text)
+	var normal := StyleBoxHelper.create_style_box_flat(Colors.warning_surface, ControlSize.radius_sm, Margin.ma_2, Margin.ma_1, Colors.error, ControlSize.border_xs)
+	var hover := ButtonStyle.filled(normal, ButtonStyle.hover_color(Colors.warning_surface, Colors.am_2), Colors.error)
+	var pressed := ButtonStyle.filled(normal, Colors.error, Colors.error)
+	ButtonStyle.apply(button, normal, hover, pressed)
 	pass
