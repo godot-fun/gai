@@ -93,17 +93,19 @@ func draw_revert_button(index: int, old_rect: Dictionary, _new_rect: Dictionary)
 	var rect := Rect2(Vector2(ControlSize.border_xs, center_y - button_size * 0.5), Vector2(button_size, button_size))
 	revert_buttons.append(RevertButton.new(index, rect))
 	var hovered := hovered_button == index
-	var background := ThemeColor.selected_surface if hovered else ThemeColor.card_surface
-	var border := ThemeColor.accent_theme_color() if hovered else Color(ThemeColor.title_color, 0.45)
-	draw_rect(rect, background, true)
-	draw_rect(rect, border, false, ControlSize.border_xs)
 	var center := rect.get_center()
-	var half_arrow := float(Margin.ma_1)
+	var radius := button_size * 0.5 - float(ControlSize.border_xs)
+	var background := ThemeColor.selected_surface if hovered else ThemeColor.card_surface
+	var border := ThemeColor.accent_theme_color() if hovered else Color(ThemeColor.title_color, 0.32)
+	draw_circle(center + Vector2(0.0, ControlSize.border_xs), radius, Color(Colors.deep_surface, 0.22), true, -1.0, true)
+	draw_circle(center, radius, background, true, -1.0, true)
+	draw_arc(center, radius, 0.0, TAU, 24, border, ControlSize.border_xs, true)
+	var half_arrow := float(Margin.ma_1) * 0.75
 	var arrow := PackedVector2Array([
-		center + Vector2(-half_arrow, -half_arrow), center + Vector2(half_arrow, 0.0),
-		center + Vector2(-half_arrow, half_arrow),
+		center + Vector2(-half_arrow * 0.65, -half_arrow), center + Vector2(half_arrow * 0.65, 0.0),
+		center + Vector2(-half_arrow * 0.65, half_arrow),
 	])
-	draw_polyline(arrow, ThemeColor.title_color, ControlSize.border_sm, true)
+	draw_polyline(arrow, ThemeColor.title_color, 1.5, true)
 	pass
 
 

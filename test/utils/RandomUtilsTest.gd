@@ -1,12 +1,16 @@
 
 const SAMPLE_TIMES: int = 1000
 
+# Fixed seed so a failing sample can be reproduced with the same sequence.
+const SAMPLE_SEED: int = 20261013
 
-# Sample [param sampler] [constant SAMPLE_TIMES] times and assert every result stays inside [from, to].
+
+## Sample [param sampler] [constant SAMPLE_TIMES] times and assert every result stays inside [from, to].
 func assert_samples_within(sampler: Callable, from: float, to: float) -> void:
+	seed(SAMPLE_SEED)
 	for i in SAMPLE_TIMES:
 		var value: float = sampler.call()
-		assert(value >= from and value < to)
+		assert(value >= from and value < to, "sample [%s] out of [%s, %s)" % [value, from, to])
 	pass
 
 
@@ -29,7 +33,14 @@ func RandomUtils_random_int_range_in_bounds_test() -> void:
 	pass
 
 
+func RandomUtils_random_int_within_bounds_test() -> void:
+	assert_samples_within(func() -> int: return RandomUtils.random_int(), RandomUtils.MIN_INT, RandomUtils.MAX_INT)
+	assert_samples_within(func() -> int: return RandomUtils.random_int_limit(RandomUtils.MAX_INT), 0, RandomUtils.MAX_INT)
+	pass
+
+
 func RandomUtils_random_boolean_test() -> void:
+	seed(SAMPLE_SEED)
 	var seen := {}
 	for i in SAMPLE_TIMES:
 		seen[RandomUtils.random_boolean()] = true
@@ -60,6 +71,13 @@ func RandomUtils_random_char_at_deterministic_test() -> void:
 	assert(first == RandomUtils.random_char_at(7, 3, 1))
 	assert(first.length() == 1)
 	assert(RandomUtils.RANDOM_STRING_CHARS.contains(first))
+	# Advancing tick must eventually repaint the cell, otherwise trails would look frozen.
+	var chars := {}
+	for tick in 16:
+		var c := RandomUtils.random_char_at(7, 3, tick)
+		assert(RandomUtils.RANDOM_STRING_CHARS.contains(c))
+		chars[c] = true
+	assert(chars.size() > 1)
 	pass
 
 
