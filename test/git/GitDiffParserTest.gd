@@ -85,13 +85,10 @@ static func diff_file_round_trip_test() -> void:
 	source.new_exists = true
 	source.changed_lines = GitDiffParser.ChangedLines.new([1], [1, 2])
 	var bundle := GitDiffBundle.new()
-	bundle.version = 2
-	bundle.patch = "patch"
 	bundle.files = [source]
 	var restored_bundle: GitDiffBundle = JsonUtils.json_to_object(JsonUtils.object_to_json(bundle), GitDiffBundle)
 	var restored := restored_bundle.files[0]
-	assert(restored_bundle.version == bundle.version)
-	assert(restored_bundle.patch == bundle.patch)
+	assert(restored_bundle.files.size() == 1)
 	assert(restored.old_path == source.old_path)
 	assert(restored.new_path == source.new_path)
 	assert(restored.new_hash == source.new_hash)

@@ -23,6 +23,7 @@ var complete: bool = true
 ## One-based real file line numbers parsed from the patch; CodeEdit APIs convert them to zero-based.
 var changed_lines := GitDiffParser.ChangedLines.new()
 
+
 func display_path() -> String:
 	return new_path if not new_path.is_empty() else old_path
 

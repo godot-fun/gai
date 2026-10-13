@@ -3,7 +3,6 @@ extends Object
 
 const DIFF_CACHE_SUBDIR := ".gai/cache/diff"
 const MAX_DIFF_CACHE_BYTES := 16 * FileUtils.BYTES_PER_MB
-const DIFF_BUNDLE_VERSION := 2
 
 
 static func _static_init() -> void:
@@ -33,6 +32,8 @@ static func async_append_git_diff(session_id: int) -> void:
 	if diff_file_stats.is_empty():
 		return
 	var patch_path := await async_cache_diff(git, reference, diff_file_stats)
+	if StringUtils.is_blank(patch_path):
+		return
 	AgentSessionManager.add_chat_entry(
 			session_id,
 			ChatEntry.KIND_GIT_DIFF,
@@ -64,7 +65,7 @@ static func async_diff_file_stats(git: GitHelper.Git, reference: String) -> Pack
 	return file_stats
 
 
-## Caches a versioned JSON bundle so later workspace changes cannot alter this bubble's diff.
+## Caches a JSON bundle so later workspace changes cannot alter this bubble's diff.
 ## The unified patch supplies change locations, while complete old/new UTF-8 snapshots make the
 ## viewer's right pane a real editor. Keeping both avoids reconstructing full files from partial hunks.
 static func async_cache_diff(git: GitHelper.Git, reference: String, file_stats: PackedStringArray) -> String:
@@ -121,8 +122,6 @@ static func async_cache_diff(git: GitHelper.Git, reference: String, file_stats: 
 		file.changed_lines = changed
 		files.append(file)
 	var bundle := GitDiffBundle.new()
-	bundle.version = DIFF_BUNDLE_VERSION
-	bundle.patch = patch
 	bundle.files = files
 	var patch_path := cache_dir.path_join(str(IdUtils.uuid()) + ".json")
 	if not FileUtils.write_string_to_file(patch_path, JsonUtils.object_to_json(bundle)):
@@ -169,7 +168,6 @@ static func load_diff_files(cache_path: String) -> Array[GitDiffFile]:
 	var bundle: GitDiffBundle
 	if cache_path.get_extension().to_lower() == "json":
 		bundle = JsonUtils.json_to_object(text, GitDiffBundle)
-	var files: Array[GitDiffFile] = []
 	if bundle != null:
 		return bundle.files
 	return load_legacy_patch(text)

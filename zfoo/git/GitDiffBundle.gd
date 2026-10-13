@@ -1,8 +1,6 @@
 class_name GitDiffBundle
 extends RefCounted
 
-## Versioned JSON cache for one agent-run diff.
+## JSON cache for the file comparisons produced by one agent run.
 
-var version: int = 0
-var patch: String = ""
 var files: Array[GitDiffFile] = []
