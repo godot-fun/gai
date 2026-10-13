@@ -25,11 +25,15 @@ var next_button: Button
 var save_button: Button
 var revert_button: Button
 var content_panel: PanelContainer
+var toolbar_panel: PanelContainer
+var heading_container: HBoxContainer
 var split_container: HSplitContainer
 var left_edit: CodeEdit
 var right_edit: CodeEdit
 var discard_dialog: ConfirmationDialog
 var heading_labels: Array[Label] = []
+var left_heading_panel: PanelContainer
+var right_heading_panel: PanelContainer
 
 
 func _init() -> void:
@@ -75,14 +79,19 @@ func build_ui() -> void:
 	root.add_theme_constant_override("separation", 0)
 	content_panel.add_child(root)
 
+	toolbar_panel = PanelContainer.new()
+	toolbar_panel.custom_minimum_size.y = ControlSize.md
+	root.add_child(toolbar_panel)
 	var toolbar := HBoxContainer.new()
 	toolbar.custom_minimum_size.y = ControlSize.md
 	toolbar.add_theme_constant_override("separation", Margin.ma_2)
-	root.add_child(toolbar)
-	previous_button = make_button("‹", "Previous changed file")
+	toolbar_panel.add_child(toolbar)
+	previous_button = make_button("◀", "Previous changed file")
+	style_navigation_button_size(previous_button)
 	previous_button.pressed.connect(select_relative.bind(-1))
 	toolbar.add_child(previous_button)
-	next_button = make_button("›", "Next changed file")
+	next_button = make_button("▶", "Next changed file")
+	style_navigation_button_size(next_button)
 	next_button.pressed.connect(select_relative.bind(1))
 	toolbar.add_child(next_button)
 	path_label = Label.new()
@@ -100,17 +109,25 @@ func build_ui() -> void:
 	save_button.pressed.connect(save_current)
 	toolbar.add_child(save_button)
 
+	heading_container = HBoxContainer.new()
+	heading_container.add_theme_constant_override("separation", 0)
+	root.add_child(heading_container)
+	left_heading_panel = add_heading_panel(heading_container, "Original · read only")
+	right_heading_panel = add_heading_panel(heading_container, "Updated · editable")
+
 	split_container = HSplitContainer.new()
 	split_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	split_container.split_offset = 0
+	split_container.add_theme_constant_override("separation", ControlSize.border_xs)
+	split_container.dragged.connect(on_split_dragged)
 	root.add_child(split_container)
 	left_edit = make_code_edit(false)
 	right_edit = make_code_edit(true)
 	left_edit.get_v_scroll_bar().value_changed.connect(on_left_scroll)
 	right_edit.get_v_scroll_bar().value_changed.connect(on_right_scroll)
 	right_edit.text_changed.connect(on_right_text_changed)
-	add_editor_pane(split_container, "Original · read only", left_edit)
-	add_editor_pane(split_container, "Updated · editable", right_edit)
+	split_container.add_child(left_edit)
+	split_container.add_child(right_edit)
 
 	discard_dialog = ConfirmationDialog.new()
 	discard_dialog.title = "Discard changes?"
@@ -125,14 +142,15 @@ func build_ui() -> void:
 func reset_split() -> void:
 	# Split offset is relative to the center, so zero produces two equal panes after layout.
 	split_container.split_offset = 0
+	sync_heading_widths()
 	pass
 
 
-func add_editor_pane(parent: Container, heading: String, edit: CodeEdit) -> void:
-	var pane := VBoxContainer.new()
-	pane.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	pane.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	pane.add_theme_constant_override("separation", 0)
+func add_heading_panel(parent: Container, heading: String) -> PanelContainer:
+	var heading_panel := PanelContainer.new()
+	heading_panel.custom_minimum_size.y = ControlSize.md
+	heading_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(heading_panel)
 	var label := Label.new()
 	label.text = heading
 	label.custom_minimum_size.y = ControlSize.md
@@ -141,9 +159,21 @@ func add_editor_pane(parent: Container, heading: String, edit: CodeEdit) -> void
 	label.add_theme_font_override("font", Fonts.medium())
 	label.add_theme_font_size_override("font_size", Typography.label_large_size)
 	heading_labels.append(label)
-	pane.add_child(label)
-	pane.add_child(edit)
-	parent.add_child(pane)
+	heading_panel.add_child(label)
+	return heading_panel
+
+
+func on_split_dragged(_offset: int) -> void:
+	sync_heading_widths.call_deferred()
+	pass
+
+
+func sync_heading_widths() -> void:
+	var total_width := left_edit.size.x + right_edit.size.x
+	if total_width <= 0.0:
+		return
+	left_heading_panel.size_flags_stretch_ratio = left_edit.size.x / total_width
+	right_heading_panel.size_flags_stretch_ratio = right_edit.size.x / total_width
 	pass
 
 
@@ -168,6 +198,13 @@ func make_button(text: String, tooltip: String) -> Button:
 	button.add_theme_font_override("font", Fonts.medium())
 	button.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	return button
+
+
+func style_navigation_button_size(button: Button) -> void:
+	button.custom_minimum_size = ControlSize.square(ControlSize.sm)
+	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	button.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	pass
 
 
 func load_selected_file() -> void:
@@ -334,18 +371,18 @@ func apply_theme() -> void:
 	add_theme_font_size_override("title_font_size", Typography.title_medium_size)
 	add_theme_icon_override("close_pressed", tint_theme_icon("close_pressed", Colors.error))
 	content_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ThemeColor.accent_surface))
+	split_container.add_theme_icon_override("grabber", make_transparent_grabber())
+	var header_style := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 0, Margin.ma_1, Margin.ma_0)
+	toolbar_panel.add_theme_stylebox_override("panel", header_style)
+	for panel in [left_heading_panel, right_heading_panel]:
+		panel.add_theme_stylebox_override("panel", header_style.duplicate())
 	for label in [path_label, position_label, status_label]:
 		label.add_theme_color_override("font_color", ThemeColor.title_color)
 		label.add_theme_font_override("font", Fonts.regular())
 	for label in heading_labels:
 		label.add_theme_color_override("font_color", ThemeColor.body_color)
 	for button in [previous_button, next_button, save_button, revert_button]:
-		ButtonStyle.apply_font_colors(button, ThemeColor.title_color, ThemeColor.title_color, ThemeColor.title_color, ThemeColor.body_color)
-		var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_sm, Margin.ma_1, Margin.ma_0, Color(ThemeColor.title_color, 0.14), ControlSize.border_xs)
-		var hover := ButtonStyle.filled(normal, ButtonStyle.hover_color(ThemeColor.card_surface, Colors.am_2))
-		var pressed := ButtonStyle.filled(normal, ThemeColor.selected_surface, ThemeColor.accent_theme_color())
-		var disabled := ButtonStyle.filled(normal, ThemeColor.inset_surface)
-		ButtonStyle.apply(button, normal, hover, pressed, disabled)
+		style_compact_button(button)
 	var editor_style := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 0, Margin.ma_2, Margin.ma_2)
 	for edit in [left_edit, right_edit]:
 		edit.add_theme_stylebox_override("normal", editor_style.duplicate())
@@ -363,6 +400,7 @@ func apply_theme() -> void:
 		edit.add_theme_font_size_override("font_size", Typography.body_medium_size)
 		ScrollBarStyle.apply(edit.get_v_scroll_bar())
 		ScrollBarStyle.apply(edit.get_h_scroll_bar())
+	style_discard_dialog()
 	if not files.is_empty():
 		paint_changed_lines()
 	pass
@@ -377,6 +415,12 @@ func tint_theme_icon(icon_name: String, color: Color) -> ImageTexture:
 	return ImageTexture.create_from_image(image)
 
 
+func make_transparent_grabber() -> ImageTexture:
+	var image := Image.create(ControlSize.border_xs, ControlSize.border_xs, false, Image.FORMAT_RGBA8)
+	image.fill(Color.TRANSPARENT)
+	return ImageTexture.create_from_image(image)
+
+
 func make_embedded_border(border_alpha: float) -> StyleBoxFlat:
 	var style: StyleBoxFlat = get_theme_stylebox("embedded_border").duplicate() as StyleBoxFlat
 	style.bg_color = ThemeColor.accent_surface
@@ -384,3 +428,32 @@ func make_embedded_border(border_alpha: float) -> StyleBoxFlat:
 	style.border_color = Color(ThemeColor.title_color, border_alpha)
 	style.set_border_width_all(ControlSize.border_xs)
 	return style
+
+
+func style_compact_button(button: Button) -> void:
+	ButtonStyle.apply_font_colors(button, ThemeColor.title_color, ThemeColor.title_color, ThemeColor.title_color, ThemeColor.body_color)
+	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, ControlSize.radius_sm, Margin.ma_1, Margin.ma_0, Color(ThemeColor.title_color, 0.16), ControlSize.border_xs)
+	var hover := ButtonStyle.filled(normal, ThemeColor.selected_surface, ThemeColor.accent_theme_color())
+	var pressed := ButtonStyle.filled(normal, ThemeColor.accent_surface, ThemeColor.accent_theme_color())
+	var disabled := ButtonStyle.filled(normal, ThemeColor.inset_surface)
+	ButtonStyle.apply(button, normal, hover, pressed, disabled)
+	pass
+
+
+func style_discard_dialog() -> void:
+	if discard_dialog == null:
+		return
+	discard_dialog.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ThemeColor.accent_surface, ControlSize.radius_md, Margin.ma_4, Margin.ma_3, Color(ThemeColor.title_color, BORDER_ALPHA), ControlSize.border_xs))
+	discard_dialog.add_theme_stylebox_override("embedded_border", make_embedded_border(BORDER_ALPHA))
+	discard_dialog.add_theme_stylebox_override("embedded_unfocused_border", make_embedded_border(BORDER_ALPHA_UNFOCUSED))
+	discard_dialog.add_theme_color_override("title_color", ThemeColor.title_color)
+	discard_dialog.add_theme_font_override("title_font", Fonts.semibold())
+	discard_dialog.add_theme_font_size_override("title_font_size", Typography.title_medium_size)
+	discard_dialog.add_theme_icon_override("close_pressed", tint_theme_icon("close_pressed", Colors.error))
+	var body_label := discard_dialog.get_label()
+	body_label.add_theme_color_override("font_color", ThemeColor.title_color)
+	body_label.add_theme_font_override("font", Fonts.regular())
+	body_label.add_theme_font_size_override("font_size", Typography.body_medium_size)
+	style_compact_button(discard_dialog.get_ok_button())
+	style_compact_button(discard_dialog.get_cancel_button())
+	pass
