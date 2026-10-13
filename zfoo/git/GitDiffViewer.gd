@@ -246,6 +246,7 @@ func make_button(text: String, tooltip: String) -> Button:
 func style_navigation_button_size(button: Button) -> void:
 	button.custom_minimum_size = ControlSize.square(ControlSize.sm)
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	pass
 
@@ -357,12 +358,17 @@ func select_relative_hunk(offset: int) -> void:
 		return
 	selected_hunk = posmod(selected_hunk + offset, displayed_hunks.size())
 	var hunk := displayed_hunks[selected_hunk]
+	var target_line := clampi(hunk.new_start - 1, 0, right_edit.get_line_count() - 1)
+	right_edit.set_caret_line(target_line)
+	right_edit.set_caret_column(0)
 	syncing_scroll = true
 	left_edit.scroll_vertical = maxf(float(hunk.old_start) - 3.0, 0.0)
 	right_edit.scroll_vertical = maxf(float(hunk.new_start) - 3.0, 0.0)
 	syncing_scroll = false
 	refresh_hunk_controls()
 	connector.set_hunks(displayed_hunks, selected_hunk)
+	# Button clicks must hand keyboard input straight back to the editable pane.
+	right_edit.grab_focus.call_deferred()
 	pass
 
 

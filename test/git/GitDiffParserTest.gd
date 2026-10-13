@@ -106,6 +106,8 @@ func diff_viewer_builds_test() -> void:
 	assert(viewer.left_edit != null)
 	assert(viewer.connector != null)
 	assert(viewer.connector.clip_contents)
+	assert(viewer.previous_change_button.focus_mode == Control.FOCUS_NONE)
+	assert(viewer.next_change_button.focus_mode == Control.FOCUS_NONE)
 	assert(not viewer.left_edit.editable)
 	assert(viewer.right_edit.editable)
 	assert(viewer.split_container.split_offset == 0)
@@ -127,6 +129,17 @@ func diff_viewer_maps_lines_across_hunks_test() -> void:
 	assert(viewer.map_diff_line(2.0, true) == 2.0)
 	assert(viewer.map_diff_line(4.0, true) == 6.0)
 	assert(viewer.map_diff_line(6.0, false) == 4.0)
+	viewer.free()
+	pass
+
+
+func diff_viewer_hunk_navigation_moves_caret_test() -> void:
+	var viewer := GitDiffViewer.new()
+	viewer.right_edit.text = "one\ntwo\nthree\nfour\nfive"
+	viewer.displayed_hunks = [GitDiffParser.DiffHunk.new(2, 1, 4, 1)]
+	viewer.select_relative_hunk(1)
+	assert(viewer.right_edit.get_caret_line() == 3)
+	assert(viewer.right_edit.get_caret_column() == 0)
 	viewer.free()
 	pass
 
