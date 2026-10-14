@@ -31,7 +31,7 @@ func setup() -> void:
 
 ## Record a bubble that changed since the last flush; refresh entry pointer if already queued.
 func enqueue(rich_text: RichTextLabel, entry: ChatEntry) -> void:
-	if rich_text == null or entry == null:
+	if not is_instance_valid(rich_text) or entry == null:
 		return
 	for item: PendingItem in pending:
 		if item.rich_text == rich_text:
@@ -54,7 +54,7 @@ func flush() -> void:
 	var batch := pending
 	pending = []
 	for item: PendingItem in batch:
-		if item.entry == null or item.rich_text == null or not is_instance_valid(item.rich_text):
+		if not is_instance_valid(item.rich_text):
 			continue
 		refresh_rich_text(item.rich_text, item.entry)
 	await ThreadUtils.async_sleep(FLUSH_MS)
