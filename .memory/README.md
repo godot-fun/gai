@@ -17,14 +17,15 @@
 
 ## Operating Rules
 
-1. Read only the memory files relevant to the current task.
-2. Treat stored memory as context, not unquestionable truth; verify it when accuracy matters.
-3. Store durable and reusable information, not complete conversation transcripts.
-4. Update an existing entry instead of creating duplicates.
-5. Distinguish confirmed facts from assumptions and items that still need verification.
-6. Keep `focus.md` short and rewrite it as the active task changes.
-7. Never store passwords, access tokens, private keys, or other secrets.
-8. Preserve useful history when facts change; note the change in `experiences.md` when appropriate.
+1. This index is located at `.memory/README.md`. Resolve every relative path in it against the `.memory/` directory.
+2. Read only the memory files relevant to the current task.
+3. Treat stored memory as context, not unquestionable truth; verify it when accuracy matters.
+4. Store durable and reusable information, not complete conversation transcripts.
+5. Update an existing entry instead of creating duplicates.
+6. Distinguish confirmed facts from assumptions and items that still need verification.
+7. Keep `focus.md` short and rewrite it as the active task changes.
+8. Never store passwords, access tokens, private keys, or other secrets.
+9. Preserve useful history when facts change; note the change in `experiences.md` when appropriate.
 
 ## Memory Metadata
 
