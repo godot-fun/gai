@@ -81,7 +81,7 @@ func refresh(_session_id: int = 0, _previous_session_id: int = 0) -> void:
 
 
 func sync_compaction_state() -> void:
-	var should_compact := AgentCompactionManager.is_compacting(AgentSessionManager.active_session_id)
+	var should_compact := CompactionManager.is_compacting(AgentSessionManager.active_session_id)
 	if should_compact == compacting:
 		return
 	compacting = should_compact
@@ -99,7 +99,7 @@ func on_gui_input(event: InputEvent) -> void:
 	var mouse := event as InputEventMouseButton
 	if not mouse.pressed or mouse.button_index != MOUSE_BUTTON_LEFT:
 		return
-	AgentCompactionManager.compact_session(AgentSessionManager.active_session_id)
+	CompactionManager.compact_session(AgentSessionManager.active_session_id)
 	wrap.get_viewport().set_input_as_handled()
 	pass
 
@@ -117,9 +117,9 @@ func on_compaction_start(session_id: int) -> void:
 func on_compaction_end(session_id: int, success: bool, error_code: String) -> void:
 	if success:
 		Alert.alert(I18n.t("agent.tokens.compact_success"), Colors.success)
-	elif error_code == AgentCompactionManager.ERROR_RUNNING:
+	elif error_code == CompactionManager.ERROR_RUNNING:
 		Alert.alert(I18n.t("agent.tokens.compact_running"), Colors.warning)
-	elif error_code == AgentCompactionManager.ERROR_EMPTY:
+	elif error_code == CompactionManager.ERROR_EMPTY:
 		Alert.alert(I18n.t("agent.tokens.compact_empty"), Colors.warning)
 	else:
 		Alert.alert(I18n.t("agent.tokens.compact_failed"), Colors.error)

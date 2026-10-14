@@ -49,7 +49,7 @@ static func compaction_keeps_only_context_entries_test() -> void:
 		ChatEntry.new(ChatEntry.KIND_AGENT, ChatEntry.TITLE_AGENT, "answer"),
 		ChatEntry.new(ChatEntry.KIND_COMPACTION, ChatEntry.TITLE_COMPACTION, "old summary"),
 	]
-	var compacted := AgentCompactionManager.collect_context_entries(entries)
+	var compacted := CompactionManager.collect_context_entries(entries)
 	assert(compacted.size() == 2)
 	assert(compacted[0].kind == ChatEntry.KIND_SYSTEM)
 	assert(compacted[1].kind == ChatEntry.KIND_MEMORY)
@@ -59,10 +59,10 @@ static func compaction_keeps_only_context_entries_test() -> void:
 static func compaction_replaces_previous_summary_message_test() -> void:
 	var messages: Array[ChatMessage] = [
 		ChatMessage.system("system"),
-		ChatMessage.system(AgentCompactionManager.SUMMARY_PREFIX + "\nold summary"),
+		ChatMessage.system(CompactionManager.SUMMARY_PREFIX + "\nold summary"),
 		ChatMessage.user("new question"),
 	]
-	var context := AgentCompactionManager.collect_context_messages(messages)
+	var context := CompactionManager.collect_context_messages(messages)
 	assert(context.size() == 1)
 	assert(context[0].content == "system")
 	pass
@@ -73,7 +73,7 @@ static func memory_messages_drop_thinking_and_tool_protocol_test() -> void:
 	tool_call.id = "call-1"
 	var messages: Array[ChatMessage] = [
 		ChatMessage.system("system"),
-		ChatMessage.system(AgentCompactionManager.SUMMARY_PREFIX + "\nprevious work"),
+		ChatMessage.system(CompactionManager.SUMMARY_PREFIX + "\nprevious work"),
 		ChatMessage.user("   "),
 		ChatMessage.user(" question "),
 		ChatMessage.assistant_tool_calls([tool_call], "", "private thinking"),

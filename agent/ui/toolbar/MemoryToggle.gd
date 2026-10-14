@@ -92,7 +92,7 @@ static func on_compaction_end(session_id: int, success: bool, _error_code: Strin
 	if not found and AgentSetting.get_memory_in_prompt_enabled():
 		session.messages.append(ChatMessage.system(context))
 		session.chat_entries.append(ChatEntry.new(ChatEntry.KIND_MEMORY, ChatEntry.TITLE_MEMORY, context))
-	AgentCompactionManager.update_estimated_usage(session)
+	CompactionManager.update_estimated_usage(session)
 	AgentSessionManager.persist_session(session_id)
 	pass
 

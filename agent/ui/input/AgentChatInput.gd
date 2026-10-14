@@ -293,7 +293,7 @@ func get_pending_queue_count() -> int:
 func refresh_send_button() -> void:
 	var session_id := AgentSessionManager.active_session_id
 	var running := RuntimeManager.is_running(session_id)
-	var compacting := AgentCompactionManager.is_compacting(session_id)
+	var compacting := CompactionManager.is_compacting(session_id)
 	var show_activity := compacting or (not expanded and running)
 	var stop_action := is_stop_action()
 	var effect_state: int = SendEffectState.ACTIVE if show_activity else (
@@ -598,7 +598,7 @@ func on_global_input(event: InputEvent) -> void:
 func is_stop_action() -> bool:
 	return (expanded
 		and RuntimeManager.is_running(AgentSessionManager.active_session_id)
-		and not AgentCompactionManager.is_compacting(AgentSessionManager.active_session_id)
+		and not CompactionManager.is_compacting(AgentSessionManager.active_session_id)
 		and get_trimmed_text().is_empty())
 
 
@@ -606,7 +606,7 @@ func on_input_action_pressed() -> void:
 	var session: AgentSession = AgentSessionStore.load_session(AgentSessionManager.active_session_id)
 	if session == null:
 		return
-	if AgentCompactionManager.is_compacting(session.id):
+	if CompactionManager.is_compacting(session.id):
 		return
 	if is_stop_action():
 		RuntimeManager.request_stop(session.id)

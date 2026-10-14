@@ -1,4 +1,4 @@
-class_name AgentCompactionManager
+class_name CompactionManager
 extends Object
 
 ## Coordinates manual context compaction for one session.

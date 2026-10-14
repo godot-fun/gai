@@ -143,7 +143,7 @@ func refresh_item(session_id: int) -> void:
 		return
 	# A live rename owns the title until it is committed; the run state still refreshes.
 	row.set_title(AgentSessionManager.get_title(session_id))
-	var active := RuntimeManager.is_running(session_id) or AgentCompactionManager.is_compacting(session_id)
+	var active := RuntimeManager.is_running(session_id) or CompactionManager.is_compacting(session_id)
 	row.set_running(active)
 	pass
 
