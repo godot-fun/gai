@@ -173,6 +173,7 @@
     "settings": {
       "appearance": "外观",
       "language": "语言",
+      "markdown": "Markdown 渲染",
       "custom_provider": "自定义",
       "heading": "AI 连接",
       "description": "配置 OpenAI 兼容 API。",

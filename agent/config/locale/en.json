@@ -173,6 +173,7 @@
     "settings": {
       "appearance": "Appearance",
       "language": "Language",
+      "markdown": "Render Markdown",
       "custom_provider": "Custom",
       "heading": "AI connection",
       "description": "Configure an OpenAI-compatible API.",

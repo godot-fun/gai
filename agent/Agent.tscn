@@ -125,19 +125,6 @@ toggle_mode = true
 mouse_default_cursor_shape = 2
 text = "SK"
 
-[node name="MarkdownToggleWrap" type="MarginContainer" parent="Root/Toolbar/ToolbarRow"]
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
-theme_override_constants/margin_right = 8
-
-[node name="MarkdownToggleButton" type="Button" parent="Root/Toolbar/ToolbarRow/MarkdownToggleWrap"]
-layout_mode = 2
-focus_mode = 0
-toggle_mode = true
-mouse_default_cursor_shape = 2
-text = "MD"
-
 [node name="LogButtonWrap" type="MarginContainer" parent="Root/Toolbar/ToolbarRow"]
 layout_mode = 2
 size_flags_horizontal = 4

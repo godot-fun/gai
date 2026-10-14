@@ -18,6 +18,8 @@ var appearance_heading_label: Label
 var agent_behavior_heading_label: Label
 var notification_heading_label: Label
 var language_select: OptionButton
+var markdown_label: Label
+var markdown_toggle_button: CheckButton
 var heading_label: Label
 var description_label: Label
 var provider_select: OptionButton
@@ -103,6 +105,13 @@ func build_dialog() -> void:
 	appearance_heading_label.add_theme_font_size_override("font_size", Typography.title_large_size)
 	fields.add_child(appearance_heading_label)
 	add_language_field(fields)
+	var markdown_row := make_field_row(fields, I18n.t("agent.settings.markdown"))
+	markdown_label = field_labels.back()
+	var markdown_control := make_option_row(markdown_row, Margin.ma_0)
+	markdown_control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	markdown_control.size_flags_stretch_ratio = FIELD_CONTROL_RATIO
+	markdown_toggle_button = add_check_button(markdown_control, "", AgentSetting.get_markdown_enabled())
+	markdown_toggle_button.toggled.connect(on_markdown_toggled)
 	add_separator(fields)
 	heading_label = Label.new()
 	heading_label.text = I18n.t("agent.settings.heading")
@@ -408,6 +417,7 @@ func on_button_pressed() -> void:
 	refresh_check_button(toast_toggle_button, AgentSetting.get_notification_window())
 	refresh_check_button(sound_toggle_button, AgentSetting.get_notification_sound())
 	refresh_check_button(sandbox_toggle_button, SandboxPolicy.is_enabled())
+	refresh_check_button(markdown_toggle_button, AgentSetting.get_markdown_enabled())
 	update_sound_options_visible(sound_toggle_button.button_pressed)
 	sound_seconds_spin.set_value_no_signal(AgentSetting.get_notification_sound_seconds())
 	sound_folder_edit.text = AgentSetting.get_notification_sound_folder()
@@ -440,6 +450,11 @@ func on_provider_selected(selected_index: int) -> void:
 
 func on_toast_toggled(enabled: bool) -> void:
 	AgentSetting.set_notification_window(enabled)
+	pass
+
+
+func on_markdown_toggled(enabled: bool) -> void:
+	AgentSetting.set_markdown_enabled(enabled)
 	pass
 
 
@@ -543,18 +558,19 @@ func apply_locale() -> void:
 	heading_label.text = I18n.t("agent.settings.heading")
 	description_label.text = I18n.t("agent.settings.description")
 	field_labels[0].text = I18n.t("agent.settings.language")
-	field_labels[1].text = I18n.t("agent.settings.provider")
-	field_labels[2].text = I18n.t("agent.settings.api_endpoint")
-	field_labels[3].text = I18n.t("agent.settings.model")
-	field_labels[4].text = I18n.t("agent.settings.api_token")
-	field_labels[5].text = I18n.t("agent.settings.proxy")
-	field_labels[6].text = I18n.t("agent.settings.sound_duration")
+	field_labels[2].text = I18n.t("agent.settings.provider")
+	field_labels[3].text = I18n.t("agent.settings.api_endpoint")
+	field_labels[4].text = I18n.t("agent.settings.model")
+	field_labels[5].text = I18n.t("agent.settings.api_token")
+	field_labels[6].text = I18n.t("agent.settings.proxy")
+	field_labels[7].text = I18n.t("agent.settings.sound_duration")
 	help_labels[0].text = I18n.t("agent.settings.provider_help")
 	help_labels[1].text = I18n.t("agent.settings.api_endpoint_help")
 	help_labels[2].text = I18n.t("agent.settings.model_help")
 	help_labels[3].text = I18n.t("agent.settings.token_help")
 	help_labels[4].text = I18n.t("agent.settings.proxy_help")
 	provider_select.set_item_text(0, I18n.t("agent.settings.custom_provider"))
+	markdown_label.text = I18n.t("agent.settings.markdown")
 	sandbox_toggle_button.text = I18n.t("agent.settings.sandbox_mode")
 	sandbox_toggle_button.tooltip_text = I18n.t("agent.settings.sandbox_mode_help")
 	toast_toggle_button.text = I18n.t("agent.settings.notification_window")
@@ -633,6 +649,7 @@ func style_dialog() -> void:
 	style_option_button(provider_select)
 	style_option_button(language_select)
 	style_spin_box(sound_seconds_spin)
+	style_check_button(markdown_toggle_button)
 	style_check_button(sandbox_toggle_button)
 	style_check_button(toast_toggle_button)
 	style_check_button(sound_toggle_button)
