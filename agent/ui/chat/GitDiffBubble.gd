@@ -3,7 +3,7 @@ extends RefCounted
 
 ## Git diff bubble appended after agent_end, listing files changed from the run checkpoint.
 
-static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: StyleBoxFlat) -> RichTextLabel:
+static func append(chat_list: VBoxContainer, session_id: int, entry: ChatEntry, panel_style: StyleBoxFlat) -> RichTextLabel:
 	var wrapper := PanelContainer.new()
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wrapper.visible = StringUtils.is_not_blank(entry.body)
@@ -28,7 +28,17 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(spacer)
 
+	var checkpoint: String = entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
+	var revert_button := Button.new()
+	revert_button.name = "RevertButton"
+	revert_button.text = "Revert"
+	revert_button.disabled = StringUtils.is_blank(checkpoint)
+	revert_button.pressed.connect(on_revert_pressed.bind(session_id, entry))
+	AgentBubble.style_header_button(revert_button, panel_style.bg_color, "Restore the workspace to before these changes", 58.0)
+	header.add_child(revert_button)
+
 	var diff_button := Button.new()
+	diff_button.name = "DiffButton"
 	diff_button.text = "Diff"
 	var patch_path: String = entry.details.get(ChatEntry.DETAIL_GIT_DIFF_PATCH, "")
 	diff_button.disabled = StringUtils.is_blank(patch_path)
@@ -84,4 +94,14 @@ static func open_file_diff(meta: Variant, patch_path: String) -> void:
 
 static func on_diff_pressed(patch_path: String) -> void:
 	GitDiff.open_diff(patch_path)
+	pass
+
+
+static func on_revert_pressed(session_id: int, entry: ChatEntry) -> void:
+	var checkpoint: String = entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
+	if not await GitManager.async_restore(session_id, checkpoint):
+		Alert.alert("Workspace restore failed; chat history was kept", Colors.error)
+		return
+	AgentSessionManager.delete_chat_from_entry(session_id, entry)
+	Alert.alert("Workspace restored", Colors.success)
 	pass

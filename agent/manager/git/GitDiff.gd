@@ -75,7 +75,10 @@ static func async_append_git_diff(session_id: int, reference: String) -> void:
 			ChatEntry.KIND_GIT_DIFF,
 			ChatEntry.TITLE_GIT_DIFF,
 			FileUtils.NEWLINE_LF.join(diff_file_stats),
-			{ChatEntry.DETAIL_GIT_DIFF_PATCH: patch_path}
+			{
+				ChatEntry.DETAIL_GIT_DIFF_PATCH: patch_path,
+				ChatEntry.DETAIL_CHECKPOINT: reference,
+			}
 	)
 	pass
 

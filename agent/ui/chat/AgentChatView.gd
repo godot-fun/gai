@@ -399,6 +399,7 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 		ChatEntry.KIND_GIT_DIFF:
 			rich_text = GitDiffBubble.append(
 					chat_list,
+					session_id,
 					chat_entry,
 					build_bubble_style(Colors.surface)
 			)
