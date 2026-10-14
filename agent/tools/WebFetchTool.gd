@@ -11,11 +11,7 @@ const DEFAULT_MAX_CHARS := 80_000
 const MAX_CHARS_CAP := 200_000
 
 
-var proxy_address: String = ""
-
-
-func _init(detected_proxy_address: String = "") -> void:
-	proxy_address = detected_proxy_address
+func _init() -> void:
 	name = NAME
 	description = "Fetch a web page by URL and return readable plain text (for docs, API pages, or linked articles)."
 	pass
@@ -41,7 +37,7 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 		"User-Agent: Mozilla/5.0 (compatible; GodotCodeAgent/1.0)",
 		"Accept: text/html,application/xhtml+xml,text/plain;q=0.9,*/*;q=0.8",
 	])
-	var response := await HttpHelper.async_get(url, AsyncHttp.DEFAULT_TIMEOUT_MILLIS, proxy_address, headers)
+	var response := await HttpHelper.async_get(url, AsyncHttp.DEFAULT_TIMEOUT_MILLIS, ApiSetting.get_proxy_address(), headers)
 	if not response.success:
 		return AgentToolResult.error(StringUtils.format("error: fetch failed (HTTP {}): {}", response.code, url))
 	var body := response.get_body_string()

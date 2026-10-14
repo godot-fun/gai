@@ -11,10 +11,7 @@ const MAX_RESULTS_CAP := 10
 const DDG_API_URL := "https://api.duckduckgo.com/"
 const DDG_LITE_URL := "https://lite.duckduckgo.com/lite/"
 
-var proxy_address: String = ""
-
-func _init(detected_proxy_address: String = "") -> void:
-	proxy_address = detected_proxy_address
+func _init() -> void:
 	name = NAME
 	description = "Search the web for documentation, API references, error messages, release notes, or general facts."
 	pass
@@ -34,6 +31,7 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 	var max_results := DEFAULT_MAX_RESULTS
 	if args.has(ARG_MAX_RESULTS):
 		max_results = clampi(int(str(args.get(ARG_MAX_RESULTS, DEFAULT_MAX_RESULTS))), 1, MAX_RESULTS_CAP)
+	var proxy_address := ApiSetting.get_proxy_address()
 	var api_text := await search_ddg_api(query, max_results, proxy_address)
 	if StringUtils.is_not_blank(api_text):
 		return AgentToolResult.ok(api_text, AgentToolResult.ui_details(NAME, api_text))

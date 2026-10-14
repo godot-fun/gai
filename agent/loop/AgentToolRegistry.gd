@@ -22,11 +22,9 @@ static func _static_init() -> void:
 	register(ListDirTool.new())
 
 	# web tools
-	var detection := await ProxyUtils.async_detect_proxy()
-	var proxy_address := detection.address if detection != null else ""
-	register(WebFetchTool.new(proxy_address))
-	if detection != null:
-		register(WebSearchToolProxy.new(detection.address))
+	register(WebFetchTool.new())
+	if StringUtils.is_not_blank(ApiSetting.get_proxy_address()):
+		register(WebSearchToolProxy.new())
 	else:
 		register(WebSearchToolBing.new())
 	pass

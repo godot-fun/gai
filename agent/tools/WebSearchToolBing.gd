@@ -1,7 +1,7 @@
 class_name WebSearchToolBing
 extends AgentTool
 
-## Search the web via Bing China (cn.bing.com). No API key or proxy required in mainland China.
+## Search the web via Bing China (cn.bing.com). No API key required.
 
 const NAME := "bing_cn_search"
 const ARG_QUERY := "query"
@@ -12,7 +12,7 @@ const SEARCH_URL := "https://cn.bing.com/search"
 
 func _init() -> void:
 	name = NAME
-	description = "Search the web via Bing China (cn.bing.com). No API key or proxy required in mainland China. Use for docs, errors, APIs, or facts."
+	description = "Search the web via Bing China (cn.bing.com). No API key required. Use for docs, errors, APIs, or facts."
 	pass
 
 # AgentTool-Interface-Implement-Start
@@ -49,7 +49,7 @@ static func fetch_search_html(query: String) -> String:
 		"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
 		"Accept-Language: zh-CN,zh;q=0.9,en;q=0.8",
 	])
-	var response := await HttpHelper.async_get(url, AsyncHttp.DEFAULT_TIMEOUT_MILLIS, "", headers)
+	var response := await HttpHelper.async_get(url, AsyncHttp.DEFAULT_TIMEOUT_MILLIS, ApiSetting.get_proxy_address(), headers)
 	if not response.success or response.code != 200:
 		return StringUtils.EMPTY
 	return response.get_body_string()
