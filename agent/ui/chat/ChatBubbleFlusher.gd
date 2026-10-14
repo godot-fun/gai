@@ -64,9 +64,12 @@ func flush() -> void:
 
 ## Push entry.body into the bubble RichTextLabel — full re-render per flush.
 static func refresh_rich_text(rich_text: RichTextLabel, entry: ChatEntry) -> void:
-	## Thinking / Result use their own preview rules; other kinds honor MarkdownToggle.
+	## Thinking / Result use their own preview rules; other kinds honor the Markdown setting.
 	if entry.kind == ChatEntry.KIND_THINKING or entry.kind == ChatEntry.KIND_RESULT:
 		ChatBubblePreview.apply(rich_text, entry.body)
+		return
+	if entry.kind == ChatEntry.KIND_TOOL:
+		ToolBubble.refresh(rich_text, entry)
 		return
 	if entry.kind == ChatEntry.KIND_FILE_TOOL:
 		FileBubble.refresh(rich_text, entry)
@@ -81,6 +84,6 @@ static func refresh_rich_text(rich_text: RichTextLabel, entry: ChatEntry) -> voi
 	MarkdownHelper.update_rich_text_label_text(
 			rich_text,
 			entry.body,
-			MarkdownToggle.markdown_enabled_for_entry(entry)
+			AgentSetting.get_markdown_enabled()
 	)
 	pass

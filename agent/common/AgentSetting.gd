@@ -15,7 +15,7 @@ extends RefCounted
 
 ## [VisualsButton] — visual presentation shown while an agent run is working.
 const VISUAL_TYPE_KEY := "agent_visual_type"
-## [MarkdownToggle] — render chat bubble bodies as BBCode instead of raw text.
+## Render chat bubble bodies as BBCode instead of raw text.
 const MARKDOWN_ENABLED_KEY := "agent_markdown_enabled"
 ## [SkillToggle] — keep the skill index system message inside new sessions.
 const SKILL_IN_PROMPT_ENABLED_KEY := "agent_skill_in_prompt_enabled"

@@ -225,6 +225,8 @@ func on_markdown_changed(_enabled: bool) -> void:
 				ChatBubblePreview.apply(rich_text, entry.body)
 			ChatEntry.KIND_COMPACTION:
 				CompactionBubble.refresh(rich_text, entry)
+			ChatEntry.KIND_TOOL:
+				ToolBubble.refresh(rich_text, entry)
 			ChatEntry.KIND_FILE_TOOL:
 				FileBubble.refresh(rich_text, entry)
 			ChatEntry.KIND_GIT_DIFF:
@@ -382,13 +384,7 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 			)
 			queue_scroll_to_bottom()
 		ChatEntry.KIND_TOOL:
-			rich_text = append_bubble(
-					chat_list,
-					chat_entry,
-					Colors.success,
-					Colors.success_surface,
-					Colors.success
-			)
+			rich_text = ToolBubble.append(chat_list, chat_entry, build_bubble_style(Colors.success_surface))
 		ChatEntry.KIND_FILE_TOOL:
 			rich_text = FileBubble.append(
 					chat_list,
@@ -451,7 +447,7 @@ func append_bubble(chat_list: VBoxContainer, entry: ChatEntry, text_color: Color
 	var rich_text: RichTextLabel = MarkdownHelper.create_rich_text_label(
 		text_color,
 		entry.body,
-		MarkdownToggle.markdown_enabled_for_entry(entry)
+		AgentSetting.get_markdown_enabled()
 	)
 	rich_text.visible = StringUtils.is_not_blank(entry.body)
 	vbox.add_child(rich_text)

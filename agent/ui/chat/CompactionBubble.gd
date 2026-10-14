@@ -40,7 +40,7 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 	var rich_text := MarkdownHelper.create_rich_text_label(
 		Colors.secondary_text,
 		StringUtils.EMPTY,
-		MarkdownToggle.markdown_enabled_for_entry(entry)
+		AgentSetting.get_markdown_enabled()
 	)
 	vbox.add_child(rich_text)
 	wrapper.set_meta(AgentChatView.META_BUBBLE_RICH_TEXT, rich_text)
@@ -72,7 +72,7 @@ static func refresh(rich_text: RichTextLabel, entry: ChatEntry, wrapper: PanelCo
 	MarkdownHelper.update_rich_text_label_text(
 		rich_text,
 		entry.body if expanded or not can_expand else preview,
-		MarkdownToggle.markdown_enabled_for_entry(entry)
+		AgentSetting.get_markdown_enabled()
 	)
 	var expand_button := wrapper.get_meta(META_EXPAND_BUTTON) as Button
 	if expand_button != null:
