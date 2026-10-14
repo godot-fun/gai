@@ -70,6 +70,9 @@ static func compact_session(session_id: int) -> void:
 
 	compacting_sessions[session_id] = true
 	AgentEvents.events.compaction_start.emit(session_id)
+	# Memory tools may edit workspace files. Capture a dedicated baseline so their changes can
+	# reuse the normal immutable Git Diff bubble without including an earlier agent run again.
+	var checkpoint := await GitManager.async_snapshot(session_id)
 	var original_messages: Array[ChatMessage] = []
 	original_messages.assign(session.messages)
 	var client := ApiSetting.get_client()
@@ -114,6 +117,7 @@ static func compact_session(session_id: int) -> void:
 	update_estimated_usage(session)
 	AgentSessionManager.persist_session(session_id)
 	finish(session_id, true, StringUtils.EMPTY)
+	await GitDiff.async_append_git_diff(session_id, checkpoint)
 	pass
 
 

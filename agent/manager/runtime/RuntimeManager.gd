@@ -152,7 +152,7 @@ static func on_agent_end(session_id: int, error_message: String) -> void:
 	var should_continue_queue := has_session_index and not should_stop(session_id) and StringUtils.is_blank(error_message)
 	if StringUtils.is_not_blank(error_message):
 		AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_ERROR, ChatEntry.TITLE_ERROR, error_message)
-	await GitDiff.async_append_git_diff(session_id)
+	await GitDiff.async_append_git_diff(session_id, get_latest_user_checkpoint(session))
 	AgentSessionManager.persist_session(session_id)
 
 	remove_runtime(session_id)
@@ -160,6 +160,15 @@ static func on_agent_end(session_id: int, error_message: String) -> void:
 	if should_continue_queue:
 		try_run_next_message.call_deferred(session_id)
 	pass
+
+
+## Returns the baseline captured immediately before the latest user turn started.
+static func get_latest_user_checkpoint(session: AgentSession) -> String:
+	for i in range(session.chat_entries.size() - 1, -1, -1):
+		var entry: ChatEntry = session.chat_entries[i]
+		if entry.kind == ChatEntry.KIND_USER:
+			return entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
+	return StringUtils.EMPTY
 
 
 # ---------------------------------------------------------------------------

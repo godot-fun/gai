@@ -53,18 +53,12 @@ static func _static_init() -> void:
 	pass
 
 
-## Appends a git diff chat entry when the completed agent run changed files.
-static func async_append_git_diff(session_id: int) -> void:
+## Appends a git diff chat entry when a completed operation changed files relative to
+## [param reference]. Callers own checkpoint selection so each workflow can use its exact baseline.
+static func async_append_git_diff(session_id: int, reference: String) -> void:
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null:
 		return
-	# Checkpoint SHA from the most recent user turn — the snapshot taken before that run started.
-	var reference := StringUtils.EMPTY
-	for i in range(session.chat_entries.size() - 1, -1, -1):
-		var entry: ChatEntry = session.chat_entries[i]
-		if entry.kind == ChatEntry.KIND_USER:
-			reference = entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
-			break
 	if StringUtils.is_blank(reference):
 		return
 	var git := GitManager.create_git(session_id)
