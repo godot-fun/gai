@@ -54,6 +54,8 @@ func setup(
 	AgentEvents.events.session_title_changed.connect(on_session_refresh)
 	AgentEvents.events.agent_start.connect(on_session_refresh)
 	AgentEvents.events.session_stop.connect(on_session_refresh)
+	AgentEvents.events.compaction_start.connect(on_compaction_start)
+	AgentEvents.events.compaction_end.connect(on_compaction_end)
 	AgentEvents.events.workspace_changed.connect(on_workspace_changed)
 
 	# Lists and headers are drop targets — the padding between rows has to accept a drop too.
@@ -78,6 +80,16 @@ func setup(
 
 
 func on_session_refresh(session_id: int, _arg: Variant = null) -> void:
+	refresh_item(session_id)
+	pass
+
+
+func on_compaction_start(session_id: int) -> void:
+	refresh_item(session_id)
+	pass
+
+
+func on_compaction_end(session_id: int, _success: bool, _error_code: String) -> void:
 	refresh_item(session_id)
 	pass
 
@@ -131,7 +143,8 @@ func refresh_item(session_id: int) -> void:
 		return
 	# A live rename owns the title until it is committed; the run state still refreshes.
 	row.set_title(AgentSessionManager.get_title(session_id))
-	row.set_running(RuntimeManager.is_running(session_id))
+	var active := RuntimeManager.is_running(session_id) or AgentCompactionManager.is_compacting(session_id)
+	row.set_running(active)
 	pass
 
 

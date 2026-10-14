@@ -1,7 +1,7 @@
 class_name SessionRowRunFx
 extends Control
 
-## Small flowing sine wave shown in place of the close button while a session runs.
+## Small flowing sine wave shown in place of the close button while a session runs or compacts.
 ## Drawn in code so it always reflects the live theme color.
 ## It shares the close button's slot size, so the swap costs no extra row width.
 

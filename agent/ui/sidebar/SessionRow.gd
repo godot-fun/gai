@@ -1,7 +1,7 @@
 class_name SessionRow
 extends PanelContainer
 
-## One chat row: title, running wave, close button, selection overlay and the inline rename field.
+## One chat row: title, activity wave, close button, selection overlay and the inline rename field.
 ##
 ## The row renders what it is told — [AgentSessionSidebar] feeds it titles, selection and run
 ## state — and reports clicks back through signals, so nothing else needs to know how a row is
@@ -11,7 +11,7 @@ extends PanelContainer
 signal select_pressed(session_id: int)
 signal delete_pressed(session_id: int)
 
-## Close button and the running wave share this slot, so swapping them while a run
+## Close button and the activity wave share this slot, so swapping them while a run or compaction
 ## starts / stops never changes the row width (and never re-ellipsizes the title).
 const ACTION_SIZE: Vector2 = Vector2(28, 28)
 ## Alpha of the floating row copy that follows the cursor while dragging.
@@ -57,7 +57,7 @@ func build(p_session_id: int, title: String) -> void:
 	title_button.pressed.connect(select_pressed.emit.bind(session_id))
 	bind_hover(title_button)
 
-	# The wave takes the close button's slot while this session runs.
+	# The wave takes the close button's slot while this session runs or compacts.
 	run_fx = SessionRowRunFx.new()
 	run_fx.custom_minimum_size = ACTION_SIZE
 
