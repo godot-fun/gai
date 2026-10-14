@@ -298,6 +298,7 @@ static func delete_chat_from_entry(session_id: int, entry: ChatEntry) -> void:
 	var deletable_kinds: Array[String] = [
 		ChatEntry.KIND_USER,
 		ChatEntry.KIND_ERROR,
+		ChatEntry.KIND_GIT_DIFF,
 		ChatEntry.KIND_SKILL,
 		ChatEntry.KIND_MEMORY,
 		ChatEntry.KIND_AGENT_PROMPT,

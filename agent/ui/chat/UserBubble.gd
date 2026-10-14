@@ -7,7 +7,6 @@ extends Object
 ## the entry has one). Both hand the message body back to the chat input for re-editing.
 ## The body follows the shared Markdown toolbar setting, matching agent replies.
 
-const BeamLayer: GDScript = preload("res://agent/ui/shaders/AccentBorderBeamLayer.gd")
 const BUBBLE_CORNER_RADIUS: float = 8.0
 const BEAM_STRENGTH: float = 1.0
 
@@ -78,7 +77,7 @@ static func append(
 	rich_text.visible = StringUtils.is_not_blank(entry.body)
 	vbox.add_child(rich_text)
 
-	var beam: AccentBorderBeamLayer = BeamLayer.new()
+	var beam := AccentBorderBeamLayer.new()
 	beam.name = "BorderBeam"
 	beam.z_index = 10
 	beam.mouse_filter = Control.MOUSE_FILTER_IGNORE
