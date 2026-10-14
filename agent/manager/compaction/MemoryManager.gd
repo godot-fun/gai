@@ -19,7 +19,7 @@ const PROMPT := """Update the workspace memory when the conversation contains in
 
 After all useful memory updates are complete, return a brief confirmation."""
 
-static func run(session_id: int) -> void:
+static func update_memory(session_id: int) -> void:
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null:
 		return

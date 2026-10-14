@@ -26,19 +26,21 @@ Preserve every detail needed to continue the work correctly, especially:
 
 Do not address the user. Do not call tools. Return only the continuation summary."""
 
-static var compacting_sessions: Dictionary[int, bool] = {}
+class CompactionState:
+	var summary := StringUtils.EMPTY
+	var summary_finished := false
+pass
+
+
+## The value keeps per-session work shared by the concurrently running memory and summary tasks.
+static var compacting_sessions: Dictionary[int, CompactionState] = {}
 
 
 static func is_compacting(session_id: int) -> bool:
 	return compacting_sessions.has(session_id)
 
 
-static func request_compaction(session_id: int) -> void:
-	compact_session(session_id)
-	pass
-
-
-## Runs memory maintenance first, then creates and persists a continuation summary.
+## Runs memory maintenance and continuation summarization concurrently, then persists the summary.
 ## The session is reloaded after both network requests because it may be deleted while awaiting.
 static func compact_session(session_id: int) -> void:
 	if is_compacting(session_id):
@@ -53,7 +55,8 @@ static func compact_session(session_id: int) -> void:
 		AgentEvents.events.compaction_end.emit(session_id, false, ERROR_EMPTY)
 		return
 
-	compacting_sessions[session_id] = true
+	var state := CompactionState.new()
+	compacting_sessions[session_id] = state
 	AgentEvents.events.compaction_start.emit(session_id)
 	# Memory tools may edit workspace files. Capture a dedicated baseline so their changes can
 	# reuse the normal immutable Git Diff bubble without including an earlier agent run again.
@@ -63,13 +66,21 @@ static func compact_session(session_id: int) -> void:
 	var client := ApiSetting.get_client()
 	client.cancel_scope = CancelScope.new()
 
-	await MemoryManager.run(session_id)
-
 	# Build the summary request again from the original conversation. The memory prompt,
 	# its tool calls, and its confirmation must never become part of the compacted context.
 	var memory_messages := MemoryManager.collect_memory_messages(original_messages)
 	memory_messages.append(ChatMessage.user(COMPACTION_PROMPT))
-	var summary := await client.async_chat_messages(memory_messages, ApiSetting.get_proxy_address())
+	var summary_deadline := Time.get_ticks_msec() + OpenAiClient.REQUEST_TIMEOUT_MILLIS + TimeUtils.MILLIS_PER_SECOND
+
+	async_generate_summary(client, memory_messages, state)
+	await MemoryManager.update_memory(session_id)
+
+	while not state.summary_finished and Time.get_ticks_msec() < summary_deadline:
+		await Engine.get_main_loop().process_frame
+	if not state.summary_finished:
+		finish(session_id, false, ERROR_REQUEST)
+		return
+	var summary := state.summary
 	if StringUtils.is_blank(summary):
 		finish(session_id, false, ERROR_REQUEST)
 		return
@@ -93,6 +104,13 @@ static func compact_session(session_id: int) -> void:
 	AgentSessionManager.persist_session(session_id)
 	finish(session_id, true, StringUtils.EMPTY)
 	await GitDiff.async_append_git_diff(session_id, checkpoint)
+	pass
+
+
+## Starts before memory maintenance is awaited and publishes its result through [param state].
+static func async_generate_summary(client: OpenAiClient, messages: Array[ChatMessage], state: CompactionState) -> void:
+	state.summary = await client.async_chat_messages(messages, ApiSetting.get_proxy_address())
+	state.summary_finished = true
 	pass
 
 

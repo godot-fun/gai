@@ -99,7 +99,7 @@ func on_gui_input(event: InputEvent) -> void:
 	var mouse := event as InputEventMouseButton
 	if not mouse.pressed or mouse.button_index != MOUSE_BUTTON_LEFT:
 		return
-	AgentCompactionManager.request_compaction(AgentSessionManager.active_session_id)
+	AgentCompactionManager.compact_session(AgentSessionManager.active_session_id)
 	wrap.get_viewport().set_input_as_handled()
 	pass
 
