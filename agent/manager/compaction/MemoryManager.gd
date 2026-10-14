@@ -25,22 +25,25 @@ static func run(session_id: int) -> void:
 		return
 	var client := ApiSetting.get_client()
 	client.cancel_scope = CancelScope.new()
-	var messages: Array[ChatMessage] = []
-	messages.assign(session.messages)
-	messages.append(ChatMessage.user(PROMPT))
-	var completion := await CompactionAgent.run(client, messages)
+	var memory_messages := collect_memory_messages(session.messages)
+	memory_messages.append(ChatMessage.user(PROMPT))
+	var completion := await CompactionAgent.run(client, memory_messages)
 	if not completion.has_error():
 		MemoryPrompt.reload_memory_context()
 	pass
 
 
-## Keeps system-level context while dropping user, assistant, tool, and previous summary turns.
-static func collect_context_messages(messages: Array[ChatMessage]) -> Array[ChatMessage]:
-	var context: Array[ChatMessage] = []
+## Builds the memory-maintenance transcript from user messages and visible model replies only.
+## Previous summaries are retained because they represent conversation removed by an earlier
+## compaction. System context, model thinking, tool calls, and tool results are discarded.
+static func collect_memory_messages(messages: Array[ChatMessage]) -> Array[ChatMessage]:
+	var transcript: Array[ChatMessage] = []
 	for message: ChatMessage in messages:
-		if message.role != ChatMessage.ROLE_SYSTEM:
-			continue
-		if message.content.begins_with(AgentCompactionManager.SUMMARY_PREFIX):
-			continue
-		context.append(message)
-	return context
+		if (message.role == ChatMessage.ROLE_SYSTEM
+			and message.content.begins_with(AgentCompactionManager.SUMMARY_PREFIX)):
+			transcript.append(ChatMessage.user("Previous compacted context:\n" + message.content))
+		elif message.role == ChatMessage.ROLE_USER:
+			transcript.append(ChatMessage.user(message.content))
+		elif message.role == ChatMessage.ROLE_ASSISTANT and StringUtils.is_not_blank(message.content):
+			transcript.append(ChatMessage.assistant(message.content))
+	return transcript

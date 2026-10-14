@@ -67,10 +67,9 @@ static func compact_session(session_id: int) -> void:
 
 	# Build the summary request again from the original conversation. The memory prompt,
 	# its tool calls, and its confirmation must never become part of the compacted context.
-	var compaction_messages: Array[ChatMessage] = []
-	compaction_messages.assign(original_messages)
-	compaction_messages.append(ChatMessage.user(COMPACTION_PROMPT))
-	var summary := await client.async_chat_messages(compaction_messages, ApiSetting.get_proxy_address())
+	var memory_messages := MemoryManager.collect_memory_messages(original_messages)
+	memory_messages.append(ChatMessage.user(COMPACTION_PROMPT))
+	var summary := await client.async_chat_messages(memory_messages, ApiSetting.get_proxy_address())
 	if StringUtils.is_blank(summary):
 		finish(session_id, false, ERROR_REQUEST)
 		return
@@ -80,7 +79,7 @@ static func compact_session(session_id: int) -> void:
 	if session == null or not AgentSessionManager.has_index(session_id):
 		finish(session_id, false, ERROR_REQUEST)
 		return
-	var compacted_messages := MemoryManager.collect_context_messages(session.messages)
+	var compacted_messages := collect_context_messages(session.messages)
 	summary = summary.strip_edges()
 	compacted_messages.append(ChatMessage.system(SUMMARY_PREFIX + FileUtils.NEWLINE_LF + summary))
 	session.messages = compacted_messages
@@ -104,7 +103,19 @@ static func has_compactable_history(session: AgentSession) -> bool:
 	return false
 
 
-## Visible transcript counterpart of [method MemoryManager.collect_context_messages].
+## Keeps system-level context while dropping user, assistant, tool, and previous summary turns.
+static func collect_context_messages(messages: Array[ChatMessage]) -> Array[ChatMessage]:
+	var context: Array[ChatMessage] = []
+	for message: ChatMessage in messages:
+		if message.role != ChatMessage.ROLE_SYSTEM:
+			continue
+		if message.content.begins_with(SUMMARY_PREFIX):
+			continue
+		context.append(message)
+	return context
+
+
+## Visible transcript counterpart of [method collect_context_messages].
 static func collect_context_entries(entries: Array[ChatEntry]) -> Array[ChatEntry]:
 	var context: Array[ChatEntry] = []
 	for entry: ChatEntry in entries:

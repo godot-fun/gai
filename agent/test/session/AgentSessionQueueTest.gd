@@ -62,7 +62,29 @@ static func compaction_replaces_previous_summary_message_test() -> void:
 		ChatMessage.system(AgentCompactionManager.SUMMARY_PREFIX + "\nold summary"),
 		ChatMessage.user("new question"),
 	]
-	var context := MemoryManager.collect_context_messages(messages)
+	var context := AgentCompactionManager.collect_context_messages(messages)
 	assert(context.size() == 1)
 	assert(context[0].content == "system")
+	pass
+
+
+static func memory_messages_drop_thinking_and_tool_protocol_test() -> void:
+	var tool_call := OpenAiToolCall.new()
+	tool_call.id = "call-1"
+	var messages: Array[ChatMessage] = [
+		ChatMessage.system("system"),
+		ChatMessage.system(AgentCompactionManager.SUMMARY_PREFIX + "\nprevious work"),
+		ChatMessage.user("question"),
+		ChatMessage.assistant_tool_calls([tool_call], "", "private thinking"),
+		ChatMessage.tool_result("call-1", "test passed"),
+		ChatMessage.assistant("answer", "more private thinking"),
+	]
+	var memory_messages := MemoryManager.collect_memory_messages(messages)
+	assert(memory_messages.size() == 3)
+	assert(memory_messages[0].role == ChatMessage.ROLE_USER)
+	assert(memory_messages[0].content.contains("previous work"))
+	assert(memory_messages[1].role == ChatMessage.ROLE_USER and memory_messages[1].content == "question")
+	assert(memory_messages[2].role == ChatMessage.ROLE_ASSISTANT and memory_messages[2].content == "answer")
+	assert(memory_messages[2].reasoning_content.is_empty())
+	assert(memory_messages[2].tool_calls.is_empty())
 	pass
