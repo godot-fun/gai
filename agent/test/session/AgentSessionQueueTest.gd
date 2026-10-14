@@ -62,7 +62,7 @@ static func compaction_replaces_previous_summary_message_test() -> void:
 		ChatMessage.system(AgentCompactionManager.SUMMARY_PREFIX + "\nold summary"),
 		ChatMessage.user("new question"),
 	]
-	var context := AgentCompactionManager.collect_context_messages(messages)
+	var context := MemoryManager.collect_context_messages(messages)
 	assert(context.size() == 1)
 	assert(context[0].content == "system")
 	pass

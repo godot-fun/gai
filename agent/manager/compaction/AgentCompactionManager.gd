@@ -4,7 +4,7 @@ extends Object
 ## Coordinates manual context compaction for one session.
 ##
 ## A compaction has two deliberately isolated model requests:
-## 1. [CompactionAgent] reviews the original conversation and may update `.memory/` with tools.
+## 1. [MemoryManager] reviews the original conversation and may update `.memory/` with tools.
 ## 2. A tool-free request summarizes the same original conversation.
 ##
 ## Both requests start from [member AgentSession.messages]. The memory agent's prompt, tool calls,
@@ -14,21 +14,6 @@ const SUMMARY_PREFIX := "# Compacted conversation context"
 const ERROR_RUNNING := "running"
 const ERROR_EMPTY := "empty"
 const ERROR_REQUEST := "request"
-## Internal task for durable memory maintenance. Its final text is discarded; only tool side
-## effects under `.memory/` are retained.
-const MEMORY_PROMPT := """Update the workspace memory when the conversation contains information worth retaining.
-
-- Read `.memory/README.md` first and follow its operating rules.
-- Read only the memory files relevant to this conversation.
-- Use the available file tools to update the appropriate files under `.memory/`.
-- Update existing entries instead of creating duplicates.
-- Keep `focus.md` short and current.
-- Store durable, reusable information only; do not store a conversation transcript.
-- Never store passwords, access tokens, private keys, or other secrets.
-- Do not edit files outside `.memory/` during this task.
-
-After all useful memory updates are complete, return a brief confirmation."""
-
 ## Tool-free request whose response becomes the new compacted continuation context.
 const COMPACTION_PROMPT := """Create a compact continuation summary of the conversation above.
 
@@ -78,16 +63,7 @@ static func compact_session(session_id: int) -> void:
 	var client := ApiSetting.get_client()
 	client.cancel_scope = CancelScope.new()
 
-	# This copy belongs exclusively to the event-free tool agent. CompactionAgent appends its
-	# assistant tool-call messages and tool results to this array while it works.
-	var memory_messages: Array[ChatMessage] = []
-	memory_messages.assign(original_messages)
-	memory_messages.append(ChatMessage.user(MEMORY_PROMPT))
-	var memory_completion := await CompactionAgent.run(client, memory_messages)
-	if memory_completion.has_error():
-		finish(session_id, false, ERROR_REQUEST)
-		return
-	MemoryPrompt.reload_memory_context()
+	await MemoryManager.run(session_id)
 
 	# Build the summary request again from the original conversation. The memory prompt,
 	# its tool calls, and its confirmation must never become part of the compacted context.
@@ -104,7 +80,7 @@ static func compact_session(session_id: int) -> void:
 	if session == null or not AgentSessionManager.has_index(session_id):
 		finish(session_id, false, ERROR_REQUEST)
 		return
-	var compacted_messages := collect_context_messages(session.messages)
+	var compacted_messages := MemoryManager.collect_context_messages(session.messages)
 	summary = summary.strip_edges()
 	compacted_messages.append(ChatMessage.system(SUMMARY_PREFIX + FileUtils.NEWLINE_LF + summary))
 	session.messages = compacted_messages
@@ -128,19 +104,7 @@ static func has_compactable_history(session: AgentSession) -> bool:
 	return false
 
 
-## Keeps system-level context while dropping user, assistant, tool, and previous summary turns.
-static func collect_context_messages(messages: Array[ChatMessage]) -> Array[ChatMessage]:
-	var context: Array[ChatMessage] = []
-	for message: ChatMessage in messages:
-		if message.role != ChatMessage.ROLE_SYSTEM:
-			continue
-		if message.content.begins_with(SUMMARY_PREFIX):
-			continue
-		context.append(message)
-	return context
-
-
-## Visible transcript counterpart of [method collect_context_messages].
+## Visible transcript counterpart of [method MemoryManager.collect_context_messages].
 static func collect_context_entries(entries: Array[ChatEntry]) -> Array[ChatEntry]:
 	var context: Array[ChatEntry] = []
 	for entry: ChatEntry in entries:
