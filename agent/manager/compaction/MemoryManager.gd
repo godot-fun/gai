@@ -39,11 +39,10 @@ static func run(session_id: int) -> void:
 static func collect_memory_messages(messages: Array[ChatMessage]) -> Array[ChatMessage]:
 	var transcript: Array[ChatMessage] = []
 	for message: ChatMessage in messages:
-		if (message.role == ChatMessage.ROLE_SYSTEM
-			and message.content.begins_with(AgentCompactionManager.SUMMARY_PREFIX)):
+		if (message.role == ChatMessage.ROLE_SYSTEM and message.content.begins_with(AgentCompactionManager.SUMMARY_PREFIX)):
 			transcript.append(ChatMessage.user("Previous compacted context:\n" + message.content))
-		elif message.role == ChatMessage.ROLE_USER:
-			transcript.append(ChatMessage.user(message.content))
+		elif message.role == ChatMessage.ROLE_USER and StringUtils.is_not_blank(message.content):
+			transcript.append(ChatMessage.user(message.content.strip_edges()))
 		elif message.role == ChatMessage.ROLE_ASSISTANT and StringUtils.is_not_blank(message.content):
-			transcript.append(ChatMessage.assistant(message.content))
+			transcript.append(ChatMessage.assistant(message.content.strip_edges()))
 	return transcript
