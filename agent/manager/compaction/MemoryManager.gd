@@ -6,18 +6,14 @@ extends RefCounted
 ## The dedicated message copy keeps this agent's prompt, tool calls, tool results, and final
 ## confirmation out of the summary request and persisted chat history.
 
-const PROMPT := """Update the workspace memory when the conversation contains information worth retaining.
+const PROMPT := """Update `.memory/` with durable, reusable information from this conversation.
 
-- Read `.memory/README.md` first and follow its operating rules.
-- Read only the memory files relevant to this conversation.
-- Use the available file tools to update the appropriate files under `.memory/`.
-- Update existing entries instead of creating duplicates.
-- Keep `focus.md` short and current.
-- Store durable, reusable information only; do not store a conversation transcript.
-- Never store passwords, access tokens, private keys, or other secrets.
-- Do not edit files outside `.memory/` during this task.
+Work immediately without explaining or planning:
+1. Read `.memory/README.md`.
+2. If nothing is worth retaining, return `Done` without reading other files.
+3. Otherwise, read only the directly relevant memory files and update them in place with the fewest tool calls.
 
-After all useful memory updates are complete, return a brief confirmation."""
+Avoid duplicates, transcripts, temporary details, and secrets. Keep `focus.md` short and current. Never edit outside `.memory/`. Return only `Done`."""
 
 static func update_memory(session_id: int) -> void:
 	var session := AgentSessionStore.load_session(session_id)

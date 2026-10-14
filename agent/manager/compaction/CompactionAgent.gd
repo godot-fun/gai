@@ -8,30 +8,14 @@ extends RefCounted
 ## persist messages. The caller owns the temporary message array and consumes only the final
 ## completion; file changes made by registered tools remain normal workspace changes.
 
-const MAX_TURNS := 32
-
-
-## Runs until the model returns a response without tool calls, an API/tool-loop error occurs,
-## or [constant MAX_TURNS] is reached. Tool calls use the same registry, argument parsing,
-## cancellation scope, and sandbox policies as the interactive agent.
 static func run(ai_client: OpenAiClient, messages: Array[ChatMessage]) -> OpenAiCompletion:
-	for _turn in range(MAX_TURNS):
-		var completion := await ai_client.async_chat_messages_stream(
-			messages,
-			AgentToolRegistry.schemas,
-			ApiSetting.get_proxy_address(),
-			func(_chunk: String, _stream_kind: String) -> void: pass
-		)
+	for _turn in range(32): # Stop after 32 turns.
+		var completion := await ai_client.async_chat_messages_stream(messages, AgentToolRegistry.schemas, ApiSetting.get_proxy_address(), func(_chunk: String, _stream_kind: String) -> void: pass)
 		if completion.has_error() or completion.tool_calls.is_empty():
 			return completion
 
-		# Preserve the full assistant tool-call turn (including reasoning content) because some
-		# providers require it to validate the following tool-result messages.
-		messages.append(ChatMessage.assistant_tool_calls(
-			completion.tool_calls,
-			completion.content,
-			completion.reasoning_content
-		))
+		# Preserve the full turn because some providers validate tool-result messages against it.
+		messages.append(ChatMessage.assistant_tool_calls(completion.tool_calls, completion.content, completion.reasoning_content))
 		for tool_call: OpenAiToolCall in completion.tool_calls:
 			var tool_name := tool_call.function.name
 			var tool: AgentTool = AgentToolRegistry.tools.get(tool_name)
