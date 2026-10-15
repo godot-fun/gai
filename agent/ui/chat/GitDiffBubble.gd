@@ -93,7 +93,8 @@ static func open_file_diff(meta: Variant, patch_path: String) -> void:
 
 
 static func on_diff_pressed(patch_path: String) -> void:
-	GitDiffManager.open_diff(patch_path)
+	if not GitDiffManager.open_diff(patch_path):
+		Alert.alert(I18n.t("git.unavailable"), Colors.error)
 	pass
 
 
