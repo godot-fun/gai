@@ -42,10 +42,16 @@ var hovered_button := -1
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	mouse_default_cursor_shape = Control.CURSOR_ARROW
-	tooltip_text = "Revert this change"
+	tooltip_text = I18n.t("git.revert_change")
 	clip_contents = true
 	custom_minimum_size.x = ControlSize.lg
 	resized.connect(queue_redraw)
+	gdf.events.locale_changed.connect(apply_locale)
+	pass
+
+
+func apply_locale() -> void:
+	tooltip_text = I18n.t("git.revert_change")
 	pass
 
 

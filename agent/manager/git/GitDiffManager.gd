@@ -172,11 +172,11 @@ static func async_cache_diff(git: GitHelper.Git, reference: String, file_stats: 
 ## Opens a cached agent run in the side-by-side CodeEdit viewer.
 static func open_diff(patch_path: String) -> void:
 	if StringUtils.is_blank(patch_path) or not FileAccess.file_exists(patch_path):
-		Alert.alert("Git diff is unavailable", Colors.error)
+		Alert.alert(I18n.t("git.unavailable"), Colors.error)
 		return
 	var files := load_diff_files(patch_path)
 	if files.is_empty():
-		Alert.alert("Git diff is unavailable", Colors.error)
+		Alert.alert(I18n.t("git.unavailable"), Colors.error)
 		return
 	GitDiffViewer.show_files(files, AgentWorkspace.get_root())
 	pass

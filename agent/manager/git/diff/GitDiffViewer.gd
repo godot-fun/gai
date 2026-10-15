@@ -47,7 +47,7 @@ var selected_hunk := -1
 
 
 func _init() -> void:
-	title = "Git Diff"
+	title = I18n.t("git.title")
 	transient = true
 	visible = false
 	min_size = Vector2i(800, 520)
@@ -55,6 +55,7 @@ func _init() -> void:
 	window_input.connect(on_window_input)
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
+	gdf.events.locale_changed.connect(apply_locale)
 	build_ui()
 	pass
 
@@ -120,11 +121,11 @@ func build_ui() -> void:
 	toolbar.custom_minimum_size.y = ControlSize.md
 	toolbar.add_theme_constant_override("separation", Margin.ma_2)
 	toolbar_panel.add_child(toolbar)
-	previous_button = make_button("◀", "Previous changed file")
+	previous_button = make_button("◀", I18n.t("git.previous_file"))
 	style_navigation_button_size(previous_button)
 	previous_button.pressed.connect(select_relative.bind(-1))
 	toolbar.add_child(previous_button)
-	next_button = make_button("▶", "Next changed file")
+	next_button = make_button("▶", I18n.t("git.next_file"))
 	style_navigation_button_size(next_button)
 	next_button.pressed.connect(select_relative.bind(1))
 	toolbar.add_child(next_button)
@@ -132,11 +133,11 @@ func build_ui() -> void:
 	path_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	path_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	toolbar.add_child(path_label)
-	previous_change_button = make_button("↑", "Previous difference")
+	previous_change_button = make_button("↑", I18n.t("git.previous_difference"))
 	style_navigation_button_size(previous_change_button)
 	previous_change_button.pressed.connect(select_relative_hunk.bind(-1))
 	toolbar.add_child(previous_change_button)
-	next_change_button = make_button("↓", "Next difference")
+	next_change_button = make_button("↓", I18n.t("git.next_difference"))
 	style_navigation_button_size(next_change_button)
 	next_change_button.pressed.connect(select_relative_hunk.bind(1))
 	toolbar.add_child(next_change_button)
@@ -146,7 +147,7 @@ func build_ui() -> void:
 	toolbar.add_child(status_label)
 	position_label = Label.new()
 	toolbar.add_child(position_label)
-	revert_button = make_button("Revert", "Restore the right pane to the left pane's version")
+	revert_button = make_button(I18n.t("git.revert"), I18n.t("git.revert_file"))
 	revert_button.custom_minimum_size.y = ControlSize.sm
 	revert_button.pressed.connect(revert_current)
 	toolbar.add_child(revert_button)
@@ -156,12 +157,12 @@ func build_ui() -> void:
 	heading_container = HBoxContainer.new()
 	heading_container.add_theme_constant_override("separation", 0)
 	root.add_child(heading_container)
-	left_heading_panel = add_heading_panel(heading_container, "Original · read only")
+	left_heading_panel = add_heading_panel(heading_container, I18n.t("git.original_read_only"))
 	heading_spacer = PanelContainer.new()
 	heading_spacer.custom_minimum_size.y = ControlSize.md
 	heading_spacer.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN # width set in sync_heading_widths()
 	heading_container.add_child(heading_spacer)
-	right_heading_panel = add_heading_panel(heading_container, "Current · editable")
+	right_heading_panel = add_heading_panel(heading_container, I18n.t("git.current_editable"))
 
 	split_container = HSplitContainer.new()
 	split_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -190,6 +191,23 @@ func build_ui() -> void:
 	split_container.add_child(right_side)
 
 	apply_theme()
+	pass
+
+
+func apply_locale() -> void:
+	title = I18n.t("git.title")
+	previous_button.tooltip_text = I18n.t("git.previous_file")
+	next_button.tooltip_text = I18n.t("git.next_file")
+	previous_change_button.tooltip_text = I18n.t("git.previous_difference")
+	next_change_button.tooltip_text = I18n.t("git.next_difference")
+	revert_button.text = I18n.t("git.revert")
+	revert_button.tooltip_text = I18n.t("git.revert_file")
+	heading_labels[0].text = I18n.t("git.original_read_only")
+	heading_labels[1].text = I18n.t("git.current_editable")
+	if not files.is_empty():
+		var file := files[selected_index]
+		status_label.text = I18n.t("git.binary_file") if file.binary else I18n.t("git.status_" + file.status)
+		refresh_hunk_controls()
 	pass
 
 
@@ -299,9 +317,9 @@ func load_selected_file() -> void:
 	right_edit.scroll_vertical = 0
 	path_label.text = file.old_path + " → " + file.new_path if file.old_path != file.new_path and not file.old_path.is_empty() and not file.new_path.is_empty() else file.display_path()
 	position_label.text = str(selected_index + 1) + " / " + str(files.size())
-	status_label.text = file.status.capitalize()
+	status_label.text = I18n.t("git.status_" + file.status)
 	if file.binary:
-		status_label.text = "Binary file"
+		status_label.text = I18n.t("git.binary_file")
 	previous_button.disabled = files.size() <= 1
 	next_button.disabled = files.size() <= 1
 	displayed_hunks.clear()
@@ -373,7 +391,7 @@ func refresh_hunk_controls() -> void:
 	var has_hunks := not displayed_hunks.is_empty()
 	previous_change_button.disabled = not has_hunks
 	next_change_button.disabled = not has_hunks
-	change_position_label.text = "0 differences" if not has_hunks else str(selected_hunk + 1) + " / " + str(displayed_hunks.size()) + " differences"
+	change_position_label.text = I18n.t("git.no_differences") if not has_hunks else StringUtils.format(I18n.t("git.difference_position"), selected_hunk + 1, displayed_hunks.size())
 	pass
 
 
@@ -476,22 +494,22 @@ func save_current() -> bool:
 		return true
 	var target := FileUtils.normalize_path(workspace_root.path_join(file.new_path))
 	if not FileUtils.is_relative_to(target, workspace_root):
-		Alert.alert("Cannot save outside the workspace", Colors.error)
+		Alert.alert(I18n.t("git.save_outside_workspace"), Colors.error)
 		return false
 	var exists_now := FileAccess.file_exists(target)
 	var current_text := FileUtils.read_file_to_string(target) if exists_now else StringUtils.EMPTY
 	if exists_now != file.new_exists or current_text.sha256_text() != file.new_hash:
-		Alert.alert("Workspace file changed after this diff was created; save was cancelled", Colors.warning)
+		Alert.alert(I18n.t("git.save_conflict"), Colors.warning)
 		return false
 	if not FileUtils.write_string_to_file(target, right_edit.text):
-		Alert.alert("Cannot save file: " + file.new_path, Colors.error)
+		Alert.alert(StringUtils.format(I18n.t("git.save_failed"), file.new_path), Colors.error)
 		return false
 	baseline_text = right_edit.text
 	file.new_text = baseline_text
 	file.new_hash = baseline_text.sha256_text()
 	file.new_exists = true
 	refresh_actions()
-	Alert.alert("Saved successfully", Colors.success)
+	Alert.alert(I18n.t("git.saved"), Colors.success)
 	return true
 
 

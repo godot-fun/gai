@@ -55,8 +55,8 @@ static func append(
 	if StringUtils.is_not_blank(checkpoint):
 		var revert_button: Button = Button.new()
 		revert_button.name = "RevertButton"
-		revert_button.text = "Revert"
-		AgentBubble.style_header_button(revert_button, panel_style.bg_color, "Delete from here and restore the workspace (message goes back to the input box)", 58.0)
+		revert_button.text = I18n.t("git.revert")
+		AgentBubble.style_header_button(revert_button, panel_style.bg_color, I18n.t("git.revert_user_message"), 58.0)
 		revert_button.pressed.connect(on_revert_pressed.bind(session_id, entry))
 		header.add_child(revert_button)
 
@@ -109,10 +109,10 @@ static func on_revert_pressed(session_id: int, entry: ChatEntry) -> void:
 	AgentEvents.events.chat_input_prefill.emit(entry.body)
 	var sha: String = entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
 	if not await GitCheckpointManager.async_restore(session_id, sha):
-		Alert.alert("Workspace restore failed; chat history was kept", Colors.error)
+		Alert.alert(I18n.t("git.restore_failed"), Colors.error)
 		return
 	AgentSessionManager.delete_chat_from_entry(session_id, entry)
-	Alert.alert("Workspace restored", Colors.success)
+	Alert.alert(I18n.t("git.restored"), Colors.success)
 	pass
 
 static func sync_layout(host: Control, panel: PanelContainer, beam: AccentBorderBeamLayer) -> void:
