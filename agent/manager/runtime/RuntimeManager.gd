@@ -85,7 +85,7 @@ static func try_run_next_message(session_id: int) -> void:
 	get_or_create_runtime(session_id)
 	AgentEvents.events.session_queue_changed.emit(session_id)
 	var queued: String = session.pending_messages[0]
-	var checkpoint := await GitManager.async_snapshot(session_id)
+	var checkpoint := await GitCheckpointManager.async_snapshot(session_id)
 	session = AgentSessionStore.load_session(session_id)
 	if not AgentSessionManager.has_index(session_id) or session == null or session.pending_messages.is_empty():
 		remove_runtime(session_id)

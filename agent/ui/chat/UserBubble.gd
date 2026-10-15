@@ -108,7 +108,7 @@ static func on_delete_from_here_pressed(session_id: int, entry: ChatEntry) -> vo
 static func on_revert_pressed(session_id: int, entry: ChatEntry) -> void:
 	AgentEvents.events.chat_input_prefill.emit(entry.body)
 	var sha: String = entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
-	if not await GitManager.async_restore(session_id, sha):
+	if not await GitCheckpointManager.async_restore(session_id, sha):
 		Alert.alert("Workspace restore failed; chat history was kept", Colors.error)
 		return
 	AgentSessionManager.delete_chat_from_entry(session_id, entry)

@@ -1,4 +1,4 @@
-class_name GitManager
+class_name GitCheckpointManager
 extends Object
 
 ## Workspace snapshots for chat revert — four shadow Git repositories under `.gai/checkpoints/`.
@@ -21,7 +21,7 @@ static func _static_init() -> void:
 # Paths
 # ---------------------------------------------------------------------------
 
-static func create_git(session_id: int) -> GitHelper.Git:
+static func create_git_context(session_id: int) -> GitHelper.Git:
 	var workspace_root := AgentWorkspace.get_root()
 	var repo_shard_index := posmod(session_id, CHECKPOINT_REPO_SHARD_COUNT)
 	var git_dir := workspace_root.path_join(CHECKPOINTS_SUBDIR).path_join(str(repo_shard_index))
@@ -67,7 +67,7 @@ static func remove_checkpoint_repo(git_dir: String) -> bool:
 	return false
 
 
-static func stage_all(git: GitHelper.Git) -> bool:
+static func stage_workspace(git: GitHelper.Git) -> bool:
 	var add := await git.async_stage_all()
 	if add.exit_code == 0:
 		return true
@@ -81,8 +81,8 @@ static func stage_all(git: GitHelper.Git) -> bool:
 
 ## Commits the current workspace state and returns the commit id; empty when unavailable.
 static func async_snapshot(session_id: int) -> String:
-	var git := create_git(session_id)
-	if not await ensure_repo(git) or not await stage_all(git):
+	var git := create_git_context(session_id)
+	if not await ensure_repo(git) or not await stage_workspace(git):
 		return StringUtils.EMPTY
 	var previous_head := await git.async_get_head()
 	if previous_head.exit_code == 0:
@@ -138,8 +138,8 @@ static func async_cleanup() -> void:
 static func async_restore(session_id: int, sha: String) -> bool:
 	if StringUtils.is_blank(sha):
 		return false
-	var git := create_git(session_id)
-	if not await ensure_repo(git) or not await stage_all(git):
+	var git := create_git_context(session_id)
+	if not await ensure_repo(git) or not await stage_workspace(git):
 		return false
 	var diff := await git.async_get_staged_name_status(sha)
 	if diff.exit_code != 0:

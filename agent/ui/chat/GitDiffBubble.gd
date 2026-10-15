@@ -99,7 +99,7 @@ static func on_diff_pressed(patch_path: String) -> void:
 
 static func on_revert_pressed(session_id: int, entry: ChatEntry) -> void:
 	var checkpoint: String = entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
-	if not await GitManager.async_restore(session_id, checkpoint):
+	if not await GitCheckpointManager.async_restore(session_id, checkpoint):
 		Alert.alert("Workspace restore failed; chat history was kept", Colors.error)
 		return
 	AgentSessionManager.delete_chat_from_entry(session_id, entry)
