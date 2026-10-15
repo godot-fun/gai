@@ -20,10 +20,13 @@ const DRAG_GHOST_ALPHA: float = 0.92
 var session_id: int = 0
 var selected: bool = false
 var hovered: bool = false
+var running: bool = false
+var unread: bool = false
 
 var title_button: Button
 var delete_button: Button
 var run_fx: SessionRowRunFx
+var unread_label: Label
 var scifi_fx: SessionRowSciFiFx
 ## Live only while the row is being renamed; null otherwise.
 var rename_field: LineEdit
@@ -60,6 +63,12 @@ func build(p_session_id: int, title: String) -> void:
 	# The wave takes the close button's slot while this session runs or compacts.
 	run_fx = SessionRowRunFx.new()
 	run_fx.custom_minimum_size = ACTION_SIZE
+	unread_label = Label.new()
+	unread_label.text = "●"
+	unread_label.custom_minimum_size = ACTION_SIZE
+	unread_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	unread_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	unread_label.visible = false
 
 	delete_button = Button.new()
 	delete_button.text = "×"
@@ -72,6 +81,7 @@ func build(p_session_id: int, title: String) -> void:
 
 	content.add_child(title_button)
 	content.add_child(run_fx)
+	content.add_child(unread_label)
 	content.add_child(delete_button)
 	apply_style()
 	pass
@@ -89,9 +99,18 @@ func set_title(title: String) -> void:
 	pass
 
 
-func set_running(running: bool) -> void:
+func set_running(value: bool) -> void:
+	running = value
 	run_fx.set_running(running)
-	delete_button.visible = not running
+	unread_label.visible = unread and not running
+	delete_button.visible = not running and not unread
+	pass
+
+
+func set_unread(value: bool) -> void:
+	unread = value
+	unread_label.visible = unread and not running
+	delete_button.visible = not running and not unread
 	pass
 
 
@@ -105,6 +124,7 @@ func apply_style() -> void:
 	add_theme_stylebox_override("panel", SessionSidebarTheme.row(selected, hovered))
 	SessionSidebarTheme.apply_row_colors(title_button, delete_button, selected, hovered)
 	scifi_fx.set_highlight(selected)
+	unread_label.add_theme_color_override("font_color", ThemeColor.accent_theme_color())
 	# The rename field is themed with the rest, so switching theme mid-rename keeps it readable.
 	if rename_field != null:
 		SessionSidebarTheme.apply_rename_field(rename_field, title_button)

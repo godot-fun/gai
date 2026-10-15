@@ -53,7 +53,7 @@ func setup(
 	AgentEvents.events.session_selected.connect(select_item)
 	AgentEvents.events.session_title_changed.connect(on_session_refresh)
 	AgentEvents.events.agent_start.connect(on_session_refresh)
-	AgentEvents.events.session_stop.connect(on_session_refresh)
+	AgentEvents.events.session_stop.connect(on_session_stop)
 	AgentEvents.events.compaction_start.connect(on_compaction_start)
 	AgentEvents.events.compaction_end.connect(on_compaction_end)
 	AgentEvents.events.workspace_changed.connect(on_workspace_changed)
@@ -84,13 +84,24 @@ func on_session_refresh(session_id: int, _arg: Variant = null) -> void:
 	pass
 
 
+func on_session_stop(session_id: int, _error_message: String) -> void:
+	mark_session_finished(session_id)
+	pass
+
+
 func on_compaction_start(session_id: int) -> void:
 	refresh_item(session_id)
 	pass
 
 
 func on_compaction_end(session_id: int, _success: bool, _error_code: String) -> void:
+	mark_session_finished(session_id)
+	pass
+
+
+func mark_session_finished(session_id: int) -> void:
 	refresh_item(session_id)
+	set_row_unread(session_id, not AgentSessionManager.is_active(session_id))
 	pass
 
 
@@ -154,8 +165,16 @@ func select_item(session_id: int, previous_session_id: int = 0) -> void:
 	# Covers selection changes that no click triggered (e.g. the fallback after a delete).
 	commit_open_rename()
 	refresh_item(session_id)
+	set_row_unread(session_id, false)
 	set_row_selected(previous_session_id, false)
 	set_row_selected(session_id, true)
+	pass
+
+
+func set_row_unread(session_id: int, unread: bool) -> void:
+	var row: SessionRow = session_rows.get(session_id)
+	if row != null:
+		row.set_unread(unread)
 	pass
 
 
