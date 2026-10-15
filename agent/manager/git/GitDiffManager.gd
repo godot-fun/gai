@@ -1,4 +1,4 @@
-class_name GitDiff
+class_name GitDiffManager
 extends Object
 
 ## JSON cache for the file comparisons produced by one agent run.

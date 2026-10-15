@@ -152,7 +152,7 @@ static func on_agent_end(session_id: int, error_message: String) -> void:
 	var should_continue_queue := has_session_index and not should_stop(session_id) and StringUtils.is_blank(error_message)
 	if StringUtils.is_not_blank(error_message):
 		AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_ERROR, ChatEntry.TITLE_ERROR, error_message)
-	await GitDiff.async_append_git_diff(session_id, get_latest_user_checkpoint(session))
+	await GitDiffManager.async_append_git_diff(session_id, get_latest_user_checkpoint(session))
 	AgentSessionManager.persist_session(session_id)
 
 	remove_runtime(session_id)
