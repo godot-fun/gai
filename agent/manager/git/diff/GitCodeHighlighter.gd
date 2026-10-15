@@ -198,12 +198,12 @@ static func configure_sql(highlighter: CodeHighlighter) -> void:
 
 
 static func configure_diff(highlighter: CodeHighlighter) -> void:
+	highlighter.add_keyword_color("diff", CodeColors.function)
 	highlighter.add_color_region("@@", "@@", CodeColors.declaration, true)
 	highlighter.add_color_region("+++", "", CodeColors.type, true)
 	highlighter.add_color_region("---", "", CodeColors.keyword, true)
 	highlighter.add_color_region("+", "", CodeColors.string, true)
 	highlighter.add_color_region("-", "", CodeColors.keyword, true)
-	highlighter.add_color_region("diff ", "", CodeColors.function, true)
 	pass
 
 
