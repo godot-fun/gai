@@ -5,7 +5,6 @@ class_name NoteWindow
 extends Window
 
 const NOTE_FILE := "user://note.txt"
-const INITIAL_LEFT_PANE_RATIO := 0.5
 const BORDER_ALPHA := 0.18
 const BORDER_ALPHA_UNFOCUSED := 0.08
 const EDIT_ICON_PATH := "res://agent/asset/image/icon/edit.svg"
@@ -93,6 +92,7 @@ func build_layout() -> void:
 	split_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	split_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	split_container.add_theme_constant_override("separation", 0)
+	split_container.dragged.connect(on_split_dragged)
 	root.add_child(split_container)
 
 	text_edit = TextEdit.new()
@@ -309,12 +309,24 @@ func on_open_on_startup_toggled(enabled: bool) -> void:
 	pass
 
 
+func on_split_dragged(_offset: int) -> void:
+	var width := split_container.size.x
+	if width <= 0.0:
+		return
+	# split_offset is center-relative; convert back to a left-pane ratio for persistence.
+	NoteSetting.set_split_ratio(float(split_container.split_offset) / width + 0.5)
+	pass
+
+
 func reset_split() -> void:
 	if not split_container.visible:
 		return
 	if not text_edit.visible or not preview_panel.visible:
 		return
-	split_container.split_offset = roundi(split_container.size.x * (INITIAL_LEFT_PANE_RATIO - 0.5))
+	var width := split_container.size.x
+	if width <= 0.0:
+		return
+	split_container.split_offset = roundi(width * (NoteSetting.get_split_ratio() - 0.5))
 	pass
 
 
