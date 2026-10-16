@@ -1,5 +1,5 @@
 class_name GitDiffViewer
-extends Window
+extends CommonWindow
 
 ## Side-by-side source comparison. The left CodeEdit is an immutable snapshot; the right CodeEdit
 ## loads the current workspace file and saves only if it has not changed again while being edited.
@@ -8,8 +8,6 @@ const SCREEN_SIZE_RATIO := 0.80
 ## Give the editable current-file pane slightly more room than the read-only original pane.
 const INITIAL_LEFT_PANE_RATIO := 0.45
 const CHANGED_LINE_ALPHA := 0.22
-const BORDER_ALPHA := 0.18
-const BORDER_ALPHA_UNFOCUSED := 0.08
 
 var files: Array[GitDiffFile] = []
 var workspace_root: String = ""
@@ -31,7 +29,6 @@ var previous_change_button: Button
 var next_change_button: Button
 var change_position_label: Label
 var revert_button: Button
-var content_panel: PanelContainer
 var toolbar_panel: PanelContainer
 var heading_container: HBoxContainer
 var split_container: HSplitContainer
@@ -47,14 +44,9 @@ var selected_hunk := -1
 
 
 func _init() -> void:
+	super()
 	title = I18n.t("git.title")
-	transient = true
-	visible = false
 	min_size = Vector2i(800, 520)
-	close_requested.connect(request_close)
-	window_input.connect(on_window_input)
-	gdf.events.theme_changed.connect(apply_theme)
-	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(apply_locale)
 	build_ui()
 	pass
@@ -99,20 +91,11 @@ func reset_editor_view() -> void:
 
 
 func build_ui() -> void:
-	content_panel = PanelContainer.new()
-	content_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	# Cover fractional canvas-scaling remainders on every edge. The Window viewport clips the
-	# one-pixel overlap so its clear color cannot show through at particular viewer sizes.
-	content_panel.offset_left = -ControlSize.border_xs
-	content_panel.offset_top = -ControlSize.border_xs
-	content_panel.offset_right = ControlSize.border_xs
-	content_panel.offset_bottom = ControlSize.border_xs
-	add_child(content_panel)
 	var root := VBoxContainer.new()
 	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_theme_constant_override("separation", 0)
-	content_panel.add_child(root)
+	container.add_child(root)
 
 	toolbar_panel = PanelContainer.new()
 	toolbar_panel.custom_minimum_size.y = ControlSize.md
@@ -557,10 +540,8 @@ func request_close() -> void:
 	pass
 
 
-func _notification(what: int) -> void:
-	# Match PopupWindow: clicking outside closes the viewer after saving any right-pane edits.
-	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT and visible:
-		request_close.call_deferred()
+func on_close_requested() -> void:
+	request_close()
 	pass
 
 
@@ -577,13 +558,8 @@ func on_window_input(event: InputEvent) -> void:
 ## Repaints every native Window/CodeEdit/Dialog surface. Theme changes happen while the viewer is
 ## open, so no control should retain a color captured only during construction.
 func apply_theme() -> void:
-	add_theme_stylebox_override("embedded_border", make_embedded_border(BORDER_ALPHA))
-	add_theme_stylebox_override("embedded_unfocused_border", make_embedded_border(BORDER_ALPHA_UNFOCUSED))
-	add_theme_color_override("title_color", Colors.primary_text)
-	add_theme_font_override("title_font", Fonts.semibold())
-	add_theme_font_size_override("title_font_size", Typography.title_medium_size)
-	add_theme_icon_override("close_pressed", tint_theme_icon("close_pressed", Colors.error))
-	content_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.surface))
+	super()
+	container.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.surface))
 	split_container.add_theme_icon_override("grabber", make_transparent_grabber())
 	var toolbar_style := StyleBoxHelper.create_style_box_flat(Colors.surface, 0, Margin.ma_1, Margin.ma_0)
 	toolbar_panel.add_theme_stylebox_override("panel", toolbar_style)
@@ -623,15 +599,6 @@ func apply_theme() -> void:
 	pass
 
 
-func tint_theme_icon(icon_name: String, color: Color) -> ImageTexture:
-	var image := get_theme_icon(icon_name).get_image()
-	for y: int in image.get_height():
-		for x: int in image.get_width():
-			var alpha := image.get_pixel(x, y).a
-			image.set_pixel(x, y, Color(color, alpha))
-	return ImageTexture.create_from_image(image)
-
-
 func make_transparent_grabber() -> ImageTexture:
 	# SplitContainer's stock grabber has its own minimum width. A 1px transparent icon leaves only
 	# the configured separation visible while preserving the native drag interaction.
@@ -640,13 +607,16 @@ func make_transparent_grabber() -> ImageTexture:
 	return ImageTexture.create_from_image(image)
 
 
-func make_embedded_border(border_alpha: float) -> StyleBoxFlat:
-	var style: StyleBoxFlat = get_theme_stylebox("embedded_border").duplicate() as StyleBoxFlat
-	style.bg_color = Colors.surface
-	style.set_corner_radius_all(ControlSize.radius_md)
-	style.border_color = Color(Colors.primary_text, border_alpha)
-	style.set_border_width_all(ControlSize.border_xs)
-	return style
+func window_background_color() -> Color:
+	return Colors.surface
+
+
+func window_title_color() -> Color:
+	return Colors.primary_text
+
+
+func window_border_color() -> Color:
+	return Colors.primary_text
 
 
 func style_compact_button(button: Button) -> void:

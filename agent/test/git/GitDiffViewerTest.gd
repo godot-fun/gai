@@ -9,7 +9,7 @@ func builds_test() -> void:
 	assert(viewer.previous_change_button.focus_mode == Control.FOCUS_NONE)
 	assert(viewer.next_change_button.focus_mode == Control.FOCUS_NONE)
 	assert(viewer.revert_button.custom_minimum_size.y == viewer.previous_change_button.custom_minimum_size.y)
-	assert((viewer.content_panel.get_theme_stylebox("panel") as StyleBoxFlat).bg_color == Colors.surface)
+	assert((viewer.container.get_theme_stylebox("panel") as StyleBoxFlat).bg_color == Colors.surface)
 	assert((viewer.left_heading_panel.get_theme_stylebox("panel") as StyleBoxFlat).bg_color == Colors.chrome_surface)
 	assert((viewer.left_edit.get_theme_stylebox("normal") as StyleBoxFlat).bg_color == Colors.app_background)
 	assert((viewer.revert_button.get_theme_stylebox("normal") as StyleBoxFlat).bg_color == Colors.control_surface)
@@ -18,10 +18,10 @@ func builds_test() -> void:
 	assert(not viewer.left_edit.editable)
 	assert(viewer.right_edit.editable)
 	assert(GitDiffViewer.initial_split_offset(1000.0) == -50)
-	assert(viewer.content_panel.offset_left == -ControlSize.border_xs)
-	assert(viewer.content_panel.offset_top == -ControlSize.border_xs)
-	assert(viewer.content_panel.offset_right == ControlSize.border_xs)
-	assert(viewer.content_panel.offset_bottom == ControlSize.border_xs)
+	assert(viewer.container.offset_left == -ControlSize.border_xs)
+	assert(viewer.container.offset_top == -ControlSize.border_xs)
+	assert(viewer.container.offset_right == ControlSize.border_xs)
+	assert(viewer.container.offset_bottom == ControlSize.border_xs)
 	viewer.free()
 	pass
 
