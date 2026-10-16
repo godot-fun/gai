@@ -77,8 +77,8 @@ static func append(
 	rich_text.visible = StringUtils.is_not_blank(entry.body)
 	vbox.add_child(rich_text)
 
-	var beam := AccentBorderBeamLayer.new()
-	beam.name = "BorderBeam"
+	var beam := MovingAccentBorder.new()
+	beam.name = "MovingAccentBorder"
 	beam.z_index = 10
 	beam.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	beam.set_fixed_corner_radius(BUBBLE_CORNER_RADIUS)
@@ -115,7 +115,7 @@ static func on_revert_pressed(session_id: int, entry: ChatEntry) -> void:
 	Alert.alert(I18n.t("git.restored"), Colors.success)
 	pass
 
-static func sync_layout(host: Control, panel: PanelContainer, beam: AccentBorderBeamLayer) -> void:
+static func sync_layout(host: Control, panel: PanelContainer, beam: MovingAccentBorder) -> void:
 	if not is_instance_valid(host) or not is_instance_valid(panel) or not is_instance_valid(beam):
 		return
 	host.custom_minimum_size = panel.get_combined_minimum_size()

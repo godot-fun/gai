@@ -28,7 +28,7 @@ var queue_badge: Label
 var queue_panel: PanelContainer
 var queue_scroll: ScrollContainer
 var queue_rows: VBoxContainer
-var border_beam: AccentBorderBeamLayer
+var border_beam: MovingAccentBorder
 var file_input: AgentChatInputFile = AgentChatInputFile.new()
 
 var expanded: bool = false
@@ -157,8 +157,8 @@ func on_ui_theme_changed() -> void:
 
 func setup_border_beam() -> void:
 	input_bar.clip_contents = false
-	border_beam = AccentBorderBeamLayer.new()
-	border_beam.name = "BorderBeam"
+	border_beam = MovingAccentBorder.new()
+	border_beam.name = "MovingAccentBorder"
 	border_beam.z_index = -1
 	input_bar.add_child(border_beam)
 	input_bar.move_child(border_beam, 0)

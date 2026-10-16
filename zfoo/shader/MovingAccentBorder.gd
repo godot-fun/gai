@@ -1,10 +1,10 @@
-class_name AccentBorderBeamLayer
+class_name MovingAccentBorder
 extends ColorRect
 
-## Theme-accent beam traveling along a rounded-rect outline (not chat-specific).
+## Animated theme-accent highlight traveling along a rounded-rect border (not chat-specific).
 ## Caller aligns this overlay to the target control — see AgentChatInput, UserBubble.
 
-const BEAM_SHADER: Shader = preload("res://agent/ui/shaders/accent_border_beam.gdshader")
+const BORDER_SHADER: Shader = preload("res://zfoo/shader/moving_accent_border.gdshader")
 
 var expanded_shape: bool = false
 var fixed_corner_radius: float = -1.0
@@ -63,7 +63,7 @@ func ensure_material() -> void:
 	if beam_material != null:
 		return
 	beam_material = ShaderMaterial.new()
-	beam_material.shader = BEAM_SHADER
+	beam_material.shader = BORDER_SHADER
 	material = beam_material
 	pass
 
