@@ -90,6 +90,23 @@ static func remember_connection(api_url: String, api_token: String, model: Strin
 	history.push_front(connection)
 	if history.size() > MAX_CONNECTION_HISTORY:
 		history.resize(MAX_CONNECTION_HISTORY)
+	save_connection_history(history)
+	pass
+
+
+## Removes one saved connection without changing the active connection fields.
+static func remove_connection(api_url: String) -> void:
+	var normalized_url := api_url.strip_edges()
+	var history := get_connection_history()
+	for index in range(history.size() - 1, -1, -1):
+		if history[index].api_url == normalized_url:
+			history.remove_at(index)
+	save_connection_history(history)
+	pass
+
+
+## Writes the complete bounded history; callers mutate an in-memory copy before replacing the file.
+static func save_connection_history(history: Array[ApiModelConfig]) -> void:
 	var file := FileAccess.open(CONNECTION_HISTORY_FILE_PATH, FileAccess.WRITE)
 	if file == null:
 		Log.error("save API connection history failed path:[{}] error:[{}]", CONNECTION_HISTORY_FILE_PATH, FileAccess.get_open_error())

@@ -88,19 +88,36 @@ func save_current() -> void:
 	pass
 
 
+## Rebuild each history row as PanelContainer -> HBoxContainer -> select/delete buttons.
+## Keep the selected fill on the outer panel so it remains continuous behind the delete button.
 func refresh_history() -> void:
 	for child in history_list.get_children():
 		history_list.remove_child(child)
 		child.queue_free()
 	for entry: ApiSetting.ApiModelConfig in ApiSetting.get_connection_history():
+		var row := PanelContainer.new()
+		row.set_meta("api_url", entry.api_url)
+		history_list.add_child(row)
+		var content := HBoxContainer.new()
+		content.add_theme_constant_override("separation", 0)
+		row.add_child(content)
 		var button := Button.new()
 		button.text = entry.api_url
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.focus_mode = Control.FOCUS_NONE
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.custom_minimum_size.y = ControlSize.sm
 		button.pressed.connect(on_history_selected.bind(entry))
-		history_list.add_child(button)
+		content.add_child(button)
 		style_history_button(button)
+		var delete_button := Button.new()
+		delete_button.text = "×"
+		delete_button.focus_mode = Control.FOCUS_NONE
+		delete_button.custom_minimum_size.x = ControlSize.sm
+		delete_button.pressed.connect(on_history_deleted.bind(entry.api_url))
+		content.add_child(delete_button)
+		style_history_delete_button(delete_button)
+		style_history_row(row)
 	pass
 
 
@@ -149,6 +166,18 @@ func on_history_selected(entry: ApiSetting.ApiModelConfig) -> void:
 	pass
 
 
+func on_history_deleted(api_url: String) -> void:
+	# History and active fields are intentionally independent: deleting the selected history row
+	# must not clear or switch the connection currently being edited.
+	ApiSetting.remove_connection(api_url)
+	refresh_history()
+	if history_list.get_child_count() == 0:
+		hide_history_panel()
+	else:
+		history_panel.size.y = history_list.get_combined_minimum_size().y + Margin.ma_2
+	pass
+
+
 func apply_locale() -> void:
 	heading_label.text = I18n.t("agent.settings.heading")
 	api_url_label.text = I18n.t("agent.settings.api_endpoint")
@@ -171,16 +200,33 @@ func apply_theme() -> void:
 		ui.style_line_edit(edit)
 	var panel_style := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 7, Margin.ma_1, Margin.ma_1, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
 	history_panel.add_theme_stylebox_override("panel", panel_style)
-	for button: Button in history_list.get_children():
-		style_history_button(button)
+	for row: PanelContainer in history_list.get_children():
+		var content := row.get_child(0) as HBoxContainer
+		style_history_row(row)
+		style_history_button(content.get_child(0) as Button)
+		style_history_delete_button(content.get_child(1) as Button)
+	pass
+
+
+func style_history_row(row: PanelContainer) -> void:
+	# Match PopupMenuStyle's selected/hover surface; selection is identified by normalized URL.
+	var selected := str(row.get_meta("api_url")) == api_url_edit.text.strip_edges()
+	var color := ThemeColor.selected_surface if selected else Color.TRANSPARENT
+	row.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(color, 5))
 	pass
 
 
 func style_history_button(button: Button) -> void:
-	var selected := button.text == api_url_edit.text.strip_edges()
 	ButtonStyle.apply_font_colors(button, Colors.primary_text, Colors.primary_text, Colors.primary_text)
-	var normal_color := ThemeColor.selected_surface if selected else Color.TRANSPARENT
-	var normal := StyleBoxHelper.create_style_box_flat(normal_color, 5, Margin.ma_2, Margin.ma_2)
+	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, 5, Margin.ma_2, Margin.ma_2)
 	var hover := StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, 5, Margin.ma_2, Margin.ma_2)
 	ButtonStyle.apply(button, normal, hover, hover.duplicate())
+	pass
+
+
+func style_history_delete_button(button: Button) -> void:
+	# Mirror LineEdit's clear affordance: a quiet glyph with no separate button background.
+	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, Colors.primary_text)
+	var empty := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, 0)
+	ButtonStyle.apply(button, empty, empty.duplicate() as StyleBoxFlat, empty.duplicate() as StyleBoxFlat)
 	pass
