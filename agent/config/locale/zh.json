@@ -206,9 +206,7 @@
       "appearance": "外观",
       "language": "语言",
       "markdown": "Markdown 渲染",
-      "custom_provider": "自定义",
       "heading": "AI 连接",
-      "description": "配置 OpenAI 兼容 API。",
       "api_endpoint": "API 地址",
       "api_endpoint_help": "完整的聊天补全接口地址",
       "model": "模型",
@@ -224,8 +222,6 @@
       "sound_folder_help": "选择包含通知声音的文件夹。",
       "sound_duration": "声音时长",
       "sound_folder_title": "选择通知声音文件夹",
-      "provider": "服务商",
-      "provider_help": "选择服务商后自动填写接口地址和推荐模型",
       "api_token": "API 令牌",
       "token_help": "保存在本地 user://setting.config",
       "tooltip": "AI 设置"

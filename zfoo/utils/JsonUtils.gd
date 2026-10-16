@@ -14,6 +14,23 @@ static func json_to_object(json: String, type: Variant) -> Variant:
 	return dict_to_object(data, type)
 
 
+static func json_to_object_array(json: String, element_type: Variant) -> Array:
+	if StringUtils.is_blank(json):
+		return []
+	var parser := JSON.new()
+	if parser.parse(json) != OK or typeof(parser.data) != TYPE_ARRAY:
+		Log.error("Json array parse error:[{}]", json)
+		return []
+	var result: Array = []
+	for value: Variant in parser.data:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var element: Variant = dict_to_object(value, element_type)
+		if element != null:
+			result.append(element)
+	return result
+
+
 static func dict_to_object(data: Dictionary, type: Variant) -> Variant:
 	if !ReflectionUtils.has_empty_constructor(type):
 		return

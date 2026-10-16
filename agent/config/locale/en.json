@@ -206,9 +206,7 @@
       "appearance": "Appearance",
       "language": "Language",
       "markdown": "Render Markdown",
-      "custom_provider": "Custom",
       "heading": "AI connection",
-      "description": "Configure an OpenAI-compatible API.",
       "api_endpoint": "API endpoint",
       "api_endpoint_help": "Full chat-completions endpoint URL",
       "model": "Model",
@@ -224,8 +222,6 @@
       "sound_folder_help": "Select a folder containing notification sounds.",
       "sound_duration": "Sound duration",
       "sound_folder_title": "Select the notification sound folder",
-      "provider": "Provider",
-      "provider_help": "Selecting a provider fills the endpoint and recommended model",
       "api_token": "API token",
       "token_help": "Stored locally in user://setting.config",
       "tooltip": "AI settings"
