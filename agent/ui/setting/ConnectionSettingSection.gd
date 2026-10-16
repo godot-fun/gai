@@ -163,8 +163,10 @@ func apply_theme() -> void:
 
 
 func style_history_button(button: Button) -> void:
+	var selected := button.text == api_url_edit.text.strip_edges()
 	ButtonStyle.apply_font_colors(button, Colors.primary_text, Colors.primary_text, Colors.primary_text)
-	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, 5, Margin.ma_2, Margin.ma_2)
-	var hover := StyleBoxHelper.create_style_box_flat(Colors.hover_surface, 5, Margin.ma_2, Margin.ma_2)
+	var normal_color := ThemeColor.selected_surface if selected else Color.TRANSPARENT
+	var normal := StyleBoxHelper.create_style_box_flat(normal_color, 5, Margin.ma_2, Margin.ma_2)
+	var hover := StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, 5, Margin.ma_2, Margin.ma_2)
 	ButtonStyle.apply(button, normal, hover, hover.duplicate())
 	pass
