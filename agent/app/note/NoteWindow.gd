@@ -4,7 +4,7 @@
 class_name NoteWindow
 extends CommonWindow
 
-const NOTE_FILE := "user://note.txt"
+const NOTE_FILE := "user://note.md"
 const EDIT_ICON_PATH := "res://agent/asset/image/icon/edit.svg"
 const SPLIT_ICON_PATH := "res://agent/asset/image/icon/split.svg"
 const PREVIEW_ICON_PATH := "res://agent/asset/image/icon/eye.svg"
