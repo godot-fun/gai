@@ -27,7 +27,7 @@ func style_text_edit() -> void:
 
 
 ## Open a centered note editor. Width/height are percent of the screen (1–100).
-static func show_note(width_percent: int = 70, height_percent: int = 80) -> void:
+static func show_note(width_percent: int = 60, height_percent: int = 80) -> void:
 	close_open_notes()
 	var window := NoteWindow.new()
 	gdf.gdf_node.add_child(window)
@@ -37,8 +37,10 @@ static func show_note(width_percent: int = 70, height_percent: int = 80) -> void
 
 
 func on_close_requested() -> void:
-	if not FileUtils.write_string_to_file(NOTE_FILE, text_edit.text):
-		Alert.alert(I18n.t("note.save_failed"), Colors.error)
+	var content := text_edit.text
+	if content != FileUtils.read_file_to_string(NOTE_FILE):
+		if not FileUtils.write_string_to_file(NOTE_FILE, content):
+			Alert.alert(I18n.t("note.save_failed"), Colors.error)
 	super.on_close_requested()
 	pass
 
