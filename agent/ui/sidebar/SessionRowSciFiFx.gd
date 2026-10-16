@@ -1,10 +1,10 @@
 class_name SessionRowSciFiFx
 extends ColorRect
 
-## Selected-row overlay (shader: agent/ui/shaders/sidebar_session_row.gdshader).
+## Selected-row overlay (shader: agent/ui/sidebar/sidebar_session_row.gdshader).
 ## Owned by [SessionRow], which toggles it through [method set_highlight].
 
-const SHADER := preload("res://agent/ui/shaders/sidebar_session_row.gdshader")
+const SHADER := preload("res://agent/ui/sidebar/sidebar_session_row.gdshader")
 const CORNER_RADIUS := 6.0
 
 var fx_material: ShaderMaterial

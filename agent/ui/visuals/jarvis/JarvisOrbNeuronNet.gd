@@ -302,7 +302,7 @@ func clear_meshes() -> void:
 
 
 func rebuild_multimesh() -> void:
-	var neuron_shader_res := load("res://agent/ui/shaders/jarvis_neuron.gdshader") as Shader
+	var neuron_shader_res := load("res://agent/ui/visuals/jarvis/jarvis_neuron.gdshader") as Shader
 	if neuron_shader_inner == null:
 		neuron_shader_inner = ShaderMaterial.new()
 		neuron_shader_inner.shader = neuron_shader_res
@@ -385,7 +385,7 @@ func build_layer_filament_mesh(
 	surface.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	if shader_ref == null:
 		shader_ref = ShaderMaterial.new()
-		shader_ref.shader = load("res://agent/ui/shaders/jarvis_filament.gdshader") as Shader
+		shader_ref.shader = load("res://agent/ui/visuals/jarvis/jarvis_filament.gdshader") as Shader
 		shader_ref.render_priority = 9 if is_inner else 8
 		if is_inner:
 			filament_shader_inner = shader_ref
