@@ -2,17 +2,14 @@
 ## the title bar toggles edit / split / preview and whether the note opens on startup. Content is
 ## loaded on open and saved when the window closes.
 class_name NoteWindow
-extends Window
+extends CommonWindow
 
 const NOTE_FILE := "user://note.txt"
-const BORDER_ALPHA := 0.18
-const BORDER_ALPHA_UNFOCUSED := 0.08
 const EDIT_ICON_PATH := "res://agent/asset/image/icon/edit.svg"
 const SPLIT_ICON_PATH := "res://agent/asset/image/icon/split.svg"
 const PREVIEW_ICON_PATH := "res://agent/asset/image/icon/eye.svg"
 
 var view_mode: NoteSetting.ViewMode = NoteSetting.ViewMode.SPLIT
-var content_panel: PanelContainer
 var root: VBoxContainer
 var toolbar_panel: PanelContainer
 var toolbar: HBoxContainer
@@ -28,12 +25,7 @@ var mode_button_group: ButtonGroup
 
 
 func _init() -> void:
-	transient = true
-	visible = false
-	close_requested.connect(on_close_requested)
-	window_input.connect(on_window_input)
-	gdf.events.theme_changed.connect(apply_theme)
-	gdf.events.theme_color_changed.connect(apply_theme)
+	super()
 	gdf.events.locale_changed.connect(apply_locale)
 	build_layout()
 	apply_theme()
@@ -43,21 +35,13 @@ func _init() -> void:
 
 
 func build_layout() -> void:
-	content_panel = PanelContainer.new()
-	content_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	# Cover fractional canvas-scaling remainders on the sides and bottom only — keep top at 0 so
-	# the toolbar does not slide under the window title band.
-	content_panel.offset_left = -ControlSize.border_xs
-	content_panel.offset_top = 0
-	content_panel.offset_right = ControlSize.border_xs
-	content_panel.offset_bottom = ControlSize.border_xs
-	add_child(content_panel)
-
+	# Keep the toolbar below the title band; other CommonWindow content covers all fractional edges.
+	container.offset_top = 0
 	root = VBoxContainer.new()
 	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	root.add_theme_constant_override("separation", 0)
-	content_panel.add_child(root)
+	container.add_child(root)
 
 	toolbar_panel = PanelContainer.new()
 	toolbar_panel.custom_minimum_size.y = ControlSize.sm
@@ -146,14 +130,8 @@ func apply_locale() -> void:
 ## Palette matches [GitDiffViewer]: frame/toolbar on [member Colors.surface], editors on
 ## [member Colors.app_background], title and body text on [member Colors.primary_text].
 func apply_theme() -> void:
-	add_theme_stylebox_override("embedded_border", make_embedded_border(BORDER_ALPHA))
-	add_theme_stylebox_override("embedded_unfocused_border", make_embedded_border(BORDER_ALPHA_UNFOCUSED))
-	add_theme_color_override("title_color", Colors.primary_text)
-	add_theme_font_override("title_font", Fonts.semibold())
-	add_theme_font_size_override("title_font_size", Typography.title_medium_size)
-	add_theme_icon_override("close", tint_theme_icon("close", Colors.primary_text))
-	add_theme_icon_override("close_pressed", tint_theme_icon("close_pressed", Colors.error))
-	content_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.surface))
+	super()
+	container.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.surface))
 	split_container.add_theme_icon_override("grabber", make_transparent_grabber())
 	style_text_edit()
 	style_preview()
@@ -161,13 +139,16 @@ func apply_theme() -> void:
 	pass
 
 
-func make_embedded_border(border_alpha: float) -> StyleBoxFlat:
-	var style: StyleBoxFlat = get_theme_stylebox("embedded_border").duplicate() as StyleBoxFlat
-	style.bg_color = Colors.surface
-	style.set_corner_radius_all(ControlSize.radius_md)
-	style.border_color = Color(Colors.primary_text, border_alpha)
-	style.set_border_width_all(ControlSize.border_xs)
-	return style
+func window_background_color() -> Color:
+	return Colors.surface
+
+
+func window_title_color() -> Color:
+	return Colors.primary_text
+
+
+func window_border_color() -> Color:
+	return Colors.primary_text
 
 
 func style_text_edit() -> void:
@@ -265,15 +246,6 @@ func make_transparent_grabber() -> ImageTexture:
 	return ImageTexture.create_from_image(image)
 
 
-func tint_theme_icon(icon_name: String, color: Color) -> ImageTexture:
-	var image := get_theme_icon(icon_name).get_image()
-	for y: int in image.get_height():
-		for x: int in image.get_width():
-			var alpha := image.get_pixel(x, y).a
-			image.set_pixel(x, y, Color(color, alpha))
-	return ImageTexture.create_from_image(image)
-
-
 func set_view_mode(mode: NoteSetting.ViewMode) -> void:
 	view_mode = mode
 	NoteSetting.set_view_mode(mode)
@@ -342,34 +314,11 @@ static func show_note(width_percent: int = 60, height_percent: int = 80) -> void
 	pass
 
 
-static func size_from_viewport_percent(width_percent: int, height_percent: int) -> Vector2i:
-	var viewport := gdf.gdf_node.get_tree().root.get_visible_rect().size
-	return Vector2i(
-		int(viewport.x * clampf(width_percent, 1.0, 100.0) / 100.0),
-		int(viewport.y * clampf(height_percent, 1.0, 100.0) / 100.0),
-	)
-
-
 func present_centered(width_percent: int = 70, height_percent: int = 80) -> void:
-	size = size_from_viewport_percent(width_percent, height_percent)
-	popup_centered()
-	oversampling_override = DisplayScale.compute_ui_scale()
+	super(width_percent, height_percent)
 	reset_split.call_deferred()
 	if view_mode != NoteSetting.ViewMode.PREVIEW:
 		text_edit.grab_focus()
-	pass
-
-
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT and visible:
-		on_close_requested.call_deferred()
-	pass
-
-
-func on_window_input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed("ui_cancel"):
-		on_close_requested()
-		set_input_as_handled()
 	pass
 
 

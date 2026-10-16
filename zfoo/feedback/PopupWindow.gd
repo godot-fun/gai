@@ -8,72 +8,28 @@
 ## The frame overrides only apply while subwindows are embedded, which is the project default; with
 ## `embed_subwindows` off the OS draws the chrome and only the text area stays themed.
 class_name PopupWindow
-extends Window
-
-## Hairline around the frame, so the popup separates from the app in either theme.
-const BORDER_ALPHA: float = 0.18
-const BORDER_ALPHA_UNFOCUSED: float = 0.08
+extends CommonWindow
 
 var text_edit: TextEdit
 
 
 func _init() -> void:
-	# Child of the main window: follows it, and usually has no taskbar entry.
-	transient = true
-	# Hide until popup_centered(), otherwise add_child flashes a default-sized window.
-	visible = false
-	close_requested.connect(on_close_requested)
-	window_input.connect(on_window_input)
-	# Freed with the window, so the connections need no teardown.
-	gdf.events.theme_changed.connect(apply_theme)
-	gdf.events.theme_color_changed.connect(apply_theme)
-
+	super()
 	text_edit = TextEdit.new()
 	text_edit.editable = false
 	text_edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
-	text_edit.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	# Cover fractional canvas-scaling remainders on every edge. The Window viewport clips the
-	# one-pixel overlap, while sizes that round the content down no longer expose the frame beneath.
-	text_edit.offset_left = -ControlSize.border_xs
-	text_edit.offset_top = -ControlSize.border_xs
-	text_edit.offset_right = ControlSize.border_xs
-	text_edit.offset_bottom = ControlSize.border_xs
-	add_child(text_edit)
+	text_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	text_edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	container.add_child(text_edit)
 	apply_theme()
 	pass
 
 
 ## Paint the popup for the current theme; safe to run again on every theme or accent change.
 func apply_theme() -> void:
-	add_theme_stylebox_override("embedded_border", make_embedded_border(BORDER_ALPHA))
-	add_theme_stylebox_override("embedded_unfocused_border", make_embedded_border(BORDER_ALPHA_UNFOCUSED))
-	add_theme_color_override("title_color", ThemeColor.title_color)
-	add_theme_font_override("title_font", Fonts.semibold())
-	add_theme_font_size_override("title_font_size", Typography.title_medium_size)
-	add_theme_icon_override("close_pressed", tint_theme_icon("close_pressed", Colors.error))
+	super()
 	style_text_edit()
 	pass
-
-
-func tint_theme_icon(icon_name: String, color: Color) -> ImageTexture:
-	var image := get_theme_icon(icon_name).get_image()
-	for y: int in image.get_height():
-		for x: int in image.get_width():
-			var alpha := image.get_pixel(x, y).a
-			image.set_pixel(x, y, Color(color, alpha))
-	return ImageTexture.create_from_image(image)
-
-
-## The engine's own frame with only its fills swapped, so the 32px title band, the close button and
-## the resize margins keep the geometry the engine positions them by. The content panel inside it stays
-## square, so its corners can never open a gap against the frame's inner edge.
-func make_embedded_border(border_alpha: float) -> StyleBoxFlat:
-	var style: StyleBoxFlat = get_theme_stylebox("embedded_border").duplicate() as StyleBoxFlat
-	style.bg_color = ThemeColor.accent_surface
-	style.set_corner_radius_all(ControlSize.radius_md)
-	style.border_color = Color(ThemeColor.title_color, border_alpha)
-	style.set_border_width_all(ControlSize.border_xs)
-	return style
 
 
 ## Read-only text area on the card's inset surface: padding from [Margin], accent caret and
@@ -98,21 +54,9 @@ func style_text_edit() -> void:
 	pass
 
 
-## Size against the root viewport; this Window is itself a Viewport. Percents clamp to 1–100.
-static func size_from_viewport_percent(width_percent: int, height_percent: int) -> Vector2i:
-	var viewport := gdf.gdf_node.get_tree().root.get_visible_rect().size
-	return Vector2i(
-		int(viewport.x * clampf(width_percent, 1.0, 100.0) / 100.0),
-		int(viewport.y * clampf(height_percent, 1.0, 100.0) / 100.0),
-	)
-
-
 ## Center, apply embedded-window font oversampling, then focus the text area.
 func present_centered(width_percent: int = 70, height_percent: int = 80) -> void:
-	size = size_from_viewport_percent(width_percent, height_percent)
-	popup_centered()
-	# Embedded Window fonts need the main-window stretch ratio; set once after popup embeds.
-	oversampling_override = DisplayScale.compute_ui_scale()
+	super(width_percent, height_percent)
 	# Keep keyboard navigation inside the popup instead of the previously focused
 	# control in the parent window.
 	text_edit.grab_focus()
@@ -135,23 +79,4 @@ static func show_window(i18n_title: String, i18n_text: String, width_percent: in
 func set_body(text: String) -> void:
 	text_edit.text = text
 	text_edit.scroll_vertical = text_edit.get_line_count()
-	pass
-
-
-func _notification(what: int) -> void:
-	# Clicking outside moves focus back to the main window.
-	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT and visible:
-		on_close_requested()
-	pass
-
-
-func on_close_requested() -> void:
-	queue_free()
-	pass
-
-
-func on_window_input(event: InputEvent) -> void:
-	if visible and event.is_action_pressed("ui_cancel"):
-		on_close_requested()
-		set_input_as_handled()
 	pass

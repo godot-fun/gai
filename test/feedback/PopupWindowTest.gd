@@ -98,11 +98,13 @@ func PopupWindow_transient_test() -> void:
 	var window := PopupWindow.new()
 	assert(window.transient)
 	assert(!window.visible)
+	assert(window.text_edit.get_parent() == window.container)
+	assert(window.container.get_parent() == window)
 	assert(window.text_edit.editable == false)
-	assert(window.text_edit.offset_left == -ControlSize.border_xs)
-	assert(window.text_edit.offset_top == -ControlSize.border_xs)
-	assert(window.text_edit.offset_right == ControlSize.border_xs)
-	assert(window.text_edit.offset_bottom == ControlSize.border_xs)
+	assert(window.container.offset_left == -ControlSize.border_xs)
+	assert(window.container.offset_top == -ControlSize.border_xs)
+	assert(window.container.offset_right == ControlSize.border_xs)
+	assert(window.container.offset_bottom == ControlSize.border_xs)
 	window.free()
 	pass
 
