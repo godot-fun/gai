@@ -13,7 +13,8 @@ func setup(p_button: Button) -> void:
 	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(apply_theme)
 	apply_theme()
-	on_button_pressed()
+	if NoteSetting.get_open_on_startup():
+		on_button_pressed()
 	pass
 
 

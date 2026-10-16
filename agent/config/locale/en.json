@@ -36,7 +36,11 @@
     "title": "Note",
     "tooltip": "Open note",
     "placeholder": "Write your notes here...",
-    "save_failed": "Failed to save note"
+    "save_failed": "Failed to save note",
+    "open_on_startup": "Open on startup",
+    "mode_edit": "Edit mode",
+    "mode_split": "Split view",
+    "mode_preview": "Preview mode"
   },
   "agent": {
     "common": {

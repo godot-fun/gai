@@ -36,7 +36,11 @@
     "title": "笔记",
     "tooltip": "打开笔记",
     "placeholder": "在这里写笔记…",
-    "save_failed": "保存笔记失败"
+    "save_failed": "保存笔记失败",
+    "open_on_startup": "每次打开应用时弹出",
+    "mode_edit": "编辑模式",
+    "mode_split": "左右文本对比模式",
+    "mode_preview": "纯预览模式"
   },
   "agent": {
     "common": {
