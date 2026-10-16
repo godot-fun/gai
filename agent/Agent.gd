@@ -30,6 +30,7 @@ extends Control
 @onready var project_button: Button = $Root/Toolbar/ToolbarRow/ProjectButton
 @onready var workflow_button: Button = $Root/Toolbar/ToolbarRow/WorkflowButton
 @onready var sense_button: Button = $Root/Toolbar/ToolbarRow/SenseButton
+@onready var note_button: Button = $Root/Toolbar/ToolbarRow/NoteButton
 @onready var search_button: Button = $Root/Toolbar/ToolbarRow/SearchButtonWrap/SearchButton
 @onready var log_button: Button = $Root/Toolbar/ToolbarRow/LogButtonWrap/LogButton
 @onready var theme_color_select: Button = $Root/Toolbar/ToolbarRow/ThemeColorSelectWrap/ThemeColorSelect
@@ -42,6 +43,7 @@ var toolbar: AgentToolbar = AgentToolbar.new()
 var workspace_button: WorkspaceButton = WorkspaceButton.new()
 var workflow_button_ctrl: WorkflowButton = WorkflowButton.new()
 var sense_button_ctrl: SenseButton = SenseButton.new()
+var note_button_ctrl: NoteButton = NoteButton.new()
 var search_button_ctrl: SearchButton = SearchButton.new()
 var log_button_ctrl: LogButton = LogButton.new()
 var chat_input: AgentChatInput = AgentChatInput.new()
@@ -84,6 +86,7 @@ func _ready() -> void:
 	workspace_button.setup(project_button, workspace_dialog)
 	workflow_button_ctrl.setup(workflow_button, project_button)
 	sense_button_ctrl.setup(sense_button, sense_input)
+	note_button_ctrl.setup(note_button)
 	search_button_ctrl.setup(search_button)
 	log_button_ctrl.setup(log_button)
 	sense_input.setup()

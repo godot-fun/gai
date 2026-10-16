@@ -98,6 +98,27 @@ func style_text_edit() -> void:
 	pass
 
 
+## Size against the root viewport; this Window is itself a Viewport. Percents clamp to 1–100.
+static func size_from_viewport_percent(width_percent: int, height_percent: int) -> Vector2i:
+	var viewport := gdf.gdf_node.get_tree().root.get_visible_rect().size
+	return Vector2i(
+		int(viewport.x * clampf(width_percent, 1.0, 100.0) / 100.0),
+		int(viewport.y * clampf(height_percent, 1.0, 100.0) / 100.0),
+	)
+
+
+## Center, apply embedded-window font oversampling, then focus the text area.
+func present_centered(width_percent: int = 70, height_percent: int = 80) -> void:
+	size = size_from_viewport_percent(width_percent, height_percent)
+	popup_centered()
+	# Embedded Window fonts need the main-window stretch ratio; set once after popup embeds.
+	oversampling_override = DisplayScale.compute_ui_scale()
+	# Keep keyboard navigation inside the popup instead of the previously focused
+	# control in the parent window.
+	text_edit.grab_focus()
+	pass
+
+
 ## Open a centered read-only window. Width/height are percent of the screen (1–100).
 ## [param i18n_title] and [param i18n_text] may be translation keys; text without a registered
 ## translation is displayed unchanged.
@@ -106,19 +127,8 @@ static func show_window(i18n_title: String, i18n_text: String, width_percent: in
 	var window := PopupWindow.new()
 	window.title = I18n.t(i18n_title)
 	gdf.gdf_node.add_child(window)
-	# Size against the root viewport; this Window is itself a Viewport.
-	var viewport := gdf.gdf_node.get_tree().root.get_visible_rect().size
-	window.size = Vector2i(
-		int(viewport.x * clampf(width_percent, 1.0, 100.0) / 100.0),
-		int(viewport.y * clampf(height_percent, 1.0, 100.0) / 100.0),
-	)
 	window.set_body(I18n.t(i18n_text))
-	window.popup_centered()
-	# Embedded Window fonts need the main-window stretch ratio; set once after popup embeds.
-	window.oversampling_override = DisplayScale.compute_ui_scale()
-	# Keep keyboard navigation inside the popup instead of the previously focused
-	# control in the parent window.
-	window.text_edit.grab_focus()
+	window.present_centered(width_percent, height_percent)
 	pass
 
 
@@ -131,7 +141,7 @@ func set_body(text: String) -> void:
 func _notification(what: int) -> void:
 	# Clicking outside moves focus back to the main window.
 	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT and visible:
-		queue_free()
+		on_close_requested()
 	pass
 
 
@@ -142,6 +152,6 @@ func on_close_requested() -> void:
 
 func on_window_input(event: InputEvent) -> void:
 	if visible and event.is_action_pressed("ui_cancel"):
-		queue_free()
+		on_close_requested()
 		set_input_as_handled()
 	pass

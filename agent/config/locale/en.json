@@ -32,6 +32,12 @@
     "save_failed": "Cannot save file: {}",
     "saved": "Saved successfully"
   },
+  "note": {
+    "title": "Note",
+    "tooltip": "Open note",
+    "placeholder": "Write your notes here...",
+    "save_failed": "Failed to save note"
+  },
   "agent": {
     "common": {
       "select": "Select",

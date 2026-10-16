@@ -32,6 +32,12 @@
     "save_failed": "无法保存文件：{}",
     "saved": "保存成功"
   },
+  "note": {
+    "title": "笔记",
+    "tooltip": "打开笔记",
+    "placeholder": "在这里写笔记…",
+    "save_failed": "保存笔记失败"
+  },
   "agent": {
     "common": {
       "select": "选择",
