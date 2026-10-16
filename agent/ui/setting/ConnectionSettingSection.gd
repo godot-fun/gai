@@ -94,7 +94,9 @@ func refresh_history() -> void:
 	for child in history_list.get_children():
 		history_list.remove_child(child)
 		child.queue_free()
-	for entry: ApiSetting.ApiModelConfig in ApiSetting.get_connection_history():
+	var history := ApiSetting.get_connection_history()
+	for index in range(history.size()):
+		var entry := history[index]
 		var row := PanelContainer.new()
 		row.set_meta("api_url", entry.api_url)
 		history_list.add_child(row)
@@ -114,7 +116,7 @@ func refresh_history() -> void:
 		delete_button.text = "×"
 		delete_button.focus_mode = Control.FOCUS_NONE
 		delete_button.custom_minimum_size.x = ControlSize.sm
-		delete_button.pressed.connect(on_history_deleted.bind(entry.api_url))
+		delete_button.pressed.connect(on_history_deleted.bind(index))
 		content.add_child(delete_button)
 		style_history_delete_button(delete_button)
 		style_history_row(row)
@@ -166,10 +168,10 @@ func on_history_selected(entry: ApiSetting.ApiModelConfig) -> void:
 	pass
 
 
-func on_history_deleted(api_url: String) -> void:
+func on_history_deleted(index: int) -> void:
 	# History and active fields are intentionally independent: deleting the selected history row
 	# must not clear or switch the connection currently being edited.
-	ApiSetting.remove_connection(api_url)
+	ApiSetting.remove_connection_at(index)
 	refresh_history()
 	if history_list.get_child_count() == 0:
 		hide_history_panel()

@@ -62,19 +62,18 @@ const CONNECTION_HISTORY_FILE_PATH := "user://api_connection_history.json"
 const MAX_CONNECTION_HISTORY := 10
 
 
-## Most-recent-first API/model/token groups. Invalid legacy data is ignored.
+## Most-recent-first API/model/token groups. Invalid legacy data is ignored; equal URLs remain
+## distinct because they may use different models or credentials.
 static func get_connection_history() -> Array[ApiModelConfig]:
 	if not FileAccess.file_exists(CONNECTION_HISTORY_FILE_PATH):
 		return []
 	var text := FileAccess.get_file_as_string(CONNECTION_HISTORY_FILE_PATH)
 	var parsed := JsonUtils.json_to_object_array(text, ApiModelConfig)
 	var result: Array[ApiModelConfig] = []
-	var seen_urls: Dictionary[String, bool] = {}
 	for value: Variant in parsed:
 		var entry := value as ApiModelConfig
-		if entry != null and entry.is_valid() and not seen_urls.has(entry.api_url):
+		if entry != null and entry.is_valid():
 			result.append(entry)
-			seen_urls[entry.api_url] = true
 	return result
 
 
@@ -85,7 +84,7 @@ static func remember_connection(api_url: String, api_token: String, model: Strin
 		return
 	var history := get_connection_history()
 	for index in range(history.size() - 1, -1, -1):
-		if history[index].matches_endpoint(connection):
+		if history[index].matches_connection(connection):
 			history.remove_at(index)
 	history.push_front(connection)
 	if history.size() > MAX_CONNECTION_HISTORY:
@@ -94,13 +93,12 @@ static func remember_connection(api_url: String, api_token: String, model: Strin
 	pass
 
 
-## Removes one saved connection without changing the active connection fields.
-static func remove_connection(api_url: String) -> void:
-	var normalized_url := api_url.strip_edges()
+## Removes exactly one saved array entry without changing the active connection fields.
+static func remove_connection_at(index: int) -> void:
 	var history := get_connection_history()
-	for index in range(history.size() - 1, -1, -1):
-		if history[index].api_url == normalized_url:
-			history.remove_at(index)
+	if index < 0 or index >= history.size():
+		return
+	history.remove_at(index)
 	save_connection_history(history)
 	pass
 
@@ -134,5 +132,5 @@ class ApiModelConfig:
 		return not api_url.is_empty() and not model.is_empty()
 
 
-	func matches_endpoint(other: ApiModelConfig) -> bool:
-		return api_url == other.api_url
+	func matches_connection(other: ApiModelConfig) -> bool:
+		return api_url == other.api_url and model == other.model and api_token == other.api_token
