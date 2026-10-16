@@ -272,71 +272,71 @@
     "batch": {
       "glob": "通配符",
       "output_type": "输出类型"
+    },
+    "category": {
+      "source": "输入",
+      "audio": "音频",
+      "image": "图片",
+      "video": "视频"
+    },
+    "port_type": {
+      "audio": "音频",
+      "image": "图片",
+      "video": "视频",
+      "text": "文本",
+      "folder": "文件夹"
+    },
+    "port": {
+      "audio": "音频",
+      "image": "图片",
+      "video": "视频",
+      "text": "文本",
+      "folder": "文件夹",
+      "item": "文件"
+    },
+    "node": {
+      "input-audio": "音频输入",
+      "input-image": "图片输入",
+      "input-video": "视频输入",
+      "input-text": "文本输入",
+      "input-folder": "文件夹输入",
+      "batch-for-each": "批处理 (For Each)",
+      "audio-to-wav": "音频转 WAV",
+      "audio-to-ogg": "音频转 OGG",
+      "audio-trim": "音频去静音",
+      "audio-denoise": "音频降噪",
+      "audio-fade": "音频淡入淡出",
+      "audio-loudness-normalization": "响度标准化",
+      "audio-sample-rate-standardize": "采样率标准化",
+      "audio-volume-adjust": "音量调整",
+      "video-to-wav": "视频提取音频",
+      "video-remove-audio": "移除视频音轨",
+      "video-to-ogv": "视频转 OGV",
+      "video-compress-to-size": "视频压缩到目标大小",
+      "video-4k-normalization": "4K 规范化",
+      "video-to-4k": "视频升 4K",
+      "video-to-60fps": "视频升 60fps",
+      "video-merge": "视频合并 (CPU)",
+      "video-merge-gpu": "视频合并 (GPU)",
+      "image-to-png": "图片转 PNG",
+      "image-trim": "图片裁边",
+      "image-remove-background": "AI 抠图",
+      "image-remove-white-background": "纯色背景抠图",
+      "image-resize": "图片缩放"
+    },
+    "node_port": {
+      "audio-to-wav.out": "WAV",
+      "audio-to-ogg.out": "OGG",
+      "image-to-png.out": "PNG",
+      "image-trim.out": "PNG",
+      "image-remove-background.out": "PNG",
+      "image-remove-white-background.out": "PNG",
+      "image-resize.out": "PNG",
+      "video-merge.folder": "视频文件夹",
+      "video-merge-gpu.folder": "视频文件夹"
+    },
+    "pipeline": {
+      "stopped": "工作流已停止"
     }
-  },
-  "category": {
-    "source": "输入",
-    "audio": "音频",
-    "image": "图片",
-    "video": "视频"
-  },
-  "port_type": {
-    "audio": "音频",
-    "image": "图片",
-    "video": "视频",
-    "text": "文本",
-    "folder": "文件夹"
-  },
-  "port": {
-    "audio": "音频",
-    "image": "图片",
-    "video": "视频",
-    "text": "文本",
-    "folder": "文件夹",
-    "item": "文件"
-  },
-  "node": {
-    "input-audio": "音频输入",
-    "input-image": "图片输入",
-    "input-video": "视频输入",
-    "input-text": "文本输入",
-    "input-folder": "文件夹输入",
-    "batch-for-each": "批处理 (For Each)",
-    "audio-to-wav": "音频转 WAV",
-    "audio-to-ogg": "音频转 OGG",
-    "audio-trim": "音频去静音",
-    "audio-denoise": "音频降噪",
-    "audio-fade": "音频淡入淡出",
-    "audio-loudness-normalization": "响度标准化",
-    "audio-sample-rate-standardize": "采样率标准化",
-    "audio-volume-adjust": "音量调整",
-    "video-to-wav": "视频提取音频",
-    "video-remove-audio": "移除视频音轨",
-    "video-to-ogv": "视频转 OGV",
-    "video-compress-to-size": "视频压缩到目标大小",
-    "video-4k-normalization": "4K 规范化",
-    "video-to-4k": "视频升 4K",
-    "video-to-60fps": "视频升 60fps",
-    "video-merge": "视频合并 (CPU)",
-    "video-merge-gpu": "视频合并 (GPU)",
-    "image-to-png": "图片转 PNG",
-    "image-trim": "图片裁边",
-    "image-remove-background": "AI 抠图",
-    "image-remove-white-background": "纯色背景抠图",
-    "image-resize": "图片缩放"
-  },
-  "node_port": {
-    "audio-to-wav.out": "WAV",
-    "audio-to-ogg.out": "OGG",
-    "image-to-png.out": "PNG",
-    "image-trim.out": "PNG",
-    "image-remove-background.out": "PNG",
-    "image-remove-white-background.out": "PNG",
-    "image-resize.out": "PNG",
-    "video-merge.folder": "视频文件夹",
-    "video-merge-gpu.folder": "视频文件夹"
-  },
-  "pipeline": {
-    "stopped": "工作流已停止"
   }
 }

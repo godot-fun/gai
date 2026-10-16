@@ -272,71 +272,71 @@
     "batch": {
       "glob": "Glob",
       "output_type": "Output Type"
+    },
+    "category": {
+      "source": "Input",
+      "audio": "Audio",
+      "image": "Image",
+      "video": "Video"
+    },
+    "port_type": {
+      "audio": "Audio",
+      "image": "Image",
+      "video": "Video",
+      "text": "Text",
+      "folder": "Folder"
+    },
+    "port": {
+      "audio": "Audio",
+      "image": "Image",
+      "video": "Video",
+      "text": "Text",
+      "folder": "Folder",
+      "item": "File"
+    },
+    "node": {
+      "input-audio": "input-audio",
+      "input-image": "input-image",
+      "input-video": "input-video",
+      "input-text": "input-text",
+      "input-folder": "input-folder",
+      "batch-for-each": "batch-for-each",
+      "audio-to-wav": "audio-to-wav",
+      "audio-to-ogg": "audio-to-ogg",
+      "audio-trim": "audio-trim",
+      "audio-denoise": "audio-denoise",
+      "audio-fade": "audio-fade",
+      "audio-loudness-normalization": "audio-loudness-normalization",
+      "audio-sample-rate-standardize": "audio-sample-rate-standardize",
+      "audio-volume-adjust": "audio-volume-adjust",
+      "video-to-wav": "video-to-wav",
+      "video-remove-audio": "video-remove-audio",
+      "video-to-ogv": "video-to-ogv",
+      "video-compress-to-size": "video-compress-to-size",
+      "video-4k-normalization": "video-4k-normalization",
+      "video-to-4k": "video-to-4k",
+      "video-to-60fps": "video-to-60fps",
+      "video-merge": "video-merge",
+      "video-merge-gpu": "video-merge-gpu",
+      "image-to-png": "image-to-png",
+      "image-trim": "image-trim",
+      "image-remove-background": "image-remove-background",
+      "image-remove-white-background": "image-remove-white-background",
+      "image-resize": "image-resize"
+    },
+    "node_port": {
+      "audio-to-wav.out": "WAV",
+      "audio-to-ogg.out": "OGG",
+      "image-to-png.out": "PNG",
+      "image-trim.out": "PNG",
+      "image-remove-background.out": "PNG",
+      "image-remove-white-background.out": "PNG",
+      "image-resize.out": "PNG",
+      "video-merge.folder": "Video Folder",
+      "video-merge-gpu.folder": "Video Folder"
+    },
+    "pipeline": {
+      "stopped": "Workflow stopped"
     }
-  },
-  "category": {
-    "source": "Input",
-    "audio": "Audio",
-    "image": "Image",
-    "video": "Video"
-  },
-  "port_type": {
-    "audio": "Audio",
-    "image": "Image",
-    "video": "Video",
-    "text": "Text",
-    "folder": "Folder"
-  },
-  "port": {
-    "audio": "Audio",
-    "image": "Image",
-    "video": "Video",
-    "text": "Text",
-    "folder": "Folder",
-    "item": "File"
-  },
-  "node": {
-    "input-audio": "input-audio",
-    "input-image": "input-image",
-    "input-video": "input-video",
-    "input-text": "input-text",
-    "input-folder": "input-folder",
-    "batch-for-each": "batch-for-each",
-    "audio-to-wav": "audio-to-wav",
-    "audio-to-ogg": "audio-to-ogg",
-    "audio-trim": "audio-trim",
-    "audio-denoise": "audio-denoise",
-    "audio-fade": "audio-fade",
-    "audio-loudness-normalization": "audio-loudness-normalization",
-    "audio-sample-rate-standardize": "audio-sample-rate-standardize",
-    "audio-volume-adjust": "audio-volume-adjust",
-    "video-to-wav": "video-to-wav",
-    "video-remove-audio": "video-remove-audio",
-    "video-to-ogv": "video-to-ogv",
-    "video-compress-to-size": "video-compress-to-size",
-    "video-4k-normalization": "video-4k-normalization",
-    "video-to-4k": "video-to-4k",
-    "video-to-60fps": "video-to-60fps",
-    "video-merge": "video-merge",
-    "video-merge-gpu": "video-merge-gpu",
-    "image-to-png": "image-to-png",
-    "image-trim": "image-trim",
-    "image-remove-background": "image-remove-background",
-    "image-remove-white-background": "image-remove-white-background",
-    "image-resize": "image-resize"
-  },
-  "node_port": {
-    "audio-to-wav.out": "WAV",
-    "audio-to-ogg.out": "OGG",
-    "image-to-png.out": "PNG",
-    "image-trim.out": "PNG",
-    "image-remove-background.out": "PNG",
-    "image-remove-white-background.out": "PNG",
-    "image-resize.out": "PNG",
-    "video-merge.folder": "Video Folder",
-    "video-merge-gpu.folder": "Video Folder"
-  },
-  "pipeline": {
-    "stopped": "Workflow stopped"
   }
 }

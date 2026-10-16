@@ -90,10 +90,10 @@ Port types: `audio`, `image`, `video`, `text`, `folder`. Connections require mat
 
 String keys:
 
-- Workflow UI, dialogs, and alerts: `workflow.*`; pipeline messages: `pipeline.*`
-- Sidebar categories: `category.*`
-- Node titles: `node.{id}` or `node.{skill}` (English UI often uses the id, matching the `.ai/` folder name)
-- Port labels: prefer `node_port.{id}.{port_id}`, then `port.{port_id}`, then `port_type.{type}`
+- Workflow UI, dialogs, alerts, and pipeline messages: `workflow.*`
+- Sidebar categories: `workflow.category.*`
+- Node titles: `workflow.node.{id}` or `workflow.node.{skill}` (English UI often uses the id, matching the `.ai/` folder name)
+- Port labels: prefer `workflow.node_port.{id}.{port_id}`, then `workflow.port.{port_id}`, then `workflow.port_type.{type}`
 
 Switch language (refreshes toolbar, sidebar, and canvas nodes):
 

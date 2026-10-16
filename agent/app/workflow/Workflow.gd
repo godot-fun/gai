@@ -379,7 +379,7 @@ func on_step_finished(node_id: String, exit_code: int, output_path: String) -> v
 func on_pipeline_stopped() -> void:
 	running_pipeline = false
 	set_run_button_running(false)
-	var message := tr("pipeline.stopped")
+	var message := tr("workflow.pipeline.stopped")
 	Log.info(message)
 	Alert.alert(message, Colors.warning)
 	pass

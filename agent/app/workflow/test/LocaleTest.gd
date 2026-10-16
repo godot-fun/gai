@@ -12,8 +12,10 @@ func ensure_translations() -> void:
 func graph_nodes_locale_test() -> void:
 	ensure_translations()
 	TranslationServer.set_locale(I18n.EN)
-	assert(GraphNodesConfig.get_def("input-audio").display_label() == I18n.t("node.input-audio"))
-	assert(GraphNodesConfig.category_label(GraphNodesConfig.SOURCE_CATEGORY) == I18n.t("category.source"))
+	assert(GraphNodesConfig.get_def("input-audio").display_label() == I18n.t("workflow.node.input-audio"))
+	assert(GraphNodesConfig.category_label(GraphNodesConfig.SOURCE_CATEGORY) == I18n.t("workflow.category.source"))
+	for key in ["workflow.port_type.audio", "workflow.port.audio", "workflow.node_port.audio-to-wav.out", "workflow.pipeline.stopped"]:
+		assert(I18n.t(key) != key)
 	pass
 
 

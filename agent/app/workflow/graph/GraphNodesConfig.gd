@@ -103,7 +103,7 @@ static func _static_init() -> void:
 
 
 static func category_label(category_id: String) -> String:
-	var key := "category." + category_id
+	var key := "workflow.category." + category_id
 	var translated := I18n.t(key)
 	return category_id if translated == key else translated
 
