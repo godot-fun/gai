@@ -78,7 +78,6 @@ func refresh() -> void:
 
 func save() -> void:
 	save_current()
-	ApiSetting.remember_connection(api_url_edit.text, api_token_edit.text, model_edit.text)
 	refresh_history()
 	pass
 
@@ -166,18 +165,19 @@ func hide_history_panel() -> void:
 
 
 func on_history_selected(entry: ApiSetting.ApiModelConfig) -> void:
+	ApiSetting.activate_connection(entry)
 	api_url_edit.text = entry.api_url
 	model_edit.text = entry.model
 	api_token_edit.text = entry.api_token
 	hide_history_panel()
-	save_current()
 	pass
 
 
 func on_history_deleted(index: int) -> void:
-	# History and active fields are intentionally independent: deleting the selected history row
-	# must not clear or switch the connection currently being edited.
 	ApiSetting.remove_connection_at(index)
+	api_url_edit.text = ApiSetting.get_api_url()
+	model_edit.text = ApiSetting.get_model()
+	api_token_edit.text = ApiSetting.get_api_token()
 	refresh_history()
 	if history_list.get_child_count() == 0:
 		hide_history_panel()

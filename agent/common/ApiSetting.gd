@@ -1,20 +1,16 @@
-﻿class_name ApiSetting
+class_name ApiSetting
 extends RefCounted
 
-## Persisted OpenAI-compatible API connection settings.
-
-# ----------------------------------------------------------------------------------------------------------------------
-# Storage keys and defaults
-
-const API_URL_KEY := "agent_ai_api_url"
-const API_TOKEN_KEY := "agent_ai_api_token"
-const PROXY_ADDRESS_KEY := "agent_ai_proxy_address"
-const MODEL_KEY := "agent_ai_model"
-
+## Encrypted OpenAI-compatible connection history and its active connection.
 
 const DEFAULT_API_URL := "https://api.deepseek.com/chat/completions"
 const DEFAULT_MODEL := "deepseek-v4-flash"
 const API_KEY_ENV := "OPENAI_API_KEY"
+const CONNECTION_HISTORY_FILE_PATH := "user://api.dat"
+const MAX_CONNECTION_HISTORY := 10
+const PROXY_ADDRESS_KEY := "agent_ai_proxy_address"
+
+static var connection_history: Array[ApiModelConfig] = load_connection_history()
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -22,100 +18,137 @@ const API_KEY_ENV := "OPENAI_API_KEY"
 
 ## Returns the endpoint currently used by the OpenAI-compatible client.
 static func get_api_url() -> String:
-	return Setting.get_string(API_URL_KEY, DEFAULT_API_URL)
+	var connection := get_active_connection()
+	return connection.api_url if connection != null else DEFAULT_API_URL
 
 
 static func get_api_token() -> String:
-	return Setting.get_string(API_TOKEN_KEY, OS.get_environment(API_KEY_ENV))
+	var connection := get_active_connection()
+	return connection.api_token if connection != null else OS.get_environment(API_KEY_ENV)
 
 
 static func get_model() -> String:
-	return Setting.get_string(MODEL_KEY, DEFAULT_MODEL)
+	var connection := get_active_connection()
+	return connection.model if connection != null else DEFAULT_MODEL
 
 
 static func get_proxy_address() -> String:
 	return Setting.get_string(PROXY_ADDRESS_KEY).strip_edges()
 
 
-## Persists the active connection and proxy independently from the reusable history list.
+## Persists the edited connection as the active history entry and saves the non-secret proxy setting.
 static func save(api_url: String, api_token: String, model: String, proxy_address: String) -> void:
-	Setting.set_string(API_URL_KEY, api_url.strip_edges())
-	Setting.set_string(API_TOKEN_KEY, api_token.strip_edges())
-	Setting.set_string(MODEL_KEY, model.strip_edges())
+	set_active_connection(ApiModelConfig.new(api_url, model, api_token))
 	Setting.set_string(PROXY_ADDRESS_KEY, proxy_address.strip_edges())
 	Setting.save()
 	pass
 
 
-# ----------------------------------------------------------------------------------------------------------------------
-# Client factory
-
-## Creates a client from the active connection; proxy selection is applied by request callers.
+## Creates a client from the active connection; request callers apply the proxy separately.
 static func get_client() -> OpenAiClient:
 	return OpenAiClient.new(get_api_token(), get_api_url(), get_model())
+
+
+static func get_active_connection() -> ApiModelConfig:
+	return connection_history.front() if not connection_history.is_empty() else null
+
+
+static func set_active_connection(connection: ApiModelConfig) -> void:
+	if not connection.is_valid():
+		return
+	if connection_history.is_empty():
+		connection_history.append(connection)
+	else:
+		connection_history[0] = connection
+	remove_duplicate_connections(connection, 1)
+	trim_and_save_connection_history()
+	pass
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Connection history
 
-const CONNECTION_HISTORY_FILE_PATH := "user://api_connection_history.json"
-const MAX_CONNECTION_HISTORY := 10
-
-
-## Most-recent-first API/model/token groups. Invalid legacy data is ignored; equal URLs remain
-## distinct because they may use different models or credentials.
+## Returns a shallow copy of the most-recent-first connection history cached in memory.
 static func get_connection_history() -> Array[ApiModelConfig]:
-	if not FileAccess.file_exists(CONNECTION_HISTORY_FILE_PATH):
-		return []
-	var text := FileAccess.get_file_as_string(CONNECTION_HISTORY_FILE_PATH)
-	var parsed := JsonUtils.json_to_object_array(text, ApiModelConfig)
 	var result: Array[ApiModelConfig] = []
-	for value: Variant in parsed:
-		var entry := value as ApiModelConfig
-		if entry != null and entry.is_valid():
-			result.append(entry)
+	result.assign(connection_history)
 	return result
 
 
-## Moves an existing configuration to the front or inserts it, keeping the history bounded.
+## Moves an equal connection to the front or inserts it as the active connection.
 static func remember_connection(api_url: String, api_token: String, model: String) -> void:
 	var connection := ApiModelConfig.new(api_url, model, api_token)
 	if not connection.is_valid():
 		return
-	var history := get_connection_history()
-	for index in range(history.size() - 1, -1, -1):
-		if history[index].matches_connection(connection):
-			history.remove_at(index)
-	history.push_front(connection)
-	if history.size() > MAX_CONNECTION_HISTORY:
-		history.resize(MAX_CONNECTION_HISTORY)
-	save_connection_history(history)
+	remove_duplicate_connections(connection)
+	connection_history.push_front(connection)
+	trim_and_save_connection_history()
 	pass
 
 
-## Removes exactly one saved array entry without changing the active connection fields.
+## Makes an existing history entry active without duplicating it.
+static func activate_connection(connection: ApiModelConfig) -> void:
+	remember_connection(connection.api_url, connection.api_token, connection.model)
+	pass
+
+
+## Removes one entry; the next entry becomes active when the first entry is removed.
 static func remove_connection_at(index: int) -> void:
-	var history := get_connection_history()
-	if index < 0 or index >= history.size():
+	if index < 0 or index >= connection_history.size():
 		return
-	history.remove_at(index)
-	save_connection_history(history)
+	connection_history.remove_at(index)
+	save_connection_history()
 	pass
 
 
-## Writes the complete bounded history; callers mutate an in-memory copy before replacing the file.
-static func save_connection_history(history: Array[ApiModelConfig]) -> void:
-	var json := JsonUtils.object_to_json(history)
-	if FileAccess.file_exists(CONNECTION_HISTORY_FILE_PATH) and FileAccess.get_file_as_string(CONNECTION_HISTORY_FILE_PATH) == json:
-		return
-	var file := FileAccess.open(CONNECTION_HISTORY_FILE_PATH, FileAccess.WRITE)
+static func remove_duplicate_connections(connection: ApiModelConfig, minimum_index: int = 0) -> void:
+	for index in range(connection_history.size() - 1, minimum_index - 1, -1):
+		if connection_history[index].matches_connection(connection):
+			connection_history.remove_at(index)
+	pass
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Encrypted history storage
+
+static func load_connection_history() -> Array[ApiModelConfig]:
+	var result: Array[ApiModelConfig] = []
+	if not FileAccess.file_exists(CONNECTION_HISTORY_FILE_PATH):
+		return result
+	var file := FileAccess.open_encrypted_with_pass(CONNECTION_HISTORY_FILE_PATH, FileAccess.READ, "zfoo")
 	if file == null:
-		Log.error("save API connection history failed path:[{}] error:[{}]", CONNECTION_HISTORY_FILE_PATH, FileAccess.get_open_error())
-		return
-	file.store_string(json)
+		Log.error("load encrypted API connection history failed path:[{}] error:[{}]", CONNECTION_HISTORY_FILE_PATH, FileAccess.get_open_error())
+		return result
+	var parsed := JsonUtils.json_to_object_array(file.get_as_text(), ApiModelConfig)
+	for value: Variant in parsed:
+		var connection := value as ApiModelConfig
+		if connection != null and connection.is_valid():
+			result.append(connection)
+	if result.size() > MAX_CONNECTION_HISTORY:
+		result.resize(MAX_CONNECTION_HISTORY)
+	return result
+
+
+static func trim_and_save_connection_history() -> void:
+	if connection_history.size() > MAX_CONNECTION_HISTORY:
+		connection_history.resize(MAX_CONNECTION_HISTORY)
+	save_connection_history()
 	pass
 
-## Serializable API endpoint, model, and credential combination used by connection history.
+
+static func save_connection_history() -> void:
+	var file := FileAccess.open_encrypted_with_pass(CONNECTION_HISTORY_FILE_PATH, FileAccess.WRITE, "zfoo")
+	if file == null:
+		Log.error("save encrypted API connection history failed path:[{}] error:[{}]", CONNECTION_HISTORY_FILE_PATH, FileAccess.get_open_error())
+		return
+	file.store_string(JsonUtils.object_to_json(connection_history))
+	pass
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Stored connection model
+
+## Serializable API endpoint, model, and credential combination.
 class ApiModelConfig:
 	extends RefCounted
 
