@@ -98,7 +98,7 @@ func refresh_history() -> void:
 	for index in range(history.size()):
 		var entry := history[index]
 		var row := PanelContainer.new()
-		row.set_meta("api_url", entry.api_url)
+		row.set_meta("connection", entry)
 		history_list.add_child(row)
 		var content := HBoxContainer.new()
 		content.add_theme_constant_override("separation", 0)
@@ -134,8 +134,13 @@ func on_api_url_input(event: InputEvent) -> void:
 ## Close the history when a click lands outside both its anchor field and floating panel.
 ## Read the position through a Control because Window input coordinates differ under canvas stretch.
 func on_dialog_input(event: InputEvent) -> void:
+	if not history_panel.visible:
+		return
+	if event is InputEventMouseMotion:
+		refresh_history_hover()
+		return
 	var click := event as InputEventMouseButton
-	if not history_panel.visible or click == null or not click.pressed:
+	if click == null or not click.pressed:
 		return
 	var click_position := api_url_edit.get_global_mouse_position()
 	if api_url_edit.get_global_rect().has_point(click_position) or history_panel.get_global_rect().has_point(click_position):
@@ -151,6 +156,7 @@ func show_history_panel() -> void:
 	history_panel.position = api_url_edit.global_position + Vector2(0, api_url_edit.size.y + Margin.ma_1)
 	history_panel.size = Vector2(api_url_edit.size.x, history_list.get_combined_minimum_size().y + Margin.ma_2)
 	history_panel.visible = true
+	refresh_history_hover()
 	pass
 
 
@@ -177,6 +183,12 @@ func on_history_deleted(index: int) -> void:
 		hide_history_panel()
 	else:
 		history_panel.size.y = history_list.get_combined_minimum_size().y + Margin.ma_2
+	pass
+
+
+func refresh_history_hover() -> void:
+	for row: PanelContainer in history_list.get_children():
+		style_history_row(row)
 	pass
 
 
@@ -211,9 +223,12 @@ func apply_theme() -> void:
 
 
 func style_history_row(row: PanelContainer) -> void:
-	# Match PopupMenuStyle's selected/hover surface; selection is identified by normalized URL.
-	var selected := str(row.get_meta("api_url")) == api_url_edit.text.strip_edges()
-	var color := ThemeColor.selected_surface if selected else Color.TRANSPARENT
+	# Compare the complete configuration because multiple history rows may share one URL.
+	var entry := row.get_meta("connection") as ApiSetting.ApiModelConfig
+	var selected := (entry.api_url == api_url_edit.text.strip_edges()
+		and entry.model == model_edit.text.strip_edges() and entry.api_token == api_token_edit.text.strip_edges())
+	var hovered := row.get_global_rect().has_point(row.get_global_mouse_position())
+	var color := ThemeColor.selected_surface if selected or hovered else Color.TRANSPARENT
 	row.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(color, 5))
 	pass
 
@@ -221,8 +236,7 @@ func style_history_row(row: PanelContainer) -> void:
 func style_history_button(button: Button) -> void:
 	ButtonStyle.apply_font_colors(button, Colors.primary_text, Colors.primary_text, Colors.primary_text)
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, 5, Margin.ma_2, Margin.ma_2)
-	var hover := StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, 5, Margin.ma_2, Margin.ma_2)
-	ButtonStyle.apply(button, normal, hover, hover.duplicate())
+	ButtonStyle.apply(button, normal, normal.duplicate() as StyleBoxFlat, normal.duplicate() as StyleBoxFlat)
 	pass
 
 

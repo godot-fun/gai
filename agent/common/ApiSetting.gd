@@ -105,11 +105,14 @@ static func remove_connection_at(index: int) -> void:
 
 ## Writes the complete bounded history; callers mutate an in-memory copy before replacing the file.
 static func save_connection_history(history: Array[ApiModelConfig]) -> void:
+	var json := JsonUtils.object_to_json(history)
+	if FileAccess.file_exists(CONNECTION_HISTORY_FILE_PATH) and FileAccess.get_file_as_string(CONNECTION_HISTORY_FILE_PATH) == json:
+		return
 	var file := FileAccess.open(CONNECTION_HISTORY_FILE_PATH, FileAccess.WRITE)
 	if file == null:
 		Log.error("save API connection history failed path:[{}] error:[{}]", CONNECTION_HISTORY_FILE_PATH, FileAccess.get_open_error())
 		return
-	file.store_string(JsonUtils.object_to_json(history))
+	file.store_string(json)
 	pass
 
 ## Serializable API endpoint, model, and credential combination used by connection history.
