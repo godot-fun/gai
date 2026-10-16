@@ -53,6 +53,7 @@ func set_up_history_panel(dialog: ConfirmationDialog) -> void:
 	history_list.add_theme_constant_override("separation", Margin.ma_1)
 	history_panel.add_child(history_list)
 	api_url_edit.focus_exited.connect(hide_history_panel)
+	dialog.window_input.connect(on_dialog_input)
 	pass
 
 
@@ -108,6 +109,19 @@ func on_api_url_input(event: InputEvent) -> void:
 	if click == null or not click.pressed or click.button_index != MOUSE_BUTTON_LEFT:
 		return
 	show_history_panel.call_deferred()
+	pass
+
+
+## Close the history when a click lands outside both its anchor field and floating panel.
+## Read the position through a Control because Window input coordinates differ under canvas stretch.
+func on_dialog_input(event: InputEvent) -> void:
+	var click := event as InputEventMouseButton
+	if not history_panel.visible or click == null or not click.pressed:
+		return
+	var click_position := api_url_edit.get_global_mouse_position()
+	if api_url_edit.get_global_rect().has_point(click_position) or history_panel.get_global_rect().has_point(click_position):
+		return
+	hide_history_panel()
 	pass
 
 
