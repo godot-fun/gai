@@ -4,7 +4,6 @@
 class_name NoteWindow
 extends CommonWindow
 
-const NOTE_FILE := "user://note.md"
 const EDIT_ICON_PATH := "res://agent/asset/image/icon/edit.svg"
 const SPLIT_ICON_PATH := "res://agent/asset/image/icon/split.svg"
 const PREVIEW_ICON_PATH := "res://agent/asset/image/icon/eye.svg"
@@ -308,7 +307,7 @@ static func show_note(width_percent: int = 60, height_percent: int = 80) -> void
 	close_open_notes()
 	var window := NoteWindow.new()
 	gdf.gdf_node.add_child(window)
-	window.text_edit.text = FileUtils.read_file_to_string(NOTE_FILE)
+	window.text_edit.text = NoteSetting.get_note()
 	window.refresh_preview()
 	window.present_centered(width_percent, height_percent)
 	pass
@@ -324,9 +323,8 @@ func present_centered(width_percent: int = 70, height_percent: int = 80) -> void
 
 func on_close_requested() -> void:
 	var content := text_edit.text
-	if content != FileUtils.read_file_to_string(NOTE_FILE):
-		if not FileUtils.write_string_to_file(NOTE_FILE, content):
-			Alert.alert(I18n.t("note.save_failed"), Colors.error)
+	if not NoteSetting.set_note(content):
+		Alert.alert(I18n.t("note.save_failed"), Colors.error)
 	queue_free()
 	pass
 

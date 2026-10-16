@@ -5,6 +5,7 @@ extends RefCounted
 
 enum ViewMode { EDIT, SPLIT, PREVIEW }
 
+const NOTE_FILE := "user://note.md"
 const OPEN_ON_STARTUP_KEY := "note_open_on_startup"
 const VIEW_MODE_KEY := "note_view_mode"
 const SPLIT_RATIO_KEY := "note_split_ratio"
@@ -16,6 +17,20 @@ const MAX_SPLIT_RATIO := 0.85
 
 static func get_open_on_startup() -> bool:
 	return Setting.get_bool(OPEN_ON_STARTUP_KEY, true)
+
+
+static func has_note() -> bool:
+	return StringUtils.is_not_blank(get_note())
+
+
+static func get_note() -> String:
+	return FileUtils.read_file_to_string(NOTE_FILE)
+
+
+static func set_note(content: String) -> bool:
+	if content == get_note():
+		return true
+	return FileUtils.write_string_to_file(NOTE_FILE, content)
 
 
 static func set_open_on_startup(enabled: bool) -> void:
