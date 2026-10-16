@@ -1,0 +1,84 @@
+class_name AppearanceSettingSection
+extends SettingSection
+
+var language_label: Label
+var language_select: OptionButton
+var markdown_label: Label
+var markdown_toggle_button: CheckButton
+
+
+func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: ConfirmationDialog) -> void:
+	super.set_up(p_ui, parent, dialog)
+	heading_label = ui.add_heading(parent, I18n.t("agent.settings.appearance"))
+	var group := ui.make_field_group(parent)
+	var parts := ui.make_field_row(group, I18n.t("agent.settings.language"))
+	language_label = parts[1]
+	language_select = OptionButton.new()
+	language_select.custom_minimum_size = Vector2(0, 38)
+	language_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	language_select.size_flags_stretch_ratio = AgentSettingDialog.FIELD_CONTROL_RATIO
+	for locale in I18nHelper.LOCALE_PATHS:
+		var config: I18nHelper.LocaleConfig = I18nHelper.LOCALE_PATHS[locale]
+		language_select.add_item(config.language)
+		language_select.set_item_metadata(language_select.item_count - 1, locale)
+	language_select.item_selected.connect(on_language_selected)
+	language_select.get_popup().popup_hide.connect(ui.request_focus_check)
+	(parts[0] as HBoxContainer).add_child(language_select)
+	var markdown_parts := ui.make_field_row(parent, I18n.t("agent.settings.markdown"))
+	markdown_label = markdown_parts[1]
+	var control := ui.make_option_row(markdown_parts[0], Margin.ma_0)
+	control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	control.size_flags_stretch_ratio = AgentSettingDialog.FIELD_CONTROL_RATIO
+	markdown_toggle_button = ui.add_check_button(control, "", AgentSetting.get_markdown_enabled())
+	markdown_toggle_button.toggled.connect(on_markdown_toggled)
+	select_current_language()
+	pass
+
+
+func refresh() -> void:
+	select_current_language()
+	ui.refresh_check_button(markdown_toggle_button, AgentSetting.get_markdown_enabled())
+	pass
+
+
+func select_current_language() -> void:
+	for index in range(language_select.item_count):
+		if str(language_select.get_item_metadata(index)) == I18n.get_locale():
+			language_select.select(index)
+			return
+	pass
+
+
+func on_language_selected(index: int) -> void:
+	var locale := str(language_select.get_item_metadata(index))
+	if locale == I18n.get_locale() or not I18nHelper.LOCALE_PATHS.has(locale):
+		return
+	var config: I18nHelper.LocaleConfig = I18nHelper.LOCALE_PATHS[locale]
+	I18n.set_locale(config.locale_path)
+	pass
+
+
+func on_markdown_toggled(enabled: bool) -> void:
+	AgentSetting.set_markdown_enabled(enabled)
+	pass
+
+
+func apply_locale() -> void:
+	heading_label.text = I18n.t("agent.settings.appearance")
+	language_label.text = I18n.t("agent.settings.language")
+	markdown_label.text = I18n.t("agent.settings.markdown")
+	select_current_language()
+	pass
+
+
+func apply_theme() -> void:
+	super.apply_theme()
+	ui.style_field_label(language_label)
+	ui.style_field_label(markdown_label)
+	ui.style_option_button(language_select)
+	ui.style_check_button(markdown_toggle_button)
+	pass
+
+
+func has_open_popup() -> bool:
+	return language_select.get_popup().visible
