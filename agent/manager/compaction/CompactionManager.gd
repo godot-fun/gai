@@ -101,9 +101,9 @@ static func compact_session(session_id: int) -> void:
 		summary
 	))
 	update_estimated_usage(session)
-	AgentSessionManager.persist_session(session_id)
 	finish(session_id, true, StringUtils.EMPTY)
 	await GitDiffManager.async_append_git_diff(session_id, checkpoint)
+	AgentSessionManager.persist_session(session_id)
 	pass
 
 
