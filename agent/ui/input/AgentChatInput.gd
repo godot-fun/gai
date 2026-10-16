@@ -28,7 +28,7 @@ var queue_badge: Label
 var queue_panel: PanelContainer
 var queue_scroll: ScrollContainer
 var queue_rows: VBoxContainer
-var border_beam: MovingAccentBorder
+var moving_border: MovingAccentBorder
 var file_input: AgentChatInputFile = AgentChatInputFile.new()
 
 var expanded: bool = false
@@ -93,7 +93,7 @@ func setup(
 	AgentEvents.events.session_selected.connect(on_session_selected)
 	AgentEvents.events.session_queue_changed.connect(on_session_queue_changed)
 	AgentEvents.events.chat_input_prefill.connect(on_chat_input_prefill)
-	setup_border_beam()
+	setup_moving_border()
 	AgentEvents.events.agent_start.connect(on_agent_start)
 	AgentEvents.events.session_stop.connect(on_session_stop)
 	AgentEvents.events.compaction_start.connect(on_compaction_start)
@@ -151,30 +151,30 @@ func setup_send_effect() -> void:
 func on_ui_theme_changed() -> void:
 	apply_theme()
 	refresh_from_active_session()
-	refresh_border_beam()
+	refresh_moving_border()
 	pass
 
 
-func setup_border_beam() -> void:
+func setup_moving_border() -> void:
 	input_bar.clip_contents = false
-	border_beam = MovingAccentBorder.new()
-	border_beam.name = "MovingAccentBorder"
-	border_beam.z_index = -1
-	input_bar.add_child(border_beam)
-	input_bar.move_child(border_beam, 0)
+	moving_border = MovingAccentBorder.new()
+	moving_border.name = "MovingAccentBorder"
+	moving_border.z_index = -1
+	input_bar.add_child(moving_border)
+	input_bar.move_child(moving_border, 0)
 	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
-		border_beam.set_anchor(side, 0.0)
+		moving_border.set_anchor(side, 0.0)
 	send_button.z_index = 2
 	send_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	layout_border_beam()
-	refresh_border_beam()
+	layout_moving_border()
+	refresh_moving_border()
 	pass
 
 
-func layout_border_beam() -> void:
-	if border_beam == null:
+func layout_moving_border() -> void:
+	if moving_border == null:
 		return
-	set_border_beam_to_wrap(
+	set_moving_border_bounds(
 		input_wrap.offset_left,
 		input_wrap.offset_top,
 		input_wrap.offset_right,
@@ -183,26 +183,29 @@ func layout_border_beam() -> void:
 	pass
 
 
-func set_border_beam_to_wrap(wrap_left: float, wrap_top: float, wrap_right: float, wrap_bottom: float) -> void:
+func set_moving_border_bounds(target_left: float, target_top: float, target_right: float, target_bottom: float) -> void:
 	var pad: int = Margin.ma_1
-	border_beam.offset_left = wrap_left - pad
-	border_beam.offset_top = wrap_top - pad
-	border_beam.offset_right = wrap_right + pad
-	border_beam.offset_bottom = wrap_bottom + pad
-	border_beam.sync_shader_uniforms()
+	moving_border.offset_left = target_left - pad
+	moving_border.offset_top = target_top - pad
+	moving_border.offset_right = target_right + pad
+	moving_border.offset_bottom = target_bottom + pad
+	moving_border.sync_geometry_uniforms()
 	pass
 
 
-func refresh_border_beam() -> void:
-	if border_beam == null:
+func refresh_moving_border() -> void:
+	if moving_border == null:
 		return
-	border_beam.set_shape(expanded)
-	var strength: float = 0.45
+	if expanded:
+		moving_border.set_corner_radius(ControlSize.radius_xxl)
+	else:
+		moving_border.use_capsule_shape()
+	var highlight_strength: float = 0.45
 	if input_field.has_focus():
-		strength = 1.0
+		highlight_strength = 1.0
 	elif expanded:
-		strength = 0.72
-	border_beam.set_highlight_strength(strength)
+		highlight_strength = 0.72
+	moving_border.set_highlight_strength(highlight_strength)
 	pass
 
 
@@ -705,7 +708,7 @@ func on_field_focus_entered() -> void:
 		set_expanded(true, true)
 	else:
 		layout_bar()
-	refresh_border_beam()
+	refresh_moving_border()
 	restore_caret()
 	pass
 
@@ -713,7 +716,7 @@ func on_field_focus_entered() -> void:
 func on_field_focus_exited() -> void:
 	if file_input.is_drop_focus_guarded():
 		return
-	refresh_border_beam()
+	refresh_moving_border()
 	try_collapse.call_deferred()
 	pass
 
@@ -865,8 +868,8 @@ func layout_bar() -> void:
 	sync_queue_panel_visibility()
 	layout_queue_panel()
 	AgentChatInputTheme.apply_wrap(input_wrap, expanded)
-	layout_border_beam()
-	refresh_border_beam()
+	layout_moving_border()
+	refresh_moving_border()
 	pass
 
 
@@ -937,14 +940,17 @@ func apply_input_tween_step(value: float) -> void:
 	input_wrap.offset_bottom = tween_bar_size.y - Margin.ma_4
 	input_inner.custom_minimum_size.y = maxf(0.0, height - Margin.ma_2)
 	# Send button stays pinned via fixed BOTTOM_RIGHT offsets; no per-frame re-layout.
-	if border_beam != null:
-		set_border_beam_to_wrap(
+	if moving_border != null:
+		if tween_expand_target:
+			moving_border.set_corner_radius(ControlSize.radius_xxl)
+		else:
+			moving_border.use_capsule_shape()
+		set_moving_border_bounds(
 			lerpf(tween_start_left, tween_target_left, value),
 			tween_bar_size.y - Margin.ma_4 - height,
 			wrap_right,
 			tween_bar_size.y - Margin.ma_4
 		)
-		border_beam.set_shape(tween_expand_target)
 	pass
 
 

@@ -2,15 +2,15 @@ shader_type canvas_item;
 render_mode blend_mix;
 
 uniform vec4 accent_color : source_color = vec4(0.35, 0.55, 1.0, 1.0);
-uniform float strength : hint_range(0.0, 1.0) = 0.55;
+uniform float highlight_strength : hint_range(0.0, 1.0) = 0.55;
 uniform float corner_radius : hint_range(0.0, 256.0) = 16.0;
-uniform float beam_speed : hint_range(0.0, 2.0) = 0.42;
-uniform float beam_span : hint_range(0.05, 0.5) = 0.2;
+uniform float laps_per_second : hint_range(0.0, 2.0) = 0.42;
+uniform float highlight_span : hint_range(0.05, 0.5) = 0.2;
 uniform vec2 rect_size = vec2(400.0, 88.0);
 uniform float edge_pad : hint_range(0.0, 24.0) = 4.0;
 
-const float BORDER_W = 2.0;
-const float GLOW_W = 5.0;
+const float BORDER_WIDTH = 2.0;
+const float GLOW_WIDTH = 5.0;
 const float HALF_PI = 1.5707963267948966;
 
 float sd_rounded_box(vec2 p, vec2 half_size, float r) {
@@ -24,7 +24,7 @@ float rounded_perimeter(vec2 size, float radius) {
 }
 
 // Top-left origin, clockwise from (r, 0).
-float perimeter_at_circle(vec2 pt, vec2 size, float r) {
+float distance_along_circle(vec2 pt, vec2 size, float r) {
 	vec2 center = size * 0.5;
 	float ang = atan(pt.y - center.y, pt.x - center.x);
 	float theta = ang + HALF_PI;
@@ -34,7 +34,7 @@ float perimeter_at_circle(vec2 pt, vec2 size, float r) {
 	return theta * r;
 }
 
-float perimeter_at(vec2 pt, vec2 size, float rad) {
+float distance_along_perimeter(vec2 pt, vec2 size, float rad) {
 	float w = size.x;
 	float h = size.y;
 	float r = min(rad, min(w, h) * 0.5);
@@ -46,7 +46,7 @@ float perimeter_at(vec2 pt, vec2 size, float rad) {
 	float edge = max(1.0, min(w, h) * 0.004);
 
 	if (top <= edge && side <= edge) {
-		return perimeter_at_circle(pt, size, r);
+		return distance_along_circle(pt, size, r);
 	}
 
 	if (y <= edge && x >= r - edge && x <= w - r + edge) {
@@ -61,6 +61,9 @@ float perimeter_at(vec2 pt, vec2 size, float rad) {
 	if (y <= edge && x < r - edge) {
 		vec2 d = pt - vec2(r, r);
 		float ang = atan(d.y, d.x);
+		if (ang < 0.0) {
+			ang += TAU;
+		}
 		ang = clamp(ang, 3.141592653589793, 3.141592653589793 + HALF_PI);
 		return top + arc + side + arc + top + arc + side + (ang - 3.141592653589793) * r;
 	}
@@ -101,6 +104,9 @@ float perimeter_at(vec2 pt, vec2 size, float rad) {
 		vec2 d = pt - vec2(r, r);
 		if (dot(d, d) <= (r + edge * 2.0) * (r + edge * 2.0)) {
 			float ang = atan(d.y, d.x);
+			if (ang < 0.0) {
+				ang += TAU;
+			}
 			ang = clamp(ang, 3.141592653589793, 3.141592653589793 + HALF_PI);
 			return top + arc + side + arc + top + arc + side + (ang - 3.141592653589793) * r;
 		}
@@ -118,25 +124,25 @@ void fragment() {
 	float abs_d = abs(d);
 	COLOR = vec4(0.0);
 
-	if (abs_d <= GLOW_W * 0.5 + 1.0) {
+	if (abs_d <= GLOW_WIDTH * 0.5 + 1.0) {
 		vec2 grad = normalize(vec2(dFdx(d), dFdy(d)));
 		vec2 on_edge_tl = p - grad * d + half_size;
 
 		float perim = rounded_perimeter(wrap_size, r);
-		float along = perimeter_at(on_edge_tl, wrap_size, r);
-		float head = fract(TIME * beam_speed);
+		float along = distance_along_perimeter(on_edge_tl, wrap_size, r);
+		float head = fract(TIME * laps_per_second);
 		// Distance backward along perimeter from the moving head (tail behind, head at u=0).
 		float u = fract(head - along / perim + 1.0);
 
-		float beam_alpha = 0.0;
-		if (u <= beam_span) {
-			float t = 1.0 - u / beam_span;
-			beam_alpha = pow(t, 1.6) * strength;
+		float highlight_alpha = 0.0;
+		if (u <= highlight_span) {
+			float t = 1.0 - u / highlight_span;
+			highlight_alpha = pow(t, 1.6) * highlight_strength;
 		}
 
-		float edge_alpha = smoothstep(GLOW_W * 0.5, BORDER_W * 0.5, abs_d);
-		float glow_alpha = (1.0 - smoothstep(BORDER_W * 0.5, GLOW_W * 0.5, abs_d)) * beam_alpha * 0.35;
-		float core_alpha = edge_alpha * beam_alpha * 0.95;
+		float edge_alpha = smoothstep(GLOW_WIDTH * 0.5, BORDER_WIDTH * 0.5, abs_d);
+		float glow_alpha = (1.0 - smoothstep(BORDER_WIDTH * 0.5, GLOW_WIDTH * 0.5, abs_d)) * highlight_alpha * 0.35;
+		float core_alpha = edge_alpha * highlight_alpha * 0.95;
 
 		vec3 core_rgb = accent_color.rgb * 1.08;
 		vec3 glow_rgb = accent_color.rgb;

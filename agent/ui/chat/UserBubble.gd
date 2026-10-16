@@ -1,14 +1,14 @@
 class_name UserBubble
 extends Object
 
-## User message bubble — flowing border beam (same shader as chat input).
+## User message bubble with a moving accent border shared with the chat input.
 ## Delete drops this turn and everything after it — chat only, code is left alone.
 ## Revert does the same and restores the workspace snapshot taken before the turn (only shown when
 ## the entry has one). Both hand the message body back to the chat input for re-editing.
 ## The body follows the shared Markdown toolbar setting, matching agent replies.
 
-const BUBBLE_CORNER_RADIUS: float = 8.0
-const BEAM_STRENGTH: float = 1.0
+const BUBBLE_CORNER_RADIUS: float = ControlSize.radius_lg
+const BORDER_HIGHLIGHT_STRENGTH: float = 1.0
 
 
 static func append(
@@ -77,21 +77,21 @@ static func append(
 	rich_text.visible = StringUtils.is_not_blank(entry.body)
 	vbox.add_child(rich_text)
 
-	var beam := MovingAccentBorder.new()
-	beam.name = "MovingAccentBorder"
-	beam.z_index = 10
-	beam.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	beam.set_fixed_corner_radius(BUBBLE_CORNER_RADIUS)
-	beam.set_highlight_strength(BEAM_STRENGTH)
-	host.add_child(beam)
+	var moving_border := MovingAccentBorder.new()
+	moving_border.name = "MovingAccentBorder"
+	moving_border.z_index = 10
+	moving_border.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	moving_border.set_corner_radius(BUBBLE_CORNER_RADIUS)
+	moving_border.set_highlight_strength(BORDER_HIGHLIGHT_STRENGTH)
+	host.add_child(moving_border)
 
-	panel.minimum_size_changed.connect(sync_layout.bind(host, panel, beam))
-	panel.resized.connect(sync_layout.bind(host, panel, beam))
-	host.resized.connect(sync_layout.bind(host, panel, beam))
+	panel.minimum_size_changed.connect(sync_layout.bind(host, panel, moving_border))
+	panel.resized.connect(sync_layout.bind(host, panel, moving_border))
+	host.resized.connect(sync_layout.bind(host, panel, moving_border))
 
 	host.set_meta(AgentChatView.META_BUBBLE_RICH_TEXT, rich_text)
 	chat_list.add_child(host)
-	sync_layout.call_deferred(host, panel, beam)
+	sync_layout.call_deferred(host, panel, moving_border)
 	return rich_text
 
 
@@ -115,16 +115,16 @@ static func on_revert_pressed(session_id: int, entry: ChatEntry) -> void:
 	Alert.alert(I18n.t("git.restored"), Colors.success)
 	pass
 
-static func sync_layout(host: Control, panel: PanelContainer, beam: MovingAccentBorder) -> void:
-	if not is_instance_valid(host) or not is_instance_valid(panel) or not is_instance_valid(beam):
+static func sync_layout(host: Control, panel: PanelContainer, moving_border: MovingAccentBorder) -> void:
+	if not is_instance_valid(host) or not is_instance_valid(panel) or not is_instance_valid(moving_border):
 		return
 	host.custom_minimum_size = panel.get_combined_minimum_size()
 	var pad: int = Margin.ma_1
 	var panel_size: Vector2 = panel.size
 	if panel_size.x < 1.0 or panel_size.y < 1.0:
 		panel_size = panel.get_combined_minimum_size()
-	beam.layout_mode = 0
-	beam.position = panel.position - Vector2(pad, pad)
-	beam.size = panel_size + Vector2(pad * 2.0, pad * 2.0)
-	beam.sync_shader_uniforms()
+	moving_border.layout_mode = 0
+	moving_border.position = panel.position - Vector2(pad, pad)
+	moving_border.size = panel_size + Vector2(pad * 2.0, pad * 2.0)
+	moving_border.sync_geometry_uniforms()
 	pass
