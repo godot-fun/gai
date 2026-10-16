@@ -151,6 +151,7 @@ func apply_theme() -> void:
 	add_theme_color_override("title_color", Colors.primary_text)
 	add_theme_font_override("title_font", Fonts.semibold())
 	add_theme_font_size_override("title_font_size", Typography.title_medium_size)
+	add_theme_icon_override("close", tint_theme_icon("close", Colors.primary_text))
 	add_theme_icon_override("close_pressed", tint_theme_icon("close_pressed", Colors.error))
 	content_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.surface))
 	split_container.add_theme_icon_override("grabber", make_transparent_grabber())
