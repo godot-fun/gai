@@ -172,6 +172,9 @@ func style_text_edit() -> void:
 
 func style_preview() -> void:
 	var style := StyleBoxHelper.create_style_box_flat(Colors.app_background, 0, Margin.ma_4, Margin.ma_3)
+	if view_mode == NoteSetting.ViewMode.SPLIT:
+		style.border_color = Colors.border
+		style.set_border_width(SIDE_LEFT, ControlSize.border_xs)
 	preview_panel.add_theme_stylebox_override("panel", style)
 	preview_label.add_theme_color_override("default_color", Colors.primary_text)
 	MarkdownHelper.apply_selection_theme(preview_label)
@@ -253,6 +256,7 @@ func set_view_mode(mode: NoteSetting.ViewMode) -> void:
 	edit_mode_button.set_pressed_no_signal(mode == NoteSetting.ViewMode.EDIT)
 	split_mode_button.set_pressed_no_signal(mode == NoteSetting.ViewMode.SPLIT)
 	preview_mode_button.set_pressed_no_signal(mode == NoteSetting.ViewMode.PREVIEW)
+	style_preview()
 	style_mode_button(edit_mode_button)
 	style_mode_button(split_mode_button)
 	style_mode_button(preview_mode_button)
