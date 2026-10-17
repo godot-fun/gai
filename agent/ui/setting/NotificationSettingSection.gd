@@ -20,11 +20,15 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.notification"))
 	var toast_parts := ui.make_field_row(parent, I18n.t("agent.settings.notification_window"), [1.0, 2.0])
 	toast_label = toast_parts[1] as Label
+	toast_label.tooltip_text = I18n.t("agent.settings.notification_window_help")
 	toast_toggle_button = ui.add_check_button(toast_parts[0], "", AgentSetting.get_notification_window())
+	toast_toggle_button.tooltip_text = I18n.t("agent.settings.notification_window_help")
 	toast_toggle_button.toggled.connect(on_toast_toggled)
 	var sound_parts := ui.make_field_row(parent, I18n.t("agent.settings.notification_sound"), [1.0, 1.0, 1.0])
 	sound_label = sound_parts[1] as Label
+	sound_label.tooltip_text = I18n.t("agent.settings.notification_sound_help")
 	sound_toggle_button = ui.add_check_button(sound_parts[0], "", AgentSetting.get_notification_sound())
+	sound_toggle_button.tooltip_text = I18n.t("agent.settings.notification_sound_help")
 	sound_toggle_button.toggled.connect(on_sound_toggled)
 	add_sound_seconds_controls(sound_parts[2], sound_parts[3])
 	sound_folder_row = ui.make_option_row(parent, Margin.ma_2)
@@ -143,7 +147,11 @@ func on_sound_folder_selected(folder: String) -> void:
 func apply_locale() -> void:
 	heading_label.text = I18n.t("agent.settings.notification")
 	toast_label.text = I18n.t("agent.settings.notification_window")
+	toast_label.tooltip_text = I18n.t("agent.settings.notification_window_help")
+	toast_toggle_button.tooltip_text = I18n.t("agent.settings.notification_window_help")
 	sound_label.text = I18n.t("agent.settings.notification_sound")
+	sound_label.tooltip_text = I18n.t("agent.settings.notification_sound_help")
+	sound_toggle_button.tooltip_text = I18n.t("agent.settings.notification_sound_help")
 	sound_seconds_label.text = I18n.t("agent.settings.sound_duration")
 	sound_folder_edit.tooltip_text = I18n.t("agent.settings.sound_folder_help")
 	sound_folder_dialog.title = I18n.t("agent.settings.sound_folder_title")

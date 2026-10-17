@@ -26,10 +26,12 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 	(parts[0] as HBoxContainer).add_child(language_select)
 	var markdown_parts := ui.make_field_row(parent, I18n.t("agent.settings.markdown"))
 	markdown_label = markdown_parts[1]
+	markdown_label.tooltip_text = I18n.t("agent.settings.markdown_help")
 	var control := ui.make_option_row(markdown_parts[0], Margin.ma_0)
 	control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	control.size_flags_stretch_ratio = AgentSettingDialog.FIELD_CONTROL_RATIO
 	markdown_toggle_button = ui.add_check_button(control, "", AgentSetting.get_markdown_enabled())
+	markdown_toggle_button.tooltip_text = I18n.t("agent.settings.markdown_help")
 	markdown_toggle_button.toggled.connect(on_markdown_toggled)
 	select_current_language()
 	pass
@@ -67,6 +69,8 @@ func apply_locale() -> void:
 	heading_label.text = I18n.t("agent.settings.appearance")
 	language_label.text = I18n.t("agent.settings.language")
 	markdown_label.text = I18n.t("agent.settings.markdown")
+	markdown_label.tooltip_text = I18n.t("agent.settings.markdown_help")
+	markdown_toggle_button.tooltip_text = I18n.t("agent.settings.markdown_help")
 	select_current_language()
 	pass
 
