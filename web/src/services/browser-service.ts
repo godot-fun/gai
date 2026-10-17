@@ -3,13 +3,7 @@ import type { BrowserContext, Page } from "playwright-core";
 import { loadConfig } from "../config";
 import { HttpError, HttpStatus } from "../http";
 
-interface BrowserServiceOptions {
-  headless: boolean;
-  userDataDir: string;
-  proxy: string;
-  maxConcurrency: number;
-  navigationTimeoutMs: number;
-}
+const config = loadConfig();
 
 interface QueueEntry {
   resolve: () => void;
@@ -38,15 +32,15 @@ export class BrowserService {
   private readonly queue: QueueEntry[] = [];
   private closing = false;
 
-  constructor(private readonly options: BrowserServiceOptions) {
+  constructor() {
     this.handleContextClose = this.handleContextClose.bind(this);
   }
 
   async start(): Promise<void> {
     this.context = await launchPersistentContext({
-      headless: this.options.headless,
-      userDataDir: this.options.userDataDir,
-      ...(this.options.proxy === "" ? {} : { proxy: this.options.proxy }),
+      headless: config.headless,
+      userDataDir: config.userDataDir,
+      proxy: config.proxy || undefined,
     });
     this.context.on("close", this.handleContextClose);
     await Promise.all(this.context.pages().map((page) => page.close()));
@@ -62,8 +56,8 @@ export class BrowserService {
       const context = this.context;
       if (context === null) throw new HttpError(HttpStatus.SERVICE_UNAVAILABLE, "BROWSER_UNAVAILABLE", "Browser is unavailable");
       const page = await context.newPage();
-      page.setDefaultNavigationTimeout(this.options.navigationTimeoutMs);
-      page.setDefaultTimeout(this.options.navigationTimeoutMs);
+      page.setDefaultNavigationTimeout(config.navigationTimeoutMs);
+      page.setDefaultTimeout(config.navigationTimeoutMs);
       return new BrowserPageLease(page, this);
     } catch (error) {
       this[releasePage]();
@@ -81,7 +75,7 @@ export class BrowserService {
 
   private async acquire(): Promise<void> {
     if (!this.isReady()) throw new HttpError(HttpStatus.SERVICE_UNAVAILABLE, "BROWSER_UNAVAILABLE", "Browser is unavailable");
-    if (this.activePages < this.options.maxConcurrency) {
+    if (this.activePages < config.browserMaxConcurrency) {
       this.activePages += 1;
       return;
     }
@@ -108,11 +102,4 @@ export class BrowserService {
   }
 }
 
-const config = loadConfig();
-export const browserService = new BrowserService({
-  headless: config.headless,
-  userDataDir: config.userDataDir,
-  proxy: config.proxy,
-  maxConcurrency: config.browserMaxConcurrency,
-  navigationTimeoutMs: config.navigationTimeoutMs,
-});
+export const browserService = new BrowserService();
