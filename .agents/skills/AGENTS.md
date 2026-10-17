@@ -171,6 +171,15 @@ When a skill does **not** specify a Python version, assume **Python 3.14** as th
 
 The `python` runtime is for **stdlib-only** skill scripts (e.g. audio wrappers, path/batch wrappers). Do **not** `pip install` into `.dependency/python/` itself.
 
+### Node.js default version
+
+When a skill does **not** specify a Node.js version, assume **Node.js v24.22.0** as the default runtime.
+
+- Install to `.dependency/node/` and register as the `node` entry in `manifest.json`.
+- Skills that only reference `node` (no version suffix) rely on this default.
+- If a skill explicitly requires another version (e.g. `node-22`), use a separate manifest entry and install directory instead.
+- Install runtimes by extracting portable archives into `.dependency/<name>/`; never run interactive/system installers or modify the host environment.
+
 ### Standalone CLI tools
 
 When a skill depends on a portable upstream binary (e.g. FFmpeg), follow this order:
