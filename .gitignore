@@ -2,6 +2,25 @@
 .gai/
 .dependency/
 
+# Node.js web project
+web/node_modules/
+web/dist/
+web/build/
+web/coverage/
+web/.cache/
+web/.npm/
+.cloakbrowser/
+.user_data/
+web/.eslintcache
+web/*.tsbuildinfo
+web/.env
+web/.env.*
+!web/.env.example
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
 # Skills
 .cursor/
 
