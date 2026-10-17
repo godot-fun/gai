@@ -11,18 +11,15 @@ var restart_web_server_button: Button
 func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: ConfirmationDialog) -> void:
 	super.set_up(p_ui, parent, dialog)
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.agent_behavior"))
-	var sandbox_parts := ui.make_field_row(parent, I18n.t("agent.settings.sandbox_mode"))
+	var sandbox_parts := ui.make_field_row(parent, I18n.t("agent.settings.sandbox_mode"), [1.0, 2.0])
 	sandbox_label = sandbox_parts[1] as Label
-	var sandbox_controls := sandbox_parts[0] as HBoxContainer
-	sandbox_toggle_button = ui.add_check_button(ui.make_grid_cell(sandbox_controls), "", SandboxPolicy.is_enabled())
+	sandbox_toggle_button = ui.add_check_button(sandbox_parts[0], "", SandboxPolicy.is_enabled())
 	sandbox_toggle_button.tooltip_text = I18n.t("agent.settings.sandbox_mode_help")
 	sandbox_toggle_button.toggled.connect(on_sandbox_toggled)
-	ui.add_grid_spacer(sandbox_controls, 2.0)
-	var browser_parts := ui.make_field_row(parent, I18n.t("agent.settings.browser_headless"))
-	var browser_row := browser_parts[0] as HBoxContainer
+	var browser_parts := ui.make_field_row(parent, I18n.t("agent.settings.browser_headless"), [1.0, 1.0, 1.0])
 	browser_headless_label = browser_parts[1] as Label
 	browser_headless_label.tooltip_text = I18n.t("agent.settings.browser_headless_help")
-	browser_headless_toggle_button = ui.add_check_button(ui.make_grid_cell(browser_row), "", AgentSetting.get_browser_headless())
+	browser_headless_toggle_button = ui.add_check_button(browser_parts[0], "", AgentSetting.get_browser_headless())
 	browser_headless_toggle_button.tooltip_text = I18n.t("agent.settings.browser_headless_help")
 	browser_headless_toggle_button.toggled.connect(on_browser_headless_toggled)
 	restart_web_server_button = Button.new()
@@ -32,8 +29,7 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 	restart_web_server_button.custom_minimum_size.y = ControlSize.sm
 	restart_web_server_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	restart_web_server_button.pressed.connect(on_restart_web_server_pressed)
-	browser_row.add_child(restart_web_server_button)
-	ui.add_grid_spacer(browser_row)
+	(browser_parts[2] as HBoxContainer).add_child(restart_web_server_button)
 	pass
 
 

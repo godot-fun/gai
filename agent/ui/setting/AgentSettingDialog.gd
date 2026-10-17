@@ -106,22 +106,6 @@ func make_option_row(parent: Container, separation: int) -> HBoxContainer:
 	return row
 
 
-func make_grid_cell(parent: Container, column_span: float = 1.0) -> HBoxContainer:
-	var cell := HBoxContainer.new()
-	cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	cell.size_flags_stretch_ratio = column_span
-	parent.add_child(cell)
-	return cell
-
-
-func add_grid_spacer(parent: Container, column_span: float = 1.0) -> void:
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	spacer.size_flags_stretch_ratio = column_span
-	parent.add_child(spacer)
-	pass
-
-
 func make_label(label_text: String) -> Label:
 	var label := Label.new()
 	label.text = label_text
@@ -139,7 +123,14 @@ func make_field_group(parent: Container) -> VBoxContainer:
 	return group
 
 
-func make_field_row(parent: Container, label_text: String) -> Array:
+## Builds one four-column settings row. Column one is the label; [param control_spans]
+## partitions columns two through four and must total three.
+func make_field_row(parent: Container, label_text: String, control_spans: Array = [FIELD_CONTROL_RATIO]) -> Array:
+	assert(not control_spans.is_empty())
+	var total_span := 0.0
+	for span in control_spans:
+		total_span += float(span)
+	assert(is_equal_approx(total_span, FIELD_CONTROL_RATIO))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", Margin.ma_3)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -148,12 +139,22 @@ func make_field_row(parent: Container, label_text: String) -> Array:
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.size_flags_stretch_ratio = FIELD_LABEL_RATIO
 	row.add_child(label)
-	var controls := HBoxContainer.new()
-	controls.add_theme_constant_override("separation", Margin.ma_3)
-	controls.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	controls.size_flags_stretch_ratio = FIELD_CONTROL_RATIO
-	row.add_child(controls)
-	return [controls, label]
+	var control_area := HBoxContainer.new()
+	control_area.add_theme_constant_override("separation", Margin.ma_3)
+	control_area.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	control_area.size_flags_stretch_ratio = FIELD_CONTROL_RATIO
+	row.add_child(control_area)
+	var result: Array = [null, label]
+	for span in control_spans:
+		var controls := HBoxContainer.new()
+		controls.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		controls.size_flags_stretch_ratio = float(span)
+		control_area.add_child(controls)
+		if result[0] == null:
+			result[0] = controls
+		else:
+			result.append(controls)
+	return result
 
 
 func add_help_label(parent: Container, help_text: String) -> Label:
