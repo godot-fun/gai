@@ -226,8 +226,8 @@ static func get_tool_entry_body(tool_name: String, args: Dictionary[String, Vari
 			body = str(args.get(ImageToTextTool.ARG_PATH, "")) + FileUtils.NEWLINE_LF + str(args.get(ImageToTextTool.ARG_PROMPT, ""))
 		AudioToTextTool.NAME:
 			body = str(args.get(AudioToTextTool.ARG_PATH, ""))
-		WebSearchToolProxy.NAME, WebSearchToolBing.NAME:
-			body = str(args.get(WebSearchToolProxy.ARG_QUERY, ""))
+		WebSearchTool.NAME:
+			body = str(args.get(WebSearchTool.ARG_QUERY, ""))
 		WebFetchTool.NAME:
 			body = str(args.get(WebFetchTool.ARG_URL, ""))
 		_:

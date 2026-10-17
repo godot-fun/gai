@@ -1,4 +1,4 @@
-class_name WebSearchToolBing
+class_name WebSearchTool
 extends AgentTool
 
 ## Search the web via Bing China (cn.bing.com). No API key required.

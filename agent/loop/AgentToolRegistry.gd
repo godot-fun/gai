@@ -23,10 +23,7 @@ static func _static_init() -> void:
 
 	# web tools
 	register(WebFetchTool.new())
-	if StringUtils.is_not_blank(ApiSetting.get_proxy_address()):
-		register(WebSearchToolProxy.new())
-	else:
-		register(WebSearchToolBing.new())
+	register(WebSearchTool.new())
 	pass
 
 
