@@ -13,7 +13,6 @@ export interface ServerConfig {
   headless: boolean;
   userDataDir: string;
   browserMaxConcurrency: number;
-  browserQueueLimit: number;
   navigationTimeoutMs: number;
   requestTimeoutMs: number;
 }
@@ -41,7 +40,6 @@ export function loadConfig(): ServerConfig {
     headless: readBoolean("CLOAKBROWSER_HEADLESS", true),
     userDataDir: process.env.CLOAKBROWSER_USER_DATA_DIR?.trim() || "./.user_data",
     browserMaxConcurrency: readPositiveInteger("BROWSER_MAX_CONCURRENCY", 4),
-    browserQueueLimit: readPositiveInteger("BROWSER_QUEUE_LIMIT", 32),
     navigationTimeoutMs: readPositiveInteger("NAVIGATION_TIMEOUT_MS", 30_000),
     requestTimeoutMs: readPositiveInteger("REQUEST_TIMEOUT_MS", 45_000),
   };

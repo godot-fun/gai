@@ -10,7 +10,6 @@ const browserService = new BrowserService({
   headless: config.headless,
   userDataDir: config.userDataDir,
   maxConcurrency: config.browserMaxConcurrency,
-  queueLimit: config.browserQueueLimit,
   navigationTimeoutMs: config.navigationTimeoutMs,
 });
 const searchService = new SearchService(browserService);

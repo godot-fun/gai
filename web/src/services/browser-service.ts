@@ -6,7 +6,6 @@ interface BrowserServiceOptions {
   headless: boolean;
   userDataDir: string;
   maxConcurrency: number;
-  queueLimit: number;
   navigationTimeoutMs: number;
 }
 
@@ -66,7 +65,6 @@ export class BrowserService {
       this.activePages += 1;
       return;
     }
-    if (this.queue.length >= this.options.queueLimit) throw new HttpError(429, "TOO_MANY_REQUESTS", "Browser request queue is full");
     await new Promise<void>((resolve, reject) => this.queue.push({ resolve, reject }));
   }
 
