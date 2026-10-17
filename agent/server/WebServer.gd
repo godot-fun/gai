@@ -13,7 +13,6 @@ static var process_id: int = PROCESS_ID_STOPPED
 static var server_host: String = "127.0.0.1"
 static var server_port: int = 33713
 static var request_timeout_millis: int = 45 * TimeUtils.MILLIS_PER_SECOND
-static var override_browser_headless: bool = false
 
 
 class HealthyResponse extends RefCounted:
@@ -70,9 +69,31 @@ static func _static_init() -> void:
 	pass
 
 
+static func async_restart(browser_headless: bool = true) -> int:
+	await async_stop()
+	var error := await async_ensure_server_running(browser_headless)
+	if error != OK:
+		Log.error("web server restart failed error:[{}]", error)
+	return error
+
+
+static func on_proxy_address_changed() -> void:
+	await async_restart()
+	pass
+
+
+## Immediately stops the owned child process. Prefer async_stop() when awaiting is possible.
+static func stop_process() -> void:
+	var pid := process_id
+	process_id = PROCESS_ID_STOPPED
+	if pid > 0:
+		OSUtils.kill_process(pid, 0)
+		Log.info("web server stopped pid:[{}]", pid)
+	pass
+
 ## Starts npm from the bundled Node.js dependency and waits until CloakBrowser is ready.
 ## Concurrent callers share the same startup instead of spawning duplicate processes.
-static func async_ensure_server_running() -> int:
+static func async_ensure_server_running(browser_headless: bool = true) -> int:
 	if await async_health():
 		return OK
 	while process_id == PROCESS_ID_STARTING:
@@ -98,7 +119,7 @@ static func async_ensure_server_running() -> int:
 
 	var args := PackedStringArray([npm_cli, "--prefix", web_path, "start"])
 	args.append("--")
-	args.append("--browser-headless={}".format([str(override_browser_headless).to_lower()], "{}"))
+	args.append("--browser-headless={}".format([str(browser_headless).to_lower()], "{}"))
 	var proxy_address := ApiSetting.get_proxy_address()
 	if StringUtils.is_not_blank(proxy_address):
 		args.append("--proxy-address={}".format([proxy_address], "{}"))
@@ -121,29 +142,6 @@ static func async_ensure_server_running() -> int:
 	Log.error("web server startup timed out")
 	stop_process()
 	return ERR_TIMEOUT
-
-
-static func async_restart() -> int:
-	await async_stop()
-	var error := await async_ensure_server_running()
-	if error != OK:
-		Log.error("web server restart failed error:[{}]", error)
-	return error
-
-
-static func on_proxy_address_changed() -> void:
-	await async_restart()
-	pass
-
-
-## Immediately stops the owned child process. Prefer async_stop() when awaiting is possible.
-static func stop_process() -> void:
-	var pid := process_id
-	process_id = PROCESS_ID_STOPPED
-	if pid > 0:
-		OSUtils.kill_process(pid, 0)
-		Log.info("web server stopped pid:[{}]", pid)
-	pass
 
 
 static func is_running() -> bool:
