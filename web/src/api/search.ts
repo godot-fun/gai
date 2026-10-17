@@ -37,7 +37,8 @@ export class SearchApi implements ApiRoute {
     }
 
     try {
-      const results = await browserService.withPage(async (page) => this.searchBing(page, query.trim(), count));
+      await using browserPage = await browserService.acquirePage();
+      const results = await this.searchBing(browserPage.page, query.trim(), count);
       return { query: query.trim(), results };
     } catch (error) {
       if (error instanceof HttpError) throw error;

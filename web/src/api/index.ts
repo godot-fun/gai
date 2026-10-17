@@ -18,14 +18,20 @@ async function route(request: IncomingMessage, response: ServerResponse, routes:
 
 export function createApiServer(options: ApiOptions): Server {
   const routes = getApiRoutes();
-  return createServer((request, response) => {
-    response.setTimeout(options.requestTimeoutMs, () => {
+  async function handleRequest(request: IncomingMessage, response: ServerResponse): Promise<void> {
+    function handleTimeout(): void {
       if (!response.headersSent) sendJson(response, HttpStatus.GATEWAY_TIMEOUT, { error: { code: "REQUEST_TIMEOUT", message: "Request timed out" } });
       else response.destroy();
-    });
-    void route(request, response, routes).catch((error: unknown) => {
+    }
+
+    response.setTimeout(options.requestTimeoutMs, handleTimeout);
+    try {
+      await route(request, response, routes);
+    } catch (error: unknown) {
       if (!response.headersSent) sendError(response, error);
       else response.destroy(error instanceof Error ? error : undefined);
-    });
-  });
+    }
+  }
+
+  return createServer(handleRequest);
 }

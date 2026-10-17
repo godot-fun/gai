@@ -39,28 +39,28 @@ export class FetchApi implements ApiRoute {
       throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_URL", "url must be a valid absolute URL");
     }
     try {
-      return await browserService.withPage(async (page) => {
-        await page.goto(requestedUrl.href, { waitUntil: "domcontentloaded" });
-        const finalUrl = page.url();
-        const html = await page.content();
-        const result = await Defuddle(html, finalUrl, { markdown: true, useAsync: false });
-        return {
-          url: requestedUrl.href,
-          finalUrl,
-          title: result.title,
-          description: result.description,
-          author: result.author,
-          published: result.published,
-          site: result.site,
-          domain: result.domain,
-          language: result.language,
-          favicon: result.favicon,
-          image: result.image,
-          content: result.content,
-          contentType: "markdown",
-          wordCount: result.wordCount,
-        };
-      });
+      await using browserPage = await browserService.acquirePage();
+      const page = browserPage.page;
+      await page.goto(requestedUrl.href, { waitUntil: "domcontentloaded" });
+      const finalUrl = page.url();
+      const html = await page.content();
+      const result = await Defuddle(html, finalUrl, { markdown: true, useAsync: false });
+      return {
+        url: requestedUrl.href,
+        finalUrl,
+        title: result.title,
+        description: result.description,
+        author: result.author,
+        published: result.published,
+        site: result.site,
+        domain: result.domain,
+        language: result.language,
+        favicon: result.favicon,
+        image: result.image,
+        content: result.content,
+        contentType: "markdown",
+        wordCount: result.wordCount,
+      };
     } catch (error) {
       if (error instanceof HttpError) throw error;
       if (error instanceof Error && error.name === "TimeoutError") throw new HttpError(HttpStatus.GATEWAY_TIMEOUT, "NAVIGATION_TIMEOUT", "Page navigation timed out");

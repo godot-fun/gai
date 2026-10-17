@@ -15,20 +15,35 @@ interface QueueEntry {
   reject: (error: Error) => void;
 }
 
+const releasePage = Symbol("releasePage");
+
+class BrowserPageLease implements AsyncDisposable {
+  constructor(public readonly page: Page, private readonly service: BrowserService) {}
+
+  async [Symbol.asyncDispose](): Promise<void> {
+    try {
+      await this.page.close();
+    } catch {
+      // Releasing the concurrency slot is more important than a page-close failure.
+    } finally {
+      this.service[releasePage]();
+    }
+  }
+}
+
 export class BrowserService {
   private context: BrowserContext | null = null;
   private activePages = 0;
   private readonly queue: QueueEntry[] = [];
   private closing = false;
 
-  constructor(private readonly options: BrowserServiceOptions) {}
+  constructor(private readonly options: BrowserServiceOptions) {
+    this.handleContextClose = this.handleContextClose.bind(this);
+  }
 
   async start(): Promise<void> {
     this.context = await launchPersistentContext({ headless: this.options.headless, userDataDir: this.options.userDataDir });
-    this.context.on("close", () => {
-      this.context = null;
-      this.rejectQueue(new HttpError(HttpStatus.SERVICE_UNAVAILABLE, "BROWSER_UNAVAILABLE", "Browser is disconnected"));
-    });
+    this.context.on("close", this.handleContextClose);
     await Promise.all(this.context.pages().map((page) => page.close()));
   }
 
@@ -36,19 +51,18 @@ export class BrowserService {
     return this.context !== null && !this.closing;
   }
 
-  async withPage<T>(operation: (page: Page) => Promise<T>): Promise<T> {
+  async acquirePage(): Promise<BrowserPageLease> {
     await this.acquire();
-    let page: Page | null = null;
     try {
       const context = this.context;
       if (context === null) throw new HttpError(HttpStatus.SERVICE_UNAVAILABLE, "BROWSER_UNAVAILABLE", "Browser is unavailable");
-      page = await context.newPage();
+      const page = await context.newPage();
       page.setDefaultNavigationTimeout(this.options.navigationTimeoutMs);
       page.setDefaultTimeout(this.options.navigationTimeoutMs);
-      return await operation(page);
-    } finally {
-      if (page !== null) await page.close().catch(() => undefined);
-      this.release();
+      return new BrowserPageLease(page, this);
+    } catch (error) {
+      this[releasePage]();
+      throw error;
     }
   }
 
@@ -69,7 +83,7 @@ export class BrowserService {
     await new Promise<void>((resolve, reject) => this.queue.push({ resolve, reject }));
   }
 
-  private release(): void {
+  [releasePage](): void {
     const next = this.queue.shift();
     if (next !== undefined && this.isReady()) {
       next.resolve();
@@ -81,6 +95,11 @@ export class BrowserService {
 
   private rejectQueue(error: Error): void {
     for (const entry of this.queue.splice(0)) entry.reject(error);
+  }
+
+  private handleContextClose(): void {
+    this.context = null;
+    this.rejectQueue(new HttpError(HttpStatus.SERVICE_UNAVAILABLE, "BROWSER_UNAVAILABLE", "Browser is disconnected"));
   }
 }
 
