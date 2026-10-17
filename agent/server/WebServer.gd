@@ -68,7 +68,6 @@ static func _static_init() -> void:
 
 static func async_restart() -> int:
 	await async_stop()
-	await ThreadUtils.async_sleep(TimeUtils.MILLIS_PER_SECOND)
 	var error := await async_ensure_server_running()
 	if error != OK:
 		Log.error("web server restart failed error:[{}]", error)
