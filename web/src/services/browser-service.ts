@@ -41,7 +41,6 @@ export class BrowserService {
       proxy: config.proxy || undefined,
     });
     this.context.on("close", this.handleContextClose);
-    await Promise.all(this.context.pages().map((page) => page.close()));
   }
 
   isReady(): boolean {
