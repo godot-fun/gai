@@ -78,7 +78,7 @@ class Events:
 	signal workspace_changed(path: String)
 
 	## Proxy address changed (see [method ApiSetting.save]).
-	signal proxy_address_changed(proxy_address: String)
+	signal proxy_address_changed
 	# ===========================================================================
 	# UI-ONLY COORDINATION — UI -> UI; managers must never subscribe below
 	# ===========================================================================

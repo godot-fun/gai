@@ -66,6 +66,7 @@ static func _static_init() -> void:
 	await ThreadUtils.async_sleep(TimeUtils.MILLIS_PER_SECOND)
 	gdf.events.application_end.connect(stop_process)
 	AgentEvents.events.proxy_address_changed.connect(on_proxy_address_changed)
+	await async_restart()
 	pass
 
 
@@ -122,19 +123,16 @@ static func async_ensure_server_running() -> int:
 	return ERR_TIMEOUT
 
 
-static func on_proxy_address_changed(_proxy_address: String) -> void:
-	if not await async_health():
-		return
+static func async_restart() -> int:
 	await async_stop()
-	var deadline := Time.get_ticks_msec() + request_timeout_millis
-	while Time.get_ticks_msec() < deadline:
-		if not await async_health():
-			var error := await async_ensure_server_running()
-			if error != OK:
-				Log.error("web server restart failed after proxy address changed error:[{}]", error)
-			return
-		await ThreadUtils.async_sleep(100)
-	Log.error("web server shutdown timed out before restart")
+	var error := await async_ensure_server_running()
+	if error != OK:
+		Log.error("web server restart failed error:[{}]", error)
+	return error
+
+
+static func on_proxy_address_changed() -> void:
+	await async_restart()
 	pass
 
 
@@ -251,4 +249,9 @@ static func async_stop() -> StopResponse:
 	if result == null:
 		Log.error("web server stop failed code:[{}] error:[{}]", response.code, response.get_error_string())
 	stop_process()
+	var deadline := Time.get_ticks_msec() + 5 * TimeUtils.MILLIS_PER_SECOND
+	while await async_health() and Time.get_ticks_msec() < deadline:
+		await ThreadUtils.async_sleep(100)
+	if await async_health():
+		Log.error("web server shutdown timed out")
 	return result

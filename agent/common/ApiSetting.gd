@@ -43,7 +43,7 @@ static func save(api_url: String, model: String, api_token: String, proxy_addres
 	if normalized_proxy_address != get_proxy_address():
 		Setting.set_string(PROXY_ADDRESS_KEY, normalized_proxy_address)
 		Setting.save()
-		AgentEvents.events.proxy_address_changed.emit(normalized_proxy_address)
+		AgentEvents.events.proxy_address_changed.emit()
 	pass
 
 
