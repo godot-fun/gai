@@ -3,6 +3,7 @@ import { HttpError, HttpStatus, sendError, sendJson } from "../http";
 import "./fetch";
 import "./healthy";
 import "./search";
+import "./stop";
 import { getApiRoutes, type ApiRoute } from "./route";
 
 export interface ApiOptions {
