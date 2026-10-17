@@ -39,6 +39,5 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 	if StringUtils.is_blank(response.content):
 		return AgentToolResult.error(StringUtils.format("error: empty response from {}", url))
 	var text := StringUtils.truncate(response.content.strip_edges(), max_chars, FileUtils.NEWLINE_LF + TRUNCATED_SUFFIX)
-	var title := response.title if StringUtils.is_not_blank(response.title) else StringUtils.format("Fetched {}", response.finalUrl)
-	return AgentToolResult.ok(text, AgentToolResult.ui_details(title, text))
+	return AgentToolResult.ok(text, AgentToolResult.ui_details(NAME, text))
 # AgentTool-Interface-Implement-End
