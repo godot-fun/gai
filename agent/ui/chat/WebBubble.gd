@@ -59,9 +59,11 @@ static func append_screenshot(parent: VBoxContainer, entry: ChatEntry) -> void:
 	if screenshot == null or screenshot.is_empty():
 		Log.error("failed to load web screenshot path:[{}]", screenshot_path)
 		return
+	var preview_width := 1024.0
+	var preview_height := preview_width * float(screenshot.get_height()) / float(screenshot.get_width())
 	var preview := TextureRect.new()
 	preview.texture = ImageTexture.create_from_image(screenshot)
-	preview.custom_minimum_size = Vector2(1024, 576)
+	preview.custom_minimum_size = Vector2(preview_width, preview_height)
 	preview.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
