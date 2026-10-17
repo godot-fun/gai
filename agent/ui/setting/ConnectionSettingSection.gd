@@ -83,7 +83,7 @@ func save() -> void:
 
 
 func save_current() -> void:
-	ApiSetting.save(api_url_edit.text, api_token_edit.text, model_edit.text, proxy_address_edit.text)
+	ApiSetting.save(api_url_edit.text, model_edit.text, api_token_edit.text, proxy_address_edit.text)
 	pass
 
 

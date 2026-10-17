@@ -8,7 +8,7 @@ const DEFAULT_MODEL := "deepseek-v4-flash"
 const API_KEY_ENV := "OPENAI_API_KEY"
 const CONNECTION_HISTORY_FILE_PATH := "user://api.dat"
 const MAX_CONNECTION_HISTORY := 10
-const PROXY_ADDRESS_KEY := "agent_ai_proxy_address"
+const PROXY_ADDRESS_KEY := "proxy_address"
 
 static var connection_history: Array[ApiModelConfig] = load_connection_history()
 
@@ -37,10 +37,13 @@ static func get_proxy_address() -> String:
 
 
 ## Persists the edited connection as the active history entry and saves the non-secret proxy setting.
-static func save(api_url: String, api_token: String, model: String, proxy_address: String) -> void:
+static func save(api_url: String, model: String, api_token: String, proxy_address: String) -> void:
 	set_active_connection(ApiModelConfig.new(api_url, model, api_token))
-	Setting.set_string(PROXY_ADDRESS_KEY, proxy_address.strip_edges())
-	Setting.save()
+	var normalized_proxy_address := proxy_address.strip_edges()
+	if normalized_proxy_address != get_proxy_address():
+		Setting.set_string(PROXY_ADDRESS_KEY, normalized_proxy_address)
+		Setting.save()
+		AgentEvents.events.proxy_address_changed.emit(normalized_proxy_address)
 	pass
 
 

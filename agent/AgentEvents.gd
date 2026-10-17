@@ -72,12 +72,13 @@ class Events:
 	signal markdown_changed(enabled: bool)
 	## Active run visual changed (see [method AgentSetting.set_visual_type]).
 	signal visual_type_changed(visual_type: int)
-
 	# Workspace
 	## Workspace root switched (see [method AgentWorkspace.set_root]) — sessions and file
 	## paths now resolve under the new root, so listeners reload their state.
 	signal workspace_changed(path: String)
 
+	## Proxy address changed (see [method ApiSetting.save]).
+	signal proxy_address_changed(proxy_address: String)
 	# ===========================================================================
 	# UI-ONLY COORDINATION — UI -> UI; managers must never subscribe below
 	# ===========================================================================
@@ -97,4 +98,5 @@ class Events:
 	signal memory_context_changed(session_id: int)
 	## AGENTS.md project prompt added to / removed from a session (see AgentPromptToggle).
 	signal agent_context_changed(session_id: int)
+
 	pass
