@@ -8,6 +8,7 @@ var sound_toggle_button: CheckButton
 var toast_label: Label
 var sound_label: Label
 var sound_seconds_label: Label
+var sound_folder_label: Label
 var sound_folder_row: HBoxContainer
 var sound_seconds_spin: SpinBox
 var sound_folder_edit: LineEdit
@@ -31,7 +32,10 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 	sound_toggle_button.tooltip_text = I18n.t("agent.settings.notification_sound_help")
 	sound_toggle_button.toggled.connect(on_sound_toggled)
 	add_sound_seconds_controls(sound_parts[2], sound_parts[3])
-	sound_folder_row = ui.make_option_row(parent, Margin.ma_2)
+	var folder_parts := ui.make_field_row(parent, I18n.t("agent.settings.sound_folder"))
+	sound_folder_row = folder_parts[0] as HBoxContainer
+	sound_folder_label = folder_parts[1] as Label
+	sound_folder_label.tooltip_text = I18n.t("agent.settings.sound_folder_help")
 	sound_folder_edit = LineEdit.new()
 	sound_folder_edit.custom_minimum_size = Vector2(0, 34)
 	sound_folder_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -110,6 +114,7 @@ func on_sound_seconds_changed(seconds: float) -> void:
 func update_sound_options_visible(enabled: bool) -> void:
 	sound_seconds_label.visible = enabled
 	sound_seconds_spin.visible = enabled
+	sound_folder_label.visible = enabled
 	sound_folder_row.visible = enabled
 	pass
 
@@ -153,6 +158,8 @@ func apply_locale() -> void:
 	sound_label.tooltip_text = I18n.t("agent.settings.notification_sound_help")
 	sound_toggle_button.tooltip_text = I18n.t("agent.settings.notification_sound_help")
 	sound_seconds_label.text = I18n.t("agent.settings.sound_duration")
+	sound_folder_label.text = I18n.t("agent.settings.sound_folder")
+	sound_folder_label.tooltip_text = I18n.t("agent.settings.sound_folder_help")
 	sound_folder_edit.tooltip_text = I18n.t("agent.settings.sound_folder_help")
 	sound_folder_dialog.title = I18n.t("agent.settings.sound_folder_title")
 	sound_folder_dialog.ok_button_text = I18n.t("agent.common.select")
@@ -166,6 +173,7 @@ func apply_theme() -> void:
 	ui.style_check_button(toast_toggle_button)
 	ui.style_check_button(sound_toggle_button)
 	ui.style_field_label(sound_seconds_label)
+	ui.style_field_label(sound_folder_label)
 	ui.style_spin_box(sound_seconds_spin)
 	ui.style_line_edit(sound_folder_edit)
 	pass
