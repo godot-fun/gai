@@ -6,14 +6,14 @@ extends Object
 const START_TIMEOUT_MILLIS: int = 2 * TimeUtils.MILLIS_PER_MINUTE
 const PROCESS_ID_STOPPED: int = -1
 const PROCESS_ID_STARTING: int = -2
-const NPM_PATH := ".dependency/node/npm"
+const NPM_CLI_PATH := ".dependency/node/node_modules/npm/bin/npm-cli.js"
 const WEB_ENV_PATH := "web/.env"
 
 static var process_id: int = PROCESS_ID_STOPPED
 static var server_host: String = "127.0.0.1"
 static var server_port: int = 33713
 static var request_timeout_millis: int = 45 * TimeUtils.MILLIS_PER_SECOND
-static var browser_headless: bool = true
+static var browser_headless: bool = false
 
 
 class HealthyResponse extends RefCounted:
@@ -79,12 +79,15 @@ static func async_ensure_server_running() -> int:
 		if await async_health():
 			return OK
 	process_id = PROCESS_ID_STARTING
-	var npm := FileUtils.globalize_writable_path(NPM_PATH)
-	if OSUtils.is_windows():
-		npm += ".cmd"
+	var node := FileUtils.globalize_writable_path(DependencyManifest.get_runtime_bin("node"))
+	var npm_cli := FileUtils.globalize_writable_path(NPM_CLI_PATH)
 	var web_path := FileUtils.globalize_writable_path(WEB_ENV_PATH.get_base_dir())
-	if not FileAccess.file_exists(npm):
-		Log.error("web server npm dependency is missing:[{}]", npm)
+	if not FileAccess.file_exists(node):
+		Log.error("web server node dependency is missing:[{}]", node)
+		process_id = PROCESS_ID_STOPPED
+		return ERR_FILE_NOT_FOUND
+	if not FileAccess.file_exists(npm_cli):
+		Log.error("web server npm CLI dependency is missing:[{}]", npm_cli)
 		process_id = PROCESS_ID_STOPPED
 		return ERR_FILE_NOT_FOUND
 	if not DirAccess.dir_exists_absolute(web_path):
@@ -92,15 +95,15 @@ static func async_ensure_server_running() -> int:
 		process_id = PROCESS_ID_STOPPED
 		return ERR_FILE_NOT_FOUND
 
-	var args := PackedStringArray(["--prefix", web_path, "start"])
+	var args := PackedStringArray([npm_cli, "--prefix", web_path, "start"])
 	args.append("--")
 	args.append("--browser-headless={}".format([str(browser_headless).to_lower()], "{}"))
 	var proxy_address := ApiSetting.get_proxy_address()
 	if StringUtils.is_not_blank(proxy_address):
 		args.append("--proxy-address={}".format([proxy_address], "{}"))
-	process_id = OS.create_process(npm, args, false)
+	process_id = OS.create_process(node, args, false)
 	if process_id <= 0:
-		Log.error("failed to start web server npm:[{}]", npm)
+		Log.error("failed to start web server node:[{}]", node)
 		process_id = PROCESS_ID_STOPPED
 		return ERR_CANT_FORK
 

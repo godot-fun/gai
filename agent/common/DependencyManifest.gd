@@ -60,3 +60,9 @@ static func has_populated_runtime(runtime_path: String) -> bool:
 	var key := normalized.trim_prefix(".dependency/").split("/")[0]
 	var entry: DependencyManifestEntry = entries.get(key, null)
 	return entry != null and entry.populated and not entry.bin.is_empty()
+
+
+static func get_runtime_bin(runtime: String) -> String:
+	reload_manifest()
+	var entry: DependencyManifestEntry = entries.get(runtime, null)
+	return entry.bin if entry != null and entry.populated else StringUtils.EMPTY
