@@ -13,10 +13,10 @@ const PROCESS_ID_STOPPED: int = -1
 const PROCESS_ID_STARTING: int = -2
 
 ## Local dependency paths are resolved from the project root for a consistent runtime layout.
-const MODEL_PATH: String = "res://.dependency/minicpm-v-4.6/model/MiniCPM-V-4_6-Q4_K_M.gguf"
-const MMPROJ_PATH: String = "res://.dependency/minicpm-v-4.6/model/mmproj-model-f16.gguf"
-const GPU_SERVER_PATH: String = "res://.dependency/llama-cpp-gpu/llama-server.exe"
-const CPU_SERVER_PATH: String = "res://.dependency/llama-cpp-cpu/llama-server.exe"
+const MODEL_PATH := ".dependency/minicpm-v-4.6/model/MiniCPM-V-4_6-Q4_K_M.gguf"
+const MMPROJ_PATH := ".dependency/minicpm-v-4.6/model/mmproj-model-f16.gguf"
+const GPU_SERVER_PATH := ".dependency/llama-cpp-gpu/llama-server.exe"
+const CPU_SERVER_PATH := ".dependency/llama-cpp-cpu/llama-server.exe"
 
 static var process_id: int = PROCESS_ID_STOPPED
 static var server_port: int = 31713
@@ -127,8 +127,8 @@ static func async_ensure_server_running() -> int:
 	server_port = available_port
 
 	var executable := select_server_executable()
-	var model := ProjectSettings.globalize_path(MODEL_PATH)
-	var mmproj := ProjectSettings.globalize_path(MMPROJ_PATH)
+	var model := FileUtils.globalize_writable_path(MODEL_PATH)
+	var mmproj := FileUtils.globalize_writable_path(MMPROJ_PATH)
 	for required in [executable, model, mmproj]:
 		if not FileAccess.file_exists(required):
 			Log.error("vision language model dependency is missing:[{}]", required)
@@ -200,10 +200,10 @@ static func build_server_args(model: String, mmproj: String, use_gpu: bool) -> P
 ## Uses Vulkan only when discovery succeeds and a device has enough currently free VRAM; otherwise
 ## the CPU build is selected.
 static func select_server_executable() -> String:
-	var gpu_server := ProjectSettings.globalize_path(GPU_SERVER_PATH)
+	var gpu_server := FileUtils.globalize_writable_path(GPU_SERVER_PATH)
 	if FileAccess.file_exists(gpu_server) and gpu_has_enough_memory(gpu_server):
 		return gpu_server
-	return ProjectSettings.globalize_path(CPU_SERVER_PATH)
+	return FileUtils.globalize_writable_path(CPU_SERVER_PATH)
 
 
 ## Queries llama.cpp device information through the shared process execution utility.

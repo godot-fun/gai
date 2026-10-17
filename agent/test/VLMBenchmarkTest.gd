@@ -68,8 +68,8 @@ func on_cli_pressed() -> void:
 	VLMServer.stop()
 	var watch := StopWatch.new()
 	var executable := VLMServer.select_server_executable().replace("llama-server.exe", "llama-mtmd-cli.exe")
-	var model := ProjectSettings.globalize_path(VLMServer.MODEL_PATH)
-	var mmproj := ProjectSettings.globalize_path(VLMServer.MMPROJ_PATH)
+	var model := FileUtils.globalize_writable_path(VLMServer.MODEL_PATH)
+	var mmproj := FileUtils.globalize_writable_path(VLMServer.MMPROJ_PATH)
 	var image := ProjectSettings.globalize_path(IMAGE_PATH)
 	var use_gpu := executable.contains("llama-cpp-gpu")
 	var args := PackedStringArray([executable, "--model", model, "--mmproj", mmproj, "--image", image,
