@@ -40,7 +40,7 @@ const TOOL_CATALOG: Array[Dictionary] = [
 	{"name": ImageToTextTool.NAME, "args": {"path": "res://icon.svg", "prompt": "Describe this icon briefly."}},
 	{"name": AudioToTextTool.NAME, "args": {"path": "res://audio/sample.wav"}},
 	{"name": WebFetchTool.NAME, "args": {"url": "https://docs.godotengine.org", "max_chars": 2000}},
-	{"name": WebSearchToolProxy.NAME, "args": {"query": "godot visual effects"}},
+	{"name": WebSearchTool.NAME, "args": {"query": "godot visual effects"}},
 ]
 
 @onready var background: ColorRect = $Background

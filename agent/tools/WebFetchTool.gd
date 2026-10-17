@@ -9,6 +9,7 @@ const ARG_MAX_CHARS := "max_chars"
 
 const DEFAULT_MAX_CHARS := 80_000
 const MAX_CHARS_CAP := 200_000
+const WEB_SCREENSHOT_DIR := ".gai/cache/screenshot"
 
 
 func _init() -> void:
@@ -33,11 +34,14 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 	var max_chars := DEFAULT_MAX_CHARS
 	if args.has(ARG_MAX_CHARS) and str(args.get(ARG_MAX_CHARS, "")).strip_edges().is_valid_int():
 		max_chars = clampi(int(str(args.get(ARG_MAX_CHARS, "")).strip_edges()), 1_000, MAX_CHARS_CAP)
-	var response := await WebServer.async_fetch(url)
+	var screenshot_path := FileUtils.globalize_writable_path(AgentWorkspace.get_root().path_join(WEB_SCREENSHOT_DIR).path_join(StringUtils.format("fetch_{}.webp", IdUtils.uuid())))
+	var response := await WebServer.async_fetch(url, screenshot_path)
 	if response == null:
 		return AgentToolResult.error(StringUtils.format("error: fetch failed: {}", url))
+	if StringUtils.is_not_blank(response.screenshotError):
+		Log.error("web fetch screenshot failed error:[{}]", response.screenshotError)
 	if StringUtils.is_blank(response.content):
 		return AgentToolResult.error(StringUtils.format("error: empty response from {}", url))
 	var text := StringUtils.truncate(response.content.strip_edges(), max_chars, FileUtils.NEWLINE_LF + TRUNCATED_SUFFIX)
-	return AgentToolResult.ok(text, AgentToolResult.ui_details(NAME, text))
+	return AgentToolResult.ok(text, AgentToolResult.ui_web_details(NAME, text, response.screenshotPath))
 # AgentTool-Interface-Implement-End

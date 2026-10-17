@@ -19,6 +19,7 @@ extends RefCounted
 const DETAIL_TITLE := "title"
 ## Bubble body text; usually mirrors [member content] but may be shorter/different for display.
 const DETAIL_BODY := "body"
+const DETAIL_SCREENSHOT_PATH := "screenshot_path"
 
 ## For tool call
 const DETAIL_FILE_LINES_ADDED := "file_lines_added"
@@ -56,6 +57,13 @@ static func ui_details(title: String, body: String = StringUtils.EMPTY) -> Dicti
 		DETAIL_TITLE: title,
 		DETAIL_BODY: body,
 	}
+
+
+static func ui_web_details(title: String, body: String, screenshot_path: String) -> Dictionary[String, String]:
+	var result := ui_details(title, body)
+	if StringUtils.is_not_blank(screenshot_path):
+		result[DETAIL_SCREENSHOT_PATH] = screenshot_path
+	return result
 
 
 ## File bubble: title is fixed to the generic result title, the optional extras drive the

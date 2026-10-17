@@ -246,7 +246,8 @@ static func on_tool_execution_end(session_id: int, _tool_call_id: String, tool_n
 		return
 	var title: String = agent_tool_result.details.get(AgentToolResult.DETAIL_TITLE, "")
 	var body: String = agent_tool_result.details.get(AgentToolResult.DETAIL_BODY, "")
-	AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_RESULT, title, body, agent_tool_result.details)
+	var kind := ChatEntry.KIND_WEB if ToolHelper.is_web_tool(tool_name) else ChatEntry.KIND_RESULT
+	AgentSessionManager.add_chat_entry(session_id, kind, title, body, agent_tool_result.details)
 	pass
 
 

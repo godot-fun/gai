@@ -9,3 +9,7 @@ static func is_file_tool(tool_name: String) -> bool:
 		or tool_name == EditTool.NAME
 		or tool_name == DeleteTool.NAME
 	)
+
+
+static func is_web_tool(tool_name: String) -> bool:
+	return tool_name == WebSearchTool.NAME or tool_name == WebFetchTool.NAME

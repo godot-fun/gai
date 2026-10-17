@@ -12,6 +12,7 @@ const KIND_TOOL := "tool"
 const KIND_FILE_TOOL := "file_tool"
 const KIND_GIT_DIFF := "git_diff"
 const KIND_RESULT := "result"
+const KIND_WEB := "web"
 const KIND_ERROR := "error"
 const KIND_COMPACTION := "compaction"
 

@@ -68,6 +68,9 @@ static func refresh_rich_text(rich_text: RichTextLabel, entry: ChatEntry) -> voi
 	if entry.kind == ChatEntry.KIND_THINKING or entry.kind == ChatEntry.KIND_RESULT:
 		ChatBubblePreview.apply(rich_text, entry.body)
 		return
+	if entry.kind == ChatEntry.KIND_WEB:
+		WebBubble.refresh(rich_text, entry)
+		return
 	if entry.kind == ChatEntry.KIND_TOOL:
 		ToolBubble.refresh(rich_text, entry)
 		return

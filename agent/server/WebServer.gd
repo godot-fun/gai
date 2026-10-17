@@ -34,6 +34,8 @@ class FetchResponse extends RefCounted:
 	var content: String
 	var contentType: String
 	var wordCount: int
+	var screenshotPath: String
+	var screenshotError: String
 	pass
 
 
@@ -48,6 +50,8 @@ class SearchResult extends RefCounted:
 class SearchResponse extends RefCounted:
 	var query: String
 	var results: Array[SearchResult] = []
+	var screenshotPath: String
+	var screenshotError: String
 	pass
 
 
@@ -190,13 +194,15 @@ static func async_health() -> bool:
 
 
 ## POST /fetch. Returns the page metadata and its extracted Markdown content.
-static func async_fetch(url: String) -> FetchResponse:
+static func async_fetch(url: String, screenshot_path: String = "") -> FetchResponse:
 	if StringUtils.is_blank(url):
 		Log.error("web fetch url is empty")
 		return null
 	if await async_ensure_server_running() != OK:
 		return null
 	var payload := {"url": url}
+	if StringUtils.is_not_blank(screenshot_path):
+		payload["screenshotPath"] = screenshot_path
 	var response := await HttpHelper.async_post(server_url() + "/fetch", JsonUtils.object_to_json(payload), PackedStringArray(), request_timeout_millis)
 	if not response.success:
 		Log.error("web server request failed path:[/fetch] code:[{}] error:[{}]", response.code, response.get_error_string())
@@ -208,7 +214,7 @@ static func async_fetch(url: String) -> FetchResponse:
 
 
 ## POST /search. Returns up to count Bing results.
-static func async_search(query: String, count: int = 10) -> SearchResponse:
+static func async_search(query: String, count: int = 10, screenshot_path: String = "") -> SearchResponse:
 	if StringUtils.is_blank(query):
 		Log.error("web search query is empty")
 		return null
@@ -218,6 +224,8 @@ static func async_search(query: String, count: int = 10) -> SearchResponse:
 	if await async_ensure_server_running() != OK:
 		return null
 	var payload := {"query": query, "count": count}
+	if StringUtils.is_not_blank(screenshot_path):
+		payload["screenshotPath"] = screenshot_path
 	var response := await HttpHelper.async_post(server_url() + "/search", JsonUtils.object_to_json(payload), PackedStringArray(), request_timeout_millis)
 	if not response.success:
 		Log.error("web server request failed path:[/search] code:[{}] error:[{}]", response.code, response.get_error_string())

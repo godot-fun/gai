@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Page } from "playwright-core";
 import { HttpError, HttpStatus, readJsonBody, requireObject, sendOk } from "../http";
 import { browserService } from "../services/browser-service";
+import { captureScreenshot } from "../services/screenshot-service";
 import { registerApi, type ApiRoute } from "./route";
 
 const DEFAULT_RESULT_COUNT = 10;
@@ -17,6 +18,8 @@ export interface SearchResult {
 export interface SearchResponse {
   query: string;
   results: SearchResult[];
+  screenshotPath: string;
+  screenshotError: string;
 }
 
 export class SearchApi implements ApiRoute {
@@ -27,10 +30,11 @@ export class SearchApi implements ApiRoute {
     const body = requireObject(await readJsonBody(request));
     if (typeof body.query !== "string") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "query must be a string");
     if (body.count !== undefined && typeof body.count !== "number") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "count must be a number");
-    sendOk(response, await this.search(body.query, body.count));
+    if (body.screenshotPath !== undefined && typeof body.screenshotPath !== "string") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "screenshotPath must be a string");
+    sendOk(response, await this.search(body.query, body.count, body.screenshotPath));
   }
 
-  private async search(query: string, count: number = DEFAULT_RESULT_COUNT): Promise<SearchResponse> {
+  private async search(query: string, count: number = DEFAULT_RESULT_COUNT, screenshotPath?: string): Promise<SearchResponse> {
     if (query.trim() === "") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "query must not be empty");
     if (!Number.isSafeInteger(count) || count < 1 || count > MAX_RESULT_COUNT) {
       throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `count must be an integer between 1 and ${MAX_RESULT_COUNT}`);
@@ -39,7 +43,8 @@ export class SearchApi implements ApiRoute {
     try {
       await using browserPage = await browserService.acquirePage();
       const results = await this.searchBing(browserPage.page, query.trim(), count);
-      return { query: query.trim(), results };
+      const screenshot = await captureScreenshot(browserPage.page, screenshotPath);
+      return { query: query.trim(), results, ...screenshot };
     } catch (error) {
       if (error instanceof HttpError) throw error;
       if (error instanceof Error && error.name === "TimeoutError") throw new HttpError(HttpStatus.GATEWAY_TIMEOUT, "NAVIGATION_TIMEOUT", "Bing search timed out");
@@ -53,7 +58,7 @@ export class SearchApi implements ApiRoute {
     searchUrl.searchParams.set("q", query);
     searchUrl.searchParams.set("count", String(count));
     await page.goto(searchUrl.href, { waitUntil: "domcontentloaded" });
-    await page.waitForSelector("#b_results", { state: "attached" });
+    await page.waitForSelector("#b_results > li.b_algo", { state: "visible" });
 
     const rawResults = await page.locator("#b_results > li.b_algo").evaluateAll((items) => items.map((item) => {
       const anchor = item.querySelector<HTMLAnchorElement>("h2 a");

@@ -223,6 +223,8 @@ func on_markdown_changed(_enabled: bool) -> void:
 		match entry.kind:
 			ChatEntry.KIND_THINKING, ChatEntry.KIND_RESULT:
 				ChatBubblePreview.apply(rich_text, entry.body)
+			ChatEntry.KIND_WEB:
+				WebBubble.refresh(rich_text, entry)
 			ChatEntry.KIND_COMPACTION:
 				CompactionBubble.refresh(rich_text, entry)
 			ChatEntry.KIND_TOOL:
@@ -402,6 +404,13 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 			queue_scroll_to_bottom()
 		ChatEntry.KIND_RESULT:
 			rich_text = ResultBubble.append(
+					chat_list,
+					chat_entry,
+					build_bubble_style(Colors.neutral_surface)
+			)
+			queue_scroll_to_bottom()
+		ChatEntry.KIND_WEB:
+			rich_text = WebBubble.append(
 					chat_list,
 					chat_entry,
 					build_bubble_style(Colors.neutral_surface)

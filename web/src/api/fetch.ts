@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { Defuddle } from "defuddle/node";
 import { HttpError, HttpStatus, readJsonBody, requireObject, sendOk } from "../http";
 import { browserService } from "../services/browser-service";
+import { captureScreenshot } from "../services/screenshot-service";
 import { registerApi, type ApiRoute } from "./route";
 
 export interface FetchResponse {
@@ -19,6 +20,8 @@ export interface FetchResponse {
   content: string;
   contentType: "markdown";
   wordCount: number;
+  screenshotPath: string;
+  screenshotError: string;
 }
 
 export class FetchApi implements ApiRoute {
@@ -28,10 +31,11 @@ export class FetchApi implements ApiRoute {
   async handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
     const body = requireObject(await readJsonBody(request));
     if (typeof body.url !== "string") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "url must be a string");
-    sendOk(response, await this.fetch(body.url));
+    if (body.screenshotPath !== undefined && typeof body.screenshotPath !== "string") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "screenshotPath must be a string");
+    sendOk(response, await this.fetch(body.url, body.screenshotPath));
   }
 
-  private async fetch(rawUrl: string): Promise<FetchResponse> {
+  private async fetch(rawUrl: string, screenshotPath?: string): Promise<FetchResponse> {
     let requestedUrl: URL;
     try {
       requestedUrl = new URL(rawUrl);
@@ -45,6 +49,7 @@ export class FetchApi implements ApiRoute {
       const finalUrl = page.url();
       const html = await page.content();
       const result = await Defuddle(html, finalUrl, { markdown: true, useAsync: false });
+      const screenshot = await captureScreenshot(page, screenshotPath);
       return {
         url: requestedUrl.href,
         finalUrl,
@@ -60,6 +65,7 @@ export class FetchApi implements ApiRoute {
         content: result.content,
         contentType: "markdown",
         wordCount: result.wordCount,
+        ...screenshot,
       };
     } catch (error) {
       if (error instanceof HttpError) throw error;

@@ -8,10 +8,12 @@ const baseUrl = `http://${config.host}:${config.port}`;
 
 test("POST /search returns Bing search results", async () => {
   const response = await axios.post(`${baseUrl}/search`, { query: "Godot Engine", count: 5 });
-  const body = response.data as { query?: unknown; results?: unknown };
+  const body = response.data as { query?: unknown; results?: unknown; screenshotPath?: unknown; screenshotError?: unknown };
   assert.equal(response.status, 200);
   assert.equal(body.query, "Godot Engine");
   assert.ok(Array.isArray(body.results));
+  assert.equal(body.screenshotPath, "");
+  assert.equal(body.screenshotError, "");
   assert.ok(body.results.length > 0);
   for (const result of body.results) {
     assert.equal(typeof result.position, "number");

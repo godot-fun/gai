@@ -8,6 +8,7 @@ const ARG_QUERY := "query"
 const ARG_MAX_RESULTS := "max_results"
 const DEFAULT_MAX_RESULTS := 5
 const MAX_RESULTS_CAP := 10
+const WEB_SCREENSHOT_DIR := ".gai/cache/screenshot"
 
 
 func _init() -> void:
@@ -30,14 +31,17 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 	var max_results := DEFAULT_MAX_RESULTS
 	if args.has(ARG_MAX_RESULTS):
 		max_results = clampi(int(str(args.get(ARG_MAX_RESULTS, DEFAULT_MAX_RESULTS))), 1, MAX_RESULTS_CAP)
-	var response := await WebServer.async_search(query, max_results)
+	var screenshot_path := FileUtils.globalize_writable_path(AgentWorkspace.get_root().path_join(WEB_SCREENSHOT_DIR).path_join(StringUtils.format("search_{}.webp", IdUtils.uuid())))
+	var response := await WebServer.async_search(query, max_results, screenshot_path)
 	if response == null:
 		return AgentToolResult.error(StringUtils.format("error: web search request failed for: {}", query))
+	if StringUtils.is_not_blank(response.screenshotError):
+		Log.error("web search screenshot failed error:[{}]", response.screenshotError)
 	if response.results.is_empty():
 		var empty := StringUtils.format("No web results for: {}", query)
-		return AgentToolResult.ok(empty, AgentToolResult.ui_details(NAME, empty))
+		return AgentToolResult.ok(empty, AgentToolResult.ui_web_details(NAME, empty, response.screenshotPath))
 	var formatted := format_results(response)
-	return AgentToolResult.ok(formatted, AgentToolResult.ui_details(NAME, formatted))
+	return AgentToolResult.ok(formatted, AgentToolResult.ui_web_details(NAME, formatted, response.screenshotPath))
 # AgentTool-Interface-Implement-End
 
 

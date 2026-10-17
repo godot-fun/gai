@@ -18,4 +18,6 @@ test("POST /fetch returns extracted page content", async () => {
   assert.ok(typeof body.content === "string");
   assert.ok(body.content.length > 0);
   assert.equal(typeof body.wordCount, "number");
+  assert.equal(body.screenshotPath, "");
+  assert.equal(body.screenshotError, "");
 });

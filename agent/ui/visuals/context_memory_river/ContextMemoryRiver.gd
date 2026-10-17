@@ -741,7 +741,7 @@ static func stream_type_for_entry(entry: ChatEntry) -> int:
 			return StreamType.SYSTEM
 		ChatEntry.KIND_FILE_TOOL:
 			return StreamType.FILE
-		ChatEntry.KIND_TOOL, ChatEntry.KIND_RESULT:
+		ChatEntry.KIND_TOOL, ChatEntry.KIND_RESULT, ChatEntry.KIND_WEB:
 			return StreamType.TOOL
 		ChatEntry.KIND_AGENT, ChatEntry.KIND_THINKING:
 			return StreamType.HISTORY
