@@ -61,9 +61,9 @@ static func append_screenshot(parent: VBoxContainer, entry: ChatEntry) -> void:
 		return
 	var preview := TextureRect.new()
 	preview.texture = ImageTexture.create_from_image(screenshot)
-	preview.custom_minimum_size = Vector2(0, 180)
-	preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	preview.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	preview.custom_minimum_size = Vector2(1024, 576)
+	preview.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	preview.tooltip_text = screenshot_path
 	parent.add_child(preview)

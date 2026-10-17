@@ -30,7 +30,7 @@ export async function captureScreenshot(page: Page, requestedPath?: string): Pro
     await page.screenshot({
       path: screenshotPath,
       type,
-      quality: type === "png" ? undefined : 90,
+      quality: type === "png" ? undefined : 100,
       fullPage: false,
       animations: "allow",
       caret: "hide",
