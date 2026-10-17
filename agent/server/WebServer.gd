@@ -3,13 +3,10 @@ extends Object
 
 ## Manages the local TypeScript web server and wraps all of its HTTP endpoints.
 
-const START_TIMEOUT_MILLIS: int = 2 * TimeUtils.MILLIS_PER_MINUTE
-const PROCESS_ID_STOPPED: int = -1
-const PROCESS_ID_STARTING: int = -2
 const NPM_CLI_PATH := ".dependency/node/node_modules/npm/bin/npm-cli.js"
 const WEB_ENV_PATH := "web/.env"
 
-static var process_id: int = PROCESS_ID_STOPPED
+static var process_id: int = 0
 static var server_host: String = "127.0.0.1"
 static var server_port: int = 33713
 static var request_timeout_millis: int = 45 * TimeUtils.MILLIS_PER_SECOND
@@ -71,6 +68,7 @@ static func _static_init() -> void:
 
 static func async_restart() -> int:
 	await async_stop()
+	await ThreadUtils.async_sleep(TimeUtils.MILLIS_PER_SECOND)
 	var error := await async_ensure_server_running()
 	if error != OK:
 		Log.error("web server restart failed error:[{}]", error)
@@ -85,7 +83,7 @@ static func on_proxy_address_changed() -> void:
 ## Immediately stops the owned child process. Prefer async_stop() when awaiting is possible.
 static func stop_process() -> void:
 	var pid := process_id
-	process_id = PROCESS_ID_STOPPED
+	process_id = 0
 	if pid > 0:
 		OSUtils.kill_process(pid, 0)
 		Log.info("web server stopped pid:[{}]", pid)
@@ -96,25 +94,20 @@ static func stop_process() -> void:
 static func async_ensure_server_running() -> int:
 	if await async_health():
 		return OK
-	while process_id == PROCESS_ID_STARTING:
-		await ThreadUtils.async_sleep(250)
-		if await async_health():
-			return OK
-	process_id = PROCESS_ID_STARTING
+	if is_running():
+		return await async_wait_for_startup(process_id)
+	process_id = 0
 	var node := FileUtils.globalize_writable_path(DependencyManifest.get_runtime_bin("node"))
 	var npm_cli := FileUtils.globalize_writable_path(NPM_CLI_PATH)
 	var web_path := FileUtils.globalize_writable_path(WEB_ENV_PATH.get_base_dir())
 	if not FileAccess.file_exists(node):
 		Log.error("web server node dependency is missing:[{}]", node)
-		process_id = PROCESS_ID_STOPPED
 		return ERR_FILE_NOT_FOUND
 	if not FileAccess.file_exists(npm_cli):
 		Log.error("web server npm CLI dependency is missing:[{}]", npm_cli)
-		process_id = PROCESS_ID_STOPPED
 		return ERR_FILE_NOT_FOUND
 	if not DirAccess.dir_exists_absolute(web_path):
 		Log.error("web server project is missing:[{}]", web_path)
-		process_id = PROCESS_ID_STOPPED
 		return ERR_FILE_NOT_FOUND
 
 	var args := PackedStringArray([npm_cli, "--prefix", web_path, "start"])
@@ -126,21 +119,27 @@ static func async_ensure_server_running() -> int:
 	process_id = OS.create_process(node, args, false)
 	if process_id <= 0:
 		Log.error("failed to start web server node:[{}]", node)
-		process_id = PROCESS_ID_STOPPED
+		process_id = 0
 		return ERR_CANT_FORK
+	return await async_wait_for_startup(process_id)
 
-	var deadline := Time.get_ticks_msec() + START_TIMEOUT_MILLIS
+
+static func async_wait_for_startup(pid: int) -> int:
+	var deadline := Time.get_ticks_msec() + TimeUtils.MILLIS_PER_SECOND_10
 	while Time.get_ticks_msec() < deadline:
-		if not OS.is_process_running(process_id):
+		await ThreadUtils.async_sleep(TimeUtils.MILLIS_PER_SECOND)
+		if process_id != pid:
+			return await async_ensure_server_running()
+		if not is_running():
 			Log.error("web server exited during startup")
-			process_id = PROCESS_ID_STOPPED
+			process_id = 0
 			return FAILED
 		if await async_health():
-			Log.info("web server started pid:[{}] url:[{}]", process_id, server_url())
+			Log.info("web server started pid:[{}] url:[{}]", pid, server_url())
 			return OK
-		await ThreadUtils.async_sleep(500)
 	Log.error("web server startup timed out")
-	stop_process()
+	if process_id == pid:
+		stop_process()
 	return ERR_TIMEOUT
 
 
@@ -182,6 +181,8 @@ static func load_server_config() -> void:
 # Web server APIs
 # ----------------------------------------------------------------------------------------------------------------------
 static func async_health() -> bool:
+	if not is_running():
+		return false
 	var response := await HttpHelper.async_get(server_url() + "/healthy", TimeUtils.MILLIS_PER_SECOND)
 	if response.code != HTTPClient.RESPONSE_OK:
 		return false
@@ -230,22 +231,20 @@ static func async_search(query: String, count: int = 10) -> SearchResponse:
 
 ## POST /stop. Requests a graceful shutdown and releases the recorded process ID.
 static func async_stop() -> StopResponse:
-	if not await async_health():
+	if not await NetUtils.telnet(server_host, server_port):
 		stop_process()
 		return null
 	var response := await HttpHelper.async_post(server_url() + "/stop", JsonUtils.object_to_json({}), PackedStringArray(), request_timeout_millis)
 	var result: StopResponse = JsonUtils.json_to_object(response.get_body_string(), StopResponse) if response.success else null
-	# Node schedules SIGTERM immediately after sending the body. On Windows the process can close the
-	# socket before the client receives it, so a confirmed shutdown is equivalent to the documented reply.
-	if result == null and not await async_health():
-		result = StopResponse.new()
-		result.status = "stopping"
-	if result == null:
+	if not response.success:
 		Log.error("web server stop failed code:[{}] error:[{}]", response.code, response.get_error_string())
+	elif result == null or result.status != "stopping":
+		Log.error("web server returned invalid response path:[/stop] body:[{}]", response.get_body_string())
+		result = null
 	stop_process()
 	var deadline := Time.get_ticks_msec() + 5 * TimeUtils.MILLIS_PER_SECOND
-	while await async_health() and Time.get_ticks_msec() < deadline:
+	while Time.get_ticks_msec() < deadline and await NetUtils.telnet(server_host, server_port):
 		await ThreadUtils.async_sleep(100)
-	if await async_health():
+	if await NetUtils.telnet(server_host, server_port):
 		Log.error("web server shutdown timed out")
 	return result

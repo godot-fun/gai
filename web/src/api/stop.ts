@@ -7,8 +7,8 @@ export class StopApi implements ApiRoute {
   readonly path = "/stop";
 
   handle(_request: IncomingMessage, response: ServerResponse): void {
+    response.once("finish", () => setTimeout(() => process.kill(process.pid, "SIGTERM"), 500));
     sendOk(response, { status: "stopping" });
-    setImmediate(() => process.kill(process.pid, "SIGTERM"));
   }
 }
 
