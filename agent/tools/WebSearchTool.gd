@@ -8,7 +8,6 @@ const ARG_QUERY := "query"
 const ARG_MAX_RESULTS := "max_results"
 const DEFAULT_MAX_RESULTS := 5
 const MAX_RESULTS_CAP := 10
-const WEB_SCREENSHOT_DIR := ".gai/cache/screenshot"
 
 
 func _init() -> void:

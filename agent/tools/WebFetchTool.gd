@@ -9,7 +9,6 @@ const ARG_MAX_CHARS := "max_chars"
 
 const DEFAULT_MAX_CHARS := 80_000
 const MAX_CHARS_CAP := 200_000
-const WEB_SCREENSHOT_DIR := ".gai/cache/screenshot"
 
 
 func _init() -> void:
