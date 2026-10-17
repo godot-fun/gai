@@ -64,7 +64,7 @@ Failure is a one-way explosion rather than a persistent full-screen mask. `failu
 6. The success return wave or failure cracks.
 7. The completion ring, noise-based dust, and final transparency.
 
-Colors are injected from `ThemeColor.accent_theme_color()`, `ColorBase.success`, and `ColorBase.error`. Derive new colors from theme tokens whenever possible; do not bake a background color for one specific theme into the shader.
+Colors are injected from `ThemeColor.accent_theme_color()`, `Colors.success`, and `Colors.error`. Derive new colors from theme tokens whenever possible; do not bake a background color for one specific theme into the shader.
 
 ## Performance Constraints
 

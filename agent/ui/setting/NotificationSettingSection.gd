@@ -5,6 +5,8 @@ const FOLDER_DIALOG_SIZE: Vector2i = Vector2i(900, 600)
 
 var toast_toggle_button: CheckButton
 var sound_toggle_button: CheckButton
+var toast_label: Label
+var sound_label: Label
 var sound_seconds_label: Label
 var sound_seconds_group: HBoxContainer
 var sound_folder_row: HBoxContainer
@@ -17,10 +19,16 @@ var folder_field_typing: bool = false
 func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: ConfirmationDialog) -> void:
 	super.set_up(p_ui, parent, dialog)
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.notification"))
-	toast_toggle_button = ui.add_check_button(ui.make_option_row(parent, Margin.ma_2), I18n.t("agent.settings.notification_window"), AgentSetting.get_notification_window())
+	var toast_parts := ui.make_field_row(parent, I18n.t("agent.settings.notification_window"))
+	toast_label = toast_parts[1] as Label
+	var toast_controls := toast_parts[0] as HBoxContainer
+	toast_toggle_button = ui.add_check_button(ui.make_grid_cell(toast_controls), "", AgentSetting.get_notification_window())
 	toast_toggle_button.toggled.connect(on_toast_toggled)
-	var sound_row := ui.make_option_row(parent, Margin.ma_4)
-	sound_toggle_button = ui.add_check_button(sound_row, I18n.t("agent.settings.notification_sound"), AgentSetting.get_notification_sound())
+	ui.add_grid_spacer(toast_controls, 2.0)
+	var sound_parts := ui.make_field_row(parent, I18n.t("agent.settings.notification_sound"))
+	sound_label = sound_parts[1] as Label
+	var sound_row := sound_parts[0] as HBoxContainer
+	sound_toggle_button = ui.add_check_button(ui.make_grid_cell(sound_row), "", AgentSetting.get_notification_sound())
 	sound_toggle_button.toggled.connect(on_sound_toggled)
 	add_sound_seconds_group(sound_row)
 	sound_folder_row = ui.make_option_row(parent, Margin.ma_2)
@@ -41,7 +49,10 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 
 func add_sound_seconds_group(parent: HBoxContainer) -> void:
 	sound_seconds_group = ui.make_option_row(parent, Margin.ma_2)
+	sound_seconds_group.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sound_seconds_group.size_flags_stretch_ratio = 2.0
 	sound_seconds_label = ui.make_label(I18n.t("agent.settings.sound_duration"))
+	sound_seconds_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sound_seconds_group.add_child(sound_seconds_label)
 	sound_seconds_spin = SpinBox.new()
 	sound_seconds_spin.min_value = AgentSetting.MIN_SOUND_SECONDS
@@ -49,6 +60,7 @@ func add_sound_seconds_group(parent: HBoxContainer) -> void:
 	sound_seconds_spin.step = 1
 	sound_seconds_spin.suffix = " s"
 	sound_seconds_spin.custom_minimum_size = Vector2(104, 34)
+	sound_seconds_spin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sound_seconds_spin.value = AgentSetting.get_notification_sound_seconds()
 	sound_seconds_spin.value_changed.connect(on_sound_seconds_changed)
 	sound_seconds_group.add_child(sound_seconds_spin)
@@ -136,8 +148,8 @@ func on_sound_folder_selected(folder: String) -> void:
 
 func apply_locale() -> void:
 	heading_label.text = I18n.t("agent.settings.notification")
-	toast_toggle_button.text = I18n.t("agent.settings.notification_window")
-	sound_toggle_button.text = I18n.t("agent.settings.notification_sound")
+	toast_label.text = I18n.t("agent.settings.notification_window")
+	sound_label.text = I18n.t("agent.settings.notification_sound")
 	sound_seconds_label.text = I18n.t("agent.settings.sound_duration")
 	sound_folder_edit.tooltip_text = I18n.t("agent.settings.sound_folder_help")
 	sound_folder_dialog.title = I18n.t("agent.settings.sound_folder_title")
@@ -147,6 +159,8 @@ func apply_locale() -> void:
 
 func apply_theme() -> void:
 	super.apply_theme()
+	ui.style_field_label(toast_label)
+	ui.style_field_label(sound_label)
 	ui.style_check_button(toast_toggle_button)
 	ui.style_check_button(sound_toggle_button)
 	ui.style_field_label(sound_seconds_label)

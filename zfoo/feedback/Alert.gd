@@ -5,7 +5,7 @@
 ## [constant Margin.ma_6] — holds, then fades out; live cards stack downward, the newest one hugging
 ## the top edge.
 ##
-## Example: `Alert.alert("Saved", ColorBase.success)`
+## Example: `Alert.alert("Saved", Colors.success)`
 class_name Alert
 extends PanelContainer
 

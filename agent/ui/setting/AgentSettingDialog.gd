@@ -4,8 +4,8 @@ extends RefCounted
 ## Settings dialog shell. Each top-level settings category owns its controls and persistence.
 
 const DIALOG_SIZE: Vector2i = Vector2i(680, 1000)
-const FIELD_LABEL_RATIO: float = 0.2
-const FIELD_CONTROL_RATIO: float = 0.8
+const FIELD_LABEL_RATIO: float = 1.0
+const FIELD_CONTROL_RATIO: float = 3.0
 const SETTINGS_ICON_PATH: String = "res://agent/asset/image/icon/settings.svg"
 
 var button: Button
@@ -106,9 +106,26 @@ func make_option_row(parent: Container, separation: int) -> HBoxContainer:
 	return row
 
 
+func make_grid_cell(parent: Container, column_span: float = 1.0) -> HBoxContainer:
+	var cell := HBoxContainer.new()
+	cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cell.size_flags_stretch_ratio = column_span
+	parent.add_child(cell)
+	return cell
+
+
+func add_grid_spacer(parent: Container, column_span: float = 1.0) -> void:
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spacer.size_flags_stretch_ratio = column_span
+	parent.add_child(spacer)
+	pass
+
+
 func make_label(label_text: String) -> Label:
 	var label := Label.new()
 	label.text = label_text
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", Typography.label_large_size)
 	return label
@@ -131,7 +148,12 @@ func make_field_row(parent: Container, label_text: String) -> Array:
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.size_flags_stretch_ratio = FIELD_LABEL_RATIO
 	row.add_child(label)
-	return [row, label]
+	var controls := HBoxContainer.new()
+	controls.add_theme_constant_override("separation", Margin.ma_3)
+	controls.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	controls.size_flags_stretch_ratio = FIELD_CONTROL_RATIO
+	row.add_child(controls)
+	return [controls, label]
 
 
 func add_help_label(parent: Container, help_text: String) -> Label:
@@ -312,6 +334,16 @@ func style_check_button(check: CheckButton) -> void:
 	StyleBoxHelper.apply_style_box_margin(empty, Margin.ma_0, Margin.ma_1, Margin.ma_2, Margin.ma_1)
 	for state in ["normal", "disabled", "focus", "hover", "pressed", "hover_pressed"]:
 		check.add_theme_stylebox_override(state, empty.duplicate())
+	pass
+
+
+func style_action_button(button: Button) -> void:
+	ButtonStyle.apply_font_colors(button, Colors.primary_text, Colors.primary_text, Colors.primary_text, Colors.secondary_text)
+	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, ControlSize.radius_md, Margin.ma_3, Margin.ma_1,
+		Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
+	var hover := normal.duplicate() as StyleBoxFlat
+	hover.border_color = ThemeColor.accent_theme_color()
+	ButtonStyle.apply(button, normal, hover, hover.duplicate(), normal.duplicate(), normal.duplicate())
 	pass
 
 

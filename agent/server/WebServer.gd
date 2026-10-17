@@ -69,9 +69,9 @@ static func _static_init() -> void:
 	pass
 
 
-static func async_restart(browser_headless: bool = true) -> int:
+static func async_restart() -> int:
 	await async_stop()
-	var error := await async_ensure_server_running(browser_headless)
+	var error := await async_ensure_server_running()
 	if error != OK:
 		Log.error("web server restart failed error:[{}]", error)
 	return error
@@ -93,7 +93,7 @@ static func stop_process() -> void:
 
 ## Starts npm from the bundled Node.js dependency and waits until CloakBrowser is ready.
 ## Concurrent callers share the same startup instead of spawning duplicate processes.
-static func async_ensure_server_running(browser_headless: bool = true) -> int:
+static func async_ensure_server_running() -> int:
 	if await async_health():
 		return OK
 	while process_id == PROCESS_ID_STARTING:
@@ -119,7 +119,7 @@ static func async_ensure_server_running(browser_headless: bool = true) -> int:
 
 	var args := PackedStringArray([npm_cli, "--prefix", web_path, "start"])
 	args.append("--")
-	args.append("--browser-headless={}".format([str(browser_headless).to_lower()], "{}"))
+	args.append("--browser-headless={}".format([str(AgentSetting.get_browser_headless()).to_lower()], "{}"))
 	var proxy_address := ApiSetting.get_proxy_address()
 	if StringUtils.is_not_blank(proxy_address):
 		args.append("--proxy-address={}".format([proxy_address], "{}"))

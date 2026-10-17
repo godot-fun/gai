@@ -6,7 +6,7 @@ extends Window
 ## `force_native` makes it a real system window without turning the app's dialogs into ones.
 ## It never activates and never joins Godot's popup list, so the app window keeps its input.
 ##
-## Example: `DesktopToast.show_toast("Run finished", summary, ColorBase.success)`
+## Example: `DesktopToast.show_toast("Run finished", summary, Colors.success)`
 ## Pass a global [enum Corner] as the fourth argument to choose another screen corner.
 ## The card uses the [ThemeColor] surface with the per-toast accent color on its leading edge.
 

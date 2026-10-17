@@ -23,6 +23,7 @@ const SKILL_IN_PROMPT_ENABLED_KEY := "agent_skill_in_prompt_enabled"
 const MEMORY_IN_PROMPT_ENABLED_KEY := "agent_memory_in_prompt_enabled"
 ## [AgentPromptToggle] — keep the AGENTS.md project prompt inside new sessions.
 const AGENT_PROMPT_IN_PROMPT_ENABLED_KEY := "agent_agents_md_in_prompt_enabled"
+const BROWSER_HEADLESS_KEY := "browser_headless"
 
 
 static func get_visual_type() -> VisualType.Type:
@@ -82,6 +83,16 @@ static func get_agent_prompt_in_prompt_enabled() -> bool:
 
 static func set_agent_prompt_in_prompt_enabled(enabled: bool) -> void:
 	Setting.set_bool(AGENT_PROMPT_IN_PROMPT_ENABLED_KEY, enabled)
+	Setting.save()
+	pass
+
+
+static func get_browser_headless() -> bool:
+	return Setting.get_bool(BROWSER_HEADLESS_KEY, true)
+
+
+static func set_browser_headless(enabled: bool) -> void:
+	Setting.set_bool(BROWSER_HEADLESS_KEY, enabled)
 	Setting.save()
 	pass
 

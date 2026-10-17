@@ -11,7 +11,7 @@ Tai Chi 是一个连续演化的全屏视觉特效，用动画表现：
 视觉基调：
 
 - 背景保持应用当前主题背景，不额外覆盖不透明底色。
-- 文字以 `ColorBase.primary_text` 和 `ColorBase.secondary_text` 为主。
+- 文字以 `Colors.primary_text` 和 `Colors.secondary_text` 为主。
 - 强调色统一使用 `ThemeColor.alpha_theme_color(alpha)`。
 - 文字和卦线使用中性前景色作为清晰主体，主题强调色只承担近、远两层光影和轨迹作用。
 - 文字与卦线的光影参数统一由 `TaiChiGlowDrawing` 管理，不在各阶段单独设置描边宽度和透明度。
