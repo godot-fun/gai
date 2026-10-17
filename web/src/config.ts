@@ -39,11 +39,19 @@ function readArgument(name: string): string {
   return process.argv.find((argument) => argument.startsWith(prefix))?.slice(prefix.length).trim() || "";
 }
 
+function readBooleanArgument(name: string): boolean | undefined {
+  const raw = readArgument(name);
+  if (raw === "") return undefined;
+  if (raw === "true") return true;
+  if (raw === "false") return false;
+  throw new Error(`--${name} must be true or false`);
+}
+
 export function loadConfig(): ServerConfig {
   return {
     host: process.env.HOST?.trim() || "127.0.0.1",
     port: readPositiveInteger("PORT", 3000),
-    headless: readBoolean("CLOAKBROWSER_HEADLESS", true),
+    headless: readBooleanArgument("browser-headless") ?? readBoolean("CLOAKBROWSER_HEADLESS", true),
     userDataDir: process.env.CLOAKBROWSER_USER_DATA_DIR?.trim() || "./.user_data",
     proxy: readArgument("proxy-address") || process.env.CLOAKBROWSER_PROXY?.trim() || "",
     browserMaxConcurrency: readPositiveInteger("BROWSER_MAX_CONCURRENCY", 4),

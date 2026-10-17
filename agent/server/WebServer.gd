@@ -13,6 +13,7 @@ static var process_id: int = PROCESS_ID_STOPPED
 static var server_host: String = "127.0.0.1"
 static var server_port: int = 33713
 static var request_timeout_millis: int = 45 * TimeUtils.MILLIS_PER_SECOND
+static var browser_headless: bool = true
 
 
 class HealthyResponse extends RefCounted:
@@ -91,9 +92,10 @@ static func async_ensure_server_running() -> int:
 		return ERR_FILE_NOT_FOUND
 
 	var args := PackedStringArray(["--prefix", web_path, "start"])
+	args.append("--")
+	args.append("--browser-headless={}".format([str(browser_headless).to_lower()], "{}"))
 	var proxy_address := ApiSetting.get_proxy_address()
 	if StringUtils.is_not_blank(proxy_address):
-		args.append("--")
 		args.append("--proxy-address={}".format([proxy_address], "{}"))
 	process_id = OS.create_process(npm, args, false)
 	if process_id <= 0:
@@ -157,6 +159,10 @@ static func load_server_config() -> void:
 			server_port = int(value)
 		elif key == "REQUEST_TIMEOUT_MS" and int(value) > 0:
 			request_timeout_millis = int(value)
+		elif key == "CLOAKBROWSER_HEADLESS":
+			var normalized_value := value.to_lower()
+			if normalized_value == "true" or normalized_value == "false":
+				browser_headless = normalized_value == "true"
 	pass
 
 
