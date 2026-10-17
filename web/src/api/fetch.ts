@@ -1,7 +1,8 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { Defuddle } from "defuddle/node";
-import { HttpError, readJsonBody, requireObject, sendJson } from "../http";
-import { BrowserService } from "../services/browser-service";
+import { HttpError, HttpStatus, readJsonBody, requireObject, sendOk } from "../http";
+import { browserService } from "../services/browser-service";
+import { registerApi, type ApiRoute } from "./route";
 
 export interface FetchResponse {
   url: string;
@@ -20,18 +21,25 @@ export interface FetchResponse {
   wordCount: number;
 }
 
-export class FetchService {
-  constructor(private readonly browserService: BrowserService) {}
+export class FetchApi implements ApiRoute {
+  readonly method = "POST";
+  readonly path = "/fetch";
 
-  async fetch(rawUrl: string): Promise<FetchResponse> {
+  async handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
+    const body = requireObject(await readJsonBody(request));
+    if (typeof body.url !== "string") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "url must be a string");
+    sendOk(response, await this.fetch(body.url));
+  }
+
+  private async fetch(rawUrl: string): Promise<FetchResponse> {
     let requestedUrl: URL;
     try {
       requestedUrl = new URL(rawUrl);
     } catch {
-      throw new HttpError(400, "INVALID_URL", "url must be a valid absolute URL");
+      throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_URL", "url must be a valid absolute URL");
     }
     try {
-      return await this.browserService.withPage(async (page) => {
+      return await browserService.withPage(async (page) => {
         await page.goto(requestedUrl.href, { waitUntil: "domcontentloaded" });
         const finalUrl = page.url();
         const html = await page.content();
@@ -55,15 +63,11 @@ export class FetchService {
       });
     } catch (error) {
       if (error instanceof HttpError) throw error;
-      if (error instanceof Error && error.name === "TimeoutError") throw new HttpError(504, "NAVIGATION_TIMEOUT", "Page navigation timed out");
+      if (error instanceof Error && error.name === "TimeoutError") throw new HttpError(HttpStatus.GATEWAY_TIMEOUT, "NAVIGATION_TIMEOUT", "Page navigation timed out");
       console.error(error);
-      throw new HttpError(502, "FETCH_FAILED", "Page content could not be fetched");
+      throw new HttpError(HttpStatus.BAD_GATEWAY, "FETCH_FAILED", "Page content could not be fetched");
     }
   }
 }
 
-export async function handleFetch(request: IncomingMessage, response: ServerResponse, fetchService: Pick<FetchService, "fetch">): Promise<void> {
-  const body = requireObject(await readJsonBody(request));
-  if (typeof body.url !== "string") throw new HttpError(400, "INVALID_REQUEST", "url must be a string");
-  sendJson(response, 200, await fetchService.fetch(body.url));
-}
+registerApi(new FetchApi());

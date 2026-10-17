@@ -1,19 +1,10 @@
 import type { Server } from "node:http";
 import { createApiServer } from "./api/index";
-import { FetchService } from "./api/fetch";
-import { SearchService } from "./api/search";
+import { getApiRoutes } from "./api/route";
 import { loadConfig } from "./config";
-import { BrowserService } from "./services/browser-service";
+import { browserService } from "./services/browser-service";
 
 const config = loadConfig();
-const browserService = new BrowserService({
-  headless: config.headless,
-  userDataDir: config.userDataDir,
-  maxConcurrency: config.browserMaxConcurrency,
-  navigationTimeoutMs: config.navigationTimeoutMs,
-});
-const searchService = new SearchService(browserService);
-const fetchService = new FetchService(browserService);
 
 async function listen(server: Server): Promise<void> {
   await new Promise<void>((resolve, reject) => {
@@ -32,12 +23,10 @@ async function closeServer(server: Server): Promise<void> {
 async function main(): Promise<void> {
   console.log("Starting CloakBrowser...");
   await browserService.start();
-  const server = createApiServer({ browserService, searchService, fetchService }, { requestTimeoutMs: config.requestTimeoutMs });
+  const server = createApiServer({ requestTimeoutMs: config.requestTimeoutMs });
   await listen(server);
   console.log("Supported endpoints:");
-  console.log("  GET  /healthy");
-  console.log("  POST /search");
-  console.log("  POST /fetch");
+  for (const route of getApiRoutes()) console.log(`  ${route.method.padEnd(5)}${route.path}`);
   console.log(`Web server listening at http://${config.host}:${config.port}`);
 
   let shuttingDown = false;
