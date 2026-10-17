@@ -64,7 +64,8 @@ class StopResponse extends RefCounted:
 static func _static_init() -> void:
 	load_server_config()
 	await ThreadUtils.async_sleep(TimeUtils.MILLIS_PER_SECOND)
-	gdf.events.application_end.connect(stop)
+	gdf.events.application_end.connect(stop_process)
+	AgentEvents.events.proxy_address_changed.connect(on_proxy_address_changed)
 	pass
 
 
@@ -114,12 +115,28 @@ static func async_ensure_server_running() -> int:
 			return OK
 		await ThreadUtils.async_sleep(500)
 	Log.error("web server startup timed out")
-	stop()
+	stop_process()
 	return ERR_TIMEOUT
 
 
+static func on_proxy_address_changed(_proxy_address: String) -> void:
+	if not await async_health():
+		return
+	await async_stop()
+	var deadline := Time.get_ticks_msec() + request_timeout_millis
+	while Time.get_ticks_msec() < deadline:
+		if not await async_health():
+			var error := await async_ensure_server_running()
+			if error != OK:
+				Log.error("web server restart failed after proxy address changed error:[{}]", error)
+			return
+		await ThreadUtils.async_sleep(100)
+	Log.error("web server shutdown timed out before restart")
+	pass
+
+
 ## Immediately stops the owned child process. Prefer async_stop() when awaiting is possible.
-static func stop() -> void:
+static func stop_process() -> void:
 	var pid := process_id
 	process_id = PROCESS_ID_STOPPED
 	if pid > 0:
@@ -219,7 +236,7 @@ static func async_search(query: String, count: int = 10) -> SearchResponse:
 ## POST /stop. Requests a graceful shutdown and releases the recorded process ID.
 static func async_stop() -> StopResponse:
 	if not await async_health():
-		process_id = PROCESS_ID_STOPPED
+		stop_process()
 		return null
 	var response := await HttpHelper.async_post(server_url() + "/stop", JsonUtils.object_to_json({}), PackedStringArray(), request_timeout_millis)
 	var result: StopResponse = JsonUtils.json_to_object(response.get_body_string(), StopResponse) if response.success else null
@@ -230,5 +247,5 @@ static func async_stop() -> StopResponse:
 		result.status = "stopping"
 	if result == null:
 		Log.error("web server stop failed code:[{}] error:[{}]", response.code, response.get_error_string())
-	process_id = PROCESS_ID_STOPPED
+	stop_process()
 	return result
