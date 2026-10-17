@@ -18,7 +18,7 @@ var proxy_address_edit: LineEdit
 func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: ConfirmationDialog) -> void:
 	super.set_up(p_ui, parent, dialog)
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.heading"))
-	var api_result := add_field(parent, I18n.t("agent.settings.api_endpoint"), "https://api.example.com/v1/chat/completions", I18n.t("agent.settings.api_endpoint_help"))
+	var api_result := add_field(parent, I18n.t("agent.settings.api_url"), "https://api.example.com/v1/chat/completions", I18n.t("agent.settings.api_url_help"))
 	api_url_edit = api_result[0]
 	api_url_label = api_result[1]
 	api_url_edit.gui_input.connect(on_api_url_input)
@@ -194,11 +194,11 @@ func refresh_history_hover() -> void:
 
 func apply_locale() -> void:
 	heading_label.text = I18n.t("agent.settings.heading")
-	api_url_label.text = I18n.t("agent.settings.api_endpoint")
+	api_url_label.text = I18n.t("agent.settings.api_url")
 	model_label.text = I18n.t("agent.settings.model")
 	api_token_label.text = I18n.t("agent.settings.api_token")
 	proxy_label.text = I18n.t("agent.settings.proxy")
-	var help_keys := ["api_endpoint_help", "model_help", "token_help", "proxy_help"]
+	var help_keys := ["api_url_help", "model_help", "token_help", "proxy_help"]
 	for index in range(help_labels.size()):
 		help_labels[index].text = I18n.t("agent.settings." + help_keys[index])
 	pass
