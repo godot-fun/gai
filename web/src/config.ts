@@ -12,6 +12,7 @@ export interface ServerConfig {
   port: number;
   headless: boolean;
   userDataDir: string;
+  proxy: string;
   browserMaxConcurrency: number;
   navigationTimeoutMs: number;
   requestTimeoutMs: number;
@@ -33,12 +34,18 @@ function readBoolean(name: string, fallback: boolean): boolean {
   throw new Error(`${name} must be true or false`);
 }
 
+function readArgument(name: string): string {
+  const prefix = `--${name}=`;
+  return process.argv.find((argument) => argument.startsWith(prefix))?.slice(prefix.length).trim() || "";
+}
+
 export function loadConfig(): ServerConfig {
   return {
     host: process.env.HOST?.trim() || "127.0.0.1",
     port: readPositiveInteger("PORT", 3000),
     headless: readBoolean("CLOAKBROWSER_HEADLESS", true),
     userDataDir: process.env.CLOAKBROWSER_USER_DATA_DIR?.trim() || "./.user_data",
+    proxy: readArgument("proxy-address") || process.env.CLOAKBROWSER_PROXY?.trim() || "",
     browserMaxConcurrency: readPositiveInteger("BROWSER_MAX_CONCURRENCY", 4),
     navigationTimeoutMs: readPositiveInteger("NAVIGATION_TIMEOUT_MS", 30_000),
     requestTimeoutMs: readPositiveInteger("REQUEST_TIMEOUT_MS", 45_000),

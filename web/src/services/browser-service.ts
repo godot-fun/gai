@@ -6,6 +6,7 @@ import { HttpError, HttpStatus } from "../http";
 interface BrowserServiceOptions {
   headless: boolean;
   userDataDir: string;
+  proxy: string;
   maxConcurrency: number;
   navigationTimeoutMs: number;
 }
@@ -42,7 +43,11 @@ export class BrowserService {
   }
 
   async start(): Promise<void> {
-    this.context = await launchPersistentContext({ headless: this.options.headless, userDataDir: this.options.userDataDir });
+    this.context = await launchPersistentContext({
+      headless: this.options.headless,
+      userDataDir: this.options.userDataDir,
+      ...(this.options.proxy === "" ? {} : { proxy: this.options.proxy }),
+    });
     this.context.on("close", this.handleContextClose);
     await Promise.all(this.context.pages().map((page) => page.close()));
   }
@@ -107,6 +112,7 @@ const config = loadConfig();
 export const browserService = new BrowserService({
   headless: config.headless,
   userDataDir: config.userDataDir,
+  proxy: config.proxy,
   maxConcurrency: config.browserMaxConcurrency,
   navigationTimeoutMs: config.navigationTimeoutMs,
 });

@@ -90,7 +90,12 @@ static func async_ensure_server_running() -> int:
 		process_id = PROCESS_ID_STOPPED
 		return ERR_FILE_NOT_FOUND
 
-	process_id = OS.create_process(npm, PackedStringArray(["--prefix", web_path, "start"]), false)
+	var args := PackedStringArray(["--prefix", web_path, "start"])
+	var proxy_address := ApiSetting.get_proxy_address()
+	if StringUtils.is_not_blank(proxy_address):
+		args.append("--")
+		args.append("--proxy-address={}".format([proxy_address], "{}"))
+	process_id = OS.create_process(npm, args, false)
 	if process_id <= 0:
 		Log.error("failed to start web server npm:[{}]", npm)
 		process_id = PROCESS_ID_STOPPED
