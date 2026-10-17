@@ -1,9 +1,7 @@
 import { launchPersistentContext } from "cloakbrowser";
 import type { BrowserContext, Page } from "playwright-core";
-import { loadConfig } from "../config";
+import { config } from "../config";
 import { HttpError, HttpStatus } from "../http";
-
-const config = loadConfig();
 
 interface QueueEntry {
   resolve: () => void;

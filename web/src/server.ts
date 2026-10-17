@@ -2,10 +2,8 @@ import { once } from "node:events";
 import type { Server } from "node:http";
 import { createApiServer } from "./api/index";
 import { getApiRoutes } from "./api/route";
-import { loadConfig } from "./config";
+import { config } from "./config";
 import { browserService } from "./services/browser-service";
-
-const config = loadConfig();
 
 async function listen(server: Server): Promise<void> {
   server.listen(config.port, config.host);
@@ -19,7 +17,7 @@ async function closeServer(server: Server): Promise<void> {
 async function main(): Promise<void> {
   console.log("Starting CloakBrowser...");
   await browserService.start();
-  const server = createApiServer({ requestTimeoutMs: config.requestTimeoutMs });
+  const server = createApiServer();
   await listen(server);
   console.log("Supported endpoints:");
   for (const route of getApiRoutes()) console.log(`  ${route.method.padEnd(5)}${route.path}`);

@@ -159,7 +159,7 @@ static func load_server_config() -> void:
 			server_port = int(value)
 		elif key == "REQUEST_TIMEOUT_MS" and int(value) > 0:
 			request_timeout_millis = int(value)
-		elif key == "CLOAKBROWSER_HEADLESS":
+		elif key == "BROWSER_HEADLESS":
 			var normalized_value := value.to_lower()
 			if normalized_value == "true" or normalized_value == "false":
 				browser_headless = normalized_value == "true"

@@ -51,11 +51,13 @@ export function loadConfig(): ServerConfig {
   return {
     host: process.env.HOST?.trim() || "127.0.0.1",
     port: readPositiveInteger("PORT", 3000),
-    headless: readBooleanArgument("browser-headless") ?? readBoolean("CLOAKBROWSER_HEADLESS", true),
+    headless: readBooleanArgument("browser-headless") ?? readBoolean("BROWSER_HEADLESS", true),
     userDataDir: process.env.CLOAKBROWSER_USER_DATA_DIR?.trim() || "./.user_data",
-    proxy: readArgument("proxy-address") || process.env.CLOAKBROWSER_PROXY?.trim() || "",
+    proxy: readArgument("proxy-address") || process.env.BROWSER_PROXY?.trim() || "",
     browserMaxConcurrency: readPositiveInteger("BROWSER_MAX_CONCURRENCY", 4),
     navigationTimeoutMs: readPositiveInteger("NAVIGATION_TIMEOUT_MS", 30_000),
     requestTimeoutMs: readPositiveInteger("REQUEST_TIMEOUT_MS", 45_000),
   };
 }
+
+export const config = loadConfig();

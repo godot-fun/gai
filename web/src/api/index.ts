@@ -1,14 +1,11 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { config } from "../config";
 import { HttpError, HttpStatus, sendError, sendJson } from "../http";
 import "./fetch";
 import "./healthy";
 import "./search";
 import "./stop";
 import { getApiRoutes, type ApiRoute } from "./route";
-
-export interface ApiOptions {
-  requestTimeoutMs: number;
-}
 
 async function route(request: IncomingMessage, response: ServerResponse, routes: readonly ApiRoute[]): Promise<void> {
   const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
@@ -17,7 +14,7 @@ async function route(request: IncomingMessage, response: ServerResponse, routes:
   await matchedRoute.handle(request, response);
 }
 
-export function createApiServer(options: ApiOptions): Server {
+export function createApiServer(): Server {
   const routes = getApiRoutes();
   async function handleRequest(request: IncomingMessage, response: ServerResponse): Promise<void> {
     function handleTimeout(): void {
@@ -25,7 +22,7 @@ export function createApiServer(options: ApiOptions): Server {
       else response.destroy();
     }
 
-    response.setTimeout(options.requestTimeoutMs, handleTimeout);
+    response.setTimeout(config.requestTimeoutMs, handleTimeout);
     try {
       await route(request, response, routes);
     } catch (error: unknown) {
