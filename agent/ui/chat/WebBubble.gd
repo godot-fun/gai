@@ -68,5 +68,16 @@ static func append_screenshot(parent: VBoxContainer, entry: ChatEntry) -> void:
 	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	preview.tooltip_text = screenshot_path
+	preview.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	preview.gui_input.connect(func(event: InputEvent) -> void: on_screenshot_input(event, screenshot_path))
 	parent.add_child(preview)
+	pass
+
+
+static func on_screenshot_input(event: InputEvent, screenshot_path: String) -> void:
+	if not event is InputEventMouseButton:
+		return
+	var mouse := event as InputEventMouseButton
+	if mouse.button_index == MOUSE_BUTTON_LEFT and mouse.pressed:
+		ImagePreviewWindow.show_window(screenshot_path)
 	pass
