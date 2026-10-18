@@ -113,18 +113,16 @@ static var light_blue: Color = DARK_LIGHT_BLUE
 # =============================================================================
 
 ## Semantic surfaces keep status/category fills readable without using strong text colors as fills.
-const DARK_STRONG_INFO_SURFACE := Color(0.16, 0.22, 0.32)
 const DARK_INFO_SURFACE := Color(0.10, 0.13, 0.19)
 const DARK_PURPLE_SURFACE := Color(0.19, 0.18, 0.30)
-const DARK_LIGHT_BLUE_SURFACE := Color("#014477CC")
+const DARK_LIGHT_BLUE_SURFACE := Color(0.12, 0.28, 0.48, 0.80)
 const DARK_SUCCESS_SURFACE := Color(0.14, 0.20, 0.16)
 const DARK_WARNING_SURFACE := Color(0.22, 0.16, 0.10)
 const DARK_NEUTRAL_SURFACE := Color(0.13, 0.16, 0.20)
 
-const LIGHT_STRONG_INFO_SURFACE := Color(0.90, 0.94, 1.00)
 const LIGHT_INFO_SURFACE := Color(0.95, 0.97, 0.99)
 const LIGHT_PURPLE_SURFACE := Color(0.96, 0.95, 1.00)
-const LIGHT_LIGHT_BLUE_SURFACE := Color("#B3E5FC")
+const LIGHT_LIGHT_BLUE_SURFACE := Color(0.70, 0.90, 0.99)
 const LIGHT_SUCCESS_SURFACE := Color(0.94, 0.99, 0.96)
 const LIGHT_WARNING_SURFACE := Color(1.00, 0.97, 0.93)
 const LIGHT_NEUTRAL_SURFACE := Color(0.94, 0.95, 0.97)
