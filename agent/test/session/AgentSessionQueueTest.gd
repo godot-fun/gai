@@ -73,7 +73,7 @@ static func compaction_refreshes_memory_before_notification_test() -> void:
 	var session := AgentSession.new(42)
 	session.messages.append(ChatMessage.system(previous_context))
 	session.chat_entries.append(ChatEntry.new(ChatEntry.KIND_MEMORY, ChatEntry.TITLE_MEMORY, previous_context))
-	AgentSessionContext.refresh_memory_after_compaction(session)
+	PromptContextManager.refresh_memory_after_compaction(session)
 	var refreshed_context := MemoryPrompt.get_memory_context()
 	assert(StringUtils.is_not_blank(refreshed_context))
 	assert(session.messages[0].content == refreshed_context)

@@ -1,4 +1,4 @@
-class_name AgentSessionContext
+class_name PromptContextManager
 extends Object
 
 ## Owns the optional system contexts attached to a session.

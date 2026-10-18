@@ -100,7 +100,7 @@ static func compact_session(session_id: int) -> void:
 		ChatEntry.TITLE_COMPACTION,
 		summary
 	))
-	AgentSessionContext.refresh_memory_after_compaction(session)
+	PromptContextManager.refresh_memory_after_compaction(session)
 	update_estimated_usage(session)
 	finish(session_id, true, StringUtils.EMPTY)
 	await GitDiffManager.async_append_git_diff(session_id, checkpoint)

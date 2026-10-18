@@ -36,9 +36,9 @@ func on_toggled(enabled: bool) -> void:
 
 	if enabled:
 		MemoryPrompt.reload_memory_context()
-		AgentSessionContext.append_memory(session_id)
+		PromptContextManager.append_memory(session_id)
 	else:
-		AgentSessionContext.remove_memory(session_id)
+		PromptContextManager.remove_memory(session_id)
 	AgentSessionManager.persist_session(session_id)
 	AgentEvents.events.memory_context_changed.emit(session_id)
 	pass

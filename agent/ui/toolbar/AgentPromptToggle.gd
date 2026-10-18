@@ -36,9 +36,9 @@ func on_toggled(enabled: bool) -> void:
 		return
 
 	if enabled:
-		AgentSessionContext.append_agent_prompt(session_id)
+		PromptContextManager.append_agent_prompt(session_id)
 	else:
-		AgentSessionContext.remove_agent_prompt(session_id)
+		PromptContextManager.remove_agent_prompt(session_id)
 	AgentSessionManager.persist_session(session_id)
 	AgentEvents.events.agent_context_changed.emit(session_id)
 	pass
