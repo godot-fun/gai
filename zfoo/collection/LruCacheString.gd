@@ -1,4 +1,4 @@
-## A bounded least-recently-used cache with String keys and Variant values.
+## A bounded least-recently-used cache with String keys and non-null Variant values.
 ## Intended for small caches: recency updates use an array and are O(capacity).
 ## This container is not thread-safe; synchronize externally when shared by workers.
 class_name LruCacheString
@@ -19,6 +19,9 @@ func _init(_maximum_size: int) -> void:
 ## Inserts or replaces a value and marks the key as most recently used.
 ## Returns the previous value, or [code]null[/code] when the key was absent.
 func put(key: String, value: Variant) -> Variant:
+	if value == null:
+		Log.error("LruCacheString put rejected key:[{}] value:[null]", key)
+		return null
 	var old_value: Variant = cache_map.get(key, null)
 	if cache_map.has(key):
 		access_order.erase(key)

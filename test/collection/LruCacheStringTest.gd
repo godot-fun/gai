@@ -88,11 +88,23 @@ func lru_cache_string_remove_releases_capacity_test() -> void:
 	pass
 
 
-func lru_cache_string_supports_empty_key_and_null_value_test() -> void:
+func lru_cache_string_supports_empty_key_and_false_value_test() -> void:
 	var cache := LruCacheString.new(2)
-	cache.put("", null)
+	cache.put("", false)
 	assert(cache.has(""))
-	assert(cache.get_value("", "fallback") == null)
-	assert(cache.put("", "value") == null)
+	assert(cache.get_value("", "fallback") == false)
+	assert(cache.put("", "value") == false)
 	assert(cache.get_value("") == "value")
+	pass
+
+
+func lru_cache_string_has_does_not_refresh_recency_test() -> void:
+	var cache := LruCacheString.new(2)
+	cache.put("a", 1)
+	cache.put("b", 2)
+	assert(cache.has("a"))
+	cache.put("c", 3)
+	assert(not cache.has("a"))
+	assert(cache.has("b"))
+	assert(cache.has("c"))
 	pass
