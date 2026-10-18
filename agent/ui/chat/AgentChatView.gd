@@ -9,12 +9,14 @@ const META_BUBBLE_RICH_TEXT: String = "bubble_rich_text"
 const THEME_COLOR_REBUILD_DELAY_MS: int = 250
 ## Keeps a little context above an entry opened from search.
 const SEARCH_ENTRY_TOP_MARGIN: float = 20.0
+## Retain the most recently used transcript control trees; scroll positions remain cached separately.
+const CHAT_LIST_CACHE_MAX_SIZE: int = 18
 
 
 var chat_scroll: ScrollContainer
 var chat_host: Control
 
-var chat_list_caches: Dictionary[int, VBoxContainer] = {}
+var chat_list_caches: LruCacheInt = LruCacheInt.new(CHAT_LIST_CACHE_MAX_SIZE)
 var scroll_position_caches: Dictionary[int, float] = {}
 var chat_bubble_flusher: ChatBubbleFlusher = ChatBubbleFlusher.new()
 ## When true, new content keeps the transcript scrolled to the latest bubble.
@@ -115,7 +117,7 @@ func on_compaction_end(session_id: int, success: bool, _error_code: String) -> v
 func on_chat_entry_add(session_id: int, entry: ChatEntry) -> void:
 	if get_bubble_rich_text(session_id, entry) != null:
 		return
-	if chat_list_caches.get(session_id) == null:
+	if chat_list_caches.get_value(session_id) == null:
 		return
 	append_entry_bubble(entry, session_id)
 	pass
@@ -123,7 +125,7 @@ func on_chat_entry_add(session_id: int, entry: ChatEntry) -> void:
 
 ## Streaming token — resolve bubble from list cache, then queue UI refresh.
 func on_chat_entry_update(session_id: int, entry: ChatEntry, _channel: String) -> void:
-	if chat_list_caches.get(session_id) == null:
+	if chat_list_caches.get_value(session_id) == null:
 		return
 	var rich_text: RichTextLabel = get_bubble_rich_text(session_id, entry)
 	if rich_text == null:
@@ -264,16 +266,20 @@ func show_session(session_id: int) -> void:
 	var has_cached_scroll: bool = scroll_position_caches.has(session_id)
 
 	# One bubble list per session — create on first open, reuse on later switches.
-	var list: VBoxContainer = chat_list_caches.get(session_id)
+	var list := chat_list_caches.get_value(session_id) as VBoxContainer
 	if list == null:
 		list = VBoxContainer.new()
 		list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		list.add_theme_constant_override("separation", Margin.ma_3)
 		chat_host.add_child(list)
-		chat_list_caches[session_id] = list
+		var old_entry := chat_list_caches.put(session_id, list)
+		if old_entry != null:
+			var old_list := old_entry.value as VBoxContainer
+			old_list.queue_free()
 
-	for id: int in chat_list_caches:
-		chat_list_caches[id].visible = id == session_id
+	for id: int in chat_list_caches.cache_map:
+		var cached_list := chat_list_caches.cache_map[id] as VBoxContainer
+		cached_list.visible = id == session_id
 
 	if list.get_child_count() == 0:
 		fill_list(session)
@@ -296,17 +302,16 @@ func fill_list(session: AgentSession) -> void:
 
 
 func clear_bubble_list(session_id: int) -> void:
-	var list: VBoxContainer = chat_list_caches.get(session_id)
+	var list := chat_list_caches.remove(session_id) as VBoxContainer
 	if list == null:
 		return
-	chat_list_caches.erase(session_id)
 	list.queue_free()
 	pass
 
 
 func clear_inactive_bubble_lists() -> void:
 	var drop_ids: Array[int] = []
-	for session_id: int in chat_list_caches:
+	for session_id: int in chat_list_caches.cache_map:
 		if session_id != AgentSessionManager.active_session_id:
 			drop_ids.append(session_id)
 	for session_id: int in drop_ids:
@@ -316,14 +321,14 @@ func clear_inactive_bubble_lists() -> void:
 
 func clear_all_bubble_lists() -> void:
 	var drop_ids: Array[int] = []
-	drop_ids.assign(chat_list_caches.keys())
+	drop_ids.assign(chat_list_caches.cache_map.keys())
 	for session_id: int in drop_ids:
 		clear_bubble_list(session_id)
 	pass
 
 
 func get_active_chat_list() -> VBoxContainer:
-	return chat_list_caches.get(AgentSessionManager.active_session_id)
+	return chat_list_caches.get_value(AgentSessionManager.active_session_id) as VBoxContainer
 
 
 # ---------------------------------------------------------------------------
@@ -331,7 +336,7 @@ func get_active_chat_list() -> VBoxContainer:
 # ---------------------------------------------------------------------------
 
 func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabel:
-	var chat_list: VBoxContainer = chat_list_caches.get(session_id)
+	var chat_list := chat_list_caches.get_value(session_id) as VBoxContainer
 	if chat_list == null:
 		return null
 	var rich_text: RichTextLabel = null
@@ -467,7 +472,7 @@ func build_bubble_style(bg_color: Color, user_beam: bool = false) -> StyleBoxFla
 ## chat_entries index matches VBoxContainer child order; label lives on wrapper meta.
 func get_bubble_rich_text(session_id: int, entry: ChatEntry) -> RichTextLabel:
 	var session: AgentSession = AgentSessionStore.load_session(session_id)
-	var list: VBoxContainer = chat_list_caches.get(session_id)
+	var list := chat_list_caches.get_value(session_id) as VBoxContainer
 	if session == null or list == null:
 		return null
 	var index: int = session.chat_entries.find(entry)

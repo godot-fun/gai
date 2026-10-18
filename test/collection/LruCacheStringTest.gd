@@ -11,12 +11,11 @@ func lru_cache_string_evicts_least_recently_used_test() -> void:
 	pass
 
 
-func lru_cache_string_replace_remove_clear_test() -> void:
+func lru_cache_string_remove_clear_test() -> void:
 	var cache := LruCacheString.new(2)
 	assert(cache.put("a", "first") == null)
-	assert(cache.put("a", "second") == "first")
 	assert(cache.get_value("missing", "fallback") == "fallback")
-	assert(cache.remove("a") == "second")
+	assert(cache.remove("a") == "first")
 	assert(cache.remove("a") == null)
 	cache.put("b", 2)
 	cache.clear()
@@ -52,13 +51,13 @@ func lru_cache_string_exact_capacity_does_not_evict_test() -> void:
 	pass
 
 
-func lru_cache_string_replace_refreshes_recency_test() -> void:
+func lru_cache_string_get_refreshes_recency_test() -> void:
 	var cache := LruCacheString.new(2)
 	cache.put("a", 1)
 	cache.put("b", 2)
-	assert(cache.put("a", 10) == 1)
+	assert(cache.get_value("a") == 1)
 	cache.put("c", 3)
-	assert(cache.get_value("a") == 10)
+	assert(cache.get_value("a") == 1)
 	assert(not cache.has("b"))
 	assert(cache.has("c"))
 	pass
@@ -93,8 +92,6 @@ func lru_cache_string_supports_empty_key_and_false_value_test() -> void:
 	cache.put("", false)
 	assert(cache.has(""))
 	assert(cache.get_value("", "fallback") == false)
-	assert(cache.put("", "value") == false)
-	assert(cache.get_value("") == "value")
 	pass
 
 
@@ -107,4 +104,15 @@ func lru_cache_string_has_does_not_refresh_recency_test() -> void:
 	assert(not cache.has("a"))
 	assert(cache.has("b"))
 	assert(cache.has("c"))
+	pass
+
+
+func lru_cache_string_put_returns_evicted_entry_test() -> void:
+	var cache := LruCacheString.new(2)
+	cache.put("a", 1)
+	cache.put("b", 2)
+	var evicted := cache.put("c", 3)
+	assert(evicted.key == "a")
+	assert(evicted.value == 1)
+	assert(not cache.has("a"))
 	pass

@@ -16,21 +16,23 @@ func _init(_maximum_size: int) -> void:
 	pass
 
 
-## Inserts or replaces a value and marks the key as most recently used.
-## Returns the previous value, or [code]null[/code] when the key was absent.
-func put(key: int, value: Variant) -> Variant:
+## Inserts a new value and marks the key as most recently used.
+## Existing keys are rejected. Returns the removed LRU entry, or [code]null[/code] if none.
+func put(key: int, value: Variant) -> PairInt:
 	if value == null:
 		Log.error("LruCacheInt put rejected key:[{}] value:[null]", key)
 		return null
-	var old_value: Variant = cache_map.get(key, null)
 	if cache_map.has(key):
-		access_order.erase(key)
+		Log.error("LruCacheInt put failed for key:[{}] value:[{}] because the key already exists", key, value)
+		return null
+	var old_entry: PairInt = null
 	cache_map[key] = value
 	access_order.append(key)
 	if cache_map.size() > maximum_size:
 		var oldest_key: int = access_order.pop_front()
+		old_entry = PairInt.new(oldest_key, cache_map[oldest_key])
 		cache_map.erase(oldest_key)
-	return old_value
+	return old_entry
 
 
 ## Returns a value and marks its key as most recently used.

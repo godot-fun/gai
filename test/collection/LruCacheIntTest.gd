@@ -11,12 +11,11 @@ func lru_cache_int_evicts_least_recently_used_test() -> void:
 	pass
 
 
-func lru_cache_int_replace_remove_clear_test() -> void:
+func lru_cache_int_remove_clear_test() -> void:
 	var cache := LruCacheInt.new(2)
 	assert(cache.put(1, "first") == null)
-	assert(cache.put(1, "second") == "first")
 	assert(cache.get_value(99, "fallback") == "fallback")
-	assert(cache.remove(1) == "second")
+	assert(cache.remove(1) == "first")
 	assert(cache.remove(1) == null)
 	cache.put(2, 2)
 	cache.clear()
@@ -52,13 +51,13 @@ func lru_cache_int_exact_capacity_does_not_evict_test() -> void:
 	pass
 
 
-func lru_cache_int_replace_refreshes_recency_test() -> void:
+func lru_cache_int_get_refreshes_recency_test() -> void:
 	var cache := LruCacheInt.new(2)
 	cache.put(1, "one")
 	cache.put(2, "two")
-	assert(cache.put(1, "updated") == "one")
+	assert(cache.get_value(1) == "one")
 	cache.put(3, "three")
-	assert(cache.get_value(1) == "updated")
+	assert(cache.get_value(1) == "one")
 	assert(not cache.has(2))
 	assert(cache.has(3))
 	pass
@@ -95,8 +94,6 @@ func lru_cache_int_supports_zero_negative_and_false_value_test() -> void:
 	assert(cache.has(0))
 	assert(cache.get_value(0, "fallback") == false)
 	assert(cache.get_value(-1) == "negative")
-	assert(cache.put(0, "zero") == false)
-	assert(cache.get_value(0) == "zero")
 	pass
 
 
@@ -109,4 +106,15 @@ func lru_cache_int_has_does_not_refresh_recency_test() -> void:
 	assert(not cache.has(1))
 	assert(cache.has(2))
 	assert(cache.has(3))
+	pass
+
+
+func lru_cache_int_put_returns_evicted_entry_test() -> void:
+	var cache := LruCacheInt.new(2)
+	cache.put(1, "one")
+	cache.put(2, "two")
+	var evicted := cache.put(3, "three")
+	assert(evicted.key == 1)
+	assert(evicted.value == "one")
+	assert(not cache.has(1))
 	pass
