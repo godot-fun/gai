@@ -27,7 +27,6 @@ func setup(
 	p_chat_host.clip_contents = true
 	ScrollBarStyle.apply(chat_scroll.get_v_scroll_bar())
 	chat_list_cache.setup(p_chat_host)
-	AgentEvents.events.chat_list_removed.connect(on_chat_list_removed)
 	chat_bubble_flusher.setup()
 	chat_scroll_controller.setup(chat_scroll)
 	gdf.events.theme_changed.connect(on_theme_changed)
@@ -217,11 +216,6 @@ func rebuild_session_if_active(session_id: int) -> void:
 func fill_list(session: AgentSession) -> void:
 	for entry: ChatEntry in session.chat_entries:
 		chat_list_cache.append_entry(session.id, entry)
-	pass
-
-
-func on_chat_list_removed(list: VBoxContainer) -> void:
-	chat_scroll_controller.clear_active_chat_list(list)
 	pass
 
 

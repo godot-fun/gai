@@ -25,12 +25,18 @@ func setup(p_chat_scroll: ScrollContainer) -> void:
 	chat_scroll.get_v_scroll_bar().scrolling.connect(on_chat_scroll_bar_scrolling)
 	chat_scroll.get_window().window_input.connect(on_chat_window_input)
 	AgentEvents.events.chat_bubble_flushed.connect(on_chat_bubble_flushed)
+	AgentEvents.events.chat_list_removed.connect(on_chat_list_removed)
 	AgentEvents.events.chat_search_result_selected.connect(on_chat_search_result_selected)
 	pass
 
 
 func on_chat_bubble_flushed() -> void:
 	queue_scroll_to_bottom()
+	pass
+
+
+func on_chat_list_removed(list: VBoxContainer) -> void:
+	clear_active_chat_list(list)
 	pass
 
 
