@@ -47,11 +47,11 @@ func show_only(session_id: int) -> void:
 	pass
 
 
-func remove(session_id: int) -> VBoxContainer:
+func remove(session_id: int) -> void:
 	var list := lists.remove(session_id) as VBoxContainer
 	if list != null:
 		dispose_list(session_id, list)
-	return list
+	pass
 
 
 func dispose_list(session_id: int, list: VBoxContainer) -> void:

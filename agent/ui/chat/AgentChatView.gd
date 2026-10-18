@@ -96,9 +96,9 @@ func on_compaction_end(session_id: int, success: bool, _error_code: String) -> v
 # ---------------------------------------------------------------------------
 
 func on_chat_entry_add(session_id: int, entry: ChatEntry) -> void:
-	if chat_list_cache.get_rich_text(session_id, entry) != null:
-		return
 	if not chat_list_cache.has(session_id):
+		return
+	if chat_list_cache.get_rich_text(session_id, entry) != null:
 		return
 	chat_list_cache.append_entry(session_id, entry)
 	if AgentSessionManager.is_active(session_id):
@@ -119,7 +119,7 @@ func on_chat_entry_update(session_id: int, entry: ChatEntry, _channel: String) -
 
 
 func on_chat_truncated(session_id: int) -> void:
-	rebuild_session_if_active(session_id)
+	invalidate_session(session_id)
 	pass
 
 
@@ -129,7 +129,7 @@ func on_chat_truncated(session_id: int) -> void:
 
 ## Re-render the transcript after a context prompt (skills / memory / AGENTS.md) is added or removed.
 func on_agent_context_changed(session_id: int) -> void:
-	rebuild_session_if_active(session_id)
+	invalidate_session(session_id)
 	pass
 
 
@@ -190,7 +190,8 @@ func show_session(session_id: int) -> void:
 	chat_scroll_controller.set_active_chat_list(list)
 
 	if list.get_child_count() == 0:
-		fill_list(session)
+		for entry: ChatEntry in session.chat_entries:
+			chat_list_cache.append_entry(session.id, entry)
 
 	chat_scroll_controller.queue_restore_session_scroll_after_layout(session_id, has_cached_scroll)
 	pass
@@ -203,19 +204,13 @@ func rebuild(session_id: int) -> void:
 	pass
 
 
-func rebuild_session_if_active(session_id: int) -> void:
+func invalidate_session(session_id: int) -> void:
 	var is_active: bool = AgentSessionManager.is_active(session_id)
 	if is_active:
 		chat_scroll_controller.cache_session_scroll(session_id)
 	chat_list_cache.remove(session_id)
 	if is_active:
 		show_session(session_id)
-	pass
-
-
-func fill_list(session: AgentSession) -> void:
-	for entry: ChatEntry in session.chat_entries:
-		chat_list_cache.append_entry(session.id, entry)
 	pass
 
 
