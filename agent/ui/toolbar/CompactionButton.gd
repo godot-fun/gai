@@ -50,9 +50,9 @@ func setup(p_wrap: PanelContainer) -> void:
 	pass
 
 
-func on_message_complete(session_id: int, _usage: OpenAiUsage) -> void:
+func on_message_complete(session_id: int, usage: OpenAiUsage) -> void:
 	if session_id == AgentSessionManager.active_session_id:
-		refresh()
+		refresh_usage(usage)
 	pass
 
 
@@ -63,7 +63,11 @@ func refresh(_session_id: int = 0, _previous_session_id: int = 0) -> void:
 	var session: AgentSession = AgentSessionStore.load_session(AgentSessionManager.active_session_id)
 	if session == null:
 		return
-	var usage: OpenAiUsage = session.usage
+	refresh_usage(session.usage)
+	pass
+
+
+func refresh_usage(usage: OpenAiUsage) -> void:
 	var n: int = usage.prompt_tokens
 	usage_ratio = token_ratio(n)
 	usage_color = text_color_for_tokens(n)

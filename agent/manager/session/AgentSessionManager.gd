@@ -57,7 +57,7 @@ static func on_persist_session(session_id: int, _arg: Variant = null) -> void:
 
 ## New session is prepended to the index; it is not selected here — [method select_default_session]
 ## covers the boot case and the sidebar selects its own new session explicitly.
-## Seeds the system prompt, then session_added so listeners (e.g. SkillToggle, AgentPromptToggle) can append context.
+## Seeds the system prompt and optional contexts before notifying observers.
 static func create_session() -> AgentSession:
 	var session := AgentSessionStore.create_session()
 	add_session_index(session)
@@ -67,7 +67,7 @@ static func create_session() -> AgentSession:
 	session.messages.append(ChatMessage.system(system_text))
 	add_chat_entry(session.id, ChatEntry.KIND_SYSTEM, ChatEntry.TITLE_SYSTEM, system_text)
 
-	# After system prompt is in place — listeners (e.g. SkillToggle) may append more context.
+	AgentSessionContext.initialize(session.id)
 	AgentEvents.events.session_added.emit(session.id, get_title(session.id))
 
 	# Save empty chat.

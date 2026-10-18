@@ -68,6 +68,19 @@ static func compaction_replaces_previous_summary_message_test() -> void:
 	pass
 
 
+static func compaction_refreshes_memory_before_notification_test() -> void:
+	var previous_context := "stale memory snapshot"
+	var session := AgentSession.new(42)
+	session.messages.append(ChatMessage.system(previous_context))
+	session.chat_entries.append(ChatEntry.new(ChatEntry.KIND_MEMORY, ChatEntry.TITLE_MEMORY, previous_context))
+	AgentSessionContext.refresh_memory_after_compaction(session)
+	var refreshed_context := MemoryPrompt.get_memory_context()
+	assert(StringUtils.is_not_blank(refreshed_context))
+	assert(session.messages[0].content == refreshed_context)
+	assert(session.chat_entries[0].body == refreshed_context)
+	pass
+
+
 static func memory_messages_drop_thinking_and_tool_protocol_test() -> void:
 	var tool_call := OpenAiToolCall.new()
 	tool_call.id = "call-1"
