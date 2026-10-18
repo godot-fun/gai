@@ -40,7 +40,7 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 	vbox.add_child(rich_text)
 	append_screenshot(vbox, entry)
 
-	wrapper.set_meta(AgentChatView.META_BUBBLE_RICH_TEXT, rich_text)
+	wrapper.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
 	chat_list.add_child(wrapper)
 	refresh(rich_text, entry)
 	return rich_text

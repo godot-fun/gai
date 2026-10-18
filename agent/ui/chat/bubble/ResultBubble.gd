@@ -45,7 +45,7 @@ static func append(
 	var rich_text: RichTextLabel = MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
 	vbox.add_child(rich_text)
 
-	wrapper.set_meta(AgentChatView.META_BUBBLE_RICH_TEXT, rich_text)
+	wrapper.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
 
 	chat_list.add_child(wrapper)
 	ChatBubblePreview.apply(rich_text, entry.body)

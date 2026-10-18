@@ -36,7 +36,7 @@ static func append(
 			AgentSetting.get_markdown_enabled()
 	)
 	vbox.add_child(rich_text)
-	wrapper.set_meta(AgentChatView.META_BUBBLE_RICH_TEXT, rich_text)
+	wrapper.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
 
 	if is_resumable(entry.body):
 		var resume_button: Button = Button.new()

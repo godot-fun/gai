@@ -50,7 +50,7 @@ static func append(
 	)
 	rich_text.visible = StringUtils.is_not_blank(entry.body)
 	vbox.add_child(rich_text)
-	wrapper.set_meta(AgentChatView.META_BUBBLE_RICH_TEXT, rich_text)
+	wrapper.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
 
 	chat_list.add_child(wrapper)
 	return rich_text

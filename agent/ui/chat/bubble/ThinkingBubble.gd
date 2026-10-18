@@ -46,7 +46,7 @@ static func append(
 	ChatBubblePreview.enable_fixed_height_at_limit(rich_text)
 	vbox.add_child(rich_text)
 
-	wrapper.set_meta(AgentChatView.META_BUBBLE_RICH_TEXT, rich_text)
+	wrapper.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
 
 	chat_list.add_child(wrapper)
 	ChatBubblePreview.apply(rich_text, entry.body)

@@ -43,7 +43,7 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 		AgentSetting.get_markdown_enabled()
 	)
 	vbox.add_child(rich_text)
-	wrapper.set_meta(AgentChatView.META_BUBBLE_RICH_TEXT, rich_text)
+	wrapper.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
 	chat_list.add_child(wrapper)
 	refresh(rich_text, entry, wrapper)
 	return rich_text
@@ -54,7 +54,7 @@ static func on_expand_pressed(wrapper: PanelContainer, entry: ChatEntry) -> void
 		return
 	var expanded := bool(wrapper.get_meta(META_EXPANDED, false))
 	wrapper.set_meta(META_EXPANDED, not expanded)
-	var rich_text := wrapper.get_meta(AgentChatView.META_BUBBLE_RICH_TEXT) as RichTextLabel
+	var rich_text := wrapper.get_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT) as RichTextLabel
 	refresh(rich_text, entry, wrapper)
 	pass
 

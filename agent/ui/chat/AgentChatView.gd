@@ -4,7 +4,6 @@ extends RefCounted
 ## Chat transcript area — bubbles, streaming, and error resume.
 ## One bubble list per session; switching shows the cached list.
 
-const META_BUBBLE_RICH_TEXT: String = "bubble_rich_text"
 ## The color picker emits on every drag step; the transcript re-renders once the theme color settles.
 const THEME_COLOR_REBUILD_DELAY_MS: int = 250
 ## Retain the most recently used transcript control trees; scroll positions remain cached separately.
@@ -276,124 +275,7 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 	var chat_list := chat_list_caches.get_value(session_id) as VBoxContainer
 	if chat_list == null:
 		return null
-	var rich_text: RichTextLabel = null
-	match chat_entry.kind:
-		ChatEntry.KIND_SYSTEM:
-			rich_text = append_bubble(chat_list, chat_entry, Colors.secondary_text, Colors.info_surface, Colors.info)
-		ChatEntry.KIND_SKILL, ChatEntry.KIND_MEMORY, ChatEntry.KIND_AGENT_PROMPT:
-			rich_text = ContextBubble.append(
-					chat_list,
-					session_id,
-					chat_entry,
-					build_bubble_style(Colors.info_surface)
-			)
-		ChatEntry.KIND_USER:
-			rich_text = UserBubble.append(
-					chat_list,
-					session_id,
-					chat_entry,
-					build_bubble_style(ThemeColor.emphasize(Colors.info_surface, Colors.am_2), true),
-					Colors.primary_text
-			)
-		ChatEntry.KIND_THINKING:
-			rich_text = ThinkingBubble.append(
-					chat_list,
-					chat_entry,
-					build_bubble_style(Colors.purple_surface)
-			)
-		ChatEntry.KIND_AGENT:
-			rich_text = AgentBubble.append(
-					chat_list,
-					chat_entry,
-					build_bubble_style(Colors.surface),
-					Colors.primary_text
-			)
-		ChatEntry.KIND_TOOL:
-			rich_text = ToolBubble.append(chat_list, chat_entry, build_bubble_style(Colors.success_surface))
-		ChatEntry.KIND_WEB_TOOL:
-			rich_text = WebToolBubble.append(chat_list, chat_entry, build_bubble_style(Colors.light_blue_surface))
-		ChatEntry.KIND_FILE_TOOL:
-			rich_text = FileBubble.append(
-					chat_list,
-					chat_entry,
-					build_bubble_style(Colors.warning_surface)
-			)
-		ChatEntry.KIND_GIT_DIFF:
-			rich_text = GitDiffBubble.append(
-					chat_list,
-					session_id,
-					chat_entry,
-					build_bubble_style(Colors.surface)
-			)
-		ChatEntry.KIND_RESULT:
-			rich_text = ResultBubble.append(
-					chat_list,
-					chat_entry,
-					build_bubble_style(Colors.neutral_surface)
-			)
-		ChatEntry.KIND_WEB:
-			rich_text = WebResultBubble.append(
-					chat_list,
-					chat_entry,
-					build_bubble_style(Colors.neutral_surface)
-			)
-		ChatEntry.KIND_ERROR:
-			rich_text = ErrorBubble.append(
-					chat_list,
-					chat_entry,
-					build_bubble_style(Colors.surface),
-					session_id,
-					RuntimeManager.is_running(session_id)
-			)
-		ChatEntry.KIND_COMPACTION:
-			rich_text = CompactionBubble.append(
-				chat_list,
-				chat_entry,
-				build_bubble_style(ThemeColor.alpha_theme_color(0.08))
-			)
-		_:
-			rich_text = append_bubble(chat_list, chat_entry, Colors.secondary_text, Colors.surface)
-	return rich_text
-
-
-func append_bubble(chat_list: VBoxContainer, entry: ChatEntry, text_color: Color, bg_color: Color, title_color: Color = Colors.secondary_text) -> RichTextLabel:
-	var wrapper: PanelContainer = PanelContainer.new()
-	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrapper.add_theme_stylebox_override("panel", build_bubble_style(bg_color))
-
-	var vbox: VBoxContainer = VBoxContainer.new()
-	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.add_theme_constant_override("separation", Margin.ma_2)
-	wrapper.add_child(vbox)
-
-	var title_label: Label = Label.new()
-	title_label.text = entry.title
-	title_label.add_theme_color_override("font_color", title_color)
-	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
-	vbox.add_child(title_label)
-
-	var rich_text: RichTextLabel = MarkdownHelper.create_rich_text_label(
-		text_color,
-		entry.body,
-		AgentSetting.get_markdown_enabled()
-	)
-	rich_text.visible = StringUtils.is_not_blank(entry.body)
-	vbox.add_child(rich_text)
-	wrapper.set_meta(META_BUBBLE_RICH_TEXT, rich_text)
-
-	chat_list.add_child(wrapper)
-	return rich_text
-
-
-func build_bubble_style(bg_color: Color, user_beam: bool = false) -> StyleBoxFlat:
-	var style := StyleBoxHelper.create_style_box_flat(bg_color, 8, Margin.ma_3, Margin.ma_3)
-	if not user_beam and ThemeColor.is_light_theme():
-		style.border_color = Colors.border
-		style.set_border_width_all(ControlSize.border_xs)
-		style.shadow_color = Color(0, 0, 0, 0.04)
-		style.shadow_size = 6
-		style.shadow_offset = Vector2(0, 2)
-	return style
+	return ChatBubbleFactory.append(chat_list, session_id, chat_entry)
 
 
 ## chat_entries index matches VBoxContainer child order; label lives on wrapper meta.
@@ -406,7 +288,7 @@ func get_bubble_rich_text(session_id: int, entry: ChatEntry) -> RichTextLabel:
 	if index < 0 or index >= list.get_child_count():
 		return null
 	var wrapper: Node = list.get_child(index)
-	return wrapper.get_meta(META_BUBBLE_RICH_TEXT) as RichTextLabel
+	return wrapper.get_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT) as RichTextLabel
 
 
 func refresh_error_resume_buttons() -> void:

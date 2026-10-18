@@ -89,7 +89,7 @@ static func append(
 	panel.resized.connect(sync_layout.bind(host, panel, moving_border))
 	host.resized.connect(sync_layout.bind(host, panel, moving_border))
 
-	host.set_meta(AgentChatView.META_BUBBLE_RICH_TEXT, rich_text)
+	host.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
 	chat_list.add_child(host)
 	sync_layout.call_deferred(host, panel, moving_border)
 	return rich_text

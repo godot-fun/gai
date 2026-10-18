@@ -75,7 +75,7 @@ static func append(
 		true
 	)
 	vbox.add_child(rich_text)
-	wrapper.set_meta(AgentChatView.META_BUBBLE_RICH_TEXT, rich_text)
+	wrapper.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
 
 	chat_list.add_child(wrapper)
 	refresh(rich_text, entry, wrapper)
@@ -92,7 +92,7 @@ static func on_expand_pressed(wrapper: PanelContainer, entry: ChatEntry) -> void
 		return
 	var expanded: bool = bool(wrapper.get_meta(META_EXPANDED, false))
 	wrapper.set_meta(META_EXPANDED, not expanded)
-	var rich_text: RichTextLabel = wrapper.get_meta(AgentChatView.META_BUBBLE_RICH_TEXT) as RichTextLabel
+	var rich_text: RichTextLabel = wrapper.get_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT) as RichTextLabel
 	if rich_text != null:
 		refresh(rich_text, entry, wrapper)
 	pass
