@@ -35,12 +35,13 @@
   "note": {
     "title": "笔记",
     "tooltip": "打开笔记",
-    "placeholder": "在这里写笔记…",
+    "placeholder": "在这里写笔记…\n\n支持 Markdown：\n# 标题\n- 列表项\n**粗体文字**",
     "save_failed": "保存笔记失败",
     "open_on_startup": "每次打开应用时弹出",
+    "open_on_startup_hint": "应用启动时自动打开此笔记",
     "mode_edit": "编辑模式",
-    "mode_split": "左右文本对比模式",
-    "mode_preview": "纯预览模式"
+    "mode_split": "编辑和预览 Markdown",
+    "mode_preview": "Markdown 预览模式"
   },
   "agent": {
     "common": {

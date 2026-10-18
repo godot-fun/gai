@@ -120,6 +120,7 @@ func apply_locale() -> void:
 	title = I18n.t("note.title")
 	text_edit.placeholder_text = I18n.t("note.placeholder")
 	open_on_startup_check.text = I18n.t("note.open_on_startup")
+	open_on_startup_check.tooltip_text = I18n.t("note.open_on_startup_hint")
 	edit_mode_button.tooltip_text = I18n.t("note.mode_edit")
 	split_mode_button.tooltip_text = I18n.t("note.mode_split")
 	preview_mode_button.tooltip_text = I18n.t("note.mode_preview")

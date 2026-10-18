@@ -35,12 +35,13 @@
   "note": {
     "title": "Note",
     "tooltip": "Open note",
-    "placeholder": "Write your notes here...",
+    "placeholder": "Write your notes here...\n\nMarkdown is supported:\n# Heading\n- List item\n**Bold text**",
     "save_failed": "Failed to save note",
     "open_on_startup": "Open on startup",
+    "open_on_startup_hint": "Open this note automatically when the app starts",
     "mode_edit": "Edit mode",
-    "mode_split": "Split view",
-    "mode_preview": "Preview mode"
+    "mode_split": "Edit and preview Markdown",
+    "mode_preview": "Markdown preview mode"
   },
   "agent": {
     "common": {
