@@ -1,4 +1,4 @@
-class_name AgentChatInputFile
+class_name ChatInputFile
 extends RefCounted
 
 ## All file input paths for the chat field: window drops and platform clipboard files.

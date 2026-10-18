@@ -29,7 +29,7 @@ var queue_panel: PanelContainer
 var queue_scroll: ScrollContainer
 var queue_rows: VBoxContainer
 var moving_border: MovingAccentBorder
-var file_input: AgentChatInputFile = AgentChatInputFile.new()
+var chat_input_file: ChatInputFile = ChatInputFile.new()
 
 var expanded: bool = false
 var force_expanded: bool = false
@@ -86,7 +86,7 @@ func setup(
 	input_wrap.gui_input.connect(on_wrap_gui_input)
 	input_bar.resized.connect(layout_bar)
 	input_bar.get_window().window_input.connect(on_global_input)
-	file_input.setup(input_bar, input_wrap, input_field, prepare_file_drop, focus_input_field, restore_caret)
+	chat_input_file.setup(input_bar, input_wrap, input_field, prepare_file_drop, focus_input_field, restore_caret)
 	gdf.events.theme_changed.connect(on_ui_theme_changed)
 	gdf.events.theme_color_changed.connect(on_ui_theme_changed)
 	gdf.events.locale_changed.connect(on_ui_theme_changed)
@@ -278,8 +278,8 @@ func refresh_from_active_session() -> void:
 
 
 func apply_theme() -> void:
-	AgentChatInputTheme.apply_wrap(input_wrap, expanded)
-	AgentChatInputTheme.apply_field(input_field)
+	ChatInputTheme.apply_wrap(input_wrap, expanded)
+	ChatInputTheme.apply_field(input_field)
 	refresh_send_button()
 	apply_queue_theme()
 	pass
@@ -302,8 +302,8 @@ func refresh_send_button() -> void:
 	var effect_state: int = SendEffectState.ACTIVE if show_activity else (
 		SendEffectState.STOP if stop_action else SendEffectState.READY)
 	set_send_effect_state(effect_state)
-	AgentChatInputTheme.apply_send_button(send_button, stop_action, show_activity, compacting)
-	AgentChatInputTheme.apply_queue_badge(queue_badge, not expanded, get_pending_queue_count())
+	ChatInputTheme.apply_send_button(send_button, stop_action, show_activity, compacting)
+	ChatInputTheme.apply_queue_badge(queue_badge, not expanded, get_pending_queue_count())
 	pass
 
 
@@ -420,7 +420,7 @@ func play_active_containment() -> void:
 
 func refresh_state(running: bool, no_history: bool = false) -> void:
 	force_expanded = no_history and not running
-	AgentChatInputTheme.apply_field(input_field)
+	ChatInputTheme.apply_field(input_field)
 	input_field.editable = true
 	if force_expanded:
 		set_expanded(true, false)
@@ -518,20 +518,20 @@ func refresh_queue() -> void:
 
 	queue_scroll.custom_minimum_size.y = mini(
 		session.pending_messages.size() + 1, 5) * ControlSize.lg
-	var header := AgentQueueRow.new()
+	var header := ChatInputQueueRow.new()
 	header.setup(
 		StringUtils.format(I18n.t("agent.input.queued"), session.pending_messages.size()),
 		I18n.t("agent.input.continue_queue"),
-		AgentChatInputTheme.make_resume_icon(ControlSize.xs, ThemeColor.accent_theme_color()), true)
+		ChatInputTheme.make_resume_icon(ControlSize.xs, ThemeColor.accent_theme_color()), true)
 	if not RuntimeManager.is_running(session.id):
 		header.action_pressed.connect(RuntimeManager.try_run_next_message.bind(session.id))
 	else:
 		header.action_button.visible = false
 	queue_rows.add_child(header)
-	var delete_icon := AgentChatInputTheme.make_trash_icon(
+	var delete_icon := ChatInputTheme.make_trash_icon(
 		ControlSize.xs, ThemeColor.accent_theme_color())
 	for queued: String in session.pending_messages:
-		var row := AgentQueueRow.new()
+		var row := ChatInputQueueRow.new()
 		row.setup(queued.replace(FileUtils.NEWLINE_LF, " "), I18n.t("agent.input.delete_queued"), delete_icon, false)
 		row.action_pressed.connect(AgentSessionManager.delete_pending_message.bind(session.id, queued))
 		queue_rows.add_child(row)
@@ -544,7 +544,7 @@ func refresh_queue() -> void:
 
 func apply_queue_theme() -> void:
 	# Keep the queue visually quieter than the composer, without stacking another floating shadow.
-	var style := AgentChatInputTheme.build_wrap_style(true)
+	var style := ChatInputTheme.build_wrap_style(true)
 	style.bg_color = ThemeColor.emphasize(Colors.info_surface, Colors.am_2)
 	style.shadow_color = Color.TRANSPARENT
 	style.shadow_size = 0
@@ -554,7 +554,7 @@ func apply_queue_theme() -> void:
 	style.content_margin_right = Margin.ma_3
 	style.content_margin_bottom = Margin.ma_1
 	queue_panel.add_theme_stylebox_override("panel", style)
-	AgentChatInputTheme.apply_queue_scroll(queue_scroll)
+	ChatInputTheme.apply_queue_scroll(queue_scroll)
 	pass
 
 
@@ -578,7 +578,7 @@ func collapse_after_send() -> void:
 
 
 func on_global_input(event: InputEvent) -> void:
-	if not expanded or file_input.is_drop_focus_guarded():
+	if not expanded or chat_input_file.is_drop_focus_guarded():
 		return
 	if event is InputEventMouseButton:
 		var mouse: InputEventMouseButton = event as InputEventMouseButton
@@ -619,7 +619,7 @@ func on_input_action_pressed() -> void:
 		expand_if_collapsed()
 		focus_input_field.call_deferred()
 		return
-	if not AgentChatInputDependencyGuard.ensure_git_installed(session.id):
+	if not ChatInputDependencyGuard.ensure_git_installed(session.id):
 		return
 	if AgentSessionManager.enqueue_message(session.id, text):
 		clear_text()
@@ -661,7 +661,7 @@ func on_field_gui_input(event: InputEvent) -> void:
 		var key: InputEventKey = event as InputEventKey
 		if not key.pressed or key.echo:
 			return
-		if key.is_action_pressed("ui_paste") and file_input.paste_clipboard_files():
+		if key.is_action_pressed("ui_paste") and chat_input_file.paste_clipboard_files():
 			input_field.accept_event()
 			input_field.get_viewport().set_input_as_handled()
 			return
@@ -714,7 +714,7 @@ func on_field_focus_entered() -> void:
 
 
 func on_field_focus_exited() -> void:
-	if file_input.is_drop_focus_guarded():
+	if chat_input_file.is_drop_focus_guarded():
 		return
 	refresh_moving_border()
 	try_collapse.call_deferred()
@@ -745,7 +745,7 @@ func expand_if_collapsed() -> void:
 func restore_caret() -> void:
 	if not input_field.editable:
 		return
-	AgentChatInputTheme.apply_field(input_field)
+	ChatInputTheme.apply_field(input_field)
 	var line: int = maxi(0, input_field.get_line_count() - 1)
 	var col: int = input_field.get_line(line).length()
 	input_field.set_caret_line(line)
@@ -867,7 +867,7 @@ func layout_bar() -> void:
 	layout_send_button()
 	sync_queue_panel_visibility()
 	layout_queue_panel()
-	AgentChatInputTheme.apply_wrap(input_wrap, expanded)
+	ChatInputTheme.apply_wrap(input_wrap, expanded)
 	layout_moving_border()
 	refresh_moving_border()
 	pass

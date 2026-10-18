@@ -56,7 +56,7 @@ var compaction_button: CompactionButton = CompactionButton.new()
 var memory_toggle: MemoryToggle = MemoryToggle.new()
 var agent_setting_dialog: AgentSettingDialog = AgentSettingDialog.new()
 var session_sidebar: AgentSessionSidebar = AgentSessionSidebar.new()
-var chat_view: AgentChatView = AgentChatView.new()
+var agent_chat_view: AgentChatView = AgentChatView.new()
 var notification: AgentNotification = AgentNotification.new()
 var sense_input: SenseInput = SenseInput.new()
 
@@ -77,7 +77,7 @@ func _ready() -> void:
 	visuals_button.setup(visuals_button_node)
 	skill_toggle.setup(skill_toggle_button)
 	agent_prompt_toggle.setup(agent_prompt_toggle_button)
-	chat_view.setup(chat_scroll, chat_host)
+	agent_chat_view.setup(chat_scroll, chat_host)
 
 	chat_input.setup(input_bar, input_wrap, input_inner, input_field, send_button)
 	theme_color_select_ctrl.setup(theme_color_select)

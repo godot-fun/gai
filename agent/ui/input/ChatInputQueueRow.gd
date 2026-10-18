@@ -1,4 +1,4 @@
-class_name AgentQueueRow
+class_name ChatInputQueueRow
 extends PanelContainer
 
 signal action_pressed
@@ -38,13 +38,13 @@ func setup(text: String, tooltip: String, icon: Texture2D, is_header: bool) -> v
 	for control: Control in [self, content, title, action_button]:
 		control.mouse_entered.connect(on_mouse_entered)
 		control.mouse_exited.connect(on_mouse_exited)
-	AgentChatInputTheme.apply_queue_action_button(action_button)
+	ChatInputTheme.apply_queue_action_button(action_button)
 	apply_theme()
 	pass
 
 
 func apply_theme() -> void:
-	AgentChatInputTheme.apply_queue_row(self, title, header, hovered)
+	ChatInputTheme.apply_queue_row(self, title, header, hovered)
 	pass
 
 

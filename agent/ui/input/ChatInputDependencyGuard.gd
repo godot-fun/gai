@@ -1,4 +1,4 @@
-class_name AgentChatInputDependencyGuard
+class_name ChatInputDependencyGuard
 extends Object
 
 ## Dependency checks that may add explanatory chat messages before submission.

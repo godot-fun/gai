@@ -1,4 +1,4 @@
-class_name AgentChatInputTheme
+class_name ChatInputTheme
 extends Object
 
 ## Theme styling and generated icons for the floating chat input.
