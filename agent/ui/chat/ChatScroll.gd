@@ -1,4 +1,4 @@
-class_name AgentChatScroll
+class_name ChatScroll
 extends RefCounted
 
 ## Owns transcript scrolling, per-session positions, search reveals, and bottom following.

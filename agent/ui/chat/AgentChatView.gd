@@ -10,7 +10,7 @@ var chat_scroll: ScrollContainer
 
 var chat_list_cache: ChatListCache = ChatListCache.new()
 var chat_bubble_refresh_buffer: ChatBubbleRefreshBuffer = ChatBubbleRefreshBuffer.new()
-var chat_scroll_controller: AgentChatScroll = AgentChatScroll.new()
+var chat_scroll_controller: ChatScroll = ChatScroll.new()
 var theme_color_rebuild_scheduled: bool = false
 
 
