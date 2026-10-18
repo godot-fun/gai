@@ -1,14 +1,12 @@
 class_name AgentChatView
 extends RefCounted
 
-## Chat transcript area — bubbles, streaming, scroll, error resume.
+## Chat transcript area — bubbles, streaming, and error resume.
 ## One bubble list per session; switching shows the cached list.
 
 const META_BUBBLE_RICH_TEXT: String = "bubble_rich_text"
 ## The color picker emits on every drag step; the transcript re-renders once the theme color settles.
 const THEME_COLOR_REBUILD_DELAY_MS: int = 250
-## Keeps a little context above an entry opened from search.
-const SEARCH_ENTRY_TOP_MARGIN: float = 20.0
 ## Retain the most recently used transcript control trees; scroll positions remain cached separately.
 const CHAT_LIST_CACHE_MAX_SIZE: int = 18
 
@@ -17,14 +15,9 @@ var chat_scroll: ScrollContainer
 var chat_host: Control
 
 var chat_list_caches: LruCacheInt = LruCacheInt.new(CHAT_LIST_CACHE_MAX_SIZE)
-var scroll_position_caches: Dictionary[int, float] = {}
 var chat_bubble_flusher: ChatBubbleFlusher = ChatBubbleFlusher.new()
-## When true, new content keeps the transcript scrolled to the latest bubble.
-var stick_to_bottom: bool = true
-var scroll_to_bottom_queued: bool = false
+var chat_scroll_controller: AgentChatScroll = AgentChatScroll.new()
 var theme_color_rebuild_scheduled: bool = false
-var search_target_session_id: int = 0
-var search_target_entry_index: int = -1
 
 
 # ---------------------------------------------------------------------------
@@ -41,11 +34,7 @@ func setup(
 	chat_host.clip_contents = true
 	ScrollBarStyle.apply(chat_scroll.get_v_scroll_bar())
 	chat_bubble_flusher.setup()
-	SchedulerBus.schedule_at_fixed_rate(queue_scroll_to_bottom, 1000, "agent_chat_stick_to_bottom")
-	chat_scroll.gui_input.connect(on_chat_scroll_gui_input)
-	# The bar swallows wheel/drag events before the container sees them.
-	chat_scroll.get_v_scroll_bar().scrolling.connect(on_chat_scroll_bar_scrolling)
-	chat_scroll.get_window().window_input.connect(on_chat_window_input)
+	chat_scroll_controller.setup(chat_scroll)
 	gdf.events.theme_changed.connect(on_theme_changed)
 	gdf.events.theme_color_changed.connect(on_theme_color_changed)
 	gdf.events.locale_changed.connect(on_locale_changed)
@@ -60,9 +49,7 @@ func setup(
 	AgentEvents.events.compaction_end.connect(on_compaction_end)
 	AgentEvents.events.chat_entry_add.connect(on_chat_entry_add)
 	AgentEvents.events.chat_entry_update.connect(on_chat_entry_update)
-	AgentEvents.events.chat_bubble_flushed.connect(on_chat_bubble_flushed)
 	AgentEvents.events.chat_entry_delete.connect(on_chat_truncated)
-	AgentEvents.events.chat_search_result_selected.connect(on_chat_search_result_selected)
 	pass
 
 
@@ -70,8 +57,7 @@ func setup(
 # AgentEvents — session lifecycle
 # ---------------------------------------------------------------------------
 
-func on_session_selected(session_id: int, previous_session_id: int) -> void:
-	cache_session_scroll(previous_session_id)
+func on_session_selected(session_id: int, _previous_session_id: int) -> void:
 	show_session(session_id)
 	refresh_error_resume_buttons()
 	pass
@@ -79,7 +65,6 @@ func on_session_selected(session_id: int, previous_session_id: int) -> void:
 
 func on_session_removed(session_id: int) -> void:
 	clear_bubble_list(session_id)
-	scroll_position_caches.erase(session_id)
 	pass
 
 
@@ -93,7 +78,6 @@ func on_session_stop(session_id: int, _error_message: String) -> void:
 func on_agent_start(session_id: int) -> void:
 	if not AgentSessionManager.is_active(session_id):
 		return
-	reset_stick_to_bottom()
 	refresh_error_resume_buttons()
 	pass
 
@@ -102,8 +86,6 @@ func on_compaction_end(session_id: int, success: bool, _error_code: String) -> v
 	if not success:
 		return
 	var is_active := AgentSessionManager.is_active(session_id)
-	if is_active:
-		reset_stick_to_bottom()
 	clear_bubble_list(session_id)
 	if is_active:
 		show_session(session_id)
@@ -135,67 +117,11 @@ func on_chat_entry_update(session_id: int, entry: ChatEntry, _channel: String) -
 	pass
 
 
-## Scroll after ChatBubbleFlusher drains a batch (see AgentEvents.bubble_rich_text_flushed).
-func on_chat_bubble_flushed() -> void:
-	queue_scroll_to_bottom()
-	pass
-
-
 func on_chat_truncated(session_id: int) -> void:
 	var is_active: bool = AgentSessionManager.is_active(session_id)
-	if is_active:
-		cache_session_scroll(session_id)
 	clear_bubble_list(session_id)
 	if is_active:
 		show_session(session_id)
-	pass
-
-
-## Reveals the persisted entry selected by chat search after the target session is visible.
-func on_chat_search_result_selected(session_id: int, entry_index: int) -> void:
-	if not AgentSessionManager.is_active(session_id):
-		return
-	search_target_session_id = session_id
-	search_target_entry_index = entry_index
-	stick_to_bottom = false
-	reveal_entry_after_layout(session_id, entry_index)
-	pass
-
-
-## A newly opened transcript needs two layout passes before RichTextLabel heights and the
-## ScrollContainer range are final. Waiting here also lets any queued bottom-scroll abort
-## after [member stick_to_bottom] was disabled above.
-func reveal_entry_after_layout(session_id: int, entry_index: int) -> void:
-	var tree := chat_scroll.get_tree()
-	if tree != null:
-		await tree.process_frame
-		await tree.process_frame
-	if not AgentSessionManager.is_active(session_id) or search_target_session_id != session_id or search_target_entry_index != entry_index:
-		return
-	# First-open restoration enables bottom-follow one frame after session selection.
-	# Disable it again at the final positioning point so the periodic follower cannot
-	# overwrite the search result position.
-	stick_to_bottom = false
-	reveal_entry(entry_index)
-	cache_session_scroll(session_id)
-	search_target_session_id = 0
-	search_target_entry_index = -1
-	pass
-
-
-func reveal_entry(entry_index: int) -> void:
-	var list := get_active_chat_list()
-	if list == null or entry_index < 0 or entry_index >= list.get_child_count():
-		return
-	var entry_control := list.get_child(entry_index) as Control
-	var vbar := chat_scroll.get_v_scroll_bar()
-	if entry_control == null or vbar == null:
-		return
-	# The bar value is expressed in ChatMargin content coordinates. The list starts after
-	# ChatMargin's top inset, and each entry position is local to the list.
-	var entry_y := list.position.y + entry_control.position.y
-	var max_scroll := maxf(vbar.min_value, vbar.max_value - vbar.page)
-	vbar.value = clampf(entry_y - SEARCH_ENTRY_TOP_MARGIN, vbar.min_value, max_scroll)
 	pass
 
 
@@ -206,8 +132,6 @@ func reveal_entry(entry_index: int) -> void:
 ## Re-render the transcript after a context prompt (skills / memory / AGENTS.md) is added or removed.
 func on_agent_context_changed(session_id: int) -> void:
 	var is_active: bool = AgentSessionManager.is_active(session_id)
-	if is_active:
-		cache_session_scroll(session_id)
 	clear_bubble_list(session_id)
 	if is_active:
 		show_session(session_id)
@@ -263,7 +187,7 @@ func show_session(session_id: int) -> void:
 	var session: AgentSession = AgentSessionStore.load_session(session_id)
 	if session == null:
 		return
-	var has_cached_scroll: bool = scroll_position_caches.has(session_id)
+	var has_cached_scroll: bool = chat_scroll_controller.has_cached_session_scroll(session_id)
 
 	# One bubble list per session — create on first open, reuse on later switches.
 	var list := chat_list_caches.get_value(session_id) as VBoxContainer
@@ -280,16 +204,16 @@ func show_session(session_id: int) -> void:
 	for id: int in chat_list_caches.cache_map:
 		var cached_list := chat_list_caches.cache_map[id] as VBoxContainer
 		cached_list.visible = id == session_id
+	chat_scroll_controller.set_active_chat_list(list)
 
 	if list.get_child_count() == 0:
 		fill_list(session)
 
-	queue_restore_session_scroll_after_layout(session_id, has_cached_scroll)
+	chat_scroll_controller.queue_restore_session_scroll_after_layout(session_id, has_cached_scroll)
 	pass
 
 
 func rebuild(session_id: int) -> void:
-	cache_session_scroll(session_id)
 	clear_all_bubble_lists()
 	show_session(session_id)
 	pass
@@ -305,6 +229,7 @@ func clear_bubble_list(session_id: int) -> void:
 	var list := chat_list_caches.remove(session_id) as VBoxContainer
 	if list == null:
 		return
+	chat_scroll_controller.clear_active_chat_list(list)
 	list.queue_free()
 	pass
 
@@ -416,7 +341,6 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 			)
 		_:
 			rich_text = append_bubble(chat_list, chat_entry, Colors.secondary_text, Colors.surface)
-	queue_scroll_to_bottom()
 	return rich_text
 
 
@@ -478,146 +402,4 @@ func refresh_error_resume_buttons() -> void:
 	if active_chat_list == null:
 		return
 	ErrorBubble.refresh_resume_buttons(active_chat_list, RuntimeManager.is_running(AgentSessionManager.active_session_id))
-	pass
-
-
-# ---------------------------------------------------------------------------
-# Scroll
-# ---------------------------------------------------------------------------
-
-func reset_stick_to_bottom() -> void:
-	stick_to_bottom = true
-	queue_scroll_to_bottom()
-	pass
-
-
-func cache_session_scroll(session_id: int) -> void:
-	if not AgentSessionManager.has_index(session_id):
-		return
-	var vbar: VScrollBar = chat_scroll.get_v_scroll_bar()
-	if vbar == null:
-		return
-	scroll_position_caches[session_id] = vbar.value
-	pass
-
-
-func on_chat_scroll_gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton:
-		var mouse: InputEventMouseButton = event as InputEventMouseButton
-		if not mouse.pressed:
-			return
-		if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
-			stick_to_bottom = false
-		elif mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN and is_scrolled_to_bottom():
-			# Wheel scrolled all the way down — re-enable follow so new
-			# content automatically keeps the transcript at the bottom.
-			stick_to_bottom = true
-	elif event is InputEventPanGesture:
-		stick_to_bottom = is_scrolled_to_bottom()
-	pass
-
-
-## Dragging the scrollbar grabber (or wheeling over the bar itself) reads history
-## instead of following the stream — follow resumes at the bottom edge.
-func on_chat_scroll_bar_scrolling() -> void:
-	stick_to_bottom = is_scrolled_to_bottom()
-	pass
-
-
-## Page keys belong to the focused TextEdit by default; route Godot's native page
-## actions to the transcript so they work while composing a message.
-func on_chat_window_input(event: InputEvent) -> void:
-	# Window input can still arrive while the chat scene is being removed from the tree.
-	if not is_instance_valid(chat_scroll) or not chat_scroll.is_inside_tree():
-		return
-	# Embedded windows do not clear the host window's focus flag, so check them explicitly.
-	for window: Window in chat_scroll.get_tree().root.get_embedded_subwindows():
-		if window.visible:
-			return
-	if not chat_scroll.get_window().has_focus():
-		return
-	if not event is InputEventKey:
-		return
-	var key: InputEventKey = event as InputEventKey
-	if not key.pressed:
-		return
-	var direction: int = 0
-	if key.is_action_pressed(&"ui_page_up", true):
-		direction = -1
-		stick_to_bottom = false
-	elif key.is_action_pressed(&"ui_page_down", true):
-		direction = 1
-	else:
-		return
-	var vbar: VScrollBar = chat_scroll.get_v_scroll_bar()
-	if vbar == null or vbar.max_value <= vbar.page:
-		return
-	vbar.value = clampf(vbar.value + vbar.page * direction, vbar.min_value, vbar.max_value - vbar.page)
-	if direction > 0:
-		stick_to_bottom = is_scrolled_to_bottom()
-	chat_scroll.get_viewport().set_input_as_handled()
-	pass
-
-
-## True when the transcript is already scrolled to (or within a pixel of) the bottom edge.
-func is_scrolled_to_bottom() -> bool:
-	var vbar: VScrollBar = chat_scroll.get_v_scroll_bar()
-	if vbar == null:
-		return true
-	return vbar.value >= vbar.max_value - vbar.page - 1.0
-
-
-func queue_scroll_to_bottom() -> void:
-	if not stick_to_bottom or scroll_to_bottom_queued:
-		return
-	scroll_to_bottom_queued = true
-	flush_scroll_to_bottom.call_deferred()
-	pass
-
-
-## The list lives inside ChatMargin, so the last bubble counts as "visible" while the
-## bar still owes the bottom margin — ensure_control_visible() stops one margin short.
-## Drive the bar to its own bottom edge so the transcript ends flush with the view.
-func flush_scroll_to_bottom() -> void:
-	scroll_to_bottom_queued = false
-	if not stick_to_bottom:
-		return
-	var active_chat_list: VBoxContainer = get_active_chat_list()
-	if active_chat_list == null or not active_chat_list.visible:
-		return
-	if active_chat_list.get_child_count() == 0:
-		return
-	var vbar: VScrollBar = chat_scroll.get_v_scroll_bar()
-	if vbar == null:
-		return
-	vbar.value = vbar.max_value - vbar.page
-	pass
-
-
-## Wait one frame for the selected list to establish its scroll range, then restore it.
-func queue_restore_session_scroll_after_layout(session_id: int, has_cached_scroll: bool) -> void:
-	var tree: SceneTree = chat_scroll.get_tree()
-	if tree == null:
-		restore_session_scroll(session_id, has_cached_scroll)
-		return
-	tree.process_frame.connect(func() -> void:
-		restore_session_scroll(session_id, has_cached_scroll)
-	, CONNECT_ONE_SHOT)
-	pass
-
-
-func restore_session_scroll(session_id: int, has_cached_scroll: bool) -> void:
-	if not AgentSessionManager.is_active(session_id):
-		return
-	if search_target_session_id == session_id:
-		return
-	if not has_cached_scroll:
-		stick_to_bottom = true
-		queue_scroll_to_bottom()
-		return
-	var vbar: VScrollBar = chat_scroll.get_v_scroll_bar()
-	if vbar == null:
-		return
-	var cached_position: float = scroll_position_caches.get(session_id, 0.0)
-	vbar.value = clampf(cached_position, vbar.min_value, vbar.max_value - vbar.page)
 	pass
