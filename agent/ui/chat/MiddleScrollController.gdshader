@@ -8,13 +8,6 @@ uniform float pointer_visible = 0.0;
 uniform float speed_factor : hint_range(0.0, 1.0) = 0.0;
 uniform float boundary_factor : hint_range(0.0, 1.0) = 0.0;
 
-float segment_distance(vec2 p, vec2 a, vec2 b) {
-	vec2 segment = b - a;
-	float length_squared = max(dot(segment, segment), 0.0001);
-	float projection = clamp(dot(p - a, segment) / length_squared, 0.0, 1.0);
-	return length(p - (a + segment * projection));
-}
-
 void fragment() {
 	vec2 p = UV * canvas_size;
 	vec2 delta = cursor_position - anchor_position;
@@ -26,9 +19,16 @@ void fragment() {
 	// Distance changes the aspect ratio: nearby pointers are compact, distant pointers
 	// grow longer while their base narrows, producing a visibly sharper tip.
 	float distance_factor = clamp((distance_to_cursor - 20.0) / 300.0, 0.0, 1.0);
+	float movement_factor = smoothstep(0.18, 0.82, speed_factor);
 	float head_length = min(16.0 + distance_factor * 16.0 + speed_factor * 4.0, distance_to_cursor * 0.45) * mix(1.0, 0.72, boundary_factor);
 	vec2 head_base = cursor_position - direction * head_length;
-	float line_distance = segment_distance(p, anchor_position, head_base);
+	vec2 line_segment = head_base - anchor_position;
+	float line_length_squared = max(dot(line_segment, line_segment), 0.0001);
+	float line_projection = clamp(dot(p - anchor_position, line_segment) / line_length_squared, 0.0, 1.0);
+	float line_wave_envelope = sin(line_projection * 3.1415926);
+	float line_wave = sin(line_projection * 34.0 - TIME * 10.0) * movement_factor * 0.85 * line_wave_envelope;
+	vec2 line_point = anchor_position + line_segment * line_projection + normal * line_wave;
+	float line_distance = length(p - line_point);
 	float line_field = line_distance - 1.25;
 
 	vec2 head_delta = p - cursor_position;
@@ -36,6 +36,22 @@ void fragment() {
 	float head_y = dot(head_delta, normal);
 	float head_half_width = mix(9.0, 6.0, distance_factor);
 	float head_field = max(max(head_x, -head_x - head_length), abs(head_y) - (-head_x / max(head_length, 0.001)) * head_half_width);
+
+	// Four short marks pass the pointer on alternating sides. Staggered phases
+	// keep only a few visible at once and make them slide toward the anchor.
+	float streak_phase_1 = fract(TIME * 1.75);
+	float streak_phase_2 = fract(TIME * 1.75 + 0.27);
+	float streak_phase_3 = fract(TIME * 1.75 + 0.54);
+	float streak_phase_4 = fract(TIME * 1.75 + 0.81);
+	float streak_x_1 = -8.0 - streak_phase_1 * 44.0;
+	float streak_x_2 = -10.0 - streak_phase_2 * 50.0;
+	float streak_x_3 = -7.0 - streak_phase_3 * 38.0;
+	float streak_x_4 = -12.0 - streak_phase_4 * 46.0;
+	float streak_1 = (1.0 - smoothstep(-0.15, 0.75, max(abs(head_y - head_half_width - 4.0) - 0.35, abs(head_x - streak_x_1) - 5.0))) * (1.0 - smoothstep(0.58, 0.92, streak_phase_1));
+	float streak_2 = (1.0 - smoothstep(-0.15, 0.75, max(abs(head_y + head_half_width + 5.0) - 0.35, abs(head_x - streak_x_2) - 4.0))) * (1.0 - smoothstep(0.52, 0.88, streak_phase_2));
+	float streak_3 = (1.0 - smoothstep(-0.15, 0.75, max(abs(head_y - head_half_width - 8.0) - 0.35, abs(head_x - streak_x_3) - 3.5))) * (1.0 - smoothstep(0.46, 0.80, streak_phase_3));
+	float streak_4 = (1.0 - smoothstep(-0.15, 0.75, max(abs(head_y + head_half_width + 9.0) - 0.35, abs(head_x - streak_x_4) - 4.5))) * (1.0 - smoothstep(0.42, 0.76, streak_phase_4));
+	float speed_streaks = max(max(streak_1, streak_2), max(streak_3, streak_4)) * movement_factor * pointer_visible;
 
 	vec2 center_delta = p - anchor_position;
 	float center_field = length(center_delta) - 8.0;
@@ -73,6 +89,8 @@ void fragment() {
 	// Higher speed shifts gently toward a cooler white without changing semantic color.
 	vec3 energy_color = mix(accent_color.rgb, vec3(0.86, 0.95, 1.0), speed_factor * 0.22);
 	vec3 core = mix(energy_color, vec3(1.0), 0.10 + scan * 0.12);
-	float alpha = core_energy * pulse + near_glow * (0.30 + speed_factor * 0.12) + far_glow * 0.09 + charge_ring * 0.48 + boundary_ring * 0.48;
-	COLOR = vec4(mix(accent_color.rgb, core, body), min(alpha, 1.0) * accent_color.a);
+	float alpha = core_energy * pulse + near_glow * (0.30 + speed_factor * 0.12) + far_glow * 0.09 + charge_ring * 0.48 + boundary_ring * 0.48 + speed_streaks * 0.56;
+	vec3 final_color = mix(accent_color.rgb, core, body);
+	final_color = mix(final_color, energy_color, clamp(speed_streaks * 0.72, 0.0, 1.0));
+	COLOR = vec4(final_color, min(alpha, 1.0) * accent_color.a);
 }
