@@ -9,7 +9,7 @@ const THEME_COLOR_REBUILD_DELAY_MS: int = 250
 var chat_scroll: ScrollContainer
 
 var chat_list_cache: ChatListCache = ChatListCache.new()
-var chat_bubble_flusher: ChatBubbleFlusher = ChatBubbleFlusher.new()
+var chat_bubble_refresh_buffer: ChatBubbleRefreshBuffer = ChatBubbleRefreshBuffer.new()
 var chat_scroll_controller: AgentChatScroll = AgentChatScroll.new()
 var theme_color_rebuild_scheduled: bool = false
 
@@ -27,7 +27,7 @@ func setup(
 	p_chat_host.clip_contents = true
 	ScrollBarStyle.apply(chat_scroll.get_v_scroll_bar())
 	chat_list_cache.setup(p_chat_host)
-	chat_bubble_flusher.setup()
+	chat_bubble_refresh_buffer.setup()
 	chat_scroll_controller.setup(chat_scroll)
 	gdf.events.theme_changed.connect(on_theme_changed)
 	gdf.events.theme_color_changed.connect(on_theme_color_changed)
@@ -67,7 +67,7 @@ func on_session_removed(session_id: int) -> void:
 func on_session_stop(session_id: int, _error_message: String) -> void:
 	if AgentSessionManager.is_active(session_id):
 		refresh_error_resume_buttons()
-	chat_bubble_flusher.flush_now()
+	chat_bubble_refresh_buffer.flush()
 	pass
 
 
@@ -114,7 +114,7 @@ func on_chat_entry_update(session_id: int, entry: ChatEntry, _channel: String) -
 	if rich_text == null:
 		rich_text = chat_list_cache.append_entry(session_id, entry)
 	if rich_text != null:
-		chat_bubble_flusher.enqueue(rich_text, entry)
+		chat_bubble_refresh_buffer.enqueue(rich_text, entry)
 	pass
 
 

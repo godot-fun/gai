@@ -83,7 +83,7 @@ class Events:
 	# UI-ONLY COORDINATION — UI -> UI; managers must never subscribe below
 	# ===========================================================================
 
-	## Emitted after ChatBubbleFlusher applies a pending batch (every ~100 ms while streaming).
+	## Emitted after ChatBubbleRefreshBuffer applies a pending batch (every ~100 ms while streaming).
 	signal chat_bubble_flushed
 	## A cached transcript list was removed; UI owners should release node references.
 	signal chat_list_removed(list: VBoxContainer)
