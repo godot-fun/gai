@@ -34,7 +34,7 @@ theme_override_font_sizes/font_size = 18
 text = "GAI"
 vertical_alignment = 1
 
-[node name="ProjectButton" type="Button" parent="Root/Toolbar/ToolbarRow" unique_id=1917564757]
+[node name="WorkspaceButton" type="Button" parent="Root/Toolbar/ToolbarRow" unique_id=1917564757]
 layout_mode = 2
 focus_mode = 0
 mouse_default_cursor_shape = 2
@@ -236,12 +236,12 @@ theme_override_constants/separation = 2
 [node name="PinnedSeparator" type="HSeparator" parent="Root/Body/Sidebar/SidebarVBox/SessionListScroll/SessionList" unique_id=884521903]
 layout_mode = 2
 
-[node name="NormalHeader" type="Label" parent="Root/Body/Sidebar/SidebarVBox/SessionListScroll/SessionList" unique_id=884521905]
+[node name="UnpinnedHeader" type="Label" parent="Root/Body/Sidebar/SidebarVBox/SessionListScroll/SessionList" unique_id=884521905]
 layout_mode = 2
 theme_override_font_sizes/font_size = 11
 text = "Chats"
 
-[node name="NormalList" type="VBoxContainer" parent="Root/Body/Sidebar/SidebarVBox/SessionListScroll/SessionList" unique_id=884521904]
+[node name="UnpinnedList" type="VBoxContainer" parent="Root/Body/Sidebar/SidebarVBox/SessionListScroll/SessionList" unique_id=884521904]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 2

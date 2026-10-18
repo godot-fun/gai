@@ -5,17 +5,17 @@ extends RefCounted
 
 var toolbar_panel: PanelContainer
 var logo_label: Label
-var project_button: Button
+var workspace_button: Button
 
 
 func setup(
 	p_toolbar_panel: PanelContainer,
 	p_logo_label: Label,
-	p_project_button: Button
+	p_workspace_button: Button
 ) -> void:
 	toolbar_panel = p_toolbar_panel
 	logo_label = p_logo_label
-	project_button = p_project_button
+	workspace_button = p_workspace_button
 	gdf.events.theme_changed.connect(apply_theme)
 	apply_theme()
 	pass
@@ -25,9 +25,9 @@ func apply_theme() -> void:
 	toolbar_panel.add_theme_stylebox_override("panel", build_toolbar_style())
 	toolbar_panel.queue_redraw()
 	apply_logo_theme()
-	project_button.add_theme_color_override("font_color", Colors.secondary_text)
-	project_button.add_theme_color_override("font_hover_color", Colors.primary_text)
-	project_button.add_theme_color_override("font_pressed_color", Colors.primary_text)
+	workspace_button.add_theme_color_override("font_color", Colors.secondary_text)
+	workspace_button.add_theme_color_override("font_hover_color", Colors.primary_text)
+	workspace_button.add_theme_color_override("font_pressed_color", Colors.primary_text)
 	pass
 
 

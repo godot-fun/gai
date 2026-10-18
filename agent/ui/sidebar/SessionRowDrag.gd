@@ -8,22 +8,22 @@ extends RefCounted
 
 var session_rows: Dictionary[int, SessionRow] = {}
 var pinned_list: VBoxContainer
-var normal_list: VBoxContainer
+var unpinned_list: VBoxContainer
 
 
 func setup(
 	p_session_rows: Dictionary[int, SessionRow],
 	p_pinned_list: VBoxContainer,
-	p_normal_list: VBoxContainer
+	p_unpinned_list: VBoxContainer
 ) -> void:
 	session_rows = p_session_rows
 	pinned_list = p_pinned_list
-	normal_list = p_normal_list
+	unpinned_list = p_unpinned_list
 	pass
 
 
 func list_for_pinned(pinned: bool) -> VBoxContainer:
-	return pinned_list if pinned else normal_list
+	return pinned_list if pinned else unpinned_list
 
 
 ## The drag payload is the session id of the dragged row; anything else is not ours.

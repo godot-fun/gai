@@ -1,7 +1,7 @@
 class_name AgentSessionSidebar
 extends RefCounted
 
-## Left sidebar — pinned + normal session lists with select / delete / drag reorder.
+## Left sidebar — pinned + unpinned session lists with select / delete / drag reorder.
 ##
 ## Wiring only: rows are [SessionRow] nodes, styling is [SessionSidebarTheme] and drag & drop is
 ## [SessionRowDrag]. The outside-click handling of an open rename rides on the window input hook
@@ -10,8 +10,8 @@ extends RefCounted
 var pinned_header: Label
 var pinned_list: VBoxContainer
 var pinned_separator: HSeparator
-var normal_header: Label
-var normal_list: VBoxContainer
+var unpinned_header: Label
+var unpinned_list: VBoxContainer
 var session_list_scroll: ScrollContainer
 var new_session_button: Button
 var sidebar_panel: PanelContainer
@@ -28,8 +28,8 @@ func setup(
 	p_pinned_header: Label,
 	p_pinned_list: VBoxContainer,
 	p_pinned_separator: HSeparator,
-	p_normal_header: Label,
-	p_normal_list: VBoxContainer,
+	p_unpinned_header: Label,
+	p_unpinned_list: VBoxContainer,
 	p_session_list_scroll: ScrollContainer,
 	p_new_session_button: Button,
 	p_sidebar_panel: PanelContainer
@@ -37,12 +37,12 @@ func setup(
 	pinned_header = p_pinned_header
 	pinned_list = p_pinned_list
 	pinned_separator = p_pinned_separator
-	normal_header = p_normal_header
-	normal_list = p_normal_list
+	unpinned_header = p_unpinned_header
+	unpinned_list = p_unpinned_list
 	session_list_scroll = p_session_list_scroll
 	new_session_button = p_new_session_button
 	sidebar_panel = p_sidebar_panel
-	drag.setup(session_rows, pinned_list, normal_list)
+	drag.setup(session_rows, pinned_list, unpinned_list)
 
 	new_session_button.pressed.connect(on_new_session_pressed)
 	gdf.events.theme_changed.connect(apply_theme)
@@ -60,15 +60,15 @@ func setup(
 
 	# Lists and headers are drop targets — the padding between rows has to accept a drop too.
 	pinned_header.mouse_filter = Control.MOUSE_FILTER_PASS
-	normal_header.mouse_filter = Control.MOUSE_FILTER_PASS
+	unpinned_header.mouse_filter = Control.MOUSE_FILTER_PASS
 	drag.bind_list(pinned_list, true)
 	drag.bind_list(pinned_header, true)
-	drag.bind_list(normal_list, false)
-	drag.bind_list(normal_header, false)
+	drag.bind_list(unpinned_list, false)
+	drag.bind_list(unpinned_header, false)
 
 	# Rows are appended, moved between sections and freed from several places, so the separator and
 	# the unpin drop pad follow the lists themselves instead of every caller remembering to ask.
-	for list: VBoxContainer in [pinned_list, normal_list]:
+	for list: VBoxContainer in [pinned_list, unpinned_list]:
 		list.child_entered_tree.connect(on_section_changed)
 		list.child_exiting_tree.connect(on_section_changed)
 	# Any click outside the open rename field closes it: row buttons never take the focus, so
@@ -113,7 +113,7 @@ func on_workspace_changed(_path: String) -> void:
 func apply_theme() -> void:
 	sidebar_panel.add_theme_stylebox_override("panel", SessionSidebarTheme.sidebar_panel())
 	pinned_header.add_theme_color_override("font_color", Colors.secondary_text)
-	normal_header.add_theme_color_override("font_color", Colors.secondary_text)
+	unpinned_header.add_theme_color_override("font_color", Colors.secondary_text)
 	pinned_separator.add_theme_stylebox_override("separator", SessionSidebarTheme.pinned_separator())
 	ScrollBarStyle.apply(session_list_scroll.get_v_scroll_bar())
 	SessionSidebarTheme.apply_new_session_button(new_session_button)
@@ -124,7 +124,7 @@ func apply_theme() -> void:
 
 func apply_locale() -> void:
 	pinned_header.text = I18n.t("agent.sidebar.pinned")
-	normal_header.text = I18n.t("agent.sidebar.chats")
+	unpinned_header.text = I18n.t("agent.sidebar.chats")
 	new_session_button.text = I18n.t("agent.sidebar.new_session")
 	for row: SessionRow in session_rows.values():
 		row.apply_locale()
@@ -195,10 +195,10 @@ func on_section_changed(_node: Node) -> void:
 
 func sync_sections() -> void:
 	var has_pinned := pinned_list.get_child_count() > 0
-	var has_normal := normal_list.get_child_count() > 0
-	pinned_separator.visible = has_pinned and has_normal
+	var has_unpinned := unpinned_list.get_child_count() > 0
+	pinned_separator.visible = has_pinned and has_unpinned
 	# An empty Chats list has no row hit target — keep a small drop pad when unpinning is possible.
-	normal_list.custom_minimum_size = Vector2(0, 40) if has_pinned and not has_normal else Vector2.ZERO
+	unpinned_list.custom_minimum_size = Vector2(0, 40) if has_pinned and not has_unpinned else Vector2.ZERO
 	pass
 
 
@@ -229,7 +229,7 @@ func remove_row(session_id: int) -> void:
 
 
 func clear() -> void:
-	for list: VBoxContainer in [pinned_list, normal_list]:
+	for list: VBoxContainer in [pinned_list, unpinned_list]:
 		for child in list.get_children():
 			child.queue_free()
 	session_rows.clear()
@@ -242,7 +242,7 @@ func clear() -> void:
 
 func on_session_added(session_id: int, title: String) -> void:
 	append_row(session_id, title, false)
-	normal_list.move_child(session_rows[session_id], 0)
+	unpinned_list.move_child(session_rows[session_id], 0)
 	pass
 
 
