@@ -220,25 +220,7 @@ func on_markdown_changed(_enabled: bool) -> void:
 		var rich_text: RichTextLabel = get_bubble_rich_text(session.id, entry)
 		if rich_text == null:
 			continue
-		match entry.kind:
-			ChatEntry.KIND_THINKING, ChatEntry.KIND_RESULT:
-				ChatBubblePreview.apply(rich_text, entry.body)
-			ChatEntry.KIND_WEB:
-				WebResultBubble.refresh(rich_text, entry)
-			ChatEntry.KIND_COMPACTION:
-				CompactionBubble.refresh(rich_text, entry)
-			ChatEntry.KIND_TOOL:
-				ToolBubble.refresh(rich_text, entry)
-			ChatEntry.KIND_WEB_TOOL:
-				WebToolBubble.refresh(rich_text, entry)
-			ChatEntry.KIND_FILE_TOOL:
-				FileBubble.refresh(rich_text, entry)
-			ChatEntry.KIND_GIT_DIFF:
-				GitDiffBubble.refresh(rich_text, entry)
-			ChatEntry.KIND_ERROR:
-				ErrorBubble.refresh(rich_text, entry)
-			_:
-				ChatBubbleFlusher.refresh_rich_text(rich_text, entry)
+		ChatBubbleFlusher.refresh_rich_text(rich_text, entry)
 	clear_inactive_bubble_lists()
 	pass
 
