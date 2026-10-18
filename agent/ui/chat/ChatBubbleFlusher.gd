@@ -69,7 +69,7 @@ static func refresh_rich_text(rich_text: RichTextLabel, entry: ChatEntry) -> voi
 		ChatBubblePreview.apply(rich_text, entry.body)
 		return
 	if entry.kind == ChatEntry.KIND_WEB:
-		WebBubble.refresh(rich_text, entry)
+		WebResultBubble.refresh(rich_text, entry)
 		return
 	if entry.kind == ChatEntry.KIND_TOOL:
 		ToolBubble.refresh(rich_text, entry)

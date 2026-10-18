@@ -1,4 +1,4 @@
-class_name WebBubble
+class_name WebResultBubble
 extends Object
 
 ## Web-tool result bubble with a text preview and an optional browser screenshot.
