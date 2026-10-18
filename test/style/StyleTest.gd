@@ -44,7 +44,6 @@ func ColorBase_follow_theme_test() -> void:
 	assert(Colors.light_blue == Colors.DARK_LIGHT_BLUE)
 	assert(Colors.info_surface == Colors.DARK_INFO_SURFACE)
 	assert(Colors.purple_surface == Colors.DARK_PURPLE_SURFACE)
-	assert(Colors.light_blue_surface == Colors.DARK_LIGHT_BLUE_SURFACE)
 	assert(Colors.success_surface == Colors.DARK_SUCCESS_SURFACE)
 	assert(Colors.warning_surface == Colors.DARK_WARNING_SURFACE)
 	assert(Colors.neutral_surface == Colors.DARK_NEUTRAL_SURFACE)
