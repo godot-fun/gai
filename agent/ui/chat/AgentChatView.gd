@@ -229,6 +229,8 @@ func on_markdown_changed(_enabled: bool) -> void:
 				CompactionBubble.refresh(rich_text, entry)
 			ChatEntry.KIND_TOOL:
 				ToolBubble.refresh(rich_text, entry)
+			ChatEntry.KIND_WEB_TOOL:
+				WebToolBubble.refresh(rich_text, entry)
 			ChatEntry.KIND_FILE_TOOL:
 				FileBubble.refresh(rich_text, entry)
 			ChatEntry.KIND_GIT_DIFF:
@@ -387,6 +389,8 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 			queue_scroll_to_bottom()
 		ChatEntry.KIND_TOOL:
 			rich_text = ToolBubble.append(chat_list, chat_entry, build_bubble_style(Colors.success_surface))
+		ChatEntry.KIND_WEB_TOOL:
+			rich_text = WebToolBubble.append(chat_list, chat_entry, build_bubble_style(Colors.info))
 		ChatEntry.KIND_FILE_TOOL:
 			rich_text = FileBubble.append(
 					chat_list,

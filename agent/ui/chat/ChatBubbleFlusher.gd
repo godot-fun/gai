@@ -74,6 +74,9 @@ static func refresh_rich_text(rich_text: RichTextLabel, entry: ChatEntry) -> voi
 	if entry.kind == ChatEntry.KIND_TOOL:
 		ToolBubble.refresh(rich_text, entry)
 		return
+	if entry.kind == ChatEntry.KIND_WEB_TOOL:
+		WebToolBubble.refresh(rich_text, entry)
+		return
 	if entry.kind == ChatEntry.KIND_FILE_TOOL:
 		FileBubble.refresh(rich_text, entry)
 		return
