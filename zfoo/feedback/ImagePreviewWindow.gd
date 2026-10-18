@@ -9,7 +9,6 @@ const ZOOM_STEP: float = 1.15
 var scroll: ScrollContainer
 var canvas: Control
 var image_view: TextureRect
-var image_path: String
 var zoom: float = 1.0
 var fit_zoom: float = 1.0
 var dragging: bool = false
@@ -40,35 +39,34 @@ func _init() -> void:
 	pass
 
 
-## Open a centered preview. The image loads asynchronously and the window remains usable while loading.
-static func show_window(path: String, i18n_title: String = "Image Preview", width_percent: int = 80,
-		height_percent: int = 85) -> ImagePreviewWindow:
-	var window := ImagePreviewWindow.new()
-	window.image_path = path
-	var file_name := path.get_file()
-	window.title = file_name if i18n_title.is_empty() else "%s - %s" % [file_name, I18n.t(i18n_title)]
-	gdf.gdf_node.add_child(window)
-	window.present_centered(width_percent, height_percent)
-	window.load_image(path)
-	return window
-
-
-## Load project resources and ordinary OS files through the shared format-aware loader.
-func load_image(path: String) -> void:
-	image_path = path
+## Load an image from a path, then open it through [method show_image].
+static func show_window(path: String, i18n_title: String = "Image Preview", width_percent: int = 80, height_percent: int = 85) -> ImagePreviewWindow:
 	var texture := await ResourceHelper.async_load(path) as Texture2D
 	if texture == null:
 		Log.error("failed to preview image path:[{}]", path)
 		Alert.alert(I18n.t("Unable to load image"), Colors.error)
-		on_close_requested()
-		return
-	set_texture(texture)
-	pass
+		return null
+	var title := StringUtils.format("{} - {}", path.get_file(), I18n.t(i18n_title))
+	return show_image(texture, title, width_percent, height_percent)
+
+
+## Open a centered preview using an image resource that is already loaded.
+static func show_image(texture: Texture2D, i18n_title: String = "Image Preview", width_percent: int = 80, height_percent: int = 85) -> ImagePreviewWindow:
+	var window := create_window(i18n_title, width_percent, height_percent)
+	window.set_texture(texture)
+	return window
+
+
+static func create_window(i18n_title: String, width_percent: int, height_percent: int) -> ImagePreviewWindow:
+	var window := ImagePreviewWindow.new()
+	window.title = I18n.t(i18n_title)
+	gdf.gdf_node.add_child(window)
+	window.present_centered(width_percent, height_percent)
+	return window
 
 
 func set_texture(texture: Texture2D) -> void:
 	image_view.texture = texture
-	image_view.tooltip_text = image_path
 	refresh_fit()
 	pass
 

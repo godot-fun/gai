@@ -62,22 +62,23 @@ static func append_screenshot(parent: VBoxContainer, entry: ChatEntry) -> void:
 	var preview_width := 1024.0
 	var preview_height := preview_width * float(screenshot.get_height()) / float(screenshot.get_width())
 	var preview := TextureRect.new()
-	preview.texture = ImageTexture.create_from_image(screenshot)
+	var preview_texture := ImageTexture.create_from_image(screenshot)
+	preview.texture = preview_texture
 	preview.custom_minimum_size = Vector2(preview_width, preview_height)
 	preview.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	preview.tooltip_text = screenshot_path
 	preview.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	preview.gui_input.connect(func(event: InputEvent) -> void: on_screenshot_input(event, screenshot_path))
+	preview.gui_input.connect(func(event: InputEvent) -> void: on_screenshot_input(event, screenshot_path, preview_texture))
 	parent.add_child(preview)
 	pass
 
 
-static func on_screenshot_input(event: InputEvent, screenshot_path: String) -> void:
+static func on_screenshot_input(event: InputEvent, screenshot_path: String, texture: Texture2D) -> void:
 	if not event is InputEventMouseButton:
 		return
 	var mouse := event as InputEventMouseButton
 	if mouse.button_index == MOUSE_BUTTON_LEFT and mouse.pressed:
-		ImagePreviewWindow.show_window(screenshot_path)
+		ImagePreviewWindow.show_image(texture, screenshot_path.get_file())
 	pass
