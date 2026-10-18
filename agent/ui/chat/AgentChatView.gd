@@ -272,7 +272,7 @@ func show_session(session_id: int) -> void:
 		list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		list.add_theme_constant_override("separation", Margin.ma_3)
 		chat_host.add_child(list)
-		var old_entry := chat_list_caches.put(session_id, list)
+		var old_entry := chat_list_caches.put_if_absent(session_id, list)
 		if old_entry != null:
 			var old_list := old_entry.value as VBoxContainer
 			old_list.queue_free()

@@ -134,5 +134,5 @@ static func get_or_compile_regex(glob_rule: String) -> RegEx:
 	var regex := RegEx.new()
 	if regex.compile(expression) != OK:
 		return null
-	regex_cache.put(cache_key, regex)
+	regex_cache.put_if_absent(cache_key, regex)
 	return regex

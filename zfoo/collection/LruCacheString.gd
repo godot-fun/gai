@@ -18,12 +18,12 @@ func _init(_maximum_size: int) -> void:
 
 ## Inserts a new value and marks the key as most recently used.
 ## Existing keys are rejected. Returns the removed LRU entry, or [code]null[/code] if none.
-func put(key: String, value: Variant) -> PairString:
+func put_if_absent(key: String, value: Variant) -> PairString:
 	if value == null:
-		Log.error("LruCacheString put rejected key:[{}] value:[null]", key)
+		Log.error("LruCacheString put_if_absent rejected key:[{}] value:[null]", key)
 		return null
 	if cache_map.has(key):
-		Log.error("LruCacheString put failed for key:[{}] value:[{}] because the key already exists", key, value)
+		Log.error("LruCacheString put_if_absent failed for key:[{}] value:[{}] because the key already exists", key, value)
 		return null
 	var old_entry: PairString = null
 	cache_map[key] = value
