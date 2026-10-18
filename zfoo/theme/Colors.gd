@@ -90,14 +90,12 @@ const DARK_INFO := Color(0.35, 0.65, 0.95)
 const DARK_WARNING := Color(1.00, 0.65, 0.30)
 const DARK_SUCCESS := Color(0.30, 0.78, 0.45)
 const DARK_PURPLE := Color(0.72, 0.58, 0.88)
-const DARK_LIGHT_BLUE := Color(0.05, 0.48, 0.75)
 
 const LIGHT_ERROR := Color(0.86, 0.15, 0.15)
 const LIGHT_INFO := Color(0.15, 0.39, 0.92)
 const LIGHT_WARNING := Color(0.72, 0.28, 0.02)
 const LIGHT_SUCCESS := Color(0.05, 0.50, 0.20)
 const LIGHT_PURPLE := Color(0.49, 0.23, 0.93)
-const LIGHT_LIGHT_BLUE := Color(0.35, 0.75, 0.95)
 
 ## Active semantic foreground colors. Use these for text, icons and status marks.
 static var error: Color = DARK_ERROR
@@ -105,7 +103,6 @@ static var info: Color = DARK_INFO
 static var warning: Color = DARK_WARNING
 static var success: Color = DARK_SUCCESS
 static var purple: Color = DARK_PURPLE
-static var light_blue: Color = DARK_LIGHT_BLUE
 
 
 # =============================================================================
@@ -115,12 +112,14 @@ static var light_blue: Color = DARK_LIGHT_BLUE
 ## Semantic surfaces keep status/category fills readable without using strong text colors as fills.
 const DARK_INFO_SURFACE := Color(0.10, 0.13, 0.19)
 const DARK_PURPLE_SURFACE := Color(0.19, 0.18, 0.30)
+const DARK_LIGHT_BLUE_SURFACE := Color(0.10, 0.17, 0.22)
 const DARK_SUCCESS_SURFACE := Color(0.14, 0.20, 0.16)
 const DARK_WARNING_SURFACE := Color(0.22, 0.16, 0.10)
 const DARK_NEUTRAL_SURFACE := Color(0.13, 0.16, 0.20)
 
 const LIGHT_INFO_SURFACE := Color(0.95, 0.97, 0.99)
 const LIGHT_PURPLE_SURFACE := Color(0.96, 0.95, 1.00)
+const LIGHT_LIGHT_BLUE_SURFACE := Color(0.93, 0.98, 1.00)
 const LIGHT_SUCCESS_SURFACE := Color(0.94, 0.99, 0.96)
 const LIGHT_WARNING_SURFACE := Color(1.00, 0.97, 0.93)
 const LIGHT_NEUTRAL_SURFACE := Color(0.94, 0.95, 0.97)
@@ -128,6 +127,7 @@ const LIGHT_NEUTRAL_SURFACE := Color(0.94, 0.95, 0.97)
 ## Low-emphasis semantic fills paired with their matching foreground colors above.
 static var info_surface: Color = DARK_INFO_SURFACE
 static var purple_surface: Color = DARK_PURPLE_SURFACE
+static var light_blue_surface: Color = DARK_LIGHT_BLUE_SURFACE
 static var success_surface: Color = DARK_SUCCESS_SURFACE
 static var warning_surface: Color = DARK_WARNING_SURFACE
 ## Status-neutral fill for output and result content.
@@ -158,9 +158,9 @@ static func refresh() -> void:
 	warning = DARK_WARNING if dark else LIGHT_WARNING
 	success = DARK_SUCCESS if dark else LIGHT_SUCCESS
 	purple = DARK_PURPLE if dark else LIGHT_PURPLE
-	light_blue = DARK_LIGHT_BLUE if dark else LIGHT_LIGHT_BLUE
 	info_surface = DARK_INFO_SURFACE if dark else LIGHT_INFO_SURFACE
 	purple_surface = DARK_PURPLE_SURFACE if dark else LIGHT_PURPLE_SURFACE
+	light_blue_surface = DARK_LIGHT_BLUE_SURFACE if dark else LIGHT_LIGHT_BLUE_SURFACE
 	success_surface = DARK_SUCCESS_SURFACE if dark else LIGHT_SUCCESS_SURFACE
 	warning_surface = DARK_WARNING_SURFACE if dark else LIGHT_WARNING_SURFACE
 	neutral_surface = DARK_NEUTRAL_SURFACE if dark else LIGHT_NEUTRAL_SURFACE

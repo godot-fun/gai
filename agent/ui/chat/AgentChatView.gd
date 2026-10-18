@@ -390,7 +390,7 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 		ChatEntry.KIND_TOOL:
 			rich_text = ToolBubble.append(chat_list, chat_entry, build_bubble_style(Colors.success_surface))
 		ChatEntry.KIND_WEB_TOOL:
-			rich_text = WebToolBubble.append(chat_list, chat_entry, build_bubble_style(Colors.light_blue))
+			rich_text = WebToolBubble.append(chat_list, chat_entry, build_bubble_style(Colors.light_blue_surface))
 		ChatEntry.KIND_FILE_TOOL:
 			rich_text = FileBubble.append(
 					chat_list,
