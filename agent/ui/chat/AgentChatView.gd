@@ -83,7 +83,7 @@ func on_session_removed(session_id: int) -> void:
 	pass
 
 
-func on_session_stop(session_id: int, error_message: String) -> void:
+func on_session_stop(session_id: int, _error_message: String) -> void:
 	if AgentSessionManager.is_active(session_id):
 		refresh_error_resume_buttons()
 	chat_bubble_flusher.flush_now()
@@ -358,14 +358,12 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 					build_bubble_style(ThemeColor.emphasize(Colors.info_surface, Colors.am_2), true),
 					Colors.primary_text
 			)
-			queue_scroll_to_bottom()
 		ChatEntry.KIND_THINKING:
 			rich_text = ThinkingBubble.append(
 					chat_list,
 					chat_entry,
 					build_bubble_style(Colors.purple_surface)
 			)
-			queue_scroll_to_bottom()
 		ChatEntry.KIND_AGENT:
 			rich_text = AgentBubble.append(
 					chat_list,
@@ -373,7 +371,6 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 					build_bubble_style(Colors.surface),
 					Colors.primary_text
 			)
-			queue_scroll_to_bottom()
 		ChatEntry.KIND_TOOL:
 			rich_text = ToolBubble.append(chat_list, chat_entry, build_bubble_style(Colors.success_surface))
 		ChatEntry.KIND_WEB_TOOL:
@@ -384,7 +381,6 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 					chat_entry,
 					build_bubble_style(Colors.warning_surface)
 			)
-			queue_scroll_to_bottom()
 		ChatEntry.KIND_GIT_DIFF:
 			rich_text = GitDiffBubble.append(
 					chat_list,
@@ -392,21 +388,18 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 					chat_entry,
 					build_bubble_style(Colors.surface)
 			)
-			queue_scroll_to_bottom()
 		ChatEntry.KIND_RESULT:
 			rich_text = ResultBubble.append(
 					chat_list,
 					chat_entry,
 					build_bubble_style(Colors.neutral_surface)
 			)
-			queue_scroll_to_bottom()
 		ChatEntry.KIND_WEB:
 			rich_text = WebResultBubble.append(
 					chat_list,
 					chat_entry,
 					build_bubble_style(Colors.neutral_surface)
 			)
-			queue_scroll_to_bottom()
 		ChatEntry.KIND_ERROR:
 			rich_text = ErrorBubble.append(
 					chat_list,
@@ -415,16 +408,15 @@ func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabe
 					session_id,
 					RuntimeManager.is_running(session_id)
 			)
-			queue_scroll_to_bottom()
 		ChatEntry.KIND_COMPACTION:
 			rich_text = CompactionBubble.append(
 				chat_list,
 				chat_entry,
 				build_bubble_style(ThemeColor.alpha_theme_color(0.08))
 			)
-			queue_scroll_to_bottom()
 		_:
 			rich_text = append_bubble(chat_list, chat_entry, Colors.secondary_text, Colors.surface)
+	queue_scroll_to_bottom()
 	return rich_text
 
 
@@ -454,7 +446,6 @@ func append_bubble(chat_list: VBoxContainer, entry: ChatEntry, text_color: Color
 	wrapper.set_meta(META_BUBBLE_RICH_TEXT, rich_text)
 
 	chat_list.add_child(wrapper)
-	queue_scroll_to_bottom()
 	return rich_text
 
 
