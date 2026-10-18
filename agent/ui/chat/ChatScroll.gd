@@ -15,6 +15,7 @@ var stick_to_bottom: bool = true
 var scroll_to_bottom_queued: bool = false
 var search_target_session_id: int = 0
 var search_target_entry_index: int = -1
+var middle_scroll_controller: MiddleScrollController
 
 
 func setup(p_chat_scroll: ScrollContainer) -> void:
@@ -27,6 +28,11 @@ func setup(p_chat_scroll: ScrollContainer) -> void:
 	AgentEvents.events.chat_bubble_flushed.connect(on_chat_bubble_flushed)
 	AgentEvents.events.chat_list_removed.connect(on_chat_list_removed)
 	AgentEvents.events.chat_search_result_selected.connect(on_chat_search_result_selected)
+	middle_scroll_controller = MiddleScrollController.new()
+	chat_scroll.get_parent().add_child(middle_scroll_controller)
+	middle_scroll_controller.setup(chat_scroll)
+	middle_scroll_controller.scrolling_started.connect(func() -> void: stick_to_bottom = false)
+	middle_scroll_controller.scrolling_ended.connect(func(at_bottom: bool) -> void: stick_to_bottom = at_bottom)
 	pass
 
 
@@ -46,6 +52,7 @@ func on_chat_search_result_selected(session_id: int, entry_index: int) -> void:
 
 
 func set_active_chat_list(chat_list: VBoxContainer) -> void:
+	middle_scroll_controller.cancel()
 	active_chat_list = chat_list
 	pass
 
@@ -150,6 +157,13 @@ func on_chat_scroll_bar_scrolling() -> void:
 	pass
 
 
+func has_visible_embedded_window() -> bool:
+	for window: Window in chat_scroll.get_tree().root.get_embedded_subwindows():
+		if window.visible:
+			return true
+	return false
+
+
 ## Page keys belong to the focused TextEdit by default; route Godot's native page
 ## actions to the transcript so they work while composing a message.
 func on_chat_window_input(event: InputEvent) -> void:
@@ -157,9 +171,8 @@ func on_chat_window_input(event: InputEvent) -> void:
 	if not is_instance_valid(chat_scroll) or not chat_scroll.is_inside_tree():
 		return
 	# Embedded windows do not clear the host window's focus flag, so check them explicitly.
-	for window: Window in chat_scroll.get_tree().root.get_embedded_subwindows():
-		if window.visible:
-			return
+	if has_visible_embedded_window():
+		return
 	if not chat_scroll.get_window().has_focus():
 		return
 	if not event is InputEventKey:
