@@ -28,14 +28,14 @@ func concurrent_map_put_if_absent_test() -> void:
 	pass
 
 
-func concurrent_map_supports_null_values_test() -> void:
+func concurrent_map_supports_false_value_test() -> void:
 	var map := ConcurrentMapInt.new()
-	map.put(3, null)
+	map.put(3, false)
 	assert(map.has(3))
-	assert(map.get_value(3, "fallback") == null)
-	assert(map.put_if_absent(3, "ignored") == null)
+	assert(map.get_value(3, "fallback") == false)
+	assert(map.put_if_absent(3, "ignored") == false)
 	assert(map.has(3))
-	assert(map.get_value(3) == null)
+	assert(map.get_value(3) == false)
 	pass
 
 

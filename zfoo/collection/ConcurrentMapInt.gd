@@ -1,4 +1,4 @@
-## A thread-safe map with int keys and Variant values.
+## A thread-safe map with int keys and non-null Variant values.
 ## Collection-returning methods return snapshots rather than internal storage.
 class_name ConcurrentMapInt
 extends RefCounted
@@ -9,6 +9,9 @@ var _mutex: Mutex = Mutex.new()
 
 ## Inserts or replaces a value and returns the previous value, or null when absent.
 func put(key: int, value: Variant) -> Variant:
+	if value == null:
+		Log.error("ConcurrentMapInt put rejected key:[{}] value:[null]", key)
+		return null
 	_mutex.lock()
 	var old_value: Variant = _map.get(key, null)
 	_map[key] = value
@@ -18,6 +21,9 @@ func put(key: int, value: Variant) -> Variant:
 
 ## Inserts a value only when the key is absent. Returns the existing value when present.
 func put_if_absent(key: int, value: Variant) -> Variant:
+	if value == null:
+		Log.error("ConcurrentMapInt put_if_absent rejected key:[{}] value:[null]", key)
+		return null
 	_mutex.lock()
 	if _map.has(key):
 		var existing_value: Variant = _map[key]
