@@ -43,10 +43,10 @@ void fragment() {
 	float streak_phase_2 = fract(TIME * 1.75 + 0.27);
 	float streak_phase_3 = fract(TIME * 1.75 + 0.54);
 	float streak_phase_4 = fract(TIME * 1.75 + 0.81);
-	float streak_x_1 = -8.0 - streak_phase_1 * 44.0;
-	float streak_x_2 = -10.0 - streak_phase_2 * 50.0;
-	float streak_x_3 = -7.0 - streak_phase_3 * 38.0;
-	float streak_x_4 = -12.0 - streak_phase_4 * 46.0;
+	float streak_x_1 = -8.0 - streak_phase_1 * 88.0;
+	float streak_x_2 = -10.0 - streak_phase_2 * 100.0;
+	float streak_x_3 = -7.0 - streak_phase_3 * 76.0;
+	float streak_x_4 = -12.0 - streak_phase_4 * 92.0;
 	float streak_1 = (1.0 - smoothstep(-0.15, 0.75, max(abs(head_y - head_half_width - 4.0) - 0.35, abs(head_x - streak_x_1) - 5.0))) * (1.0 - smoothstep(0.58, 0.92, streak_phase_1));
 	float streak_2 = (1.0 - smoothstep(-0.15, 0.75, max(abs(head_y + head_half_width + 5.0) - 0.35, abs(head_x - streak_x_2) - 4.0))) * (1.0 - smoothstep(0.52, 0.88, streak_phase_2));
 	float streak_3 = (1.0 - smoothstep(-0.15, 0.75, max(abs(head_y - head_half_width - 8.0) - 0.35, abs(head_x - streak_x_3) - 3.5))) * (1.0 - smoothstep(0.46, 0.80, streak_phase_3));
