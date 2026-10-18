@@ -85,6 +85,8 @@ class Events:
 
 	## Emitted after ChatBubbleFlusher applies a pending batch (every ~100 ms while streaming).
 	signal chat_bubble_flushed
+	## A cached transcript list was removed; UI owners should release node references.
+	signal chat_list_removed(list: VBoxContainer)
 
 	# Chat navigation and input
 	## A search result requests that the transcript reveal a specific persisted entry.

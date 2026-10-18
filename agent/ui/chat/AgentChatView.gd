@@ -6,14 +6,9 @@ extends RefCounted
 
 ## The color picker emits on every drag step; the transcript re-renders once the theme color settles.
 const THEME_COLOR_REBUILD_DELAY_MS: int = 250
-## Retain the most recently used transcript control trees; scroll positions remain cached separately.
-const CHAT_LIST_CACHE_MAX_SIZE: int = 18
-
-
 var chat_scroll: ScrollContainer
-var chat_host: Control
 
-var chat_list_caches: LruCacheInt = LruCacheInt.new(CHAT_LIST_CACHE_MAX_SIZE)
+var chat_list_cache: ChatListCache = ChatListCache.new()
 var chat_bubble_flusher: ChatBubbleFlusher = ChatBubbleFlusher.new()
 var chat_scroll_controller: AgentChatScroll = AgentChatScroll.new()
 var theme_color_rebuild_scheduled: bool = false
@@ -28,10 +23,11 @@ func setup(
 	p_chat_host: Control
 ) -> void:
 	chat_scroll = p_chat_scroll
-	chat_host = p_chat_host
 	chat_scroll.clip_contents = true
-	chat_host.clip_contents = true
+	p_chat_host.clip_contents = true
 	ScrollBarStyle.apply(chat_scroll.get_v_scroll_bar())
+	chat_list_cache.setup(p_chat_host)
+	AgentEvents.events.chat_list_removed.connect(on_chat_list_removed)
 	chat_bubble_flusher.setup()
 	chat_scroll_controller.setup(chat_scroll)
 	gdf.events.theme_changed.connect(on_theme_changed)
@@ -64,7 +60,7 @@ func on_session_selected(session_id: int, previous_session_id: int) -> void:
 
 
 func on_session_removed(session_id: int) -> void:
-	clear_bubble_list(session_id)
+	chat_list_cache.remove(session_id)
 	chat_scroll_controller.remove_session(session_id)
 	pass
 
@@ -90,7 +86,7 @@ func on_compaction_end(session_id: int, success: bool, _error_code: String) -> v
 	var is_active := AgentSessionManager.is_active(session_id)
 	if is_active:
 		chat_scroll_controller.reset_stick_to_bottom()
-	clear_bubble_list(session_id)
+	chat_list_cache.remove(session_id)
 	if is_active:
 		show_session(session_id)
 	pass
@@ -101,11 +97,11 @@ func on_compaction_end(session_id: int, success: bool, _error_code: String) -> v
 # ---------------------------------------------------------------------------
 
 func on_chat_entry_add(session_id: int, entry: ChatEntry) -> void:
-	if get_bubble_rich_text(session_id, entry) != null:
+	if chat_list_cache.get_rich_text(session_id, entry) != null:
 		return
-	if chat_list_caches.get_value(session_id) == null:
+	if not chat_list_cache.has(session_id):
 		return
-	append_entry_bubble(entry, session_id)
+	chat_list_cache.append_entry(session_id, entry)
 	if AgentSessionManager.is_active(session_id):
 		chat_scroll_controller.queue_scroll_to_bottom()
 	pass
@@ -113,23 +109,18 @@ func on_chat_entry_add(session_id: int, entry: ChatEntry) -> void:
 
 ## Streaming token — resolve bubble from list cache, then queue UI refresh.
 func on_chat_entry_update(session_id: int, entry: ChatEntry, _channel: String) -> void:
-	if chat_list_caches.get_value(session_id) == null:
+	if not chat_list_cache.has(session_id):
 		return
-	var rich_text: RichTextLabel = get_bubble_rich_text(session_id, entry)
+	var rich_text: RichTextLabel = chat_list_cache.get_rich_text(session_id, entry)
 	if rich_text == null:
-		rich_text = append_entry_bubble(entry, session_id)
+		rich_text = chat_list_cache.append_entry(session_id, entry)
 	if rich_text != null:
 		chat_bubble_flusher.enqueue(rich_text, entry)
 	pass
 
 
 func on_chat_truncated(session_id: int) -> void:
-	var is_active: bool = AgentSessionManager.is_active(session_id)
-	if is_active:
-		chat_scroll_controller.cache_session_scroll(session_id)
-	clear_bubble_list(session_id)
-	if is_active:
-		show_session(session_id)
+	rebuild_session_if_active(session_id)
 	pass
 
 
@@ -139,12 +130,7 @@ func on_chat_truncated(session_id: int) -> void:
 
 ## Re-render the transcript after a context prompt (skills / memory / AGENTS.md) is added or removed.
 func on_agent_context_changed(session_id: int) -> void:
-	var is_active: bool = AgentSessionManager.is_active(session_id)
-	if is_active:
-		chat_scroll_controller.cache_session_scroll(session_id)
-	clear_bubble_list(session_id)
-	if is_active:
-		show_session(session_id)
+	rebuild_session_if_active(session_id)
 	pass
 
 
@@ -153,11 +139,11 @@ func on_markdown_changed(_enabled: bool) -> void:
 	if session == null:
 		return
 	for entry: ChatEntry in session.chat_entries:
-		var rich_text: RichTextLabel = get_bubble_rich_text(session.id, entry)
+		var rich_text: RichTextLabel = chat_list_cache.get_rich_text(session.id, entry)
 		if rich_text == null:
 			continue
 		ChatBubbleFactory.refresh_rich_text(rich_text, entry)
-	clear_inactive_bubble_lists()
+	chat_list_cache.clear_inactive()
 	pass
 
 
@@ -200,20 +186,8 @@ func show_session(session_id: int) -> void:
 	var has_cached_scroll: bool = chat_scroll_controller.has_cached_session_scroll(session_id)
 
 	# One bubble list per session — create on first open, reuse on later switches.
-	var list := chat_list_caches.get_value(session_id) as VBoxContainer
-	if list == null:
-		list = VBoxContainer.new()
-		list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		list.add_theme_constant_override("separation", Margin.ma_3)
-		chat_host.add_child(list)
-		var old_entry := chat_list_caches.put_if_absent(session_id, list)
-		if old_entry != null:
-			var old_list := old_entry.value as VBoxContainer
-			old_list.queue_free()
-
-	for id: int in chat_list_caches.cache_map:
-		var cached_list := chat_list_caches.cache_map[id] as VBoxContainer
-		cached_list.visible = id == session_id
+	var list := chat_list_cache.get_or_create(session_id)
+	chat_list_cache.show_only(session_id)
 	chat_scroll_controller.set_active_chat_list(list)
 
 	if list.get_child_count() == 0:
@@ -225,74 +199,34 @@ func show_session(session_id: int) -> void:
 
 func rebuild(session_id: int) -> void:
 	chat_scroll_controller.cache_session_scroll(session_id)
-	clear_all_bubble_lists()
+	chat_list_cache.clear_all()
 	show_session(session_id)
+	pass
+
+
+func rebuild_session_if_active(session_id: int) -> void:
+	var is_active: bool = AgentSessionManager.is_active(session_id)
+	if is_active:
+		chat_scroll_controller.cache_session_scroll(session_id)
+	chat_list_cache.remove(session_id)
+	if is_active:
+		show_session(session_id)
 	pass
 
 
 func fill_list(session: AgentSession) -> void:
 	for entry: ChatEntry in session.chat_entries:
-		append_entry_bubble(entry, session.id)
+		chat_list_cache.append_entry(session.id, entry)
 	pass
 
 
-func clear_bubble_list(session_id: int) -> void:
-	var list := chat_list_caches.remove(session_id) as VBoxContainer
-	if list == null:
-		return
+func on_chat_list_removed(list: VBoxContainer) -> void:
 	chat_scroll_controller.clear_active_chat_list(list)
-	list.queue_free()
 	pass
-
-
-func clear_inactive_bubble_lists() -> void:
-	var drop_ids: Array[int] = []
-	for session_id: int in chat_list_caches.cache_map:
-		if session_id != AgentSessionManager.active_session_id:
-			drop_ids.append(session_id)
-	for session_id: int in drop_ids:
-		clear_bubble_list(session_id)
-	pass
-
-
-func clear_all_bubble_lists() -> void:
-	var drop_ids: Array[int] = []
-	drop_ids.assign(chat_list_caches.cache_map.keys())
-	for session_id: int in drop_ids:
-		clear_bubble_list(session_id)
-	pass
-
-
-func get_active_chat_list() -> VBoxContainer:
-	return chat_list_caches.get_value(AgentSessionManager.active_session_id) as VBoxContainer
-
-
-# ---------------------------------------------------------------------------
-# Bubbles
-# ---------------------------------------------------------------------------
-
-func append_entry_bubble(chat_entry: ChatEntry, session_id: int) -> RichTextLabel:
-	var chat_list := chat_list_caches.get_value(session_id) as VBoxContainer
-	if chat_list == null:
-		return null
-	return ChatBubbleFactory.append(chat_list, session_id, chat_entry)
-
-
-## chat_entries index matches VBoxContainer child order; label lives on wrapper meta.
-func get_bubble_rich_text(session_id: int, entry: ChatEntry) -> RichTextLabel:
-	var session: AgentSession = AgentSessionStore.load_session(session_id)
-	var list := chat_list_caches.get_value(session_id) as VBoxContainer
-	if session == null or list == null:
-		return null
-	var index: int = session.chat_entries.find(entry)
-	if index < 0 or index >= list.get_child_count():
-		return null
-	var wrapper: Node = list.get_child(index)
-	return wrapper.get_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT) as RichTextLabel
 
 
 func refresh_error_resume_buttons() -> void:
-	var active_chat_list: VBoxContainer = get_active_chat_list()
+	var active_chat_list: VBoxContainer = chat_list_cache.get_active_list()
 	if active_chat_list == null:
 		return
 	ErrorBubble.refresh_resume_buttons(active_chat_list, RuntimeManager.is_running(AgentSessionManager.active_session_id))
