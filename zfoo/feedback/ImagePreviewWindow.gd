@@ -5,6 +5,8 @@ extends CommonWindow
 const MIN_ZOOM: float = 0.1
 const MAX_ZOOM: float = 8.0
 const ZOOM_STEP: float = 1.15
+const MAX_WIDTH_PERCENT: float = 80.0
+const MAX_HEIGHT_PERCENT: float = 85.0
 
 var scroll: ScrollContainer
 var canvas: Control
@@ -40,34 +42,53 @@ func _init() -> void:
 
 
 ## Load an image from a path, then open it through [method show_image].
-static func show_window(path: String, i18n_title: String = "Image Preview", width_percent: int = 80, height_percent: int = 85) -> ImagePreviewWindow:
+static func show_window(path: String, i18n_title: String = "Image Preview") -> ImagePreviewWindow:
 	var texture := await ResourceHelper.async_load(path) as Texture2D
 	if texture == null:
 		Log.error("failed to preview image path:[{}]", path)
 		Alert.alert(I18n.t("Unable to load image"), Colors.error)
 		return null
 	var title := StringUtils.format("{} - {}", path.get_file(), I18n.t(i18n_title))
-	return show_image(texture, title, width_percent, height_percent)
+	return show_image(texture, title)
 
 
 ## Open a centered preview using an image resource that is already loaded.
-static func show_image(texture: Texture2D, i18n_title: String = "Image Preview", width_percent: int = 80, height_percent: int = 85) -> ImagePreviewWindow:
-	var window := create_window(i18n_title, width_percent, height_percent)
+static func show_image(texture: Texture2D, i18n_title: String = "Image Preview") -> ImagePreviewWindow:
+	var window := create_window(i18n_title)
 	window.set_texture(texture)
+	window.present_image()
 	return window
 
 
-static func create_window(i18n_title: String, width_percent: int, height_percent: int) -> ImagePreviewWindow:
+static func create_window(i18n_title: String) -> ImagePreviewWindow:
 	var window := ImagePreviewWindow.new()
 	window.title = I18n.t(i18n_title)
 	gdf.gdf_node.add_child(window)
-	window.present_centered(width_percent, height_percent)
 	return window
 
 
 func set_texture(texture: Texture2D) -> void:
 	image_view.texture = texture
 	refresh_fit()
+	pass
+
+
+## Size the window to the image aspect ratio within the configured maximum screen bounds.
+func present_image() -> void:
+	if image_view.texture == null:
+		return
+	var viewport_size := gdf.gdf_node.get_tree().root.get_visible_rect().size
+	var max_window_size := Vector2(
+		viewport_size.x * MAX_WIDTH_PERCENT / 100.0,
+		viewport_size.y * MAX_HEIGHT_PERCENT / 100.0,
+	)
+	var image_size := image_view.texture.get_size()
+	var image_scale := minf(1.0, minf(max_window_size.x / image_size.x, max_window_size.y / image_size.y))
+	var content_size := image_size * image_scale
+	var window_size := Vector2(maxf(content_size.x, ControlSize.image_sm), maxf(content_size.y, ControlSize.xxl))
+	size = Vector2i(roundi(window_size.x), roundi(window_size.y))
+	popup_centered()
+	oversampling_override = DisplayScale.compute_ui_scale()
 	pass
 
 
