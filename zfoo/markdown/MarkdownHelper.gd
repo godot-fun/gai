@@ -192,6 +192,9 @@ static func handle_meta_clicked(meta: Variant) -> void:
 			Log.error("open link failed url:[{}] err:[{}]", url, http_error)
 		return
 	if url.begins_with("res://") or url.begins_with("user://") or url.is_absolute_path():
+		if ImageHelper.EXTENSIONS.has(url.get_extension().to_lower()):
+			ImagePreviewWindow.show_window(url)
+			return
 		var local_path := ProjectSettings.globalize_path(url)
 		var local_error := FileUtils.open_file(local_path)
 		if local_error != OK:
