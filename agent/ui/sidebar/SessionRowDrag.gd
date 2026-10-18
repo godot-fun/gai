@@ -1,7 +1,7 @@
 class_name SessionRowDrag
 extends RefCounted
 
-## Row drag & drop — reorder inside a list, move between the pinned and normal sections.
+## Row drag & drop — reorder inside a list, move between the pinned and unpinned sections.
 ##
 ## The host hands in its row map and the two lists. Rows are added to / erased from that same
 ## dictionary (never reassigned), so this controller always sees the live set.

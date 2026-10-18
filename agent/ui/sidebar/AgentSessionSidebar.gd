@@ -17,7 +17,7 @@ var new_session_button: Button
 var sidebar_panel: PanelContainer
 
 var session_rows: Dictionary[int, SessionRow] = {}
-var drag := SessionRowDrag.new()
+var session_row_drag := SessionRowDrag.new()
 
 
 # ---------------------------------------------------------------------------
@@ -42,7 +42,7 @@ func setup(
 	session_list_scroll = p_session_list_scroll
 	new_session_button = p_new_session_button
 	sidebar_panel = p_sidebar_panel
-	drag.setup(session_rows, pinned_list, unpinned_list)
+	session_row_drag.setup(session_rows, pinned_list, unpinned_list)
 
 	new_session_button.pressed.connect(on_new_session_pressed)
 	gdf.events.theme_changed.connect(apply_theme)
@@ -61,10 +61,10 @@ func setup(
 	# Lists and headers are drop targets — the padding between rows has to accept a drop too.
 	pinned_header.mouse_filter = Control.MOUSE_FILTER_PASS
 	unpinned_header.mouse_filter = Control.MOUSE_FILTER_PASS
-	drag.bind_list(pinned_list, true)
-	drag.bind_list(pinned_header, true)
-	drag.bind_list(unpinned_list, false)
-	drag.bind_list(unpinned_header, false)
+	session_row_drag.bind_list(pinned_list, true)
+	session_row_drag.bind_list(pinned_header, true)
+	session_row_drag.bind_list(unpinned_list, false)
+	session_row_drag.bind_list(unpinned_header, false)
 
 	# Rows are appended, moved between sections and freed from several places, so the separator and
 	# the unpin drop pad follow the lists themselves instead of every caller remembering to ask.
@@ -211,10 +211,10 @@ func append_row(session_id: int, title: String, pinned: bool) -> void:
 	row.build(session_id, title)
 	row.select_pressed.connect(on_session_row_pressed)
 	row.delete_pressed.connect(on_session_delete_pressed)
-	drag.list_for_pinned(pinned).add_child(row)
+	session_row_drag.list_for_pinned(pinned).add_child(row)
 	# Registered before the refresh: refresh looks rows up by session id.
 	session_rows[session_id] = row
-	drag.bind_row(row)
+	session_row_drag.bind_row(row)
 	refresh_item(session_id)
 	pass
 

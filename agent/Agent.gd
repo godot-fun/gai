@@ -15,7 +15,7 @@ extends Control
 @onready var unpinned_list: VBoxContainer = $Root/Body/Sidebar/SidebarVBox/SessionListScroll/SessionList/UnpinnedList
 @onready var session_list_scroll: ScrollContainer = $Root/Body/Sidebar/SidebarVBox/SessionListScroll
 @onready var new_session_button: Button = $Root/Body/Sidebar/SidebarVBox/NewSessionButton
-@onready var chat_scroll: ScrollContainer = $Root/Body/ChatArea/ChatScroll
+@onready var chat_scroll_node: ScrollContainer = $Root/Body/ChatArea/ChatScroll
 @onready var chat_host: MarginContainer = $Root/Body/ChatArea/ChatScroll/ChatMargin
 @onready var token_usage_wrap: PanelContainer = $Root/Toolbar/ToolbarRow/TokenUsageWrap
 @onready var memory_toggle_button: Button = $Root/Toolbar/ToolbarRow/MemoryToggleWrap/MemoryToggleButton
@@ -77,7 +77,7 @@ func _ready() -> void:
 	visuals_button.setup(visuals_button_node)
 	skill_toggle.setup(skill_toggle_button)
 	agent_prompt_toggle.setup(agent_prompt_toggle_button)
-	agent_chat_view.setup(chat_scroll, chat_host)
+	agent_chat_view.setup(chat_scroll_node, chat_host)
 
 	agent_chat_input.setup(input_bar, input_wrap, input_inner, input_field, send_button)
 	theme_color_select.setup(theme_color_select_node)
