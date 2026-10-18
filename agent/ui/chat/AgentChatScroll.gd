@@ -24,70 +24,13 @@ func setup(p_chat_scroll: ScrollContainer) -> void:
 	# The bar swallows wheel/drag events before the container sees them.
 	chat_scroll.get_v_scroll_bar().scrolling.connect(on_chat_scroll_bar_scrolling)
 	chat_scroll.get_window().window_input.connect(on_chat_window_input)
-	gdf.events.theme_changed.connect(on_appearance_changed)
-	gdf.events.theme_color_changed.connect(on_appearance_changed)
-	gdf.events.locale_changed.connect(on_appearance_changed)
-	AgentEvents.events.skill_context_changed.connect(on_agent_context_changed)
-	AgentEvents.events.memory_context_changed.connect(on_agent_context_changed)
-	AgentEvents.events.agent_context_changed.connect(on_agent_context_changed)
-	AgentEvents.events.session_selected.connect(on_session_selected)
-	AgentEvents.events.session_removed.connect(on_session_removed)
-	AgentEvents.events.agent_start.connect(on_agent_start)
-	AgentEvents.events.compaction_end.connect(on_compaction_end)
-	AgentEvents.events.chat_entry_add.connect(on_chat_entry_add)
 	AgentEvents.events.chat_bubble_flushed.connect(on_chat_bubble_flushed)
-	AgentEvents.events.chat_entry_delete.connect(on_chat_truncated)
 	AgentEvents.events.chat_search_result_selected.connect(on_chat_search_result_selected)
-	pass
-
-
-func on_appearance_changed(_arg: Variant = null) -> void:
-	cache_session_scroll(AgentSessionManager.active_session_id)
-	pass
-
-
-func on_agent_context_changed(session_id: int) -> void:
-	if AgentSessionManager.is_active(session_id):
-		cache_session_scroll(session_id)
-	pass
-
-
-func on_session_selected(_session_id: int, previous_session_id: int) -> void:
-	cache_session_scroll(previous_session_id)
-	pass
-
-
-func on_session_removed(session_id: int) -> void:
-	remove_session(session_id)
-	pass
-
-
-func on_agent_start(session_id: int) -> void:
-	if AgentSessionManager.is_active(session_id):
-		reset_stick_to_bottom()
-	pass
-
-
-func on_compaction_end(session_id: int, success: bool, _error_code: String) -> void:
-	if success and AgentSessionManager.is_active(session_id):
-		reset_stick_to_bottom()
-	pass
-
-
-func on_chat_entry_add(session_id: int, _entry: ChatEntry) -> void:
-	if AgentSessionManager.is_active(session_id):
-		queue_scroll_to_bottom()
 	pass
 
 
 func on_chat_bubble_flushed() -> void:
 	queue_scroll_to_bottom()
-	pass
-
-
-func on_chat_truncated(session_id: int) -> void:
-	if AgentSessionManager.is_active(session_id):
-		cache_session_scroll(session_id)
 	pass
 
 

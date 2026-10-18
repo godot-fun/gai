@@ -57,7 +57,8 @@ func setup(
 # AgentEvents — session lifecycle
 # ---------------------------------------------------------------------------
 
-func on_session_selected(session_id: int, _previous_session_id: int) -> void:
+func on_session_selected(session_id: int, previous_session_id: int) -> void:
+	chat_scroll_controller.cache_session_scroll(previous_session_id)
 	show_session(session_id)
 	refresh_error_resume_buttons()
 	pass
@@ -65,6 +66,7 @@ func on_session_selected(session_id: int, _previous_session_id: int) -> void:
 
 func on_session_removed(session_id: int) -> void:
 	clear_bubble_list(session_id)
+	chat_scroll_controller.remove_session(session_id)
 	pass
 
 
@@ -78,6 +80,7 @@ func on_session_stop(session_id: int, _error_message: String) -> void:
 func on_agent_start(session_id: int) -> void:
 	if not AgentSessionManager.is_active(session_id):
 		return
+	chat_scroll_controller.reset_stick_to_bottom()
 	refresh_error_resume_buttons()
 	pass
 
@@ -86,6 +89,8 @@ func on_compaction_end(session_id: int, success: bool, _error_code: String) -> v
 	if not success:
 		return
 	var is_active := AgentSessionManager.is_active(session_id)
+	if is_active:
+		chat_scroll_controller.reset_stick_to_bottom()
 	clear_bubble_list(session_id)
 	if is_active:
 		show_session(session_id)
@@ -102,6 +107,8 @@ func on_chat_entry_add(session_id: int, entry: ChatEntry) -> void:
 	if chat_list_caches.get_value(session_id) == null:
 		return
 	append_entry_bubble(entry, session_id)
+	if AgentSessionManager.is_active(session_id):
+		chat_scroll_controller.queue_scroll_to_bottom()
 	pass
 
 
@@ -119,6 +126,8 @@ func on_chat_entry_update(session_id: int, entry: ChatEntry, _channel: String) -
 
 func on_chat_truncated(session_id: int) -> void:
 	var is_active: bool = AgentSessionManager.is_active(session_id)
+	if is_active:
+		chat_scroll_controller.cache_session_scroll(session_id)
 	clear_bubble_list(session_id)
 	if is_active:
 		show_session(session_id)
@@ -132,6 +141,8 @@ func on_chat_truncated(session_id: int) -> void:
 ## Re-render the transcript after a context prompt (skills / memory / AGENTS.md) is added or removed.
 func on_agent_context_changed(session_id: int) -> void:
 	var is_active: bool = AgentSessionManager.is_active(session_id)
+	if is_active:
+		chat_scroll_controller.cache_session_scroll(session_id)
 	clear_bubble_list(session_id)
 	if is_active:
 		show_session(session_id)
@@ -214,6 +225,7 @@ func show_session(session_id: int) -> void:
 
 
 func rebuild(session_id: int) -> void:
+	chat_scroll_controller.cache_session_scroll(session_id)
 	clear_all_bubble_lists()
 	show_session(session_id)
 	pass
