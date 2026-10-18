@@ -49,7 +49,7 @@ const TOOL_CATALOG: Array[Dictionary] = [
 @onready var hint_label: Label = $UiLayer/Ui/Hint
 @onready var status_label: Label = $UiLayer/Ui/Status
 @onready var stop_button: Button = $UiLayer/Ui/Controls/Stop
-@onready var theme_color_select: Button = $UiLayer/Ui/Controls/ThemeColorSelect
+@onready var theme_color_select_node: Button = $UiLayer/Ui/Controls/ThemeColorSelect
 @onready var theme_toggle_button: Button = $UiLayer/Ui/Controls/ThemeToggle
 @onready var small_row: HBoxContainer = $UiLayer/Ui/SmallRow/Buttons
 @onready var large_row: HBoxContainer = $UiLayer/Ui/LargeRow/Buttons
@@ -57,7 +57,7 @@ const TOOL_CATALOG: Array[Dictionary] = [
 @onready var large_row_label: Label = $UiLayer/Ui/LargeRow/Label
 
 var theme_toggle: ThemeToggle = ThemeToggle.new()
-var theme_color_select_ctrl: ThemeColorSelect = ThemeColorSelect.new()
+var theme_color_select: ThemeColorSelect = ThemeColorSelect.new()
 
 var demo_session_id: int = 1_0000
 var demo_generation: int = 0
@@ -75,7 +75,7 @@ func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	AgentSessionManager.load_from_disk()
 	demo_session_id = AgentSessionManager.active_session_id
-	theme_color_select_ctrl.setup(theme_color_select)
+	theme_color_select.setup(theme_color_select_node)
 	theme_toggle.setup(theme_toggle_button)
 	build_effect_buttons()
 	stop_button.pressed.connect(on_stop_pressed)
