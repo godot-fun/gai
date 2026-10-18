@@ -156,7 +156,7 @@ func on_markdown_changed(_enabled: bool) -> void:
 		var rich_text: RichTextLabel = get_bubble_rich_text(session.id, entry)
 		if rich_text == null:
 			continue
-		ChatBubbleFlusher.refresh_rich_text(rich_text, entry)
+		ChatBubbleFactory.refresh_rich_text(rich_text, entry)
 	clear_inactive_bubble_lists()
 	pass
 

@@ -56,40 +56,7 @@ func flush() -> void:
 	for item: PendingItem in batch:
 		if not is_instance_valid(item.rich_text):
 			continue
-		refresh_rich_text(item.rich_text, item.entry)
+		ChatBubbleFactory.refresh_rich_text(item.rich_text, item.entry)
 	await ThreadUtils.async_sleep(FLUSH_MS)
 	AgentEvents.events.chat_bubble_flushed.emit()
-	pass
-
-
-## Push entry.body into the bubble RichTextLabel using the refresh rules for its kind.
-static func refresh_rich_text(rich_text: RichTextLabel, entry: ChatEntry) -> void:
-	if not is_instance_valid(rich_text) or entry == null:
-		return
-	match entry.kind:
-		ChatEntry.KIND_THINKING, ChatEntry.KIND_RESULT:
-			ChatBubblePreview.apply(rich_text, entry.body)
-		ChatEntry.KIND_WEB:
-			WebResultBubble.refresh(rich_text, entry)
-		ChatEntry.KIND_COMPACTION:
-			CompactionBubble.refresh(rich_text, entry)
-		ChatEntry.KIND_TOOL:
-			ToolBubble.refresh(rich_text, entry)
-		ChatEntry.KIND_WEB_TOOL:
-			WebToolBubble.refresh(rich_text, entry)
-		ChatEntry.KIND_FILE_TOOL:
-			FileBubble.refresh(rich_text, entry)
-		ChatEntry.KIND_GIT_DIFF:
-			GitDiffBubble.refresh(rich_text, entry)
-		ChatEntry.KIND_ERROR:
-			ErrorBubble.refresh(rich_text, entry)
-		ChatEntry.KIND_SKILL, ChatEntry.KIND_MEMORY, ChatEntry.KIND_AGENT_PROMPT:
-			ContextBubble.refresh(rich_text, entry)
-		_:
-			rich_text.visible = StringUtils.is_not_blank(entry.body)
-			MarkdownHelper.update_rich_text_label_text(
-				rich_text,
-				entry.body,
-				AgentSetting.get_markdown_enabled()
-			)
 	pass
