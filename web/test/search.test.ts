@@ -6,7 +6,7 @@ import { loadConfig } from "../src/config";
 const config = loadConfig();
 const baseUrl = `http://${config.host}:${config.port}`;
 
-test("POST /search returns Bing search results", async () => {
+test("POST /search returns web search results", async () => {
   const response = await axios.post(`${baseUrl}/search`, { query: "Godot Engine", count: 5 });
   const body = response.data as { query?: unknown; results?: unknown; screenshotPath?: unknown; screenshotError?: unknown };
   assert.equal(response.status, 200);

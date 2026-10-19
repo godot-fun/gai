@@ -213,7 +213,7 @@ static func async_fetch(url: String, screenshot_path: String = "") -> FetchRespo
 	return result
 
 
-## POST /search. Returns up to count Bing results.
+## POST /search. Returns up to count results (Google with a configured proxy, otherwise Bing).
 static func async_search(query: String, count: int = 10, screenshot_path: String = "") -> SearchResponse:
 	if StringUtils.is_blank(query):
 		Log.error("web search query is empty")
