@@ -4,7 +4,7 @@ extends RefCounted
 ## Encrypted OpenAI-compatible connection history and its active connection.
 
 const DEFAULT_API_URL := "https://api.deepseek.com/chat/completions"
-const DEFAULT_MODEL := "deepseek-v4-flash"
+const DEFAULT_MODEL := "deepseek-flash"
 const API_KEY_ENV := "OPENAI_API_KEY"
 const CONNECTION_HISTORY_FILE_PATH := "user://api.dat"
 const MAX_CONNECTION_HISTORY := 10
