@@ -230,6 +230,7 @@
       "sandbox_mode_help": "File tools are limited to the current workspace; Bash blocks common high-risk commands but cannot provide complete isolation.",
       "browser_headless": "Browser headless",
       "browser_headless_help": "Run browser automation without showing a browser window. Restart the browser service to apply changes.",
+      "browser_service": "Browser service",
       "restart_browser_service": "Restart",
       "restart_browser_service_help": "Restart the browser service to apply the current browser and proxy settings.",
       "restarting_browser_service": "Restarting...",

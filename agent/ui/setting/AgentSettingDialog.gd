@@ -123,37 +123,27 @@ func make_field_group(parent: Container) -> VBoxContainer:
 	return group
 
 
-## Builds one four-column settings row. Column one is the label; [param control_spans]
-## partitions columns two through four and must total three.
-func make_field_row(parent: Container, label_text: String, control_spans: Array = [FIELD_CONTROL_RATIO]) -> Array:
-	assert(not control_spans.is_empty())
-	var total_span := 0.0
-	for span in control_spans:
-		total_span += float(span)
-	assert(is_equal_approx(total_span, FIELD_CONTROL_RATIO))
+## Builds a settings row with one column per entry in [param column_spans].
+## The first column contains the label and each remaining column is an empty control
+## container. Columns are returned from left to right using the same indexes.
+func make_multi_column_field_row(parent: Container, label_text: String, column_spans: Array[float] = [FIELD_LABEL_RATIO, FIELD_CONTROL_RATIO]) -> Array[HBoxContainer]:
+	assert(column_spans.size() >= 2)
+	for span in column_spans:
+		assert(span > 0.0)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", Margin.ma_3)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(row)
+	var result: Array[HBoxContainer] = []
+	for span in column_spans:
+		var column := HBoxContainer.new()
+		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		column.size_flags_stretch_ratio = span
+		row.add_child(column)
+		result.append(column)
 	var label := make_label(label_text)
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label.size_flags_stretch_ratio = FIELD_LABEL_RATIO
-	row.add_child(label)
-	var control_area := HBoxContainer.new()
-	control_area.add_theme_constant_override("separation", Margin.ma_3)
-	control_area.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	control_area.size_flags_stretch_ratio = FIELD_CONTROL_RATIO
-	row.add_child(control_area)
-	var result: Array = [null, label]
-	for span in control_spans:
-		var controls := HBoxContainer.new()
-		controls.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		controls.size_flags_stretch_ratio = float(span)
-		control_area.add_child(controls)
-		if result[0] == null:
-			result[0] = controls
-		else:
-			result.append(controls)
+	result[0].add_child(label)
 	return result
 
 
