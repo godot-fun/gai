@@ -72,6 +72,7 @@ export class SearchApi implements ApiRoute {
     const searchUrl = new URL("https://www.google.com/search");
     searchUrl.searchParams.set("q", query);
     searchUrl.searchParams.set("num", String(count));
+    searchUrl.searchParams.set("udm", "14");
     await page.goto(searchUrl.href, { waitUntil: "domcontentloaded" });
     await page.waitForSelector("#search a:has(h3)", { state: "visible" });
 
