@@ -124,24 +124,35 @@ func make_field_group(parent: Container) -> VBoxContainer:
 	return group
 
 
-## Builds a row with one empty container per entry in [param column_spans].
-## Columns are returned from left to right using the same indexes.
-func make_multi_column_row(parent: Container, column_spans: Array[float]) -> Array[HBoxContainer]:
-	assert(not column_spans.is_empty())
-	for span in column_spans:
-		assert(span > 0.0)
+## Builds an aligned two-column or four-column settings row.
+func make_setting_row(parent: Container, column_count: int = 2) -> Array[HBoxContainer]:
+	assert(column_count == 2 or column_count == 4)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", Margin.ma_3)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(row)
-	var result: Array[HBoxContainer] = []
-	for span in column_spans:
+	var label_column := HBoxContainer.new()
+	label_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label_column.size_flags_stretch_ratio = FIELD_LABEL_RATIO
+	row.add_child(label_column)
+	var control_column := HBoxContainer.new()
+	control_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	control_column.size_flags_stretch_ratio = FIELD_CONTROL_RATIO
+	row.add_child(control_column)
+	if column_count == 2:
+		var two_columns: Array[HBoxContainer] = [label_column, control_column]
+		return two_columns
+	var controls := HBoxContainer.new()
+	controls.add_theme_constant_override("separation", Margin.ma_3)
+	controls.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	control_column.add_child(controls)
+	var columns: Array[HBoxContainer] = [label_column]
+	for _index in range(3):
 		var column := HBoxContainer.new()
 		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		column.size_flags_stretch_ratio = span
-		row.add_child(column)
-		result.append(column)
-	return result
+		controls.add_child(column)
+		columns.append(column)
+	return columns
 
 
 func add_help_label(parent: Container, help_text: String) -> Label:
