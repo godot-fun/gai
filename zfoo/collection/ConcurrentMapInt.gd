@@ -3,8 +3,8 @@
 class_name ConcurrentMapInt
 extends RefCounted
 
-var _map: Dictionary[int, Variant] = {}
-var _mutex: Mutex = Mutex.new()
+var map: Dictionary[int, Variant] = {}
+var mutex: Mutex = Mutex.new()
 
 
 ## Inserts or replaces a value and returns the previous value, or null when absent.
@@ -12,10 +12,10 @@ func put(key: int, value: Variant) -> Variant:
 	if value == null:
 		Log.error("ConcurrentMapInt put rejected key:[{}] value:[null]", key)
 		return null
-	_mutex.lock()
-	var old_value: Variant = _map.get(key, null)
-	_map[key] = value
-	_mutex.unlock()
+	mutex.lock()
+	var old_value: Variant = map.get(key, null)
+	map[key] = value
+	mutex.unlock()
 	return old_value
 
 
@@ -24,81 +24,81 @@ func put_if_absent(key: int, value: Variant) -> Variant:
 	if value == null:
 		Log.error("ConcurrentMapInt put_if_absent rejected key:[{}] value:[null]", key)
 		return null
-	_mutex.lock()
-	if _map.has(key):
-		var existing_value: Variant = _map[key]
-		_mutex.unlock()
+	mutex.lock()
+	if map.has(key):
+		var existing_value: Variant = map[key]
+		mutex.unlock()
 		return existing_value
-	_map[key] = value
-	_mutex.unlock()
+	map[key] = value
+	mutex.unlock()
 	return null
 
 
 func get_value(key: int, default_value: Variant = null) -> Variant:
-	_mutex.lock()
-	var value: Variant = _map.get(key, default_value)
-	_mutex.unlock()
+	mutex.lock()
+	var value: Variant = map.get(key, default_value)
+	mutex.unlock()
 	return value
 
 
 func has(key: int) -> bool:
-	_mutex.lock()
-	var contains_key := _map.has(key)
-	_mutex.unlock()
+	mutex.lock()
+	var contains_key := map.has(key)
+	mutex.unlock()
 	return contains_key
 
 
 ## Removes a key and returns its previous value, or null when absent.
 func remove(key: int) -> Variant:
-	_mutex.lock()
-	if not _map.has(key):
-		_mutex.unlock()
+	mutex.lock()
+	if not map.has(key):
+		mutex.unlock()
 		return null
-	var old_value: Variant = _map[key]
-	_map.erase(key)
-	_mutex.unlock()
+	var old_value: Variant = map[key]
+	map.erase(key)
+	mutex.unlock()
 	return old_value
 
 
 func clear() -> void:
-	_mutex.lock()
-	_map.clear()
-	_mutex.unlock()
+	mutex.lock()
+	map.clear()
+	mutex.unlock()
 	pass
 
 
 func size() -> int:
-	_mutex.lock()
-	var map_size := _map.size()
-	_mutex.unlock()
+	mutex.lock()
+	var map_size := map.size()
+	mutex.unlock()
 	return map_size
 
 
 func is_empty() -> bool:
-	_mutex.lock()
-	var empty := _map.is_empty()
-	_mutex.unlock()
+	mutex.lock()
+	var empty := map.is_empty()
+	mutex.unlock()
 	return empty
 
 
 func keys() -> Array[int]:
-	_mutex.lock()
+	mutex.lock()
 	var result: Array[int] = []
-	result.assign(_map.keys())
-	_mutex.unlock()
+	result.assign(map.keys())
+	mutex.unlock()
 	return result
 
 
 func values() -> Array[Variant]:
-	_mutex.lock()
+	mutex.lock()
 	var result: Array[Variant] = []
-	result.assign(_map.values())
-	_mutex.unlock()
+	result.assign(map.values())
+	mutex.unlock()
 	return result
 
 
 func snapshot() -> Dictionary[int, Variant]:
-	_mutex.lock()
-	var result: Dictionary[int, Variant] = _map.duplicate()
-	_mutex.unlock()
+	mutex.lock()
+	var result: Dictionary[int, Variant] = map.duplicate()
+	mutex.unlock()
 	return result
