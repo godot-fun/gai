@@ -111,6 +111,7 @@ func make_label(label_text: String) -> Label:
 	label.text = label_text
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.add_theme_font_size_override("font_size", Typography.label_large_size)
 	return label
 
@@ -123,11 +124,10 @@ func make_field_group(parent: Container) -> VBoxContainer:
 	return group
 
 
-## Builds a settings row with one column per entry in [param column_spans].
-## The first column contains the label and each remaining column is an empty control
-## container. Columns are returned from left to right using the same indexes.
-func make_multi_column_field_row(parent: Container, label_text: String, column_spans: Array[float] = [FIELD_LABEL_RATIO, FIELD_CONTROL_RATIO]) -> Array[HBoxContainer]:
-	assert(column_spans.size() >= 2)
+## Builds a row with one empty container per entry in [param column_spans].
+## Columns are returned from left to right using the same indexes.
+func make_multi_column_row(parent: Container, column_spans: Array[float]) -> Array[HBoxContainer]:
+	assert(not column_spans.is_empty())
 	for span in column_spans:
 		assert(span > 0.0)
 	var row := HBoxContainer.new()
@@ -141,9 +141,6 @@ func make_multi_column_field_row(parent: Container, label_text: String, column_s
 		column.size_flags_stretch_ratio = span
 		row.add_child(column)
 		result.append(column)
-	var label := make_label(label_text)
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	result[0].add_child(label)
 	return result
 
 

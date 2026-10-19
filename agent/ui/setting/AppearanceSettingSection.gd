@@ -11,8 +11,9 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 	super.set_up(p_ui, parent, dialog)
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.appearance"))
 	var group := ui.make_field_group(parent)
-	var parts := ui.make_multi_column_field_row(group, I18n.t("agent.settings.language"))
-	language_label = parts[0].get_child(0) as Label
+	var parts := ui.make_multi_column_row(group, [1.0, 3.0])
+	language_label = ui.make_label(I18n.t("agent.settings.language"))
+	parts[0].add_child(language_label)
 	language_select = OptionButton.new()
 	language_select.custom_minimum_size = Vector2(0, 38)
 	language_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -24,8 +25,9 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 	language_select.item_selected.connect(on_language_selected)
 	language_select.get_popup().popup_hide.connect(ui.request_focus_check)
 	parts[1].add_child(language_select)
-	var markdown_parts := ui.make_multi_column_field_row(parent, I18n.t("agent.settings.markdown"))
-	markdown_label = markdown_parts[0].get_child(0) as Label
+	var markdown_parts := ui.make_multi_column_row(parent, [1.0, 3.0])
+	markdown_label = ui.make_label(I18n.t("agent.settings.markdown"))
+	markdown_parts[0].add_child(markdown_label)
 	markdown_label.tooltip_text = I18n.t("agent.settings.markdown_help")
 	var control := ui.make_option_row(markdown_parts[1], Margin.ma_0)
 	control.size_flags_horizontal = Control.SIZE_EXPAND_FILL

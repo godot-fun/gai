@@ -59,11 +59,13 @@ func set_up_history_panel(dialog: ConfirmationDialog) -> void:
 
 func add_field(parent: VBoxContainer, label_text: String, placeholder: String, help_text: String) -> Array:
 	var group := ui.make_field_group(parent)
-	var parts := ui.make_multi_column_field_row(group, label_text)
+	var parts := ui.make_multi_column_row(group, [1.0, 3.0])
+	var label := ui.make_label(label_text)
+	parts[0].add_child(label)
 	var edit := ui.make_line_edit(placeholder)
 	parts[1].add_child(edit)
 	help_labels.append(ui.add_help_label(group, help_text))
-	return [edit, parts[0].get_child(0) as Label]
+	return [edit, label]
 
 
 func refresh() -> void:

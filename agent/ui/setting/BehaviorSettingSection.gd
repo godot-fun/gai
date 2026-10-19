@@ -12,13 +12,15 @@ var restart_web_server_button: Button
 func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: ConfirmationDialog) -> void:
 	super.set_up(p_ui, parent, dialog)
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.agent_behavior"))
-	var sandbox_parts := ui.make_multi_column_field_row(parent, I18n.t("agent.settings.sandbox_mode"), [1.0, 1.0, 2.0])
-	sandbox_label = sandbox_parts[0].get_child(0) as Label
+	var sandbox_parts := ui.make_multi_column_row(parent, [1.0, 1.0, 2.0])
+	sandbox_label = ui.make_label(I18n.t("agent.settings.sandbox_mode"))
+	sandbox_parts[0].add_child(sandbox_label)
 	sandbox_toggle_button = ui.add_check_button(sandbox_parts[1], "", SandboxPolicy.is_enabled())
 	sandbox_toggle_button.tooltip_text = I18n.t("agent.settings.sandbox_mode_help")
 	sandbox_toggle_button.toggled.connect(on_sandbox_toggled)
-	var browser_parts := ui.make_multi_column_field_row(parent, I18n.t("agent.settings.browser_headless"), [1.0, 1.0, 1.0, 1.0])
-	browser_headless_label = browser_parts[0].get_child(0) as Label
+	var browser_parts := ui.make_multi_column_row(parent, [1.0, 1.0, 1.0, 1.0])
+	browser_headless_label = ui.make_label(I18n.t("agent.settings.browser_headless"))
+	browser_parts[0].add_child(browser_headless_label)
 	browser_headless_label.tooltip_text = I18n.t("agent.settings.browser_headless_help")
 	browser_headless_toggle_button = ui.add_check_button(browser_parts[1], "", AgentSetting.get_browser_headless())
 	browser_headless_toggle_button.tooltip_text = I18n.t("agent.settings.browser_headless_help")

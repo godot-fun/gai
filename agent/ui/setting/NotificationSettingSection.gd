@@ -19,22 +19,25 @@ var folder_field_typing: bool = false
 func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: ConfirmationDialog) -> void:
 	super.set_up(p_ui, parent, dialog)
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.notification"))
-	var toast_parts := ui.make_multi_column_field_row(parent, I18n.t("agent.settings.notification_window"), [1.0, 1.0, 2.0])
-	toast_label = toast_parts[0].get_child(0) as Label
+	var toast_parts := ui.make_multi_column_row(parent, [1.0, 1.0, 2.0])
+	toast_label = ui.make_label(I18n.t("agent.settings.notification_window"))
+	toast_parts[0].add_child(toast_label)
 	toast_label.tooltip_text = I18n.t("agent.settings.notification_window_help")
 	toast_toggle_button = ui.add_check_button(toast_parts[1], "", AgentSetting.get_notification_window())
 	toast_toggle_button.tooltip_text = I18n.t("agent.settings.notification_window_help")
 	toast_toggle_button.toggled.connect(on_toast_toggled)
-	var sound_parts := ui.make_multi_column_field_row(parent, I18n.t("agent.settings.notification_sound"), [1.0, 1.0, 1.0, 1.0])
-	sound_label = sound_parts[0].get_child(0) as Label
+	var sound_parts := ui.make_multi_column_row(parent, [1.0, 1.0, 1.0, 1.0])
+	sound_label = ui.make_label(I18n.t("agent.settings.notification_sound"))
+	sound_parts[0].add_child(sound_label)
 	sound_label.tooltip_text = I18n.t("agent.settings.notification_sound_help")
 	sound_toggle_button = ui.add_check_button(sound_parts[1], "", AgentSetting.get_notification_sound())
 	sound_toggle_button.tooltip_text = I18n.t("agent.settings.notification_sound_help")
 	sound_toggle_button.toggled.connect(on_sound_toggled)
 	add_sound_seconds_controls(sound_parts[2], sound_parts[3])
-	var folder_parts := ui.make_multi_column_field_row(parent, I18n.t("agent.settings.sound_folder"))
+	var folder_parts := ui.make_multi_column_row(parent, [1.0, 3.0])
 	sound_folder_row = folder_parts[1]
-	sound_folder_label = folder_parts[0].get_child(0) as Label
+	sound_folder_label = ui.make_label(I18n.t("agent.settings.sound_folder"))
+	folder_parts[0].add_child(sound_folder_label)
 	sound_folder_label.tooltip_text = I18n.t("agent.settings.sound_folder_help")
 	sound_folder_edit = LineEdit.new()
 	sound_folder_edit.custom_minimum_size = Vector2(0, 34)
