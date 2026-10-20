@@ -7,16 +7,12 @@ extends BubbleContainer
 func apply(_session_id: int, entry: ChatEntry) -> void:
 	apply_panel_style(Colors.warning_surface)
 
-	var vbox: VBoxContainer = VBoxContainer.new()
-	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.add_theme_constant_override("separation", Margin.ma_2)
-	add_child(vbox)
-
-	var header: HBoxContainer = HBoxContainer.new()
+	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", Margin.ma_2)
 	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(header)
 
-	var title_label: Label = Label.new()
+	var title_label := Label.new()
 	title_label.text = entry.title
 	title_label.add_theme_color_override("font_color", Colors.warning)
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
@@ -34,7 +30,6 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 		header.add_child(create_file_detail_label(file_message, Colors.error))
 	if StringUtils.is_not_blank(file_path):
 		header.add_child(create_file_path_button(file_path))
-	vbox.add_child(header)
 	pass
 
 
@@ -42,15 +37,14 @@ func refresh(_entry: ChatEntry) -> void:
 	pass
 
 
-static func open_file(meta: Variant) -> void:
-	var path: String = str(meta)
+static func open_file(path: String) -> void:
 	if FileUtils.open_file(path) != OK:
 		Alert.alert(StringUtils.format(I18n.t("common.file_not_found"), path), Colors.error)
 	pass
 
 
 static func create_file_detail_label(text: String, color: Color) -> Label:
-	var label: Label = Label.new()
+	var label := Label.new()
 	label.text = text
 	label.add_theme_color_override("font_color", color)
 	label.add_theme_font_size_override("font_size", Typography.label_small_size)
@@ -58,7 +52,7 @@ static func create_file_detail_label(text: String, color: Color) -> Label:
 
 
 static func create_file_path_button(file_path: String) -> LinkButton:
-	var button: LinkButton = LinkButton.new()
+	var button := LinkButton.new()
 	button.text = file_path
 	button.tooltip_text = file_path
 	button.underline = LinkButton.UNDERLINE_MODE_NEVER

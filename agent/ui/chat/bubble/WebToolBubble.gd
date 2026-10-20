@@ -6,15 +6,12 @@ extends BubbleContainer
 func apply(_session_id: int, entry: ChatEntry) -> void:
 	apply_panel_style(Colors.info_surface)
 
-	var vbox: VBoxContainer = VBoxContainer.new()
-	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	add_child(vbox)
-
-	var header: HBoxContainer = HBoxContainer.new()
+	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", Margin.ma_2)
 	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(header)
 
-	var title_label: Label = Label.new()
+	var title_label := Label.new()
 	title_label.text = entry.title
 	title_label.add_theme_color_override("font_color", Colors.info)
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
@@ -25,7 +22,6 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 		header.add_child(create_url_button(body))
 	else:
 		header.add_child(create_body_label(body))
-	vbox.add_child(header)
 	pass
 
 
