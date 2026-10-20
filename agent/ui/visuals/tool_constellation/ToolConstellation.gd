@@ -28,11 +28,48 @@ const CRT_GLITCH_SECONDS := 0.55
 enum ExecutionState { RUNNING, SUCCESS, FAILED }
 enum ToolFamily { GENERIC, READ, WRITE, SEARCH, SHELL, WEB, IMAGE, AUDIO }
 
-var nodes: Array[Dictionary] = []
+
+class ToolCall extends RefCounted:
+	var id: String
+	var name: String
+	var args: Dictionary[String, Variant]
+	var turn: int
+
+	func _init(call_id: String, tool_name: String, tool_args: Dictionary[String, Variant], turn_index: int) -> void:
+		id = call_id
+		name = tool_name
+		args = tool_args.duplicate(true)
+		turn = turn_index
+		pass
+
+
+class ConstellationNode extends RefCounted:
+	var id: String
+	var name: String
+	var arg_count: int
+	var sequence: int
+	var turn: int
+	var family: ToolFamily
+	var state: ExecutionState = ExecutionState.RUNNING
+	var growth: float = 0.0
+	var settle: float = 0.0
+	var orbit: float = 0.0
+
+	func _init(call_id: String, tool_name: String, tool_args: Dictionary[String, Variant], spawn_sequence: int, turn_index: int) -> void:
+		id = call_id
+		name = tool_name
+		arg_count = tool_args.size()
+		sequence = spawn_sequence
+		turn = turn_index
+		family = ToolConstellation.tool_family(tool_name)
+		pass
+
+
+var nodes: Array[ConstellationNode] = []
 var active_calls: Dictionary[String, int] = {}
-var pending_calls: Array[Dictionary] = []
+var pending_calls: Array[ToolCall] = []
 var pending_results: Dictionary[String, AgentToolResult] = {}
-var playing_call: Dictionary = {}
+var playing_call: ToolCall
 var playing_seconds: float = 0.0
 var result_hold_seconds: float = 0.0
 var turn_index: int = 0
@@ -71,7 +108,7 @@ func reset_visual() -> void:
 	active_calls.clear()
 	pending_calls.clear()
 	pending_results.clear()
-	playing_call.clear()
+	playing_call = null
 	playing_seconds = 0.0
 	result_hold_seconds = 0.0
 	turn_index = 0
@@ -103,19 +140,19 @@ func on_agent_end(error_message: String) -> void:
 	if ended_with_error:
 		crt_glitch = CRT_GLITCH_SECONDS
 	var fallback_result := AgentToolResult.ok("completed") if not ended_with_error else AgentToolResult.error(error_message)
-	if not playing_call.is_empty():
-		var playing_id := String(playing_call["id"])
+	if playing_call != null:
+		var playing_id := playing_call.id
 		if not pending_results.has(playing_id):
 			pending_results[playing_id] = fallback_result
-	for call: Dictionary in pending_calls:
-		var pending_id := String(call["id"])
+	for call: ToolCall in pending_calls:
+		var pending_id := call.id
 		if not pending_results.has(pending_id):
 			pending_results[pending_id] = fallback_result
 	core_pulse = 1.0
 	queue_redraw()
 	if not is_inside_tree():
 		return
-	while not pending_calls.is_empty() or not playing_call.is_empty() or result_hold_seconds > 0.0:
+	while not pending_calls.is_empty() or playing_call != null or result_hold_seconds > 0.0:
 		await get_tree().process_frame
 	completing = true
 	completion = 0.0
@@ -152,7 +189,7 @@ func on_message_update(chunk: String, next_stream_kind: String) -> void:
 
 
 func on_tool_execution_start(tool_call_id: String, tool_name: String, args: Dictionary[String, Variant]) -> void:
-	pending_calls.append({"id": tool_call_id, "name": tool_name, "args": args.duplicate(true), "turn": turn_index})
+	pending_calls.append(ToolCall.new(tool_call_id, tool_name, args, turn_index))
 	start_next_queued_call()
 	pass
 
@@ -180,15 +217,15 @@ func _process(delta: float) -> void:
 	else:
 		field_spread = move_toward(field_spread, 1.0, delta / RING_EXPAND_SECONDS)
 	advance_tool_queue(delta)
-	for node: Dictionary in nodes:
-		node["growth"] = move_toward(float(node["growth"]), 1.0, delta * 3.2)
-		if int(node["state"]) != ExecutionState.RUNNING:
-			var previous_settle := float(node["settle"])
-			node["settle"] = move_toward(previous_settle, 1.0, delta * 1.6)
-			if int(node["state"]) == ExecutionState.SUCCESS and previous_settle < 0.98 and float(node["settle"]) >= 0.98:
+	for node: ConstellationNode in nodes:
+		node.growth = move_toward(node.growth, 1.0, delta * 3.2)
+		if node.state != ExecutionState.RUNNING:
+			var previous_settle := node.settle
+			node.settle = move_toward(previous_settle, 1.0, delta * 1.6)
+			if node.state == ExecutionState.SUCCESS and previous_settle < 0.98 and node.settle >= 0.98:
 				absorb_flash = 1.0
 		var target_orbit := target_orbit_for(node)
-		node["orbit"] = move_toward(float(node["orbit"]), target_orbit, delta * 1.7)
+		node.orbit = move_toward(node.orbit, target_orbit, delta * 1.7)
 	queue_redraw()
 	pass
 
@@ -197,14 +234,14 @@ func advance_tool_queue(delta: float) -> void:
 	if result_hold_seconds > 0.0:
 		result_hold_seconds = maxf(0.0, result_hold_seconds - delta)
 		if result_hold_seconds <= 0.0:
-			playing_call.clear()
+			playing_call = null
 			start_next_queued_call()
 		return
-	if playing_call.is_empty():
+	if playing_call == null:
 		start_next_queued_call()
 		return
 	playing_seconds += delta
-	var tool_call_id := String(playing_call["id"])
+	var tool_call_id := playing_call.id
 	if playing_seconds < MIN_TOOL_PLAY_SECONDS or not pending_results.has(tool_call_id):
 		return
 	complete_playing_call(pending_results[tool_call_id])
@@ -212,14 +249,13 @@ func advance_tool_queue(delta: float) -> void:
 
 
 func start_next_queued_call() -> void:
-	if not playing_call.is_empty() or result_hold_seconds > 0.0 or pending_calls.is_empty():
+	if playing_call != null or result_hold_seconds > 0.0 or pending_calls.is_empty():
 		return
 	playing_call = pending_calls.pop_front()
 	playing_seconds = 0.0
-	var tool_call_id := String(playing_call["id"])
-	var tool_name := String(playing_call["name"])
-	var args: Dictionary[String, Variant] = playing_call["args"]
-	var node := make_node(tool_call_id, tool_name, args, spawn_sequence, int(playing_call["turn"]))
+	var tool_call_id := playing_call.id
+	var tool_name := playing_call.name
+	var node := make_node(tool_call_id, tool_name, playing_call.args, spawn_sequence, playing_call.turn)
 	spawn_sequence += 1
 	var slot_index := nodes.size()
 	if nodes.size() >= MAX_NODES:
@@ -235,12 +271,12 @@ func start_next_queued_call() -> void:
 
 
 func complete_playing_call(result: AgentToolResult) -> void:
-	var tool_call_id := String(playing_call["id"])
+	var tool_call_id := playing_call.id
 	if active_calls.has(tool_call_id):
 		var index: int = active_calls[tool_call_id]
 		if index >= 0 and index < nodes.size():
-			nodes[index]["state"] = ExecutionState.FAILED if result.is_error else ExecutionState.SUCCESS
-			nodes[index]["settle"] = 0.0
+			nodes[index].state = ExecutionState.FAILED if result.is_error else ExecutionState.SUCCESS
+			nodes[index].settle = 0.0
 			if result.is_error:
 				crt_glitch = CRT_GLITCH_SECONDS
 	active_calls.erase(tool_call_id)
@@ -344,7 +380,7 @@ func draw_constellation_links(center: Vector2, fade: float) -> void:
 		return
 	var turn_groups: Dictionary[int, PackedInt32Array] = {}
 	for index in range(nodes.size()):
-		var turn: int = nodes[index]["turn"]
+		var turn := nodes[index].turn
 		if not turn_groups.has(turn):
 			turn_groups[turn] = PackedInt32Array()
 		var group: PackedInt32Array = turn_groups[turn]
@@ -467,47 +503,43 @@ func draw_crt_vignette(rect: Rect2, fade: float) -> void:
 
 
 func current_command_line() -> String:
-	if playing_call.is_empty():
+	if playing_call == null:
 		return "idle --watch constellation"
-	var name := String(playing_call["name"])
-	var args: Dictionary[String, Variant] = playing_call["args"]
-	var parts: PackedStringArray = PackedStringArray([name])
-	for key: String in args.keys():
-		parts.append("--%s=%s" % [key, short_argument(args[key])])
+	var parts: PackedStringArray = PackedStringArray([playing_call.name])
+	for key: String in playing_call.args.keys():
+		parts.append("--%s=%s" % [key, short_argument(playing_call.args[key])])
 	return " ".join(parts).left(42)
 
 
 func current_tool_name() -> String:
-	if playing_call.is_empty():
+	if playing_call == null:
 		return "IDLE"
-	return String(playing_call["name"]).to_upper()
+	return playing_call.name.to_upper()
 
 
 func current_command_arguments() -> String:
-	if playing_call.is_empty():
+	if playing_call == null:
 		return "watching constellation events..."
-	var args: Dictionary[String, Variant] = playing_call["args"]
-	if args.is_empty():
+	if playing_call.args.is_empty():
 		return "no arguments"
 	var parts := PackedStringArray()
-	for key: String in args.keys():
-		parts.append("%s: %s" % [key, short_argument(args[key])])
+	for key: String in playing_call.args.keys():
+		parts.append("%s: %s" % [key, short_argument(playing_call.args[key])])
 	return "  ".join(parts).left(45)
 
 
 func current_tool_status() -> String:
 	# active_calls is erased as soon as a result arrives, while playing_call is deliberately
 	# held for the result card. Resolve state from the persistent node collection instead.
-	if playing_call.is_empty():
+	if playing_call == null:
 		return "READY"
-	var playing_id := String(playing_call["id"])
-	for node: Dictionary in nodes:
-		if String(node["id"]) != playing_id:
+	var playing_id := playing_call.id
+	for node: ConstellationNode in nodes:
+		if node.id != playing_id:
 			continue
-		var state: int = node["state"]
-		if state == ExecutionState.FAILED:
+		if node.state == ExecutionState.FAILED:
 			return "ERR"
-		if state == ExecutionState.SUCCESS:
+		if node.state == ExecutionState.SUCCESS:
 			return "OK"
 	return "RUN"
 
@@ -538,12 +570,12 @@ static func terminal_display_lines(text: String, line_length: int, line_count: i
 	return result
 
 
-func draw_connection(node: Dictionary, center: Vector2, position: Vector2, fade: float) -> void:
-	var growth: float = node["growth"]
-	var state: int = node["state"]
+func draw_connection(node: ConstellationNode, center: Vector2, position: Vector2, fade: float) -> void:
+	var growth := node.growth
+	var state := node.state
 	var accent := ThemeColor.accent_theme_color()
 	var color := accent if state == ExecutionState.RUNNING else (Colors.success if state == ExecutionState.SUCCESS else Colors.error)
-	var points := curved_path(center, position, int(node["sequence"]))
+	var points := curved_path(center, position, node.sequence)
 	var visible_points := partial_path(points, growth)
 	if state == ExecutionState.FAILED:
 		draw_broken_curve(visible_points, Color(color, 0.78 * fade))
@@ -560,8 +592,8 @@ func draw_connection(node: Dictionary, center: Vector2, position: Vector2, fade:
 		for packet_index in range(PACKET_COUNT):
 			var progress := fmod(elapsed * 0.55 + float(packet_index) / float(PACKET_COUNT), 1.0)
 			draw_packet_streak(points, progress * growth, Color(accent, fade), true)
-	elif state == ExecutionState.SUCCESS and float(node["settle"]) < 0.98:
-		draw_packet_streak(points, 1.0 - clampf(float(node["settle"]), 0.0, 1.0), Color(Colors.success, fade), false)
+	elif state == ExecutionState.SUCCESS and node.settle < 0.98:
+		draw_packet_streak(points, 1.0 - clampf(node.settle, 0.0, 1.0), Color(Colors.success, fade), false)
 	pass
 
 
@@ -586,20 +618,20 @@ func draw_failure_sparks(points: PackedVector2Array, color: Color, fade: float) 
 	pass
 
 
-func draw_tool_node(node: Dictionary, position: Vector2, center: Vector2, fade: float) -> void:
-	var state: int = node["state"]
+func draw_tool_node(node: ConstellationNode, position: Vector2, center: Vector2, fade: float) -> void:
+	var state := node.state
 	var accent := ThemeColor.accent_theme_color()
 	var state_color := accent if state == ExecutionState.RUNNING else (Colors.success if state == ExecutionState.SUCCESS else Colors.error)
-	var growth: float = node["growth"]
+	var growth := node.growth
 	var node_radius := NODE_RADIUS * growth
 	if state != ExecutionState.RUNNING:
-		node_radius *= lerpf(1.0, 0.86, clampf(float(node["orbit"]) / 2.0, 0.0, 1.0))
+		node_radius *= lerpf(1.0, 0.86, clampf(node.orbit / 2.0, 0.0, 1.0))
 	var highlight := radar_highlight(center, position)
 	var shake := Vector2.ZERO
-	if state == ExecutionState.FAILED and float(node["settle"]) < 0.85:
-		shake = Vector2(sin(elapsed * 38.0), cos(elapsed * 31.0)) * (1.0 - float(node["settle"])) * 2.4
+	if state == ExecutionState.FAILED and node.settle < 0.85:
+		shake = Vector2(sin(elapsed * 38.0), cos(elapsed * 31.0)) * (1.0 - node.settle) * 2.4
 	position += shake
-	var alpha := fade * lerpf(1.0, 0.55, clampf(float(node["orbit"]) * 0.35, 0.0, 1.0))
+	var alpha := fade * lerpf(1.0, 0.55, clampf(node.orbit * 0.35, 0.0, 1.0))
 	if state == ExecutionState.RUNNING:
 		draw_circle(position, node_radius + 11.0, Color(state_color, 0.14 * alpha))
 		draw_circle(position, node_radius + 4.0, Color(state_color, 0.08 * alpha))
@@ -608,7 +640,7 @@ func draw_tool_node(node: Dictionary, position: Vector2, center: Vector2, fade: 
 	var hex := hexagon_points(position, node_radius)
 	draw_colored_polygon(hex, Color(Colors.deep_surface, 0.97 * alpha))
 	# Motif owns the hex interior; glyph sits above so letters and icons no longer fight.
-	draw_family_motif(position, node_radius * 0.78, int(node["family"]), state_color, alpha * 0.88)
+	draw_family_motif(position, node_radius * 0.78, node.family, state_color, alpha * 0.88)
 	var outline := PackedVector2Array(hex)
 	outline.append(hex[0])
 	if state == ExecutionState.FAILED:
@@ -621,15 +653,15 @@ func draw_tool_node(node: Dictionary, position: Vector2, center: Vector2, fade: 
 		draw_polyline(outline, Color(state_color, 0.62 * alpha), 2.0, true)
 	if state == ExecutionState.RUNNING:
 		for satellite in range(3):
-			var satellite_angle := elapsed * 1.35 + float(satellite) * TAU / 3.0 + float(node["sequence"])
+			var satellite_angle := elapsed * 1.35 + float(satellite) * TAU / 3.0 + node.sequence
 			draw_circle(position + Vector2.from_angle(satellite_angle) * (node_radius + 15.0), 2.6, Color(state_color, 0.85 * alpha))
-	draw_centered_text(position + Vector2(0.0, -node_radius - Margin.ma_2), VisualToolFormatter.glyph(String(node["name"])), Fonts.semibold(), Typography.label_small_size, Color(state_color, 0.85 * alpha))
+	draw_centered_text(position + Vector2(0.0, -node_radius - Margin.ma_2), VisualToolFormatter.glyph(node.name), Fonts.semibold(), Typography.label_small_size, Color(state_color, 0.85 * alpha))
 	var label_position := position + Vector2(0.0, node_radius + Margin.ma_5)
-	draw_centered_text(label_position, VisualToolFormatter.title_name(String(node["name"])), Fonts.semibold(), Typography.label_medium_size, Color(Colors.primary_text, alpha))
+	draw_centered_text(label_position, VisualToolFormatter.title_name(node.name), Fonts.semibold(), Typography.label_medium_size, Color(Colors.primary_text, alpha))
 	if state == ExecutionState.RUNNING:
 		draw_centered_text(label_position + Vector2(0.0, Margin.ma_4), I18n.t("agent.visuals.running"), Fonts.medium(), Typography.label_small_size, Color(state_color, 0.9 * alpha))
-		if int(node["arg_count"]) > 0:
-			draw_centered_text(label_position + Vector2(0.0, Margin.ma_8), StringUtils.format(I18n.t("agent.visuals.args"), int(node["arg_count"])), Fonts.regular(), Typography.label_small_size, Color(Colors.secondary_text, alpha))
+		if node.arg_count > 0:
+			draw_centered_text(label_position + Vector2(0.0, Margin.ma_8), StringUtils.format(I18n.t("agent.visuals.args"), node.arg_count), Fonts.regular(), Typography.label_small_size, Color(Colors.secondary_text, alpha))
 	elif state == ExecutionState.FAILED:
 		draw_centered_text(label_position + Vector2(0.0, Margin.ma_4), I18n.t("agent.visuals.failed"), Fonts.medium(), Typography.label_small_size, Color(state_color, 0.9 * alpha))
 	pass
@@ -717,7 +749,7 @@ func draw_broken_curve(points: PackedVector2Array, color: Color) -> void:
 
 func node_position(index: int, _count: int, center: Vector2) -> Vector2:
 	var angle := -PI * 0.5 + float(index) * GOLDEN_ANGLE
-	var orbit := float(nodes[index]["orbit"]) if index < nodes.size() else float(index % 3)
+	var orbit := nodes[index].orbit if index < nodes.size() else float(index % 3)
 	# During completion, keep each tool attached to its matching visual orbit so the
 	# constellation itself retracts into the core instead of only fading in place.
 	var orbit_layer := clampi(int(round(orbit)) + 2, 2, RING_LAYER_COUNT)
@@ -756,10 +788,10 @@ func layer_spread(layer_from_inside: int, layer_count: int) -> float:
 	return local * local * (3.0 - 2.0 * local)
 
 
-func target_orbit_for(node: Dictionary) -> float:
-	if int(node["state"]) == ExecutionState.RUNNING:
+func target_orbit_for(node: ConstellationNode) -> float:
+	if node.state == ExecutionState.RUNNING:
 		return 0.0
-	var age := spawn_sequence - int(node["sequence"])
+	var age := spawn_sequence - node.sequence
 	return 2.0 if age > 10 else 1.0
 
 
@@ -807,9 +839,9 @@ func oldest_settled_node_index() -> int:
 	var oldest_sequence := 0
 	var found := false
 	for index in range(nodes.size()):
-		if int(nodes[index]["state"]) == ExecutionState.RUNNING:
+		if nodes[index].state == ExecutionState.RUNNING:
 			continue
-		var sequence: int = nodes[index]["sequence"]
+		var sequence := nodes[index].sequence
 		if not found or sequence < oldest_sequence:
 			replace_index = index
 			oldest_sequence = sequence
@@ -836,16 +868,5 @@ static func tool_family(tool_name: String) -> int:
 	return ToolFamily.GENERIC
 
 
-static func make_node(tool_call_id: String, tool_name: String, args: Dictionary[String, Variant], sequence: int, turn: int) -> Dictionary:
-	return {
-		"id": tool_call_id,
-		"name": tool_name,
-		"arg_count": args.size(),
-		"sequence": sequence,
-		"turn": turn,
-		"family": tool_family(tool_name),
-		"state": ExecutionState.RUNNING,
-		"growth": 0.0,
-		"settle": 0.0,
-		"orbit": 0.0,
-	}
+static func make_node(tool_call_id: String, tool_name: String, args: Dictionary[String, Variant], sequence: int, turn: int) -> ConstellationNode:
+	return ConstellationNode.new(tool_call_id, tool_name, args, sequence, turn)
