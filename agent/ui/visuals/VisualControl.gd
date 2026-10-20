@@ -1,8 +1,6 @@
 class_name VisualControl
 extends Control
 
-const TAI_CHI_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChi.gd")
-
 ## Single event bridge that routes all concurrent agent runs to the selected visual effect.
 ## The shared effect remains visible until every active session has finished.
 
@@ -60,7 +58,7 @@ func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 		VisualType.Type.INK_LANDSCAPE:
 			return InkLandscape.new()
 		VisualType.Type.TAI_CHI:
-			return TAI_CHI_SCRIPT.new()
+			return TaiChi.new()
 	return null
 
 
