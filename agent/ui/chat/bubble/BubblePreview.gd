@@ -1,4 +1,4 @@
-class_name ChatBubblePreview
+class_name BubblePreview
 extends Object
 
 ## Shared text-preview calculations for transcript bubbles.

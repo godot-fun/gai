@@ -88,7 +88,7 @@ func refresh(entry: ChatEntry) -> void:
 				expand_button.text = I18n.t("common.collapse")
 				expand_button.tooltip_text = I18n.t("agent.chat.collapse_tooltip")
 			else:
-				var hidden: int = ChatBubblePreview.hidden_line_count(entry.body, PREVIEW_LINES)
+				var hidden: int = BubblePreview.hidden_line_count(entry.body, PREVIEW_LINES)
 				expand_button.text = StringUtils.format(
 					I18n.t("agent.chat.expand_lines"),
 					hidden,

@@ -49,7 +49,7 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 func refresh(entry: ChatEntry) -> void:
 	if not is_instance_valid(rich_text) or entry == null:
 		return
-	ChatBubblePreview.apply(rich_text, view_button, line_label, entry.body, true)
+	BubblePreview.apply(rich_text, view_button, line_label, entry.body, true)
 	pass
 
 
