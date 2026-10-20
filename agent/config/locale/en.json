@@ -5,7 +5,9 @@
     "copy_tooltip": "Copy message",
     "copied": "Copied",
     "delete": "Delete",
-    "resume": "Resume"
+    "resume": "Resume",
+    "more_line": "+{} line",
+    "more_lines": "+{} lines"
   },
   "git": {
     "title": "Git Diff",
@@ -67,7 +69,8 @@
       "view_full_thinking": "View full thinking",
       "view_full_result": "View full result",
       "message_moved_to_input": "Message moved to the input box",
-      "session_busy": "Session is busy"
+      "session_busy": "Session is busy",
+      "file_not_found": "File not found: {}"
     },
     "visuals": {
       "error": "ERROR",

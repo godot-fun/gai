@@ -5,7 +5,9 @@
     "copy_tooltip": "复制消息",
     "copied": "已复制",
     "delete": "删除",
-    "resume": "继续"
+    "resume": "继续",
+    "more_line": "+{} 行",
+    "more_lines": "+{} 行"
   },
   "git": {
     "title": "Git 差异",
@@ -67,7 +69,8 @@
       "view_full_thinking": "查看完整思考内容",
       "view_full_result": "查看完整结果",
       "message_moved_to_input": "消息已移回输入框",
-      "session_busy": "会话正忙"
+      "session_busy": "会话正忙",
+      "file_not_found": "文件不存在：{}"
     },
     "visuals": {
       "error": "错误",

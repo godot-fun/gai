@@ -6,12 +6,6 @@ extends Object
 
 const PREVIEW_LINES := 6
 const PREVIEW_CHARS := 600
-const META_FIXED_HEIGHT_AT_LIMIT := "preview_fixed_height_at_limit"
-
-
-static func enable_fixed_height_at_limit(rich_text: RichTextLabel) -> void:
-	rich_text.set_meta(META_FIXED_HEIGHT_AT_LIMIT, true)
-	pass
 
 
 static func preview(s: String) -> String:
@@ -27,21 +21,19 @@ static func extra_line_count(s: String) -> int:
 	return maxi(0, s.count(FileUtils.NEWLINE_LF) + 1 - PREVIEW_LINES)
 
 
-static func apply(rich_text: RichTextLabel, body: String) -> void:
+static func apply(rich_text: RichTextLabel, view_button: Button, line_label: Label, body: String, fixed_height_at_limit: bool = false) -> void:
 	if not is_instance_valid(rich_text):
 		return
 	var text := preview(body)
-	var header := rich_text.get_parent().get_child(0) as HBoxContainer
-	var view_button := header.get_child(1) as Button
-	var line_label := header.get_child(2) as Label
 	view_button.visible = text != body
 	var extra_lines := extra_line_count(body)
 	line_label.visible = extra_lines > 0
 	if extra_lines > 0:
-		line_label.text = StringUtils.format("+{} line{}", extra_lines, "" if extra_lines == 1 else "s")
+		var line_key := "common.more_line" if extra_lines == 1 else "common.more_lines"
+		line_label.text = StringUtils.format(I18n.t(line_key), extra_lines)
 	rich_text.text = text
 	rich_text.visible = StringUtils.is_not_blank(body)
-	if rich_text.has_meta(META_FIXED_HEIGHT_AT_LIMIT):
+	if fixed_height_at_limit:
 		apply_height_limit(rich_text, extra_lines > 0)
 	pass
 

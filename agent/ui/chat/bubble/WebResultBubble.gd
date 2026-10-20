@@ -2,6 +2,8 @@ class_name WebResultBubble
 extends BubbleContainer
 
 var rich_text: RichTextLabel
+var view_button: Button
+var line_label: Label
 
 ## Web-tool result bubble with a text preview and an optional browser screenshot.
 
@@ -24,13 +26,13 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	header.add_child(title_label)
 
-	var view_button := Button.new()
+	view_button = Button.new()
 	view_button.text = "⋯"
 	ResultBubble.style_view_button(view_button)
 	view_button.pressed.connect(entry.open_full_view)
 	header.add_child(view_button)
 
-	var line_label := Label.new()
+	line_label = Label.new()
 	line_label.add_theme_color_override("font_color", Colors.secondary_text)
 	line_label.add_theme_font_size_override("font_size", Typography.label_small_size)
 	header.add_child(line_label)
@@ -47,7 +49,7 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 func refresh(entry: ChatEntry) -> void:
 	if not is_instance_valid(rich_text) or entry == null:
 		return
-	ChatBubblePreview.apply(rich_text, entry.body)
+	ChatBubblePreview.apply(rich_text, view_button, line_label, entry.body)
 	pass
 
 
