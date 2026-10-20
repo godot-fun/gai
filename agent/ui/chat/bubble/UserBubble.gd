@@ -7,7 +7,6 @@ extends Object
 ## the entry has one). Both hand the message body back to the chat input for re-editing.
 ## The body follows the shared Markdown toolbar setting, matching agent replies.
 
-const BUBBLE_CORNER_RADIUS: float = ControlSize.radius_lg
 const BORDER_HIGHLIGHT_STRENGTH: float = 1.0
 
 
@@ -81,7 +80,7 @@ static func append(
 	moving_border.name = "MovingAccentBorder"
 	moving_border.z_index = 10
 	moving_border.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	moving_border.set_corner_radius(BUBBLE_CORNER_RADIUS)
+	moving_border.set_corner_radius(ControlSize.radius_lg)
 	moving_border.set_highlight_strength(BORDER_HIGHLIGHT_STRENGTH)
 	host.add_child(moving_border)
 
