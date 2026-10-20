@@ -27,11 +27,11 @@ func setup(p_chat_scroll: ScrollContainer) -> void:
 	chat_scroll.get_window().window_input.connect(on_chat_window_input)
 	AgentEvents.events.chat_bubble_flushed.connect(on_chat_bubble_flushed)
 	AgentEvents.events.chat_search_result_selected.connect(on_chat_search_result_selected)
+	AgentEvents.events.middle_scroll_started.connect(func() -> void: stick_to_bottom = false)
+	AgentEvents.events.middle_scroll_ended.connect(func(at_bottom: bool) -> void: stick_to_bottom = at_bottom)
 	middle_scroll_controller = MiddleScrollController.new()
 	chat_scroll.get_parent().add_child(middle_scroll_controller)
 	middle_scroll_controller.setup(chat_scroll)
-	middle_scroll_controller.scrolling_started.connect(func() -> void: stick_to_bottom = false)
-	middle_scroll_controller.scrolling_ended.connect(func(at_bottom: bool) -> void: stick_to_bottom = at_bottom)
 	pass
 
 
@@ -108,7 +108,7 @@ func reveal_entry_after_layout(session_id: int, entry_index: int) -> void:
 
 
 func reveal_entry(entry_index: int) -> void:
-	if active_chat_list == null or entry_index < 0 or entry_index >= active_chat_list.get_child_count():
+	if not is_instance_valid(active_chat_list) or entry_index < 0 or entry_index >= active_chat_list.get_child_count():
 		return
 	var entry_control := active_chat_list.get_child(entry_index) as Control
 	var vbar := chat_scroll.get_v_scroll_bar()

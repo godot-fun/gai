@@ -85,6 +85,10 @@ class Events:
 
 	## Emitted after ChatBubbleFlusher applies a pending batch (every ~100 ms while streaming).
 	signal chat_bubble_flushed
+	## Middle-button transcript auto-scroll interaction started.
+	signal middle_scroll_started
+	## Middle-button transcript auto-scroll interaction ended.
+	signal middle_scroll_ended(at_bottom: bool)
 
 	# Chat navigation and input
 	## A search result requests that the transcript reveal a specific persisted entry.

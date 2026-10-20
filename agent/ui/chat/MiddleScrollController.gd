@@ -4,9 +4,6 @@ extends ColorRect
 ## Reusable browser-style middle-button auto-scroll for a vertical [ScrollContainer].
 ## Owns input, motion, boundary feedback, and the shader-rendered control visualization.
 
-signal scrolling_started
-signal scrolling_ended(at_bottom: bool)
-
 ## Movement inside this radius stays idle.
 const DEAD_ZONE: float = 10.0
 ## The uncapped quadratic curve keeps accelerating with cursor distance.
@@ -14,7 +11,6 @@ const LINEAR_ACCELERATION: float = 2.0
 const QUADRATIC_ACCELERATION: float = 0.06
 ## Exponential smoothing prevents abrupt speed changes near the dead zone.
 const VELOCITY_SMOOTHING: float = 14.0
-const EFFECT_MARGIN: float = 32.0
 const POINTER_SHADER := preload("res://agent/ui/chat/MiddleScrollController.gdshader")
 
 var scroll: ScrollContainer
@@ -102,7 +98,7 @@ func try_begin_scroll() -> void:
 	scrolling = true
 	set_process(true)
 	update_visual(anchor, false, 0.0, 0.0)
-	scrolling_started.emit()
+	AgentEvents.events.middle_scroll_started.emit()
 	scroll.get_viewport().set_input_as_handled()
 	pass
 
@@ -154,7 +150,7 @@ func update_visual(mouse_position: Vector2, show_pointer: bool, speed_factor: fl
 	var inverse_parent_transform := parent_control.get_global_transform_with_canvas().affine_inverse()
 	var anchor_parent := inverse_parent_transform * anchor
 	var cursor_parent := inverse_parent_transform * mouse_position
-	var bounds := Rect2(anchor_parent, cursor_parent - anchor_parent).abs().grow(EFFECT_MARGIN)
+	var bounds := Rect2(anchor_parent, cursor_parent - anchor_parent).abs().grow(Margin.ma_8)
 	position = bounds.position
 	size = bounds.size
 	shader_material.set_shader_parameter("canvas_size", size)
@@ -182,7 +178,7 @@ func end_scroll() -> void:
 	target_velocity = 0.0
 	visible = false
 	set_process(false)
-	scrolling_ended.emit(is_at_bottom())
+	AgentEvents.events.middle_scroll_ended.emit(is_at_bottom())
 	pass
 
 
