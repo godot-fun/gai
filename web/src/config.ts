@@ -1,9 +1,5 @@
 import "dotenv/config";
-// download cloak browser for proxy
-// import {setGlobalDispatcher, ProxyAgent} from "undici"
-// setGlobalDispatcher(new ProxyAgent("http://127.0.0.1:10809"))
-// console.log(`cloak browser path:[${process.env.CLOAKBROWSER_CACHE_DIR}]`);
-// console.log(`working path:[${process.cwd()}]`);
+import {setGlobalDispatcher, ProxyAgent} from "undici"
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -61,3 +57,14 @@ export function loadConfig(): ServerConfig {
 }
 
 export const config = loadConfig();
+
+export function isProxyEnabled(): boolean {
+  return config.proxy !== "";
+}
+
+// download cloak browser for proxy
+if (isProxyEnabled()) {
+  setGlobalDispatcher(new ProxyAgent(config.proxy));
+  console.log(`cloak browser path:[${process.env.CLOAKBROWSER_CACHE_DIR}]`);
+  console.log(`working path:[${process.cwd()}]`);
+}

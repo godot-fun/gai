@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Page } from "playwright-core";
-import { config } from "../config";
+import { isProxyEnabled } from "../config";
 import { HttpError, HttpStatus, readJsonBody, requireObject, sendOk } from "../http";
 import { browserService } from "../services/browser-service";
 import { captureScreenshot } from "../services/screenshot-service";
@@ -51,7 +51,7 @@ export class SearchApi implements ApiRoute {
       throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `count must be an integer between 1 and ${MAX_RESULT_COUNT}`);
     }
 
-    const selectedEngine = engine ?? (config.proxy === "" ? SearchEngine.Bing : SearchEngine.Google);
+    const selectedEngine = engine ?? (isProxyEnabled() ? SearchEngine.Google : SearchEngine.Bing);
     try {
       await using browserPage = await browserService.acquirePage();
       const results = selectedEngine === SearchEngine.Google
