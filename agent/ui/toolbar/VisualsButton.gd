@@ -44,24 +44,11 @@ func apply_theme() -> void:
 func update_popup_items() -> void:
 	var selected_type := AgentSetting.get_visual_type()
 	popup.clear()
-	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_none"), VisualType.Type.NONE)
-	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_jarvis"), VisualType.Type.JARVIS)
-	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_transformer"), VisualType.Type.TRANSFORMER)
-	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_reasoning_tree"), VisualType.Type.REASONING_TREE)
-	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_tool_constellation"), VisualType.Type.TOOL_CONSTELLATION)
-	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_context_memory_river"), VisualType.Type.CONTEXT_MEMORY_RIVER)
-	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_neural_aurora"), VisualType.Type.NEURAL_AURORA)
-	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_semantic_black_hole"), VisualType.Type.SEMANTIC_BLACK_HOLE)
-	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_cyber_command_deck"), VisualType.Type.CYBER_COMMAND_DECK)
-	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_quantum_circuit"), VisualType.Type.QUANTUM_CIRCUIT)
-	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_desktop_cat"), VisualType.Type.DESKTOP_CAT)
-	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_geometric_genesis"), VisualType.Type.GEOMETRIC_GENESIS)
-	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_matrix_rain"), VisualType.Type.MATRIX_RAIN)
-	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_filter_carousel"), VisualType.Type.FILTER_CAROUSEL)
-	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_ink_landscape"), VisualType.Type.INK_LANDSCAPE)
-	popup.add_radio_check_item(I18n.t("agent.toolbar.visual_tai_chi"), VisualType.Type.TAI_CHI)
-	for visual_type: VisualType.Type in VisualType.Type.values():
-		popup.set_item_checked(popup.get_item_index(visual_type), selected_type == visual_type)
+	for visual_name: String in VisualType.Type:
+		var visual_type: VisualType.Type = VisualType.Type[visual_name]
+		var translation_key := "agent.toolbar.visual_" + visual_name.to_lower()
+		popup.add_radio_check_item(I18n.t(translation_key), visual_type)
+		popup.set_item_checked(popup.item_count - 1, selected_type == visual_type)
 	pass
 
 
