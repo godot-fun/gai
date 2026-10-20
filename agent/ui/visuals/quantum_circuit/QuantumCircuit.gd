@@ -44,10 +44,6 @@ func get_visual_type() -> VisualType.Type:
 	return VisualType.Type.QUANTUM_CIRCUIT
 
 
-func fade_in_seconds() -> float:
-	return 0.3
-
-
 func fade_out_seconds() -> float:
 	return 0.38
 

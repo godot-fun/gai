@@ -9,8 +9,6 @@ extends VisualEffect
 static var complete_animation_on_agent_end: bool = false
 
 const COMPLETION_SECONDS := 1.25
-const TAI_CHI_HEXAGRAM_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiHexagramFlow.gd")
-const TAI_CHI_DIVINATION_FLOW_SCRIPT := preload("res://agent/ui/visuals/tai_chi/TaiChiDivinationFlow.gd")
 const FILL_SHADER_PATH := "res://agent/ui/visuals/tai_chi/TaiChiFill.gdshader"
 const FILL_ALPHA := 0.58
 
@@ -20,8 +18,8 @@ var tai_chi_formation_flow := TaiChiFormationFlow.new()
 var tai_chi_evolution_flow := TaiChiEvolutionFlow.new()
 var tai_chi_bagua_flow := TaiChiBaguaFlow.new()
 var tai_chi_carousel_flow := TaiChiCarouselFlow.new()
-var tai_chi_hexagram_flow := TAI_CHI_HEXAGRAM_FLOW_SCRIPT.new()
-var tai_chi_divination_flow := TAI_CHI_DIVINATION_FLOW_SCRIPT.new()
+var tai_chi_hexagram_flow := TaiChiHexagramFlow.new()
+var tai_chi_divination_flow := TaiChiDivinationFlow.new()
 var tai_chi_element_background := TaiChiElementBackground.new()
 var fill_layer: ColorRect
 var fill_material: ShaderMaterial
@@ -47,14 +45,12 @@ func fade_out_seconds() -> float:
 
 
 func reset_visual() -> void:
-	tai_chi_opening_flow.reset()
-	tai_chi_duality_flow.reset()
-	tai_chi_formation_flow.reset()
-	tai_chi_evolution_flow.reset()
-	tai_chi_bagua_flow.reset()
-	tai_chi_carousel_flow.reset()
-	tai_chi_hexagram_flow.reset()
-	tai_chi_divination_flow.reset()
+	for flow: Variant in [
+		tai_chi_opening_flow, tai_chi_duality_flow, tai_chi_formation_flow,
+		tai_chi_evolution_flow, tai_chi_bagua_flow, tai_chi_carousel_flow,
+		tai_chi_hexagram_flow, tai_chi_divination_flow,
+	]:
+		flow.reset()
 	tai_chi_element_background.reset()
 	queue_redraw()
 	pass
@@ -75,48 +71,32 @@ func on_agent_end(error_message: String) -> void:
 	pass
 
 
-func on_theme_changed() -> void:
-	queue_redraw()
-	pass
-
-
 func _process(delta: float) -> void:
 	if not visible:
 		return
 	var changed := tai_chi_opening_flow.advance(delta)
-	if tai_chi_opening_flow.line_progress() >= 1.0 and not tai_chi_duality_flow.active:
-		tai_chi_duality_flow.begin()
-		changed = true
-	changed = tai_chi_duality_flow.advance(delta) or changed
-	if tai_chi_duality_flow.progress() >= 1.0 and not tai_chi_formation_flow.active:
-		tai_chi_formation_flow.begin()
-		changed = true
-	changed = tai_chi_formation_flow.advance(delta) or changed
-	if tai_chi_formation_flow.progress() >= 1.0 and not tai_chi_evolution_flow.active:
-		tai_chi_evolution_flow.begin()
-		changed = true
-	changed = tai_chi_evolution_flow.advance(delta) or changed
-	if tai_chi_evolution_flow.progress() >= 1.0 and not tai_chi_bagua_flow.active:
-		tai_chi_bagua_flow.begin()
-		changed = true
-	changed = tai_chi_bagua_flow.advance(delta) or changed
-	if tai_chi_bagua_flow.progress() >= 1.0 and not tai_chi_carousel_flow.active:
-		tai_chi_carousel_flow.begin()
-		changed = true
-	changed = tai_chi_carousel_flow.advance(delta) or changed
+	changed = advance_flow(tai_chi_duality_flow, tai_chi_opening_flow.line_progress() >= 1.0, delta, changed)
+	changed = advance_flow(tai_chi_formation_flow, tai_chi_duality_flow.progress() >= 1.0, delta, changed)
+	changed = advance_flow(tai_chi_evolution_flow, tai_chi_formation_flow.progress() >= 1.0, delta, changed)
+	changed = advance_flow(tai_chi_bagua_flow, tai_chi_evolution_flow.progress() >= 1.0, delta, changed)
+	changed = advance_flow(tai_chi_carousel_flow, tai_chi_bagua_flow.progress() >= 1.0, delta, changed)
 	if tai_chi_carousel_flow.finished() and not tai_chi_hexagram_flow.active:
 		tai_chi_hexagram_flow.begin(tai_chi_carousel_flow.ring_rotation())
 		changed = true
 	changed = tai_chi_hexagram_flow.advance(delta) or changed
-	if tai_chi_hexagram_flow.progress() >= 1.0 and not tai_chi_divination_flow.active:
-		tai_chi_divination_flow.begin()
-		changed = true
-	changed = tai_chi_divination_flow.advance(delta) or changed
+	changed = advance_flow(tai_chi_divination_flow, tai_chi_hexagram_flow.progress() >= 1.0, delta, changed)
 	update_fill_layer()
 	tai_chi_element_background.update(size, tai_chi_carousel_flow)
 	if changed:
 		queue_redraw()
 	pass
+
+
+func advance_flow(flow: Variant, ready: bool, delta: float, changed: bool) -> bool:
+	if ready and not flow.active:
+		flow.begin()
+		changed = true
+	return flow.advance(delta) or changed
 
 
 func create_fill_layer() -> void:

@@ -354,37 +354,10 @@ func wait_step(seconds: float, generation: int) -> bool:
 
 
 func visual_label() -> String:
-	match AgentSetting.get_visual_type():
-		VisualType.Type.JARVIS:
-			return "Jarvis"
-		VisualType.Type.TRANSFORMER:
-			return "Transformer"
-		VisualType.Type.REASONING_TREE:
-			return "Reasoning Tree"
-		VisualType.Type.TOOL_CONSTELLATION:
-			return "Tool Constellation"
-		VisualType.Type.CONTEXT_MEMORY_RIVER:
-			return "Context Memory River"
-		VisualType.Type.NEURAL_AURORA:
-			return "Neural Aurora"
-		VisualType.Type.SEMANTIC_BLACK_HOLE:
-			return "Semantic Black Hole"
-		VisualType.Type.CYBER_COMMAND_DECK:
-			return "Cyber Command Deck"
-		VisualType.Type.QUANTUM_CIRCUIT:
-			return "Quantum Circuit"
-		VisualType.Type.DESKTOP_CAT:
-			return "Desktop Cat"
-		VisualType.Type.GEOMETRIC_GENESIS:
-			return "Geometric Genesis"
-		VisualType.Type.MATRIX_RAIN:
-			return "Matrix Rain"
-		VisualType.Type.FILTER_CAROUSEL:
-			return "Filter Carousel"
-		VisualType.Type.INK_LANDSCAPE:
-			return "Ink Landscape"
-		VisualType.Type.TAI_CHI:
-			return "Tai Chi"
+	var visual_type := AgentSetting.get_visual_type()
+	for spec: Dictionary in EFFECT_SPECS:
+		if spec["type"] == visual_type:
+			return str(spec["label"])
 	return "None"
 
 

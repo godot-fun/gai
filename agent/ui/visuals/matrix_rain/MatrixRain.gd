@@ -62,10 +62,6 @@ func get_visual_type() -> VisualType.Type:
 	return VisualType.Type.MATRIX_RAIN
 
 
-func fade_in_seconds() -> float:
-	return 0.3
-
-
 func fade_out_seconds() -> float:
 	return 0.5
 
@@ -174,11 +170,6 @@ func on_tool_execution_end(tool_call_id: String, _tool_name: String, result: Age
 		column.highlight = 1.0
 		column.release_pending = true
 	active_tools.erase(tool_call_id)
-	queue_redraw()
-	pass
-
-
-func on_theme_changed() -> void:
 	queue_redraw()
 	pass
 

@@ -158,9 +158,9 @@ func draw_needle(canvas: Control, center: Vector2, short_side: float) -> void:
 
 func draw_prompt(canvas: Control, center: Vector2) -> void:
 	var alpha := prompt_progress()
-	draw_centered_text(canvas, "八卦定运势，运势生大业。", center - Vector2(0.0, canvas.size.y * 0.025),
+	TaiChiGlowDrawing.draw_light_centered_text(canvas, "八卦定运势，运势生大业。", center - Vector2(0.0, canvas.size.y * 0.025),
 		clampi(int(canvas.size.y * 0.05), 34, 56), alpha * 0.88)
-	draw_centered_text(canvas,
+	TaiChiGlowDrawing.draw_light_centered_text(canvas,
 		"The eight trigrams determine good fortune and misfortune. Good fortune and misfortune create the great field of action.",
 		center + Vector2(0.0, canvas.size.y * 0.055), clampi(int(canvas.size.y * 0.016), 11, 17), alpha * 0.52)
 	pass
@@ -169,9 +169,9 @@ func draw_prompt(canvas: Control, center: Vector2) -> void:
 func draw_spinning_label(canvas: Control, center: Vector2) -> void:
 	var entry := TaiChiHexagramCatalog.entry_from_value(highlighted_value())
 	var alpha := 0.35 + 0.4 * (1.0 - spin_progress())
-	draw_centered_text(canvas, "问卦", center - Vector2(0.0, canvas.size.y * 0.025),
+	TaiChiGlowDrawing.draw_light_centered_text(canvas, "问卦", center - Vector2(0.0, canvas.size.y * 0.025),
 		clampi(int(canvas.size.y * 0.064), 42, 70), alpha)
-	draw_centered_text(canvas, "第 %d 卦 · %s" % [entry.number, entry.full_name],
+	TaiChiGlowDrawing.draw_light_centered_text(canvas, "第 %d 卦 · %s" % [entry.number, entry.full_name],
 		center + Vector2(0.0, canvas.size.y * 0.06), clampi(int(canvas.size.y * 0.02), 14, 22), alpha * 0.7)
 	pass
 
@@ -196,15 +196,15 @@ func draw_result(canvas: Control, center: Vector2) -> void:
 	var alpha := result_progress()
 	var entry := TaiChiHexagramCatalog.entry_from_value(selected_value)
 	var title_y := center.y - canvas.size.y * 0.035
-	draw_centered_text(canvas, "%s  第 %d 卦 · %s" % [entry.symbol, entry.number, entry.full_name],
+	TaiChiGlowDrawing.draw_light_centered_text(canvas, "%s  第 %d 卦 · %s" % [entry.symbol, entry.number, entry.full_name],
 		Vector2(center.x, title_y), clampi(int(canvas.size.y * 0.038), 25, 42), alpha * 0.9)
-	draw_centered_text(canvas, str(entry.theme), Vector2(center.x, title_y + canvas.size.y * 0.06),
+	TaiChiGlowDrawing.draw_light_centered_text(canvas, str(entry.theme), Vector2(center.x, title_y + canvas.size.y * 0.06),
 		clampi(int(canvas.size.y * 0.025), 18, 28), alpha * 0.82)
 	draw_wrapped_text(canvas, str(entry.interpretation), Vector2(center.x, title_y + canvas.size.y * 0.115),
 		clampi(int(canvas.size.y * 0.018), 13, 19), alpha * 0.68, canvas.size.x * 0.56)
-	draw_centered_text(canvas, "宜：%s    忌：%s" % [entry.advice, entry.avoid],
+	TaiChiGlowDrawing.draw_light_centered_text(canvas, "宜：%s    忌：%s" % [entry.advice, entry.avoid],
 		Vector2(center.x, title_y + canvas.size.y * 0.19), clampi(int(canvas.size.y * 0.017), 12, 18), alpha * 0.62)
-	draw_centered_text(canvas, "原典 · 上%s%s，下%s%s" % [entry.upper_name, entry.upper_element,
+	TaiChiGlowDrawing.draw_light_centered_text(canvas, "原典 · 上%s%s，下%s%s" % [entry.upper_name, entry.upper_element,
 		entry.lower_name, entry.lower_element], Vector2(center.x, title_y + canvas.size.y * 0.255),
 		clampi(int(canvas.size.y * 0.016), 12, 17), alpha * 0.48)
 	draw_wrapped_text(canvas, "卦辞：" + str(entry.judgment), Vector2(center.x, title_y + canvas.size.y * 0.3),
@@ -230,12 +230,5 @@ func draw_wrapped_text(canvas: Control, text: String, position: Vector2, font_si
 		lines.append(current)
 	var line_height := float(font_size) * 1.55
 	for index in lines.size():
-		draw_centered_text(canvas, lines[index], position + Vector2(0.0, float(index) * line_height), font_size, alpha)
-	pass
-
-
-func draw_centered_text(canvas: Control, text: String, position: Vector2, font_size: int, alpha: float) -> void:
-	if alpha <= 0.0:
-		return
-	TaiChiGlowDrawing.draw_centered_text(canvas, Fonts.light(), text, position, font_size, alpha)
+		TaiChiGlowDrawing.draw_light_centered_text(canvas, lines[index], position + Vector2(0.0, float(index) * line_height), font_size, alpha)
 	pass

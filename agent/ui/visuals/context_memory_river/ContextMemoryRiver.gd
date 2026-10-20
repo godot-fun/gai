@@ -212,11 +212,6 @@ func on_tool_execution_end(_tool_call_id: String, tool_name: String, result: Age
 	pass
 
 
-func on_theme_changed() -> void:
-	queue_redraw()
-	pass
-
-
 func _process(delta: float) -> void:
 	if not visible:
 		return

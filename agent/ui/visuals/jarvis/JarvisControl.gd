@@ -161,10 +161,6 @@ func on_tool_execution_end(_tool_call_id: String, _tool_name: String, _agent_too
 	pass
 
 
-func on_chat_entry_add(_entry: ChatEntry) -> void:
-	pass
-
-
 func transition_to(new_phase: OrbPhase.Phase) -> void:
 	phase = new_phase
 	if jarvis_orb != null:

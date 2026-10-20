@@ -101,4 +101,5 @@ func on_chat_entry_add(_entry: ChatEntry) -> void:
 
 
 func on_theme_changed() -> void:
+	queue_redraw()
 	pass

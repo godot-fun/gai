@@ -103,7 +103,7 @@ func draw_moving_trigram(canvas: Control, evolution: TaiChiEvolutionFlow, center
 	var moving_name_position := source_name_position.lerp(name_position, ease(local, -1.3)) + arc_offset
 	var target_font_size := TaiChiHexagramCatalog.orbit_label_font_size(canvas.size.y)
 	var font_size := int(round(lerpf(18.0, float(target_font_size), local)))
-	draw_centered_text(canvas, TaiChiHexagramCatalog.TRIGRAM_NAMES[index], moving_name_position, font_size,
+	TaiChiGlowDrawing.draw_light_centered_text(canvas, TaiChiHexagramCatalog.TRIGRAM_NAMES[index], moving_name_position, font_size,
 		lerpf(0.76, TaiChiTrigramDrawing.LABEL_BASE_ALPHA, local))
 	pass
 
@@ -140,11 +140,4 @@ func draw_frame(canvas: Control, center: Vector2, short_side: float) -> void:
 		var outer := center + Vector2.from_angle(angle) * hexagram_radius
 		var inner := center + Vector2.from_angle(angle) * (hexagram_radius - length)
 		canvas.draw_line(inner, outer, ThemeColor.alpha_theme_color(0.2 * reveal), 1.2, true)
-	pass
-
-
-func draw_centered_text(canvas: Control, text: String, position: Vector2, font_size: int, alpha: float) -> void:
-	if alpha <= 0.0:
-		return
-	TaiChiGlowDrawing.draw_centered_text(canvas, Fonts.light(), text, position, font_size, alpha)
 	pass

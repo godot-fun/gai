@@ -195,7 +195,7 @@ func draw_trigram_layers(canvas: Control, bagua: TaiChiBaguaFlow, center: Vector
 		var source_font_size := TaiChiHexagramCatalog.orbit_label_font_size(canvas.size.y)
 		var target_font_size := clampi(int(canvas.size.y * 0.026), 17, 27)
 		var font_size := int(round(lerpf(float(source_font_size), float(target_font_size), split)))
-		draw_centered_text(canvas, TaiChiHexagramCatalog.TRIGRAM_NAMES[upper_index], label_position,
+		TaiChiGlowDrawing.draw_light_centered_text(canvas, TaiChiHexagramCatalog.TRIGRAM_NAMES[upper_index], label_position,
 			font_size, final_fade * lerpf(TaiChiTrigramDrawing.LABEL_BASE_ALPHA, 0.54, split))
 	if split <= 0.0:
 		return
@@ -256,22 +256,15 @@ func draw_caption(canvas: Control, center: Vector2) -> void:
 	var panorama := panorama_progress()
 	var explanation_alpha := split * (1.0 - panorama)
 	if explanation_alpha > 0.0:
-		draw_centered_text(canvas, "八卦相荡", center - Vector2(0.0, canvas.size.y * 0.025),
+		TaiChiGlowDrawing.draw_light_centered_text(canvas, "八卦相荡", center - Vector2(0.0, canvas.size.y * 0.025),
 			clampi(int(canvas.size.y * 0.06), 38, 64), explanation_alpha * 0.82)
-		draw_centered_text(canvas, "八上卦 × 八下卦", center + Vector2(0.0, canvas.size.y * 0.055),
+		TaiChiGlowDrawing.draw_light_centered_text(canvas, "八上卦 × 八下卦", center + Vector2(0.0, canvas.size.y * 0.055),
 			clampi(int(canvas.size.y * 0.022), 15, 23), explanation_alpha * 0.55)
 	if panorama > 0.0:
-		draw_centered_text(canvas, "六十四卦", center - Vector2(0.0, canvas.size.y * 0.025),
+		TaiChiGlowDrawing.draw_light_centered_text(canvas, "六十四卦", center - Vector2(0.0, canvas.size.y * 0.025),
 			clampi(int(canvas.size.y * 0.064), 42, 70), panorama * 0.88)
-		draw_centered_text(canvas, "变动不居，周流六虚", center + Vector2(0.0, canvas.size.y * 0.058),
+		TaiChiGlowDrawing.draw_light_centered_text(canvas, "变动不居，周流六虚", center + Vector2(0.0, canvas.size.y * 0.058),
 			clampi(int(canvas.size.y * 0.023), 16, 25), panorama * 0.58)
-		draw_centered_text(canvas, "（变化之象，周流不息）", center + Vector2(0.0, canvas.size.y * 0.092),
+		TaiChiGlowDrawing.draw_light_centered_text(canvas, "（变化之象，周流不息）", center + Vector2(0.0, canvas.size.y * 0.092),
 			clampi(int(canvas.size.y * 0.016), 12, 17), panorama * 0.4)
-	pass
-
-
-func draw_centered_text(canvas: Control, text: String, position: Vector2, font_size: int, alpha: float) -> void:
-	if alpha <= 0.0:
-		return
-	TaiChiGlowDrawing.draw_centered_text(canvas, Fonts.light(), text, position, font_size, alpha)
 	pass

@@ -42,6 +42,14 @@ static func draw_centered_text(canvas: Control, font: Font, text: String, positi
 	pass
 
 
+static func draw_light_centered_text(canvas: Control, text: String, position: Vector2,
+		font_size: int, alpha: float) -> void:
+	if alpha <= 0.0:
+		return
+	draw_centered_text(canvas, Fonts.light(), text, position, font_size, alpha)
+	pass
+
+
 static func draw_line(canvas: Control, start: Vector2, finish: Vector2, line_width: float,
 		alpha: float) -> void:
 	canvas.draw_line(start, finish, ThemeColor.alpha_theme_color(alpha * LINE_FAR_GLOW_ALPHA),

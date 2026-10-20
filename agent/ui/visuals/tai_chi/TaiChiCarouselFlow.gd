@@ -169,7 +169,7 @@ func draw_trigrams(canvas: Control, bagua: TaiChiBaguaFlow, center: Vector2, orb
 		var label_position := center + Vector2.from_angle(angle) * (
 			orbit_radius + TaiChiHexagramCatalog.orbit_label_gap(canvas.size.y))
 		var label_alpha := TaiChiTrigramDrawing.LABEL_HIGHLIGHT_ALPHA if highlighted else TaiChiTrigramDrawing.LABEL_BASE_ALPHA
-		draw_centered_text(canvas, TaiChiHexagramCatalog.TRIGRAM_NAMES[index], label_position,
+		TaiChiGlowDrawing.draw_light_centered_text(canvas, TaiChiHexagramCatalog.TRIGRAM_NAMES[index], label_position,
 			TaiChiHexagramCatalog.orbit_label_font_size(canvas.size.y), label_alpha)
 	pass
 
@@ -181,17 +181,10 @@ func draw_explanation(canvas: Control, center: Vector2) -> void:
 	var index := selected_index()
 	var phase := item_phase()
 	var lift := (1.0 - ease(minf(phase / 0.25, 1.0), -1.6)) * 24.0
-	draw_centered_text(canvas, TaiChiHexagramCatalog.TRIGRAM_ELEMENTS[index], center - Vector2(0.0, 20.0 + lift), clampi(int(canvas.size.y * 0.14), 76, 142), alpha * 0.9)
-	draw_centered_text(canvas, TaiChiHexagramCatalog.trigram_statement(index), center + Vector2(0.0, canvas.size.y * 0.105), clampi(int(canvas.size.y * 0.035), 20, 36), alpha * 0.76)
-	draw_centered_text(canvas, FEATURES[index], center + Vector2(0.0, canvas.size.y * 0.155), clampi(int(canvas.size.y * 0.022), 15, 23), alpha * 0.58)
+	TaiChiGlowDrawing.draw_light_centered_text(canvas, TaiChiHexagramCatalog.TRIGRAM_ELEMENTS[index], center - Vector2(0.0, 20.0 + lift), clampi(int(canvas.size.y * 0.14), 76, 142), alpha * 0.9)
+	TaiChiGlowDrawing.draw_light_centered_text(canvas, TaiChiHexagramCatalog.trigram_statement(index), center + Vector2(0.0, canvas.size.y * 0.105), clampi(int(canvas.size.y * 0.035), 20, 36), alpha * 0.76)
+	TaiChiGlowDrawing.draw_light_centered_text(canvas, FEATURES[index], center + Vector2(0.0, canvas.size.y * 0.155), clampi(int(canvas.size.y * 0.022), 15, 23), alpha * 0.58)
 	# Keep the source sentence near the bottom of the inner circle: visually tied
 	# to the current explanation, but clear of the lower 坤 trigram and its label.
-	draw_centered_text(canvas, XIANG_QUOTES[index], center + Vector2(0.0, canvas.size.y * 0.225), clampi(int(canvas.size.y * 0.019), 14, 20), alpha * 0.52)
-	pass
-
-
-func draw_centered_text(canvas: Control, text: String, position: Vector2, font_size: int, alpha: float) -> void:
-	if alpha <= 0.0:
-		return
-	TaiChiGlowDrawing.draw_centered_text(canvas, Fonts.light(), text, position, font_size, alpha)
+	TaiChiGlowDrawing.draw_light_centered_text(canvas, XIANG_QUOTES[index], center + Vector2(0.0, canvas.size.y * 0.225), clampi(int(canvas.size.y * 0.019), 14, 20), alpha * 0.52)
 	pass

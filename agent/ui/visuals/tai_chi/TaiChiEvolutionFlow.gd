@@ -142,9 +142,9 @@ func draw_final_caption(canvas: Control, reveal: float) -> void:
 	var center := symbol_center(canvas.size)
 	var radius := symbol_radius(canvas.size)
 	var chinese_position := center + Vector2(0.0, radius + minf(38.0, canvas.size.y * 0.04))
-	draw_centered_text(canvas, "两仪生四象，四象生八卦", chinese_position,
+	TaiChiGlowDrawing.draw_light_centered_text(canvas, "两仪生四象，四象生八卦", chinese_position,
 		clampi(int(canvas.size.y * 0.024), 17, 26), reveal * 0.82)
-	draw_centered_text(canvas,
+	TaiChiGlowDrawing.draw_light_centered_text(canvas,
 		"The two primary forces generate the four images. The four images generate the eight trigrams.",
 		chinese_position + Vector2(0.0, minf(34.0, canvas.size.y * 0.035)),
 		clampi(int(canvas.size.y * 0.014), 11, 15), reveal * 0.58)
@@ -168,7 +168,7 @@ func draw_symbol_row(canvas: Control, title: String, names: Array, values: Array
 		var scale := lerpf(0.38, 1.0, ease(local, -1.8))
 		draw_flight_trail(canvas, center, local, index)
 		draw_line_symbol(canvas, center, values[index], line_count, SYMBOL_WIDTH * scale, local)
-		draw_centered_text(canvas, names[index], center + Vector2(0.0, -34.0 * scale),
+		TaiChiGlowDrawing.draw_light_centered_text(canvas, names[index], center + Vector2(0.0, -34.0 * scale),
 			maxi(10, int(round(18.0 * scale))), local * 0.76)
 	pass
 
@@ -189,7 +189,7 @@ func draw_trigram_row(canvas: Control, y: float, reveal: float) -> void:
 		var scale := lerpf(0.38, 1.0, ease(local, -1.8))
 		draw_flight_trail(canvas, center, local, index)
 		draw_line_symbol(canvas, center, TaiChiHexagramCatalog.TRIGRAM_VALUES[index], 3, SYMBOL_WIDTH * scale, local)
-		draw_centered_text(canvas, TaiChiHexagramCatalog.TRIGRAM_NAMES[index], center + Vector2(0.0, -34.0 * scale),
+		TaiChiGlowDrawing.draw_light_centered_text(canvas, TaiChiHexagramCatalog.TRIGRAM_NAMES[index], center + Vector2(0.0, -34.0 * scale),
 			maxi(10, int(round(18.0 * scale))), local * 0.76)
 	pass
 
@@ -233,7 +233,7 @@ func draw_flight_trail(canvas: Control, position: Vector2, local: float, index: 
 func draw_row_label(canvas: Control, text: String, y: float, reveal: float) -> void:
 	var font_size := clampi(int(canvas.size.y * 0.034), 20, 34)
 	var x := canvas.size.x * ROW_LABEL_X_RATIO
-	draw_centered_text(canvas, text, Vector2(x, y), font_size, reveal * 0.72)
+	TaiChiGlowDrawing.draw_light_centered_text(canvas, text, Vector2(x, y), font_size, reveal * 0.72)
 	pass
 
 
@@ -241,9 +241,4 @@ func draw_line_symbol(canvas: Control, center: Vector2, value: int, line_count: 
 	var line_gap := 7.0 if line_count == 3 else 5.0
 	TaiChiTrigramDrawing.draw_symbol(canvas, center, value, line_count, width, line_gap, 3.0,
 		reveal * TaiChiTrigramDrawing.SOURCE_ALPHA)
-	pass
-
-
-func draw_centered_text(canvas: Control, text: String, position: Vector2, font_size: int, alpha: float) -> void:
-	TaiChiGlowDrawing.draw_centered_text(canvas, Fonts.light(), text, position, font_size, alpha)
 	pass

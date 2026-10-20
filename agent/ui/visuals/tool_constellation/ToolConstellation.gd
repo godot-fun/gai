@@ -95,14 +95,6 @@ func get_visual_type() -> VisualType.Type:
 	return VisualType.Type.TOOL_CONSTELLATION
 
 
-func fade_in_seconds() -> float:
-	return 0.3
-
-
-func fade_out_seconds() -> float:
-	return 0.4
-
-
 func reset_visual() -> void:
 	nodes.clear()
 	active_calls.clear()
@@ -196,11 +188,6 @@ func on_tool_execution_start(tool_call_id: String, tool_name: String, args: Dict
 
 func on_tool_execution_end(tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
 	pending_results[tool_call_id] = result
-	pass
-
-
-func on_theme_changed() -> void:
-	queue_redraw()
 	pass
 
 
