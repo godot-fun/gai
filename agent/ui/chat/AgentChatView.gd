@@ -7,7 +7,7 @@ extends RefCounted
 var chat_scroll_node: ScrollContainer
 
 var chat_list_cache: ChatListCache = ChatListCache.new()
-var chat_bubble_refresh_buffer: ChatBubbleRefreshBuffer = ChatBubbleRefreshBuffer.new()
+var chat_bubble_flusher: ChatBubbleFlusher = ChatBubbleFlusher.new()
 var chat_scroll: ChatScroll = ChatScroll.new()
 
 
@@ -24,7 +24,7 @@ func setup(
 	p_chat_host.clip_contents = true
 	ScrollBarStyle.apply(chat_scroll_node.get_v_scroll_bar())
 	chat_list_cache.setup(p_chat_host)
-	chat_bubble_refresh_buffer.setup()
+	chat_bubble_flusher.setup()
 	chat_scroll.setup(chat_scroll_node)
 	gdf.events.theme_changed.connect(on_theme_changed)
 	gdf.events.theme_color_changed.connect(on_theme_color_changed)
@@ -64,7 +64,7 @@ func on_session_removed(session_id: int) -> void:
 func on_session_stop(session_id: int, _error_message: String) -> void:
 	if AgentSessionManager.is_active(session_id):
 		refresh_error_resume_buttons()
-	chat_bubble_refresh_buffer.flush()
+	chat_bubble_flusher.flush()
 	pass
 
 
@@ -111,7 +111,7 @@ func on_chat_entry_update(session_id: int, entry: ChatEntry, _channel: String) -
 	if bubble == null:
 		bubble = chat_list_cache.append_entry(session_id, entry)
 	if bubble != null:
-		chat_bubble_refresh_buffer.enqueue(bubble, entry)
+		chat_bubble_flusher.enqueue(bubble, entry)
 	pass
 
 

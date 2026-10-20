@@ -1,4 +1,4 @@
-class_name ChatBubbleRefreshBuffer
+class_name ChatBubbleFlusher
 extends RefCounted
 
 ## Buffers streaming bubble refreshes, deduplicates them, and applies them in batches.
