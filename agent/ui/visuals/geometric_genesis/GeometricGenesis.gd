@@ -16,9 +16,51 @@ enum SealState { CONSTRUCTING, COMPLETE }
 enum ToolState { RUNNING, SUCCESS, FAILED }
 enum GeometryKind { STAR, ROSETTE, RADIAL, NESTED, WEAVE, ELLIPSE, PARABOLA, ROSE, LISSAJOUS, SPIRAL }
 
-var seals: Array[Dictionary] = []
-var active_seal: Dictionary = {}
-var active_tools: Dictionary[String, Dictionary] = {}
+
+class ToolMotif extends RefCounted:
+	var id: String
+	var name: String
+	var state: ToolState = ToolState.RUNNING
+	var growth: float = 0.0
+	var pulse: float = 1.0
+	var slot: int
+
+	func _init(tool_call_id: String, tool_name: String, motif_slot: int) -> void:
+		id = tool_call_id
+		name = tool_name
+		slot = motif_slot
+		pass
+
+
+class GeometrySeal extends RefCounted:
+	var turn: int
+	var index: int
+	var sides: int
+	var complexity: int
+	var geometry_kind: GeometryKind
+	var rotation: float
+	var growth: float = 0.0
+	var settle: float = 0.0
+	var phase: float
+	var answer_energy: float = 0.0
+	var state: SealState = SealState.CONSTRUCTING
+	var motifs: Array[ToolMotif] = []
+
+	func _init(turn_index: int, seal_index: int) -> void:
+		turn = turn_index
+		index = seal_index
+		var sequence_index := index % SIDE_SEQUENCE.size()
+		complexity = GeometricGenesis.complexity_for_index(index)
+		sides = SIDE_SEQUENCE[sequence_index]
+		geometry_kind = GeometricGenesis.geometry_kind_for(index, complexity)
+		rotation = -PI * 0.5 + fmod(float(turn) * GOLDEN_ANGLE, TAU)
+		phase = fmod(float(turn) * 0.61803398875, 1.0)
+		pass
+
+
+var seals: Array[GeometrySeal] = []
+var active_seal: GeometrySeal
+var active_tools: Dictionary[String, ToolMotif] = {}
 var elapsed: float = 0.0
 var reasoning_energy: float = 0.0
 var completion: float = 0.0
@@ -43,7 +85,7 @@ func fade_out_seconds() -> float:
 
 func reset_visual() -> void:
 	seals.clear()
-	active_seal = {}
+	active_seal = null
 	active_tools.clear()
 	elapsed = 0.0
 	reasoning_energy = 0.0
@@ -64,7 +106,7 @@ func on_agent_start(_session_id: int) -> void:
 
 
 func on_agent_end(error_message: String) -> void:
-	if not active_seal.is_empty():
+	if active_seal != null:
 		finish_active_seal()
 	ended_with_error = StringUtils.is_not_blank(error_message)
 	completing = true
@@ -74,10 +116,10 @@ func on_agent_end(error_message: String) -> void:
 
 
 func on_turn_start() -> void:
-	if not active_seal.is_empty():
+	if active_seal != null:
 		finish_active_seal()
 	if seals.size() >= MAX_SEALS:
-		active_seal = {}
+		active_seal = null
 		return
 	turn_serial += 1
 	active_seal = make_seal(turn_serial, seals.size())
@@ -94,30 +136,23 @@ func on_turn_end() -> void:
 
 func on_message_update(chunk: String, stream_kind: String) -> void:
 	ensure_seal()
-	if chunk.is_empty() or active_seal.is_empty():
+	if chunk.is_empty() or active_seal == null:
 		return
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
 		reasoning_energy = minf(1.0, reasoning_energy + float(chunk.length()) / 180.0)
-		active_seal["phase"] = fmod(float(active_seal["phase"]) + float(chunk.length()) * 0.004, 1.0)
+		active_seal.phase = fmod(active_seal.phase + float(chunk.length()) * 0.004, 1.0)
 	else:
-		active_seal["answer_energy"] = minf(1.0, float(active_seal["answer_energy"]) + 0.08)
+		active_seal.answer_energy = minf(1.0, active_seal.answer_energy + 0.08)
 	queue_redraw()
 	pass
 
 
 func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	ensure_seal()
-	if active_seal.is_empty():
+	if active_seal == null:
 		return
-	var motif := {
-		"id": tool_call_id,
-		"name": tool_name,
-		"state": ToolState.RUNNING,
-		"growth": 0.0,
-		"pulse": 1.0,
-		"slot": (active_seal["motifs"] as Array).size(),
-	}
-	(active_seal["motifs"] as Array).append(motif)
+	var motif := ToolMotif.new(tool_call_id, tool_name, active_seal.motifs.size())
+	active_seal.motifs.append(motif)
 	active_tools[tool_call_id] = motif
 	reasoning_energy = 1.0
 	queue_redraw()
@@ -127,9 +162,9 @@ func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dic
 func on_tool_execution_end(tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
 	if not active_tools.has(tool_call_id):
 		return
-	var motif: Dictionary = active_tools[tool_call_id]
-	motif["state"] = ToolState.FAILED if result.is_error else ToolState.SUCCESS
-	motif["pulse"] = 1.0
+	var motif := active_tools[tool_call_id]
+	motif.state = ToolState.FAILED if result.is_error else ToolState.SUCCESS
+	motif.pulse = 1.0
 	active_tools.erase(tool_call_id)
 	queue_redraw()
 	pass
@@ -147,19 +182,19 @@ func _process(delta: float) -> void:
 	coordinate_reveal = minf(1.0, coordinate_reveal + delta / COORDINATE_REVEAL_SECONDS)
 	reasoning_energy = move_toward(reasoning_energy, 0.12, delta * 0.55)
 	var changed := completing
-	for seal: Dictionary in seals:
-		var old_growth: float = seal["growth"]
+	for seal: GeometrySeal in seals:
+		var old_growth := seal.growth
 		if coordinate_reveal >= 0.52:
-			seal["growth"] = move_toward(old_growth, 1.0, delta * DRAW_SPEED)
-		var old_settle: float = seal["settle"]
-		var settle_target := 1.0 if int(seal["state"]) == SealState.COMPLETE else 0.0
-		seal["settle"] = move_toward(old_settle, settle_target, delta * SETTLE_SPEED)
-		changed = changed or old_growth != float(seal["growth"]) or old_settle != float(seal["settle"])
-		for motif: Dictionary in seal["motifs"]:
-			var old_motif_growth: float = motif["growth"]
-			motif["growth"] = move_toward(old_motif_growth, 1.0, delta * 2.1)
-			motif["pulse"] = move_toward(float(motif["pulse"]), 0.0, delta * 1.6)
-			changed = changed or old_motif_growth != float(motif["growth"])
+			seal.growth = move_toward(old_growth, 1.0, delta * DRAW_SPEED)
+		var old_settle := seal.settle
+		var settle_target := 1.0 if seal.state == SealState.COMPLETE else 0.0
+		seal.settle = move_toward(old_settle, settle_target, delta * SETTLE_SPEED)
+		changed = changed or old_growth != seal.growth or old_settle != seal.settle
+		for motif: ToolMotif in seal.motifs:
+			var old_motif_growth := motif.growth
+			motif.growth = move_toward(old_motif_growth, 1.0, delta * 2.1)
+			motif.pulse = move_toward(motif.pulse, 0.0, delta * 1.6)
+			changed = changed or old_motif_growth != motif.growth
 	if completing:
 		completion = minf(1.0, completion + delta / COMPLETION_SECONDS)
 	if changed or reasoning_energy > 0.13 or coordinate_reveal < 1.0:
@@ -202,8 +237,8 @@ func prepare_formula_layout(origin: Vector2) -> void:
 		var stable_rect := clamp_formula_rect(formula_layout[key])
 		formula_layout[key] = stable_rect
 		occupied.append(stable_rect)
-	for seal: Dictionary in seals:
-		var index: int = seal["index"]
+	for seal: GeometrySeal in seals:
+		var index := seal.index
 		if formula_layout.has(index):
 			continue
 		var position := seal_position(index, origin)
@@ -307,7 +342,7 @@ func draw_coordinate_projection(index: int, position: Vector2, origin: Vector2) 
 	if index == 0:
 		return
 	var accent := ThemeColor.accent_theme_color()
-	var is_active := not active_seal.is_empty() and int(active_seal["index"]) == index
+	var is_active := active_seal != null and active_seal.index == index
 	var alpha := 0.16 if is_active else 0.045
 	var x_projection := Vector2(position.x, origin.y)
 	var y_projection := Vector2(origin.x, position.y)
@@ -344,23 +379,23 @@ func draw_origin(center: Vector2) -> void:
 	pass
 
 
-func draw_seal(seal: Dictionary, center: Vector2, radius: float) -> void:
-	var growth: float = seal["growth"]
-	var settle: float = seal["settle"]
-	var sides: int = seal["sides"]
-	var rotation: float = seal["rotation"]
+func draw_seal(seal: GeometrySeal, center: Vector2, radius: float) -> void:
+	var growth := seal.growth
+	var settle := seal.settle
+	var sides := seal.sides
+	var rotation := seal.rotation
 	var accent := ThemeColor.accent_theme_color()
-	var answer_energy: float = seal["answer_energy"]
+	var answer_energy := seal.answer_energy
 	var guide_alpha := (1.0 - settle * 0.82) * (0.12 + reasoning_energy * 0.12)
 	var guide_progress := clampf(growth * 1.35, 0.0, 1.0)
 	draw_arc(center, radius * 1.14, rotation, rotation + TAU * guide_progress, 48, Color(accent, guide_alpha), 1.0, true)
 	if growth < 0.12:
 		draw_circle(center, 2.5 + growth * 16.0, Color(accent, 0.7))
 		return
-	var geometry_kind: int = seal["geometry_kind"]
+	var geometry_kind := seal.geometry_kind
 	if geometry_kind >= GeometryKind.ELLIPSE:
 		draw_analytic_geometry(seal, center, radius, smoothstep(0.12, 1.0, growth))
-		for motif: Dictionary in seal["motifs"]:
+		for motif: ToolMotif in seal.motifs:
 			draw_tool_motif(motif, center, radius, sides, rotation)
 		return
 	var points := polygon_points(center, radius, sides, rotation)
@@ -375,7 +410,7 @@ func draw_seal(seal: Dictionary, center: Vector2, radius: float) -> void:
 		var reveal := clampf(outline_growth * float(sides) - float(vertex_index), 0.0, 1.0)
 		if reveal > 0.0:
 			draw_circle(points[vertex_index], 1.35 + reveal * 0.9, Color(accent, 0.58 * reveal))
-	var complexity: int = seal["complexity"]
+	var complexity := seal.complexity
 	if complexity > 0 and growth > 0.58:
 		draw_inner_geometry(seal, center, radius, points, smoothstep(0.58, 1.0, growth))
 	elif complexity == 0 and growth > 0.72:
@@ -384,15 +419,15 @@ func draw_seal(seal: Dictionary, center: Vector2, radius: float) -> void:
 	if settle > 0.0:
 		var fill := PackedColorArray([Color(accent, (0.012 + answer_energy * 0.018) * settle)])
 		draw_polygon(points, fill)
-	for motif: Dictionary in seal["motifs"]:
+	for motif: ToolMotif in seal.motifs:
 		draw_tool_motif(motif, center, radius, sides, rotation)
 	pass
 
 
-func draw_analytic_geometry(seal: Dictionary, center: Vector2, radius: float, growth: float) -> void:
-	var kind: int = seal["geometry_kind"]
-	var rotation: float = seal["rotation"]
-	var variant: int = seal["index"]
+func draw_analytic_geometry(seal: GeometrySeal, center: Vector2, radius: float, growth: float) -> void:
+	var kind := seal.geometry_kind
+	var rotation := seal.rotation
+	var variant := seal.index
 	var points := analytic_curve_points(kind, center, radius, rotation, growth, variant)
 	if points.size() < 2:
 		return
@@ -401,7 +436,7 @@ func draw_analytic_geometry(seal: Dictionary, center: Vector2, radius: float, gr
 	draw_polyline(points, Color(accent, 0.74), 1.2, true)
 	var head := points[points.size() - 1]
 	draw_circle(head, 2.2, Color(accent, 0.76))
-	var settle: float = seal["settle"]
+	var settle := seal.settle
 	var construction_alpha := 0.18 * (1.0 - settle * 0.72)
 	match kind:
 		GeometryKind.ELLIPSE:
@@ -461,16 +496,16 @@ static func analytic_curve_points(kind: int, center: Vector2, radius: float, rot
 	return points
 
 
-func draw_construction_formula(seal: Dictionary, center: Vector2, radius: float) -> void:
-	var growth: float = seal["growth"]
+func draw_construction_formula(seal: GeometrySeal, center: Vector2, radius: float) -> void:
+	var growth := seal.growth
 	if growth <= 0.0:
 		return
-	var settle: float = seal["settle"]
+	var settle := seal.settle
 	# Completed formulas remain as quiet proof annotations instead of disappearing.
 	var fade := lerpf(1.0, 0.38, smoothstep(0.05, 0.72, settle))
-	var index: int = seal["index"]
-	var sides: int = seal["sides"]
-	var shape_formula := geometry_formula(int(seal["geometry_kind"]), sides)
+	var index := seal.index
+	var sides := seal.sides
+	var shape_formula := geometry_formula(seal.geometry_kind, sides)
 	var shape_reveal := clampf(growth / 0.82, 0.0, 1.0)
 	var shape_text := reveal_formula(shape_formula, shape_reveal)
 	var formula_width := 330.0
@@ -523,8 +558,8 @@ static func geometry_formula(kind: int, sides: int) -> String:
 	return "v_k = P_n + r (cos(2πk / m), sin(2πk / m))"
 
 
-func draw_inner_geometry(seal: Dictionary, center: Vector2, radius: float, points: PackedVector2Array, growth: float) -> void:
-	match int(seal["geometry_kind"]):
+func draw_inner_geometry(seal: GeometrySeal, center: Vector2, radius: float, points: PackedVector2Array, growth: float) -> void:
+	match seal.geometry_kind:
 		GeometryKind.STAR:
 			draw_star_geometry(seal, center, radius, points, growth)
 		GeometryKind.ROSETTE:
@@ -535,15 +570,15 @@ func draw_inner_geometry(seal: Dictionary, center: Vector2, radius: float, point
 			draw_nested_geometry(seal, center, radius, growth)
 		GeometryKind.WEAVE:
 			draw_weave_geometry(center, points, growth)
-	var complexity: int = seal["complexity"]
+	var complexity := seal.complexity
 	var accent := ThemeColor.accent_theme_color()
 	if complexity >= 3:
 		var secondary_growth := smoothstep(0.28, 1.0, growth)
-		draw_arc(center, radius * 0.34, float(seal["rotation"]), float(seal["rotation"]) + TAU * secondary_growth, 32, Color(accent, 0.24), 1.0, true)
+		draw_arc(center, radius * 0.34, seal.rotation, seal.rotation + TAU * secondary_growth, 32, Color(accent, 0.24), 1.0, true)
 	if complexity >= 4:
 		# Mature seals combine two construction grammars instead of merely adding more sides.
 		draw_radial_geometry(center, radius * 0.72, points, smoothstep(0.42, 1.0, growth))
-		var core := polygon_points(center, radius * 0.26, maxi(3, int(seal["sides"]) - 2), -float(seal["rotation"]) * 0.5)
+		var core := polygon_points(center, radius * 0.26, maxi(3, seal.sides - 2), -seal.rotation * 0.5)
 		core.append(core[0])
 		var visible_core := partial_polyline(core, smoothstep(0.55, 1.0, growth))
 		if visible_core.size() >= 2:
@@ -551,9 +586,9 @@ func draw_inner_geometry(seal: Dictionary, center: Vector2, radius: float, point
 	pass
 
 
-func draw_star_geometry(seal: Dictionary, center: Vector2, radius: float, points: PackedVector2Array, growth: float) -> void:
+func draw_star_geometry(seal: GeometrySeal, center: Vector2, radius: float, points: PackedVector2Array, growth: float) -> void:
 	var accent := ThemeColor.accent_theme_color()
-	var sides: int = seal["sides"]
+	var sides := seal.sides
 	var step := 2 if sides % 2 == 1 else maxi(2, sides / 2 - 1)
 	var star := PackedVector2Array()
 	var cursor := 0
@@ -567,7 +602,7 @@ func draw_star_geometry(seal: Dictionary, center: Vector2, radius: float, points
 	if visible_star.size() >= 2:
 		draw_polyline(visible_star, Color(accent, 0.035), 6.0, true)
 		draw_polyline(visible_star, Color(accent, 0.32), 1.0, true)
-	var inner_radius := radius * (0.24 + 0.07 * sin(float(seal["phase"]) * TAU))
+	var inner_radius := radius * (0.24 + 0.07 * sin(seal.phase * TAU))
 	draw_arc(center, inner_radius, 0.0, TAU * growth, 32, Color(accent, 0.34), 1.2, true)
 	pass
 
@@ -599,10 +634,10 @@ func draw_radial_geometry(center: Vector2, radius: float, points: PackedVector2A
 	pass
 
 
-func draw_nested_geometry(seal: Dictionary, center: Vector2, radius: float, growth: float) -> void:
+func draw_nested_geometry(seal: GeometrySeal, center: Vector2, radius: float, growth: float) -> void:
 	var accent := ThemeColor.accent_theme_color()
-	var sides: int = seal["sides"]
-	var rotation: float = seal["rotation"]
+	var sides := seal.sides
+	var rotation := seal.rotation
 	for layer in range(3):
 		var reveal := clampf(growth * 3.0 - float(layer), 0.0, 1.0)
 		if reveal <= 0.0:
@@ -633,12 +668,12 @@ func draw_weave_geometry(center: Vector2, points: PackedVector2Array, growth: fl
 	pass
 
 
-func draw_tool_motif(motif: Dictionary, center: Vector2, radius: float, sides: int, rotation: float) -> void:
-	var slot: int = motif["slot"]
+func draw_tool_motif(motif: ToolMotif, center: Vector2, radius: float, sides: int, rotation: float) -> void:
+	var slot := motif.slot
 	var angle := rotation + float(slot) * GOLDEN_ANGLE
 	var edge := center + Vector2.from_angle(angle) * radius * 0.78
-	var growth: float = motif["growth"]
-	var state: int = motif["state"]
+	var growth := motif.growth
+	var state := motif.state
 	var color := ThemeColor.accent_theme_color() if state != ToolState.FAILED else Colors.error
 	var from := center.lerp(edge, growth)
 	if state == ToolState.FAILED:
@@ -651,7 +686,7 @@ func draw_tool_motif(motif: Dictionary, center: Vector2, radius: float, sides: i
 		return
 	draw_line(center, from, Color(color, 0.30 if state == ToolState.SUCCESS else 0.52), 1.2, true)
 	if growth > 0.82:
-		var pulse: float = motif["pulse"]
+		var pulse := motif.pulse
 		draw_circle(edge, 2.6 + pulse * 5.0, Color(color, 0.72 - pulse * 0.25))
 		if state == ToolState.SUCCESS:
 			var next_angle := rotation + float((slot + 2) % sides) * TAU / float(sides)
@@ -676,20 +711,20 @@ func draw_completion_wave(center: Vector2) -> void:
 
 
 func finish_active_seal() -> void:
-	if active_seal.is_empty():
+	if active_seal == null:
 		return
-	active_seal["state"] = SealState.COMPLETE
-	for motif: Dictionary in active_seal["motifs"]:
-		if int(motif["state"]) == ToolState.RUNNING:
-			motif["state"] = ToolState.SUCCESS
-	active_seal = {}
+	active_seal.state = SealState.COMPLETE
+	for motif: ToolMotif in active_seal.motifs:
+		if motif.state == ToolState.RUNNING:
+			motif.state = ToolState.SUCCESS
+	active_seal = null
 	active_tools.clear()
 	queue_redraw()
 	pass
 
 
 func ensure_seal() -> void:
-	if active_seal.is_empty() and seals.size() < MAX_SEALS:
+	if active_seal == null and seals.size() < MAX_SEALS:
 		on_turn_start()
 	pass
 
@@ -715,24 +750,8 @@ func coordinate_spacing() -> float:
 	return clampf(minf(size.x, size.y) * 0.072, 44.0, 76.0)
 
 
-static func make_seal(turn: int, index: int) -> Dictionary:
-	var sequence_index := index % SIDE_SEQUENCE.size()
-	var complexity := complexity_for_index(index)
-	var geometry_kind := geometry_kind_for(index, complexity)
-	return {
-		"turn": turn,
-		"index": index,
-		"sides": SIDE_SEQUENCE[sequence_index],
-		"complexity": complexity,
-		"geometry_kind": geometry_kind,
-		"rotation": -PI * 0.5 + fmod(float(turn) * GOLDEN_ANGLE, TAU),
-		"growth": 0.0,
-		"settle": 0.0,
-		"phase": fmod(float(turn) * 0.61803398875, 1.0),
-		"answer_energy": 0.0,
-		"state": SealState.CONSTRUCTING,
-		"motifs": [],
-	}
+static func make_seal(turn: int, index: int) -> GeometrySeal:
+	return GeometrySeal.new(turn, index)
 
 
 static func complexity_for_index(index: int) -> int:

@@ -16,9 +16,9 @@ func turns_create_persistent_seals_test() -> void:
 	var effect := GeometricGenesis.new()
 	effect.on_turn_start()
 	assert(effect.seals.size() == 1)
-	assert(int(effect.seals[0]["state"]) == GeometricGenesis.SealState.CONSTRUCTING)
+	assert(effect.seals[0].state == GeometricGenesis.SealState.CONSTRUCTING)
 	effect.on_turn_end()
-	assert(int(effect.seals[0]["state"]) == GeometricGenesis.SealState.COMPLETE)
+	assert(effect.seals[0].state == GeometricGenesis.SealState.COMPLETE)
 	effect.on_turn_start()
 	assert(effect.seals.size() == 2)
 	effect.free()
@@ -32,10 +32,10 @@ func tool_results_become_geometry_test() -> void:
 	effect.on_tool_execution_end("ok", "read_file", AgentToolResult.ok("done"))
 	effect.on_tool_execution_start("bad", "write_file", {})
 	effect.on_tool_execution_end("bad", "write_file", AgentToolResult.error("failed"))
-	var motifs: Array = effect.seals[0]["motifs"]
+	var motifs := effect.seals[0].motifs
 	assert(motifs.size() == 2)
-	assert(int(motifs[0]["state"]) == GeometricGenesis.ToolState.SUCCESS)
-	assert(int(motifs[1]["state"]) == GeometricGenesis.ToolState.FAILED)
+	assert(motifs[0].state == GeometricGenesis.ToolState.SUCCESS)
+	assert(motifs[1].state == GeometricGenesis.ToolState.FAILED)
 	effect.free()
 	pass
 
@@ -56,14 +56,14 @@ func seals_grow_from_simple_to_varied_geometry_test() -> void:
 	var previous_complexity := 0
 	for index in range(GeometricGenesis.MAX_SEALS):
 		var seal := GeometricGenesis.make_seal(index + 1, index)
-		sides[int(seal["sides"])] = true
-		kinds[int(seal["geometry_kind"])] = true
-		var complexity: int = seal["complexity"]
+		sides[seal.sides] = true
+		kinds[seal.geometry_kind] = true
+		var complexity := seal.complexity
 		assert(complexity >= previous_complexity)
 		previous_complexity = complexity
 		if index < 3:
 			assert(complexity == 0)
-			assert(int(seal["sides"]) <= 5)
+			assert(seal.sides <= 5)
 	assert(previous_complexity == 4)
 	assert(sides.size() == 7)
 	assert(kinds.size() == GeometricGenesis.GeometryKind.size())
@@ -82,9 +82,9 @@ func coordinate_plane_reveals_before_geometry_test() -> void:
 	effect.on_turn_start()
 	effect._process(GeometricGenesis.COORDINATE_REVEAL_SECONDS * 0.4)
 	assert(effect.coordinate_reveal > 0.0)
-	assert(float(effect.seals[0]["growth"]) == 0.0)
+	assert(effect.seals[0].growth == 0.0)
 	effect._process(GeometricGenesis.COORDINATE_REVEAL_SECONDS * 0.2)
-	assert(float(effect.seals[0]["growth"]) > 0.0)
+	assert(effect.seals[0].growth > 0.0)
 	effect.free()
 	pass
 
