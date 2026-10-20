@@ -139,7 +139,7 @@ func on_markdown_changed(_enabled: bool) -> void:
 		if bubble == null:
 			continue
 		bubble.refresh(entry)
-	chat_list_cache.clear_inactive()
+	chat_list_cache.clear_inactive(AgentSessionManager.active_session_id)
 	pass
 
 
@@ -210,7 +210,7 @@ func invalidate_session(session_id: int) -> void:
 
 
 func refresh_error_resume_buttons() -> void:
-	var active_chat_list: VBoxContainer = chat_list_cache.get_active_list()
+	var active_chat_list := chat_list_cache.get_list(AgentSessionManager.active_session_id)
 	if active_chat_list == null:
 		return
 	ErrorBubble.refresh_resume_buttons(active_chat_list, RuntimeManager.is_running(AgentSessionManager.active_session_id))

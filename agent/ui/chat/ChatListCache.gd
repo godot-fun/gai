@@ -8,7 +8,6 @@ const MAX_SIZE: int = 18
 
 var host: Control
 var lists: LruCacheInt = LruCacheInt.new(MAX_SIZE)
-var active_session_id: int = 0
 
 
 func setup(p_host: Control) -> void:
@@ -35,12 +34,11 @@ func get_or_create(session_id: int) -> VBoxContainer:
 	var evicted_entry := lists.put_if_absent(session_id, list)
 	if evicted_entry != null:
 		var evicted_list := evicted_entry.value as VBoxContainer
-		dispose_list(evicted_entry.key, evicted_list)
+		dispose_list(evicted_list)
 	return list
 
 
 func show_only(session_id: int) -> void:
-	active_session_id = session_id
 	for id: int in lists.cache_map:
 		var list := lists.cache_map[id] as VBoxContainer
 		list.visible = id == session_id
@@ -50,22 +48,20 @@ func show_only(session_id: int) -> void:
 func remove(session_id: int) -> void:
 	var list := lists.remove(session_id) as VBoxContainer
 	if list != null:
-		dispose_list(session_id, list)
+		dispose_list(list)
 	pass
 
 
-func dispose_list(session_id: int, list: VBoxContainer) -> void:
-	if active_session_id == session_id:
-		active_session_id = 0
+func dispose_list(list: VBoxContainer) -> void:
 	AgentEvents.events.chat_list_removed.emit(list)
 	list.queue_free()
 	pass
 
 
-func clear_inactive() -> void:
+func clear_inactive(selected_session_id: int) -> void:
 	var drop_ids: Array[int] = []
 	for session_id: int in lists.cache_map:
-		if session_id != active_session_id:
+		if session_id != selected_session_id:
 			drop_ids.append(session_id)
 	for session_id: int in drop_ids:
 		remove(session_id)
@@ -78,10 +74,6 @@ func clear_all() -> void:
 	for session_id: int in drop_ids:
 		remove(session_id)
 	pass
-
-
-func get_active_list() -> VBoxContainer:
-	return get_list(active_session_id)
 
 
 func append_entry(session_id: int, entry: ChatEntry) -> BubbleContainer:
