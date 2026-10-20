@@ -49,7 +49,11 @@ static func refresh(rich_text: RichTextLabel, entry: ChatEntry) -> void:
 static func create_body_label() -> RichTextLabel:
 	var label := RichTextLabel.new()
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label.fit_content = true
+	# Let the HBox constrain long URLs to the chat bubble instead of using their
+	# full width as this control's minimum size. The complete URL stays available
+	# through the tooltip and remains clickable.
+	label.fit_content = false
+	label.clip_contents = true
 	label.scroll_active = false
 	label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	label.add_theme_color_override("default_color", Colors.secondary_text)
