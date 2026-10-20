@@ -3,10 +3,6 @@ extends RefCounted
 
 ## Owns transcript scrolling, per-session positions, search reveals, and bottom following.
 
-## Keeps a little context above an entry opened from search.
-const SEARCH_ENTRY_TOP_MARGIN: float = 20.0
-
-
 var chat_scroll: ScrollContainer
 var active_chat_list: VBoxContainer
 var scroll_position_caches: Dictionary[int, float] = {}
@@ -114,11 +110,11 @@ func reveal_entry(entry_index: int) -> void:
 	var vbar := chat_scroll.get_v_scroll_bar()
 	if entry_control == null or vbar == null:
 		return
-# The bar value is expressed in ChatList content coordinates. The list starts after
-# ChatList's top inset, and each entry position is local to the list.
+# The bar value is expressed in ChatListsContainer content coordinates. The list starts after
+# ChatListsContainer's top inset, and each entry position is local to the list.
 	var entry_y := active_chat_list.position.y + entry_control.position.y
 	var max_scroll := maxf(vbar.min_value, vbar.max_value - vbar.page)
-	vbar.value = clampf(entry_y - SEARCH_ENTRY_TOP_MARGIN, vbar.min_value, max_scroll)
+	vbar.value = clampf(entry_y - Margin.ma_5, vbar.min_value, max_scroll)
 	pass
 
 
@@ -202,7 +198,7 @@ func queue_scroll_to_bottom() -> void:
 	pass
 
 
-## The list lives inside ChatList, so the last bubble counts as "visible" while the
+## The list lives inside ChatListsContainer, so the last bubble counts as "visible" while the
 ## bar still owes the bottom margin — ensure_control_visible() stops one margin short.
 ## Drive the bar to its own bottom edge so the transcript ends flush with the view.
 func flush_scroll_to_bottom() -> void:
