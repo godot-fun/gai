@@ -75,8 +75,10 @@ static func create_file_detail_label(text: String, color: Color) -> Label:
 static func create_file_path_button(file_path: String) -> LinkButton:
 	var button: LinkButton = LinkButton.new()
 	button.text = file_path
-	button.tooltip_text = "Open file"
+	button.tooltip_text = file_path
 	button.underline = LinkButton.UNDERLINE_MODE_NEVER
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, Colors.primary_text)
 	button.add_theme_font_override("font", Fonts.regular())
 	button.add_theme_font_size_override("font_size", Typography.label_medium_size)

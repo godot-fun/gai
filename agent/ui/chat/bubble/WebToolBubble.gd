@@ -3,7 +3,6 @@ extends Object
 
 ## Web-tool call bubble showing the query, URL, or primary argument sent to the tool.
 
-
 static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: StyleBoxFlat) -> RichTextLabel:
 	var wrapper: PanelContainer = PanelContainer.new()
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -15,6 +14,7 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 
 	var header: HBoxContainer = HBoxContainer.new()
 	header.add_theme_constant_override("separation", Margin.ma_2)
+	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var title_label: Label = Label.new()
 	title_label.text = entry.title
@@ -22,25 +22,26 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	header.add_child(title_label)
 
-	var rich_text := create_body_label()
-	header.add_child(rich_text)
+	var body := entry.body.strip_edges()
+	var rich_text: RichTextLabel = null
+	if HttpUtils.is_valid_http_url(body):
+		header.add_child(create_url_button(body))
+	else:
+		rich_text = create_body_label()
+		header.add_child(rich_text)
 	vbox.add_child(header)
 
 	wrapper.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
 	chat_list.add_child(wrapper)
-	refresh(rich_text, entry)
+	if rich_text != null:
+		refresh(rich_text, entry)
 	return rich_text
 
 
 static func refresh(rich_text: RichTextLabel, entry: ChatEntry) -> void:
 	var body := entry.body.strip_edges()
 	rich_text.clear()
-	if HttpUtils.is_valid_http_url(body):
-		rich_text.push_meta(body)
-		rich_text.add_text(body)
-		rich_text.pop()
-	else:
-		rich_text.add_text(body)
+	rich_text.add_text(body)
 	rich_text.tooltip_text = body
 	rich_text.visible = StringUtils.is_not_blank(body)
 	pass
@@ -49,9 +50,8 @@ static func refresh(rich_text: RichTextLabel, entry: ChatEntry) -> void:
 static func create_body_label() -> RichTextLabel:
 	var label := RichTextLabel.new()
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	# Let the HBox constrain long URLs to the chat bubble instead of using their
-	# full width as this control's minimum size. The complete URL stays available
-	# through the tooltip and remains clickable.
+	# Let the HBox constrain long text to the chat bubble instead of using its
+	# full width as this control's minimum size.
 	label.fit_content = false
 	label.clip_contents = true
 	label.scroll_active = false
@@ -60,17 +60,27 @@ static func create_body_label() -> RichTextLabel:
 	label.add_theme_color_override("font_outline_color", Color.TRANSPARENT)
 	label.add_theme_font_override("normal_font", Fonts.regular())
 	label.add_theme_font_size_override("normal_font_size", Typography.label_medium_size)
-	label.meta_clicked.connect(MarkdownHelper.handle_meta_clicked)
-	label.meta_hover_started.connect(handle_url_hover_started.bind(label))
-	label.meta_hover_ended.connect(handle_url_hover_ended.bind(label))
 	return label
 
 
-static func handle_url_hover_started(_meta: Variant, label: RichTextLabel) -> void:
-	label.add_theme_color_override("default_color", Colors.primary_text)
-	pass
+static func create_url_button(url: String) -> LinkButton:
+	var button := LinkButton.new()
+	button.text = url
+	button.tooltip_text = url
+	button.underline = LinkButton.UNDERLINE_MODE_NEVER
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, Colors.primary_text)
+	button.add_theme_font_override("font", Fonts.regular())
+	button.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	button.pressed.connect(func() -> void: open_url(button.text))
+	return button
 
 
-static func handle_url_hover_ended(_meta: Variant, label: RichTextLabel) -> void:
-	label.add_theme_color_override("default_color", Colors.secondary_text)
+static func open_url(url: String) -> void:
+	if not HttpUtils.is_valid_http_url(url):
+		return
+	var error := OS.shell_open(url)
+	if error != OK:
+		Log.error("open link failed url:[{}] err:[{}]", url, error)
 	pass
