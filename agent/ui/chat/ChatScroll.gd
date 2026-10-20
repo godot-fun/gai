@@ -26,7 +26,6 @@ func setup(p_chat_scroll: ScrollContainer) -> void:
 	chat_scroll.get_v_scroll_bar().scrolling.connect(on_chat_scroll_bar_scrolling)
 	chat_scroll.get_window().window_input.connect(on_chat_window_input)
 	AgentEvents.events.chat_bubble_flushed.connect(on_chat_bubble_flushed)
-	AgentEvents.events.chat_list_removed.connect(on_chat_list_removed)
 	AgentEvents.events.chat_search_result_selected.connect(on_chat_search_result_selected)
 	middle_scroll_controller = MiddleScrollController.new()
 	chat_scroll.get_parent().add_child(middle_scroll_controller)
@@ -41,11 +40,6 @@ func on_chat_bubble_flushed() -> void:
 	pass
 
 
-func on_chat_list_removed(list: VBoxContainer) -> void:
-	clear_active_chat_list(list)
-	pass
-
-
 func on_chat_search_result_selected(session_id: int, entry_index: int) -> void:
 	reveal_search_result(session_id, entry_index)
 	pass
@@ -54,12 +48,6 @@ func on_chat_search_result_selected(session_id: int, entry_index: int) -> void:
 func set_active_chat_list(chat_list: VBoxContainer) -> void:
 	middle_scroll_controller.cancel()
 	active_chat_list = chat_list
-	pass
-
-
-func clear_active_chat_list(chat_list: VBoxContainer) -> void:
-	if active_chat_list == chat_list:
-		active_chat_list = null
 	pass
 
 

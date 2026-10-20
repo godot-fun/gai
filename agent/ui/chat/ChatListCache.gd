@@ -49,7 +49,6 @@ func remove(session_id: int) -> void:
 
 
 func dispose_list(list: VBoxContainer) -> void:
-	AgentEvents.events.chat_list_removed.emit(list)
 	list.queue_free()
 	pass
 
