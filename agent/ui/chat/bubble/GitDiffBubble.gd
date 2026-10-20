@@ -34,7 +34,7 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 	revert_button.text = I18n.t("git.revert")
 	revert_button.disabled = StringUtils.is_blank(checkpoint)
 	revert_button.pressed.connect(on_revert_pressed.bind(session_id, entry))
-	AgentBubble.style_header_button(revert_button, Colors.surface, I18n.t("git.restore_workspace"), 58.0)
+	style_header_button(revert_button, Colors.surface, I18n.t("git.restore_workspace"), 58.0)
 	header.add_child(revert_button)
 
 	var diff_button := Button.new()
@@ -43,7 +43,7 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 	var patch_path: String = entry.details.get(ChatEntry.DETAIL_GIT_DIFF_PATCH, "")
 	diff_button.disabled = StringUtils.is_blank(patch_path)
 	diff_button.pressed.connect(on_diff_pressed.bind(patch_path))
-	AgentBubble.style_header_button(diff_button, Colors.surface, I18n.t("git.open_side_by_side"), 52.0)
+	style_header_button(diff_button, Colors.surface, I18n.t("git.open_side_by_side"), 52.0)
 	header.add_child(diff_button)
 
 	rich_text = MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)

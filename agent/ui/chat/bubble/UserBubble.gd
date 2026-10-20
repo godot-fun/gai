@@ -56,14 +56,14 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 		var revert_button: Button = Button.new()
 		revert_button.name = "RevertButton"
 		revert_button.text = I18n.t("git.revert")
-		AgentBubble.style_header_button(revert_button, ThemeColor.card_surface, I18n.t("git.revert_user_message"), 58.0)
+		style_header_button(revert_button, ThemeColor.card_surface, I18n.t("git.revert_user_message"), 58.0)
 		revert_button.pressed.connect(on_revert_pressed.bind(session_id, entry))
 		header.add_child(revert_button)
 
 	var delete_from_here_button: Button = Button.new()
 	delete_from_here_button.name = "DeleteFromHereButton"
 	delete_from_here_button.text = "Delete"
-	AgentBubble.style_header_button(delete_from_here_button, ThemeColor.card_surface, "Delete from here (message goes back to the input box, workspace is kept)", 52.0)
+	style_header_button(delete_from_here_button, ThemeColor.card_surface, "Delete from here (message goes back to the input box, workspace is kept)", 52.0)
 	delete_from_here_button.pressed.connect(on_delete_from_here_pressed.bind(session_id, entry))
 	header.add_child(delete_from_here_button)
 

@@ -56,7 +56,7 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 	var delete_button: Button = Button.new()
 	delete_button.name = "DeleteButton"
 	delete_button.text = "Delete"
-	AgentBubble.style_header_button(delete_button, Colors.info_surface, "Delete from here", 52.0)
+	style_header_button(delete_button, Colors.info_surface, "Delete from here", 52.0)
 	delete_button.pressed.connect(on_delete_pressed.bind(session_id, entry))
 	header.add_child(delete_button)
 
