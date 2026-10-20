@@ -45,7 +45,7 @@ func ColorBase_follow_theme_test() -> void:
 	assert(Colors.purple_surface == Colors.DARK_PURPLE_SURFACE)
 	assert(Colors.success_surface == Colors.DARK_SUCCESS_SURFACE)
 	assert(Colors.warning_surface == Colors.DARK_WARNING_SURFACE)
-	assert(Colors.neutral_surface == Colors.DARK_NEUTRAL_SURFACE)
+	assert(Colors.blue_grey_surface == Colors.DARK_BLUE_GREY_SURFACE)
 	assert(ThemeColor.selected_surface == ThemeColor.DARK_SELECTED_SURFACE_BASE.lerp(ThemeColor.accent_theme_color(), ThemeColor.DARK_SELECTED_SURFACE_MIX))
 
 	ThemeColor.current_theme = ThemeColor.ThemeEnum.LIGHT
@@ -71,7 +71,7 @@ func ColorBase_follow_theme_test() -> void:
 	assert(Colors.purple_surface == Colors.LIGHT_PURPLE_SURFACE)
 	assert(Colors.success_surface == Colors.LIGHT_SUCCESS_SURFACE)
 	assert(Colors.warning_surface == Colors.LIGHT_WARNING_SURFACE)
-	assert(Colors.neutral_surface == Colors.LIGHT_NEUTRAL_SURFACE)
+	assert(Colors.blue_grey_surface == Colors.LIGHT_BLUE_GREY_SURFACE)
 	assert(ThemeColor.selected_surface == ThemeColor.LIGHT_SELECTED_SURFACE_BASE.lerp(ThemeColor.accent_theme_color(), ThemeColor.LIGHT_SELECTED_SURFACE_MIX))
 
 	ThemeColor.current_theme = original

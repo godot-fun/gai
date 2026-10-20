@@ -10,7 +10,7 @@ var line_label: Label
 
 
 func apply(_session_id: int, entry: ChatEntry) -> void:
-	apply_panel_style(Colors.neutral_surface)
+	apply_panel_style(Colors.blue_grey_surface)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -67,8 +67,8 @@ static func style_view_button(button: Button) -> void:
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, ButtonStyle.hover_color(Colors.primary_text, 0.08), ButtonStyle.press_color(Colors.secondary_text, 0.08))
 
 	var border := ButtonStyle.press_color(Colors.secondary_text)
-	var normal := StyleBoxHelper.create_style_box_flat(ButtonStyle.hover_color(Colors.neutral_surface, 0.08), 4, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
+	var normal := StyleBoxHelper.create_style_box_flat(ButtonStyle.hover_color(Colors.blue_grey_surface, 0.08), 4, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
 	ButtonStyle.apply(button, normal,
-		ButtonStyle.filled(normal, ButtonStyle.hover_color(Colors.neutral_surface, 0.16), Colors.secondary_text),
-		ButtonStyle.filled(normal, ButtonStyle.press_color(Colors.neutral_surface, 0.06), Colors.secondary_text))
+		ButtonStyle.filled(normal, ButtonStyle.hover_color(Colors.blue_grey_surface, 0.16), Colors.secondary_text),
+		ButtonStyle.filled(normal, ButtonStyle.press_color(Colors.blue_grey_surface, 0.06), Colors.secondary_text))
 	pass

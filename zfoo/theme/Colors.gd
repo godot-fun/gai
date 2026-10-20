@@ -114,21 +114,21 @@ const DARK_INFO_SURFACE := Color(0.10, 0.17, 0.22)
 const DARK_PURPLE_SURFACE := Color(0.19, 0.18, 0.30)
 const DARK_SUCCESS_SURFACE := Color(0.14, 0.20, 0.16)
 const DARK_WARNING_SURFACE := Color(0.22, 0.16, 0.10)
-const DARK_NEUTRAL_SURFACE := Color(0.13, 0.16, 0.20)
+const DARK_BLUE_GREY_SURFACE := Color(0.13, 0.16, 0.20)
 
 const LIGHT_INFO_SURFACE := Color(0.93, 0.98, 1.00)
 const LIGHT_PURPLE_SURFACE := Color(0.96, 0.95, 1.00)
 const LIGHT_SUCCESS_SURFACE := Color(0.94, 0.99, 0.96)
 const LIGHT_WARNING_SURFACE := Color(1.00, 0.97, 0.93)
-const LIGHT_NEUTRAL_SURFACE := Color(0.94, 0.95, 0.97)
+const LIGHT_BLUE_GREY_SURFACE := Color(0.94, 0.95, 0.97)
 
 ## Low-emphasis semantic fills paired with their matching foreground colors above.
 static var info_surface: Color = DARK_INFO_SURFACE
 static var success_surface: Color = DARK_SUCCESS_SURFACE
 static var warning_surface: Color = DARK_WARNING_SURFACE
 static var purple_surface: Color = DARK_PURPLE_SURFACE
-## Status-neutral fill for output and result content.
-static var neutral_surface: Color = DARK_NEUTRAL_SURFACE
+## Low-emphasis blue-grey fill for output and result content.
+static var blue_grey_surface: Color = DARK_BLUE_GREY_SURFACE
 
 
 # =============================================================================
@@ -159,5 +159,5 @@ static func refresh() -> void:
 	purple_surface = DARK_PURPLE_SURFACE if dark else LIGHT_PURPLE_SURFACE
 	success_surface = DARK_SUCCESS_SURFACE if dark else LIGHT_SUCCESS_SURFACE
 	warning_surface = DARK_WARNING_SURFACE if dark else LIGHT_WARNING_SURFACE
-	neutral_surface = DARK_NEUTRAL_SURFACE if dark else LIGHT_NEUTRAL_SURFACE
+	blue_grey_surface = DARK_BLUE_GREY_SURFACE if dark else LIGHT_BLUE_GREY_SURFACE
 	pass
