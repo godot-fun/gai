@@ -302,6 +302,7 @@ static func delete_chat_from_entry(session_id: int, entry: ChatEntry) -> void:
 		ChatEntry.KIND_SKILL,
 		ChatEntry.KIND_MEMORY,
 		ChatEntry.KIND_AGENT_PROMPT,
+		ChatEntry.KIND_COMPACTION,
 	]
 	if entry == null or entry.kind not in deletable_kinds:
 		return
@@ -330,7 +331,7 @@ static func message_index_for_chat_entry(session: AgentSession, entry_idx: int) 
 	if entry_idx < 0 or entry_idx >= session.chat_entries.size():
 		return -1
 	var entry: ChatEntry = session.chat_entries[entry_idx]
-	if entry.kind == ChatEntry.KIND_SKILL or entry.kind == ChatEntry.KIND_MEMORY or entry.kind == ChatEntry.KIND_AGENT_PROMPT:
+	if entry.kind == ChatEntry.KIND_SKILL or entry.kind == ChatEntry.KIND_MEMORY or entry.kind == ChatEntry.KIND_AGENT_PROMPT or entry.kind == ChatEntry.KIND_COMPACTION:
 		for message_idx in range(session.messages.size()):
 			var message: ChatMessage = session.messages[message_idx]
 			var matches := false
@@ -338,8 +339,10 @@ static func message_index_for_chat_entry(session: AgentSession, entry_idx: int) 
 				matches = SkillPrompt.is_skill_context_message(message)
 			elif entry.kind == ChatEntry.KIND_MEMORY:
 				matches = MemoryPrompt.is_memory_context_message(message)
-			else:
+			elif entry.kind == ChatEntry.KIND_AGENT_PROMPT:
 				matches = AgentPrompt.is_agent_context_message(message)
+			elif entry.kind == ChatEntry.KIND_COMPACTION:
+				matches = CompactionManager.is_compaction_message(message)
 			if matches:
 				return message_idx
 		return -1

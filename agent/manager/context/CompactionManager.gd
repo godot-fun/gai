@@ -40,6 +40,11 @@ static func is_compacting(session_id: int) -> bool:
 	return compacting_sessions.has(session_id)
 
 
+## Returns whether [param message] is the system message persisted for a prior compaction.
+static func is_compaction_message(message: ChatMessage) -> bool:
+	return message.role == ChatMessage.ROLE_SYSTEM and message.content.begins_with(SUMMARY_PREFIX)
+
+
 ## Runs memory maintenance and continuation summarization concurrently, then persists the summary.
 ## The session is reloaded after both network requests because it may be deleted while awaiting.
 static func compact_session(session_id: int) -> void:
@@ -128,7 +133,7 @@ static func collect_context_messages(messages: Array[ChatMessage]) -> Array[Chat
 	for message: ChatMessage in messages:
 		if message.role != ChatMessage.ROLE_SYSTEM:
 			continue
-		if message.content.begins_with(SUMMARY_PREFIX):
+		if is_compaction_message(message):
 			continue
 		context.append(message)
 	return context

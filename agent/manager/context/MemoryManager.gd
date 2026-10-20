@@ -35,7 +35,7 @@ static func update_memory(session_id: int) -> void:
 static func collect_memory_messages(messages: Array[ChatMessage]) -> Array[ChatMessage]:
 	var transcript: Array[ChatMessage] = []
 	for message: ChatMessage in messages:
-		if (message.role == ChatMessage.ROLE_SYSTEM and message.content.begins_with(CompactionManager.SUMMARY_PREFIX)):
+		if CompactionManager.is_compaction_message(message):
 			transcript.append(ChatMessage.user("Previous compacted context:\n" + message.content))
 		elif message.role == ChatMessage.ROLE_USER and StringUtils.is_not_blank(message.content):
 			transcript.append(ChatMessage.user(message.content.strip_edges()))

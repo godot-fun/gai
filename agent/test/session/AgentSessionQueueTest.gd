@@ -68,6 +68,23 @@ static func compaction_replaces_previous_summary_message_test() -> void:
 	pass
 
 
+static func compaction_entry_resolves_to_summary_message_test() -> void:
+	var session := AgentSession.new(42)
+	session.messages.append(ChatMessage.system("system"))
+	session.messages.append(ChatMessage.system(CompactionManager.SUMMARY_PREFIX + "\nsummary"))
+	session.chat_entries.append(ChatEntry.new(ChatEntry.KIND_SYSTEM, ChatEntry.TITLE_SYSTEM, "system"))
+	session.chat_entries.append(ChatEntry.new(ChatEntry.KIND_COMPACTION, ChatEntry.TITLE_COMPACTION, "summary"))
+	assert(AgentSessionManager.message_index_for_chat_entry(session, 1) == 1)
+	pass
+
+
+static func compaction_message_identification_test() -> void:
+	assert(CompactionManager.is_compaction_message(ChatMessage.system(CompactionManager.SUMMARY_PREFIX + "\nsummary")))
+	assert(not CompactionManager.is_compaction_message(ChatMessage.system("normal system context")))
+	assert(not CompactionManager.is_compaction_message(ChatMessage.user(CompactionManager.SUMMARY_PREFIX + "\nsummary")))
+	pass
+
+
 static func compaction_refreshes_memory_before_notification_test() -> void:
 	var previous_context := "stale memory snapshot"
 	var session := AgentSession.new(42)
