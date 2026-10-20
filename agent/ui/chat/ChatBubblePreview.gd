@@ -1,8 +1,8 @@
 class_name ChatBubblePreview
 extends Object
 
-## Shared preview truncation for Result / Thinking bubbles.
-## Keep the last PREVIEW_LINES, then the last PREVIEW_CHARS of that window.
+## Shared text-preview calculations for transcript bubbles.
+## Result / Thinking keep the last PREVIEW_LINES, then the last PREVIEW_CHARS of that window.
 
 const PREVIEW_LINES := 6
 const PREVIEW_CHARS := 600
@@ -21,6 +21,16 @@ static func extra_line_count(s: String) -> int:
 	return maxi(0, s.count(FileUtils.NEWLINE_LF) + 1 - PREVIEW_LINES)
 
 
+static func first_lines(body: String, line_count: int) -> String:
+	return StringUtils.first_lines(body, line_count)
+
+
+static func hidden_line_count(body: String, visible_line_count: int) -> int:
+	if StringUtils.is_blank(body):
+		return 0
+	return maxi(0, body.count(FileUtils.NEWLINE_LF) + 1 - visible_line_count)
+
+
 static func apply(rich_text: RichTextLabel, view_button: Button, line_label: Label, body: String, fixed_height_at_limit: bool = false) -> void:
 	if not is_instance_valid(rich_text):
 		return
@@ -29,7 +39,7 @@ static func apply(rich_text: RichTextLabel, view_button: Button, line_label: Lab
 	var extra_lines := extra_line_count(body)
 	line_label.visible = extra_lines > 0
 	if extra_lines > 0:
-		var line_key := "git.more_line" if extra_lines == 1 else "git.more_lines"
+		var line_key := "common.more_line" if extra_lines == 1 else "common.more_lines"
 		line_label.text = StringUtils.format(I18n.t(line_key), extra_lines)
 	rich_text.text = text
 	rich_text.visible = StringUtils.is_not_blank(body)

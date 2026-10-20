@@ -54,7 +54,7 @@ func on_expand_pressed(entry: ChatEntry) -> void:
 func refresh(entry: ChatEntry) -> void:
 	if not is_instance_valid(rich_text) or entry == null:
 		return
-	var preview := StringUtils.first_lines(entry.body, PREVIEW_LINES)
+	var preview := ChatBubblePreview.first_lines(entry.body, PREVIEW_LINES)
 	var can_expand := preview != entry.body
 	MarkdownHelper.update_rich_text_label_text(
 		rich_text,
@@ -65,12 +65,12 @@ func refresh(entry: ChatEntry) -> void:
 		expand_button.visible = can_expand
 		if can_expand:
 			if expanded:
-				expand_button.text = I18n.t("agent.tokens.summary_collapse")
+				expand_button.text = I18n.t("common.collapse")
 				expand_button.tooltip_text = I18n.t("agent.tokens.summary_collapse_tooltip")
 			else:
-				var hidden_lines := maxi(0, entry.body.count(FileUtils.NEWLINE_LF) + 1 - PREVIEW_LINES)
+				var hidden_lines := ChatBubblePreview.hidden_line_count(entry.body, PREVIEW_LINES)
 				expand_button.text = StringUtils.format(
-					I18n.t("agent.tokens.summary_expand"),
+					I18n.t("common.expand_lines"),
 					hidden_lines,
 					"" if hidden_lines == 1 else "s"
 				)

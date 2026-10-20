@@ -12,18 +12,8 @@ var expanded: bool = false
 var expand_button: Button
 
 
-static func preview(body: String) -> String:
-	return StringUtils.first_lines(body, PREVIEW_LINES)
-
-
 static func needs_expand(body: String) -> bool:
-	return StringUtils.is_not_blank(body) and preview(body) != body
-
-
-static func hidden_line_count(body: String) -> int:
-	if StringUtils.is_blank(body):
-		return 0
-	return maxi(0, body.count(FileUtils.NEWLINE_LF) + 1 - PREVIEW_LINES)
+	return StringUtils.is_not_blank(body) and ChatBubblePreview.first_lines(body, PREVIEW_LINES) != body
 
 
 func apply(session_id: int, entry: ChatEntry) -> void:
@@ -87,7 +77,7 @@ func refresh(entry: ChatEntry) -> void:
 	if not is_instance_valid(rich_text) or entry == null:
 		return
 	var can_expand: bool = needs_expand(entry.body)
-	var display: String = entry.body if expanded or not can_expand else preview(entry.body)
+	var display: String = entry.body if expanded or not can_expand else ChatBubblePreview.first_lines(entry.body, PREVIEW_LINES)
 	rich_text.visible = StringUtils.is_not_blank(entry.body)
 	MarkdownHelper.update_rich_text_label_text(rich_text, display, true)
 
@@ -95,16 +85,16 @@ func refresh(entry: ChatEntry) -> void:
 		expand_button.visible = can_expand
 		if can_expand:
 			if expanded:
-				expand_button.text = I18n.t("agent.common.collapse")
-				expand_button.tooltip_text = I18n.t("agent.common.collapse_tooltip")
+				expand_button.text = I18n.t("common.collapse")
+				expand_button.tooltip_text = I18n.t("agent.chat.collapse_tooltip")
 			else:
-				var hidden: int = hidden_line_count(entry.body)
+				var hidden: int = ChatBubblePreview.hidden_line_count(entry.body, PREVIEW_LINES)
 				expand_button.text = StringUtils.format(
-					I18n.t("agent.common.expand_lines"),
+					I18n.t("common.expand_lines"),
 					hidden,
 					"" if hidden == 1 else "s"
 				)
-				expand_button.tooltip_text = I18n.t("agent.common.expand_tooltip")
+				expand_button.tooltip_text = I18n.t("agent.chat.expand_tooltip")
 	pass
 
 
