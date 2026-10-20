@@ -27,8 +27,7 @@ static func hidden_line_count(body: String) -> int:
 
 
 func apply(session_id: int, entry: ChatEntry) -> void:
-	apply_background(Colors.info_surface)
-	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	apply_panel_style(Colors.info_surface)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL

@@ -3,7 +3,7 @@ extends Object
 
 ## Creates the transcript bubble matching a chat entry kind.
 
-static var bubbles: Dictionary[String, Script] = {
+static var bubble_types: Dictionary[String, Script] = {
 	ChatEntry.KIND_SYSTEM: DefaultBubble,
 	ChatEntry.KIND_SKILL: ContextBubble,
 	ChatEntry.KIND_MEMORY: ContextBubble,
@@ -23,7 +23,7 @@ static var bubbles: Dictionary[String, Script] = {
 
 
 static func append(chat_list: VBoxContainer, session_id: int, entry: ChatEntry) -> BubbleContainer:
-	var bubble_script: Script = bubbles.get(entry.kind, DefaultBubble)
+	var bubble_script: Script = bubble_types.get(entry.kind, DefaultBubble)
 	var bubble := bubble_script.new() as BubbleContainer
 	bubble.apply(session_id, entry)
 	chat_list.add_child(bubble)

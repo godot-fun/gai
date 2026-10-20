@@ -11,8 +11,7 @@ const META_RESUME_BUTTON: String = "resume_button"
 
 
 func apply(session_id: int, entry: ChatEntry) -> void:
-	apply_background(Colors.surface)
-	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	apply_panel_style(Colors.surface)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL

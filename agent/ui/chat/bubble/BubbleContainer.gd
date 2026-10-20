@@ -12,7 +12,12 @@ func apply(session_id: int, entry: ChatEntry) -> void
 func refresh(entry: ChatEntry) -> void
 
 
-func apply_background(bg_color: Color = Color.TRANSPARENT) -> void:
+func _init() -> void:
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	pass
+
+
+func apply_panel_style(bg_color: Color = Color.TRANSPARENT) -> void:
 	var style: StyleBox = StyleBoxEmpty.new() if bg_color == Color.TRANSPARENT else create_panel_style(bg_color)
 	add_theme_stylebox_override("panel", style)
 	pass

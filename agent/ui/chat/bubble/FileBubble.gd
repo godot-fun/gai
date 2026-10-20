@@ -7,8 +7,7 @@ var rich_text: RichTextLabel
 
 
 func apply(_session_id: int, entry: ChatEntry) -> void:
-	apply_background(Colors.warning_surface)
-	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	apply_panel_style(Colors.warning_surface)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL

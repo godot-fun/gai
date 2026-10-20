@@ -13,8 +13,7 @@ const BORDER_HIGHLIGHT_STRENGTH: float = 1.0
 
 
 func apply(session_id: int, entry: ChatEntry) -> void:
-	apply_background()
-	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	apply_panel_style()
 	clip_contents = false
 
 	# Keep the overlay layout outside PanelContainer's child sorting so the animated border

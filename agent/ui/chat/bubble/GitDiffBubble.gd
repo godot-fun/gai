@@ -6,8 +6,7 @@ var rich_text: RichTextLabel
 ## Git diff bubble appended after agent_end, listing files changed from the run checkpoint.
 
 func apply(session_id: int, entry: ChatEntry) -> void:
-	apply_background(Colors.surface)
-	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	apply_panel_style(Colors.surface)
 	visible = StringUtils.is_not_blank(entry.body)
 
 	var vbox := VBoxContainer.new()

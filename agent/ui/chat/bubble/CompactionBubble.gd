@@ -11,8 +11,7 @@ var expand_button: Button
 
 
 func apply(_session_id: int, entry: ChatEntry) -> void:
-	apply_background(ThemeColor.alpha_theme_color(0.08))
-	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	apply_panel_style(ThemeColor.alpha_theme_color(0.08))
 
 	var vbox := VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL

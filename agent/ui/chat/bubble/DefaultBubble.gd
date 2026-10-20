@@ -7,8 +7,7 @@ var rich_text: RichTextLabel
 
 
 func apply(_session_id: int, entry: ChatEntry) -> void:
-	apply_background(ThemeColor.promote(Colors.info_surface, Colors.am_2) if entry.kind == ChatEntry.KIND_SYSTEM else Colors.surface)
-	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	apply_panel_style(ThemeColor.promote(Colors.info_surface, Colors.am_2) if entry.kind == ChatEntry.KIND_SYSTEM else Colors.surface)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL

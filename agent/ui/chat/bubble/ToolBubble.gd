@@ -6,8 +6,7 @@ var rich_text: RichTextLabel
 ## Tool-call bubble showing the command, query, path, or primary argument sent to a tool.
 
 func apply(_session_id: int, entry: ChatEntry) -> void:
-	apply_background(Colors.success_surface)
-	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	apply_panel_style(Colors.success_surface)
 
 	var vbox := VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL

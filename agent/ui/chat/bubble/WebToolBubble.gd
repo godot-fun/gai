@@ -6,8 +6,7 @@ var body_label: RichTextLabel
 ## Web-tool call bubble showing the query, URL, or primary argument sent to the tool.
 
 func apply(_session_id: int, entry: ChatEntry) -> void:
-	apply_background(Colors.info_surface)
-	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	apply_panel_style(Colors.info_surface)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
