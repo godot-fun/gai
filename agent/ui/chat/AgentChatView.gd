@@ -4,14 +4,13 @@ extends RefCounted
 ## Chat transcript area — bubbles, streaming, and error resume.
 ## One bubble list per session; switching shows the cached list.
 
-## The color picker emits on every drag step; the transcript re-renders once the theme color settles.
-const THEME_COLOR_REBUILD_DELAY_MS: int = 250
+## The color picker emits on every drag step; coalesce rebuilds to this window.
+const THEME_COLOR_REBUILD_DELAY_MS: int = 100
 var chat_scroll_node: ScrollContainer
 
 var chat_list_cache: ChatListCache = ChatListCache.new()
 var chat_bubble_refresh_buffer: ChatBubbleRefreshBuffer = ChatBubbleRefreshBuffer.new()
 var chat_scroll: ChatScroll = ChatScroll.new()
-var theme_color_rebuild_scheduled: bool = false
 
 
 # ---------------------------------------------------------------------------
@@ -158,18 +157,16 @@ func on_locale_changed() -> void:
 
 
 ## Markdown colors are derived from the theme color, so a color pick has to re-render the
-## transcript — but only once: the picker emits on every drag step.
+## transcript — but only once per window: the picker emits on every drag step.
 func on_theme_color_changed() -> void:
 	ScrollBarStyle.apply(chat_scroll_node.get_v_scroll_bar())
-	if theme_color_rebuild_scheduled:
+	if RateLimitUtils.limit_millis_100():
 		return
-	theme_color_rebuild_scheduled = true
 	SchedulerBus.schedule(on_theme_color_rebuild, THEME_COLOR_REBUILD_DELAY_MS)
 	pass
 
 
 func on_theme_color_rebuild() -> void:
-	theme_color_rebuild_scheduled = false
 	rebuild(AgentSessionManager.active_session_id)
 	pass
 
