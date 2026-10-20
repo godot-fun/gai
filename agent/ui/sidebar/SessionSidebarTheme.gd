@@ -21,7 +21,6 @@ static func sidebar_panel() -> StyleBoxFlat:
 
 
 static func pinned_separator() -> StyleBoxLine:
-	var theme_color: Color = ThemeColor.accent_theme_color()
 	var line: StyleBoxLine = StyleBoxLine.new()
 	line.color = ThemeColor.alpha_theme_color(0.42 if ThemeColor.is_dark_theme() else 0.32)
 	line.grow_begin = 2
@@ -106,7 +105,6 @@ static func apply_rename_field(edit: LineEdit, title_button: Button) -> void:
 
 
 static func rename_field() -> StyleBoxFlat:
-	var theme_color: Color = ThemeColor.accent_theme_color()
 	var border := ThemeColor.alpha_theme_color(0.75 if ThemeColor.is_dark_theme() else 0.55)
 	return StyleBoxHelper.create_style_box_flat(Colors.surface, RENAME_CORNER_RADIUS, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
 

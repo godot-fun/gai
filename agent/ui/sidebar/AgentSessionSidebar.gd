@@ -232,6 +232,7 @@ func remove_row(session_id: int) -> void:
 func clear() -> void:
 	for list: VBoxContainer in [pinned_list, unpinned_list]:
 		for child in list.get_children():
+			list.remove_child(child)
 			child.queue_free()
 	session_rows.clear()
 	pass
