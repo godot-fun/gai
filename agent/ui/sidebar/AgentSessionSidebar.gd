@@ -52,6 +52,8 @@ func setup(
 	AgentEvents.events.session_removed.connect(remove_row)
 	AgentEvents.events.session_selected.connect(select_item)
 	AgentEvents.events.session_title_changed.connect(on_session_refresh)
+	AgentEvents.events.session_select_pressed.connect(on_session_row_pressed)
+	AgentEvents.events.session_delete_pressed.connect(on_session_delete_pressed)
 	AgentEvents.events.agent_start.connect(on_session_refresh)
 	AgentEvents.events.session_stop.connect(on_session_stop)
 	AgentEvents.events.compaction_start.connect(on_compaction_start)
@@ -210,8 +212,6 @@ func sync_sections() -> void:
 func append_row(session_id: int, title: String, pinned: bool) -> void:
 	var row := SessionRow.new()
 	row.build(session_id, title)
-	row.select_pressed.connect(on_session_row_pressed)
-	row.delete_pressed.connect(on_session_delete_pressed)
 	session_row_drag.list_for_pinned(pinned).add_child(row)
 	# Registered before the refresh: refresh looks rows up by session id.
 	session_rows[session_id] = row

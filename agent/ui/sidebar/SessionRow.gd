@@ -4,12 +4,10 @@ extends PanelContainer
 ## One chat row: title, activity wave, close button, selection overlay and the inline rename field.
 ##
 ## The row renders what it is told — [AgentSessionSidebar] feeds it titles, selection and run
-## state — and reports clicks back through signals, so nothing else needs to know how a row is
-## built. The rename field is row-local state: opening, committing and discarding all happen here,
-## and the host only has to ask [method is_renaming].
-
-signal select_pressed(session_id: int)
-signal delete_pressed(session_id: int)
+## state — and reports clicks via [signal AgentEvents.events.session_select_pressed] /
+## [signal AgentEvents.events.session_delete_pressed]. The rename field is row-local state:
+## opening, committing and discarding all happen here, and the host only has to ask
+## [method is_renaming].
 
 ## Close button and the activity wave share this slot, so swapping them while a run or compaction
 ## starts / stops never changes the row width (and never re-ellipsizes the title).
@@ -57,7 +55,7 @@ func build(p_session_id: int, title: String) -> void:
 	title_button.mouse_default_cursor_shape = Control.CURSOR_MOVE
 	# Cut at the row width, character by character, without an ellipsis.
 	title_button.text_overrun_behavior = TextServer.OVERRUN_TRIM_CHAR
-	title_button.pressed.connect(select_pressed.emit.bind(session_id))
+	title_button.pressed.connect(AgentEvents.events.session_select_pressed.emit.bind(session_id))
 	bind_hover(title_button)
 
 	# The wave takes the close button's slot while this session runs or compacts.
@@ -76,7 +74,7 @@ func build(p_session_id: int, title: String) -> void:
 	delete_button.custom_minimum_size = ACTION_SIZE
 	delete_button.focus_mode = Control.FOCUS_NONE
 	delete_button.flat = true
-	delete_button.pressed.connect(delete_pressed.emit.bind(session_id))
+	delete_button.pressed.connect(AgentEvents.events.session_delete_pressed.emit.bind(session_id))
 	bind_hover(delete_button)
 
 	content.add_child(title_button)

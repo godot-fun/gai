@@ -94,6 +94,12 @@ class Events:
 	## A bubble handed its body back to the chat input (delete / revert) for re-editing.
 	signal chat_input_prefill(text: String)
 
+	# Sidebar session row actions (SessionRow -> AgentSessionSidebar)
+	## User clicked a session row title (select or start rename when already active).
+	signal session_select_pressed(session_id: int)
+	## User clicked the session row delete button.
+	signal session_delete_pressed(session_id: int)
+
 	# Session context controls
 	signal skill_context_changed(session_id: int)
 	## Project memory index added to / removed from a session (see MemoryToggle).
