@@ -1,13 +1,15 @@
 class_name ContextBubble
-extends RefCounted
+extends BubbleContainer
+
+var rich_text: RichTextLabel
 
 ## Context chat bubble for skills / memory / AGENTS.md — expand/collapse with Markdown preview.
 ## Session / toolbar toggles live in SkillToggle and AgentPromptToggle.
 
 
 const PREVIEW_LINES: int = 8
-const META_EXPANDED: String = "context_bubble_expanded"
-const META_EXPAND_BUTTON: String = "context_bubble_expand_button"
+var expanded: bool = false
+var expand_button: Button
 
 
 static func preview(body: String) -> String:
@@ -29,11 +31,10 @@ static func append(
 	session_id: int,
 	entry: ChatEntry,
 	panel_style: StyleBoxFlat
-) -> void:
-	var wrapper: PanelContainer = PanelContainer.new()
+) -> ContextBubble:
+	var wrapper := ContextBubble.new()
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wrapper.add_theme_stylebox_override("panel", panel_style)
-	wrapper.set_meta(META_EXPANDED, false)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -49,11 +50,10 @@ static func append(
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	header.add_child(title_label)
 
-	var expand_button: Button = Button.new()
-	style_expand_button(expand_button)
-	expand_button.pressed.connect(on_expand_pressed.bind(wrapper, entry))
-	header.add_child(expand_button)
-	wrapper.set_meta(META_EXPAND_BUTTON, expand_button)
+	wrapper.expand_button = Button.new()
+	style_expand_button(wrapper.expand_button)
+	wrapper.expand_button.pressed.connect(wrapper.on_expand_pressed.bind(entry))
+	header.add_child(wrapper.expand_button)
 
 	var spacer: Control = Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -69,17 +69,16 @@ static func append(
 
 	vbox.add_child(header)
 
-	var rich_text: RichTextLabel = MarkdownHelper.create_rich_text_label(
+	wrapper.rich_text = MarkdownHelper.create_rich_text_label(
 		Colors.secondary_text,
 		StringUtils.EMPTY,
 		true
 	)
-	vbox.add_child(rich_text)
-	wrapper.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
+	vbox.add_child(wrapper.rich_text)
 
 	chat_list.add_child(wrapper)
-	refresh(rich_text, entry, wrapper)
-	pass
+	wrapper.refresh(entry)
+	return wrapper
 
 
 static func on_delete_pressed(session_id: int, entry: ChatEntry) -> void:
@@ -87,33 +86,21 @@ static func on_delete_pressed(session_id: int, entry: ChatEntry) -> void:
 	pass
 
 
-static func on_expand_pressed(wrapper: PanelContainer, entry: ChatEntry) -> void:
-	if not is_instance_valid(wrapper):
-		return
-	var expanded: bool = bool(wrapper.get_meta(META_EXPANDED, false))
-	wrapper.set_meta(META_EXPANDED, not expanded)
-	var rich_text: RichTextLabel = wrapper.get_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT) as RichTextLabel
-	if rich_text != null:
-		refresh(rich_text, entry, wrapper)
+func on_expand_pressed(entry: ChatEntry) -> void:
+	expanded = not expanded
+	refresh(entry)
 	pass
 
 
-static func refresh(rich_text: RichTextLabel, entry: ChatEntry, wrapper: PanelContainer = null) -> void:
-	if not is_instance_valid(rich_text):
+func refresh(entry: ChatEntry) -> void:
+	if not is_instance_valid(rich_text) or entry == null:
 		return
-	if wrapper == null:
-		wrapper = find_wrapper(rich_text)
-	if wrapper == null:
-		return
-
-	var expanded: bool = bool(wrapper.get_meta(META_EXPANDED, false))
 	var can_expand: bool = needs_expand(entry.body)
 	var display: String = entry.body if expanded or not can_expand else preview(entry.body)
 	rich_text.visible = StringUtils.is_not_blank(entry.body)
 	MarkdownHelper.update_rich_text_label_text(rich_text, display, true)
 
-	var expand_button: Button = wrapper.get_meta(META_EXPAND_BUTTON) as Button
-	if expand_button != null:
+	if is_instance_valid(expand_button):
 		expand_button.visible = can_expand
 		if can_expand:
 			if expanded:
@@ -128,13 +115,6 @@ static func refresh(rich_text: RichTextLabel, entry: ChatEntry, wrapper: PanelCo
 				)
 				expand_button.tooltip_text = I18n.t("agent.common.expand_tooltip")
 	pass
-
-
-static func find_wrapper(rich_text: RichTextLabel) -> PanelContainer:
-	var vbox: Node = rich_text.get_parent()
-	if vbox == null:
-		return null
-	return vbox.get_parent() as PanelContainer
 
 
 static func style_expand_button(button: Button) -> void:

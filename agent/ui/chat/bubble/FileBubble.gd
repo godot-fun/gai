@@ -1,11 +1,13 @@
 class_name FileBubble
-extends Object
+extends BubbleContainer
+
+var rich_text: RichTextLabel
 
 ## File-change result bubble with added/removed line counts.
 
 
-static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: StyleBoxFlat) -> void:
-	var wrapper: PanelContainer = PanelContainer.new()
+static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: StyleBoxFlat) -> FileBubble:
+	var wrapper := FileBubble.new()
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wrapper.add_theme_stylebox_override("panel", panel_style)
 
@@ -38,17 +40,17 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 		header.add_child(create_file_path_button(file_path))
 	vbox.add_child(header)
 
-	var rich_text: RichTextLabel = RichTextLabel.new()
-	rich_text.visible = false
-	vbox.add_child(rich_text)
-	wrapper.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
+	wrapper.rich_text = RichTextLabel.new()
+	wrapper.rich_text.visible = false
+	vbox.add_child(wrapper.rich_text)
 
 	chat_list.add_child(wrapper)
-	# refresh(rich_text, entry)
-	pass
+	return wrapper
 
 
-static func refresh(rich_text: RichTextLabel, entry: ChatEntry) -> void:
+func refresh(entry: ChatEntry) -> void:
+	if not is_instance_valid(rich_text) or entry == null:
+		return
 	rich_text.clear()
 	rich_text.push_meta(entry.body)
 	rich_text.add_text(entry.body)

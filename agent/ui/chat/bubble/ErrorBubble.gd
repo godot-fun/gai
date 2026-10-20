@@ -1,5 +1,7 @@
 class_name ErrorBubble
-extends Object
+extends BubbleContainer
+
+var rich_text: RichTextLabel
 
 ## Error bubble with optional resume action for the agent chat transcript.
 
@@ -14,8 +16,8 @@ static func append(
 	panel_style: StyleBoxFlat,
 	session_id: int,
 	running: bool
-) -> void:
-	var wrapper: PanelContainer = PanelContainer.new()
+) -> ErrorBubble:
+	var wrapper := ErrorBubble.new()
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wrapper.add_theme_stylebox_override("panel", panel_style)
 
@@ -30,13 +32,12 @@ static func append(
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	vbox.add_child(title_label)
 
-	var rich_text: RichTextLabel = MarkdownHelper.create_rich_text_label(
+	wrapper.rich_text = MarkdownHelper.create_rich_text_label(
 			Colors.error,
 			StringUtils.first_lines(entry.body, MAX_LINES),
 			AgentSetting.get_markdown_enabled()
 	)
-	vbox.add_child(rich_text)
-	wrapper.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
+	vbox.add_child(wrapper.rich_text)
 
 	if is_resumable(entry.body):
 		var resume_button: Button = Button.new()
@@ -49,11 +50,11 @@ static func append(
 
 	chat_list.add_child(wrapper)
 	refresh_resume_buttons(chat_list, running)
-	pass
+	return wrapper
 
 
-static func refresh(rich_text: RichTextLabel, entry: ChatEntry) -> void:
-	if entry == null:
+func refresh(entry: ChatEntry) -> void:
+	if not is_instance_valid(rich_text) or entry == null:
 		return
 	var display: String = StringUtils.first_lines(entry.body, MAX_LINES)
 	MarkdownHelper.update_rich_text_label_text(rich_text, display, AgentSetting.get_markdown_enabled())

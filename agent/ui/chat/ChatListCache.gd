@@ -84,16 +84,15 @@ func get_active_list() -> VBoxContainer:
 	return get_list(active_session_id)
 
 
-func append_entry(session_id: int, entry: ChatEntry) -> void:
+func append_entry(session_id: int, entry: ChatEntry) -> BubbleContainer:
 	var list := get_list(session_id)
 	if list == null:
-		return
-	ChatBubbleFactory.append(list, session_id, entry)
-	pass
+		return null
+	return ChatBubbleFactory.append(list, session_id, entry)
 
 
-## chat_entries index matches VBoxContainer child order; label lives on wrapper meta.
-func get_rich_text(session_id: int, entry: ChatEntry) -> RichTextLabel:
+## chat_entries index matches VBoxContainer child order.
+func get_bubble(session_id: int, entry: ChatEntry) -> BubbleContainer:
 	var session: AgentSession = AgentSessionStore.load_session(session_id)
 	var list := get_list(session_id)
 	if session == null or list == null:
@@ -101,5 +100,4 @@ func get_rich_text(session_id: int, entry: ChatEntry) -> RichTextLabel:
 	var index: int = session.chat_entries.find(entry)
 	if index < 0 or index >= list.get_child_count():
 		return null
-	var wrapper: Node = list.get_child(index)
-	return wrapper.get_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT) as RichTextLabel
+	return list.get_child(index) as BubbleContainer

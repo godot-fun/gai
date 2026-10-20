@@ -1,5 +1,7 @@
 class_name UserBubble
-extends Object
+extends BubbleContainer
+
+var rich_text: RichTextLabel
 
 ## User message bubble with a moving accent border shared with the chat input.
 ## Delete drops this turn and everything after it — chat only, code is left alone.
@@ -17,10 +19,18 @@ static func append(
 	panel_style: StyleBoxFlat,
 	text_color: Color,
 	title_color: Color = Colors.secondary_text
-) -> void:
-	var host: Control = Control.new()
+) -> UserBubble:
+	var bubble := UserBubble.new()
+	bubble.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bubble.clip_contents = false
+	bubble.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+
+	# Keep the overlay layout outside PanelContainer's child sorting so the animated border
+	# can extend beyond the content panel.
+	var host := Control.new()
 	host.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.clip_contents = false
+	bubble.add_child(host)
 
 	var panel: PanelContainer = PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -68,13 +78,13 @@ static func append(
 
 	vbox.add_child(header)
 
-	var rich_text: RichTextLabel = MarkdownHelper.create_rich_text_label(
+	bubble.rich_text = MarkdownHelper.create_rich_text_label(
 		text_color,
 		entry.body,
 		AgentSetting.get_markdown_enabled()
 	)
-	rich_text.visible = StringUtils.is_not_blank(entry.body)
-	vbox.add_child(rich_text)
+	bubble.rich_text.visible = StringUtils.is_not_blank(entry.body)
+	vbox.add_child(bubble.rich_text)
 
 	var moving_border := MovingAccentBorder.new()
 	moving_border.name = "MovingAccentBorder"
@@ -88,9 +98,16 @@ static func append(
 	panel.resized.connect(sync_layout.bind(host, panel, moving_border))
 	host.resized.connect(sync_layout.bind(host, panel, moving_border))
 
-	host.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
-	chat_list.add_child(host)
+	chat_list.add_child(bubble)
 	sync_layout.call_deferred(host, panel, moving_border)
+	return bubble
+
+
+func refresh(entry: ChatEntry) -> void:
+	if not is_instance_valid(rich_text) or entry == null:
+		return
+	rich_text.visible = StringUtils.is_not_blank(entry.body)
+	MarkdownHelper.update_rich_text_label_text(rich_text, entry.body, AgentSetting.get_markdown_enabled())
 	pass
 
 

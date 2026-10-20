@@ -1,11 +1,13 @@
 class_name WebResultBubble
-extends Object
+extends BubbleContainer
+
+var rich_text: RichTextLabel
 
 ## Web-tool result bubble with a text preview and an optional browser screenshot.
 
 
-static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: StyleBoxFlat) -> void:
-	var wrapper := PanelContainer.new()
+static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: StyleBoxFlat) -> WebResultBubble:
+	var wrapper := WebResultBubble.new()
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wrapper.add_theme_stylebox_override("panel", panel_style)
 
@@ -36,17 +38,18 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 	header.add_child(line_label)
 	vbox.add_child(header)
 
-	var rich_text := MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
-	vbox.add_child(rich_text)
+	wrapper.rich_text = MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
+	vbox.add_child(wrapper.rich_text)
 	append_screenshot(vbox, entry)
 
-	wrapper.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
 	chat_list.add_child(wrapper)
-	refresh(rich_text, entry)
-	pass
+	wrapper.refresh(entry)
+	return wrapper
 
 
-static func refresh(rich_text: RichTextLabel, entry: ChatEntry) -> void:
+func refresh(entry: ChatEntry) -> void:
+	if not is_instance_valid(rich_text) or entry == null:
+		return
 	ChatBubblePreview.apply(rich_text, entry.body)
 	pass
 

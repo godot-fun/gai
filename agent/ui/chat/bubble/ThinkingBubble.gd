@@ -1,5 +1,7 @@
 class_name ThinkingBubble
-extends Object
+extends BubbleContainer
+
+var rich_text: RichTextLabel
 
 ## Thinking / reasoning bubble — plain text preview in chat.
 ## Full text lives on ChatEntry.body; the header ··· button opens it in PopupWindow.
@@ -9,8 +11,8 @@ static func append(
 	chat_list: VBoxContainer,
 	entry: ChatEntry,
 	panel_style: StyleBoxFlat
-) -> void:
-	var wrapper: PanelContainer = PanelContainer.new()
+) -> ThinkingBubble:
+	var wrapper := ThinkingBubble.new()
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wrapper.add_theme_stylebox_override("panel", panel_style)
 
@@ -42,13 +44,18 @@ static func append(
 
 	vbox.add_child(header)
 
-	var rich_text: RichTextLabel = MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
-	ChatBubblePreview.enable_fixed_height_at_limit(rich_text)
-	vbox.add_child(rich_text)
-
-	wrapper.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
+	wrapper.rich_text = MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
+	ChatBubblePreview.enable_fixed_height_at_limit(wrapper.rich_text)
+	vbox.add_child(wrapper.rich_text)
 
 	chat_list.add_child(wrapper)
+	wrapper.refresh(entry)
+	return wrapper
+
+
+func refresh(entry: ChatEntry) -> void:
+	if not is_instance_valid(rich_text) or entry == null:
+		return
 	ChatBubblePreview.apply(rich_text, entry.body)
 	pass
 

@@ -98,7 +98,7 @@ func on_compaction_end(session_id: int, success: bool, _error_code: String) -> v
 func on_chat_entry_add(session_id: int, entry: ChatEntry) -> void:
 	if not chat_list_cache.has(session_id):
 		return
-	if chat_list_cache.get_rich_text(session_id, entry) != null:
+	if chat_list_cache.get_bubble(session_id, entry) != null:
 		return
 	chat_list_cache.append_entry(session_id, entry)
 	if AgentSessionManager.is_active(session_id):
@@ -110,12 +110,11 @@ func on_chat_entry_add(session_id: int, entry: ChatEntry) -> void:
 func on_chat_entry_update(session_id: int, entry: ChatEntry, _channel: String) -> void:
 	if not chat_list_cache.has(session_id):
 		return
-	var rich_text: RichTextLabel = chat_list_cache.get_rich_text(session_id, entry)
-	if rich_text == null:
-		chat_list_cache.append_entry(session_id, entry)
-		rich_text = chat_list_cache.get_rich_text(session_id, entry)
-	if rich_text != null:
-		chat_bubble_refresh_buffer.enqueue(rich_text, entry)
+	var bubble: BubbleContainer = chat_list_cache.get_bubble(session_id, entry)
+	if bubble == null:
+		bubble = chat_list_cache.append_entry(session_id, entry)
+	if bubble != null:
+		chat_bubble_refresh_buffer.enqueue(bubble, entry)
 	pass
 
 
@@ -139,10 +138,10 @@ func on_markdown_changed(_enabled: bool) -> void:
 	if session == null:
 		return
 	for entry: ChatEntry in session.chat_entries:
-		var rich_text: RichTextLabel = chat_list_cache.get_rich_text(session.id, entry)
-		if rich_text == null:
+		var bubble: BubbleContainer = chat_list_cache.get_bubble(session.id, entry)
+		if bubble == null:
 			continue
-		ChatBubbleFactory.refresh_rich_text(rich_text, entry)
+		bubble.refresh(entry)
 	chat_list_cache.clear_inactive()
 	pass
 

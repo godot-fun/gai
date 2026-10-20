@@ -1,10 +1,12 @@
 class_name WebToolBubble
-extends Object
+extends BubbleContainer
+
+var body_label: RichTextLabel
 
 ## Web-tool call bubble showing the query, URL, or primary argument sent to the tool.
 
-static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: StyleBoxFlat) -> void:
-	var wrapper: PanelContainer = PanelContainer.new()
+static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: StyleBoxFlat) -> WebToolBubble:
+	var wrapper := WebToolBubble.new()
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wrapper.add_theme_stylebox_override("panel", panel_style)
 
@@ -23,27 +25,26 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 	header.add_child(title_label)
 
 	var body := entry.body.strip_edges()
-	var rich_text: RichTextLabel = null
 	if HttpUtils.is_valid_http_url(body):
 		header.add_child(create_url_button(body))
 	else:
-		rich_text = create_body_label()
-		header.add_child(rich_text)
+		wrapper.body_label = create_body_label()
+		header.add_child(wrapper.body_label)
 	vbox.add_child(header)
 
-	wrapper.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
 	chat_list.add_child(wrapper)
-	if rich_text != null:
-		refresh(rich_text, entry)
-	pass
+	wrapper.refresh(entry)
+	return wrapper
 
 
-static func refresh(rich_text: RichTextLabel, entry: ChatEntry) -> void:
+func refresh(entry: ChatEntry) -> void:
+	if not is_instance_valid(body_label) or entry == null:
+		return
 	var body := entry.body.strip_edges()
-	rich_text.clear()
-	rich_text.add_text(body)
-	rich_text.tooltip_text = body
-	rich_text.visible = StringUtils.is_not_blank(body)
+	body_label.clear()
+	body_label.add_text(body)
+	body_label.tooltip_text = body
+	body_label.visible = StringUtils.is_not_blank(body)
 	pass
 
 

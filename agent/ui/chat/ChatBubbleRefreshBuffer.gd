@@ -7,17 +7,17 @@ const FLUSH_MS := 100
 const TIMER_NAME := "agent_chat_bubble_refresh"
 
 
-## One buffered refresh target; entry.body mutates in place while rich_text stays fixed.
+## One buffered refresh target; entry.body mutates in place while the bubble stays fixed.
 class BufferedRefresh:
-	var rich_text: RichTextLabel = null
+	var bubble: BubbleContainer = null
 	var entry: ChatEntry = null
 
-	func _init(p_rich_text: RichTextLabel, p_entry: ChatEntry) -> void:
-		rich_text = p_rich_text
+	func _init(p_bubble: BubbleContainer, p_entry: ChatEntry) -> void:
+		bubble = p_bubble
 		entry = p_entry
 
 
-## Deduped by rich_text; the same bubble appears only once per flush window.
+## Deduped by bubble; the same bubble appears only once per flush window.
 var pending: Array[BufferedRefresh] = []
 
 
@@ -27,14 +27,14 @@ func setup() -> void:
 
 
 ## Buffer a bubble refresh; update its entry pointer when it is already pending.
-func enqueue(rich_text: RichTextLabel, entry: ChatEntry) -> void:
-	if not is_instance_valid(rich_text) or entry == null:
+func enqueue(bubble: BubbleContainer, entry: ChatEntry) -> void:
+	if not is_instance_valid(bubble) or entry == null:
 		return
 	for item: BufferedRefresh in pending:
-		if item.rich_text == rich_text:
+		if item.bubble == bubble:
 			item.entry = entry
 			return
-	pending.append(BufferedRefresh.new(rich_text, entry))
+	pending.append(BufferedRefresh.new(bubble, entry))
 	pass
 
 
@@ -45,9 +45,9 @@ func flush() -> void:
 	var batch := pending
 	pending = []
 	for item: BufferedRefresh in batch:
-		if not is_instance_valid(item.rich_text):
+		if not is_instance_valid(item.bubble):
 			continue
-		ChatBubbleFactory.refresh_rich_text(item.rich_text, item.entry)
+		item.bubble.refresh(item.entry)
 	await ThreadUtils.async_sleep(FLUSH_MS)
 	AgentEvents.events.chat_bubble_flushed.emit()
 	pass
