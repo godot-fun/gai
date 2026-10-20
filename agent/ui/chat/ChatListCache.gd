@@ -49,6 +49,7 @@ func remove(session_id: int) -> void:
 
 
 func dispose_list(list: VBoxContainer) -> void:
+	list.hide()
 	list.queue_free()
 	pass
 
