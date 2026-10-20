@@ -59,7 +59,7 @@ static func title_color_for(entry: ChatEntry) -> Color:
 
 
 static func style_view_button(button: Button) -> void:
-	button.tooltip_text = "View full result"
+	button.tooltip_text = I18n.t("agent.chat.view_full_result")
 	button.custom_minimum_size = Vector2(22, 18)
 	button.add_theme_font_size_override("font_size", Typography.label_small_size)
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, ButtonStyle.hover_color(Colors.primary_text, 0.08), ButtonStyle.press_color(Colors.secondary_text, 0.08))

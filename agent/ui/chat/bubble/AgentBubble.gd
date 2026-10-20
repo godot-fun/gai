@@ -30,7 +30,7 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 	header.add_child(spacer)
 
 	var copy_button: Button = Button.new()
-	copy_button.text = "Copy"
+	copy_button.text = I18n.t("common.copy")
 	style_copy_button(copy_button, Colors.surface)
 	copy_button.pressed.connect(on_copy_pressed.bind(entry))
 	header.add_child(copy_button)
@@ -59,10 +59,10 @@ static func on_copy_pressed(entry: ChatEntry) -> void:
 	if entry == null or StringUtils.is_blank(entry.body):
 		return
 	MarkdownHelper.copy_to_clipboard(entry.body)
-	Alert.alert("Copied", Colors.success)
+	Alert.alert(I18n.t("common.copied"), Colors.success)
 	pass
 
 
 static func style_copy_button(button: Button, bubble_bg: Color) -> void:
-	style_header_button(button, bubble_bg, "Copy message", 40.0)
+	style_header_button(button, bubble_bg, I18n.t("common.copy_tooltip"), 40.0)
 	pass

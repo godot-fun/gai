@@ -1,5 +1,12 @@
 {
   "locale": "en",
+  "common": {
+    "copy": "Copy",
+    "copy_tooltip": "Copy message",
+    "copied": "Copied",
+    "delete": "Delete",
+    "resume": "Resume"
+  },
   "git": {
     "title": "Git Diff",
     "revert": "Revert",
@@ -52,6 +59,15 @@
       "collapse": "Collapse",
       "expand_tooltip": "Show full context",
       "collapse_tooltip": "Show the first 8 lines"
+    },
+    "chat": {
+      "delete_context_tooltip": "Delete from here",
+      "delete_message_tooltip": "Delete from here (message goes back to the input box, workspace is kept)",
+      "resume_tooltip": "Resume this task",
+      "view_full_thinking": "View full thinking",
+      "view_full_result": "View full result",
+      "message_moved_to_input": "Message moved to the input box",
+      "session_busy": "Session is busy"
     },
     "visuals": {
       "error": "ERROR",

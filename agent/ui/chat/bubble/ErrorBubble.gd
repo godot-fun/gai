@@ -32,7 +32,8 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 
 	if is_resumable(entry.body):
 		resume_button = Button.new()
-		resume_button.text = "Resume"
+		resume_button.text = I18n.t("common.resume")
+		resume_button.tooltip_text = I18n.t("agent.chat.resume_tooltip")
 		resume_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		resume_button.disabled = RuntimeManager.is_running(session_id)
 		style_resume_button(resume_button)
@@ -65,7 +66,7 @@ static func is_resumable(message: String) -> bool:
 
 static func on_resume_pressed(session_id: int, entry: ChatEntry) -> void:
 	if RuntimeManager.is_running(session_id):
-		Alert.alert("session is busy", Colors.error)
+		Alert.alert(I18n.t("agent.chat.session_busy"), Colors.error)
 		return
 	AgentSessionManager.delete_chat_from_entry(session_id, entry)
 	RuntimeManager.resume_agent(session_id)

@@ -62,8 +62,8 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 
 	var delete_from_here_button: Button = Button.new()
 	delete_from_here_button.name = "DeleteFromHereButton"
-	delete_from_here_button.text = "Delete"
-	style_header_button(delete_from_here_button, ThemeColor.card_surface, "Delete from here (message goes back to the input box, workspace is kept)", 52.0)
+	delete_from_here_button.text = I18n.t("common.delete")
+	style_header_button(delete_from_here_button, ThemeColor.card_surface, I18n.t("agent.chat.delete_message_tooltip"), 52.0)
 	delete_from_here_button.pressed.connect(on_delete_from_here_pressed.bind(session_id, entry))
 	header.add_child(delete_from_here_button)
 
@@ -105,7 +105,7 @@ func refresh(entry: ChatEntry) -> void:
 ## (via AgentEvents.events.chat_input_prefill, see AgentChatInput).
 static func on_delete_from_here_pressed(session_id: int, entry: ChatEntry) -> void:
 	AgentEvents.events.chat_input_prefill.emit(entry.body)
-	Alert.alert("Message moved to the input box", Colors.success)
+	Alert.alert(I18n.t("agent.chat.message_moved_to_input"), Colors.success)
 	AgentSessionManager.delete_chat_from_entry(session_id, entry)
 	pass
 

@@ -53,7 +53,7 @@ func refresh(entry: ChatEntry) -> void:
 
 
 static func style_view_button(button: Button) -> void:
-	button.tooltip_text = "View full thinking"
+	button.tooltip_text = I18n.t("agent.chat.view_full_thinking")
 	button.custom_minimum_size = Vector2(22, 18)
 	button.add_theme_font_size_override("font_size", Typography.label_small_size)
 	ButtonStyle.apply_font_colors(button, Colors.info, ButtonStyle.hover_color(Colors.info, 0.12), ButtonStyle.press_color(Colors.info, 0.08))

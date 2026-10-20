@@ -1,5 +1,12 @@
 {
   "locale": "zh",
+  "common": {
+    "copy": "复制",
+    "copy_tooltip": "复制消息",
+    "copied": "已复制",
+    "delete": "删除",
+    "resume": "继续"
+  },
   "git": {
     "title": "Git 差异",
     "revert": "还原",
@@ -52,6 +59,15 @@
       "collapse": "收起",
       "expand_tooltip": "显示完整上下文",
       "collapse_tooltip": "仅显示前 8 行"
+    },
+    "chat": {
+      "delete_context_tooltip": "从此处删除",
+      "delete_message_tooltip": "从此处删除（消息将返回输入框，工作区保持不变）",
+      "resume_tooltip": "继续执行此任务",
+      "view_full_thinking": "查看完整思考内容",
+      "view_full_result": "查看完整结果",
+      "message_moved_to_input": "消息已移回输入框",
+      "session_busy": "会话正忙"
     },
     "visuals": {
       "error": "错误",
