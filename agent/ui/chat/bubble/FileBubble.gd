@@ -45,7 +45,7 @@ func refresh(_entry: ChatEntry) -> void:
 static func open_file(meta: Variant) -> void:
 	var path: String = str(meta)
 	if FileUtils.open_file(path) != OK:
-		Alert.alert(StringUtils.format(I18n.t("agent.chat.file_not_found"), path), Colors.error)
+		Alert.alert(StringUtils.format(I18n.t("common.file_not_found"), path), Colors.error)
 	pass
 
 

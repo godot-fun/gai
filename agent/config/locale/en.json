@@ -6,8 +6,7 @@
     "copied": "Copied",
     "delete": "Delete",
     "resume": "Resume",
-    "more_line": "+{} line",
-    "more_lines": "+{} lines"
+    "file_not_found": "File not found: {}"
   },
   "git": {
     "title": "Git Diff",
@@ -39,7 +38,9 @@
     "save_outside_workspace": "Cannot save outside the workspace",
     "save_conflict": "Workspace file changed after this diff was created; save was cancelled",
     "save_failed": "Cannot save file: {}",
-    "saved": "Saved successfully"
+    "saved": "Saved successfully",
+    "more_line": "+{} line",
+    "more_lines": "+{} lines"
   },
   "note": {
     "title": "Note",
@@ -69,8 +70,7 @@
       "view_full_thinking": "View full thinking",
       "view_full_result": "View full result",
       "message_moved_to_input": "Message moved to the input box",
-      "session_busy": "Session is busy",
-      "file_not_found": "File not found: {}"
+      "session_busy": "Session is busy"
     },
     "visuals": {
       "error": "ERROR",

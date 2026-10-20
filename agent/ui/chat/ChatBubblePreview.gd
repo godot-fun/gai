@@ -29,7 +29,7 @@ static func apply(rich_text: RichTextLabel, view_button: Button, line_label: Lab
 	var extra_lines := extra_line_count(body)
 	line_label.visible = extra_lines > 0
 	if extra_lines > 0:
-		var line_key := "common.more_line" if extra_lines == 1 else "common.more_lines"
+		var line_key := "git.more_line" if extra_lines == 1 else "git.more_lines"
 		line_label.text = StringUtils.format(I18n.t(line_key), extra_lines)
 	rich_text.text = text
 	rich_text.visible = StringUtils.is_not_blank(body)
