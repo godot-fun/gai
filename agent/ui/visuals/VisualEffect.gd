@@ -11,6 +11,13 @@ extends Control
 var fade_tween: Tween
 
 
+func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	set_anchors_preset(Control.PRESET_FULL_RECT)
+	visible = false
+	pass
+
+
 func get_visual_type() -> VisualType.Type:
 	return VisualType.Type.NONE
 

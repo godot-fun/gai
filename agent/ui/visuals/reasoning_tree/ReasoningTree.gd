@@ -46,9 +46,7 @@ var pulse_spawn_elapsed: float = 0.0
 
 
 func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	set_anchors_preset(Control.PRESET_FULL_RECT)
-	visible = false
+	super._ready()
 	build_completion_particles()
 	pass
 

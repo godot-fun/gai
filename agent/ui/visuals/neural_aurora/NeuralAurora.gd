@@ -58,8 +58,7 @@ var ended_with_error: bool = false
 
 
 func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	super._ready()
 	field = ColorRect.new()
 	field.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	field.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -76,7 +75,6 @@ func _ready() -> void:
 	tool_label.size = Vector2(360.0, ControlSize.md)
 	tool_label.modulate.a = 0.0
 	add_child(tool_label)
-	visible = false
 	# Load the GPU program without blocking the UI thread. Lifecycle events may arrive while the
 	# resource is loading; their CPU state is retained and sent on the next `_process()` frame.
 	var loaded_shader: Shader = await ResourceHelper.async_load(SHADER_PATH)

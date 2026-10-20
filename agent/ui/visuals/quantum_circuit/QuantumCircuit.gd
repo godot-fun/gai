@@ -35,10 +35,8 @@ var tool_tint: Color
 
 
 func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	super._ready()
 	refresh_palette()
-	visible = false
 	pass
 
 

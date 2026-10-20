@@ -28,11 +28,9 @@ var fill_material: ShaderMaterial
 
 
 func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	super._ready()
 	tai_chi_element_background.create(self)
 	create_fill_layer()
-	visible = false
 	pass
 
 

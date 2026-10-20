@@ -52,8 +52,7 @@ var tool_badge_hold_seconds: float = 0.0
 
 
 func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	super._ready()
 	field = ColorRect.new()
 	field.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	field.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -74,7 +73,6 @@ func _ready() -> void:
 	labels.add_child(tool_status_label)
 	tool_badge.add_child(labels)
 	add_child(tool_badge)
-	visible = false
 	# Loading asynchronously prevents a first-use hitch. State can safely accumulate before the
 	# shader arrives because every current value is uploaded from one place on each visible frame.
 	var loaded_shader: Shader = await ResourceHelper.async_load(SHADER_PATH)

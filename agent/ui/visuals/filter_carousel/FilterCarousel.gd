@@ -216,10 +216,9 @@ var current_preset_name: String = ""
 
 
 func _ready() -> void:
+	super._ready()
 	# A white ColorRect makes the shader cover the viewport while SCREEN_UV samples everything
 	# already drawn below this VisualEffect. Mouse input must continue to reach the application UI.
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	set_anchors_preset(Control.PRESET_FULL_RECT)
 	screen_rect = ColorRect.new()
 	screen_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	screen_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -228,7 +227,6 @@ func _ready() -> void:
 	filter_material.set_shader_parameter("strength", 0.0)
 	screen_rect.material = filter_material
 	add_child(screen_rect)
-	visible = false
 	pass
 
 

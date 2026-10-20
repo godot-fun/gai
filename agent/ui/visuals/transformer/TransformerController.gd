@@ -19,9 +19,7 @@ var pipeline_running: bool = false
 
 
 func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	set_anchors_preset(Control.PRESET_FULL_RECT)
-	visible = false
+	super._ready()
 	tokenizer = TokenizerEffect.new()
 	tokenizer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(tokenizer)

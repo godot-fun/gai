@@ -59,13 +59,6 @@ var end_error_message: String = ""
 var radar_echoes: Dictionary[int, float] = {}
 
 
-func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	set_anchors_preset(Control.PRESET_FULL_RECT)
-	visible = false
-	pass
-
-
 func get_visual_type() -> VisualType.Type:
 	return VisualType.Type.CYBER_COMMAND_DECK
 

@@ -81,12 +81,10 @@ var current_turn_has_mountain: bool = false
 
 
 func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	super._ready()
 	# Parent-drawn birds stay above every relative negative-z landscape layer.
 	z_index = 100
 	create_cloud_canvas()
-	visible = false
 	pass
 
 
