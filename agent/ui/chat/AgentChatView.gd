@@ -112,7 +112,8 @@ func on_chat_entry_update(session_id: int, entry: ChatEntry, _channel: String) -
 		return
 	var rich_text: RichTextLabel = chat_list_cache.get_rich_text(session_id, entry)
 	if rich_text == null:
-		rich_text = chat_list_cache.append_entry(session_id, entry)
+		chat_list_cache.append_entry(session_id, entry)
+		rich_text = chat_list_cache.get_rich_text(session_id, entry)
 	if rich_text != null:
 		chat_bubble_refresh_buffer.enqueue(rich_text, entry)
 	pass

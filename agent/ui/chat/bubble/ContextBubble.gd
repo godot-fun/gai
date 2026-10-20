@@ -29,7 +29,7 @@ static func append(
 	session_id: int,
 	entry: ChatEntry,
 	panel_style: StyleBoxFlat
-) -> RichTextLabel:
+) -> void:
 	var wrapper: PanelContainer = PanelContainer.new()
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wrapper.add_theme_stylebox_override("panel", panel_style)
@@ -79,7 +79,7 @@ static func append(
 
 	chat_list.add_child(wrapper)
 	refresh(rich_text, entry, wrapper)
-	return rich_text
+	pass
 
 
 static func on_delete_pressed(session_id: int, entry: ChatEntry) -> void:

@@ -17,7 +17,7 @@ static func append(
 	panel_style: StyleBoxFlat,
 	text_color: Color,
 	title_color: Color = Colors.secondary_text
-) -> RichTextLabel:
+) -> void:
 	var host: Control = Control.new()
 	host.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.clip_contents = false
@@ -91,7 +91,7 @@ static func append(
 	host.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
 	chat_list.add_child(host)
 	sync_layout.call_deferred(host, panel, moving_border)
-	return rich_text
+	pass
 
 
 ## Both actions drop the message — the body goes back to the chat input for re-editing

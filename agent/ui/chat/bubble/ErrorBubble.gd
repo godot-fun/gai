@@ -14,7 +14,7 @@ static func append(
 	panel_style: StyleBoxFlat,
 	session_id: int,
 	running: bool
-) -> RichTextLabel:
+) -> void:
 	var wrapper: PanelContainer = PanelContainer.new()
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wrapper.add_theme_stylebox_override("panel", panel_style)
@@ -49,7 +49,7 @@ static func append(
 
 	chat_list.add_child(wrapper)
 	refresh_resume_buttons(chat_list, running)
-	return rich_text
+	pass
 
 
 static func refresh(rich_text: RichTextLabel, entry: ChatEntry) -> void:

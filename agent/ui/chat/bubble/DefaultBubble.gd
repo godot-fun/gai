@@ -10,7 +10,7 @@ static func append(
 	panel_style: StyleBoxFlat,
 	text_color: Color,
 	title_color: Color = Colors.secondary_text
-) -> RichTextLabel:
+) -> void:
 	var wrapper: PanelContainer = PanelContainer.new()
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wrapper.add_theme_stylebox_override("panel", panel_style)
@@ -36,4 +36,4 @@ static func append(
 	wrapper.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
 
 	chat_list.add_child(wrapper)
-	return rich_text
+	pass

@@ -84,11 +84,12 @@ func get_active_list() -> VBoxContainer:
 	return get_list(active_session_id)
 
 
-func append_entry(session_id: int, entry: ChatEntry) -> RichTextLabel:
+func append_entry(session_id: int, entry: ChatEntry) -> void:
 	var list := get_list(session_id)
 	if list == null:
-		return null
-	return ChatBubbleFactory.append(list, session_id, entry)
+		return
+	ChatBubbleFactory.append(list, session_id, entry)
+	pass
 
 
 ## chat_entries index matches VBoxContainer child order; label lives on wrapper meta.

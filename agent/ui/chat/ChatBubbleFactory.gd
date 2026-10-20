@@ -6,36 +6,37 @@ extends Object
 const META_BUBBLE_RICH_TEXT: String = "bubble_rich_text"
 
 
-static func append(chat_list: VBoxContainer, session_id: int, entry: ChatEntry) -> RichTextLabel:
+static func append(chat_list: VBoxContainer, session_id: int, entry: ChatEntry) -> void:
 	match entry.kind:
 		ChatEntry.KIND_SYSTEM:
-			return DefaultBubble.append(chat_list, entry, build_style(ThemeColor.promote(Colors.info_surface, Colors.am_2)), Colors.secondary_text, Colors.info)
+			DefaultBubble.append(chat_list, entry, build_style(ThemeColor.promote(Colors.info_surface, Colors.am_2)), Colors.secondary_text, Colors.info)
 		ChatEntry.KIND_SKILL, ChatEntry.KIND_MEMORY, ChatEntry.KIND_AGENT_PROMPT:
-			return ContextBubble.append(chat_list, session_id, entry, build_style(Colors.info_surface))
+			ContextBubble.append(chat_list, session_id, entry, build_style(Colors.info_surface))
 		ChatEntry.KIND_USER:
-			return UserBubble.append(chat_list, session_id, entry, build_style(ThemeColor.card_surface), Colors.primary_text)
+			UserBubble.append(chat_list, session_id, entry, build_style(ThemeColor.card_surface), Colors.primary_text)
 		ChatEntry.KIND_THINKING:
-			return ThinkingBubble.append(chat_list, entry, build_style(Colors.purple_surface))
+			ThinkingBubble.append(chat_list, entry, build_style(Colors.purple_surface))
 		ChatEntry.KIND_AGENT:
-			return AgentBubble.append(chat_list, entry, build_style(Colors.surface), Colors.primary_text)
+			AgentBubble.append(chat_list, entry, build_style(Colors.surface), Colors.primary_text)
 		ChatEntry.KIND_TOOL:
-			return ToolBubble.append(chat_list, entry, build_style(Colors.success_surface))
+			ToolBubble.append(chat_list, entry, build_style(Colors.success_surface))
 		ChatEntry.KIND_WEB_TOOL:
-			return WebToolBubble.append(chat_list, entry, build_style(Colors.info_surface))
+			WebToolBubble.append(chat_list, entry, build_style(Colors.info_surface))
 		ChatEntry.KIND_FILE_TOOL:
-			return FileBubble.append(chat_list, entry, build_style(Colors.warning_surface))
+			FileBubble.append(chat_list, entry, build_style(Colors.warning_surface))
 		ChatEntry.KIND_GIT_DIFF:
-			return GitDiffBubble.append(chat_list, session_id, entry, build_style(Colors.surface))
+			GitDiffBubble.append(chat_list, session_id, entry, build_style(Colors.surface))
 		ChatEntry.KIND_RESULT:
-			return ResultBubble.append(chat_list, entry, build_style(Colors.neutral_surface))
+			ResultBubble.append(chat_list, entry, build_style(Colors.neutral_surface))
 		ChatEntry.KIND_WEB:
-			return WebResultBubble.append(chat_list, entry, build_style(Colors.neutral_surface))
+			WebResultBubble.append(chat_list, entry, build_style(Colors.neutral_surface))
 		ChatEntry.KIND_ERROR:
-			return ErrorBubble.append(chat_list, entry, build_style(Colors.surface), session_id, RuntimeManager.is_running(session_id))
+			ErrorBubble.append(chat_list, entry, build_style(Colors.surface), session_id, RuntimeManager.is_running(session_id))
 		ChatEntry.KIND_COMPACTION:
-			return CompactionBubble.append(chat_list, entry, build_style(ThemeColor.alpha_theme_color(0.08)))
+			CompactionBubble.append(chat_list, entry, build_style(ThemeColor.alpha_theme_color(0.08)))
 		_:
-			return DefaultBubble.append(chat_list, entry, build_style(Colors.surface), Colors.secondary_text)
+			DefaultBubble.append(chat_list, entry, build_style(Colors.surface), Colors.secondary_text)
+	pass
 
 
 ## Push entry.body into the bubble RichTextLabel using the refresh rules for its kind.

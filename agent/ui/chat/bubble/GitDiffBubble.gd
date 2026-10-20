@@ -3,7 +3,7 @@ extends RefCounted
 
 ## Git diff bubble appended after agent_end, listing files changed from the run checkpoint.
 
-static func append(chat_list: VBoxContainer, session_id: int, entry: ChatEntry, panel_style: StyleBoxFlat) -> RichTextLabel:
+static func append(chat_list: VBoxContainer, session_id: int, entry: ChatEntry, panel_style: StyleBoxFlat) -> void:
 	var wrapper := PanelContainer.new()
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wrapper.visible = StringUtils.is_not_blank(entry.body)
@@ -53,7 +53,7 @@ static func append(chat_list: VBoxContainer, session_id: int, entry: ChatEntry, 
 	wrapper.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
 	chat_list.add_child(wrapper)
 	refresh(rich_text, entry)
-	return rich_text
+	pass
 
 
 static func refresh(rich_text: RichTextLabel, entry: ChatEntry) -> void:

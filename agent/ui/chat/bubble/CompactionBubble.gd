@@ -8,7 +8,7 @@ const META_EXPANDED := "compaction_bubble_expanded"
 const META_EXPAND_BUTTON := "compaction_bubble_expand_button"
 
 
-static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: StyleBoxFlat) -> RichTextLabel:
+static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: StyleBoxFlat) -> void:
 	var wrapper := PanelContainer.new()
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wrapper.add_theme_stylebox_override("panel", panel_style)
@@ -46,7 +46,7 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 	wrapper.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
 	chat_list.add_child(wrapper)
 	refresh(rich_text, entry, wrapper)
-	return rich_text
+	pass
 
 
 static func on_expand_pressed(wrapper: PanelContainer, entry: ChatEntry) -> void:

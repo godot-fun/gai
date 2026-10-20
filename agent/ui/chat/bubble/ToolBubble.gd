@@ -3,7 +3,7 @@ extends Object
 
 ## Tool-call bubble showing the command, query, path, or primary argument sent to a tool.
 
-static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: StyleBoxFlat) -> RichTextLabel:
+static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: StyleBoxFlat) -> void:
 	var wrapper := PanelContainer.new()
 	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	wrapper.add_theme_stylebox_override("panel", panel_style)
@@ -24,7 +24,7 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 	wrapper.set_meta(ChatBubbleFactory.META_BUBBLE_RICH_TEXT, rich_text)
 	chat_list.add_child(wrapper)
 	refresh(rich_text, entry)
-	return rich_text
+	pass
 
 
 static func refresh(rich_text: RichTextLabel, entry: ChatEntry) -> void:
