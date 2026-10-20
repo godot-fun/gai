@@ -26,7 +26,7 @@ func setup(p_button: Button, p_dialog: FileDialog) -> void:
 func apply_locale() -> void:
 	button.tooltip_text = workspace_tooltip()
 	dialog.title = I18n.t("agent.workspace.dialog_title")
-	dialog.ok_button_text = I18n.t("agent.common.select")
+	dialog.ok_button_text = I18n.t("common.select")
 	pass
 
 

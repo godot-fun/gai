@@ -26,13 +26,17 @@ func display_label(catalog_id: String) -> String:
 	var translated := I18n.t(node_port_key)
 	if translated != node_port_key:
 		return translated
-	var port_key := "workflow.port." + id
+	var port_key := "common.file" if id == "item" else "common." + id
 	translated = I18n.t(port_key)
 	if translated != port_key:
 		return translated
-	var type_key := "workflow.port_type." + type
-	translated = I18n.t(type_key)
-	return type if translated == type_key else translated
+	return type_label(type)
+
+
+static func type_label(type_name: String) -> String:
+	var key := "common." + type_name
+	var translated := I18n.t(key)
+	return type_name if translated == key else translated
 
 
 var port_type: int:

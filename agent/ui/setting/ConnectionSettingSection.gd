@@ -23,7 +23,7 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 	api_url_label = api_result[1]
 	api_url_edit.gui_input.connect(on_api_url_input)
 	set_up_history_panel(dialog)
-	var model_result := add_field(parent, I18n.t("agent.settings.model"), ApiSetting.DEFAULT_MODEL, I18n.t("agent.settings.model_help"))
+	var model_result := add_field(parent, I18n.t("common.model"), ApiSetting.DEFAULT_MODEL, I18n.t("agent.settings.model_help"))
 	model_edit = model_result[0]
 	model_label = model_result[1]
 	var token_result := add_field(parent, I18n.t("agent.settings.api_token"), "sk-...", I18n.t("agent.settings.token_help"))
@@ -197,7 +197,7 @@ func refresh_history_hover() -> void:
 func apply_locale() -> void:
 	heading_label.text = I18n.t("agent.settings.heading")
 	api_url_label.text = I18n.t("agent.settings.api_url")
-	model_label.text = I18n.t("agent.settings.model")
+	model_label.text = I18n.t("common.model")
 	api_token_label.text = I18n.t("agent.settings.api_token")
 	proxy_label.text = I18n.t("agent.settings.proxy")
 	var help_keys := ["api_url_help", "model_help", "token_help", "proxy_help"]

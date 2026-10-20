@@ -118,11 +118,11 @@ func apply_text_tokens() -> void:
 
 
 func style_toolbar_buttons() -> void:
-	style_toolbar_button(new_button, tr("workflow.toolbar.new"))
-	style_toolbar_button(load_button, tr("workflow.toolbar.load"))
-	style_toolbar_button(save_button, tr("workflow.toolbar.save"))
+	style_toolbar_button(new_button, tr("common.new"))
+	style_toolbar_button(load_button, tr("common.open"))
+	style_toolbar_button(save_button, tr("common.save"))
 	style_toolbar_button(delete_button, tr("workflow.toolbar.delete"))
-	style_toolbar_button(log_button, tr("workflow.toolbar.log"))
+	style_toolbar_button(log_button, tr("common.log"))
 	pass
 
 
@@ -192,26 +192,26 @@ func set_palette_item_text(item: TreeItem, label: String) -> void:
 
 
 func apply_ui_locale() -> void:
-	new_button.text = tr("workflow.toolbar.new")
-	load_button.text = tr("workflow.toolbar.load")
-	save_button.text = tr("workflow.toolbar.save")
+	new_button.text = tr("common.new")
+	load_button.text = tr("common.open")
+	save_button.text = tr("common.save")
 	delete_button.text = tr("workflow.toolbar.delete")
-	log_button.text = tr("workflow.toolbar.log")
+	log_button.text = tr("common.log")
 	if running_pipeline:
-		run_button.text = tr("workflow.toolbar.stop")
+		run_button.text = tr("common.stop")
 	else:
-		run_button.text = tr("workflow.toolbar.run")
+		run_button.text = tr("common.run")
 	palette_title.text = tr("workflow.palette.title")
 	palette_hint.text = tr("workflow.palette.hint")
 	palette_hint.add_theme_color_override("font_color", Colors.secondary_text)
 	save_dialog.title = tr("workflow.dialog.save_title")
-	save_dialog.ok_button_text = tr("workflow.toolbar.save")
+	save_dialog.ok_button_text = tr("common.save")
 	save_dialog.filters = PackedStringArray([
 		"*.workflow.json ; " + tr("workflow.dialog.workflow_filter"),
 		"* ; " + tr("workflow.dialog.all_files"),
 	])
 	load_dialog.title = tr("workflow.dialog.load_title")
-	load_dialog.ok_button_text = tr("workflow.toolbar.load")
+	load_dialog.ok_button_text = tr("common.open")
 	load_dialog.filters = PackedStringArray([
 		"*.workflow.json ; " + tr("workflow.dialog.workflow_filter"),
 	])
@@ -402,11 +402,11 @@ func set_run_button_running(running: bool) -> void:
 	if running:
 		apply_run_button_style(Colors.error)
 		run_button.icon = make_stop_icon(Typography.title_small_size, Color.WHITE)
-		run_button.text = tr("workflow.toolbar.stop")
+		run_button.text = tr("common.stop")
 	else:
 		apply_run_button_style(Colors.success)
 		run_button.icon = make_play_icon(Typography.title_small_size, Color.WHITE)
-		run_button.text = tr("workflow.toolbar.run")
+		run_button.text = tr("common.run")
 	pass
 
 
@@ -418,7 +418,7 @@ func style_run_button() -> void:
 	run_button.focus_mode = Control.FOCUS_NONE
 	run_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	run_button.icon = make_play_icon(Typography.title_small_size, Color.WHITE)
-	run_button.text = tr("workflow.toolbar.run")
+	run_button.text = tr("common.run")
 	run_button.add_theme_constant_override("icon_max_width", Typography.title_small_size)
 	run_button.add_theme_constant_override("icon_max_height", Typography.title_small_size)
 	run_button.add_theme_constant_override("h_separation", Margin.ma_2)

@@ -48,10 +48,7 @@ func create_path_row(port_id: String, label_text: String, port_type: int) -> HBo
 	field.custom_minimum_size.x = FIELD_MIN_WIDTH
 	field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var type_name := PortDef.type_to_string(port_type)
-	var type_key := "workflow.port_type." + type_name
-	var translated_type := tr(type_key)
-	if translated_type == type_key:
-		translated_type = type_name
+	var translated_type := PortDef.type_label(type_name)
 	field.placeholder_text = tr("workflow.node.path_placeholder").format([translated_type], StringUtils.EMPTY_JSON)
 	style_field(field)
 	row.add_child(field)

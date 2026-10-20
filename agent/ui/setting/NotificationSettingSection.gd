@@ -76,7 +76,7 @@ func build_folder_dialog(dialog: ConfirmationDialog) -> void:
 	sound_folder_dialog.title = I18n.t("agent.settings.sound_folder_title")
 	sound_folder_dialog.file_mode = FileDialog.FILE_MODE_OPEN_DIR
 	sound_folder_dialog.access = FileDialog.ACCESS_FILESYSTEM
-	sound_folder_dialog.ok_button_text = I18n.t("agent.common.select")
+	sound_folder_dialog.ok_button_text = I18n.t("common.select")
 	sound_folder_dialog.size = FOLDER_DIALOG_SIZE
 	sound_folder_dialog.dir_selected.connect(on_sound_folder_selected)
 	dialog.add_child(sound_folder_dialog)
@@ -165,7 +165,7 @@ func apply_locale() -> void:
 	sound_folder_label.tooltip_text = I18n.t("agent.settings.sound_folder_help")
 	sound_folder_edit.tooltip_text = I18n.t("agent.settings.sound_folder_help")
 	sound_folder_dialog.title = I18n.t("agent.settings.sound_folder_title")
-	sound_folder_dialog.ok_button_text = I18n.t("agent.common.select")
+	sound_folder_dialog.ok_button_text = I18n.t("common.select")
 	pass
 
 

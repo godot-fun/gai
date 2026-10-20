@@ -42,13 +42,13 @@ func create_item_type_row() -> HBoxContainer:
 	item_type_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	item_type_option.custom_minimum_size.y = ControlSize.md
 	item_type_option.add_theme_font_size_override("font_size", Typography.body_medium_size)
-	item_type_option.add_item(tr("workflow.port_type." + PortDef.TYPE_NAME_AUDIO), 0)
+	item_type_option.add_item(PortDef.type_label(PortDef.TYPE_NAME_AUDIO), 0)
 	item_type_option.set_item_metadata(0, PortDef.TYPE_NAME_AUDIO)
-	item_type_option.add_item(tr("workflow.port_type." + PortDef.TYPE_NAME_IMAGE), 1)
+	item_type_option.add_item(PortDef.type_label(PortDef.TYPE_NAME_IMAGE), 1)
 	item_type_option.set_item_metadata(1, PortDef.TYPE_NAME_IMAGE)
-	item_type_option.add_item(tr("workflow.port_type." + PortDef.TYPE_NAME_VIDEO), 2)
+	item_type_option.add_item(PortDef.type_label(PortDef.TYPE_NAME_VIDEO), 2)
 	item_type_option.set_item_metadata(2, PortDef.TYPE_NAME_VIDEO)
-	item_type_option.add_item(tr("workflow.port_type." + PortDef.TYPE_NAME_TEXT), 3)
+	item_type_option.add_item(PortDef.type_label(PortDef.TYPE_NAME_TEXT), 3)
 	item_type_option.set_item_metadata(3, PortDef.TYPE_NAME_TEXT)
 	PopupMenuStyle.apply(item_type_option.get_popup())
 	item_type_option.item_selected.connect(on_batch_item_type_selected)

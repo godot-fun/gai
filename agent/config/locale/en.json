@@ -2,11 +2,28 @@
   "locale": "en",
   "common": {
     "copy": "Copy",
-    "copy_tooltip": "Copy message",
     "copied": "Copied",
     "delete": "Delete",
     "resume": "Resume",
-    "file_not_found": "File not found: {}"
+    "select": "Select",
+    "cancel": "Cancel",
+    "save": "Save",
+    "open": "Open",
+    "new": "New",
+    "stop": "Stop",
+    "run": "Run",
+    "log": "Log",
+    "model": "Model",
+    "show": "Show",
+    "hide": "Hide",
+    "collapse": "Collapse",
+    "file_not_found": "File not found: {}",
+    "audio": "Audio",
+    "image": "Image",
+    "video": "Video",
+    "text": "Text",
+    "folder": "Folder",
+    "file": "File"
   },
   "git": {
     "title": "Git Diff",
@@ -38,9 +55,7 @@
     "save_outside_workspace": "Cannot save outside the workspace",
     "save_conflict": "Workspace file changed after this diff was created; save was cancelled",
     "save_failed": "Cannot save file: {}",
-    "saved": "Saved successfully",
-    "more_line": "+{} line",
-    "more_lines": "+{} lines"
+    "saved": "Saved successfully"
   },
   "note": {
     "title": "Note",
@@ -54,23 +69,20 @@
     "mode_preview": "Markdown preview mode"
   },
   "agent": {
-    "common": {
-      "select": "Select",
-      "show": "Show",
-      "hide": "Hide",
-      "expand_lines": "Expand (+{} line{})",
-      "collapse": "Collapse",
-      "expand_tooltip": "Show full context",
-      "collapse_tooltip": "Show the first 8 lines"
-    },
     "chat": {
+      "copy_tooltip": "Copy message",
       "delete_context_tooltip": "Delete from here",
       "delete_message_tooltip": "Delete from here (message goes back to the input box, workspace is kept)",
       "resume_tooltip": "Resume this task",
       "view_full_thinking": "View full thinking",
       "view_full_result": "View full result",
       "message_moved_to_input": "Message moved to the input box",
-      "session_busy": "Session is busy"
+      "session_busy": "Session is busy",
+      "expand_lines": "Expand (+{} line{})",
+      "expand_tooltip": "Show full context",
+      "collapse_tooltip": "Show the first 8 lines",
+      "more_line": "+{} line",
+      "more_lines": "+{} lines"
     },
     "visuals": {
       "error": "ERROR",
@@ -128,7 +140,6 @@
     },
     "toolbar": {
       "title": "Code Agent Workspace",
-      "log": "Log",
       "view_log": "View system log",
       "open_workflow": "Open workflow",
       "theme_color": "Theme color",
@@ -186,16 +197,13 @@
     "input": {
       "placeholder": "Ask gai Code Agent to read, edit, or run commands…  (Enter to send, Shift+Enter for newline)",
       "click_to_ask": "Click to ask gai Code Agent…",
-      "stop": "Stop",
       "send": "Send (Enter)",
-      "compacting": "Compacting context…",
       "queued": "Queued ({})",
       "continue_queue": "Continue",
       "delete_queued": "Delete queued message"
     },
     "sense": {
       "pick_title": "Pick",
-      "pick_cancel": "Cancel",
       "pick_pending": "Generating…",
       "pick_skipped": "No voice",
       "label_voice": "Voice",
@@ -207,7 +215,6 @@
       "settings_tooltip": "Sense input settings",
       "input_method": "Input method",
       "enabled_tooltip": "Enable or disable Sense input",
-      "model": "Model",
       "local_model": "Local model",
       "remote_model": "Remote model",
       "hotkey": "Shortcut",
@@ -228,8 +235,6 @@
       "compact_running": "Wait for the current task to finish before compacting",
       "compact_empty": "There is no conversation to compact",
       "compact_failed": "Context compaction failed. Try again",
-      "summary_expand": "Expand (+{} line{})",
-      "summary_collapse": "Collapse",
       "summary_expand_tooltip": "Show full summary",
       "summary_collapse_tooltip": "Show the first 8 lines"
     },
@@ -241,7 +246,6 @@
       "heading": "AI connection",
       "api_url": "API url",
       "api_url_help": "Full chat-completions endpoint URL",
-      "model": "Model",
       "model_help": "Model sent with each request",
       "proxy": "Proxy",
       "proxy_help": "Optional HTTP/HTTPS proxy",
@@ -274,13 +278,7 @@
     "window_title": "Skills Workflow — {}",
     "untitled": "Untitled",
     "toolbar": {
-      "new": "New",
-      "load": "Open",
-      "save": "Save",
-      "delete": "Delete Node",
-      "log": "Log",
-      "run": "Run",
-      "stop": "Stop"
+      "delete": "Delete Node"
     },
     "locale_switch": {
       "to_en": "EN",
@@ -300,34 +298,7 @@
     "node": {
       "connect_upstream": "Connect upstream",
       "path_placeholder": "Select or enter {}",
-      "output_arrow": "→ {}"
-    },
-    "batch": {
-      "glob": "Glob",
-      "output_type": "Output Type"
-    },
-    "category": {
-      "source": "Input",
-      "audio": "Audio",
-      "image": "Image",
-      "video": "Video"
-    },
-    "port_type": {
-      "audio": "Audio",
-      "image": "Image",
-      "video": "Video",
-      "text": "Text",
-      "folder": "Folder"
-    },
-    "port": {
-      "audio": "Audio",
-      "image": "Image",
-      "video": "Video",
-      "text": "Text",
-      "folder": "Folder",
-      "item": "File"
-    },
-    "node": {
+      "output_arrow": "→ {}",
       "input-audio": "input-audio",
       "input-image": "input-image",
       "input-video": "input-video",
@@ -356,6 +327,13 @@
       "image-remove-background": "image-remove-background",
       "image-remove-white-background": "image-remove-white-background",
       "image-resize": "image-resize"
+    },
+    "batch": {
+      "glob": "Glob",
+      "output_type": "Output Type"
+    },
+    "category": {
+      "source": "Input"
     },
     "node_port": {
       "audio-to-wav.out": "WAV",

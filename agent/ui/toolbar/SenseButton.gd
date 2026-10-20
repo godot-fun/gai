@@ -97,7 +97,7 @@ func build_dialog() -> void:
 	enabled_check.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	enabled_check.toggled.connect(on_enabled_toggled)
 	enabled_control.add_child(enabled_check)
-	var model_field := make_inline_field(left_settings, I18n.t("agent.sense.model"))
+	var model_field := make_inline_field(left_settings, I18n.t("common.model"))
 	backend_select = OptionButton.new()
 	backend_select.custom_minimum_size = Vector2(0, 38)
 	backend_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -317,7 +317,7 @@ func on_option_popup_hide() -> void:
 func apply_locale() -> void:
 	title_label.text = I18n.t("agent.sense.settings_title")
 	field_labels[0].text = I18n.t("agent.sense.input_method")
-	field_labels[1].text = I18n.t("agent.sense.model")
+	field_labels[1].text = I18n.t("common.model")
 	field_labels[2].text = I18n.t("agent.sense.hotkey")
 	field_labels[3].text = I18n.t("agent.sense.system_prompt")
 	field_labels[4].text = I18n.t("agent.sense.prompt_search")

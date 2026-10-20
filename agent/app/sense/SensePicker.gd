@@ -401,7 +401,7 @@ func make_cancel_row(label_size: int) -> PanelContainer:
 	)
 	var label := Label.new()
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.text = I18n.t("agent.sense.pick_cancel")
+	label.text = I18n.t("common.cancel")
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_override("font", Fonts.regular())
 	label.add_theme_font_size_override("font_size", label_size)

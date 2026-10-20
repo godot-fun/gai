@@ -70,7 +70,7 @@ func refresh(entry: ChatEntry) -> void:
 			else:
 				var hidden_lines := ChatBubblePreview.hidden_line_count(entry.body, PREVIEW_LINES)
 				expand_button.text = StringUtils.format(
-					I18n.t("common.expand_lines"),
+					I18n.t("agent.chat.expand_lines"),
 					hidden_lines,
 					"" if hidden_lines == 1 else "s"
 				)

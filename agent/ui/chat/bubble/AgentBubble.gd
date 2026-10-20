@@ -64,5 +64,5 @@ static func on_copy_pressed(entry: ChatEntry) -> void:
 
 
 static func style_copy_button(button: Button, bubble_bg: Color) -> void:
-	style_header_button(button, bubble_bg, I18n.t("common.copy_tooltip"), 40.0)
+	style_header_button(button, bubble_bg, I18n.t("agent.chat.copy_tooltip"), 40.0)
 	pass

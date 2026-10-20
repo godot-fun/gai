@@ -18,7 +18,7 @@ func setup(p_button: Button) -> void:
 
 func apply_theme() -> void:
 	AgentToolbarButton.style(button, I18n.t("agent.toolbar.view_log"))
-	button.text = I18n.t("agent.toolbar.log")
+	button.text = I18n.t("common.log")
 	pass
 
 

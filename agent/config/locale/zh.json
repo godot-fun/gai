@@ -2,11 +2,28 @@
   "locale": "zh",
   "common": {
     "copy": "复制",
-    "copy_tooltip": "复制消息",
     "copied": "已复制",
     "delete": "删除",
     "resume": "继续",
-    "file_not_found": "文件不存在：{}"
+    "select": "选择",
+    "cancel": "取消",
+    "save": "保存",
+    "open": "打开",
+    "new": "新建",
+    "stop": "停止",
+    "run": "运行",
+    "log": "日志",
+    "model": "模型",
+    "show": "显示",
+    "hide": "隐藏",
+    "collapse": "收起",
+    "file_not_found": "文件不存在：{}",
+    "audio": "音频",
+    "image": "图片",
+    "video": "视频",
+    "text": "文本",
+    "folder": "文件夹",
+    "file": "文件"
   },
   "git": {
     "title": "Git 差异",
@@ -38,9 +55,7 @@
     "save_outside_workspace": "无法保存到工作区之外",
     "save_conflict": "创建此差异后工作区文件已发生变化，保存已取消",
     "save_failed": "无法保存文件：{}",
-    "saved": "保存成功",
-    "more_line": "+{} 行",
-    "more_lines": "+{} 行"
+    "saved": "保存成功"
   },
   "note": {
     "title": "笔记",
@@ -54,23 +69,20 @@
     "mode_preview": "Markdown 预览模式"
   },
   "agent": {
-    "common": {
-      "select": "选择",
-      "show": "显示",
-      "hide": "隐藏",
-      "expand_lines": "展开（+{} 行）",
-      "collapse": "收起",
-      "expand_tooltip": "显示完整上下文",
-      "collapse_tooltip": "仅显示前 8 行"
-    },
     "chat": {
+      "copy_tooltip": "复制消息",
       "delete_context_tooltip": "从此处删除",
       "delete_message_tooltip": "从此处删除（消息将返回输入框，工作区保持不变）",
       "resume_tooltip": "继续执行此任务",
       "view_full_thinking": "查看完整思考内容",
       "view_full_result": "查看完整结果",
       "message_moved_to_input": "消息已移回输入框",
-      "session_busy": "会话正忙"
+      "session_busy": "会话正忙",
+      "expand_lines": "展开（+{} 行）",
+      "expand_tooltip": "显示完整上下文",
+      "collapse_tooltip": "仅显示前 8 行",
+      "more_line": "+{} 行",
+      "more_lines": "+{} 行"
     },
     "visuals": {
       "error": "错误",
@@ -128,7 +140,6 @@
     },
     "toolbar": {
       "title": "代码智能体工作区",
-      "log": "日志",
       "view_log": "查看系统日志",
       "open_workflow": "打开工作流",
       "theme_color": "主题颜色",
@@ -186,16 +197,13 @@
     "input": {
       "placeholder": "让 gai Code Agent 读取、编辑文件或运行命令…（Enter 发送，Shift+Enter 换行）",
       "click_to_ask": "点击询问 gai Code Agent…",
-      "stop": "停止",
       "send": "发送（Enter）",
-      "compacting": "正在压缩上下文…",
       "queued": "排队中（{}）",
       "continue_queue": "继续",
       "delete_queued": "删除排队消息"
     },
     "sense": {
       "pick_title": "选文",
-      "pick_cancel": "取消",
       "pick_pending": "生成中…",
       "pick_skipped": "无语音",
       "label_voice": "语音",
@@ -207,7 +215,6 @@
       "settings_tooltip": "Sense 输入法设置",
       "input_method": "输入法",
       "enabled_tooltip": "启用或关闭 Sense 输入法",
-      "model": "模型",
       "local_model": "本地模型",
       "remote_model": "远程模型",
       "hotkey": "唤起快捷键",
@@ -228,8 +235,6 @@
       "compact_running": "请等待当前任务完成后再压缩",
       "compact_empty": "当前没有可压缩的对话",
       "compact_failed": "上下文压缩失败，请重试",
-      "summary_expand": "展开（+{} 行）",
-      "summary_collapse": "收起",
       "summary_expand_tooltip": "显示完整摘要",
       "summary_collapse_tooltip": "仅显示前 8 行"
     },
@@ -241,7 +246,6 @@
       "heading": "AI 连接",
       "api_url": "API 地址",
       "api_url_help": "完整的聊天补全接口地址",
-      "model": "模型",
       "model_help": "每次请求使用的模型",
       "proxy": "代理",
       "proxy_help": "可选的 HTTP/HTTPS 代理",
@@ -274,13 +278,7 @@
     "window_title": "Skills Workflow — {}",
     "untitled": "未命名",
     "toolbar": {
-      "new": "新建",
-      "load": "打开",
-      "save": "保存",
-      "delete": "删除节点",
-      "log": "日志",
-      "run": "运行",
-      "stop": "停止"
+      "delete": "删除节点"
     },
     "locale_switch": {
       "to_en": "EN",
@@ -300,34 +298,7 @@
     "node": {
       "connect_upstream": "请连接上游",
       "path_placeholder": "选择或输入 {}",
-      "output_arrow": "→ {}"
-    },
-    "batch": {
-      "glob": "通配符",
-      "output_type": "输出类型"
-    },
-    "category": {
-      "source": "输入",
-      "audio": "音频",
-      "image": "图片",
-      "video": "视频"
-    },
-    "port_type": {
-      "audio": "音频",
-      "image": "图片",
-      "video": "视频",
-      "text": "文本",
-      "folder": "文件夹"
-    },
-    "port": {
-      "audio": "音频",
-      "image": "图片",
-      "video": "视频",
-      "text": "文本",
-      "folder": "文件夹",
-      "item": "文件"
-    },
-    "node": {
+      "output_arrow": "→ {}",
       "input-audio": "音频输入",
       "input-image": "图片输入",
       "input-video": "视频输入",
@@ -356,6 +327,13 @@
       "image-remove-background": "AI 抠图",
       "image-remove-white-background": "纯色背景抠图",
       "image-resize": "图片缩放"
+    },
+    "batch": {
+      "glob": "通配符",
+      "output_type": "输出类型"
+    },
+    "category": {
+      "source": "输入"
     },
     "node_port": {
       "audio-to-wav.out": "WAV",

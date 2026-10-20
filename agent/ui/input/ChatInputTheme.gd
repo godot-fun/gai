@@ -59,11 +59,11 @@ static func apply_send_button(send_button: Button, stop_action: bool, show_activ
 	send_button.disabled = compacting
 	if show_activity:
 		send_button.text = ""
-		send_button.tooltip_text = I18n.t("agent.input.compacting") if compacting else I18n.t("agent.visuals.running")
+		send_button.tooltip_text = I18n.t("agent.tokens.compacting") if compacting else I18n.t("agent.visuals.running")
 		send_button.icon = null
 		return
 	send_button.text = ""
-	send_button.tooltip_text = I18n.t("agent.input.stop") if stop_action else I18n.t("agent.input.send")
+	send_button.tooltip_text = I18n.t("common.stop") if stop_action else I18n.t("agent.input.send")
 	send_button.icon = null
 	pass
 
