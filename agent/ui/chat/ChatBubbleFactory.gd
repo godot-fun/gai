@@ -4,7 +4,7 @@ extends Object
 ## Creates the transcript bubble matching a chat entry kind.
 
 static var bubble_types: Dictionary[String, Script] = {
-	ChatEntry.KIND_SYSTEM: DefaultBubble,
+	ChatEntry.KIND_SYSTEM: ContextBubble,
 	ChatEntry.KIND_SKILL: ContextBubble,
 	ChatEntry.KIND_MEMORY: ContextBubble,
 	ChatEntry.KIND_AGENT_PROMPT: ContextBubble,

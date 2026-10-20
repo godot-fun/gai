@@ -17,9 +17,8 @@ func _init() -> void:
 	pass
 
 
-func apply_panel_style(bg_color: Color = Color.TRANSPARENT) -> void:
-	var style: StyleBox = StyleBoxEmpty.new() if bg_color == Color.TRANSPARENT else create_panel_style(bg_color)
-	add_theme_stylebox_override("panel", style)
+func apply_panel_style(bg_color: Color) -> void:
+	add_theme_stylebox_override("panel", create_panel_style(bg_color))
 	pass
 
 

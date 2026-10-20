@@ -13,7 +13,8 @@ const BORDER_HIGHLIGHT_STRENGTH: float = 1.0
 
 
 func apply(session_id: int, entry: ChatEntry) -> void:
-	apply_panel_style()
+	# The outer panel only hosts the overflow-capable border overlay; the inner panel draws the card.
+	add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	clip_contents = false
 
 	# Keep the overlay layout outside PanelContainer's child sorting so the animated border
@@ -27,7 +28,7 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	panel.set_offsets_preset(Control.PRESET_FULL_RECT)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override("panel", create_panel_style(ThemeColor.card_surface))
+	panel.add_theme_stylebox_override("panel", create_panel_style(Colors.info_surface))
 	host.add_child(panel)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
