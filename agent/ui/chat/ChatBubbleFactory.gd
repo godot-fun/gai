@@ -21,7 +21,7 @@ static func append(chat_list: VBoxContainer, session_id: int, entry: ChatEntry) 
 		ChatEntry.KIND_TOOL:
 			return ToolBubble.append(chat_list, entry, build_style(Colors.success_surface))
 		ChatEntry.KIND_WEB_TOOL:
-			return WebToolBubble.append(chat_list, entry, build_style(Colors.light_blue_surface))
+			return WebToolBubble.append(chat_list, entry, build_style(Colors.info_surface))
 		ChatEntry.KIND_FILE_TOOL:
 			return FileBubble.append(chat_list, entry, build_style(Colors.warning_surface))
 		ChatEntry.KIND_GIT_DIFF:
