@@ -11,7 +11,7 @@ var fx_material: ShaderMaterial
 
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	color = Color(1.0, 1.0, 1.0, 0.0)
+	color = Color.WHITE
 	set_anchors_preset(PRESET_FULL_RECT)
 	fx_material = ShaderMaterial.new()
 	fx_material.shader = SHADER
@@ -29,14 +29,14 @@ func _ready() -> void:
 	pass
 
 
+## Visibility gates drawing; strength is the shader fade. Theme refresh still re-enters here via
+## [method SessionRow.apply_style], so uniforms stay in sync while the row stays selected.
 func set_highlight(active: bool) -> void:
 	visible = active
-	color.a = 1.0 if active else 0.0
 	if fx_material == null:
 		return
 	fx_material.set_shader_parameter("strength", 1.0 if active else 0.0)
 	sync_uniforms()
-	queue_redraw()
 	pass
 
 
