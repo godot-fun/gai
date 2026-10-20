@@ -153,7 +153,7 @@ func apply_theme() -> void:
 	title_label.add_theme_color_override("font_color", ThemeColor.title_color)
 	style_close_button()
 	status_label.add_theme_color_override("font_color", Color(ThemeColor.title_color, 0.62))
-	ScrollBarStyle.apply_custom(results_scroll.get_v_scroll_bar(), ScrollBarStyle.thickness_sm, ThemeColor.body_color, ThemeColor.emphasize(ThemeColor.theme_color, Colors.am_8), ThemeColor.emphasize(ThemeColor.theme_color, Colors.am_4), true)
+	ScrollBarStyle.apply_custom(results_scroll.get_v_scroll_bar(), ScrollBarStyle.thickness_sm, ThemeColor.body_color, ThemeColor.promote(ThemeColor.theme_color, Colors.am_8), ThemeColor.promote(ThemeColor.theme_color, Colors.am_4), true)
 	style_query_edit()
 	for child: Node in results_list.get_children():
 		if child is Button:

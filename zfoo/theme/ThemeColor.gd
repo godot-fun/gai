@@ -122,13 +122,6 @@ static func alpha_theme_color(alpha: float) -> Color:
 	return Color(theme_color, alpha)
 
 
-## Increase a color's visual emphasis against the active theme background.
-## Dark themes lighten the color; light themes darken it. [param amount] uses the same `0.0` to
-## `1.0` adjustment ratio as [method Color.lightened] and [method Color.darkened].
-static func emphasize(color: Color, amount: float) -> Color:
-	return color.lightened(amount) if is_dark_theme() else color.darkened(amount)
-
-
 ## Refresh every palette derived from the active appearance. Cards follow the accent hue; semantic,
 ## markdown and file colors select their hand-tuned dark or light variants.
 static func refresh_derived_colors() -> void:
@@ -156,3 +149,18 @@ static func refresh_theme_colors() -> void:
 
 static func derive_theme_color(saturation: float, value: float) -> Color:
 	return Color.from_hsv(theme_color.h, clampf(theme_color.s * saturation, 0.0, 1.0), value, 1.0)
+
+
+# Color adjustment ---------------------------------------------------------------------------------------------------
+## Increase a color's contrast against the active theme background.
+## Dark themes lighten the color; light themes darken it. [param amount] uses the same `0.0` to
+## `1.0` adjustment ratio as [method Color.lightened] and [method Color.darkened].
+static func promote(color: Color, amount: float) -> Color:
+	return color.lightened(amount) if is_dark_theme() else color.darkened(amount)
+
+
+## Decrease a color's contrast against the active theme background.
+## Dark themes darken the color; light themes lighten it. [param amount] uses the same `0.0` to
+## `1.0` adjustment ratio as [method Color.lightened] and [method Color.darkened].
+static func demote(color: Color, amount: float) -> Color:
+	return color.darkened(amount) if is_dark_theme() else color.lightened(amount)

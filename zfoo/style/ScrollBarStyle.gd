@@ -16,7 +16,7 @@ const thickness_xxl: int = 6
 
 ## Shared default used by popup, transcript and sidebar surfaces.
 static func apply(bar: ScrollBar) -> void:
-	apply_custom(bar, thickness_xxl, ThemeColor.body_color, ThemeColor.emphasize(ThemeColor.theme_color, Colors.am_8), ThemeColor.emphasize(ThemeColor.theme_color, Colors.am_4), false)
+	apply_custom(bar, thickness_xxl, ThemeColor.body_color, ThemeColor.promote(ThemeColor.theme_color, Colors.am_8), ThemeColor.promote(ThemeColor.theme_color, Colors.am_4), false)
 	pass
 
 

@@ -9,7 +9,7 @@ const META_BUBBLE_RICH_TEXT: String = "bubble_rich_text"
 static func append(chat_list: VBoxContainer, session_id: int, entry: ChatEntry) -> RichTextLabel:
 	match entry.kind:
 		ChatEntry.KIND_SYSTEM:
-			return DefaultBubble.append(chat_list, entry, build_style(Colors.info_surface), Colors.secondary_text, Colors.info)
+			return DefaultBubble.append(chat_list, entry, build_style(ThemeColor.promote(Colors.info_surface, Colors.am_2)), Colors.secondary_text, Colors.info)
 		ChatEntry.KIND_SKILL, ChatEntry.KIND_MEMORY, ChatEntry.KIND_AGENT_PROMPT:
 			return ContextBubble.append(chat_list, session_id, entry, build_style(Colors.info_surface))
 		ChatEntry.KIND_USER:
