@@ -9,9 +9,6 @@ extends PanelContainer
 ## opening, committing and discarding all happen here, and the host only has to ask
 ## [method is_renaming].
 
-## Close button and the activity wave share this slot, so swapping them while a run or compaction
-## starts / stops never changes the row width (and never re-ellipsizes the title).
-const ACTION_SIZE: Vector2 = Vector2(28, 28)
 ## Alpha of the floating row copy that follows the cursor while dragging.
 const DRAG_GHOST_ALPHA: float = 0.92
 
@@ -58,12 +55,13 @@ func build(p_session_id: int, title: String) -> void:
 	title_button.pressed.connect(AgentEvents.events.session_select_pressed.emit.bind(session_id))
 	bind_hover(title_button)
 
-	# The wave takes the close button's slot while this session runs or compacts.
+	# Wave, unread dot and close button share this slot so swapping them never re-ellipsizes the title.
+	var action_size := ControlSize.square(ControlSize.sm)
 	run_fx = SessionRowRunFx.new()
-	run_fx.custom_minimum_size = ACTION_SIZE
+	run_fx.custom_minimum_size = action_size
 	unread_label = Label.new()
 	unread_label.text = "●"
-	unread_label.custom_minimum_size = ACTION_SIZE
+	unread_label.custom_minimum_size = action_size
 	unread_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	unread_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	unread_label.visible = false
@@ -71,7 +69,7 @@ func build(p_session_id: int, title: String) -> void:
 	delete_button = Button.new()
 	delete_button.text = "×"
 	delete_button.tooltip_text = I18n.t("agent.sidebar.delete_chat")
-	delete_button.custom_minimum_size = ACTION_SIZE
+	delete_button.custom_minimum_size = action_size
 	delete_button.focus_mode = Control.FOCUS_NONE
 	delete_button.flat = true
 	delete_button.pressed.connect(AgentEvents.events.session_delete_pressed.emit.bind(session_id))
