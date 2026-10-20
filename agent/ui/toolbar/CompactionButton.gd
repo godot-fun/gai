@@ -73,10 +73,10 @@ func refresh_usage(usage: OpenAiUsage) -> void:
 	usage_color = text_color_for_tokens(n)
 	wrap.tooltip_text = StringUtils.format(
 		I18n.t("agent.tokens.tooltip"),
-		n,
+		format_count(n),
 		int(round(usage_ratio * 100.0)),
-		usage.completion_tokens,
-		usage.total_tokens
+		format_count(usage.completion_tokens),
+		format_count(usage.total_tokens)
 	)
 	if compacting:
 		wrap.tooltip_text = I18n.t("agent.tokens.compacting")
