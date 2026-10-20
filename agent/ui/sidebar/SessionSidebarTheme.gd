@@ -101,7 +101,7 @@ static func apply_rename_field(edit: LineEdit, title_button: Button) -> void:
 
 static func rename_field() -> StyleBoxFlat:
 	var border := ThemeColor.alpha_theme_color(0.75 if ThemeColor.is_dark_theme() else 0.55)
-	return StyleBoxHelper.create_style_box_flat(Colors.surface, ControlSize.radius_md, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
+	return StyleBoxHelper.create_style_box_flat(Colors.surface, ControlSize.radius_sm, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
 
 
 ## Mirrors a resolved font onto another control (rename field, drag ghost).
