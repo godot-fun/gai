@@ -39,11 +39,11 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 
 	rich_text = MarkdownHelper.create_rich_text_label(
 		Colors.primary_text,
-		entry.body,
+		StringUtils.EMPTY,
 		AgentSetting.get_markdown_enabled()
 	)
-	rich_text.visible = StringUtils.is_not_blank(entry.body)
 	vbox.add_child(rich_text)
+	refresh(entry)
 	pass
 
 

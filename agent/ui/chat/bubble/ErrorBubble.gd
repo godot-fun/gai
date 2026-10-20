@@ -26,10 +26,11 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 
 	rich_text = MarkdownHelper.create_rich_text_label(
 			Colors.error,
-			StringUtils.first_lines(entry.body, MAX_LINES),
+			StringUtils.EMPTY,
 			AgentSetting.get_markdown_enabled()
 	)
 	vbox.add_child(rich_text)
+	refresh(entry)
 
 	if is_resumable(entry.body):
 		var resume_button: Button = Button.new()
