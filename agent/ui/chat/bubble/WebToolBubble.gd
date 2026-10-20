@@ -5,14 +5,13 @@ var body_label: RichTextLabel
 
 ## Web-tool call bubble showing the query, URL, or primary argument sent to the tool.
 
-static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: StyleBoxFlat) -> WebToolBubble:
-	var wrapper := WebToolBubble.new()
-	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrapper.add_theme_stylebox_override("panel", panel_style)
+func apply(_session_id: int, entry: ChatEntry) -> void:
+	apply_background(Colors.info_surface)
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrapper.add_child(vbox)
+	add_child(vbox)
 
 	var header: HBoxContainer = HBoxContainer.new()
 	header.add_theme_constant_override("separation", Margin.ma_2)
@@ -28,13 +27,12 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 	if HttpUtils.is_valid_http_url(body):
 		header.add_child(create_url_button(body))
 	else:
-		wrapper.body_label = create_body_label()
-		header.add_child(wrapper.body_label)
+		body_label = create_body_label()
+		header.add_child(body_label)
 	vbox.add_child(header)
 
-	chat_list.add_child(wrapper)
-	wrapper.refresh(entry)
-	return wrapper
+	refresh(entry)
+	pass
 
 
 func refresh(entry: ChatEntry) -> void:

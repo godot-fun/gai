@@ -7,19 +7,14 @@ var rich_text: RichTextLabel
 ## Full text lives on ChatEntry.body; the header ··· button opens it in PopupWindow.
 
 
-static func append(
-	chat_list: VBoxContainer,
-	entry: ChatEntry,
-	panel_style: StyleBoxFlat
-) -> ThinkingBubble:
-	var wrapper := ThinkingBubble.new()
-	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrapper.add_theme_stylebox_override("panel", panel_style)
+func apply(_session_id: int, entry: ChatEntry) -> void:
+	apply_background(Colors.purple_surface)
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.add_theme_constant_override("separation", Margin.ma_2)
-	wrapper.add_child(vbox)
+	add_child(vbox)
 
 	var header: HBoxContainer = HBoxContainer.new()
 	header.add_theme_constant_override("separation", Margin.ma_2)
@@ -44,13 +39,11 @@ static func append(
 
 	vbox.add_child(header)
 
-	wrapper.rich_text = MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
-	ChatBubblePreview.enable_fixed_height_at_limit(wrapper.rich_text)
-	vbox.add_child(wrapper.rich_text)
-
-	chat_list.add_child(wrapper)
-	wrapper.refresh(entry)
-	return wrapper
+	rich_text = MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
+	ChatBubblePreview.enable_fixed_height_at_limit(rich_text)
+	vbox.add_child(rich_text)
+	refresh(entry)
+	pass
 
 
 func refresh(entry: ChatEntry) -> void:

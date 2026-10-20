@@ -6,15 +6,14 @@ var rich_text: RichTextLabel
 ## Web-tool result bubble with a text preview and an optional browser screenshot.
 
 
-static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: StyleBoxFlat) -> WebResultBubble:
-	var wrapper := WebResultBubble.new()
-	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrapper.add_theme_stylebox_override("panel", panel_style)
+func apply(_session_id: int, entry: ChatEntry) -> void:
+	apply_background(Colors.neutral_surface)
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var vbox := VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.add_theme_constant_override("separation", Margin.ma_2)
-	wrapper.add_child(vbox)
+	add_child(vbox)
 
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", Margin.ma_2)
@@ -38,13 +37,12 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 	header.add_child(line_label)
 	vbox.add_child(header)
 
-	wrapper.rich_text = MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
-	vbox.add_child(wrapper.rich_text)
+	rich_text = MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
+	vbox.add_child(rich_text)
 	append_screenshot(vbox, entry)
 
-	chat_list.add_child(wrapper)
-	wrapper.refresh(entry)
-	return wrapper
+	refresh(entry)
+	pass
 
 
 func refresh(entry: ChatEntry) -> void:

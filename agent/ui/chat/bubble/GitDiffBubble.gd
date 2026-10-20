@@ -5,16 +5,15 @@ var rich_text: RichTextLabel
 
 ## Git diff bubble appended after agent_end, listing files changed from the run checkpoint.
 
-static func append(chat_list: VBoxContainer, session_id: int, entry: ChatEntry, panel_style: StyleBoxFlat) -> GitDiffBubble:
-	var wrapper := GitDiffBubble.new()
-	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrapper.visible = StringUtils.is_not_blank(entry.body)
-	wrapper.add_theme_stylebox_override("panel", panel_style)
+func apply(session_id: int, entry: ChatEntry) -> void:
+	apply_background(Colors.surface)
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	visible = StringUtils.is_not_blank(entry.body)
 
 	var vbox := VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.add_theme_constant_override("separation", Margin.ma_2)
-	wrapper.add_child(vbox)
+	add_child(vbox)
 
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", Margin.ma_2)
@@ -36,7 +35,7 @@ static func append(chat_list: VBoxContainer, session_id: int, entry: ChatEntry, 
 	revert_button.text = I18n.t("git.revert")
 	revert_button.disabled = StringUtils.is_blank(checkpoint)
 	revert_button.pressed.connect(on_revert_pressed.bind(session_id, entry))
-	AgentBubble.style_header_button(revert_button, panel_style.bg_color, I18n.t("git.restore_workspace"), 58.0)
+	AgentBubble.style_header_button(revert_button, Colors.surface, I18n.t("git.restore_workspace"), 58.0)
 	header.add_child(revert_button)
 
 	var diff_button := Button.new()
@@ -45,16 +44,15 @@ static func append(chat_list: VBoxContainer, session_id: int, entry: ChatEntry, 
 	var patch_path: String = entry.details.get(ChatEntry.DETAIL_GIT_DIFF_PATCH, "")
 	diff_button.disabled = StringUtils.is_blank(patch_path)
 	diff_button.pressed.connect(on_diff_pressed.bind(patch_path))
-	AgentBubble.style_header_button(diff_button, panel_style.bg_color, I18n.t("git.open_side_by_side"), 52.0)
+	AgentBubble.style_header_button(diff_button, Colors.surface, I18n.t("git.open_side_by_side"), 52.0)
 	header.add_child(diff_button)
 
-	wrapper.rich_text = MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
-	wrapper.rich_text.meta_clicked.connect(open_file_diff.bind(patch_path))
-	wrapper.rich_text.tooltip_text = I18n.t("git.open_file")
-	vbox.add_child(wrapper.rich_text)
-	chat_list.add_child(wrapper)
-	wrapper.refresh(entry)
-	return wrapper
+	rich_text = MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
+	rich_text.meta_clicked.connect(open_file_diff.bind(patch_path))
+	rich_text.tooltip_text = I18n.t("git.open_file")
+	vbox.add_child(rich_text)
+	refresh(entry)
+	pass
 
 
 func refresh(entry: ChatEntry) -> void:

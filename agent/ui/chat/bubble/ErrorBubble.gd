@@ -10,21 +10,14 @@ const MAX_LINES: int = 28
 const META_RESUME_BUTTON: String = "resume_button"
 
 
-static func append(
-	chat_list: VBoxContainer,
-	entry: ChatEntry,
-	panel_style: StyleBoxFlat,
-	session_id: int,
-	running: bool
-) -> ErrorBubble:
-	var wrapper := ErrorBubble.new()
-	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrapper.add_theme_stylebox_override("panel", panel_style)
+func apply(session_id: int, entry: ChatEntry) -> void:
+	apply_background(Colors.surface)
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.add_theme_constant_override("separation", Margin.ma_2)
-	wrapper.add_child(vbox)
+	add_child(vbox)
 
 	var title_label: Label = Label.new()
 	title_label.text = entry.title
@@ -32,25 +25,23 @@ static func append(
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	vbox.add_child(title_label)
 
-	wrapper.rich_text = MarkdownHelper.create_rich_text_label(
+	rich_text = MarkdownHelper.create_rich_text_label(
 			Colors.error,
 			StringUtils.first_lines(entry.body, MAX_LINES),
 			AgentSetting.get_markdown_enabled()
 	)
-	vbox.add_child(wrapper.rich_text)
+	vbox.add_child(rich_text)
 
 	if is_resumable(entry.body):
 		var resume_button: Button = Button.new()
 		resume_button.text = "Resume"
 		resume_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+		resume_button.disabled = RuntimeManager.is_running(session_id)
 		style_resume_button(resume_button)
 		resume_button.pressed.connect(on_resume_pressed.bind(session_id, entry))
-		wrapper.set_meta(META_RESUME_BUTTON, resume_button)
+		set_meta(META_RESUME_BUTTON, resume_button)
 		vbox.add_child(resume_button)
-
-	chat_list.add_child(wrapper)
-	refresh_resume_buttons(chat_list, running)
-	return wrapper
+	pass
 
 
 func refresh(entry: ChatEntry) -> void:

@@ -3,44 +3,28 @@ extends Object
 
 ## Creates the transcript bubble matching a chat entry kind.
 
+static var bubbles: Dictionary[String, Script] = {
+	ChatEntry.KIND_SYSTEM: DefaultBubble,
+	ChatEntry.KIND_SKILL: ContextBubble,
+	ChatEntry.KIND_MEMORY: ContextBubble,
+	ChatEntry.KIND_AGENT_PROMPT: ContextBubble,
+	ChatEntry.KIND_USER: UserBubble,
+	ChatEntry.KIND_THINKING: ThinkingBubble,
+	ChatEntry.KIND_AGENT: AgentBubble,
+	ChatEntry.KIND_TOOL: ToolBubble,
+	ChatEntry.KIND_WEB_TOOL: WebToolBubble,
+	ChatEntry.KIND_FILE_TOOL: FileBubble,
+	ChatEntry.KIND_GIT_DIFF: GitDiffBubble,
+	ChatEntry.KIND_RESULT: ResultBubble,
+	ChatEntry.KIND_WEB: WebResultBubble,
+	ChatEntry.KIND_ERROR: ErrorBubble,
+	ChatEntry.KIND_COMPACTION: CompactionBubble,
+}
+
+
 static func append(chat_list: VBoxContainer, session_id: int, entry: ChatEntry) -> BubbleContainer:
-	match entry.kind:
-		ChatEntry.KIND_SYSTEM:
-			return DefaultBubble.append(chat_list, entry, build_style(ThemeColor.promote(Colors.info_surface, Colors.am_2)), Colors.secondary_text, Colors.info)
-		ChatEntry.KIND_SKILL, ChatEntry.KIND_MEMORY, ChatEntry.KIND_AGENT_PROMPT:
-			return ContextBubble.append(chat_list, session_id, entry, build_style(Colors.info_surface))
-		ChatEntry.KIND_USER:
-			return UserBubble.append(chat_list, session_id, entry, build_style(ThemeColor.card_surface), Colors.primary_text)
-		ChatEntry.KIND_THINKING:
-			return ThinkingBubble.append(chat_list, entry, build_style(Colors.purple_surface))
-		ChatEntry.KIND_AGENT:
-			return AgentBubble.append(chat_list, entry, build_style(Colors.surface), Colors.primary_text)
-		ChatEntry.KIND_TOOL:
-			return ToolBubble.append(chat_list, entry, build_style(Colors.success_surface))
-		ChatEntry.KIND_WEB_TOOL:
-			return WebToolBubble.append(chat_list, entry, build_style(Colors.info_surface))
-		ChatEntry.KIND_FILE_TOOL:
-			return FileBubble.append(chat_list, entry, build_style(Colors.warning_surface))
-		ChatEntry.KIND_GIT_DIFF:
-			return GitDiffBubble.append(chat_list, session_id, entry, build_style(Colors.surface))
-		ChatEntry.KIND_RESULT:
-			return ResultBubble.append(chat_list, entry, build_style(Colors.neutral_surface))
-		ChatEntry.KIND_WEB:
-			return WebResultBubble.append(chat_list, entry, build_style(Colors.neutral_surface))
-		ChatEntry.KIND_ERROR:
-			return ErrorBubble.append(chat_list, entry, build_style(Colors.surface), session_id, RuntimeManager.is_running(session_id))
-		ChatEntry.KIND_COMPACTION:
-			return CompactionBubble.append(chat_list, entry, build_style(ThemeColor.alpha_theme_color(0.08)))
-		_:
-			return DefaultBubble.append(chat_list, entry, build_style(Colors.surface), Colors.secondary_text)
-
-
-static func build_style(bg_color: Color) -> StyleBoxFlat:
-	var style := StyleBoxHelper.create_style_box_flat(bg_color, 8, Margin.ma_3, Margin.ma_3)
-	if ThemeColor.is_light_theme():
-		style.border_color = Colors.border
-		style.set_border_width_all(ControlSize.border_xs)
-		style.shadow_color = Color(0, 0, 0, 0.04)
-		style.shadow_size = 6
-		style.shadow_offset = Vector2(0, 2)
-	return style
+	var bubble_script: Script = bubbles.get(entry.kind, DefaultBubble)
+	var bubble := bubble_script.new() as BubbleContainer
+	bubble.apply(session_id, entry)
+	chat_list.add_child(bubble)
+	return bubble

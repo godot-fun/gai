@@ -10,15 +10,14 @@ var expanded: bool = false
 var expand_button: Button
 
 
-static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: StyleBoxFlat) -> CompactionBubble:
-	var wrapper := CompactionBubble.new()
-	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrapper.add_theme_stylebox_override("panel", panel_style)
+func apply(_session_id: int, entry: ChatEntry) -> void:
+	apply_background(ThemeColor.alpha_theme_color(0.08))
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var vbox := VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.add_theme_constant_override("separation", Margin.ma_2)
-	wrapper.add_child(vbox)
+	add_child(vbox)
 
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", Margin.ma_2)
@@ -31,21 +30,20 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 	title.add_theme_color_override("font_color", ThemeColor.accent_theme_color())
 	header.add_child(title)
 
-	wrapper.expand_button = Button.new()
-	wrapper.expand_button.focus_mode = Control.FOCUS_NONE
-	wrapper.expand_button.pressed.connect(wrapper.on_expand_pressed.bind(entry))
-	style_expand_button(wrapper.expand_button)
-	header.add_child(wrapper.expand_button)
+	expand_button = Button.new()
+	expand_button.focus_mode = Control.FOCUS_NONE
+	expand_button.pressed.connect(on_expand_pressed.bind(entry))
+	style_expand_button(expand_button)
+	header.add_child(expand_button)
 
-	wrapper.rich_text = MarkdownHelper.create_rich_text_label(
+	rich_text = MarkdownHelper.create_rich_text_label(
 		Colors.secondary_text,
 		StringUtils.EMPTY,
 		AgentSetting.get_markdown_enabled()
 	)
-	vbox.add_child(wrapper.rich_text)
-	chat_list.add_child(wrapper)
-	wrapper.refresh(entry)
-	return wrapper
+	vbox.add_child(rich_text)
+	refresh(entry)
+	pass
 
 
 func on_expand_pressed(entry: ChatEntry) -> void:

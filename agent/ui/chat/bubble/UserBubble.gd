@@ -12,31 +12,23 @@ var rich_text: RichTextLabel
 const BORDER_HIGHLIGHT_STRENGTH: float = 1.0
 
 
-static func append(
-	chat_list: VBoxContainer,
-	session_id: int,
-	entry: ChatEntry,
-	panel_style: StyleBoxFlat,
-	text_color: Color,
-	title_color: Color = Colors.secondary_text
-) -> UserBubble:
-	var bubble := UserBubble.new()
-	bubble.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bubble.clip_contents = false
-	bubble.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+func apply(session_id: int, entry: ChatEntry) -> void:
+	apply_background()
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	clip_contents = false
 
 	# Keep the overlay layout outside PanelContainer's child sorting so the animated border
 	# can extend beyond the content panel.
 	var host := Control.new()
 	host.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.clip_contents = false
-	bubble.add_child(host)
+	add_child(host)
 
 	var panel: PanelContainer = PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	panel.set_offsets_preset(Control.PRESET_FULL_RECT)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override("panel", panel_style)
+	panel.add_theme_stylebox_override("panel", create_panel_style(ThemeColor.card_surface))
 	host.add_child(panel)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
@@ -50,7 +42,7 @@ static func append(
 
 	var title_label: Label = Label.new()
 	title_label.text = entry.title
-	title_label.add_theme_color_override("font_color", title_color)
+	title_label.add_theme_color_override("font_color", Colors.secondary_text)
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	header.add_child(title_label)
 
@@ -65,26 +57,26 @@ static func append(
 		var revert_button: Button = Button.new()
 		revert_button.name = "RevertButton"
 		revert_button.text = I18n.t("git.revert")
-		AgentBubble.style_header_button(revert_button, panel_style.bg_color, I18n.t("git.revert_user_message"), 58.0)
+		AgentBubble.style_header_button(revert_button, ThemeColor.card_surface, I18n.t("git.revert_user_message"), 58.0)
 		revert_button.pressed.connect(on_revert_pressed.bind(session_id, entry))
 		header.add_child(revert_button)
 
 	var delete_from_here_button: Button = Button.new()
 	delete_from_here_button.name = "DeleteFromHereButton"
 	delete_from_here_button.text = "Delete"
-	AgentBubble.style_header_button(delete_from_here_button, panel_style.bg_color, "Delete from here (message goes back to the input box, workspace is kept)", 52.0)
+	AgentBubble.style_header_button(delete_from_here_button, ThemeColor.card_surface, "Delete from here (message goes back to the input box, workspace is kept)", 52.0)
 	delete_from_here_button.pressed.connect(on_delete_from_here_pressed.bind(session_id, entry))
 	header.add_child(delete_from_here_button)
 
 	vbox.add_child(header)
 
-	bubble.rich_text = MarkdownHelper.create_rich_text_label(
-		text_color,
+	rich_text = MarkdownHelper.create_rich_text_label(
+		Colors.primary_text,
 		entry.body,
 		AgentSetting.get_markdown_enabled()
 	)
-	bubble.rich_text.visible = StringUtils.is_not_blank(entry.body)
-	vbox.add_child(bubble.rich_text)
+	rich_text.visible = StringUtils.is_not_blank(entry.body)
+	vbox.add_child(rich_text)
 
 	var moving_border := MovingAccentBorder.new()
 	moving_border.name = "MovingAccentBorder"
@@ -98,9 +90,8 @@ static func append(
 	panel.resized.connect(sync_layout.bind(host, panel, moving_border))
 	host.resized.connect(sync_layout.bind(host, panel, moving_border))
 
-	chat_list.add_child(bubble)
 	sync_layout.call_deferred(host, panel, moving_border)
-	return bubble
+	pass
 
 
 func refresh(entry: ChatEntry) -> void:

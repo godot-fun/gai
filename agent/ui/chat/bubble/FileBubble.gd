@@ -6,15 +6,14 @@ var rich_text: RichTextLabel
 ## File-change result bubble with added/removed line counts.
 
 
-static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: StyleBoxFlat) -> FileBubble:
-	var wrapper := FileBubble.new()
-	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrapper.add_theme_stylebox_override("panel", panel_style)
+func apply(_session_id: int, entry: ChatEntry) -> void:
+	apply_background(Colors.warning_surface)
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.add_theme_constant_override("separation", Margin.ma_2)
-	wrapper.add_child(vbox)
+	add_child(vbox)
 
 	var header: HBoxContainer = HBoxContainer.new()
 	header.add_theme_constant_override("separation", Margin.ma_2)
@@ -40,12 +39,10 @@ static func append(chat_list: VBoxContainer, entry: ChatEntry, panel_style: Styl
 		header.add_child(create_file_path_button(file_path))
 	vbox.add_child(header)
 
-	wrapper.rich_text = RichTextLabel.new()
-	wrapper.rich_text.visible = false
-	vbox.add_child(wrapper.rich_text)
-
-	chat_list.add_child(wrapper)
-	return wrapper
+	rich_text = RichTextLabel.new()
+	rich_text.visible = false
+	vbox.add_child(rich_text)
+	pass
 
 
 func refresh(entry: ChatEntry) -> void:

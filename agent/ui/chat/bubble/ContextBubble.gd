@@ -26,20 +26,14 @@ static func hidden_line_count(body: String) -> int:
 	return maxi(0, body.count(FileUtils.NEWLINE_LF) + 1 - PREVIEW_LINES)
 
 
-static func append(
-	chat_list: VBoxContainer,
-	session_id: int,
-	entry: ChatEntry,
-	panel_style: StyleBoxFlat
-) -> ContextBubble:
-	var wrapper := ContextBubble.new()
-	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrapper.add_theme_stylebox_override("panel", panel_style)
+func apply(session_id: int, entry: ChatEntry) -> void:
+	apply_background(Colors.info_surface)
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.add_theme_constant_override("separation", Margin.ma_2)
-	wrapper.add_child(vbox)
+	add_child(vbox)
 
 	var header: HBoxContainer = HBoxContainer.new()
 	header.add_theme_constant_override("separation", Margin.ma_2)
@@ -50,10 +44,10 @@ static func append(
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	header.add_child(title_label)
 
-	wrapper.expand_button = Button.new()
-	style_expand_button(wrapper.expand_button)
-	wrapper.expand_button.pressed.connect(wrapper.on_expand_pressed.bind(entry))
-	header.add_child(wrapper.expand_button)
+	expand_button = Button.new()
+	style_expand_button(expand_button)
+	expand_button.pressed.connect(on_expand_pressed.bind(entry))
+	header.add_child(expand_button)
 
 	var spacer: Control = Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -63,22 +57,20 @@ static func append(
 	var delete_button: Button = Button.new()
 	delete_button.name = "DeleteButton"
 	delete_button.text = "Delete"
-	AgentBubble.style_header_button(delete_button, panel_style.bg_color, "Delete from here", 52.0)
+	AgentBubble.style_header_button(delete_button, Colors.info_surface, "Delete from here", 52.0)
 	delete_button.pressed.connect(on_delete_pressed.bind(session_id, entry))
 	header.add_child(delete_button)
 
 	vbox.add_child(header)
 
-	wrapper.rich_text = MarkdownHelper.create_rich_text_label(
+	rich_text = MarkdownHelper.create_rich_text_label(
 		Colors.secondary_text,
 		StringUtils.EMPTY,
 		true
 	)
-	vbox.add_child(wrapper.rich_text)
-
-	chat_list.add_child(wrapper)
-	wrapper.refresh(entry)
-	return wrapper
+	vbox.add_child(rich_text)
+	refresh(entry)
+	pass
 
 
 static func on_delete_pressed(session_id: int, entry: ChatEntry) -> void:

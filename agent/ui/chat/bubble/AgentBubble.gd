@@ -6,21 +6,14 @@ var rich_text: RichTextLabel
 ## Agent reply bubble 鈥?markdown body; header copy puts ChatEntry.body on the clipboard.
 
 
-static func append(
-	chat_list: VBoxContainer,
-	entry: ChatEntry,
-	panel_style: StyleBoxFlat,
-	text_color: Color,
-	title_color: Color = Colors.secondary_text
-) -> AgentBubble:
-	var wrapper := AgentBubble.new()
-	wrapper.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	wrapper.add_theme_stylebox_override("panel", panel_style)
+func apply(_session_id: int, entry: ChatEntry) -> void:
+	apply_background(Colors.surface)
+	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.add_theme_constant_override("separation", Margin.ma_2)
-	wrapper.add_child(vbox)
+	add_child(vbox)
 
 	var header: HBoxContainer = HBoxContainer.new()
 	header.add_theme_constant_override("separation", Margin.ma_2)
@@ -28,7 +21,7 @@ static func append(
 
 	var title_label: Label = Label.new()
 	title_label.text = entry.title
-	title_label.add_theme_color_override("font_color", title_color)
+	title_label.add_theme_color_override("font_color", Colors.secondary_text)
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	header.add_child(title_label)
 
@@ -39,22 +32,20 @@ static func append(
 
 	var copy_button: Button = Button.new()
 	copy_button.text = "Copy"
-	style_copy_button(copy_button, panel_style.bg_color)
+	style_copy_button(copy_button, Colors.surface)
 	copy_button.pressed.connect(on_copy_pressed.bind(entry))
 	header.add_child(copy_button)
 
 	vbox.add_child(header)
 
-	wrapper.rich_text = MarkdownHelper.create_rich_text_label(
-		text_color,
+	rich_text = MarkdownHelper.create_rich_text_label(
+		Colors.primary_text,
 		entry.body,
 		AgentSetting.get_markdown_enabled()
 	)
-	wrapper.rich_text.visible = StringUtils.is_not_blank(entry.body)
-	vbox.add_child(wrapper.rich_text)
-
-	chat_list.add_child(wrapper)
-	return wrapper
+	rich_text.visible = StringUtils.is_not_blank(entry.body)
+	vbox.add_child(rich_text)
+	pass
 
 
 func refresh(entry: ChatEntry) -> void:
