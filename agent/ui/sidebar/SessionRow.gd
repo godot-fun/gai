@@ -101,20 +101,26 @@ func set_title(title: String) -> void:
 
 func set_running(value: bool) -> void:
 	running = value
+	refresh_action_state()
+	pass
+
+
+func set_unread(value: bool) -> void:
+	unread = value
+	refresh_action_state()
+	pass
+
+
+func refresh_action_state() -> void:
 	run_fx.set_running(running)
 	unread_label.visible = unread and not running
 	delete_button.visible = not running and not unread
 	pass
 
 
-func set_unread(value: bool) -> void:
-	unread = value
-	unread_label.visible = unread and not running
-	delete_button.visible = not running and not unread
-	pass
-
-
 func set_selected(value: bool) -> void:
+	if selected == value:
+		return
 	selected = value
 	apply_style()
 	pass
@@ -145,6 +151,8 @@ func bind_hover(control: Control) -> void:
 
 
 func on_mouse_entered() -> void:
+	if hovered:
+		return
 	hovered = true
 	apply_style()
 	pass

@@ -76,6 +76,7 @@ func setup(
 	sidebar_panel.get_window().window_input.connect(on_window_input)
 
 	apply_theme()
+	apply_locale()
 	pass
 
 

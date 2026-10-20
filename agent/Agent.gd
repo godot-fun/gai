@@ -115,9 +115,6 @@ func apply_layout() -> void:
 
 
 func apply_locale() -> void:
-	new_session_button.text = I18n.t("agent.sidebar.new_session")
-	pinned_header.text = I18n.t("agent.sidebar.pinned")
-	unpinned_header.text = I18n.t("agent.sidebar.chats")
 	input_field.placeholder_text = I18n.t("agent.input.placeholder")
 	workspace_dialog.title = I18n.t("agent.workspace.dialog_title")
 	workspace_dialog.ok_button_text = I18n.t("agent.common.select")
