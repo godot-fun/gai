@@ -28,7 +28,7 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	panel.set_offsets_preset(Control.PRESET_FULL_RECT)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override("panel", create_panel_style(Colors.info_surface))
+	panel.add_theme_stylebox_override("panel", create_panel_style(ThemeColor.inset_surface))
 	host.add_child(panel)
 
 	var vbox: VBoxContainer = VBoxContainer.new()

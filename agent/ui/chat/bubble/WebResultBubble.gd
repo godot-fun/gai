@@ -22,7 +22,7 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 
 	var title_label := Label.new()
 	title_label.text = entry.title
-	title_label.add_theme_color_override("font_color", Colors.secondary_text)
+	title_label.add_theme_color_override("font_color", Colors.info)
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	header.add_child(title_label)
 
