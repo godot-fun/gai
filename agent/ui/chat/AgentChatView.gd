@@ -4,8 +4,6 @@ extends RefCounted
 ## Chat transcript area — bubbles, streaming, and error resume.
 ## One bubble list per session; switching shows the cached list.
 
-## The color picker emits on every drag step; coalesce rebuilds to this window.
-const THEME_COLOR_REBUILD_DELAY_MS: int = 100
 var chat_scroll_node: ScrollContainer
 
 var chat_list_cache: ChatListCache = ChatListCache.new()
@@ -162,7 +160,7 @@ func on_theme_color_changed() -> void:
 	ScrollBarStyle.apply(chat_scroll_node.get_v_scroll_bar())
 	if RateLimitUtils.limit_millis_100():
 		return
-	SchedulerBus.schedule(on_theme_color_rebuild, THEME_COLOR_REBUILD_DELAY_MS)
+	SchedulerBus.schedule(on_theme_color_rebuild, 100)
 	pass
 
 
