@@ -13,7 +13,7 @@ var expand_button: Button
 
 
 static func needs_expand(body: String) -> bool:
-	return StringUtils.is_not_blank(body) and ChatBubblePreview.first_lines(body, PREVIEW_LINES) != body
+	return StringUtils.is_not_blank(body) and StringUtils.first_lines(body, PREVIEW_LINES) != body
 
 
 func apply(session_id: int, entry: ChatEntry) -> void:
@@ -77,7 +77,7 @@ func refresh(entry: ChatEntry) -> void:
 	if not is_instance_valid(rich_text) or entry == null:
 		return
 	var can_expand: bool = needs_expand(entry.body)
-	var display: String = entry.body if expanded or not can_expand else ChatBubblePreview.first_lines(entry.body, PREVIEW_LINES)
+	var display: String = entry.body if expanded or not can_expand else StringUtils.first_lines(entry.body, PREVIEW_LINES)
 	rich_text.visible = StringUtils.is_not_blank(entry.body)
 	MarkdownHelper.update_rich_text_label_text(rich_text, display, true)
 

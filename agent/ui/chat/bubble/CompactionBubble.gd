@@ -54,7 +54,7 @@ func on_expand_pressed(entry: ChatEntry) -> void:
 func refresh(entry: ChatEntry) -> void:
 	if not is_instance_valid(rich_text) or entry == null:
 		return
-	var preview := ChatBubblePreview.first_lines(entry.body, PREVIEW_LINES)
+	var preview := StringUtils.first_lines(entry.body, PREVIEW_LINES)
 	var can_expand := preview != entry.body
 	MarkdownHelper.update_rich_text_label_text(
 		rich_text,

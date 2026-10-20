@@ -21,10 +21,6 @@ static func extra_line_count(s: String) -> int:
 	return maxi(0, s.count(FileUtils.NEWLINE_LF) + 1 - PREVIEW_LINES)
 
 
-static func first_lines(body: String, line_count: int) -> String:
-	return StringUtils.first_lines(body, line_count)
-
-
 static func hidden_line_count(body: String, visible_line_count: int) -> int:
 	if StringUtils.is_blank(body):
 		return 0
