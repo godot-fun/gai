@@ -18,13 +18,14 @@ func setup(
 	workspace_button = p_workspace_button
 	button.pressed.connect(on_button_pressed)
 	gdf.events.theme_changed.connect(apply_theme)
+	gdf.events.locale_changed.connect(apply_theme)
 	apply_theme()
 	update_alignment.call_deferred()
 	pass
 
 
 func apply_theme() -> void:
-	AgentToolbarButton.style(button, "Open workflow")
+	AgentToolbarButton.style(button, I18n.t("agent.toolbar.open_workflow"))
 	pass
 
 

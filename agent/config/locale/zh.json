@@ -111,6 +111,7 @@
       "title": "代码智能体工作区",
       "log": "日志",
       "view_log": "查看系统日志",
+      "open_workflow": "打开工作流",
       "theme_color": "主题颜色",
       "light_theme": "切换到浅色主题",
       "dark_theme": "切换到深色主题",

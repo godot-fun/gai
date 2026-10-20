@@ -111,6 +111,7 @@
       "title": "Code Agent Workspace",
       "log": "Log",
       "view_log": "View system log",
+      "open_workflow": "Open workflow",
       "theme_color": "Theme color",
       "light_theme": "Switch to light theme",
       "dark_theme": "Switch to dark theme",
