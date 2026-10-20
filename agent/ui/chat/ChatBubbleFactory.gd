@@ -8,6 +8,7 @@ static var bubble_types: Dictionary[String, Script] = {
 	ChatEntry.KIND_SKILL: ContextBubble,
 	ChatEntry.KIND_MEMORY: ContextBubble,
 	ChatEntry.KIND_AGENT_PROMPT: ContextBubble,
+	ChatEntry.KIND_COMPACTION: ContextBubble,
 	ChatEntry.KIND_USER: UserBubble,
 	ChatEntry.KIND_THINKING: ThinkingBubble,
 	ChatEntry.KIND_AGENT: AgentBubble,
@@ -18,7 +19,6 @@ static var bubble_types: Dictionary[String, Script] = {
 	ChatEntry.KIND_RESULT: ResultBubble,
 	ChatEntry.KIND_WEB: WebResultBubble,
 	ChatEntry.KIND_ERROR: ErrorBubble,
-	ChatEntry.KIND_COMPACTION: CompactionBubble,
 }
 
 

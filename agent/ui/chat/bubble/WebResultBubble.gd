@@ -9,7 +9,7 @@ var line_label: Label
 
 
 func apply(_session_id: int, entry: ChatEntry) -> void:
-	apply_panel_style(Colors.blue_grey_surface)
+	apply_panel_style(Colors.grey_surface)
 
 	var vbox := VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL

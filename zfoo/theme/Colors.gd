@@ -114,7 +114,7 @@ const DARK_INFO_SURFACE := Color(0.10, 0.17, 0.22)
 const DARK_SUCCESS_SURFACE := Color(0.14, 0.20, 0.16)
 const DARK_WARNING_SURFACE := Color(0.22, 0.16, 0.10)
 const DARK_BLUE_GREY_SURFACE := Color(0.13, 0.16, 0.20)
-const DARK_GREY_SURFACE := Color(0.17, 0.17, 0.17)
+const DARK_GREY_SURFACE := Color(0.13, 0.13, 0.15)
 const DARK_PURPLE_SURFACE := Color(0.19, 0.18, 0.30)
 const DARK_LIME_SURFACE := Color(0.16, 0.22, 0.10)
 
