@@ -13,7 +13,7 @@ static func append(chat_list: VBoxContainer, session_id: int, entry: ChatEntry) 
 		ChatEntry.KIND_SKILL, ChatEntry.KIND_MEMORY, ChatEntry.KIND_AGENT_PROMPT:
 			return ContextBubble.append(chat_list, session_id, entry, build_style(Colors.info_surface))
 		ChatEntry.KIND_USER:
-			return UserBubble.append(chat_list, session_id, entry, build_style(ThemeColor.emphasize(Colors.info_surface, Colors.am_2)), Colors.primary_text)
+			return UserBubble.append(chat_list, session_id, entry, build_style(ThemeColor.card_surface), Colors.primary_text)
 		ChatEntry.KIND_THINKING:
 			return ThinkingBubble.append(chat_list, entry, build_style(Colors.purple_surface))
 		ChatEntry.KIND_AGENT:
