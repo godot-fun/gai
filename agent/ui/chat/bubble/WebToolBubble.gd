@@ -1,8 +1,6 @@
 class_name WebToolBubble
 extends BubbleContainer
 
-var body_label: RichTextLabel
-
 ## Web-tool call bubble showing the query, URL, or primary argument sent to the tool.
 
 func apply(_session_id: int, entry: ChatEntry) -> void:
@@ -26,38 +24,30 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 	if HttpUtils.is_valid_http_url(body):
 		header.add_child(create_url_button(body))
 	else:
-		body_label = create_body_label()
-		header.add_child(body_label)
+		header.add_child(create_body_label(body))
 	vbox.add_child(header)
-
-	refresh(entry)
 	pass
 
 
-func refresh(entry: ChatEntry) -> void:
-	if not is_instance_valid(body_label) or entry == null:
-		return
-	var body := entry.body.strip_edges()
-	body_label.clear()
-	body_label.add_text(body)
-	body_label.tooltip_text = body
-	body_label.visible = StringUtils.is_not_blank(body)
+func refresh(_entry: ChatEntry) -> void:
 	pass
 
 
-static func create_body_label() -> RichTextLabel:
-	var label := RichTextLabel.new()
+static func create_body_label(body: String) -> Label:
+	var label := Label.new()
+	label.text = body
+	label.tooltip_text = body
+	label.visible = StringUtils.is_not_blank(body)
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	# Let the HBox constrain long text to the chat bubble instead of using its
 	# full width as this control's minimum size.
-	label.fit_content = false
 	label.clip_contents = true
-	label.scroll_active = false
 	label.autowrap_mode = TextServer.AUTOWRAP_OFF
-	label.add_theme_color_override("default_color", Colors.secondary_text)
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	label.add_theme_color_override("font_color", Colors.secondary_text)
 	label.add_theme_color_override("font_outline_color", Color.TRANSPARENT)
-	label.add_theme_font_override("normal_font", Fonts.regular())
-	label.add_theme_font_size_override("normal_font_size", Typography.label_medium_size)
+	label.add_theme_font_override("font", Fonts.regular())
+	label.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	return label
 
 

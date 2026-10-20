@@ -1,8 +1,6 @@
 class_name FileBubble
 extends BubbleContainer
 
-var rich_text: RichTextLabel
-
 ## File-change result bubble with added/removed line counts.
 
 
@@ -37,21 +35,10 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 	if StringUtils.is_not_blank(file_path):
 		header.add_child(create_file_path_button(file_path))
 	vbox.add_child(header)
-
-	rich_text = RichTextLabel.new()
-	rich_text.visible = false
-	vbox.add_child(rich_text)
 	pass
 
 
-func refresh(entry: ChatEntry) -> void:
-	if not is_instance_valid(rich_text) or entry == null:
-		return
-	rich_text.clear()
-	rich_text.push_meta(entry.body)
-	rich_text.add_text(entry.body)
-	rich_text.pop()
-	rich_text.visible = StringUtils.is_not_blank(entry.body)
+func refresh(_entry: ChatEntry) -> void:
 	pass
 
 

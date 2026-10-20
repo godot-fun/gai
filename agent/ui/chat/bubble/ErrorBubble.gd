@@ -2,13 +2,11 @@ class_name ErrorBubble
 extends BubbleContainer
 
 var rich_text: RichTextLabel
+var resume_button: Button
 
 ## Error bubble with optional resume action for the agent chat transcript.
 
 const MAX_LINES: int = 28
-
-const META_RESUME_BUTTON: String = "resume_button"
-
 
 func apply(session_id: int, entry: ChatEntry) -> void:
 	apply_panel_style(Colors.surface)
@@ -33,13 +31,12 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 	refresh(entry)
 
 	if is_resumable(entry.body):
-		var resume_button: Button = Button.new()
+		resume_button = Button.new()
 		resume_button.text = "Resume"
 		resume_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 		resume_button.disabled = RuntimeManager.is_running(session_id)
 		style_resume_button(resume_button)
 		resume_button.pressed.connect(on_resume_pressed.bind(session_id, entry))
-		set_meta(META_RESUME_BUTTON, resume_button)
 		vbox.add_child(resume_button)
 	pass
 
@@ -54,10 +51,11 @@ func refresh(entry: ChatEntry) -> void:
 
 static func refresh_resume_buttons(chat_list: VBoxContainer, running: bool) -> void:
 	for child in chat_list.get_children():
-		if not child.has_meta(META_RESUME_BUTTON):
+		if not child is ErrorBubble:
 			continue
-		var resume_button: Button = child.get_meta(META_RESUME_BUTTON)
-		resume_button.disabled = running
+		var error_bubble := child as ErrorBubble
+		if is_instance_valid(error_bubble.resume_button):
+			error_bubble.resume_button.disabled = running
 	pass
 
 
