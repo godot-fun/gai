@@ -4,10 +4,6 @@ extends Object
 ## Every stylebox / color override the sidebar uses. All builders read the live palette, so a
 ## theme switch only has to re-apply them (see [method AgentSessionSidebar.apply_theme]).
 
-const ROW_CORNER_RADIUS: int = 6
-const RENAME_CORNER_RADIUS: int = 5
-
-
 # ---------------------------------------------------------------------------
 # Sidebar shell
 # ---------------------------------------------------------------------------
@@ -37,7 +33,7 @@ static func apply_new_session_button(button: Button) -> void:
 	ButtonStyle.apply_font_colors(button, theme_color, ButtonStyle.hover_color(theme_color, 0.08), ButtonStyle.press_color(theme_color, 0.06), Colors.secondary_text)
 
 	var border := ThemeColor.alpha_theme_color(0.55 if ThemeColor.is_dark_theme() else 0.45)
-	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ROW_CORNER_RADIUS, Margin.ma_3, Margin.ma_2, border, ControlSize.border_xs)
+	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_md, Margin.ma_3, Margin.ma_2, border, ControlSize.border_xs)
 	ButtonStyle.apply(button, normal,
 		ButtonStyle.filled(normal, ThemeColor.selected_surface, ThemeColor.alpha_theme_color(0.85)),
 		ButtonStyle.filled(normal, ButtonStyle.hover_color(ThemeColor.selected_surface, 0.06), theme_color))
@@ -50,7 +46,7 @@ static func apply_new_session_button(button: Button) -> void:
 
 ## Row background 鈥?selected beats hovered, transparent otherwise.
 static func row(selected: bool, hovered: bool) -> StyleBoxFlat:
-	var style := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ROW_CORNER_RADIUS)
+	var style := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_md)
 	StyleBoxHelper.apply_style_box_margin(style, Margin.ma_3, Margin.ma_1, Margin.ma_1, Margin.ma_1)
 	if selected:
 		style.bg_color = ThemeColor.selected_surface
@@ -74,7 +70,6 @@ static func apply_row_colors(title_button: Button, delete_button: Button, select
 
 ## Floating row copy that follows the cursor while dragging.
 static func drag_ghost() -> StyleBoxFlat:
-	var theme_color: Color = ThemeColor.accent_theme_color()
 	var style: StyleBoxFlat = row(false, false)
 	style.bg_color = ThemeColor.selected_surface
 	style.border_color = ThemeColor.alpha_theme_color(0.9 if ThemeColor.is_dark_theme() else 0.75)
@@ -106,7 +101,7 @@ static func apply_rename_field(edit: LineEdit, title_button: Button) -> void:
 
 static func rename_field() -> StyleBoxFlat:
 	var border := ThemeColor.alpha_theme_color(0.75 if ThemeColor.is_dark_theme() else 0.55)
-	return StyleBoxHelper.create_style_box_flat(Colors.surface, RENAME_CORNER_RADIUS, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
+	return StyleBoxHelper.create_style_box_flat(Colors.surface, ControlSize.radius_md, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
 
 
 ## Mirrors a resolved font onto another control (rename field, drag ghost).

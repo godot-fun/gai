@@ -5,7 +5,6 @@ extends ColorRect
 ## Owned by [SessionRow], which toggles it through [method set_highlight].
 
 const SHADER := preload("res://agent/ui/sidebar/sidebar_session_row.gdshader")
-const CORNER_RADIUS := 6.0
 
 var fx_material: ShaderMaterial
 
@@ -50,7 +49,7 @@ func sync_uniforms() -> void:
 		if parent_row != null:
 			sz = parent_row.size
 	fx_material.set_shader_parameter("rect_size", sz)
-	fx_material.set_shader_parameter("corner_radius", CORNER_RADIUS)
+	fx_material.set_shader_parameter("corner_radius", float(ControlSize.radius_md))
 	var is_dark := ThemeColor.is_dark_theme()
 	var accent_color := ThemeColor.accent_theme_color()
 	# Dark surfaces swallow low-alpha shader details, especially with a user-selected dark accent.
