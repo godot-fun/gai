@@ -5,6 +5,7 @@ extends RefCounted
 ## One bubble list per session; switching shows the cached list.
 
 var chat_scroll_node: ScrollContainer
+var chat_list: MarginContainer
 
 var chat_list_cache: ChatListCache = ChatListCache.new()
 var chat_bubble_flusher: ChatBubbleFlusher = ChatBubbleFlusher.new()
@@ -17,13 +18,13 @@ var chat_scroll: ChatScroll = ChatScroll.new()
 
 func setup(
 	p_chat_scroll_node: ScrollContainer,
-	p_chat_host: Control
+	p_chat_list: MarginContainer
 ) -> void:
 	chat_scroll_node = p_chat_scroll_node
+	chat_list = p_chat_list
 	chat_scroll_node.clip_contents = true
-	p_chat_host.clip_contents = true
+	chat_list.clip_contents = true
 	ScrollBarStyle.apply(chat_scroll_node.get_v_scroll_bar())
-	chat_list_cache.setup(p_chat_host)
 	chat_bubble_flusher.setup()
 	chat_scroll.setup(chat_scroll_node)
 	gdf.events.theme_changed.connect(on_theme_changed)
@@ -180,7 +181,7 @@ func show_session(session_id: int) -> void:
 	var has_cached_scroll: bool = chat_scroll.has_cached_session_scroll(session_id)
 
 	# One bubble list per session — create on first open, reuse on later switches.
-	var list := chat_list_cache.show(session_id)
+	var list := chat_list_cache.show(session_id, chat_list)
 	chat_scroll.set_active_chat_list(list)
 
 	if list.get_child_count() == 0:

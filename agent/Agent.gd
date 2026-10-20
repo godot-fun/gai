@@ -16,7 +16,7 @@ extends Control
 @onready var session_list_scroll: ScrollContainer = $Root/Body/Sidebar/SidebarVBox/SessionListScroll
 @onready var new_session_button: Button = $Root/Body/Sidebar/SidebarVBox/NewSessionButton
 @onready var chat_scroll_node: ScrollContainer = $Root/Body/ChatArea/ChatScroll
-@onready var chat_host: MarginContainer = $Root/Body/ChatArea/ChatScroll/ChatMargin
+@onready var chat_list: MarginContainer = $Root/Body/ChatArea/ChatScroll/ChatList
 @onready var token_usage_wrap: PanelContainer = $Root/Toolbar/ToolbarRow/TokenUsageWrap
 @onready var memory_toggle_button: Button = $Root/Toolbar/ToolbarRow/MemoryToggleWrap/MemoryToggleButton
 @onready var visuals_button_node: Button = $Root/Toolbar/ToolbarRow/VisualsButtonWrap/VisualsButton
@@ -77,7 +77,7 @@ func _ready() -> void:
 	visuals_button.setup(visuals_button_node)
 	skill_toggle.setup(skill_toggle_button)
 	agent_prompt_toggle.setup(agent_prompt_toggle_button)
-	agent_chat_view.setup(chat_scroll_node, chat_host)
+	agent_chat_view.setup(chat_scroll_node, chat_list)
 
 	agent_chat_input.setup(input_bar, input_wrap, input_inner, input_field, send_button)
 	theme_color_select.setup(theme_color_select_node)
@@ -107,10 +107,10 @@ func apply_layout() -> void:
 	sidebar_panel.custom_minimum_size.x = AgentLayout.SIDEBAR_MIN_WIDTH
 	toolbar_row.add_theme_constant_override("separation", Margin.ma_4)
 	agent_setting_wrap.add_theme_constant_override("margin_right", Margin.ma_3)
-	chat_host.add_theme_constant_override("margin_left", Margin.ma_5)
-	chat_host.add_theme_constant_override("margin_right", Margin.ma_5)
-	chat_host.add_theme_constant_override("margin_top", Margin.ma_3)
-	chat_host.add_theme_constant_override("margin_bottom", Margin.ma_2)
+	chat_list.add_theme_constant_override("margin_left", Margin.ma_5)
+	chat_list.add_theme_constant_override("margin_right", Margin.ma_5)
+	chat_list.add_theme_constant_override("margin_top", Margin.ma_3)
+	chat_list.add_theme_constant_override("margin_bottom", Margin.ma_2)
 	pass
 
 

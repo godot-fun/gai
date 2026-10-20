@@ -4,7 +4,6 @@ extends RefCounted
 ## Buffers streaming bubble refreshes, deduplicates them, and applies them in batches.
 
 const FLUSH_MS := 100
-const TIMER_NAME := "agent_chat_bubble_refresh"
 
 
 ## One buffered refresh target; entry.body mutates in place while the bubble stays fixed.
@@ -22,7 +21,7 @@ var pending: Array[BufferedRefresh] = []
 
 
 func setup() -> void:
-	SchedulerBus.schedule_at_fixed_rate(flush, FLUSH_MS, TIMER_NAME)
+	SchedulerBus.schedule_at_fixed_rate(flush, FLUSH_MS, "agent_chat_bubble_refresh")
 	pass
 
 

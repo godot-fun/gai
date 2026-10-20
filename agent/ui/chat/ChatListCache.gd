@@ -6,13 +6,7 @@ extends RefCounted
 const MAX_SIZE: int = 18
 
 
-var host: Control
 var lists: LruCacheInt = LruCacheInt.new(MAX_SIZE)
-
-
-func setup(p_host: Control) -> void:
-	host = p_host
-	pass
 
 
 func has(session_id: int) -> bool:
@@ -24,13 +18,13 @@ func get_list(session_id: int) -> VBoxContainer:
 
 
 ## Returns the session transcript and makes it the only visible cached list.
-func show(session_id: int) -> VBoxContainer:
+func show(session_id: int, chat_list: MarginContainer) -> VBoxContainer:
 	var list := get_list(session_id)
 	if list == null:
 		list = VBoxContainer.new()
 		list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		list.add_theme_constant_override("separation", Margin.ma_3)
-		host.add_child(list)
+		chat_list.add_child(list)
 		var evicted_entry := lists.put_if_absent(session_id, list)
 		if evicted_entry != null:
 			var evicted_list := evicted_entry.value as VBoxContainer

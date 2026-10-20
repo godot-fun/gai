@@ -260,7 +260,7 @@ grow_horizontal = 2
 grow_vertical = 2
 follow_focus = true
 
-[node name="ChatMargin" type="MarginContainer" parent="Root/Body/ChatArea/ChatScroll" unique_id=1922989924]
+[node name="ChatList" type="MarginContainer" parent="Root/Body/ChatArea/ChatScroll" unique_id=1922989924]
 layout_mode = 2
 size_flags_horizontal = 3
 
