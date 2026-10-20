@@ -23,26 +23,22 @@ func get_list(session_id: int) -> VBoxContainer:
 	return lists.get_value(session_id) as VBoxContainer
 
 
-func get_or_create(session_id: int) -> VBoxContainer:
+## Returns the session transcript and makes it the only visible cached list.
+func show(session_id: int) -> VBoxContainer:
 	var list := get_list(session_id)
-	if list != null:
-		return list
-	list = VBoxContainer.new()
-	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	list.add_theme_constant_override("separation", Margin.ma_3)
-	host.add_child(list)
-	var evicted_entry := lists.put_if_absent(session_id, list)
-	if evicted_entry != null:
-		var evicted_list := evicted_entry.value as VBoxContainer
-		dispose_list(evicted_list)
-	return list
-
-
-func show_only(session_id: int) -> void:
+	if list == null:
+		list = VBoxContainer.new()
+		list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		list.add_theme_constant_override("separation", Margin.ma_3)
+		host.add_child(list)
+		var evicted_entry := lists.put_if_absent(session_id, list)
+		if evicted_entry != null:
+			var evicted_list := evicted_entry.value as VBoxContainer
+			dispose_list(evicted_list)
 	for id: int in lists.cache_map:
-		var list := lists.cache_map[id] as VBoxContainer
-		list.visible = id == session_id
-	pass
+		var cached_list := lists.cache_map[id] as VBoxContainer
+		cached_list.visible = id == session_id
+	return list
 
 
 func remove(session_id: int) -> void:
@@ -58,10 +54,10 @@ func dispose_list(list: VBoxContainer) -> void:
 	pass
 
 
-func clear_inactive(selected_session_id: int) -> void:
+func remove_all_except(session_id_to_keep: int) -> void:
 	var drop_ids: Array[int] = []
 	for session_id: int in lists.cache_map:
-		if session_id != selected_session_id:
+		if session_id != session_id_to_keep:
 			drop_ids.append(session_id)
 	for session_id: int in drop_ids:
 		remove(session_id)

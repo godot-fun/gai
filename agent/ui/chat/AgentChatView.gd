@@ -139,7 +139,7 @@ func on_markdown_changed(_enabled: bool) -> void:
 		if bubble == null:
 			continue
 		bubble.refresh(entry)
-	chat_list_cache.clear_inactive(AgentSessionManager.active_session_id)
+	chat_list_cache.remove_all_except(AgentSessionManager.active_session_id)
 	pass
 
 
@@ -180,8 +180,7 @@ func show_session(session_id: int) -> void:
 	var has_cached_scroll: bool = chat_scroll.has_cached_session_scroll(session_id)
 
 	# One bubble list per session — create on first open, reuse on later switches.
-	var list := chat_list_cache.get_or_create(session_id)
-	chat_list_cache.show_only(session_id)
+	var list := chat_list_cache.show(session_id)
 	chat_scroll.set_active_chat_list(list)
 
 	if list.get_child_count() == 0:
