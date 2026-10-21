@@ -95,22 +95,6 @@ func ThemeColor_promote_demote_test() -> void:
 	pass
 
 
-## The whole point of the helper: the same call keeps contrast on both themes.
-func ButtonStyle_color_direction_test() -> void:
-	var original: ThemeColor.ThemeEnum = ThemeColor.current_theme
-
-	ThemeColor.current_theme = ThemeColor.ThemeEnum.DARK
-	assert(ButtonStyle.hover_color(GRAY, 0.10) == GRAY.lightened(0.10))
-	assert(ButtonStyle.press_color(GRAY, 0.06) == GRAY.darkened(0.06))
-
-	ThemeColor.current_theme = ThemeColor.ThemeEnum.LIGHT
-	assert(ButtonStyle.hover_color(GRAY, 0.10) == GRAY.darkened(0.10))
-	assert(ButtonStyle.press_color(GRAY, 0.06) == GRAY.lightened(0.06))
-
-	ThemeColor.current_theme = original
-	pass
-
-
 func ButtonStyle_with_alpha_test() -> void:
 	var tinted := Color(Colors.info, 0.45)
 	# `Color` stores 32-bit floats, so compare approximately.

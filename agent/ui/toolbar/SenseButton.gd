@@ -407,7 +407,7 @@ func style_check_button(check: CheckButton) -> void:
 func style_button(control: Button) -> void:
 	ButtonStyle.apply_font_colors(control, Colors.primary_text, Colors.primary_text, ThemeColor.accent_theme_color())
 	var normal := make_input_style()
-	var hover := ButtonStyle.filled(normal, ButtonStyle.hover_color(ThemeColor.inset_surface, 0.08))
+	var hover := ButtonStyle.filled(normal, ThemeColor.promote(ThemeColor.inset_surface, 0.08))
 	ButtonStyle.apply(control, normal, hover, ButtonStyle.filled(normal, ThemeColor.selected_surface))
 	pass
 

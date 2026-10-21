@@ -15,7 +15,7 @@ static func style(button: Button, tooltip: String) -> void:
 	ButtonStyle.apply(button, normal,
 		ButtonStyle.filled(normal, Colors.hover_surface),
 		ButtonStyle.filled(normal, ThemeColor.selected_surface),
-		null, ButtonStyle.filled(normal, ButtonStyle.hover_color(ThemeColor.selected_surface, 0.06)))
+		null, ButtonStyle.filled(normal, ThemeColor.promote(ThemeColor.selected_surface, 0.06)))
 	pass
 
 
@@ -37,5 +37,5 @@ static func style_round(button: Button, tooltip: String) -> void:
 	ButtonStyle.apply(button, normal,
 		ButtonStyle.filled(normal, Colors.hover_surface),
 		ButtonStyle.filled(normal, ThemeColor.selected_surface),
-		null, ButtonStyle.filled(normal, ButtonStyle.hover_color(ThemeColor.selected_surface, 0.06)))
+		null, ButtonStyle.filled(normal, ThemeColor.promote(ThemeColor.selected_surface, 0.06)))
 	pass

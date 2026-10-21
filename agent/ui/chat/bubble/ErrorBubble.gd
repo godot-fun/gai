@@ -78,8 +78,8 @@ static func style_resume_button(button: Button) -> void:
 	button.add_theme_font_size_override("font_size", Typography.label_large_size)
 
 	var theme_color := ThemeColor.accent_theme_color()
-	ButtonStyle.apply_font_colors(button,theme_color,ButtonStyle.hover_color(theme_color, 0.12),
-		ButtonStyle.press_color(theme_color, 0.08),ThemeColor.alpha_theme_color(0.45))
+	ButtonStyle.apply_font_colors(button,theme_color,ThemeColor.promote(theme_color, 0.12),
+		ThemeColor.demote(theme_color, 0.08),ThemeColor.alpha_theme_color(0.45))
 
 	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.alpha_theme_color(0.08),5,
 		Margin.ma_3,Margin.ma_1,ThemeColor.alpha_theme_color(0.35),ControlSize.border_xs)

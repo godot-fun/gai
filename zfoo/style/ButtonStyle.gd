@@ -1,14 +1,9 @@
 class_name ButtonStyle
 extends Object
 
-## Button and panel state styling: derive the hover / pressed colors from one base color,
-## and install the state set a [Button] needs. The boxes themselves are built by [StyleBoxHelper].
-##
-## The derivation is theme-aware on purpose. [method hover_color] steps *away* from the surface —
-## brighter on the dark theme, darker on the light one — and [method press_color] steps back toward
-## it, so a control keeps its contrast when the theme flips instead of washing out.
-## The amount is the caller's: that is per-component tuning, not a shared token, and the defaults
-## are just the common step.
+## Button and panel state styling: install the state set a [Button] needs. The boxes themselves
+## are built by [StyleBoxHelper]; hover and pressed fills use [method ThemeColor.promote] and
+## [method ThemeColor.demote] so contrast stays correct when the theme flips.
 ##
 ## Solid fills (accent buttons, shadows) are the exception — those read as plain shading, so they
 ## keep [method Color.darkened] on every theme.
@@ -17,26 +12,9 @@ extends Object
 ## [codeblock]
 ## var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 6, Margin.ma_2, Margin.ma_1, ThemeColor.accent_theme_color(), ControlSize.border_xs)
 ## ButtonStyle.apply(button, normal,
-## 	ButtonStyle.filled(normal, ButtonStyle.hover_color(ThemeColor.card_surface, 0.08)),
+## 	ButtonStyle.filled(normal, ThemeColor.promote(ThemeColor.card_surface, 0.08)),
 ## 	ButtonStyle.filled(normal, ThemeColor.inset_surface, ThemeColor.accent_theme_color()))
 ## [/codeblock]
-
-## Common step sizes; pass an explicit amount when a component needs a different one.
-const HOVER_AMOUNT := 0.10
-const PRESS_AMOUNT := 0.06
-
-
-## Fill or text color for the hover state: one step away from the surface, brighter on the dark
-## theme and darker on the light one, so the same call is correct on both.
-static func hover_color(base: Color, amount: float = HOVER_AMOUNT) -> Color:
-	return base.lightened(amount) if ThemeColor.is_dark_theme() else base.darkened(amount)
-
-
-## Fill or text color for the pressed state: one step toward the surface, the opposite of
-## [method hover_color].
-static func press_color(base: Color, amount: float = PRESS_AMOUNT) -> Color:
-	return base.darkened(amount) if ThemeColor.is_dark_theme() else base.lightened(amount)
-
 
 ## A copy of [param base] with a new fill — how the hover / pressed / disabled box of a button is
 ## derived from its normal box, so the border, padding and corners are written only once.
