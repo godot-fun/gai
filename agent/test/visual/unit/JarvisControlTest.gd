@@ -26,3 +26,18 @@ func comma_is_not_a_complete_sentence_test() -> void:
 	assert(sentence.text.is_empty())
 	assert(sentence.next_index == 0)
 	pass
+
+
+func session_cursor_cache_isolated_test() -> void:
+	VisualChatSentenceCursor.remove_session(91)
+	VisualChatSentenceCursor.remove_session(92)
+	var first := VisualChatSentenceCursor.get_or_create_cursor(91)
+	first.chat_entry_index = 4
+	var same_session := VisualChatSentenceCursor.get_or_create_cursor(91)
+	var other_session := VisualChatSentenceCursor.get_or_create_cursor(92)
+	assert(same_session == first)
+	assert(same_session.chat_entry_index == 4)
+	assert(other_session != first)
+	VisualChatSentenceCursor.remove_session(91)
+	VisualChatSentenceCursor.remove_session(92)
+	pass

@@ -16,7 +16,6 @@ var sub_viewport: SubViewport
 var jarvis_orb: JarvisOrb
 var orb_tween: Tween
 var active_session_id: int = 0
-var visual_chat_sentence_cursor: VisualChatSentenceCursor = VisualChatSentenceCursor.new()
 var sentence_timer: float = 0.0
 
 
@@ -91,13 +90,12 @@ func set_visual_visible(show: bool, animated: bool) -> void:
 func on_agent_start(session_id: int) -> void:
 	transition_to(OrbPhase.Phase.AWAKE)
 	active_session_id = session_id
-	visual_chat_sentence_cursor.reset_for_session(session_id)
 	sentence_timer = 0.0
 	pass
 
 
 func offer_next_sentence() -> void:
-	var sentence: String = visual_chat_sentence_cursor.take_next_from_session(active_session_id)
+	var sentence: String = VisualChatSentenceCursor.take_next_from_session(active_session_id)
 	if not sentence.is_empty():
 		jarvis_orb.add_step_text(sentence)
 	pass

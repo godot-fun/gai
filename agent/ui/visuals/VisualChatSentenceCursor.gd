@@ -1,8 +1,13 @@
 class_name VisualChatSentenceCursor
 extends RefCounted
 
-## Incrementally reads complete sentences from a live session transcript. The two
-## indices remain stable while the final ChatEntry grows during streaming.
+## Incrementally reads complete sentences from live session transcripts. Each session
+## owns a shared cursor, so concurrent effects continue from the correct transcript.
+
+
+# ---------------------------------------------------------------------------
+# Value objects
+# ---------------------------------------------------------------------------
 
 class VisualChatSentence:
 	extends RefCounted
@@ -16,30 +21,28 @@ class VisualChatSentence:
 		next_index = sentence_next_index
 		pass
 
+
+# ---------------------------------------------------------------------------
+# Instance state
+# ---------------------------------------------------------------------------
+
 var chat_entry_index: int = 0
 var entry_char_index: int = 0
 
 
-func reset_for_session(session_id: int) -> void:
-	var session: AgentSession = AgentSessionStore.load_session(session_id)
-	if session == null:
-		chat_entry_index = 0
-		entry_char_index = 0
-		return
-	chat_entry_index = find_latest_user_entry(session.chat_entries)
+# ---------------------------------------------------------------------------
+# Instance cursor operations
+# ---------------------------------------------------------------------------
+
+
+func reset(entries: Array[ChatEntry]) -> void:
+	chat_entry_index = find_latest_user_entry(entries)
 	entry_char_index = 0
 	pass
 
 
 ## Returns the next complete sentence, or an empty string while the current entry
 ## still has an unfinished tail. Later calls continue from the same two indices.
-func take_next_from_session(session_id: int) -> String:
-	var session: AgentSession = AgentSessionStore.load_session(session_id)
-	if session == null:
-		return ""
-	return take_next(session.chat_entries)
-
-
 func take_next(entries: Array[ChatEntry]) -> String:
 	while chat_entry_index < entries.size():
 		var entry: ChatEntry = entries[chat_entry_index]
@@ -53,6 +56,38 @@ func take_next(entries: Array[ChatEntry]) -> String:
 		chat_entry_index += 1
 		entry_char_index = 0
 	return ""
+
+
+# ---------------------------------------------------------------------------
+# Shared session cursor cache
+# ---------------------------------------------------------------------------
+
+static var session_cursors: Dictionary[int, VisualChatSentenceCursor] = {}
+
+
+static func take_next_from_session(session_id: int) -> String:
+	var session: AgentSession = AgentSessionStore.load_session(session_id)
+	if session == null:
+		remove_session(session_id)
+		return ""
+	var has_cursor := session_cursors.has(session_id)
+	var cursor := get_or_create_cursor(session_id)
+	if not has_cursor:
+		cursor.reset(session.chat_entries)
+	return cursor.take_next(session.chat_entries)
+
+
+static func remove_session(session_id: int) -> void:
+	session_cursors.erase(session_id)
+	pass
+
+
+static func get_or_create_cursor(session_id: int) -> VisualChatSentenceCursor:
+	var cursor: VisualChatSentenceCursor = session_cursors.get(session_id)
+	if cursor == null:
+		cursor = VisualChatSentenceCursor.new()
+		session_cursors[session_id] = cursor
+	return cursor
 
 
 static func find_latest_user_entry(entries: Array[ChatEntry]) -> int:

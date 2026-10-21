@@ -51,7 +51,6 @@ var reasoning_energy: float = 0.0
 var layout_width: float = -1.0
 var active_session_id: int = 0
 var sentence_timer: float = 0.0
-var visual_chat_sentence_cursor: VisualChatSentenceCursor = VisualChatSentenceCursor.new()
 var reply_glyphs: Array[ReplyGlyph] = []
 var reply_sentence_index: int = 0
 var active_reply_rain_count: int = 0
@@ -64,7 +63,6 @@ func fade_out_seconds() -> float:
 
 func on_agent_start(session_id: int) -> void:
 	active_session_id = session_id
-	visual_chat_sentence_cursor.reset_for_session(session_id)
 	pending_sentence = ""
 	reasoning_energy = 0.28
 	ensure_columns()
@@ -201,7 +199,7 @@ func offer_next_sentence() -> bool:
 		return false
 	var sentence := pending_sentence
 	if sentence.is_empty():
-		sentence = visual_chat_sentence_cursor.take_next_from_session(active_session_id)
+		sentence = VisualChatSentenceCursor.take_next_from_session(active_session_id)
 	if sentence.is_empty():
 		return false
 	if active_reply_rain_count + reply_rain_count(sentence) > MAX_REPLY_RAINS:

@@ -80,6 +80,7 @@ func prepare_effect() -> VisualEffect:
 
 
 func on_session_stop(session_id: int, error_message: String) -> void:
+	VisualChatSentenceCursor.remove_session(session_id)
 	if not RuntimeManager.runtimes.is_empty():
 		return
 	var effect := current_effect
