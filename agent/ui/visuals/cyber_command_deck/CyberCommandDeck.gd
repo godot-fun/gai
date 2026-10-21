@@ -42,9 +42,29 @@ const HUD_HEX_STROKE := 0.65
 enum DeckPhase { IDLE, ACTIVE, REASONING, RESPONDING, ENDING }
 enum PodState { CONNECTING, EXECUTING, COMPLETE, FAILED }
 
+## Runtime state for one tool panel. Keeping this as a class makes pod ownership and fields explicit.
+class ToolPod:
+	extends RefCounted
+
+	var id: String
+	var name: String
+	var slot: int
+	var state: int
+	var pending_state: int = -1
+	var age: float = 0.0
+	var open: float = 0.0
+
+	func _init(tool_call_id: String, tool_name: String, pod_slot: int, initial_state: int) -> void:
+		id = tool_call_id
+		name = tool_name
+		slot = pod_slot
+		state = initial_state
+		pass
+
+
 var phase: DeckPhase = DeckPhase.IDLE
-var pods: Array[Dictionary] = []
-var pod_by_id: Dictionary[String, Dictionary] = {}
+var pods: Array[ToolPod] = []
+var pod_by_id: Dictionary[String, ToolPod] = {}
 var elapsed: float = 0.0
 var radar_angle: float = 0.0
 var activity: float = 0.0
@@ -72,9 +92,9 @@ func on_agent_start(_session_id: int) -> void:
 
 ## Blocks until every pod has reached COMPLETE/FAILED and held for `COMPLETE_HOLD_SECONDS`, then runs the end wave.
 func on_agent_end(_session_id: int, error_message: String) -> void:
-	for pod: Dictionary in pods:
-		if int(pod["state"]) < PodState.COMPLETE and int(pod["pending_state"]) < 0:
-			pod["pending_state"] = PodState.FAILED if StringUtils.is_not_blank(error_message) else PodState.COMPLETE
+	for pod: ToolPod in pods:
+		if pod.state < PodState.COMPLETE and pod.pending_state < 0:
+			pod.pending_state = PodState.FAILED if StringUtils.is_not_blank(error_message) else PodState.COMPLETE
 	if not is_inside_tree():
 		return
 	while not all_pods_finished_holding():
@@ -113,13 +133,13 @@ func on_message_complete(_session_id: int, _usage: OpenAiUsage) -> void:
 
 
 ## Registers or replaces a pod; replacement reuses slot index and clears stale radar echo for that slot.
-func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: String, args: Dictionary[String, Variant]) -> void:
+func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	var slot := pods.size()
 	if pods.size() >= MAX_PODS:
 		slot = next_replacement_slot
 		next_replacement_slot = (next_replacement_slot + 1) % MAX_PODS
-		pod_by_id.erase(String(pods[slot]["id"]))
-	var pod := make_pod(tool_call_id, tool_name, args, slot)
+		pod_by_id.erase(pods[slot].id)
+	var pod := ToolPod.new(tool_call_id, tool_name, slot, PodState.CONNECTING)
 	radar_echoes.erase(slot)
 	if slot < pods.size():
 		pods[slot] = pod
@@ -133,8 +153,8 @@ func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: 
 func on_tool_execution_end(_session_id: int, tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
 	if not pod_by_id.has(tool_call_id):
 		return
-	var pod: Dictionary = pod_by_id[tool_call_id]
-	pod["pending_state"] = PodState.FAILED if result.is_error else PodState.COMPLETE
+	var pod: ToolPod = pod_by_id[tool_call_id]
+	pod.pending_state = PodState.FAILED if result.is_error else PodState.COMPLETE
 	activity = 1.0
 	pass
 
@@ -154,23 +174,23 @@ func _process(delta: float) -> void:
 		else:
 			radar_echoes[slot] = echo
 	# Only open pods register hits; angle is pod center vs screen center (same as `draw_radar_echoes`).
-	for pod: Dictionary in pods:
-		if float(pod["open"]) < 0.75:
+	for pod: ToolPod in pods:
+		if pod.open < 0.75:
 			continue
-		var rect := pod_rect(int(pod["slot"]), pods.size(), size * 0.5)
+		var rect := pod_rect(pod.slot, pods.size(), size * 0.5)
 		var target_angle := (rect.get_center() - size * 0.5).angle()
 		if radar_crossed_angle(previous_radar_angle, radar_angle, target_angle):
-			radar_echoes[int(pod["slot"])] = 1.0
+			radar_echoes[pod.slot] = 1.0
 	activity = move_toward(activity, 0.22, delta * 0.7)
-	for pod: Dictionary in pods:
-		pod["age"] = float(pod["age"]) + delta
-		pod["open"] = move_toward(float(pod["open"]), 1.0, delta * 4.6)
-		if int(pod["state"]) == PodState.CONNECTING and float(pod["age"]) >= CONNECT_SECONDS:
-			pod["state"] = PodState.EXECUTING
-			pod["age"] = 0.0
-		elif int(pod["state"]) == PodState.EXECUTING and float(pod["age"]) >= MIN_EXECUTION_SECONDS and int(pod["pending_state"]) >= 0:
-			pod["state"] = int(pod["pending_state"])
-			pod["age"] = 0.0
+	for pod: ToolPod in pods:
+		pod.age += delta
+		pod.open = move_toward(pod.open, 1.0, delta * 4.6)
+		if pod.state == PodState.CONNECTING and pod.age >= CONNECT_SECONDS:
+			pod.state = PodState.EXECUTING
+			pod.age = 0.0
+		elif pod.state == PodState.EXECUTING and pod.age >= MIN_EXECUTION_SECONDS and pod.pending_state >= 0:
+			pod.state = pod.pending_state
+			pod.age = 0.0
 	if phase == DeckPhase.ENDING:
 		scan_wave = minf(1.0, scan_wave + delta / END_SECONDS)
 		# Core shrink lags slightly so the shockwave reads before the hex collapses.
@@ -436,8 +456,8 @@ func draw_energy_cube(energy_center: Vector2, half: float, visibility: float) ->
 
 
 ## Orthogonal path from pod inner edge to mission hex flat side (must stay in sync with `draw_core` radius/rotation).
-func draw_pod_link(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
-	var open_amount := float(pod["open"]) * (1.0 - collapse)
+func draw_pod_link(pod: ToolPod, rect: Rect2, center: Vector2) -> void:
+	var open_amount := pod.open * (1.0 - collapse)
 	if open_amount <= 0.01:
 		return
 	var left_side := rect.get_center().x < center.x
@@ -447,19 +467,19 @@ func draw_pod_link(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
 	# Slight vertical bias keeps long horizontal segments visually centered on the core.
 	var start := center + Vector2(-attach_x if left_side else attach_x, (target.y - center.y) * 0.18)
 	var elbow := Vector2(lerpf(start.x, target.x, 0.58), target.y)
-	var state: int = pod["state"]
+	var state := pod.state
 	var color := pod_color(state)
 	var path := PackedVector2Array([start, Vector2(elbow.x, start.y), elbow, target])
 	draw_polyline(path, Color(color, 0.08 * open_amount), 8.0, true)
 	draw_polyline(path, Color(color, 0.52 * open_amount), 1.2, true)
 	if state <= PodState.EXECUTING:
-		var packet := fmod(elapsed * 0.72 + float(pod["slot"]) * 0.13, 1.0)
+		var packet := fmod(elapsed * 0.72 + float(pod.slot) * 0.13, 1.0)
 		var segment := mini(int(packet * 3.0), 2)
 		var local := fmod(packet * 3.0, 1.0)
 		var position := path[segment].lerp(path[segment + 1], local)
 		draw_circle(position, 6.0, Color(color, 0.1))
 		draw_circle(position, 2.4, Color(color, 0.95))
-		var return_packet := 1.0 - fmod(elapsed * 0.48 + float(pod["slot"]) * 0.19, 1.0)
+		var return_packet := 1.0 - fmod(elapsed * 0.48 + float(pod.slot) * 0.19, 1.0)
 		var return_segment := mini(int(return_packet * 3.0), 2)
 		var return_local := fmod(return_packet * 3.0, 1.0)
 		var return_position := path[return_segment].lerp(path[return_segment + 1], return_local)
@@ -468,11 +488,11 @@ func draw_pod_link(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
 
 
 ## Tool panel chrome. In-pod decor: energy bars (non-EXECUTING), waveform + activity overlays (`draw_pod_activity`), radar scan tint.
-func draw_tool_pod(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
-	var open_amount := float(pod["open"]) * (1.0 - collapse)
+func draw_tool_pod(pod: ToolPod, rect: Rect2, center: Vector2) -> void:
+	var open_amount := pod.open * (1.0 - collapse)
 	if open_amount <= 0.01:
 		return
-	var state: int = pod["state"]
+	var state := pod.state
 	var color := pod_color(state)
 	var shown := Rect2(rect.position + Vector2(rect.size.x * (1.0 - open_amount) * 0.5, rect.size.y * (1.0 - open_amount) * 0.5), rect.size * open_amount)
 	var cut := minf(15.0, shown.size.x * 0.1)
@@ -487,9 +507,9 @@ func draw_tool_pod(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
 	draw_colored_polygon(shadow, Color(color, 0.055))
 	draw_polyline(PackedVector2Array([shadow[0], shadow[1], shadow[2], shadow[3]]), Color(color, 0.16), 4.0, true)
 	var is_executing := state == PodState.EXECUTING
-	var active_breath := 0.5 + 0.5 * sin(elapsed * 5.2 + float(pod["slot"]))
+	var active_breath := 0.5 + 0.5 * sin(elapsed * 5.2 + float(pod.slot))
 	# Live beam width × `radar_pod_feedback`; echo adds sustained highlight (0.55 scales decay tail on the panel).
-	var radar_feedback := maxf(radar_pod_feedback(shown, center), float(radar_echoes.get(int(pod["slot"]), 0.0)) * 0.55) * open_amount
+	var radar_feedback := maxf(radar_pod_feedback(shown, center), float(radar_echoes.get(pod.slot, 0.0)) * 0.55) * open_amount
 	if is_executing:
 		for glow in range(4, 0, -1):
 			draw_polyline(outset_polyline(panel, float(glow) * 3.0), Color(color, (0.018 + active_breath * 0.012) * float(5 - glow)), 4.0, true)
@@ -505,14 +525,14 @@ func draw_tool_pod(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
 	draw_polyline(outline, Color(color, 0.2 if is_executing else 0.12), 9.0 if is_executing else 7.0, true)
 	draw_polyline(outline, Color(color, 0.98 if is_executing else 0.8), 2.2 if is_executing else 1.4, true)
 	draw_line(shown.position + Vector2(cut + 8.0, 0.0), shown.position + Vector2(shown.size.x * 0.84, 0.0), Color(color, 0.98), 3.0)
-	var title := VisualToolFormatter.title_name(String(pod["name"]))
-	var glyph := VisualToolFormatter.glyph(String(pod["name"]))
+	var title := VisualToolFormatter.title_name(pod.name)
+	var glyph := VisualToolFormatter.glyph(pod.name)
 	draw_rect(Rect2(shown.position + Vector2(15.0, 17.0), Vector2(34.0, 34.0)), Color(color, 0.08), true)
 	draw_rect(Rect2(shown.position + Vector2(15.0, 17.0), Vector2(34.0, 34.0)), Color(color, 0.58), false, 1.0)
 	draw_centered_text(shown.position + Vector2(32.0, 40.0), glyph, Fonts.bold(), Typography.label_medium_size, color)
 	draw_string(Fonts.semibold(), shown.position + Vector2(59.0, 27.0), title.to_upper(), HORIZONTAL_ALIGNMENT_LEFT, shown.size.x - 80.0, Typography.label_medium_size, Colors.primary_text)
 	draw_string(Fonts.medium(), shown.position + Vector2(59.0, 49.0), "// " + pod_status(state), HORIZONTAL_ALIGNMENT_LEFT, shown.size.x - 80.0, Typography.label_small_size, color)
-	draw_string(Fonts.regular(), shown.position + Vector2(shown.size.x - 62.0, 49.0), "%02d" % int(pod["slot"]), HORIZONTAL_ALIGNMENT_RIGHT, 45.0, Typography.label_small_size, Color(color, 0.7))
+	draw_string(Fonts.regular(), shown.position + Vector2(shown.size.x - 62.0, 49.0), "%02d" % pod.slot, HORIZONTAL_ALIGNMENT_RIGHT, 45.0, Typography.label_small_size, Color(color, 0.7))
 	if is_executing:
 		var live_rect := Rect2(shown.position + Vector2(shown.size.x - 62.0, 8.0), Vector2(46.0, 15.0))
 		draw_rect(live_rect, Color(color, 0.12 + active_breath * 0.08), true)
@@ -521,11 +541,11 @@ func draw_tool_pod(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
 	# Upper-right energy columns — idle/complete pods only; EXECUTING uses LIVE badge instead.
 	if not is_executing:
 		for bar in range(5):
-			var bar_height := 3.0 + absf(sin(elapsed * 5.0 + bar * 1.7 + int(pod["slot"]))) * 8.0
+			var bar_height := 3.0 + absf(sin(elapsed * 5.0 + bar * 1.7 + pod.slot)) * 8.0
 			var bar_x := shown.end.x - 58.0 + bar * 7.0
 			draw_rect(Rect2(Vector2(bar_x, shown.position.y + 19.0 + 10.0 - bar_height), Vector2(3.0, bar_height)), Color(color, 0.55), true)
 	draw_pod_activity(pod, shown, color)
-	var progress := fmod(elapsed * 0.9 + float(pod["slot"]) * 0.17, 1.0)
+	var progress := fmod(elapsed * 0.9 + float(pod.slot) * 0.17, 1.0)
 	if state <= PodState.EXECUTING:
 		draw_rect(Rect2(shown.position + Vector2(16.0, shown.size.y - 12.0), Vector2(shown.size.x - 32.0, 2.0)), Color(color, 0.14), true)
 		draw_rect(Rect2(shown.position + Vector2(16.0, shown.size.y - 12.0), Vector2((shown.size.x - 32.0) * progress, 2.0)), Color(color, 0.95), true)
@@ -533,9 +553,9 @@ func draw_tool_pod(pod: Dictionary, rect: Rect2, center: Vector2) -> void:
 
 
 ## State-specific motion inside the pod: connect sweep, execute scan/chevrons, shared waveform, complete pulse ring.
-func draw_pod_activity(pod: Dictionary, rect: Rect2, color: Color) -> void:
-	var state: int = pod["state"]
-	var age: float = pod["age"]
+func draw_pod_activity(pod: ToolPod, rect: Rect2, color: Color) -> void:
+	var state := pod.state
+	var age := pod.age
 	if state == PodState.CONNECTING:
 		var sweep_x := rect.position.x + fmod(age / CONNECT_SECONDS, 1.0) * rect.size.x
 		draw_rect(Rect2(Vector2(sweep_x - 10.0, rect.position.y + 3.0), Vector2(20.0, rect.size.y - 6.0)), Color(neon_magenta(), 0.045), true)
@@ -544,7 +564,7 @@ func draw_pod_activity(pod: Dictionary, rect: Rect2, color: Color) -> void:
 			draw_circle(rect.position + Vector2(62.0 + dot * 9.0, rect.size.y - 11.0), 1.8, Color(neon_magenta(), dot_alpha))
 		return
 	if state == PodState.EXECUTING:
-		var scan_x := rect.position.x + fmod(elapsed * 0.72 + float(pod["slot"]) * 0.11, 1.0) * rect.size.x
+		var scan_x := rect.position.x + fmod(elapsed * 0.72 + float(pod.slot) * 0.11, 1.0) * rect.size.x
 		draw_rect(Rect2(Vector2(scan_x - 16.0, rect.position.y + 3.0), Vector2(32.0, rect.size.y - 6.0)), Color(neon_cyan(), 0.055), true)
 		for chevron in range(3):
 			var chevron_x := rect.position.x + 58.0 + chevron * 10.0
@@ -560,13 +580,13 @@ func draw_pod_activity(pod: Dictionary, rect: Rect2, color: Color) -> void:
 
 
 ## Lower-right sine trace; kept for EXECUTING and after (COMPLETE/FAILED) — independent of energy bars above.
-func draw_pod_waveform(pod: Dictionary, rect: Rect2, color: Color) -> void:
+func draw_pod_waveform(pod: ToolPod, rect: Rect2, color: Color) -> void:
 	var graph := PackedVector2Array()
 	var graph_left := rect.position.x + rect.size.x * 0.58
 	var graph_width := rect.size.x * 0.28
 	for point in range(13):
 		var amount := float(point) / 12.0
-		var value := sin(elapsed * 5.4 + amount * 13.0 + int(pod["slot"])) * 5.0 + sin(elapsed * 2.1 + amount * 27.0) * 2.0
+		var value := sin(elapsed * 5.4 + amount * 13.0 + pod.slot) * 5.0 + sin(elapsed * 2.1 + amount * 27.0) * 2.0
 		graph.append(Vector2(graph_left + amount * graph_width, rect.position.y + rect.size.y - 23.0 + value))
 	draw_polyline(graph, Color(color, 0.2), 5.0, true)
 	draw_polyline(graph, Color(color, 0.9), 1.2, true)
@@ -621,11 +641,11 @@ func radar_pod_feedback(rect: Rect2, center: Vector2) -> float:
 
 ## Tick marks on the radar ring at each echoing pod bearing (strength follows `radar_echoes` decay).
 func draw_radar_echoes(center: Vector2, radius: float) -> void:
-	for pod: Dictionary in pods:
-		var strength := float(radar_echoes.get(int(pod["slot"]), 0.0))
+	for pod: ToolPod in pods:
+		var strength := float(radar_echoes.get(pod.slot, 0.0))
 		if strength <= 0.0:
 			continue
-		var rect := pod_rect(int(pod["slot"]), pods.size(), center)
+		var rect := pod_rect(pod.slot, pods.size(), center)
 		var angle := (rect.get_center() - center).angle()
 		var echo_radius := radius - 10.0
 		var marker := center + Vector2.from_angle(angle) * echo_radius
@@ -654,8 +674,8 @@ static func radar_crossed_angle(previous_angle: float, current_angle: float, tar
 
 func active_pod_count() -> int:
 	var count := 0
-	for pod: Dictionary in pods:
-		if int(pod["state"]) <= PodState.EXECUTING:
+	for pod: ToolPod in pods:
+		if pod.state <= PodState.EXECUTING:
 			count += 1
 	return count
 
@@ -713,14 +733,9 @@ static func accent_shifted(hue_offset: float, sat_mul: float = 1.0, val_mul: flo
 	return Color.from_hsv(fposmod(base.h + hue_offset, 1.0), clampf(base.s * sat_mul, 0.0, 1.0), clampf(maxf(base.v, 0.72) * val_mul, 0.0, 1.0))
 
 
-## `pending_state`: -1 until tool returns; then COMPLETE/FAILED applied after min execute time. `open`: panel reveal 0..1.
-static func make_pod(tool_call_id: String, tool_name: String, args: Dictionary[String, Variant], slot: int) -> Dictionary:
-	return {"id": tool_call_id, "name": tool_name, "arg_count": args.size(), "slot": slot, "state": PodState.CONNECTING, "pending_state": -1, "age": 0.0, "open": 0.0}
-
-
 func all_pods_finished_holding() -> bool:
-	for pod: Dictionary in pods:
-		if int(pod["state"]) < PodState.COMPLETE or float(pod["age"]) < COMPLETE_HOLD_SECONDS:
+	for pod: ToolPod in pods:
+		if pod.state < PodState.COMPLETE or pod.age < COMPLETE_HOLD_SECONDS:
 			return false
 	return true
 
