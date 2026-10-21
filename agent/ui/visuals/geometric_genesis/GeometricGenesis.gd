@@ -85,7 +85,7 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> void:
+func on_agent_end(_session_id: int, error_message: String) -> void:
 	if active_seal != null:
 		finish_active_seal()
 	ended_with_error = StringUtils.is_not_blank(error_message)
@@ -95,7 +95,7 @@ func on_agent_end(error_message: String) -> void:
 	pass
 
 
-func on_turn_start() -> void:
+func on_turn_start(_session_id: int) -> void:
 	if active_seal != null:
 		finish_active_seal()
 	if seals.size() >= MAX_SEALS:
@@ -109,12 +109,12 @@ func on_turn_start() -> void:
 	pass
 
 
-func on_turn_end() -> void:
+func on_turn_end(_session_id: int) -> void:
 	finish_active_seal()
 	pass
 
 
-func on_message_update(chunk: String, stream_kind: String) -> void:
+func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> void:
 	ensure_seal()
 	if chunk.is_empty() or active_seal == null:
 		return
@@ -127,7 +127,7 @@ func on_message_update(chunk: String, stream_kind: String) -> void:
 	pass
 
 
-func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
+func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	ensure_seal()
 	if active_seal == null:
 		return
@@ -139,7 +139,7 @@ func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dic
 	pass
 
 
-func on_tool_execution_end(tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
+func on_tool_execution_end(_session_id: int, tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
 	if not active_tools.has(tool_call_id):
 		return
 	var motif := active_tools[tool_call_id]
@@ -700,7 +700,7 @@ func finish_active_seal() -> void:
 
 func ensure_seal() -> void:
 	if active_seal == null and seals.size() < MAX_SEALS:
-		on_turn_start()
+		on_turn_start(0)
 	pass
 
 

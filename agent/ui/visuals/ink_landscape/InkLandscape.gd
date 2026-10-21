@@ -133,7 +133,7 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> void:
+func on_agent_end(_session_id: int, error_message: String) -> void:
 	ended_with_error = StringUtils.is_not_blank(error_message)
 	completing = true
 	for bird: BirdState in birds:
@@ -161,7 +161,7 @@ func set_landscape_alpha(value: float) -> void:
 	pass
 
 
-func on_turn_start() -> void:
+func on_turn_start(_session_id: int) -> void:
 	turn_serial += 1
 	current_turn_has_mountain = false
 	# Composition cadence is cloud -> mountain. Mountain geometry uses its own
@@ -198,7 +198,7 @@ func on_turn_start() -> void:
 	pass
 
 
-func on_turn_end() -> void:
+func on_turn_end(_session_id: int) -> void:
 	if current_turn_has_mountain and not mountains.is_empty():
 		mountains[-1].settled = true
 		mountains[-1].growth = 1.0
@@ -207,7 +207,7 @@ func on_turn_end() -> void:
 	pass
 
 
-func on_message_update(chunk: String, stream_kind: String) -> void:
+func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> void:
 	if chunk.is_empty():
 		return
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
@@ -217,7 +217,7 @@ func on_message_update(chunk: String, stream_kind: String) -> void:
 	pass
 
 
-func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
+func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	bird_serial += 1
 	if birds.size() >= MAX_BIRDS:
 		# Retire the oldest active bird through the same phase sequence instead of
@@ -240,7 +240,7 @@ func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dic
 	pass
 
 
-func on_tool_execution_end(tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
+func on_tool_execution_end(_session_id: int, tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
 	var bird := find_active_bird(tool_call_id)
 	if bird == null:
 		return
@@ -492,7 +492,7 @@ func draw_tool_bird(bird: BirdState, field: Rect2) -> void:
 
 func ensure_landscape_mark() -> void:
 	if mountains.is_empty() and cloud_count == 0:
-		on_turn_start()
+		on_turn_start(0)
 	pass
 
 

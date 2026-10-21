@@ -49,7 +49,7 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> void:
+func on_agent_end(_session_id: int, error_message: String) -> void:
 	ended_with_error = StringUtils.is_not_blank(error_message)
 	completing = true
 	if is_inside_tree():
@@ -57,7 +57,7 @@ func on_agent_end(error_message: String) -> void:
 	pass
 
 
-func on_turn_start() -> void:
+func on_turn_start(_session_id: int) -> void:
 	if not active_wire.is_empty():
 		active_wire["active"] = false
 	turn_serial += 1
@@ -82,14 +82,14 @@ func on_turn_start() -> void:
 	pass
 
 
-func on_turn_end() -> void:
+func on_turn_end(_session_id: int) -> void:
 	if not active_wire.is_empty():
 		active_wire["complete"] = true
 		active_wire["active"] = false
 	pass
 
 
-func on_message_update(chunk: String, stream_kind: String) -> void:
+func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> void:
 	ensure_wire()
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
 		active_wire["signal_kind"] = SignalKind.REASONING
@@ -105,7 +105,7 @@ func on_message_update(chunk: String, stream_kind: String) -> void:
 	pass
 
 
-func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
+func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	ensure_wire()
 	var gate := append_gate(GateKind.TOOL, tool_call_id, VisualToolFormatter.gate_name(tool_name))
 	gate["state"] = GateState.RUNNING
@@ -114,7 +114,7 @@ func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dic
 	pass
 
 
-func on_tool_execution_end(tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
+func on_tool_execution_end(_session_id: int, tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
 	if not tool_gates.has(tool_call_id):
 		return
 	var gate: Dictionary = tool_gates[tool_call_id]
@@ -610,7 +610,7 @@ func append_gate(kind: int, id: String, label: String) -> Dictionary:
 
 func ensure_wire() -> void:
 	if active_wire.is_empty():
-		on_turn_start()
+		on_turn_start(0)
 	pass
 
 

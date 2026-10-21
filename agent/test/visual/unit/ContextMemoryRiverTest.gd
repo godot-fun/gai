@@ -15,7 +15,7 @@ static func context_usage_test() -> void:
 	var usage := OpenAiUsage.new()
 	usage.prompt_tokens = 64_000
 	usage.completion_tokens = 2_000
-	effect.on_message_complete(usage)
+	effect.on_message_complete(1, usage)
 	assert(is_equal_approx(effect.context_ratio(), 0.5))
 	assert(effect.token_label() == "64.0K / 128.0K")
 	effect.free()

@@ -45,7 +45,7 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> void:
+func on_agent_end(_session_id: int, error_message: String) -> void:
 	if complete_animation_on_agent_end and StringUtils.is_blank(error_message):
 		while is_inside_tree() and (not tai_chi_divination_flow.active or not tai_chi_divination_flow.animation_finished()):
 			await get_tree().process_frame

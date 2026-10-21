@@ -65,15 +65,15 @@ func fade_out_seconds() -> float:
 	return 0.34
 
 
-func on_agent_start(p_session_id: int) -> void:
-	session_id = p_session_id
+func on_agent_start(session_id: int) -> void:
+	self.session_id = session_id
 	phase = DeckPhase.ACTIVE
 	activity = 1.0
 	pass
 
 
 ## Blocks until every pod has reached COMPLETE/FAILED and held for `COMPLETE_HOLD_SECONDS`, then runs the end wave.
-func on_agent_end(error_message: String) -> void:
+func on_agent_end(_session_id: int, error_message: String) -> void:
 	for pod: Dictionary in pods:
 		if int(pod["state"]) < PodState.COMPLETE and int(pod["pending_state"]) < 0:
 			pod["pending_state"] = PodState.FAILED if StringUtils.is_not_blank(error_message) else PodState.COMPLETE
@@ -90,32 +90,32 @@ func on_agent_end(error_message: String) -> void:
 	pass
 
 
-func on_turn_start() -> void:
+func on_turn_start(_session_id: int) -> void:
 	turn_index += 1
 	phase = DeckPhase.ACTIVE
 	activity = 1.0
 	pass
 
 
-func on_turn_end() -> void:
+func on_turn_end(_session_id: int) -> void:
 	if phase != DeckPhase.ENDING:
 		phase = DeckPhase.ACTIVE
 	pass
 
 
-func on_message_update(chunk: String, stream_kind: String) -> void:
+func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> void:
 	phase = DeckPhase.REASONING if stream_kind == OpenAiClient.STREAM_KIND_REASONING else DeckPhase.RESPONDING
 	activity = clampf(activity + maxf(0.12, chunk.length() * 0.008), 0.0, 1.0)
 	pass
 
 
-func on_message_complete(_usage: OpenAiUsage) -> void:
+func on_message_complete(_session_id: int, _usage: OpenAiUsage) -> void:
 	activity = 1.0
 	pass
 
 
 ## Registers or replaces a pod; replacement reuses slot index and clears stale radar echo for that slot.
-func on_tool_execution_start(tool_call_id: String, tool_name: String, args: Dictionary[String, Variant]) -> void:
+func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: String, args: Dictionary[String, Variant]) -> void:
 	var slot := pods.size()
 	if pods.size() >= MAX_PODS:
 		slot = next_replacement_slot
@@ -132,7 +132,7 @@ func on_tool_execution_start(tool_call_id: String, tool_name: String, args: Dict
 	pass
 
 
-func on_tool_execution_end(tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
+func on_tool_execution_end(_session_id: int, tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
 	if not pod_by_id.has(tool_call_id):
 		return
 	var pod: Dictionary = pod_by_id[tool_call_id]

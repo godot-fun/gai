@@ -98,7 +98,7 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> void:
+func on_agent_end(_session_id: int, error_message: String) -> void:
 	# Drain the independent tool timeline so fast real executions remain readable.
 	ended_with_error = StringUtils.is_not_blank(error_message)
 	if ended_with_error:
@@ -125,24 +125,24 @@ func on_agent_end(error_message: String) -> void:
 	pass
 
 
-func on_turn_start() -> void:
+func on_turn_start(_session_id: int) -> void:
 	turn_index += 1
 	core_pulse = 1.0
 	queue_redraw()
 	pass
 
 
-func on_turn_end() -> void:
+func on_turn_end(_session_id: int) -> void:
 	core_pulse = maxf(core_pulse, 0.45)
 	pass
 
 
-func on_chat_entry_add(_entry: ChatEntry) -> void:
+func on_chat_entry_add(_session_id: int, _entry: ChatEntry) -> void:
 	core_pulse = 1.0
 	pass
 
 
-func on_message_update(chunk: String, next_stream_kind: String) -> void:
+func on_message_update(_session_id: int, chunk: String, next_stream_kind: String) -> void:
 	# Chunks can be tiny token fragments. Append first, then retain only a bounded tail so
 	# redraw cost and memory usage remain stable throughout long responses.
 	stream_kind = next_stream_kind
@@ -152,13 +152,13 @@ func on_message_update(chunk: String, next_stream_kind: String) -> void:
 	pass
 
 
-func on_tool_execution_start(tool_call_id: String, tool_name: String, args: Dictionary[String, Variant]) -> void:
+func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: String, args: Dictionary[String, Variant]) -> void:
 	pending_calls.append(ToolCall.new(tool_call_id, tool_name, args, turn_index))
 	start_next_queued_call()
 	pass
 
 
-func on_tool_execution_end(tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
+func on_tool_execution_end(_session_id: int, tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
 	pending_results[tool_call_id] = result
 	pass
 

@@ -18,7 +18,7 @@ func ink_landscape_uses_slow_fade_out_test() -> void:
 
 func reasoning_builds_mountain_test() -> void:
 	var effect := InkLandscape.new()
-	effect.on_message_update("Study the context, then compare the paths.", OpenAiClient.STREAM_KIND_REASONING)
+	effect.on_message_update(1, "Study the context, then compare the paths.", OpenAiClient.STREAM_KIND_REASONING)
 	assert(effect.cloud_count == 1)
 	assert(effect.mountains.is_empty())
 	assert(effect.reasoning_ink > 0.0)
@@ -29,13 +29,13 @@ func reasoning_builds_mountain_test() -> void:
 func tool_bird_tracks_result_test() -> void:
 	var effect := InkLandscape.new()
 	var args: Dictionary[String, Variant] = {"path": "res://project.godot"}
-	effect.on_tool_execution_start("tool-1", ReadTool.NAME, args)
+	effect.on_tool_execution_start(1, "tool-1", ReadTool.NAME, args)
 	assert(effect.birds.size() == 1)
 	var bird := effect.find_active_bird("tool-1")
 	assert(bird != null)
 	assert(bird.phase == InkLandscape.BirdPhase.ENTERING)
 	assert(bird.result == InkLandscape.BirdResult.ACTIVE)
-	effect.on_tool_execution_end("tool-1", ReadTool.NAME, AgentToolResult.ok("done"))
+	effect.on_tool_execution_end(1, "tool-1", ReadTool.NAME, AgentToolResult.ok("done"))
 	assert(effect.find_active_bird("tool-1") == null)
 	assert(bird.result == InkLandscape.BirdResult.SUCCESS)
 	effect.free()
@@ -47,7 +47,7 @@ func repeated_tools_retire_old_birds_without_abrupt_removal_test() -> void:
 	effect.visible = true
 	var args: Dictionary[String, Variant] = {}
 	for index in range(24):
-		effect.on_tool_execution_start("tool-%d" % index, ReadTool.NAME, args)
+		effect.on_tool_execution_start(1, "tool-%d" % index, ReadTool.NAME, args)
 		effect._process(0.5)
 	assert(effect.birds.size() >= InkLandscape.MAX_BIRDS)
 	assert(effect.bird_serial == 24)
@@ -66,7 +66,7 @@ func capacity_retirement_waits_for_entering_bird_test() -> void:
 	effect.visible = true
 	var args: Dictionary[String, Variant] = {}
 	for index in range(InkLandscape.MAX_BIRDS + 1):
-		effect.on_tool_execution_start("capacity-%d" % index, ReadTool.NAME, args)
+		effect.on_tool_execution_start(1, "capacity-%d" % index, ReadTool.NAME, args)
 	var retiring_bird: InkLandscape.BirdState = effect.birds[0]
 	assert(retiring_bird.result == InkLandscape.BirdResult.SUCCESS)
 	assert(retiring_bird.phase == InkLandscape.BirdPhase.ENTERING)
@@ -80,13 +80,13 @@ func capacity_retirement_waits_for_entering_bird_test() -> void:
 func tool_birds_enter_from_both_screen_edges_test() -> void:
 	var effect := InkLandscape.new()
 	var args: Dictionary[String, Variant] = {}
-	effect.on_tool_execution_start("top-bird", ReadTool.NAME, args)
+	effect.on_tool_execution_start(1, "top-bird", ReadTool.NAME, args)
 	var target := InkLandscape.bird_exit_position(1, float(effect.birds[0]["seed"]))
 	var spawn := InkLandscape.bird_spawn_position(target.x, 1)
 	assert(spawn.y < 0.0)
 	assert(target.y > 0.0 and target.y < 1.0)
 	assert(spawn.x > target.x)
-	effect.on_tool_execution_start("bottom-bird", ReadTool.NAME, args)
+	effect.on_tool_execution_start(1, "bottom-bird", ReadTool.NAME, args)
 	var second_target := InkLandscape.bird_exit_position(2, float(effect.birds[1]["seed"]))
 	var second_spawn := InkLandscape.bird_spawn_position(second_target.x, 2)
 	assert(second_spawn.y > 1.0)
@@ -115,7 +115,7 @@ func descending_birds_stay_in_distant_sky_test() -> void:
 func tool_bird_crosses_and_exits_screen_test() -> void:
 	var effect := InkLandscape.new()
 	var args: Dictionary[String, Variant] = {}
-	effect.on_tool_execution_start("cross-screen", ReadTool.NAME, args)
+	effect.on_tool_execution_start(1, "cross-screen", ReadTool.NAME, args)
 	var bird: InkLandscape.BirdState = effect.birds[0]
 	var target := InkLandscape.bird_exit_position(bird.serial, bird.seed)
 	var spawn := InkLandscape.bird_spawn_position(target.x, bird.serial)
@@ -256,10 +256,10 @@ func bird_downstroke_shortens_visible_wing_span_test() -> void:
 func gliding_bird_finishes_flap_cycle_before_locking_test() -> void:
 	var effect := InkLandscape.new()
 	effect.visible = true
-	effect.on_tool_execution_start("glide-anchor", ReadTool.NAME, {})
+	effect.on_tool_execution_start(1, "glide-anchor", ReadTool.NAME, {})
 	var bird: InkLandscape.BirdState = effect.birds[0]
 	bird.entry = 1.0
-	effect.on_tool_execution_end("glide-anchor", ReadTool.NAME, AgentToolResult.ok("done"))
+	effect.on_tool_execution_end(1, "glide-anchor", ReadTool.NAME, AgentToolResult.ok("done"))
 	var phase_before := bird.wing
 	effect._process(0.01)
 	assert(bird.phase == InkLandscape.BirdPhase.FINISHING)
@@ -296,8 +296,8 @@ func bird_perspective_shrinks_and_fades_with_height_test() -> void:
 func completed_tool_keeps_flapping_until_entry_finishes_test() -> void:
 	var effect := InkLandscape.new()
 	var args: Dictionary[String, Variant] = {}
-	effect.on_tool_execution_start("fast-tool", ReadTool.NAME, args)
-	effect.on_tool_execution_end("fast-tool", ReadTool.NAME, AgentToolResult.ok("done"))
+	effect.on_tool_execution_start(1, "fast-tool", ReadTool.NAME, args)
+	effect.on_tool_execution_end(1, "fast-tool", ReadTool.NAME, AgentToolResult.ok("done"))
 	var initial_wing := float(effect.birds[0]["wing"])
 	effect.visible = true
 	effect._process(1.0)
@@ -315,9 +315,9 @@ func completed_tool_keeps_flapping_until_entry_finishes_test() -> void:
 
 func completed_tool_bird_departs_after_glide_test() -> void:
 	var effect := InkLandscape.new()
-	effect.on_tool_execution_start("departing-tool", ReadTool.NAME, {})
+	effect.on_tool_execution_start(1, "departing-tool", ReadTool.NAME, {})
 	effect.birds[0].entry = 1.0
-	effect.on_tool_execution_end("departing-tool", ReadTool.NAME, AgentToolResult.ok("done"))
+	effect.on_tool_execution_end(1, "departing-tool", ReadTool.NAME, AgentToolResult.ok("done"))
 	effect.visible = true
 	for _frame in range(600):
 		effect._process(1.0 / 60.0)
@@ -331,7 +331,7 @@ func completed_tool_bird_departs_after_glide_test() -> void:
 func mountain_count_is_capped_test() -> void:
 	var effect := InkLandscape.new()
 	for _index in range(96):
-		effect.on_turn_start()
+		effect.on_turn_start(1)
 	assert(effect.mountains.size() == InkLandscape.MAX_MOUNTAINS)
 	assert(effect.cloud_count == InkLandscape.MAX_CLOUDS)
 	assert(effect.turn_serial == 96)
@@ -381,20 +381,20 @@ func first_three_mountains_span_screen_test() -> void:
 func one_mountain_is_added_per_turn_test() -> void:
 	var effect := InkLandscape.new()
 	effect.visible = true
-	effect.on_turn_start()
+	effect.on_turn_start(1)
 	assert(effect.cloud_count == 1)
 	assert(effect.mountains.is_empty())
-	effect.on_turn_start()
+	effect.on_turn_start(1)
 	effect._process(0.25)
 	assert(effect.mountains.size() == 1)
 	var first_growth := float(effect.mountains[0]["growth"])
 	assert(first_growth > 0.0 and first_growth < 1.0)
-	effect.on_turn_end()
+	effect.on_turn_end(1)
 	assert(float(effect.mountains[0]["growth"]) == 1.0)
-	effect.on_turn_start()
+	effect.on_turn_start(1)
 	assert(effect.cloud_count == 2)
 	assert(effect.mountains.size() == 1)
-	effect.on_turn_start()
+	effect.on_turn_start(1)
 	assert(effect.mountains.size() == 2)
 	assert(float(effect.mountains[0]["growth"]) == 1.0)
 	assert(float(effect.mountains[1]["growth"]) == 0.0)
@@ -405,7 +405,7 @@ func one_mountain_is_added_per_turn_test() -> void:
 func cloud_appears_gradually_test() -> void:
 	var effect := InkLandscape.new()
 	effect.visible = true
-	effect.on_turn_start()
+	effect.on_turn_start(1)
 	assert(effect.cloud_count == 1)
 	assert(effect.cloud_reveal == 0.0)
 	effect._process(0.5)
@@ -418,13 +418,13 @@ func cloud_appears_gradually_test() -> void:
 
 func cloud_turn_does_not_settle_previous_mountain_test() -> void:
 	var effect := InkLandscape.new()
-	effect.on_turn_start()
-	effect.on_turn_start()
+	effect.on_turn_start(1)
+	effect.on_turn_start(1)
 	assert(effect.current_turn_has_mountain)
 	effect.mountains[0]["growth"] = 0.42
-	effect.on_turn_start()
+	effect.on_turn_start(1)
 	assert(not effect.current_turn_has_mountain)
-	effect.on_turn_end()
+	effect.on_turn_end(1)
 	assert(is_equal_approx(float(effect.mountains[0]["growth"]), 0.42))
 	effect.free()
 	pass
@@ -453,13 +453,13 @@ func render_smoke_test() -> void:
 	effect.set_landscape_alpha(0.37)
 	assert(is_equal_approx(float(effect.cloud_material.get_shader_parameter("fade_alpha")), 0.37))
 	effect.visible = true
-	effect.on_turn_start()
-	effect.on_turn_start()
-	effect.on_message_update("Consider the evidence, compare it, then answer.", OpenAiClient.STREAM_KIND_REASONING)
-	effect.on_message_update("The answer follows from the evidence.", OpenAiClient.STREAM_KIND_CONTENT)
+	effect.on_turn_start(1)
+	effect.on_turn_start(1)
+	effect.on_message_update(1, "Consider the evidence, compare it, then answer.", OpenAiClient.STREAM_KIND_REASONING)
+	effect.on_message_update(1, "The answer follows from the evidence.", OpenAiClient.STREAM_KIND_CONTENT)
 	var args: Dictionary[String, Variant] = {"path": "res://project.godot"}
-	effect.on_tool_execution_start("render-tool", ReadTool.NAME, args)
-	effect.on_tool_execution_end("render-tool", ReadTool.NAME, AgentToolResult.ok("done"))
+	effect.on_tool_execution_start(1, "render-tool", ReadTool.NAME, args)
+	effect.on_tool_execution_end(1, "render-tool", ReadTool.NAME, AgentToolResult.ok("done"))
 	effect._process(0.3)
 	await Engine.get_main_loop().process_frame
 	assert(effect.z_index == 100)
@@ -472,7 +472,7 @@ func render_smoke_test() -> void:
 	effect.set_landscape_alpha(0.23)
 	assert(is_equal_approx(float(mountain_material.get_shader_parameter("fade_alpha")), 0.23))
 	for _index in range(12):
-		effect.on_turn_start()
+		effect.on_turn_start(1)
 	assert(is_equal_approx(float(mountain_material.get_shader_parameter("strength")), initial_strength))
 	effect.get_parent().remove_child(effect)
 	effect.free()

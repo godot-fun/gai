@@ -63,11 +63,11 @@ func set_visual_visible(show: bool, animated: bool) -> void:
 	pass
 
 
-func on_agent_start(value: int) -> void:
-	session_id = value
-	var session := AgentSessionStore.load_session(value)
+func on_agent_start(session_id: int) -> void:
+	self.session_id = session_id
+	var session := AgentSessionStore.load_session(session_id)
 	run_entry_start = session.chat_entries.size() if session != null else 0
-	var prompt := latest_user_prompt(value)
+	var prompt := latest_user_prompt(session_id)
 	if prompt.is_empty():
 		return
 	request_generation += 1
@@ -76,7 +76,7 @@ func on_agent_start(value: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> void:
+func on_agent_end(_session_id: int, error_message: String) -> void:
 	if complete_animation_on_agent_end and StringUtils.is_blank(error_message):
 		await finish_logits_animation(request_generation)
 		return

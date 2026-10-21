@@ -112,7 +112,7 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(_error_message: String) -> void:
+func on_agent_end(_session_id: int, _error_message: String) -> void:
 	# Stop admitting new work, then let the existing visual story finish in order:
 	# intake -> absorption -> output -> lens close.
 	is_ending = true
@@ -128,18 +128,18 @@ func on_agent_end(_error_message: String) -> void:
 	pass
 
 
-func on_turn_start() -> void:
+func on_turn_start(_session_id: int) -> void:
 	turn_index += 1
 	activity = 1.0
 	pass
 
 
-func on_turn_end() -> void:
+func on_turn_end(_session_id: int) -> void:
 	output_activity = maxf(output_activity, 0.6)
 	pass
 
 
-func on_chat_entry_add(entry: ChatEntry) -> void:
+func on_chat_entry_add(_session_id: int, entry: ChatEntry) -> void:
 	var stream_type := stream_type_for_entry(entry)
 	if stream_type < 0:
 		return
@@ -148,7 +148,7 @@ func on_chat_entry_add(entry: ChatEntry) -> void:
 	pass
 
 
-func on_message_update(chunk: String, stream_kind: String) -> void:
+func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> void:
 	if chunk.strip_edges().is_empty():
 		return
 	var stream_type := StreamType.REASONING if stream_kind == OpenAiClient.STREAM_KIND_REASONING else StreamType.ANSWER
@@ -161,7 +161,7 @@ func on_message_update(chunk: String, stream_kind: String) -> void:
 	pass
 
 
-func on_message_complete(usage: OpenAiUsage) -> void:
+func on_message_complete(_session_id: int, usage: OpenAiUsage) -> void:
 	prompt_tokens = maxi(usage.prompt_tokens, 0)
 	completion_tokens = maxi(usage.completion_tokens, 0)
 	# Keep the gauge meaningful for providers whose actual context limit is unknown.
@@ -172,13 +172,13 @@ func on_message_complete(usage: OpenAiUsage) -> void:
 	pass
 
 
-func on_tool_execution_start(_tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
+func on_tool_execution_start(_session_id: int, _tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	add_item(StreamType.TOOL, public_label(tool_name), 0.7)
 	activity = 1.0
 	pass
 
 
-func on_tool_execution_end(_tool_call_id: String, tool_name: String, result: AgentToolResult) -> void:
+func on_tool_execution_end(_session_id: int, _tool_call_id: String, tool_name: String, result: AgentToolResult) -> void:
 	var stream_type := StreamType.FILE if tool_name.to_lower().contains("read") else StreamType.TOOL
 	add_item(stream_type, public_label(tool_name), 0.82 if not result.is_error else 0.45)
 	activity = 1.0

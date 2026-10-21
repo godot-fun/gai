@@ -57,7 +57,7 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> void:
+func on_agent_end(_session_id: int, error_message: String) -> void:
 	# The final result takes priority over cosmetic events that have not finished playing.
 	active_tools.clear()
 	animation_queue.clear()
@@ -77,34 +77,34 @@ func on_agent_end(error_message: String) -> void:
 	pass
 
 
-func on_turn_start() -> void:
+func on_turn_start(_session_id: int) -> void:
 	reasoning_active = true
 	if active_tools.is_empty() and not animation_event_active and animation_queue.is_empty():
 		set_state(CatState.THINKING)
 	pass
 
 
-func on_turn_end() -> void:
+func on_turn_end(_session_id: int) -> void:
 	reasoning_active = false
 	if active_tools.is_empty() and not animation_event_active and animation_queue.is_empty() and state not in [CatState.SUCCESS, CatState.FAILED, CatState.CANCELLED]:
 		set_state(CatState.IDLE)
 	pass
 
 
-func on_message_update(_chunk: String, stream_kind: String) -> void:
+func on_message_update(_session_id: int, _chunk: String, stream_kind: String) -> void:
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING and active_tools.is_empty() and not animation_event_active and animation_queue.is_empty():
 		reasoning_active = true
 		set_state(CatState.THINKING)
 	pass
 
 
-func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
+func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	active_tools[tool_call_id] = {"name": tool_name, "seconds": 0.0}
 	enqueue_tool_animation(CatState.TOOL_START, tool_name)
 	pass
 
 
-func on_tool_execution_end(tool_call_id: String, tool_name: String, result: AgentToolResult) -> void:
+func on_tool_execution_end(_session_id: int, tool_call_id: String, tool_name: String, result: AgentToolResult) -> void:
 	active_tools.erase(tool_call_id)
 	enqueue_tool_animation(CatState.TOOL_FAILED if result.is_error else CatState.TOOL_SUCCESS, tool_name)
 	pass

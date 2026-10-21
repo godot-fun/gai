@@ -165,7 +165,7 @@ func one_to_three_leaf_clusters_are_evenly_fanned_test() -> void:
 func branches_are_never_discarded_test() -> void:
 	var tree := ReasoningTree.new()
 	for index in range(ReasoningTree.MAX_BRANCHES + 3):
-		tree.on_tool_execution_start("call-%d" % index, "read", {})
+		tree.on_tool_execution_start(1, "call-%d" % index, "read", {})
 	assert(tree.branches.size() == ReasoningTree.MAX_BRANCHES + 3)
 	assert(String(tree.branches[0]["id"]) == "call-0")
 	tree.free()
@@ -208,7 +208,7 @@ func live_branch_starts_at_current_trunk_tip_test() -> void:
 	var tree := ReasoningTree.new()
 	tree.trunk_growth = 2.4
 	tree.target_trunk_growth = 5.8
-	tree.on_tool_execution_start("live", "read", {})
+	tree.on_tool_execution_start(1, "live", "read", {})
 	assert(tree.branches.size() == 1)
 	assert(is_equal_approx(ReasoningTree.branch_anchor_segment(tree.branches[0]), tree.trunk_growth))
 	tree.free()
@@ -272,10 +272,10 @@ func crown_opens_small_then_reaches_full_size_test() -> void:
 func reasoning_chunks_do_not_accumulate_tree_height_test() -> void:
 	var tree := ReasoningTree.new()
 	tree.on_agent_start(1)
-	tree.on_turn_start()
+	tree.on_turn_start(1)
 	var turn_height := tree.target_trunk_growth
 	for index in range(100):
-		tree.on_message_update("chunk %d" % index, OpenAiClient.STREAM_KIND_REASONING)
+		tree.on_message_update(1, "chunk %d" % index, OpenAiClient.STREAM_KIND_REASONING)
 	assert(tree.target_trunk_growth == turn_height)
 	assert(is_equal_approx(tree.target_trunk_growth, ReasoningTree.trunk_growth_for_turn(1)))
 	tree.free()
@@ -294,7 +294,7 @@ func turns_ease_out_across_trunk_test() -> void:
 	var tree := ReasoningTree.new()
 	tree.on_agent_start(1)
 	for expected_turn in range(1, 5):
-		tree.on_turn_start()
+		tree.on_turn_start(1)
 		assert(is_equal_approx(tree.target_trunk_growth, ReasoningTree.trunk_growth_for_turn(expected_turn)))
 		assert(tree.target_trunk_growth < float(expected_turn))
 	tree.free()

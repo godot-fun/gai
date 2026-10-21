@@ -103,7 +103,7 @@ func offer_next_sentence() -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> void:
+func on_agent_end(_session_id: int, error_message: String) -> void:
 	var is_stop: bool = error_message == "Stop." or error_message == "Stop..."
 	var end_phase: OrbPhase.Phase = OrbPhase.Phase.SUCCESS
 	if StringUtils.is_not_blank(error_message) and not is_stop:
@@ -115,18 +115,18 @@ func on_agent_end(error_message: String) -> void:
 	pass
 
 
-func on_turn_start() -> void:
+func on_turn_start(_session_id: int) -> void:
 	jarvis_orb.clear_stream_queue()
 	transition_to(OrbPhase.Phase.AWAKE)
 	pass
 
 
-func on_turn_end() -> void:
+func on_turn_end(_session_id: int) -> void:
 	transition_to(OrbPhase.Phase.TURN_COOLDOWN)
 	pass
 
 
-func on_message_update(_chunk: String, stream_kind: String) -> void:
+func on_message_update(_session_id: int, _chunk: String, stream_kind: String) -> void:
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
 		transition_to(OrbPhase.Phase.REASONING)
 	elif phase != OrbPhase.Phase.TOOL_EXEC:
@@ -134,18 +134,18 @@ func on_message_update(_chunk: String, stream_kind: String) -> void:
 	pass
 
 
-func on_message_complete(_usage: OpenAiUsage) -> void:
+func on_message_complete(_session_id: int, _usage: OpenAiUsage) -> void:
 	jarvis_orb.flush_growth()
 	jarvis_orb.neuron_net.pulse_random(1.0)
 	pass
 
 
-func on_tool_execution_start(_tool_call_id: String, _tool_name: String, _args: Dictionary[String, Variant]) -> void:
+func on_tool_execution_start(_session_id: int, _tool_call_id: String, _tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	transition_to(OrbPhase.Phase.TOOL_EXEC)
 	pass
 
 
-func on_tool_execution_end(_tool_call_id: String, _tool_name: String, _agent_tool_result: AgentToolResult) -> void:
+func on_tool_execution_end(_session_id: int, _tool_call_id: String, _tool_name: String, _agent_tool_result: AgentToolResult) -> void:
 	if phase == OrbPhase.Phase.TOOL_EXEC:
 		transition_to(OrbPhase.Phase.AWAKE)
 	pass

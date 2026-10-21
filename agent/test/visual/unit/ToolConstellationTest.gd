@@ -31,15 +31,15 @@ static func node_and_labels_test() -> void:
 
 func retro_terminal_stream_and_command_test() -> void:
 	var effect := ToolConstellation.new()
-	effect.on_message_update("streamed terminal content", OpenAiClient.STREAM_KIND_REASONING)
+	effect.on_message_update(1, "streamed terminal content", OpenAiClient.STREAM_KIND_REASONING)
 	assert(effect.stream_buffer == "streamed terminal content")
 	assert(effect.stream_kind == OpenAiClient.STREAM_KIND_REASONING)
-	effect.on_tool_execution_start("shell-1", "exec_command", {"cmd": "godot --headless"})
+	effect.on_tool_execution_start(1, "shell-1", "exec_command", {"cmd": "godot --headless"})
 	assert(effect.current_command_line().begins_with("exec_command --cmd="))
 	assert(effect.current_tool_name() == "EXEC_COMMAND")
 	assert(effect.current_tool_status() == "RUN")
 	assert(effect.current_command_arguments().begins_with("cmd: godot --headless"))
-	effect.on_tool_execution_end("shell-1", "exec_command", AgentToolResult.error("failed"))
+	effect.on_tool_execution_end(1, "shell-1", "exec_command", AgentToolResult.error("failed"))
 	effect.advance_tool_queue(ToolConstellation.MIN_TOOL_PLAY_SECONDS)
 	assert(effect.crt_glitch > 0.0)
 	assert(effect.current_tool_status() == "ERR")
@@ -49,11 +49,11 @@ func retro_terminal_stream_and_command_test() -> void:
 
 func lifecycle_test() -> void:
 	var effect := ToolConstellation.new()
-	effect.on_turn_start()
-	effect.on_tool_execution_start("read-1", "read", {"path": "res://file.gd"})
+	effect.on_turn_start(1)
+	effect.on_tool_execution_start(1, "read-1", "read", {"path": "res://file.gd"})
 	assert(effect.nodes.size() == 1)
 	assert(effect.active_calls.has("read-1"))
-	effect.on_tool_execution_end("read-1", "read", AgentToolResult.ok("done"))
+	effect.on_tool_execution_end(1, "read-1", "read", AgentToolResult.ok("done"))
 	effect.advance_tool_queue(ToolConstellation.MIN_TOOL_PLAY_SECONDS)
 	assert(effect.nodes[0].state == ToolConstellation.ExecutionState.SUCCESS)
 	assert(not effect.active_calls.has("read-1"))
@@ -63,10 +63,10 @@ func lifecycle_test() -> void:
 
 func fast_tools_play_in_order_test() -> void:
 	var effect := ToolConstellation.new()
-	effect.on_tool_execution_start("first", "read", {})
-	effect.on_tool_execution_start("second", "write", {})
-	effect.on_tool_execution_end("first", "read", AgentToolResult.ok("done"))
-	effect.on_tool_execution_end("second", "write", AgentToolResult.ok("done"))
+	effect.on_tool_execution_start(1, "first", "read", {})
+	effect.on_tool_execution_start(1, "second", "write", {})
+	effect.on_tool_execution_end(1, "first", "read", AgentToolResult.ok("done"))
+	effect.on_tool_execution_end(1, "second", "write", AgentToolResult.ok("done"))
 	assert(effect.nodes.size() == 1)
 	assert(effect.pending_calls.size() == 1)
 	effect.advance_tool_queue(ToolConstellation.MIN_TOOL_PLAY_SECONDS)
@@ -138,13 +138,13 @@ func full_constellation_replaces_oldest_slot_test() -> void:
 	var effect := ToolConstellation.new()
 	for index in range(ToolConstellation.MAX_NODES):
 		var call_id := "call-%d" % index
-		effect.on_tool_execution_start(call_id, "read", {})
-		effect.on_tool_execution_end(call_id, "read", AgentToolResult.ok("done"))
+		effect.on_tool_execution_start(1, call_id, "read", {})
+		effect.on_tool_execution_end(1, call_id, "read", AgentToolResult.ok("done"))
 		effect.advance_tool_queue(ToolConstellation.MIN_TOOL_PLAY_SECONDS)
 		effect.advance_tool_queue(ToolConstellation.RESULT_HOLD_SECONDS)
 	assert(effect.nodes.size() == ToolConstellation.MAX_NODES)
 	var preserved_id := effect.nodes[1].id
-	effect.on_tool_execution_start("call-new", "write", {})
+	effect.on_tool_execution_start(1, "call-new", "write", {})
 	assert(effect.nodes.size() == ToolConstellation.MAX_NODES)
 	assert(effect.nodes[0].id == "call-new")
 	assert(effect.nodes[0].state == ToolConstellation.ExecutionState.RUNNING)

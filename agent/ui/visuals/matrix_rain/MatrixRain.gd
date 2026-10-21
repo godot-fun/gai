@@ -72,7 +72,7 @@ func on_agent_start(session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> void:
+func on_agent_end(_session_id: int, error_message: String) -> void:
 	active_session_id = 0
 	pending_sentence = ""
 	ensure_columns()
@@ -99,18 +99,18 @@ func on_agent_end(error_message: String) -> void:
 	pass
 
 
-func on_turn_start() -> void:
+func on_turn_start(_session_id: int) -> void:
 	reasoning_energy = maxf(reasoning_energy, 0.52)
 	pass
 
 
-func on_turn_end() -> void:
+func on_turn_end(_session_id: int) -> void:
 	drain_available_sentences()
 	reasoning_energy = minf(reasoning_energy, 0.32)
 	pass
 
 
-func on_message_update(chunk: String, stream_kind: String) -> void:
+func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> void:
 	if chunk.is_empty():
 		return
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
@@ -119,7 +119,7 @@ func on_message_update(chunk: String, stream_kind: String) -> void:
 	pass
 
 
-func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
+func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	ensure_columns()
 	var column_index := find_tool_column(tool_call_id)
 	if column_index < 0:
@@ -137,7 +137,7 @@ func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dic
 	pass
 
 
-func on_tool_execution_end(tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
+func on_tool_execution_end(_session_id: int, tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
 	if not active_tools.has(tool_call_id):
 		return
 	var column_index: int = active_tools[tool_call_id]

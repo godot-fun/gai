@@ -105,7 +105,7 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> void:
+func on_agent_end(_session_id: int, error_message: String) -> void:
 	# The asynchronous tail waits for queued tools before beginning the closing ritual.
 	ended_with_error = StringUtils.is_not_blank(error_message)
 	var fallback_result := AgentToolResult.error(error_message) if ended_with_error else AgentToolResult.ok("completed")
@@ -131,19 +131,19 @@ func on_agent_end(error_message: String) -> void:
 	pass
 
 
-func on_turn_start() -> void:
+func on_turn_start(_session_id: int) -> void:
 	# Direction reversal is the visual punctuation between independent model turns.
 	target_direction *= -1.0
 	target_energy = 0.82
 	pass
 
 
-func on_turn_end() -> void:
+func on_turn_end(_session_id: int) -> void:
 	target_detail = minf(target_detail, 0.42)
 	pass
 
 
-func on_message_update(_chunk: String, stream_kind: String) -> void:
+func on_message_update(_session_id: int, _chunk: String, stream_kind: String) -> void:
 	# Reasoning energizes the persistent fine structure. Content uses a short warm wave so a
 	# user can distinguish "thinking" from "speaking" without reading additional UI.
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
@@ -155,18 +155,18 @@ func on_message_update(_chunk: String, stream_kind: String) -> void:
 	pass
 
 
-func on_message_complete(_usage: OpenAiUsage) -> void:
+func on_message_complete(_session_id: int, _usage: OpenAiUsage) -> void:
 	target_detail = 0.38
 	pass
 
 
-func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
+func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	pending_tool_calls.append({"id": tool_call_id, "name": tool_name})
 	start_next_tool()
 	pass
 
 
-func on_tool_execution_end(tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
+func on_tool_execution_end(_session_id: int, tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
 	pending_tool_results[tool_call_id] = result
 	pass
 

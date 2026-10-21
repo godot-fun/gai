@@ -30,10 +30,10 @@ static func turn_start_deepens_whirlpool_without_reversal_test() -> void:
 	effect.on_agent_start(1)
 	var gravity_before := effect.target_gravity
 	var disk_before := effect.target_disk_energy
-	effect.on_turn_start()
+	effect.on_turn_start(1)
 	assert(effect.target_gravity > gravity_before)
 	assert(effect.target_disk_energy > disk_before)
-	effect.on_turn_start()
+	effect.on_turn_start(1)
 	assert(effect.target_gravity >= 0.9)
 	assert(effect.target_disk_energy >= 0.72)
 	effect.free()
@@ -59,11 +59,11 @@ static func tool_badge_follows_visual_lifecycle_test() -> void:
 	effect.tool_badge = PanelContainer.new()
 	effect.tool_name_label = Label.new()
 	effect.tool_status_label = Label.new()
-	effect.on_tool_execution_start("call", "web_search", {})
+	effect.on_tool_execution_start(1, "call", "web_search", {})
 	assert(effect.tool_name_label.text == "WEB SEARCH")
 	assert(effect.tool_badge_state == SemanticBlackHole.ToolBadgeState.CONNECTING)
 	assert(effect.target_tool_badge_alpha == 1.0)
-	effect.on_tool_execution_end("call", "web_search", AgentToolResult.ok("ok"))
+	effect.on_tool_execution_end(1, "call", "web_search", AgentToolResult.ok("ok"))
 	assert(effect.tool_badge_state == SemanticBlackHole.ToolBadgeState.RETURNING)
 	effect.success_return_progress = 1.0
 	effect.success_absorb_time = SemanticBlackHole.SUCCESS_ABSORB_SECONDS

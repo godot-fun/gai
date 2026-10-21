@@ -67,7 +67,7 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> void:
+func on_agent_end(_session_id: int, error_message: String) -> void:
 	if StringUtils.is_blank(error_message):
 		phase_label = I18n.t("agent.visuals.task_complete")
 		target_crown_growth = 1.0
@@ -80,7 +80,7 @@ func on_agent_end(error_message: String) -> void:
 	pass
 
 
-func on_turn_start() -> void:
+func on_turn_start(_session_id: int) -> void:
 	turn_index += 1
 	phase_label = StringUtils.format(I18n.t("agent.visuals.turn_analyzing"), turn_index)
 	# Map turns across the full trunk using AgentLoop.MAX_TURNS so late tools do not pile at the tip.
@@ -89,13 +89,13 @@ func on_turn_start() -> void:
 	pass
 
 
-func on_turn_end() -> void:
+func on_turn_end(_session_id: int) -> void:
 	phase_label = StringUtils.format(I18n.t("agent.visuals.turn_complete"), turn_index)
 	queue_redraw()
 	pass
 
 
-func on_message_update(chunk: String, stream_kind: String) -> void:
+func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> void:
 	if chunk.is_empty():
 		return
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
@@ -107,12 +107,12 @@ func on_message_update(chunk: String, stream_kind: String) -> void:
 	pass
 
 
-func on_message_complete(_usage: OpenAiUsage) -> void:
+func on_message_complete(_session_id: int, _usage: OpenAiUsage) -> void:
 	queue_redraw()
 	pass
 
 
-func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
+func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	branches.append(make_branch(tool_call_id, tool_name, branch_sequence, trunk_growth))
 	branch_sequence += 1
 	active_tool_indices[tool_call_id] = branches.size() - 1
@@ -121,7 +121,7 @@ func on_tool_execution_start(tool_call_id: String, tool_name: String, _args: Dic
 	pass
 
 
-func on_tool_execution_end(tool_call_id: String, tool_name: String, result: AgentToolResult) -> void:
+func on_tool_execution_end(_session_id: int, tool_call_id: String, tool_name: String, result: AgentToolResult) -> void:
 	if not active_tool_indices.has(tool_call_id):
 		return
 	var index: int = active_tool_indices[tool_call_id]

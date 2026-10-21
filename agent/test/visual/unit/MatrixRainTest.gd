@@ -12,7 +12,7 @@ static func visual_type_test() -> void:
 
 func reasoning_accelerates_rain_test() -> void:
 	var effect := MatrixRain.new()
-	effect.on_message_update("inspect the current implementation", OpenAiClient.STREAM_KIND_REASONING)
+	effect.on_message_update(1, "inspect the current implementation", OpenAiClient.STREAM_KIND_REASONING)
 	assert(effect.reasoning_energy > 0.0)
 	effect.free()
 	pass
@@ -65,11 +65,11 @@ func tools_reserve_and_release_columns_test() -> void:
 	effect.size = Vector2(1280.0, 720.0)
 	effect.ensure_columns()
 	effect.on_agent_start(1)
-	effect.on_tool_execution_start("tool-1", "read_file", {})
+	effect.on_tool_execution_start(1, "tool-1", "read_file", {})
 	assert(effect.active_tools.has("tool-1"))
 	var column_index: int = effect.active_tools["tool-1"]
 	assert(effect.columns[column_index].tool_state == MatrixRain.ToolState.RUNNING)
-	effect.on_tool_execution_end("tool-1", "read_file", AgentToolResult.ok("done"))
+	effect.on_tool_execution_end(1, "tool-1", "read_file", AgentToolResult.ok("done"))
 	assert(not effect.active_tools.has("tool-1"))
 	assert(effect.columns[column_index].tool_state == MatrixRain.ToolState.SUCCESS)
 	assert(effect.columns[column_index].release_pending)
@@ -87,7 +87,7 @@ func agent_end_accelerates_rain_offscreen_test() -> void:
 	effect.size = Vector2(1280.0, 720.0)
 	effect.ensure_columns()
 	effect.ingest_sentence("Finish with a fast falling rain animation.")
-	effect.on_agent_end("")
+	effect.on_agent_end(1, "")
 	assert(effect.active_session_id == 0)
 	for column: MatrixRain.RainColumn in effect.columns:
 		assert(column.speed >= MatrixRain.END_DROP_MIN_SPEED)

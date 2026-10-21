@@ -12,12 +12,12 @@ static func visual_type_test() -> void:
 
 func turns_create_persistent_seals_test() -> void:
 	var effect := GeometricGenesis.new()
-	effect.on_turn_start()
+	effect.on_turn_start(1)
 	assert(effect.seals.size() == 1)
 	assert(effect.seals[0].state == GeometricGenesis.SealState.CONSTRUCTING)
-	effect.on_turn_end()
+	effect.on_turn_end(1)
 	assert(effect.seals[0].state == GeometricGenesis.SealState.COMPLETE)
-	effect.on_turn_start()
+	effect.on_turn_start(1)
 	assert(effect.seals.size() == 2)
 	effect.free()
 	pass
@@ -25,11 +25,11 @@ func turns_create_persistent_seals_test() -> void:
 
 func tool_results_become_geometry_test() -> void:
 	var effect := GeometricGenesis.new()
-	effect.on_turn_start()
-	effect.on_tool_execution_start("ok", "read_file", {})
-	effect.on_tool_execution_end("ok", "read_file", AgentToolResult.ok("done"))
-	effect.on_tool_execution_start("bad", "write_file", {})
-	effect.on_tool_execution_end("bad", "write_file", AgentToolResult.error("failed"))
+	effect.on_turn_start(1)
+	effect.on_tool_execution_start(1, "ok", "read_file", {})
+	effect.on_tool_execution_end(1, "ok", "read_file", AgentToolResult.ok("done"))
+	effect.on_tool_execution_start(1, "bad", "write_file", {})
+	effect.on_tool_execution_end(1, "bad", "write_file", AgentToolResult.error("failed"))
 	var motifs := effect.seals[0].motifs
 	assert(motifs.size() == 2)
 	assert(motifs[0].state == GeometricGenesis.ToolState.SUCCESS)
@@ -41,8 +41,8 @@ func tool_results_become_geometry_test() -> void:
 func seal_count_is_bounded_test() -> void:
 	var effect := GeometricGenesis.new()
 	for index in range(GeometricGenesis.MAX_SEALS + 8):
-		effect.on_turn_start()
-		effect.on_turn_end()
+		effect.on_turn_start(1)
+		effect.on_turn_end(1)
 	assert(effect.seals.size() == GeometricGenesis.MAX_SEALS)
 	effect.free()
 	pass
@@ -77,7 +77,7 @@ func every_geometry_kind_has_a_formula_test() -> void:
 func coordinate_plane_reveals_before_geometry_test() -> void:
 	var effect := GeometricGenesis.new()
 	effect.visible = true
-	effect.on_turn_start()
+	effect.on_turn_start(1)
 	effect._process(GeometricGenesis.COORDINATE_REVEAL_SECONDS * 0.4)
 	assert(effect.coordinate_reveal > 0.0)
 	assert(effect.seals[0].growth == 0.0)
@@ -108,11 +108,11 @@ func formula_layout_avoids_available_space_test() -> void:
 func existing_formula_layout_stays_stable_test() -> void:
 	var effect := GeometricGenesis.new()
 	effect.size = Vector2(1600.0, 900.0)
-	effect.on_turn_start()
+	effect.on_turn_start(1)
 	effect.prepare_formula_layout(effect.size * 0.5)
 	var first_rect: Rect2 = effect.formula_layout[0]
-	effect.on_turn_end()
-	effect.on_turn_start()
+	effect.on_turn_end(1)
+	effect.on_turn_start(1)
 	effect.prepare_formula_layout(effect.size * 0.5)
 	assert(effect.formula_layout[0] == first_rect)
 	assert(effect.formula_layout.has(1))

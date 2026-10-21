@@ -13,14 +13,14 @@ static func visual_type_test() -> void:
 func concurrent_tool_pods_test() -> void:
 	var effect := CyberCommandDeck.new()
 	effect.visible = true
-	effect.on_tool_execution_start("read-1", "read", {"path": "res://a.gd"})
-	effect.on_tool_execution_start("write-1", "write", {"path": "res://b.gd"})
+	effect.on_tool_execution_start(1, "read-1", "read", {"path": "res://a.gd"})
+	effect.on_tool_execution_start(1, "write-1", "write", {"path": "res://b.gd"})
 	assert(effect.pods.size() == 2)
 	assert(effect.active_pod_count() == 2)
 	effect._process(CyberCommandDeck.CONNECT_SECONDS)
 	assert(int(effect.pods[0]["state"]) == CyberCommandDeck.PodState.EXECUTING)
 	assert(int(effect.pods[1]["state"]) == CyberCommandDeck.PodState.EXECUTING)
-	effect.on_tool_execution_end("read-1", "read", AgentToolResult.ok("done"))
+	effect.on_tool_execution_end(1, "read-1", "read", AgentToolResult.ok("done"))
 	assert(int(effect.pods[0]["state"]) == CyberCommandDeck.PodState.EXECUTING)
 	effect._process(CyberCommandDeck.MIN_EXECUTION_SECONDS)
 	assert(int(effect.pods[0]["state"]) == CyberCommandDeck.PodState.COMPLETE)
@@ -33,7 +33,7 @@ func completion_sequence_test() -> void:
 	var effect := CyberCommandDeck.new()
 	effect.on_agent_start(7)
 	assert(effect.phase == CyberCommandDeck.DeckPhase.ACTIVE)
-	effect.on_agent_end("")
+	effect.on_agent_end(7, "")
 	assert(effect.phase == CyberCommandDeck.DeckPhase.ACTIVE)
 	effect.free()
 	pass
@@ -74,10 +74,10 @@ func palette_follows_accent_theme_color_test() -> void:
 func full_deck_replaces_head_without_reflow_test() -> void:
 	var effect := CyberCommandDeck.new()
 	for index in range(CyberCommandDeck.MAX_PODS):
-		effect.on_tool_execution_start("call-%d" % index, "read", {})
+		effect.on_tool_execution_start(1, "call-%d" % index, "read", {})
 	var stable_second: Dictionary = effect.pods[1]
 	var stable_last: Dictionary = effect.pods[CyberCommandDeck.MAX_PODS - 1]
-	effect.on_tool_execution_start("replacement", "write", {})
+	effect.on_tool_execution_start(1, "replacement", "write", {})
 	assert(effect.pods.size() == CyberCommandDeck.MAX_PODS)
 	assert(String(effect.pods[0]["id"]) == "replacement")
 	assert(int(effect.pods[0]["slot"]) == 0)
@@ -85,7 +85,7 @@ func full_deck_replaces_head_without_reflow_test() -> void:
 	assert(effect.pods[CyberCommandDeck.MAX_PODS - 1] == stable_last)
 	assert(not effect.pod_by_id.has("call-0"))
 	assert(effect.pod_by_id.has("replacement"))
-	effect.on_tool_execution_start("replacement-2", "edit", {})
+	effect.on_tool_execution_start(1, "replacement-2", "edit", {})
 	assert(effect.pods.size() == CyberCommandDeck.MAX_PODS)
 	assert(String(effect.pods[0]["id"]) == "replacement")
 	assert(String(effect.pods[1]["id"]) == "replacement-2")

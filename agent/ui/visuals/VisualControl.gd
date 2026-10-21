@@ -79,12 +79,12 @@ func prepare_effect() -> VisualEffect:
 	return current_effect
 
 
-func on_session_stop(_session_id: int, error_message: String) -> void:
+func on_session_stop(session_id: int, error_message: String) -> void:
 	if not RuntimeManager.runtimes.is_empty():
 		return
 	var effect := current_effect
 	if is_instance_valid(effect):
-		await effect.on_agent_end(error_message)
+		await effect.on_agent_end(session_id, error_message)
 	if not RuntimeManager.runtimes.is_empty():
 		return
 	if is_instance_valid(effect):
@@ -95,49 +95,49 @@ func on_session_stop(_session_id: int, error_message: String) -> void:
 func on_turn_start(session_id: int) -> void:
 	var effect := get_running_effect(session_id)
 	if effect != null:
-		effect.on_turn_start()
+		effect.on_turn_start(session_id)
 	pass
 
 
 func on_turn_end(session_id: int) -> void:
 	var effect := get_running_effect(session_id)
 	if effect != null:
-		effect.on_turn_end()
+		effect.on_turn_end(session_id)
 	pass
 
 
 func on_message_update(session_id: int, chunk: String, stream_kind: String) -> void:
 	var effect := get_running_effect(session_id)
 	if effect != null:
-		effect.on_message_update(chunk, stream_kind)
+		effect.on_message_update(session_id, chunk, stream_kind)
 	pass
 
 
 func on_message_complete(session_id: int, usage: OpenAiUsage) -> void:
 	var effect := get_running_effect(session_id)
 	if effect != null:
-		effect.on_message_complete(usage)
+		effect.on_message_complete(session_id, usage)
 	pass
 
 
 func on_tool_execution_start(session_id: int, tool_call_id: String, tool_name: String, args: Dictionary[String, Variant]) -> void:
 	var effect := get_running_effect(session_id)
 	if effect != null:
-		effect.on_tool_execution_start(tool_call_id, tool_name, args)
+		effect.on_tool_execution_start(session_id, tool_call_id, tool_name, args)
 	pass
 
 
 func on_tool_execution_end(session_id: int, tool_call_id: String, tool_name: String, agent_tool_result: AgentToolResult) -> void:
 	var effect := get_running_effect(session_id)
 	if effect != null:
-		effect.on_tool_execution_end(tool_call_id, tool_name, agent_tool_result)
+		effect.on_tool_execution_end(session_id, tool_call_id, tool_name, agent_tool_result)
 	pass
 
 
 func on_chat_entry_add(session_id: int, entry: ChatEntry) -> void:
 	var effect := get_running_effect(session_id)
 	if effect != null:
-		effect.on_chat_entry_add(entry)
+		effect.on_chat_entry_add(session_id, entry)
 	pass
 
 

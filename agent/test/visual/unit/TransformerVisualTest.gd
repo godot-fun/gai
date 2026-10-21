@@ -6,7 +6,7 @@ func agent_end_cancels_unfinished_pipeline_test() -> void:
 	var controller := TransformerController.new()
 	controller.request_generation = 7
 	controller.pipeline_running = true
-	controller.on_agent_end("")
+	controller.on_agent_end(1, "")
 	assert(controller.request_generation == 8)
 	assert(not controller.pipeline_running)
 	controller.free()

@@ -2,7 +2,8 @@
 class_name VisualEffect
 extends Control
 
-## Effect contract used by [VisualControl]. Override the hooks needed by an effect.
+## Effect contract used by [VisualControl]. Every hook mirrors its [AgentEvents] payload,
+## including session_id, so effects can keep concurrent runs separate.
 ##
 ## Effects paint on a [CanvasLayer] above the chat. Most effects stay sparse overlays: draw
 ## shapes, glyphs, and glows, but never an accidental full-surface translucent wash. Purpose-built
@@ -60,33 +61,33 @@ func on_agent_start(_session_id: int) -> void:
 
 
 ## Runs the effect's optional completion animation before [VisualControl] fades it out.
-func on_agent_end(_error_message: String) -> void:
+func on_agent_end(_session_id: int, _error_message: String) -> void:
 	pass
 
 
-func on_turn_start() -> void:
+func on_turn_start(_session_id: int) -> void:
 	pass
 
 
-func on_turn_end() -> void:
+func on_turn_end(_session_id: int) -> void:
 	pass
 
 
-func on_message_update(_chunk: String, _stream_kind: String) -> void:
+func on_message_update(_session_id: int, _chunk: String, _stream_kind: String) -> void:
 	pass
 
 
-func on_message_complete(_usage: OpenAiUsage) -> void:
+func on_message_complete(_session_id: int, _usage: OpenAiUsage) -> void:
 	pass
 
 
-func on_tool_execution_start(_tool_call_id: String, _tool_name: String, _args: Dictionary[String, Variant]) -> void:
+func on_tool_execution_start(_session_id: int, _tool_call_id: String, _tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	pass
 
 
-func on_tool_execution_end(_tool_call_id: String, _tool_name: String, _agent_tool_result: AgentToolResult) -> void:
+func on_tool_execution_end(_session_id: int, _tool_call_id: String, _tool_name: String, _agent_tool_result: AgentToolResult) -> void:
 	pass
 
 
-func on_chat_entry_add(_entry: ChatEntry) -> void:
+func on_chat_entry_add(_session_id: int, _entry: ChatEntry) -> void:
 	pass

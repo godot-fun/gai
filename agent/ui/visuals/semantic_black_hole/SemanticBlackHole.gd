@@ -106,7 +106,7 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func on_agent_end(error_message: String) -> void:
+func on_agent_end(_session_id: int, error_message: String) -> void:
 	ended_with_error = StringUtils.is_not_blank(error_message)
 	if ended_with_error:
 		failure_shock = 1.0
@@ -118,25 +118,25 @@ func on_agent_end(error_message: String) -> void:
 	pass
 
 
-func on_turn_start() -> void:
+func on_turn_start(_session_id: int) -> void:
 	# Deepen the well each turn; the whirlpool always spins the same way and pulls inward.
 	target_gravity = 0.9
 	target_disk_energy = 0.72
 	pass
 
 
-func on_turn_end() -> void:
+func on_turn_end(_session_id: int) -> void:
 	target_reasoning_density = 0.24
 	pass
 
 
-func on_chat_entry_add(entry: ChatEntry) -> void:
+func on_chat_entry_add(_session_id: int, entry: ChatEntry) -> void:
 	# Text length affects density sublinearly so very large contexts cannot saturate the screen.
 	context_density = clampf(context_density + sqrt(float(entry.body.length())) / 80.0, 0.0, 1.0)
 	pass
 
 
-func on_message_update(_chunk: String, stream_kind: String) -> void:
+func on_message_update(_session_id: int, _chunk: String, stream_kind: String) -> void:
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
 		target_reasoning_density = 1.0
 		target_disk_energy = 1.0
@@ -148,12 +148,12 @@ func on_message_update(_chunk: String, stream_kind: String) -> void:
 	pass
 
 
-func on_message_complete(_usage: OpenAiUsage) -> void:
+func on_message_complete(_session_id: int, _usage: OpenAiUsage) -> void:
 	target_reasoning_density = 0.2
 	pass
 
 
-func on_tool_execution_start(_tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
+func on_tool_execution_start(_session_id: int, _tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	wormhole_angle = angle_for_tool(tool_name)
 	target_wormhole_open = 1.0
 	tool_name_label.text = VisualToolFormatter.upper_name(tool_name)
@@ -164,7 +164,7 @@ func on_tool_execution_start(_tool_call_id: String, tool_name: String, _args: Di
 	pass
 
 
-func on_tool_execution_end(_tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
+func on_tool_execution_end(_session_id: int, _tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
 	target_wormhole_open = 0.0
 	if result.is_error:
 		failure_shock = 1.0

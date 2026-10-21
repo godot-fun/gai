@@ -14,9 +14,9 @@ func lifecycle_state_test() -> void:
 	var cat := DesktopCat.new()
 	cat.on_agent_start(7)
 	assert(cat.state == DesktopCat.CatState.THINKING)
-	cat.on_turn_end()
+	cat.on_turn_end(7)
 	assert(cat.state == DesktopCat.CatState.IDLE)
-	cat.on_agent_end("")
+	cat.on_agent_end(7, "")
 	assert(cat.state == DesktopCat.CatState.SUCCESS)
 	cat.free()
 	pass
@@ -25,12 +25,12 @@ func lifecycle_state_test() -> void:
 func tool_state_test() -> void:
 	var cat := DesktopCat.new()
 	cat.visible = true
-	cat.on_tool_execution_start("read-1", "read_file", {})
+	cat.on_tool_execution_start(1, "read-1", "read_file", {})
 	assert(cat.state == DesktopCat.CatState.TOOL_START)
 	assert(cat.active_tools.has("read-1"))
 	cat._process(DesktopCat.TOOL_REACH_MIN_SECONDS + 0.01)
 	assert(cat.state == DesktopCat.CatState.TOOL_WAITING)
-	cat.on_tool_execution_end("read-1", "read_file", AgentToolResult.ok("done"))
+	cat.on_tool_execution_end(1, "read-1", "read_file", AgentToolResult.ok("done"))
 	assert(cat.state == DesktopCat.CatState.TOOL_SUCCESS)
 	cat._process(DesktopCat.REACTION_SECONDS + 0.01)
 	assert(cat.state == DesktopCat.CatState.IDLE)
@@ -42,9 +42,9 @@ func tool_state_test() -> void:
 func concurrent_tool_returns_to_active_name_test() -> void:
 	var cat := DesktopCat.new()
 	cat.visible = true
-	cat.on_tool_execution_start("read-1", "read_file", {})
-	cat.on_tool_execution_start("write-1", "write_file", {})
-	cat.on_tool_execution_end("write-1", "write_file", AgentToolResult.ok("done"))
+	cat.on_tool_execution_start(1, "read-1", "read_file", {})
+	cat.on_tool_execution_start(1, "write-1", "write_file", {})
+	cat.on_tool_execution_end(1, "write-1", "write_file", AgentToolResult.ok("done"))
 	cat._process(DesktopCat.TOOL_REACH_MIN_SECONDS + 0.01)
 	assert(cat.active_tool_name == "write_file")
 	assert(cat.state == DesktopCat.CatState.TOOL_START)
@@ -59,12 +59,12 @@ func concurrent_tool_returns_to_active_name_test() -> void:
 
 func failure_and_cancel_state_test() -> void:
 	var cat := DesktopCat.new()
-	cat.on_tool_execution_start("bad", "write_file", {})
-	cat.on_tool_execution_end("bad", "write_file", AgentToolResult.error("denied"))
+	cat.on_tool_execution_start(1, "bad", "write_file", {})
+	cat.on_tool_execution_end(1, "bad", "write_file", AgentToolResult.error("denied"))
 	assert(cat.state == DesktopCat.CatState.TOOL_START)
-	cat.on_agent_end("network failed")
+	cat.on_agent_end(1, "network failed")
 	assert(cat.state == DesktopCat.CatState.FAILED)
-	cat.on_agent_end("Stop.")
+	cat.on_agent_end(1, "Stop.")
 	assert(cat.state == DesktopCat.CatState.CANCELLED)
 	cat.free()
 	pass
@@ -72,11 +72,11 @@ func failure_and_cancel_state_test() -> void:
 
 func final_state_skips_unfinished_tool_animations_test() -> void:
 	var cat := DesktopCat.new()
-	cat.on_tool_execution_start("read", "read_file", {})
-	cat.on_tool_execution_end("read", "read_file", AgentToolResult.ok("done"))
-	cat.on_tool_execution_start("write", "write_file", {})
+	cat.on_tool_execution_start(1, "read", "read_file", {})
+	cat.on_tool_execution_end(1, "read", "read_file", AgentToolResult.ok("done"))
+	cat.on_tool_execution_start(1, "write", "write_file", {})
 	assert(not cat.animation_queue.is_empty())
-	cat.on_agent_end("")
+	cat.on_agent_end(1, "")
 	assert(cat.state == DesktopCat.CatState.SUCCESS)
 	assert(cat.animation_queue.is_empty())
 	assert(not cat.animation_event_active)

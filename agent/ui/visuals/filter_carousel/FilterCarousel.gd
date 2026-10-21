@@ -239,31 +239,31 @@ func on_agent_start(session_id: int) -> void:
 	pass
 
 
-func on_turn_start() -> void:
+func on_turn_start(_session_id: int) -> void:
 	if hold_timer < 0.8:
 		hold_timer = 0.8
 	pass
 
 
-func on_tool_execution_start(_tool_call_id: String, _tool_name: String, _args: Dictionary[String, Variant]) -> void:
+func on_tool_execution_start(_session_id: int, _tool_call_id: String, _tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	# Tool execution favors technological effects so the visual language reflects application state.
 	show_preset_from_modes([12, 13, 16])
 	pass
 
 
-func on_tool_execution_end(_tool_call_id: String, _tool_name: String, agent_tool_result: AgentToolResult) -> void:
+func on_tool_execution_end(_session_id: int, _tool_call_id: String, _tool_name: String, agent_tool_result: AgentToolResult) -> void:
 	# Errors use harsh print treatment; successful tools return through CRT/terminal/blueprint modes.
 	show_preset_from_modes([3] if agent_tool_result.is_error else [8, 9, 14])
 	pass
 
 
-func on_message_update(_chunk: String, stream_kind: String) -> void:
+func on_message_update(_session_id: int, _chunk: String, stream_kind: String) -> void:
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING and hold_timer < 1.2:
 		hold_timer = 1.2
 	pass
 
 
-func on_agent_end(error_message: String) -> void:
+func on_agent_end(_session_id: int, error_message: String) -> void:
 	active_session_id = 0
 	# Hold a short corruption beat on failure, then always restore the unfiltered screen.
 	if StringUtils.is_not_blank(error_message):
