@@ -83,10 +83,6 @@ func _ready() -> void:
 	pass
 
 
-func get_visual_type() -> VisualType.Type:
-	return VisualType.Type.SEMANTIC_BLACK_HOLE
-
-
 func fade_in_seconds() -> float:
 	return 0.45
 

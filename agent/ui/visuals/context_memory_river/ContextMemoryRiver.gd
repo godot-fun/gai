@@ -95,10 +95,6 @@ var lens_closing: bool = false
 var lens_close_progress: float = 0.0
 
 
-func get_visual_type() -> VisualType.Type:
-	return VisualType.Type.CONTEXT_MEMORY_RIVER
-
-
 func fade_in_seconds() -> float:
 	return 0.35
 

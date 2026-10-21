@@ -5,7 +5,6 @@ static func visual_type_test() -> void:
 	var control := VisualControl.new()
 	var effect := control.create_effect(VisualType.Type.TAI_CHI)
 	assert(effect != null)
-	assert(effect.get_visual_type() == VisualType.Type.TAI_CHI)
 	effect.free()
 	control.free()
 	pass

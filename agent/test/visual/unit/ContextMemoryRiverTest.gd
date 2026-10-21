@@ -6,7 +6,6 @@ static func visual_type_test() -> void:
 	var control := VisualControl.new()
 	var effect := control.create_effect(VisualType.Type.CONTEXT_MEMORY_RIVER)
 	assert(effect is ContextMemoryRiver)
-	assert(effect.get_visual_type() == VisualType.Type.CONTEXT_MEMORY_RIVER)
 	effect.free()
 	control.free()
 	pass

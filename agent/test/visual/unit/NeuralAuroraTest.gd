@@ -6,7 +6,6 @@ static func neural_aurora_factory_test() -> void:
 	var control := VisualControl.new()
 	var effect := control.create_effect(VisualType.Type.NEURAL_AURORA)
 	assert(effect is NeuralAurora)
-	assert(effect.get_visual_type() == VisualType.Type.NEURAL_AURORA)
 	effect.free()
 	control.free()
 	pass

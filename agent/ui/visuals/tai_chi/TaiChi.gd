@@ -32,10 +32,6 @@ func _ready() -> void:
 	pass
 
 
-func get_visual_type() -> VisualType.Type:
-	return VisualType.Type.TAI_CHI
-
-
 func fade_in_seconds() -> float:
 	return 0.18
 

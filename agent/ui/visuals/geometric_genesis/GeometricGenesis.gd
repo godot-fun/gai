@@ -71,10 +71,6 @@ var coordinate_reveal: float = 0.0
 var formula_layout: Dictionary[int, Rect2] = {}
 
 
-func get_visual_type() -> VisualType.Type:
-	return VisualType.Type.GEOMETRIC_GENESIS
-
-
 func fade_in_seconds() -> float:
 	return 0.35
 

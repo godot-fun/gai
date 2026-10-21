@@ -41,10 +41,6 @@ func _ready() -> void:
 	pass
 
 
-func get_visual_type() -> VisualType.Type:
-	return VisualType.Type.TRANSFORMER
-
-
 func set_visual_visible(show: bool, animated: bool) -> void:
 	if active_tween != null and active_tween.is_valid():
 		active_tween.kill()

@@ -83,10 +83,6 @@ func build_scene() -> void:
 	pass
 
 
-func get_visual_type() -> VisualType.Type:
-	return VisualType.Type.JARVIS
-
-
 func set_visual_visible(show: bool, animated: bool) -> void:
 	set_orb_visible(show, animated)
 	pass

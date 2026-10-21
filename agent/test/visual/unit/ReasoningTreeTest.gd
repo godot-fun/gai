@@ -4,7 +4,6 @@ extends Node
 func visual_type_is_registered_test() -> void:
 	assert(VisualType.is_valid(VisualType.Type.REASONING_TREE))
 	var effect := ReasoningTree.new()
-	assert(effect.get_visual_type() == VisualType.Type.REASONING_TREE)
 	effect.free()
 	pass
 

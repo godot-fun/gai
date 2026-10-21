@@ -6,7 +6,6 @@ static func semantic_black_hole_factory_test() -> void:
 	var control := VisualControl.new()
 	var effect := control.create_effect(VisualType.Type.SEMANTIC_BLACK_HOLE)
 	assert(effect is SemanticBlackHole)
-	assert(effect.get_visual_type() == VisualType.Type.SEMANTIC_BLACK_HOLE)
 	effect.free()
 	control.free()
 	pass

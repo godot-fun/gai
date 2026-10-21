@@ -85,10 +85,6 @@ func _ready() -> void:
 	pass
 
 
-func get_visual_type() -> VisualType.Type:
-	return VisualType.Type.NEURAL_AURORA
-
-
 func fade_in_seconds() -> float:
 	return 0.42
 

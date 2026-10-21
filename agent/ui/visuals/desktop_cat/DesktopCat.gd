@@ -44,10 +44,6 @@ var resting_paw_activity: float = 0.0
 var mouth_blend: float = 0.35
 
 
-func get_visual_type() -> VisualType.Type:
-	return VisualType.Type.DESKTOP_CAT
-
-
 func fade_in_seconds() -> float:
 	return 0.25
 

@@ -6,7 +6,6 @@ static func visual_type_test() -> void:
 	var control := VisualControl.new()
 	var effect := control.create_effect(VisualType.Type.FILTER_CAROUSEL)
 	assert(effect != null)
-	assert(effect.get_visual_type() == VisualType.Type.FILTER_CAROUSEL)
 	effect.free()
 	control.free()
 	pass

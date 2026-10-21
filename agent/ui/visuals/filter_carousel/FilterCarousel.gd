@@ -230,10 +230,6 @@ func _ready() -> void:
 	pass
 
 
-func get_visual_type() -> VisualType.Type:
-	return VisualType.Type.FILTER_CAROUSEL
-
-
 func reset_visual() -> void:
 	active_session_id = 0
 	hold_timer = 0.0

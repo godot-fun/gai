@@ -91,10 +91,6 @@ var crt_glitch: float = 0.0
 var field_spread: float = 0.0
 
 
-func get_visual_type() -> VisualType.Type:
-	return VisualType.Type.TOOL_CONSTELLATION
-
-
 func reset_visual() -> void:
 	nodes.clear()
 	active_calls.clear()

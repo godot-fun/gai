@@ -58,10 +58,6 @@ var active_reply_rain_count: int = 0
 var pending_sentence: String = ""
 
 
-func get_visual_type() -> VisualType.Type:
-	return VisualType.Type.MATRIX_RAIN
-
-
 func fade_out_seconds() -> float:
 	return 0.5
 

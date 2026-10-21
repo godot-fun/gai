@@ -59,10 +59,6 @@ var end_error_message: String = ""
 var radar_echoes: Dictionary[int, float] = {}
 
 
-func get_visual_type() -> VisualType.Type:
-	return VisualType.Type.CYBER_COMMAND_DECK
-
-
 func fade_in_seconds() -> float:
 	return 0.28
 
