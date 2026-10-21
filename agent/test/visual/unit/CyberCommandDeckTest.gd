@@ -53,7 +53,9 @@ func radar_angle_stays_continuous_across_phase_changes_test() -> void:
 
 
 func palette_follows_accent_theme_color_test() -> void:
+	var original_theme := ThemeColor.current_theme
 	var original: Color = ThemeColor.theme_color
+	ThemeColor.current_theme = ThemeColor.ThemeEnum.DARK
 	ThemeColor.theme_color = Color(0.2, 0.45, 1.0)
 	ThemeColor.refresh_derived_colors()
 	assert(CyberCommandDeck.neon_cyan() == ThemeColor.accent_theme_color())
@@ -61,10 +63,21 @@ func palette_follows_accent_theme_color_test() -> void:
 	assert(CyberCommandDeck.neon_magenta() != CyberCommandDeck.neon_cyan())
 	assert(CyberCommandDeck.pod_color(CyberCommandDeck.PodState.EXECUTING) == ThemeColor.accent_theme_color())
 	assert(CyberCommandDeck.pod_color(CyberCommandDeck.PodState.CONNECTING) == CyberCommandDeck.neon_magenta())
+	assert(is_equal_approx(CyberCommandDeck.hud(Color.WHITE, 0.1).a, 0.1))
 	ThemeColor.theme_color = Color(1.0, 0.35, 0.05)
 	ThemeColor.refresh_derived_colors()
 	assert(CyberCommandDeck.neon_cyan() == ThemeColor.accent_theme_color())
 	assert(CyberCommandDeck.pod_color(CyberCommandDeck.PodState.EXECUTING) == ThemeColor.accent_theme_color())
+	ThemeColor.current_theme = ThemeColor.ThemeEnum.LIGHT
+	ThemeColor.refresh_derived_colors()
+	var light_cyan := CyberCommandDeck.neon_cyan()
+	assert(light_cyan != ThemeColor.accent_theme_color())
+	assert(light_cyan.v < ThemeColor.accent_theme_color().v)
+	assert(CyberCommandDeck.neon_blue() != light_cyan)
+	assert(CyberCommandDeck.neon_magenta() != light_cyan)
+	assert(CyberCommandDeck.pod_color(CyberCommandDeck.PodState.EXECUTING) == light_cyan)
+	assert(CyberCommandDeck.hud(Color.WHITE, 0.1).a > 0.1)
+	ThemeColor.current_theme = original_theme
 	ThemeColor.theme_color = original
 	ThemeColor.refresh_derived_colors()
 	pass
