@@ -1,8 +1,7 @@
 class_name VisualControl
 extends Control
 
-## Single event bridge that routes all concurrent agent runs to the selected visual effect.
-## The shared effect remains visible until every active session has finished.
+## Single event bridge that routes concurrent runs to one effect for the whole run.
 
 
 var current_effect: VisualEffect
