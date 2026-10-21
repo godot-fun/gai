@@ -156,8 +156,6 @@ func start_demo(visual_type: VisualType.Type, turn_count: int, large: bool) -> v
 func select_visual(visual_type: VisualType.Type) -> void:
 	if AgentSetting.get_visual_type() != visual_type:
 		AgentSetting.set_visual_type(visual_type)
-	elif visual_control.current_effect == null or visual_control.current_effect.get_visual_type() != visual_type:
-		visual_control.mount_selected_effect()
 	pass
 
 

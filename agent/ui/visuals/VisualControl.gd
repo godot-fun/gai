@@ -11,19 +11,6 @@ var current_effect: VisualEffect
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	connect_visual_events()
-	mount_selected_effect()
-	pass
-
-
-func mount_selected_effect() -> void:
-	# Recreate instead of reusing the node so no animation state leaks between runs or types.
-	unmount_current_effect()
-	var effect := create_effect(AgentSetting.get_visual_type())
-	if effect == null:
-		return
-	current_effect = effect
-	add_child(current_effect)
-	current_effect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	pass
 
 
@@ -61,17 +48,6 @@ func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 			return TaiChi.new()
 	return null
 
-
-func unmount_current_effect() -> void:
-	if current_effect == null:
-		return
-	current_effect.set_visual_visible(false, false)
-	remove_child(current_effect)
-	current_effect.queue_free()
-	current_effect = null
-	pass
-
-
 func connect_visual_events() -> void:
 	gdf.events.theme_changed.connect(on_theme_changed)
 	gdf.events.theme_color_changed.connect(on_theme_changed)
@@ -84,26 +60,41 @@ func connect_visual_events() -> void:
 	AgentEvents.events.tool_execution_start.connect(on_tool_execution_start)
 	AgentEvents.events.tool_execution_end.connect(on_tool_execution_end)
 	AgentEvents.events.chat_entry_add.connect(on_chat_entry_add)
-	AgentEvents.events.visual_type_changed.connect(on_visual_type_changed)
 	pass
 
 
 func on_agent_start(session_id: int) -> void:
-	var effect := get_selected_effect()
+	var effect := prepare_effect()
 	if effect == null:
 		return
-	if not has_visible_effect():
+	var should_start_visual := not effect.visible
+	if should_start_visual:
 		effect.reset_visual()
 	effect.on_agent_start(session_id)
-	if not has_visible_effect():
+	if should_start_visual:
 		effect.set_visual_visible(true, true)
 	pass
+
+
+func prepare_effect() -> VisualEffect:
+	if current_effect != null:
+		if current_effect.visible or current_effect.get_visual_type() == AgentSetting.get_visual_type():
+			return current_effect
+		current_effect.queue_free()
+		current_effect = null
+	var effect := create_effect(AgentSetting.get_visual_type())
+	if effect == null:
+		return null
+	current_effect = effect
+	add_child(effect)
+	effect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	return current_effect
 
 
 func on_session_stop(_session_id: int, error_message: String) -> void:
 	if not RuntimeManager.runtimes.is_empty():
 		return
-	var effect := get_selected_effect()
+	var effect := current_effect
 	if is_instance_valid(effect):
 		await effect.on_agent_end(error_message)
 	if not RuntimeManager.runtimes.is_empty():
@@ -168,30 +159,8 @@ func on_theme_changed() -> void:
 	pass
 
 
-func on_visual_type_changed(_visual_type: int) -> void:
-	mount_selected_effect()
-	var effect := get_selected_effect()
-	if effect == null or RuntimeManager.runtimes.is_empty():
-		return
-	var session_id := int(RuntimeManager.runtimes.keys()[0])
-	effect.reset_visual()
-	effect.on_agent_start(session_id)
-	effect.set_visual_visible(true, true)
-	pass
-
-
-func get_selected_effect() -> VisualEffect:
-	if current_effect == null or current_effect.get_visual_type() != AgentSetting.get_visual_type():
-		return null
-	return current_effect
-
-
 func get_running_effect(session_id: int) -> VisualEffect:
 	if not RuntimeManager.is_running(session_id):
 		return null
-	var effect := get_selected_effect()
+	var effect := current_effect
 	return effect if effect != null and effect.visible else null
-
-
-func has_visible_effect() -> bool:
-	return current_effect != null and current_effect.visible
