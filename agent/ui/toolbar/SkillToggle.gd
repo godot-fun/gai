@@ -36,9 +36,9 @@ func on_toggled(enabled: bool) -> void:
 		return
 	
 	if enabled:
-		PromptContextManager.append_skill(session_id)
+		ContextInjectionManager.append_skill(session_id)
 	else:
-		PromptContextManager.remove_skill(session_id)
+		ContextInjectionManager.remove_skill(session_id)
 	AgentSessionManager.persist_session(session_id)
 	AgentEvents.events.skill_context_changed.emit(session_id)
 	pass

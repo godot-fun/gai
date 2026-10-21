@@ -1,7 +1,7 @@
 class_name CompactionPrompt
 extends RefCounted
 
-## Model instructions used by conversation compaction and durable memory maintenance.
+## Text protocol and model instructions for conversation compaction and durable memory maintenance.
 
 
 # ---------------------------------------------------------------------------

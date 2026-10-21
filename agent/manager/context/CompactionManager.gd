@@ -54,11 +54,11 @@ static func compact_session(session_id: int) -> void:
 
 	# Build the summary request again from the original conversation. The memory prompt,
 	# its tool calls, and its confirmation must never become part of the compacted context.
-	var memory_messages := MemoryManager.collect_memory_messages(original_messages)
-	memory_messages.append(ChatMessage.user(CompactionPrompt.SUMMARY_REQUEST))
+	var summary_messages := MemoryManager.collect_memory_messages(original_messages)
+	summary_messages.append(ChatMessage.user(CompactionPrompt.SUMMARY_REQUEST))
 	var summary_deadline := Time.get_ticks_msec() + OpenAiClient.REQUEST_TIMEOUT_MILLIS + TimeUtils.MILLIS_PER_SECOND
 
-	async_generate_summary(client, memory_messages, state)
+	async_generate_summary(client, summary_messages, state)
 	await MemoryManager.update_memory(session_id)
 
 	while not state.summary_finished and Time.get_ticks_msec() < summary_deadline:
@@ -86,7 +86,7 @@ static func compact_session(session_id: int) -> void:
 		ChatEntry.TITLE_COMPACTION,
 		summary
 	))
-	PromptContextManager.refresh_memory_after_compaction(session)
+	ContextInjectionManager.refresh_memory_after_compaction(session)
 	update_estimated_usage(session)
 	finish(session_id, true, StringUtils.EMPTY)
 	await GitDiffManager.async_append_git_diff(session_id, checkpoint)

@@ -1,4 +1,4 @@
-class_name PromptContextManager
+class_name ContextInjectionManager
 extends Object
 
 ## Owns the optional system contexts attached to a session.

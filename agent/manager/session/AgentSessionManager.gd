@@ -65,7 +65,7 @@ static func create_session() -> AgentSession:
 	session.messages.append(ChatMessage.system(system_text))
 	add_chat_entry(session.id, ChatEntry.KIND_SYSTEM, ChatEntry.TITLE_SYSTEM, system_text)
 
-	PromptContextManager.initialize(session.id)
+	ContextInjectionManager.initialize(session.id)
 	AgentEvents.events.session_added.emit(session.id, get_title(session.id))
 
 	# Save empty chat.
