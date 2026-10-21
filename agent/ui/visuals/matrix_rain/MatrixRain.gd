@@ -49,7 +49,6 @@ var glyph_clock: float = 0.0
 var glyph_tick: int = 0
 var reasoning_energy: float = 0.0
 var layout_width: float = -1.0
-var active_session_id: int = 0
 var sentence_timer: float = 0.0
 var reply_glyphs: Array[ReplyGlyph] = []
 var reply_sentence_index: int = 0
@@ -61,8 +60,7 @@ func fade_out_seconds() -> float:
 	return 0.5
 
 
-func on_agent_start(session_id: int) -> void:
-	active_session_id = session_id
+func on_agent_start(_session_id: int) -> void:
 	pending_sentence = ""
 	reasoning_energy = 0.28
 	ensure_columns()
@@ -71,7 +69,6 @@ func on_agent_start(session_id: int) -> void:
 
 
 func on_agent_end(_session_id: int, error_message: String) -> void:
-	active_session_id = 0
 	pending_sentence = ""
 	ensure_columns()
 	for column: RainColumn in columns:
@@ -84,7 +81,7 @@ func on_agent_end(_session_id: int, error_message: String) -> void:
 	queue_redraw()
 	if not is_inside_tree():
 		return
-	while active_session_id == 0:
+	while RuntimeManager.runtimes.is_empty():
 		var all_columns_exited := true
 		for column: RainColumn in columns:
 			var tail_y := column.head_y - float(column.length - 1) * column.step_y
@@ -155,7 +152,7 @@ func _process(delta: float) -> void:
 	ensure_columns()
 	elapsed += delta
 	sentence_timer += delta
-	if active_session_id != 0 and sentence_timer >= SENTENCE_INTERVAL_SECONDS:
+	if not RuntimeManager.runtimes.is_empty() and sentence_timer >= SENTENCE_INTERVAL_SECONDS:
 		sentence_timer = fmod(sentence_timer, SENTENCE_INTERVAL_SECONDS)
 		offer_next_sentence()
 	glyph_clock += delta
@@ -166,7 +163,7 @@ func _process(delta: float) -> void:
 	for column: RainColumn in columns:
 		column.head_y += column.speed * delta
 		var wrap_height := size.y + float(column.length) * column.step_y
-		if active_session_id != 0 and column.head_y > wrap_height:
+		if not RuntimeManager.runtimes.is_empty() and column.head_y > wrap_height:
 			if column.release_pending:
 				clear_tool_column(column)
 			column.head_y = -float(column.length) * column.step_y
@@ -199,7 +196,7 @@ func offer_next_sentence() -> bool:
 		return false
 	var sentence := pending_sentence
 	if sentence.is_empty():
-		sentence = ChatEntryCursor.take_next_sentence_from_session(active_session_id)
+		sentence = ChatEntryCursor.take_next_sentence()
 	if sentence.is_empty():
 		return false
 	if active_reply_rain_count + reply_rain_count(sentence) > MAX_REPLY_RAINS:
@@ -211,7 +208,7 @@ func offer_next_sentence() -> bool:
 
 
 func drain_available_sentences() -> void:
-	while active_session_id != 0 and offer_next_sentence():
+	while not RuntimeManager.runtimes.is_empty() and offer_next_sentence():
 		pass
 	pass
 

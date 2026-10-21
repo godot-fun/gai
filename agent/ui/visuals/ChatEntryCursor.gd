@@ -58,11 +58,33 @@ func take_next(entries: Array[ChatEntry]) -> String:
 	return ""
 
 
+## Returns one complete sentence at [param start_index]. An unfinished tail is
+## intentionally left unconsumed so a streaming ChatEntry can complete it later.
+func take_sentence(text: String, start_index: int) -> VisualChatSentence:
+	var start := clampi(start_index, 0, text.length())
+	while start < text.length() and text.substr(start, 1).strip_edges().is_empty():
+		start += 1
+	for index in range(start, text.length()):
+		if not StringUtils.is_sentence_end(text.substr(start, index - start + 1)):
+			continue
+		return VisualChatSentence.new(text.substr(start, index - start + 1).strip_edges(), index + 1)
+	return VisualChatSentence.new("", start)
+
+
 # ---------------------------------------------------------------------------
 # Shared session cursor cache
 # ---------------------------------------------------------------------------
 
 static var session_cursors: Dictionary[int, ChatEntryCursor] = {}
+
+
+## Returns the next available complete sentence from any active session.
+static func take_next_sentence() -> String:
+	for session_id: int in RuntimeManager.runtimes:
+		var sentence := take_next_sentence_from_session(session_id)
+		if not sentence.is_empty():
+			return sentence
+	return ""
 
 
 static func take_next_sentence_from_session(session_id: int) -> String:
@@ -95,16 +117,3 @@ static func find_latest_user_entry(entries: Array[ChatEntry]) -> int:
 		if entries[index].kind == ChatEntry.KIND_USER:
 			return index
 	return entries.size()
-
-
-## Returns one complete sentence at [param start_index]. An unfinished tail is
-## intentionally left unconsumed so a streaming ChatEntry can complete it later.
-static func take_sentence(text: String, start_index: int) -> VisualChatSentence:
-	var start := clampi(start_index, 0, text.length())
-	while start < text.length() and text.substr(start, 1).strip_edges().is_empty():
-		start += 1
-	for index in range(start, text.length()):
-		if not StringUtils.is_sentence_end(text.substr(start, index - start + 1)):
-			continue
-		return VisualChatSentence.new(text.substr(start, index - start + 1).strip_edges(), index + 1)
-	return VisualChatSentence.new("", start)

@@ -211,7 +211,6 @@ var preset_order: Array[int] = []
 var preset_cursor: int = -1
 var hold_timer: float = 0.0
 var transition_tween: Tween
-var active_session_id: int = 0
 var current_preset_name: String = ""
 
 
@@ -230,10 +229,8 @@ func _ready() -> void:
 	pass
 
 
-func on_agent_start(session_id: int) -> void:
-	active_session_id = session_id
-	# Stable session data plus the current tick prevents identical ordering on consecutive runs.
-	rng.seed = session_id * 104729 + Time.get_ticks_msec()
+func on_agent_start(_session_id: int) -> void:
+	rng.randomize()
 	rebuild_preset_order()
 	show_next_preset(true)
 	pass
@@ -264,7 +261,6 @@ func on_message_update(_session_id: int, _chunk: String, stream_kind: String) ->
 
 
 func on_agent_end(_session_id: int, error_message: String) -> void:
-	active_session_id = 0
 	# Hold a short corruption beat on failure, then always restore the unfiltered screen.
 	if StringUtils.is_not_blank(error_message):
 		apply_preset(find_first_mode(13))
@@ -278,7 +274,7 @@ func on_agent_end(_session_id: int, error_message: String) -> void:
 
 
 func _process(delta: float) -> void:
-	if active_session_id == 0 or filter_material == null:
+	if RuntimeManager.runtimes.is_empty() or filter_material == null:
 		return
 	hold_timer -= delta
 	if hold_timer <= 0.0 and (transition_tween == null or not transition_tween.is_running()):

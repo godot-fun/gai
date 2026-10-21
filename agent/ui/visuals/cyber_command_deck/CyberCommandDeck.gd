@@ -51,7 +51,6 @@ var activity: float = 0.0
 var scan_wave: float = -1.0
 var collapse: float = 0.0
 var turn_index: int = 0
-var session_id: int = 0
 var next_replacement_slot: int = 0
 ## Per-slot strength 0..1 when the radar beam crosses that pod; decays in `_process`.
 var radar_echoes: Dictionary[int, float] = {}
@@ -65,8 +64,7 @@ func fade_out_seconds() -> float:
 	return 0.34
 
 
-func on_agent_start(session_id: int) -> void:
-	self.session_id = session_id
+func on_agent_start(_session_id: int) -> void:
 	phase = DeckPhase.ACTIVE
 	activity = 1.0
 	pass

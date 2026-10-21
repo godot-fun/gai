@@ -15,7 +15,6 @@ var viewport_container: SubViewportContainer
 var sub_viewport: SubViewport
 var jarvis_orb: JarvisOrb
 var orb_tween: Tween
-var active_session_id: int = 0
 var sentence_timer: float = 0.0
 
 
@@ -27,7 +26,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if active_session_id == 0 or jarvis_orb == null:
+	if RuntimeManager.runtimes.is_empty() or jarvis_orb == null:
 		return
 	sentence_timer += delta
 	if sentence_timer < SENTENCE_INTERVAL_S:
@@ -87,15 +86,14 @@ func set_visual_visible(show: bool, animated: bool) -> void:
 	pass
 
 
-func on_agent_start(session_id: int) -> void:
+func on_agent_start(_session_id: int) -> void:
 	transition_to(OrbPhase.Phase.AWAKE)
-	active_session_id = session_id
 	sentence_timer = 0.0
 	pass
 
 
 func offer_next_sentence() -> void:
-	var sentence: String = ChatEntryCursor.take_next_sentence_from_session(active_session_id)
+	var sentence: String = ChatEntryCursor.take_next_sentence()
 	if not sentence.is_empty():
 		jarvis_orb.add_step_text(sentence)
 	pass
@@ -206,7 +204,6 @@ func finalize_orb_hidden() -> void:
 	modulate.a = 0.0
 	scale = Vector2.ONE
 	phase = OrbPhase.Phase.IDLE
-	active_session_id = 0
 	if jarvis_orb != null:
 		jarvis_orb.clear_stream_queue()
 		jarvis_orb.reset_growth()
