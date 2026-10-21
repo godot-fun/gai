@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://b7q0m0pea1dgh"]
+
+[ext_resource type="Script" uid="uid://bf822ysoqanj7" path="res://zfoo/gdtest/IntegrationTest.gd" id="1_nqk0r"]
+
+[node name="IntegrationTest" type="Node" unique_id=1023885134]
+script = ExtResource("1_nqk0r")
+include_subfolders = true
