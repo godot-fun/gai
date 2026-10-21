@@ -79,8 +79,8 @@ class ToolPod:
 	func _init(tool_call_id: String, tool_name: String, pod_slot: int, initial_state: int, initial_pending_state: int) -> void:
 		id = tool_call_id
 		name = tool_name
-		title = VisualToolFormatter.title_name(tool_name).to_upper()
-		glyph = VisualToolFormatter.glyph(tool_name)
+		title = ToolVisualDisplay.upper_name(tool_name)
+		glyph = ToolVisualDisplay.glyph(tool_name)
 		slot = pod_slot
 		state = initial_state
 		pending_state = initial_pending_state

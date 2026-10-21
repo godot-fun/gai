@@ -378,7 +378,7 @@ static func tool_color(state: ToolState) -> Color:
 
 
 static func compact_tool_name(tool_name: String) -> String:
-	var label := VisualToolFormatter.title_name(tool_name).to_upper()
+	var label := ToolVisualDisplay.upper_name(tool_name)
 	if label.length() > 10:
 		label = label.left(10)
 	return label

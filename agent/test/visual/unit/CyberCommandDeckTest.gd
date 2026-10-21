@@ -100,11 +100,11 @@ func radar_envelope_stable_when_pods_added_test() -> void:
 func tool_pod_caches_title_and_glyph_test() -> void:
 	var effect := CyberCommandDeck.new()
 	effect.on_tool_execution_start(1, "read-1", "read_file", {})
-	assert(effect.pods[0].title == VisualToolFormatter.title_name("read_file").to_upper())
-	assert(effect.pods[0].glyph == VisualToolFormatter.glyph("read_file"))
+	assert(effect.pods[0].title == ToolVisualDisplay.upper_name("read_file"))
+	assert(effect.pods[0].glyph == ToolVisualDisplay.glyph("read_file"))
 	effect.on_tool_execution_start(1, "write-1", "write_file", {})
-	assert(effect.pods[1].title == VisualToolFormatter.title_name("write_file").to_upper())
-	assert(effect.pods[1].glyph == VisualToolFormatter.glyph("write_file"))
+	assert(effect.pods[1].title == ToolVisualDisplay.upper_name("write_file"))
+	assert(effect.pods[1].glyph == ToolVisualDisplay.glyph("write_file"))
 	effect.free()
 	pass
 

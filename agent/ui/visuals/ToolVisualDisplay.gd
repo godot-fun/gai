@@ -1,8 +1,8 @@
-class_name VisualToolFormatter
+class_name ToolVisualDisplay
 extends RefCounted
 
-## Shared tool name and glyph formatting for agent visual effects.
-## Use [method glyph_text] for compact symbol/text marks, [method glyph_emoji] for emoji icons.
+## Shared tool name and glyph display strings for agent visual effects.
+## Use [method glyph] for compact symbol/text marks, [method glyph_emoji] for emoji icons.
 
 
 static func readable_name(tool_name: String) -> String:

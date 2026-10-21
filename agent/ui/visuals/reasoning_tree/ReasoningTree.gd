@@ -116,7 +116,7 @@ func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: 
 	branches.append(make_branch(tool_call_id, tool_name, branch_sequence, trunk_growth))
 	branch_sequence += 1
 	active_tool_indices[tool_call_id] = branches.size() - 1
-	phase_label = StringUtils.format(I18n.t("agent.visuals.calling_tool"), VisualToolFormatter.title_name(tool_name, I18n.t("agent.visuals.tool")))
+	phase_label = StringUtils.format(I18n.t("agent.visuals.calling_tool"), ToolVisualDisplay.title_name(tool_name, I18n.t("agent.visuals.tool")))
 	queue_redraw()
 	pass
 
@@ -126,7 +126,7 @@ func on_tool_execution_end(_session_id: int, tool_call_id: String, tool_name: St
 		return
 	var index: int = active_tool_indices[tool_call_id]
 	branches[index]["state"] = BranchState.FAILED if result.is_error else BranchState.SUCCESS
-	branches[index]["label"] = "%s · %s" % [VisualToolFormatter.title_name(tool_name, I18n.t("agent.visuals.tool")), I18n.t("agent.visuals.failed") if result.is_error else I18n.t("agent.visuals.complete")]
+	branches[index]["label"] = "%s · %s" % [ToolVisualDisplay.title_name(tool_name, I18n.t("agent.visuals.tool")), I18n.t("agent.visuals.failed") if result.is_error else I18n.t("agent.visuals.complete")]
 	active_tool_indices.erase(tool_call_id)
 	if not result.is_error:
 		target_trunk_growth = maxf(target_trunk_growth, trunk_growth_for_turn(turn_index))
@@ -539,7 +539,7 @@ static func make_branch(tool_call_id: String, tool_name: String, branch_index: i
 	var direction := -1.0 if branch_index % 2 == 0 else 1.0
 	return {
 		"id": tool_call_id,
-		"label": VisualToolFormatter.title_name(tool_name, I18n.t("agent.visuals.tool")),
+		"label": ToolVisualDisplay.title_name(tool_name, I18n.t("agent.visuals.tool")),
 		"state": BranchState.RUNNING,
 		"anchor": clampf(growth, ANCHOR_MIN, ANCHOR_MAX),
 		"direction": direction,

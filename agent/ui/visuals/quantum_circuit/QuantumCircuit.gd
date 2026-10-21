@@ -107,7 +107,7 @@ func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> 
 
 func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	ensure_wire()
-	var gate := append_gate(GateKind.TOOL, tool_call_id, VisualToolFormatter.gate_name(tool_name))
+	var gate := append_gate(GateKind.TOOL, tool_call_id, ToolVisualDisplay.gate_name(tool_name))
 	gate["state"] = GateState.RUNNING
 	tool_gates[tool_call_id] = gate
 	pulse = 1.0

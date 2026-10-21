@@ -156,7 +156,7 @@ func on_message_complete(_session_id: int, _usage: OpenAiUsage) -> void:
 func on_tool_execution_start(_session_id: int, _tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	wormhole_angle = angle_for_tool(tool_name)
 	target_wormhole_open = 1.0
-	tool_name_label.text = VisualToolFormatter.upper_name(tool_name)
+	tool_name_label.text = ToolVisualDisplay.upper_name(tool_name)
 	set_tool_badge_state(ToolBadgeState.CONNECTING)
 	target_tool_badge_alpha = 1.0
 	tool_badge_hold_seconds = 0.0

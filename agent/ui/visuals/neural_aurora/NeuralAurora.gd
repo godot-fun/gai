@@ -225,7 +225,7 @@ func start_next_tool() -> void:
 	tool_play_seconds = 0.0
 	tool_pulse = 0.01
 	tool_angle = angle_for_text(String(playing_tool["name"]))
-	tool_label.text = VisualToolFormatter.upper_name(String(playing_tool["name"]))
+	tool_label.text = ToolVisualDisplay.upper_name(String(playing_tool["name"]))
 	tool_label.add_theme_color_override("font_color", ThemeColor.accent_theme_color())
 	tool_label.modulate.a = 1.0
 	target_energy = 1.0

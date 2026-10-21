@@ -614,9 +614,9 @@ func draw_tool_node(node: ConstellationNode, position: Vector2, center: Vector2,
 		for satellite in range(3):
 			var satellite_angle := elapsed * 1.35 + float(satellite) * TAU / 3.0 + node.sequence
 			draw_circle(position + Vector2.from_angle(satellite_angle) * (node_radius + 15.0), 2.6, Color(state_color, 0.85 * alpha))
-	draw_centered_text(position + Vector2(0.0, -node_radius - Margin.ma_2), VisualToolFormatter.glyph(node.name), Fonts.semibold(), Typography.label_small_size, Color(state_color, 0.85 * alpha))
+	draw_centered_text(position + Vector2(0.0, -node_radius - Margin.ma_2), ToolVisualDisplay.glyph(node.name), Fonts.semibold(), Typography.label_small_size, Color(state_color, 0.85 * alpha))
 	var label_position := position + Vector2(0.0, node_radius + Margin.ma_5)
-	draw_centered_text(label_position, VisualToolFormatter.title_name(node.name), Fonts.semibold(), Typography.label_medium_size, Color(Colors.primary_text, alpha))
+	draw_centered_text(label_position, ToolVisualDisplay.title_name(node.name), Fonts.semibold(), Typography.label_medium_size, Color(Colors.primary_text, alpha))
 	if state == ExecutionState.RUNNING:
 		draw_centered_text(label_position + Vector2(0.0, Margin.ma_4), I18n.t("agent.visuals.running"), Fonts.medium(), Typography.label_small_size, Color(state_color, 0.9 * alpha))
 		if node.arg_count > 0:

@@ -165,7 +165,7 @@ func play_next_animation_event() -> void:
 	active_tool_name = String(event["tool_name"])
 	var next_state: CatState = event["state"]
 	if next_state in [CatState.TOOL_SUCCESS, CatState.TOOL_FAILED]:
-		card_text = VisualToolFormatter.title_name(active_tool_name)
+		card_text = ToolVisualDisplay.title_name(active_tool_name)
 	set_state(next_state)
 	pass
 
@@ -454,10 +454,10 @@ func draw_tool_button(loading: bool) -> void:
 	var center := Vector2(88.0, 173.0)
 	draw_paw_print(center + Vector2(2.0, 4.0), 1.05, Color(0.0, 0.0, 0.0, 0.2), Color.TRANSPARENT)
 	draw_paw_print(center, 1.0, Color(Colors.control_surface, 0.96), Color(accent, 0.86))
-	draw_centered_text(center + Vector2(0.0, 12.0), VisualToolFormatter.glyph(active_tool_name), Fonts.semibold(), Typography.title_medium_size, Colors.primary_text)
+	draw_centered_text(center + Vector2(0.0, 12.0), ToolVisualDisplay.glyph(active_tool_name), Fonts.semibold(), Typography.title_medium_size, Colors.primary_text)
 	if loading:
 		draw_yarn_loader(center, accent)
-	draw_centered_text(center + Vector2(0.0, 56.0), compact_label(VisualToolFormatter.title_name(active_tool_name), 15), Fonts.medium(), Typography.label_small_size, Colors.secondary_text)
+	draw_centered_text(center + Vector2(0.0, 56.0), compact_label(ToolVisualDisplay.title_name(active_tool_name), 15), Fonts.medium(), Typography.label_small_size, Colors.secondary_text)
 	pass
 
 

@@ -173,14 +173,14 @@ func on_message_complete(_session_id: int, usage: OpenAiUsage) -> void:
 
 
 func on_tool_execution_start(_session_id: int, _tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
-	add_item(StreamType.TOOL, public_label(tool_name), 0.7)
+	add_item(StreamType.TOOL, ToolVisualDisplay.upper_name(tool_name), 0.7)
 	activity = 1.0
 	pass
 
 
 func on_tool_execution_end(_session_id: int, _tool_call_id: String, tool_name: String, result: AgentToolResult) -> void:
 	var stream_type := StreamType.FILE if tool_name.to_lower().contains("read") else StreamType.TOOL
-	add_item(stream_type, public_label(tool_name), 0.82 if not result.is_error else 0.45)
+	add_item(stream_type, ToolVisualDisplay.upper_name(tool_name), 0.82 if not result.is_error else 0.45)
 	activity = 1.0
 	pass
 
@@ -741,7 +741,3 @@ static func color_for_type(stream_type: StreamType) -> Color:
 		StreamType.ANSWER:
 			return Color("67f0dd")
 	return Color("7e91ae")
-
-
-static func public_label(tool_name: String) -> String:
-	return StringUtils.truncate(VisualToolFormatter.readable_name(tool_name).to_upper(), 14)
