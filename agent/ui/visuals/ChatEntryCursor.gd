@@ -1,4 +1,4 @@
-class_name VisualChatSentenceCursor
+class_name ChatEntryCursor
 extends RefCounted
 
 ## Incrementally reads complete sentences from live session transcripts. Each session
@@ -62,10 +62,10 @@ func take_next(entries: Array[ChatEntry]) -> String:
 # Shared session cursor cache
 # ---------------------------------------------------------------------------
 
-static var session_cursors: Dictionary[int, VisualChatSentenceCursor] = {}
+static var session_cursors: Dictionary[int, ChatEntryCursor] = {}
 
 
-static func take_next_from_session(session_id: int) -> String:
+static func take_next_sentence_from_session(session_id: int) -> String:
 	var session: AgentSession = AgentSessionStore.load_session(session_id)
 	if session == null:
 		remove_session(session_id)
@@ -82,10 +82,10 @@ static func remove_session(session_id: int) -> void:
 	pass
 
 
-static func get_or_create_cursor(session_id: int) -> VisualChatSentenceCursor:
-	var cursor: VisualChatSentenceCursor = session_cursors.get(session_id)
+static func get_or_create_cursor(session_id: int) -> ChatEntryCursor:
+	var cursor: ChatEntryCursor = session_cursors.get(session_id)
 	if cursor == null:
-		cursor = VisualChatSentenceCursor.new()
+		cursor = ChatEntryCursor.new()
 		session_cursors[session_id] = cursor
 	return cursor
 

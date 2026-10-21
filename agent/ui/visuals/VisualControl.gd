@@ -56,7 +56,7 @@ static func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 	return null
 
 func on_agent_start(session_id: int) -> void:
-	VisualChatSentenceCursor.remove_session(session_id)
+	ChatEntryCursor.remove_session(session_id)
 	var effect := prepare_effect()
 	if effect == null or effect.visible:
 		return
@@ -81,7 +81,7 @@ func prepare_effect() -> VisualEffect:
 
 
 func on_session_stop(session_id: int, error_message: String) -> void:
-	VisualChatSentenceCursor.remove_session(session_id)
+	ChatEntryCursor.remove_session(session_id)
 	if not RuntimeManager.runtimes.is_empty():
 		return
 	var effect := current_effect

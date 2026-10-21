@@ -105,7 +105,7 @@ func agent_end_accelerates_rain_offscreen_test() -> void:
 
 static func sentence_cursor_waits_for_complete_tail_test() -> void:
 	var entries: Array[ChatEntry] = [ChatEntry.new(ChatEntry.KIND_AGENT, ChatEntry.TITLE_AGENT, "First. Second")]
-	var cursor := VisualChatSentenceCursor.new()
+	var cursor := ChatEntryCursor.new()
 	assert(cursor.take_next(entries) == "First.")
 	assert(cursor.take_next(entries).is_empty())
 	entries[0].body += " complete!"
