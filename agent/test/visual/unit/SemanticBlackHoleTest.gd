@@ -11,7 +11,7 @@ static func semantic_black_hole_factory_test() -> void:
 
 
 static func semantic_black_hole_tool_mapping_test() -> void:
-	assert(VisualToolFormatter.upper_name("web_search") == "WEB SEARCH")
+	assert(VisualToolFormatter.upper_name(WebSearchTool.NAME) == "WEB SEARCH")
 	assert(VisualToolFormatter.upper_name("") == "TOOL")
 	assert(SemanticBlackHole.angle_for_tool("read") == SemanticBlackHole.angle_for_tool("read"))
 	pass

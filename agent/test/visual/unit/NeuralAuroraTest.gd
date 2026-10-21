@@ -11,7 +11,7 @@ static func neural_aurora_factory_test() -> void:
 
 
 static func neural_aurora_tool_label_test() -> void:
-	assert(VisualToolFormatter.upper_name("web_search") == "WEB SEARCH")
+	assert(VisualToolFormatter.upper_name(WebSearchTool.NAME) == "WEB SEARCH")
 	assert(VisualToolFormatter.upper_name("") == "TOOL")
 	pass
 
