@@ -10,11 +10,29 @@ extends RefCounted
 # Value objects
 # ---------------------------------------------------------------------------
 
-class VisualChatSentence:
+class ChatEntrySentence:
 	extends RefCounted
 
-	var text: String
-	var next_index: int
+	var text: String = ""
+	var entry: ChatEntry = null
+
+
+	func _init(sentence_text: String = "", sentence_entry: ChatEntry = null) -> void:
+		text = sentence_text
+		entry = sentence_entry
+		pass
+
+
+	func is_empty() -> bool:
+		return text.is_empty()
+		pass
+
+
+class SentenceParse:
+	extends RefCounted
+
+	var text: String = ""
+	var next_index: int = 0
 
 
 	func _init(sentence_text: String = "", sentence_next_index: int = 0) -> void:
@@ -42,34 +60,33 @@ func reset(entries: Array[ChatEntry]) -> void:
 	pass
 
 
-## Returns the next complete sentence, or an empty string while the current entry
-## still has an unfinished tail. Later calls continue from the same two indices.
-func take_next(entries: Array[ChatEntry]) -> String:
+## Returns the next complete sentence and its source entry, or an empty result while the
+## current entry still has an unfinished tail. Later calls continue from the same indices.
+func take_next(entries: Array[ChatEntry]) -> ChatEntrySentence:
 	while chat_entry_index < entries.size():
 		var entry: ChatEntry = entries[chat_entry_index]
-		var sentence: VisualChatSentence = take_sentence(entry.body, entry_char_index)
-		var text := sentence.text
-		entry_char_index = sentence.next_index
-		if not text.is_empty():
-			return text
+		var parse: SentenceParse = parse_sentence(entry.body, entry_char_index)
+		entry_char_index = parse.next_index
+		if not parse.text.is_empty():
+			return ChatEntrySentence.new(parse.text, entry)
 		if chat_entry_index == entries.size() - 1:
-			return ""
+			return ChatEntrySentence.new()
 		chat_entry_index += 1
 		entry_char_index = 0
-	return ""
+	return ChatEntrySentence.new()
 
 
 ## Returns one complete sentence at [param start_index]. An unfinished tail is
 ## intentionally left unconsumed so a streaming ChatEntry can complete it later.
-func take_sentence(text: String, start_index: int) -> VisualChatSentence:
+static func parse_sentence(text: String, start_index: int) -> SentenceParse:
 	var start := clampi(start_index, 0, text.length())
 	while start < text.length() and text.substr(start, 1).strip_edges().is_empty():
 		start += 1
 	for index in range(start, text.length()):
 		if not StringUtils.is_sentence_end(text.substr(start, index - start + 1)):
 			continue
-		return VisualChatSentence.new(text.substr(start, index - start + 1).strip_edges(), index + 1)
-	return VisualChatSentence.new("", start)
+		return SentenceParse.new(text.substr(start, index - start + 1).strip_edges(), index + 1)
+	return SentenceParse.new("", start)
 
 
 # ---------------------------------------------------------------------------
@@ -82,19 +99,19 @@ static var session_cursors: Dictionary[int, ChatEntryCursor] = {}
 ## Returns the next available complete sentence from any active session for the shared
 ## overlay. This intentionally multiplexes sessions rather than preserving one session's
 ## complete visual sequence before moving to another.
-static func take_next_sentence() -> String:
+static func take_next_sentence() -> ChatEntrySentence:
 	for session_id: int in RuntimeManager.runtimes:
 		var sentence := take_next_sentence_from_session(session_id)
 		if not sentence.is_empty():
 			return sentence
-	return ""
+	return ChatEntrySentence.new()
 
 
-static func take_next_sentence_from_session(session_id: int) -> String:
+static func take_next_sentence_from_session(session_id: int) -> ChatEntrySentence:
 	var session: AgentSession = AgentSessionStore.load_session(session_id)
 	if session == null:
 		remove_session(session_id)
-		return ""
+		return ChatEntrySentence.new()
 	var has_cursor := session_cursors.has(session_id)
 	var cursor := get_or_create_cursor(session_id)
 	if not has_cursor:

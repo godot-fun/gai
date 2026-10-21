@@ -16,9 +16,6 @@ const TRAIL_SAMPLE_COUNT := 4
 # curve quality stable across frame rates and bounds memory per item.
 const MAX_PATH_HISTORY_POINTS := 128
 const PATH_HISTORY_STEP := 2.0
-# Short phrases remain readable while keeping per-character draw calls bounded.
-const MAX_FLOATING_TEXT_LENGTH := 18
-const STREAM_COALESCE_PROGRESS := 0.2
 # A fixed small count adds depth without scaling draw cost with stream traffic.
 const DECORATIVE_MOTE_COUNT := 7
 const DECORATIVE_TRAIL_SAMPLES := 4
@@ -94,6 +91,7 @@ var output_activity: float = 0.0
 var is_ending: bool = false
 var lens_closing: bool = false
 var lens_close_progress: float = 0.0
+var stream_pending: Dictionary[int, String] = {}
 
 
 func fade_in_seconds() -> float:
@@ -108,6 +106,7 @@ func on_agent_start(_session_id: int) -> void:
 	is_ending = false
 	lens_closing = false
 	lens_close_progress = 0.0
+	stream_pending.clear()
 	activity = 1.0
 	queue_redraw()
 	pass
@@ -144,9 +143,7 @@ func on_chat_entry_add(_session_id: int, entry: ChatEntry) -> void:
 	var stream_type := stream_type_for_entry(entry)
 	if stream_type < 0:
 		return
-	var typed := stream_type as StreamType
-	var fallback := label_for_type(typed)
-	add_item(typed, floating_text(entry.body, fallback), weight_for_text(entry.body))
+	drain_complete_sentences(stream_type as StreamType, compact_line(entry.body))
 	pass
 
 
@@ -345,24 +342,26 @@ func visual_flow_is_empty() -> bool:
 	return items.is_empty() and decorative_motes.is_empty() and absorption_effects.is_empty() and output_motes.is_empty()
 
 
-## Streaming APIs commonly deliver one or two characters per chunk. Merge nearby
-## chunks into one visual item so draw cost follows phrases instead of token count.
-## Only young items are eligible: changing an older label would alter spacing
-## after that phrase is already well inside the scene.
-func add_stream_fragment(stream_type: StreamType, chunk: String, fallback: String) -> void:
+## Buffers token chunks until [ChatEntryCursor] sees a complete sentence, matching Matrix/Jarvis.
+func add_stream_fragment(stream_type: StreamType, chunk: String, _fallback: String) -> void:
 	if is_ending:
 		return
-	if not items.is_empty():
-		var latest := items[items.size() - 1]
-		if latest.stream_type == stream_type and latest.progress <= STREAM_COALESCE_PROGRESS and latest.label.length() < MAX_FLOATING_TEXT_LENGTH:
-			latest.label = floating_text(latest.label + chunk, fallback)
-			latest.weight = weight_for_text(latest.label)
-			latest.pulse = 1.0
-			cache_text_metrics(latest)
-			queue_redraw()
-			return
-	add_item(stream_type, floating_text(chunk, fallback), weight_for_text(chunk))
+	var pending_key := stream_type as int
+	var pending := compact_line(String(stream_pending.get(pending_key, "")) + chunk)
+	stream_pending[pending_key] = drain_complete_sentences(stream_type, pending)
 	pass
+
+
+## Emits one [ChatEntryCursor] sentence at a time; returns any unfinished tail.
+func drain_complete_sentences(stream_type: StreamType, text: String) -> String:
+	var rest := text
+	while StringUtils.is_not_blank(rest):
+		var parse := ChatEntryCursor.parse_sentence(rest, 0)
+		if parse.text.is_empty():
+			break
+		add_item(stream_type, parse.text, weight_for_text(parse.text))
+		rest = compact_line(rest.substr(parse.next_index))
+	return rest
 
 
 func _draw() -> void:
@@ -690,13 +689,11 @@ static func weight_for_text(text: String) -> float:
 	return clampf(0.3 + float(text.length()) / 240.0, 0.3, 1.0)
 
 
-static func floating_text(text: String, fallback: String) -> String:
+static func compact_line(text: String) -> String:
 	var compact := text.replace("\r", " ").replace("\n", " ").replace("\t", " ").strip_edges()
 	while compact.contains("  "):
 		compact = compact.replace("  ", " ")
-	if compact.is_empty():
-		return fallback
-	return StringUtils.truncate(compact, MAX_FLOATING_TEXT_LENGTH)
+	return compact
 
 
 static func stream_type_for_tool_name(tool_name: String) -> StreamType:

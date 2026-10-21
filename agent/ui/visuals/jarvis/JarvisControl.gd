@@ -93,9 +93,9 @@ func on_agent_start(_session_id: int) -> void:
 
 
 func offer_next_sentence() -> void:
-	var sentence: String = ChatEntryCursor.take_next_sentence()
+	var sentence := ChatEntryCursor.take_next_sentence()
 	if not sentence.is_empty():
-		jarvis_orb.add_step_text(sentence)
+		jarvis_orb.add_step_text(sentence.text)
 	pass
 
 

@@ -196,7 +196,7 @@ func offer_next_sentence() -> bool:
 		return false
 	var sentence := pending_sentence
 	if sentence.is_empty():
-		sentence = ChatEntryCursor.take_next_sentence()
+		sentence = ChatEntryCursor.take_next_sentence().text
 	if sentence.is_empty():
 		return false
 	if active_reply_rain_count + reply_rain_count(sentence) > MAX_REPLY_RAINS:
