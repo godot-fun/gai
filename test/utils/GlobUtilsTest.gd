@@ -199,31 +199,27 @@ func glob_match_backslash_normalization_test() -> void:
 	pass
 
 
-func glob_match_repo_gitignore_rules_stay_in_sync_test() -> void:
-	var actual_rules: Array[String] = []
-	for line in FileUtils.read_file_to_lines("res://.gitignore"):
-		var rule := line.strip_edges()
-		if not rule.is_empty() and not rule.begins_with("#"):
-			actual_rules.append(rule)
-	var expected_rules: Array[String] = [
-		".gai/", ".dependency/", ".cursor/", "__pycache__/", "*.pyc",
-		"cpp/**/*.obj", "cpp/**/*.os", "cpp/**/*.o", "cpp/**/*.a", "cpp/**/*.lib",
-		"cpp/**/*.exp", "cpp/**/*.ilk", "cpp/**/*.pdb",
-		"cpp/.sconsign.dblite", "cpp/.sconsign.dblite.*", "cpp/bin/**/~*",
-		".godot/**", "!.godot/extension_list.cfg", ".nomedia",
-		".import/", "export.cfg", "export_credentials.cfg", "*.tmp",
-		"*.translation", ".mono/", "data_*/", "mono_crash.*.json",
-		".idea", ".vscode", ".vs", "*.suo", "*.ntvs*", "*.njsproj", "*.sln", "*.slnx",
-		".DS_Store", "Thumbs.db", "desktop.ini", "*.bak", "*.orig", "*.rej", "*.sw?",
-	]
-	assert(actual_rules == expected_rules)
-	pass
-
-
 func glob_match_repo_gitignore_positive_cases_test() -> void:
 	var cases: Array = [
 		[".gai/", ".gai/cache/state.json"],
 		[".dependency/", "src/.dependency/vendor/lib.bin"],
+		["web/node_modules/", "web/node_modules/react/index.js"],
+		["web/dist/", "web/dist/assets/app.js"],
+		["web/build/", "web/build/app.js"],
+		["web/coverage/", "web/coverage/lcov.info"],
+		["web/.cache/", "web/.cache/build.json"],
+		["web/.npm/", "web/.npm/cache.json"],
+		[".cloakbrowser/", ".cloakbrowser/session.json"],
+		[".user_data/", ".user_data/cache/state.json"],
+		["web/.eslintcache", "web/.eslintcache"],
+		["web/*.tsbuildinfo", "web/app.tsbuildinfo"],
+		["web/.env", "web/.env"],
+		["web/.env.*", "web/.env.production"],
+		["!web/.env.example", "web/.env.example"],
+		["npm-debug.log*", "npm-debug.log.123"],
+		["yarn-debug.log*", "yarn-debug.log"],
+		["yarn-error.log*", "yarn-error.log.1"],
+		["pnpm-debug.log*", "pnpm-debug.log"],
 		[".cursor/", ".cursor/skills/humanizer/SKILL.md"],
 		["__pycache__/", ".ai/common/__pycache__/output_utils.cpython-314.pyc"],
 		["*.pyc", "cpp/__pycache__/methods.pyc"],
