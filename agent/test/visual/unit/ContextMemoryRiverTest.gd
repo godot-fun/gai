@@ -67,6 +67,20 @@ static func visible_text_items_are_bounded_test() -> void:
 	pass
 
 
+static func stream_palette_respects_theme_test() -> void:
+	var base := ContextMemoryRiver.neon_base_for_type(ContextMemoryRiver.StreamType.USER)
+	var original := ThemeColor.current_theme
+	ThemeColor.current_theme = ThemeColor.ThemeEnum.DARK
+	var dark := VisualColor.appearance_color(base)
+	ThemeColor.current_theme = ThemeColor.ThemeEnum.LIGHT
+	var light := VisualColor.appearance_color(base)
+	ThemeColor.current_theme = original
+	assert(dark.v >= VisualColor.NEON_VALUE_FLOOR)
+	assert(light.v >= VisualColor.LIGHT_INK_VALUE_MIN)
+	assert(light.v <= VisualColor.LIGHT_INK_VALUE_MAX)
+	pass
+
+
 static func absorption_spawns_one_output_mote_test() -> void:
 	var effect := ContextMemoryRiver.new()
 	effect.add_item(ContextMemoryRiver.StreamType.TOOL, "READ", 0.5)

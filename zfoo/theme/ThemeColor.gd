@@ -151,8 +151,7 @@ static func derive_theme_color(saturation: float, value: float) -> Color:
 	return Color.from_hsv(theme_color.h, clampf(theme_color.s * saturation, 0.0, 1.0), value, 1.0)
 
 
-## Rotate [param base] on the hue wheel and scale saturation/value. Used by overlay palettes
-## that need a cool/warm companion to the accent without picking a second named color.
+## Rotate [param base] on the hue wheel and scale saturation/value.
 static func shift_hsv(base: Color, hue_offset: float = 0.0, sat_mul: float = 1.0, val_mul: float = 1.0) -> Color:
 	return Color.from_hsv(fposmod(base.h + hue_offset, 1.0), clampf(base.s * sat_mul, 0.0, 1.0), clampf(base.v * val_mul, 0.0, 1.0))
 

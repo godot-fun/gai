@@ -389,11 +389,11 @@ func draw_decorative_motes(center: Vector2) -> void:
 			var sample_progress := maxf(progress - float(sample) * 0.012, 0.0)
 			trail.append(item_position(sample_progress, mote, center, false))
 		if trail.size() > 1:
-			draw_polyline(trail, Color(color, alpha * 0.12), 1.0, true)
+			draw_polyline(trail, VisualColor.stroke(color, alpha * 0.12), 1.0, true)
 		var position := trail[trail.size() - 1]
 		var radius := 2.2 + float(mote.stream_type % 3) * 0.65
-		draw_circle(position, radius * 2.0, Color(color, alpha * 0.055))
-		draw_circle(position, radius, Color(color, alpha * 0.72))
+		draw_circle(position, radius * 2.0, VisualColor.stroke(color, alpha * 0.055))
+		draw_circle(position, radius, VisualColor.stroke(color, alpha * 0.72))
 	pass
 
 
@@ -412,11 +412,11 @@ func draw_absorption_effects(center: Vector2) -> void:
 		var particle_alpha := 1.0 - smoothstep(0.38, 0.72, phase)
 		var text_rotation := clampf((center - impact_position).angle(), -0.42, 0.42)
 		var tail_anchor := text_left_anchor(particle_position, label, text_rotation)
-		draw_line(impact_position, tail_anchor, Color(color, particle_alpha * 0.24), 1.0 + weight, true)
-		draw_rotated_centered_text(particle_position, label, text_rotation, Color(color, particle_alpha * 0.92))
+		draw_line(impact_position, tail_anchor, VisualColor.stroke(color, particle_alpha * 0.24), 1.0 + weight, true)
+		draw_rotated_centered_text(particle_position, label, text_rotation, VisualColor.stroke(color, particle_alpha * 0.92))
 		var ripple_phase := clampf(phase / 0.82, 0.0, 1.0)
 		var ripple_radius := lerpf(54.0, 84.0, ripple_phase)
-		draw_arc(center, ripple_radius, 0.0, TAU, 72, Color(color, (1.0 - ripple_phase) * 0.2), 1.6, true)
+		draw_arc(center, ripple_radius, 0.0, TAU, 72, VisualColor.stroke(color, (1.0 - ripple_phase) * 0.2), 1.6, true)
 	pass
 
 
@@ -438,14 +438,14 @@ func draw_item(item: StreamItem, center: Vector2) -> void:
 			var trail_progress := maxf(progress - float(trail_index) * OUTPUT_TRAIL_STEP, 0.0)
 			trail_points.append(item_position(trail_progress, item, center, true))
 		if trail_points.size() > 1:
-			draw_polyline(trail_points, Color(color, edge_fade * 0.18), maxf(1.0, radius * 0.26), true)
-		draw_circle(position, radius * 1.7, Color(color, edge_fade * 0.06))
-		draw_circle(position, radius * 0.72, Color(color, edge_fade * 0.88))
+			draw_polyline(trail_points, VisualColor.stroke(color, edge_fade * 0.18), maxf(1.0, radius * 0.26), true)
+		draw_circle(position, radius * 1.7, VisualColor.stroke(color, edge_fade * 0.06))
+		draw_circle(position, radius * 0.72, VisualColor.stroke(color, edge_fade * 0.88))
 	else:
 		# Incoming sources are semantic, so lay their real labels glyph-by-glyph on
 		# the cached path instead of drawing a rigid horizontal label.
 		var text_alpha := edge_fade * (0.76 + item.pulse * 0.18)
-		draw_text_on_path(item, position, label, Color(color, text_alpha), Color(color, edge_fade * 0.18))
+		draw_text_on_path(item, position, label, VisualColor.stroke(color, text_alpha), VisualColor.stroke(color, edge_fade * 0.18))
 	pass
 
 
@@ -646,11 +646,11 @@ func draw_output(center: Vector2) -> void:
 		for sample in range(OUTPUT_TRAIL_SAMPLES, -1, -1):
 			var sample_progress := maxf(progress - float(sample) * OUTPUT_TRAIL_STEP, 0.0)
 			tail_points.append(output_spiral_position(sample_progress, mote.phase_offset, center))
-		draw_polyline(tail_points, Color(answer, alpha * particle_fade * 0.16), lerpf(0.8, 1.5, depth), true)
+		draw_polyline(tail_points, VisualColor.stroke(answer, alpha * particle_fade * 0.16), lerpf(0.8, 1.5, depth), true)
 		var position := tail_points[tail_points.size() - 1]
 		var radius := lerpf(2.0, 4.2 + output_activity, depth)
-		draw_circle(position, radius * 2.0, Color(answer, alpha * particle_fade * 0.07))
-		draw_circle(position, radius, Color(answer, alpha * particle_fade * lerpf(0.48, 1.0, depth)))
+		draw_circle(position, radius * 2.0, VisualColor.stroke(answer, alpha * particle_fade * 0.07))
+		draw_circle(position, radius, VisualColor.stroke(answer, alpha * particle_fade * lerpf(0.48, 1.0, depth)))
 	pass
 
 
@@ -726,12 +726,14 @@ static func label_for_type(stream_type: StreamType) -> String:
 	return I18n.t("agent.visuals.history")
 
 
-static func color_for_type(stream_type: StreamType) -> Color:
+static func neon_base_for_type(stream_type: StreamType) -> Color:
 	match stream_type:
 		StreamType.USER:
 			return Color("59c8ff")
 		StreamType.SYSTEM:
 			return Color("b894ff")
+		StreamType.HISTORY:
+			return Color("7e91ae")
 		StreamType.FILE:
 			return Color("5ee6a8")
 		StreamType.TOOL:
@@ -741,3 +743,7 @@ static func color_for_type(stream_type: StreamType) -> Color:
 		StreamType.ANSWER:
 			return Color("67f0dd")
 	return Color("7e91ae")
+
+
+static func color_for_type(stream_type: StreamType) -> Color:
+	return VisualColor.appearance_color(neon_base_for_type(stream_type))

@@ -10,6 +10,7 @@ extends Control
 ## Effects paint on a [CanvasLayer] above the chat. Most effects stay sparse overlays: draw
 ## shapes, glyphs, and glows, but never an accidental full-surface translucent wash. Purpose-built
 ## post-processing effects may cover the rect when their shader preserves and transforms the screen.
+## Neon/ink canvas colors live on [VisualColor], not [ThemeColor].
 
 var fade_tween: Tween
 
