@@ -92,13 +92,9 @@ func run_agent_events(
 			unregister_session(session_id)
 			return
 
-	if not await wait_step(host, pace(0.45, 0.2, large), is_active):
-		unregister_session(session_id)
-		return
 	if not is_active.call():
 		unregister_session(session_id)
 		return
-	RuntimeManager.remove_runtime(session_id)
 	AgentEvents.events.agent_end.emit(session_id, "")
 	unregister_session(session_id)
 	on_status.call(StringUtils.format("{} · {} · complete", mode_label, visual_label))
@@ -128,10 +124,6 @@ func play_turn(
 		if not await wait_step(host, pace(0.08, 0.03, large), is_active):
 			return false
 
-	for tool_spec: Dictionary in build_tool_calls(turn_index, turn_count, large, catalog_offset):
-		if not await play_tool(host, session_id, tool_spec, large, is_active):
-			return false
-
 	var is_final := turn_index == turn_count - 1
 	for chunk: String in build_content_chunks(turn_index, large, is_final, session_tag, visual_label):
 		AgentEvents.events.message_update.emit(session_id, chunk, OpenAiClient.STREAM_KIND_CONTENT)
@@ -145,6 +137,14 @@ func play_turn(
 	AgentEvents.events.message_complete.emit(session_id, usage)
 	if not await wait_step(host, pace(0.1, 0.04, large), is_active):
 		return false
+
+	var tool_specs := build_tool_calls(turn_index, turn_count, large, catalog_offset)
+	for tool_spec: Dictionary in tool_specs:
+		if not await play_tool(host, session_id, tool_spec, large, is_active):
+			return false
+
+	if tool_specs.is_empty():
+		return true
 	AgentEvents.events.turn_end.emit(session_id)
 	return await wait_step(host, pace(0.16, 0.06, large), is_active)
 
@@ -202,7 +202,7 @@ static func build_reasoning_chunks(turn_index: int, large: bool, session_tag: St
 		StringUtils.format("{}Turn {}.", prefix, turn_index + 1),
 		StringUtils.format("{}Active visual: {} — tune chunk delay so overlays keep up without stutter.", prefix, visual_label),
 		StringUtils.format("{}One tool.", prefix),
-		StringUtils.format("{}Draft the visible reply only after the fake tool result lands, and keep it aligned with whatever the preview catalog returned for this turn index.", prefix),
+		StringUtils.format("{}Stream reasoning and assistant content, then message_complete, then fixture tools — same order as [AgentLoop].", prefix),
 	])
 	if large:
 		chunks.append(StringUtils.format("{}Repo sweep.", prefix))
@@ -241,7 +241,7 @@ static func build_content_chunks(turn_index: int, large: bool, is_final: bool, s
 	if large:
 		chunks.append(StringUtils.format("{}Catalog output applied.", prefix))
 		chunks.append(StringUtils.format("{}The reasoning block above was deliberately uneven — one-word beats, then a long clause — so glyph layout and scroll velocity get exercised the way real models stream.", prefix))
-		chunks.append(StringUtils.format("{}Jarvis / Transformer: watch turn_start → tools → content.", prefix))
+		chunks.append(StringUtils.format("{}Jarvis / Transformer: watch turn_start → stream → message_complete → tools.", prefix))
 		chunks.append(StringUtils.format("{}More turns left.", prefix))
 	chunks.append_array(chinese_content_chunks(turn_index, large, false))
 	return chunks
@@ -269,7 +269,7 @@ static func chinese_reasoning_chunks(turn_index: int, large: bool) -> PackedStri
 		StringUtils.format("【中文·推理】第 {} 轮。", turn_index + 1),
 		"先看当前视觉特效能不能跟上流式字数。",
 		"短句。",
-		"等模拟工具返回后再写对外回复，内容要和 TOOL_CATALOG 里这一轮的工具名对得上，别写空话。",
+		"先流式推理和正文，再 message_complete，最后跑 fixture 工具，顺序与 AgentLoop 一致。",
 	])
 	if large:
 		chunks.append("扫仓库。")
@@ -305,7 +305,7 @@ static func chinese_content_chunks(turn_index: int, large: bool, is_final: bool)
 	if large:
 		chunks.append("已套用 catalog 假结果。")
 		chunks.append("上面推理故意混极短和很长的一句，用来压 Noto 字体、竖排密度和滚动速度，贴近真实模型吐字。")
-		chunks.append("Jarvis / Transformer：turn_start → 工具 → 正文。")
+		chunks.append("Jarvis / Transformer：turn_start → 流式 → message_complete → 工具。")
 		chunks.append("后面还有轮次。")
 	return chunks
 
