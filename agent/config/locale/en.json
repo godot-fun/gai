@@ -176,6 +176,7 @@
     },
     "sidebar": {
       "new_session": "+ New Agent",
+      "default_title": "New Chat",
       "pinned": "Pinned",
       "chats": "Chats",
       "delete_chat": "Delete chat",

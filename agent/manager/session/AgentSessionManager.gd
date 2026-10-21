@@ -5,8 +5,6 @@ extends Object
 
 ## Sidebar titles are trimmed to this many characters before they land in the session index.
 const MAX_TITLE_LENGTH := 64
-## Untouched chat title; the first prompt replaces it (see [method async_send]).
-const DEFAULT_TITLE := "New Chat"
 
 static var session_indexes := AgentSessionIndexes.new()
 ## Selected session. 0 only before [method load_from_disk]; from then on this is always a live session id.
@@ -169,7 +167,7 @@ static func get_next_session_id(session_id: int) -> int:
 static func add_session_index(session: AgentSession) -> void:
 	var session_index := AgentSessionIndexes.SessionIndex.new()
 	session_index.id = session.id
-	session_index.title = DEFAULT_TITLE
+	session_index.title = get_default_title()
 	session_indexes.indexes.insert(0, session_index)
 	pass
 
@@ -210,6 +208,14 @@ static func transfer_session_index(session_id: int, to_pinned: bool, to_index: i
 # ---------------------------------------------------------------------------
 # Session title
 # ---------------------------------------------------------------------------
+
+static func get_default_title() -> String:
+	return I18n.t("agent.sidebar.default_title")
+
+
+static func has_default_title(session_id: int) -> bool:
+	return get_title(session_id) == get_default_title()
+
 
 static func get_title(session_id: int) -> String:
 	var session_index := get_session_index(session_id)

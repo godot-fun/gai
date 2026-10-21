@@ -100,7 +100,7 @@ static func try_run_next_message(session_id: int) -> void:
 	session.pending_messages.pop_front()
 	AgentEvents.events.session_queue_changed.emit(session_id)
 	ChatInputDependencyGuard.append_python_install_message(session)
-	if AgentSessionManager.get_title(session_id) == AgentSessionManager.DEFAULT_TITLE:
+	if AgentSessionManager.has_default_title(session_id):
 		AgentSessionManager.set_title(session_id, queued)
 	session.messages.append(ChatMessage.user(queued))
 	var details: Dictionary[String, String] = {}

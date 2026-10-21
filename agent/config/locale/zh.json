@@ -176,6 +176,7 @@
     },
     "sidebar": {
       "new_session": "+ 新建智能体",
+      "default_title": "新对话",
       "pinned": "已固定",
       "chats": "对话",
       "delete_chat": "删除对话",
