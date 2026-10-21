@@ -23,10 +23,15 @@ var entry_char_index: int = 0
 func reset_for_session(session_id: int) -> void:
 	var session: AgentSession = AgentSessionStore.load_session(session_id)
 	if session == null:
-		chat_entry_index = 0
-		entry_char_index = 0
+		clear()
 		return
 	chat_entry_index = find_latest_user_entry(session.chat_entries)
+	entry_char_index = 0
+	pass
+
+
+func clear() -> void:
+	chat_entry_index = 0
 	entry_char_index = 0
 	pass
 
