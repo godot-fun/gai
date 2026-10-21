@@ -13,3 +13,31 @@ static func is_file_tool(tool_name: String) -> bool:
 
 static func is_web_tool(tool_name: String) -> bool:
 	return tool_name == WebSearchTool.NAME or tool_name == WebFetchTool.NAME
+
+
+static func get_tool_call_summary(tool_name: String, args: Dictionary[String, Variant]) -> String:
+	var body := ""
+	match tool_name:
+		GrepTool.NAME:
+			body = str(args.get(GrepTool.ARG_PATTERN, ""))
+		GlobTool.NAME:
+			body = str(args.get(GlobTool.ARG_PATTERN, ""))
+		ListDirTool.NAME:
+			body = str(args.get(ListDirTool.ARG_PATH, ""))
+		BashTool.NAME:
+			body = str(args.get(BashTool.ARG_COMMAND, ""))
+		ImageToTextTool.NAME:
+			body = str(args.get(ImageToTextTool.ARG_PATH, "")) + FileUtils.NEWLINE_LF + str(args.get(ImageToTextTool.ARG_PROMPT, ""))
+		AudioToTextTool.NAME:
+			body = str(args.get(AudioToTextTool.ARG_PATH, ""))
+		WebSearchTool.NAME:
+			body = str(args.get(WebSearchTool.ARG_QUERY, ""))
+		WebFetchTool.NAME:
+			body = str(args.get(WebFetchTool.ARG_URL, ""))
+		_:
+			for key: Variant in args.keys():
+				var value := str(args[key])
+				if StringUtils.is_not_blank(value):
+					body = value
+					break
+	return body

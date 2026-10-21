@@ -208,38 +208,10 @@ static func on_tool_execution_start(session_id: int, _tool_call_id: String, tool
 	if ToolHelper.is_file_tool(tool_name):
 		return
 	if ToolHelper.is_web_tool(tool_name):
-		AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_WEB_TOOL, tool_name, get_tool_entry_body(tool_name, args))
+		AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_WEB_TOOL, tool_name, ToolHelper.get_tool_call_summary(tool_name, args))
 		return
-	AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_TOOL, tool_name, get_tool_entry_body(tool_name, args))
+	AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_TOOL, tool_name, ToolHelper.get_tool_call_summary(tool_name, args))
 	pass
-
-
-static func get_tool_entry_body(tool_name: String, args: Dictionary[String, Variant]) -> String:
-	var body := ""
-	match tool_name:
-		GrepTool.NAME:
-			body = str(args.get(GrepTool.ARG_PATTERN, ""))
-		GlobTool.NAME:
-			body = str(args.get(GlobTool.ARG_PATTERN, ""))
-		ListDirTool.NAME:
-			body = str(args.get(ListDirTool.ARG_PATH, ""))
-		BashTool.NAME:
-			body = str(args.get(BashTool.ARG_COMMAND, ""))
-		ImageToTextTool.NAME:
-			body = str(args.get(ImageToTextTool.ARG_PATH, "")) + FileUtils.NEWLINE_LF + str(args.get(ImageToTextTool.ARG_PROMPT, ""))
-		AudioToTextTool.NAME:
-			body = str(args.get(AudioToTextTool.ARG_PATH, ""))
-		WebSearchTool.NAME:
-			body = str(args.get(WebSearchTool.ARG_QUERY, ""))
-		WebFetchTool.NAME:
-			body = str(args.get(WebFetchTool.ARG_URL, ""))
-		_:
-			for key: Variant in args.keys():
-				var value := str(args[key])
-				if StringUtils.is_not_blank(value):
-					body = value
-					break
-	return body
 
 
 static func on_tool_execution_end(session_id: int, _tool_call_id: String, tool_name: String, agent_tool_result: AgentToolResult) -> void:
