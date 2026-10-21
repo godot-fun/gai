@@ -58,14 +58,11 @@ func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 
 func on_agent_start(session_id: int) -> void:
 	var effect := prepare_effect()
-	if effect == null:
+	if effect == null or effect.visible:
 		return
-	var should_start_visual := not effect.visible
-	if should_start_visual:
-		effect.reset_visual()
+	effect.reset_visual()
 	effect.on_agent_start(session_id)
-	if should_start_visual:
-		effect.set_visual_visible(true, true)
+	effect.set_visual_visible(true, true)
 	pass
 
 
