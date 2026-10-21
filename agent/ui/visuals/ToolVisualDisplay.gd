@@ -61,7 +61,7 @@ static func glyph_emoji(tool_name: String) -> String:
 		ReadTool.NAME:
 			return "📚"
 		WriteTool.NAME:
-			return "✍️"
+			return "🖊️"
 		EditTool.NAME:
 			return "✂️"
 		BashTool.NAME:
@@ -71,15 +71,15 @@ static func glyph_emoji(tool_name: String) -> String:
 		AudioToTextTool.NAME:
 			return "🎙️"
 		DeleteTool.NAME:
-			return "🗑"
+			return "❌"
 		GrepTool.NAME:
 			return "🕵️"
 		GlobTool.NAME:
-			return "🪄"
+			return "⭐"
 		ListDirTool.NAME:
 			return "📂"
 		WebFetchTool.NAME:
-			return "📥"
+			return "📡"
 		WebSearchTool.NAME:
 			return "🌐"
 		_:
