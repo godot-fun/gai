@@ -30,13 +30,13 @@ static func apply_new_session_button(button: Button) -> void:
 	var theme_color: Color = ThemeColor.accent_theme_color()
 	button.flat = false
 	button.focus_mode = Control.FOCUS_NONE
-	ButtonStyle.apply_font_colors(button, theme_color, ThemeColor.promote(theme_color, 0.08), ThemeColor.demote(theme_color, 0.06), Colors.secondary_text)
+	ButtonStyle.apply_font_colors(button, theme_color, ThemeColor.promote(theme_color, Colors.am_2), ThemeColor.demote(theme_color, Colors.am_2), Colors.secondary_text)
 
 	var border := ThemeColor.alpha_theme_color(0.55 if ThemeColor.is_dark_theme() else 0.45)
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_md, Margin.ma_3, Margin.ma_2, border, ControlSize.border_xs)
 	ButtonStyle.apply(button, normal,
 		ButtonStyle.filled(normal, ThemeColor.selected_surface, ThemeColor.alpha_theme_color(0.85)),
-		ButtonStyle.filled(normal, ThemeColor.promote(ThemeColor.selected_surface, 0.06), theme_color))
+		ButtonStyle.filled(normal, ThemeColor.promote(ThemeColor.selected_surface, Colors.am_2), theme_color))
 	pass
 
 

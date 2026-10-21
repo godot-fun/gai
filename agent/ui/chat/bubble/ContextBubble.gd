@@ -103,7 +103,7 @@ static func style_expand_button(button: Button) -> void:
 	button.custom_minimum_size = Vector2(0, 18)
 	button.add_theme_font_size_override("font_size", Typography.label_small_size)
 	var theme_color := ThemeColor.accent_theme_color()
-	ButtonStyle.apply_font_colors(button, theme_color, ThemeColor.promote(theme_color, 0.12), ThemeColor.demote(theme_color, 0.08))
+	ButtonStyle.apply_font_colors(button, theme_color, ThemeColor.promote(theme_color, Colors.am_2), ThemeColor.demote(theme_color, Colors.am_2))
 
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, 0, Margin.ma_1, Margin.ma_0)
 	var hover := ButtonStyle.filled(normal, ThemeColor.alpha_theme_color(0.12))

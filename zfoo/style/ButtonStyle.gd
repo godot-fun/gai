@@ -12,7 +12,7 @@ extends Object
 ## [codeblock]
 ## var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 6, Margin.ma_2, Margin.ma_1, ThemeColor.accent_theme_color(), ControlSize.border_xs)
 ## ButtonStyle.apply(button, normal,
-## 	ButtonStyle.filled(normal, ThemeColor.promote(ThemeColor.card_surface, 0.08)),
+## 	ButtonStyle.filled(normal, ThemeColor.promote(ThemeColor.card_surface, Colors.am_2)),
 ## 	ButtonStyle.filled(normal, ThemeColor.inset_surface, ThemeColor.accent_theme_color()))
 ## [/codeblock]
 

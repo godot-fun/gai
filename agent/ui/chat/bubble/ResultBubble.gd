@@ -64,11 +64,11 @@ static func style_view_button(button: Button) -> void:
 	button.tooltip_text = I18n.t("agent.chat.view_full_result")
 	button.custom_minimum_size = Vector2(22, 18)
 	button.add_theme_font_size_override("font_size", Typography.label_small_size)
-	ButtonStyle.apply_font_colors(button, Colors.secondary_text, ThemeColor.promote(Colors.primary_text, 0.08), ThemeColor.demote(Colors.secondary_text, 0.08))
+	ButtonStyle.apply_font_colors(button, Colors.secondary_text, ThemeColor.promote(Colors.primary_text, Colors.am_2), ThemeColor.demote(Colors.secondary_text, Colors.am_2))
 
-	var border := ThemeColor.demote(Colors.secondary_text, 0.06)
-	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.promote(Colors.blue_grey_surface, 0.08), 4, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
+	var border := ThemeColor.demote(Colors.secondary_text, Colors.am_2)
+	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.promote(Colors.blue_grey_surface, Colors.am_2), 4, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
 	ButtonStyle.apply(button, normal,
-		ButtonStyle.filled(normal, ThemeColor.promote(Colors.blue_grey_surface, 0.16), Colors.secondary_text),
-		ButtonStyle.filled(normal, ThemeColor.demote(Colors.blue_grey_surface, 0.06), Colors.secondary_text))
+		ButtonStyle.filled(normal, ThemeColor.promote(Colors.blue_grey_surface, Colors.am_3), Colors.secondary_text),
+		ButtonStyle.filled(normal, ThemeColor.demote(Colors.blue_grey_surface, Colors.am_2), Colors.secondary_text))
 	pass
