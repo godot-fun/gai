@@ -10,7 +10,17 @@ var current_effect: VisualEffect
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	connect_visual_events()
+	gdf.events.theme_changed.connect(on_theme_changed)
+	gdf.events.theme_color_changed.connect(on_theme_changed)
+	AgentEvents.events.agent_start.connect(on_agent_start)
+	AgentEvents.events.session_stop.connect(on_session_stop)
+	AgentEvents.events.turn_start.connect(on_turn_start)
+	AgentEvents.events.turn_end.connect(on_turn_end)
+	AgentEvents.events.message_update.connect(on_message_update)
+	AgentEvents.events.message_complete.connect(on_message_complete)
+	AgentEvents.events.tool_execution_start.connect(on_tool_execution_start)
+	AgentEvents.events.tool_execution_end.connect(on_tool_execution_end)
+	AgentEvents.events.chat_entry_add.connect(on_chat_entry_add)
 	pass
 
 
@@ -47,21 +57,6 @@ func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 		VisualType.Type.TAI_CHI:
 			return TaiChi.new()
 	return null
-
-func connect_visual_events() -> void:
-	gdf.events.theme_changed.connect(on_theme_changed)
-	gdf.events.theme_color_changed.connect(on_theme_changed)
-	AgentEvents.events.agent_start.connect(on_agent_start)
-	AgentEvents.events.session_stop.connect(on_session_stop)
-	AgentEvents.events.turn_start.connect(on_turn_start)
-	AgentEvents.events.turn_end.connect(on_turn_end)
-	AgentEvents.events.message_update.connect(on_message_update)
-	AgentEvents.events.message_complete.connect(on_message_complete)
-	AgentEvents.events.tool_execution_start.connect(on_tool_execution_start)
-	AgentEvents.events.tool_execution_end.connect(on_tool_execution_end)
-	AgentEvents.events.chat_entry_add.connect(on_chat_entry_add)
-	pass
-
 
 func on_agent_start(session_id: int) -> void:
 	var effect := prepare_effect()

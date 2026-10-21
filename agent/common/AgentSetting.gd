@@ -7,7 +7,7 @@ extends RefCounted
 ## Behavior lives in [AgentNotification] and the matching `agent/ui/toolbar` toggle; the fields are
 ## edited by [AgentSettingDialog].
 ##
-## Setters that change something visible right away announce it on [AgentEvents].
+## Setters that change an already rendered UI announce it on [AgentEvents].
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Toolbar toggles
@@ -31,14 +31,11 @@ static func get_visual_type() -> VisualType.Type:
 	return visual_type if VisualType.is_valid(visual_type) else VisualType.Type.JARVIS
 
 
-## Announces a selection on [signal AgentEvents.events.visual_type_changed] so visual controllers
-## can show or hide their presentation.
 static func set_visual_type(visual_type: VisualType.Type) -> void:
 	if not VisualType.is_valid(visual_type) or get_visual_type() == visual_type:
 		return
 	Setting.set_int(VISUAL_TYPE_KEY, visual_type)
 	Setting.save()
-	AgentEvents.events.visual_type_changed.emit(visual_type)
 	pass
 
 

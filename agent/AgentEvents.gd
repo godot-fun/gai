@@ -70,8 +70,6 @@ class Events:
 	# Appearance
 	## Markdown bubble rendering switched (see [method AgentSetting.set_markdown_enabled]).
 	signal markdown_changed(enabled: bool)
-	## Active run visual changed (see [method AgentSetting.set_visual_type]).
-	signal visual_type_changed(visual_type: int)
 	# Workspace
 	## Workspace root switched (see [method AgentWorkspace.set_root]) — sessions and file
 	## paths now resolve under the new root, so listeners reload their state.
