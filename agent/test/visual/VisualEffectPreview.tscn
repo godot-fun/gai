@@ -38,71 +38,94 @@ script = ExtResource("2_visual")
 [node name="UiLayer" type="CanvasLayer" parent="."]
 layer = 20
 
-[node name="Ui" type="VBoxContainer" parent="UiLayer"]
+[node name="Scroll" type="ScrollContainer" parent="UiLayer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 offset_left = 24.0
 offset_top = 24.0
-offset_right = 920.0
-offset_bottom = 320.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Ui" type="VBoxContainer" parent="UiLayer/Scroll"]
+custom_minimum_size = Vector2(920, 0)
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 10
 
-[node name="Title" type="Label" parent="UiLayer/Ui"]
+[node name="Intro" type="VBoxContainer" parent="UiLayer/Scroll/Ui"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="UiLayer/Scroll/Ui/Intro"]
 layout_mode = 2
 text = "Visual Effect Preview · Desktop Coding Agent"
 
-[node name="Hint" type="Label" parent="UiLayer/Ui"]
+[node name="Hint" type="Label" parent="UiLayer/Scroll/Ui/Intro"]
 layout_mode = 2
 autowrap_mode = 3
-text = "Press F6. Stream responses through real AgentEvents into VisualControl (same sequence as AgentLoop). Small payload: 16 turns; large payload: 64 turns. Each button selects one effect. Enable Dual concurrent sessions to run multiple independent sessions with interleaved events."
+text = "Press F6. Choose a payload size, then an effect — each click creates a new agent session and streams real AgentEvents. Click again before a run finishes to simulate multiple independent sessions."
 
-[node name="Status" type="Label" parent="UiLayer/Ui"]
+[node name="Run" type="VBoxContainer" parent="UiLayer/Scroll/Ui"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Status" type="Label" parent="UiLayer/Scroll/Ui/Run"]
 layout_mode = 2
 autowrap_mode = 3
 text = "..."
 
-[node name="Controls" type="HBoxContainer" parent="UiLayer/Ui"]
+[node name="Payload" type="HBoxContainer" parent="UiLayer/Scroll/Ui/Run"]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Stop" type="Button" parent="UiLayer/Ui/Controls"]
+[node name="PayloadLabel" type="Label" parent="UiLayer/Scroll/Ui/Run/Payload"]
+layout_mode = 2
+text = "Payload"
+
+[node name="SmallPayload" type="Button" parent="UiLayer/Scroll/Ui/Run/Payload"]
+layout_mode = 2
+toggle_mode = 1
+button_pressed = true
+focus_mode = 0
+text = "Small · 16 turns"
+
+[node name="LargePayload" type="Button" parent="UiLayer/Scroll/Ui/Run/Payload"]
+layout_mode = 2
+toggle_mode = 1
+focus_mode = 0
+text = "Large · 64 turns"
+
+[node name="Controls" type="HBoxContainer" parent="UiLayer/Scroll/Ui/Run"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Stop" type="Button" parent="UiLayer/Scroll/Ui/Run/Controls"]
 layout_mode = 2
 text = "Stop"
 
-[node name="ThemeColorSelect" type="Button" parent="UiLayer/Ui/Controls"]
+[node name="ThemeColorSelect" type="Button" parent="UiLayer/Scroll/Ui/Run/Controls"]
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 focus_mode = 0
 mouse_default_cursor_shape = 2
 
-[node name="ThemeToggle" type="Button" parent="UiLayer/Ui/Controls"]
+[node name="ThemeToggle" type="Button" parent="UiLayer/Scroll/Ui/Run/Controls"]
 layout_mode = 2
 tooltip_text = "Switch theme"
 
-[node name="ConcurrentSessions" type="CheckButton" parent="UiLayer/Ui/Controls"]
+[node name="Effects" type="VBoxContainer" parent="UiLayer/Scroll/Ui"]
 layout_mode = 2
-focus_mode = 0
-tooltip_text = "Run multiple independent sessions while agents are working; one shared VisualControl, events interleaved per turn."
-text = "Dual concurrent sessions"
+theme_override_constants/separation = 6
 
-[node name="SmallRow" type="VBoxContainer" parent="UiLayer/Ui"]
+[node name="Label" type="Label" parent="UiLayer/Scroll/Ui/Effects"]
 layout_mode = 2
-theme_override_constants/separation = 4
+autowrap_mode = 3
+text = "Effects by category — one button per visual type."
 
-[node name="Label" type="Label" parent="UiLayer/Ui/SmallRow"]
-layout_mode = 2
-text = "Small payload · 16 turns · short user/thinking · exercises each built-in tool"
-
-[node name="Buttons" type="HBoxContainer" parent="UiLayer/Ui/SmallRow"]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="LargeRow" type="VBoxContainer" parent="UiLayer/Ui"]
-layout_mode = 2
-theme_override_constants/separation = 4
-
-[node name="Label" type="Label" parent="UiLayer/Ui/LargeRow"]
-layout_mode = 2
-text = "Large payload · 64 turns · denser streams · higher tool-call density"
-
-[node name="Buttons" type="HBoxContainer" parent="UiLayer/Ui/LargeRow"]
+[node name="Groups" type="VBoxContainer" parent="UiLayer/Scroll/Ui/Effects"]
 layout_mode = 2
 theme_override_constants/separation = 8

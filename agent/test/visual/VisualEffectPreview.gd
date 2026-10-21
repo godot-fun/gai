@@ -3,30 +3,57 @@ extends Control
 ## Unified visual-effect preview. Drives [VisualControl] by emitting real [AgentEvents]
 ## (same sequence as [AgentLoop]), with no direct effect-method calls.
 ##
-## Row 1 — small payload: 16 turns, short user / thinking, each registered tool appears.
-## Row 2 — large payload: 64 turns, denser streams and more tool calls per turn.
-## Each row has one play button per visual type.
-## Optional dual concurrent sessions: two RuntimeManager runtimes, staggered agent_start, interleaved turns.
+## Effect buttons are grouped by function; each click creates a new agent session.
 
 const SMALL_TURNS := 16
 const LARGE_TURNS := 64
 
-const EFFECT_SPECS: Array[Dictionary] = [
-	{"type": VisualControl.Type.JARVIS, "label": "Jarvis"},
-	{"type": VisualControl.Type.TRANSFORMER, "label": "Transformer"},
-	{"type": VisualControl.Type.REASONING_TREE, "label": "Reasoning Tree"},
-	{"type": VisualControl.Type.TOOL_CONSTELLATION, "label": "Tool Constellation"},
-	{"type": VisualControl.Type.CONTEXT_MEMORY_RIVER, "label": "Context Memory River"},
-	{"type": VisualControl.Type.NEURAL_AURORA, "label": "Neural Aurora"},
-	{"type": VisualControl.Type.SEMANTIC_BLACK_HOLE, "label": "Semantic Black Hole"},
-	{"type": VisualControl.Type.CYBER_COMMAND_DECK, "label": "Cyber Command Deck"},
-	{"type": VisualControl.Type.QUANTUM_CIRCUIT, "label": "Quantum Circuit"},
-	{"type": VisualControl.Type.DESKTOP_CAT, "label": "Desktop Cat"},
-	{"type": VisualControl.Type.GEOMETRIC_GENESIS, "label": "Geometric Genesis"},
-	{"type": VisualControl.Type.MATRIX_RAIN, "label": "Matrix Rain"},
-	{"type": VisualControl.Type.FILTER_CAROUSEL, "label": "Filter Carousel"},
-	{"type": VisualControl.Type.INK_LANDSCAPE, "label": "Ink Landscape"},
-	{"type": VisualControl.Type.TAI_CHI, "label": "Tai Chi"},
+const EFFECT_GROUPS: Array[Dictionary] = [
+	{
+		"title": "Agent core",
+		"effects": [
+			{"type": VisualControl.Type.JARVIS, "label": "Jarvis"},
+			{"type": VisualControl.Type.TRANSFORMER, "label": "Transformer"},
+		],
+	},
+	{
+		"title": "Tools",
+		"effects": [
+			{"type": VisualControl.Type.REASONING_TREE, "label": "Reasoning Tree"},
+			{"type": VisualControl.Type.TOOL_CONSTELLATION, "label": "Tool Constellation"},
+			{"type": VisualControl.Type.CYBER_COMMAND_DECK, "label": "Cyber Command Deck"},
+		],
+	},
+	{
+		"title": "Context",
+		"effects": [
+			{"type": VisualControl.Type.CONTEXT_MEMORY_RIVER, "label": "Context Memory River"},
+			{"type": VisualControl.Type.MATRIX_RAIN, "label": "Matrix Rain"},
+		],
+	},
+	{
+		"title": "Memory & semantics",
+		"effects": [
+			{"type": VisualControl.Type.NEURAL_AURORA, "label": "Neural Aurora"},
+			{"type": VisualControl.Type.SEMANTIC_BLACK_HOLE, "label": "Semantic Black Hole"},
+		],
+	},
+	{
+		"title": "Systems & circuits",
+		"effects": [
+			{"type": VisualControl.Type.QUANTUM_CIRCUIT, "label": "Quantum Circuit"},
+		],
+	},
+	{
+		"title": "Motion & style",
+		"effects": [
+			{"type": VisualControl.Type.DESKTOP_CAT, "label": "Desktop Cat"},
+			{"type": VisualControl.Type.GEOMETRIC_GENESIS, "label": "Geometric Genesis"},
+			{"type": VisualControl.Type.FILTER_CAROUSEL, "label": "Filter Carousel"},
+			{"type": VisualControl.Type.INK_LANDSCAPE, "label": "Ink Landscape"},
+			{"type": VisualControl.Type.TAI_CHI, "label": "Tai Chi"},
+		],
+	},
 ]
 
 const TOOL_CATALOG: Array[Dictionary] = [
@@ -46,46 +73,46 @@ const TOOL_CATALOG: Array[Dictionary] = [
 
 @onready var background: ColorRect = $Background
 @onready var visual_control: VisualControl = $VisualOverlay/VisualControl
-@onready var title_label: Label = $UiLayer/Ui/Title
-@onready var hint_label: Label = $UiLayer/Ui/Hint
-@onready var status_label: Label = $UiLayer/Ui/Status
-@onready var stop_button: Button = $UiLayer/Ui/Controls/Stop
-@onready var theme_color_select_node: Button = $UiLayer/Ui/Controls/ThemeColorSelect
-@onready var theme_toggle_button: Button = $UiLayer/Ui/Controls/ThemeToggle
-@onready var concurrent_sessions_toggle: CheckButton = $UiLayer/Ui/Controls/ConcurrentSessions
-@onready var small_row: HBoxContainer = $UiLayer/Ui/SmallRow/Buttons
-@onready var large_row: HBoxContainer = $UiLayer/Ui/LargeRow/Buttons
-@onready var small_row_label: Label = $UiLayer/Ui/SmallRow/Label
-@onready var large_row_label: Label = $UiLayer/Ui/LargeRow/Label
-
+@onready var title_label: Label = $UiLayer/Scroll/Ui/Intro/Title
+@onready var hint_label: Label = $UiLayer/Scroll/Ui/Intro/Hint
+@onready var status_label: Label = $UiLayer/Scroll/Ui/Run/Status
+@onready var stop_button: Button = $UiLayer/Scroll/Ui/Run/Controls/Stop
+@onready var theme_color_select_node: Button = $UiLayer/Scroll/Ui/Run/Controls/ThemeColorSelect
+@onready var theme_toggle_button: Button = $UiLayer/Scroll/Ui/Run/Controls/ThemeToggle
+@onready var payload_label: Label = $UiLayer/Scroll/Ui/Run/Payload/PayloadLabel
+@onready var small_payload_button: Button = $UiLayer/Scroll/Ui/Run/Payload/SmallPayload
+@onready var large_payload_button: Button = $UiLayer/Scroll/Ui/Run/Payload/LargePayload
+@onready var effects_label: Label = $UiLayer/Scroll/Ui/Effects/Label
+@onready var effect_groups: VBoxContainer = $UiLayer/Scroll/Ui/Effects/Groups
 var theme_toggle: ThemeToggle = ThemeToggle.new()
 var theme_color_select: ThemeColorSelect = ThemeColorSelect.new()
 
-var demo_session_id: int = 1_0000
-var demo_session_id_b: int = 2_0000
 var demo_generation: int = 0
-var demo_running: bool = false
+var demo_active_session_ids: Array[int] = []
 var tool_serial: int = 0
 var play_buttons: Array[Button] = []
+var section_labels: Array[Label] = []
 
+
+# ---------------------------------------------------------------------------
+# Lifecycle
+# ---------------------------------------------------------------------------
 
 func _ready() -> void:
-	# This preview runs directly with F6 and bypasses Agent._ready(), where the application normally
-	# initializes translations. Keep this first so effects created below receive translated labels.
 	TransformerController.complete_animation_on_agent_end = true
 	TaiChi.complete_animation_on_agent_end = true
 	I18nHelper.init_i18n()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	AgentSessionManager.load_from_disk()
-	demo_session_id = AgentSessionManager.active_session_id
 	theme_color_select.setup(theme_color_select_node)
 	theme_toggle.setup(theme_toggle_button)
+	setup_payload_buttons()
 	build_effect_buttons()
 	stop_button.pressed.connect(on_stop_pressed)
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
 	apply_theme()
-	set_status("Pick an effect row to stream simulated AgentEvents in real time.")
+	set_status("Pick an effect button to create an agent and stream simulated AgentEvents.")
 	pass
 
 
@@ -95,23 +122,57 @@ func _exit_tree() -> void:
 	pass
 
 
-func build_effect_buttons() -> void:
-	for spec: Dictionary in EFFECT_SPECS:
-		var small_button := make_effect_button(str(spec["label"]), int(spec["type"]), SMALL_TURNS, false)
-		small_row.add_child(small_button)
-		play_buttons.append(small_button)
-		var large_button := make_effect_button(str(spec["label"]), int(spec["type"]), LARGE_TURNS, true)
-		large_row.add_child(large_button)
-		play_buttons.append(large_button)
+# ---------------------------------------------------------------------------
+# UI build & theme
+# ---------------------------------------------------------------------------
+
+func setup_payload_buttons() -> void:
+	var payload_group := ButtonGroup.new()
+	small_payload_button.button_group = payload_group
+	large_payload_button.button_group = payload_group
+	small_payload_button.button_pressed = true
+	small_payload_button.toggled.connect(on_payload_toggled)
+	large_payload_button.toggled.connect(on_payload_toggled)
 	pass
 
 
-func make_effect_button(label: String, visual_type: int, turn_count: int, large: bool) -> Button:
+func on_payload_toggled(pressed: bool) -> void:
+	if not pressed:
+		return
+	apply_theme()
+	pass
+
+
+func build_effect_buttons() -> void:
+	for group: Dictionary in EFFECT_GROUPS:
+		var heading := Label.new()
+		heading.text = str(group["title"])
+		section_labels.append(heading)
+		effect_groups.add_child(heading)
+		var buttons := HBoxContainer.new()
+		buttons.add_theme_constant_override("separation", Margin.ma_2)
+		effect_groups.add_child(buttons)
+		for spec: Dictionary in group["effects"]:
+			var button := make_effect_button(str(spec["label"]), int(spec["type"]))
+			buttons.add_child(button)
+			play_buttons.append(button)
+	pass
+
+
+func make_effect_button(label: String, visual_type: int) -> Button:
 	var button := Button.new()
 	button.text = label
 	button.focus_mode = Control.FOCUS_NONE
-	button.pressed.connect(func() -> void: start_demo(visual_type as VisualControl.Type, turn_count, large))
+	button.pressed.connect(func() -> void: start_demo(visual_type as VisualControl.Type, selected_turn_count(), selected_large_payload()))
 	return button
+
+
+func selected_large_payload() -> bool:
+	return large_payload_button.button_pressed
+
+
+func selected_turn_count() -> int:
+	return LARGE_TURNS if selected_large_payload() else SMALL_TURNS
 
 
 func apply_theme() -> void:
@@ -119,25 +180,58 @@ func apply_theme() -> void:
 	title_label.add_theme_font_override("font", Fonts.semibold())
 	title_label.add_theme_font_size_override("font_size", Typography.title_large_size)
 	title_label.add_theme_color_override("font_color", Colors.primary_text)
-	for label: Label in [hint_label, status_label, small_row_label, large_row_label]:
+	for label: Label in [hint_label, status_label, payload_label, effects_label]:
 		label.add_theme_font_override("font", Fonts.regular())
 		label.add_theme_font_size_override("font_size", Typography.body_medium_size)
 		label.add_theme_color_override("font_color", Colors.secondary_text)
-	var buttons: Array[Button] = [stop_button]
-	buttons.append_array(play_buttons)
-	for button: Button in buttons:
-		button.add_theme_font_override("font", Fonts.medium())
-		button.add_theme_font_size_override("font_size", Typography.label_large_size)
-		var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1, Colors.subtle_border, ControlSize.border_xs)
+	payload_label.add_theme_color_override("font_color", Colors.primary_text)
+	for label: Label in section_labels:
+		label.add_theme_font_override("font", Fonts.medium())
+		label.add_theme_font_size_override("font_size", Typography.label_large_size)
+		label.add_theme_color_override("font_color", Colors.primary_text)
+	style_toolbar_button(stop_button)
+	for button: Button in play_buttons:
+		style_toolbar_button(button)
+	for button: Button in [small_payload_button, large_payload_button]:
+		style_payload_button(button)
+	pass
+
+
+func style_toolbar_button(button: Button) -> void:
+	button.add_theme_font_override("font", Fonts.medium())
+	button.add_theme_font_size_override("font_size", Typography.label_large_size)
+	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1, Colors.subtle_border, ControlSize.border_xs)
+	ButtonStyle.apply(button, normal,
+		ButtonStyle.filled(normal, ThemeColor.promote(Colors.control_surface, Colors.am_2)),
+		ButtonStyle.filled(normal, ThemeColor.demote(Colors.control_surface, Colors.am_2)))
+	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, ThemeColor.accent_theme_color())
+	pass
+
+
+func style_payload_button(button: Button) -> void:
+	button.add_theme_font_override("font", Fonts.medium())
+	button.add_theme_font_size_override("font_size", Typography.label_large_size)
+	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1, Colors.subtle_border, ControlSize.border_xs)
+	var selected := ButtonStyle.filled(normal, ThemeColor.promote(Colors.control_surface, Colors.am_2), ThemeColor.accent_theme_color())
+	if button.button_pressed:
+		ButtonStyle.apply(button, selected, selected, selected)
+		ButtonStyle.apply_font_colors(button, ThemeColor.accent_theme_color(), ThemeColor.accent_theme_color(), ThemeColor.accent_theme_color())
+	else:
 		ButtonStyle.apply(button, normal,
 			ButtonStyle.filled(normal, ThemeColor.promote(Colors.control_surface, Colors.am_2)),
 			ButtonStyle.filled(normal, ThemeColor.demote(Colors.control_surface, Colors.am_2)))
 		ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, ThemeColor.accent_theme_color())
-	concurrent_sessions_toggle.add_theme_font_override("font", Fonts.medium())
-	concurrent_sessions_toggle.add_theme_font_size_override("font_size", Typography.label_large_size)
-	ButtonStyle.apply_check_button(concurrent_sessions_toggle, Colors.secondary_text, Colors.primary_text)
 	pass
 
+
+func set_status(text: String) -> void:
+	status_label.text = text
+	pass
+
+
+# ---------------------------------------------------------------------------
+# Demo control
+# ---------------------------------------------------------------------------
 
 func on_stop_pressed() -> void:
 	stop_demo("Stopped.", true)
@@ -145,17 +239,11 @@ func on_stop_pressed() -> void:
 
 
 func start_demo(visual_type: VisualControl.Type, turn_count: int, large: bool) -> void:
-	if demo_running:
-		# Cancel the in-flight simulation without agent_end — a follow-up agent_start owns the effect.
-		demo_generation += 1
-		demo_running = false
-		clear_running_sessions(get_demo_session_ids())
-		await get_tree().process_frame
-	demo_running = true
-	demo_generation += 1
-	var generation := demo_generation
 	select_visual(visual_type)
-	await run_agent_events(turn_count, large, generation)
+	var session := AgentSessionManager.create_session()
+	demo_active_session_ids.append(session.id)
+	var generation := demo_generation
+	await run_agent_events(session.id, turn_count, large, generation)
 	pass
 
 
@@ -167,60 +255,54 @@ func select_visual(visual_type: VisualControl.Type) -> void:
 
 func stop_demo(status_text: String, as_error: bool = false) -> void:
 	demo_generation += 1
-	demo_running = false
-	var session_ids := get_demo_session_ids()
+	var session_ids := demo_active_session_ids.duplicate()
 	clear_running_sessions(session_ids)
 	if as_error:
 		for session_id: int in session_ids:
 			if session_id != 0:
 				AgentEvents.events.agent_end.emit(session_id, "Stop.")
+	demo_active_session_ids.clear()
 	if StringUtils.is_not_blank(status_text):
 		set_status(status_text)
 	pass
 
 
-func run_agent_events(turn_count: int, large: bool, generation: int) -> void:
-	var session_ids := get_demo_session_ids()
-	for session_id: int in session_ids:
-		seed_user_prompt_for_session(session_id, large, session_id == demo_session_id_b)
-	if not mark_running_sessions(session_ids):
-		demo_running = false
+# ---------------------------------------------------------------------------
+# AgentEvents playback (AgentLoop-shaped)
+# ---------------------------------------------------------------------------
+
+func run_agent_events(session_id: int, turn_count: int, large: bool, generation: int) -> void:
+	seed_user_prompt(session_id, large)
+	if not mark_running(session_id):
+		unregister_demo_session(session_id)
 		set_status("Cannot start session.")
 		return
-	var payload_label := StringUtils.format("Large payload · {} turns", turn_count) if large else StringUtils.format("Small payload · {} turns", turn_count)
-	var mode_label := StringUtils.format("{} · dual sessions", payload_label) if session_ids.size() > 1 else payload_label
+	var mode_label := format_payload_label(turn_count, large)
 	set_status(StringUtils.format("{} · {} · started", mode_label, visual_label()))
-	AgentEvents.events.agent_start.emit(session_ids[0])
-	if session_ids.size() > 1:
-		if not await wait_step(pace(0.22, 0.12, large), generation):
-			return
-		AgentEvents.events.agent_start.emit(session_ids[1])
+	AgentEvents.events.agent_start.emit(session_id)
 	if not await wait_step(pace(0.35, 0.18, large), generation):
+		unregister_demo_session(session_id)
 		return
 
 	for turn_index in range(turn_count):
-		for session_index in range(session_ids.size()):
-			var session_id: int = session_ids[session_index]
-			if not await play_turn(session_id, turn_index, turn_count, large, generation, session_index):
-				return
+		if not await play_turn(session_id, turn_index, turn_count, large, generation):
+			unregister_demo_session(session_id)
+			return
 
 	if not await wait_step(pace(0.45, 0.2, large), generation):
+		unregister_demo_session(session_id)
 		return
-	for session_index in range(session_ids.size()):
-		var session_id: int = session_ids[session_index]
-		if session_index > 0:
-			if not await wait_step(pace(0.2, 0.1, large), generation):
-				return
-		RuntimeManager.remove_runtime(session_id)
-		AgentEvents.events.agent_end.emit(session_id, "")
 	if generation != demo_generation:
+		unregister_demo_session(session_id)
 		return
-	demo_running = false
+	RuntimeManager.remove_runtime(session_id)
+	AgentEvents.events.agent_end.emit(session_id, "")
+	unregister_demo_session(session_id)
 	set_status(StringUtils.format("{} · {} · complete", mode_label, visual_label()))
 	pass
 
 
-func play_turn(session_id: int, turn_index: int, turn_count: int, large: bool, generation: int, catalog_offset: int) -> bool:
+func play_turn(session_id: int, turn_index: int, turn_count: int, large: bool, generation: int) -> bool:
 	var session_tag := session_tag_for_id(session_id)
 	var status_prefix := StringUtils.format("{} · {}", visual_label(), session_tag) if StringUtils.is_not_blank(session_tag) else visual_label()
 	set_status(StringUtils.format("{} · turn {} / {}", status_prefix, turn_index + 1, turn_count))
@@ -228,6 +310,7 @@ func play_turn(session_id: int, turn_index: int, turn_count: int, large: bool, g
 	if not await wait_step(pace(0.12, 0.05, large), generation):
 		return false
 
+	var catalog_offset := absi(session_id) % 2
 	var reasoning_chunks := build_reasoning_chunks(turn_index, large, session_tag)
 	for chunk: String in reasoning_chunks:
 		AgentEvents.events.message_update.emit(session_id, chunk, OpenAiClient.STREAM_KIND_REASONING)
@@ -274,9 +357,21 @@ func play_tool(session_id: int, tool_spec: Dictionary, large: bool, generation: 
 	return await wait_step(pace(0.22, 0.08, large), generation)
 
 
+func wait_step(seconds: float, generation: int) -> bool:
+	await get_tree().create_timer(seconds).timeout
+	return generation == demo_generation
+
+
+func pace(small_seconds: float, large_seconds: float, large: bool) -> float:
+	return large_seconds if large else small_seconds
+
+
+# ---------------------------------------------------------------------------
+# Simulated payloads (tools, streams, prompts)
+# ---------------------------------------------------------------------------
+
 func build_tool_calls(turn_index: int, turn_count: int, large: bool, catalog_offset: int) -> Array[Dictionary]:
 	var calls: Array[Dictionary] = []
-	# Final turn answers without tools, matching a typical AgentLoop finish.
 	if turn_index >= turn_count - 1:
 		return calls
 	if large:
@@ -287,7 +382,6 @@ func build_tool_calls(turn_index: int, turn_count: int, large: bool, catalog_off
 			call["failed"] = (turn_index + offset + catalog_offset) % 7 == 0
 			calls.append(call)
 		return calls
-	# Small: one tool most turns; cycle the full catalog across 16 rounds.
 	if turn_index % 4 == 3:
 		return calls
 	var catalog_small: Dictionary = TOOL_CATALOG[(turn_index + catalog_offset) % TOOL_CATALOG.size()]
@@ -333,8 +427,8 @@ func build_content_chunks(turn_index: int, large: bool, is_final: bool, session_
 	])
 
 
-func seed_user_prompt_for_session(session_id: int, large: bool, secondary: bool) -> void:
-	var prompt := secondary_user_prompt(large) if secondary else (large_user_prompt() if large else small_user_prompt())
+func seed_user_prompt(session_id: int, large: bool) -> void:
+	var prompt := large_user_prompt() if large else small_user_prompt()
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null:
 		return
@@ -358,41 +452,29 @@ func large_user_prompt() -> String:
 	)
 
 
-func secondary_user_prompt(large: bool) -> String:
-	if large:
-		return large_user_prompt() + " (Concurrent session B — interleaved with session A.)"
-	return small_user_prompt() + " (Concurrent session B.)"
+# ---------------------------------------------------------------------------
+# Session & display helpers
+# ---------------------------------------------------------------------------
 
-
-func get_demo_session_ids() -> Array[int]:
-	if not concurrent_sessions_toggle.button_pressed:
-		return [demo_session_id]
-	if not ensure_secondary_session():
-		return [demo_session_id]
-	return [demo_session_id, demo_session_id_b]
-
-
-func ensure_secondary_session() -> bool:
-	if demo_session_id_b != 0 and AgentSessionManager.has_index(demo_session_id_b):
-		return true
-	var session := AgentSessionManager.create_session()
-	demo_session_id_b = session.id
-	return demo_session_id_b != 0
+func format_payload_label(turn_count: int, large: bool) -> String:
+	return StringUtils.format("Large payload · {} turns", turn_count) if large else StringUtils.format("Small payload · {} turns", turn_count)
 
 
 func session_tag_for_id(session_id: int) -> String:
-	if not concurrent_sessions_toggle.button_pressed:
+	if demo_active_session_ids.size() <= 1:
 		return StringUtils.EMPTY
-	if session_id == demo_session_id_b:
-		return "Session B"
-	return "Session A"
+	return StringUtils.format("session {}", session_id)
 
 
-func mark_running_sessions(session_ids: Array[int]) -> bool:
-	for session_id: int in session_ids:
-		if AgentSessionManager.get_session_index(session_id) == null:
-			return false
-		RuntimeManager.get_or_create_runtime(session_id)
+func unregister_demo_session(session_id: int) -> void:
+	demo_active_session_ids.erase(session_id)
+	pass
+
+
+func mark_running(session_id: int) -> bool:
+	if AgentSessionManager.get_session_index(session_id) == null:
+		return false
+	RuntimeManager.get_or_create_runtime(session_id)
 	return true
 
 
@@ -402,23 +484,10 @@ func clear_running_sessions(session_ids: Array[int]) -> void:
 	pass
 
 
-func pace(small_seconds: float, large_seconds: float, large: bool) -> float:
-	return large_seconds if large else small_seconds
-
-
-func wait_step(seconds: float, generation: int) -> bool:
-	await get_tree().create_timer(seconds).timeout
-	return generation == demo_generation
-
-
 func visual_label() -> String:
 	var visual_type := AgentSetting.get_visual_type()
-	for spec: Dictionary in EFFECT_SPECS:
-		if spec["type"] == visual_type:
-			return str(spec["label"])
+	for group: Dictionary in EFFECT_GROUPS:
+		for spec: Dictionary in group["effects"]:
+			if spec["type"] == visual_type:
+				return str(spec["label"])
 	return "None"
-
-
-func set_status(text: String) -> void:
-	status_label.text = text
-	pass
