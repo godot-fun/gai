@@ -5,6 +5,26 @@ extends Control
 ## effect, so their animation events may interleave. The overlay begins with the first
 ## active run and finishes only after the last run stops; it is not a per-session view.
 
+## Visual presentation selected for an agent run.
+enum Type {
+	NONE,
+	JARVIS,
+	TRANSFORMER,
+	REASONING_TREE,
+	TOOL_CONSTELLATION,
+	CONTEXT_MEMORY_RIVER,
+	NEURAL_AURORA,
+	SEMANTIC_BLACK_HOLE,
+	CYBER_COMMAND_DECK,
+	QUANTUM_CIRCUIT,
+	DESKTOP_CAT,
+	GEOMETRIC_GENESIS,
+	MATRIX_RAIN,
+	FILTER_CAROUSEL,
+	INK_LANDSCAPE,
+	TAI_CHI,
+}
+
 
 var current_effect: VisualEffect
 
@@ -23,37 +43,37 @@ func _ready() -> void:
 	pass
 
 
-static func create_effect(visual_type: VisualType.Type) -> VisualEffect:
+static func create_effect(visual_type: Type) -> VisualEffect:
 	match visual_type:
-		VisualType.Type.JARVIS:
+		Type.JARVIS:
 			return JarvisControl.new()
-		VisualType.Type.TRANSFORMER:
+		Type.TRANSFORMER:
 			return TransformerController.new()
-		VisualType.Type.REASONING_TREE:
+		Type.REASONING_TREE:
 			return ReasoningTree.new()
-		VisualType.Type.TOOL_CONSTELLATION:
+		Type.TOOL_CONSTELLATION:
 			return ToolConstellation.new()
-		VisualType.Type.CONTEXT_MEMORY_RIVER:
+		Type.CONTEXT_MEMORY_RIVER:
 			return ContextMemoryRiver.new()
-		VisualType.Type.NEURAL_AURORA:
+		Type.NEURAL_AURORA:
 			return NeuralAurora.new()
-		VisualType.Type.SEMANTIC_BLACK_HOLE:
+		Type.SEMANTIC_BLACK_HOLE:
 			return SemanticBlackHole.new()
-		VisualType.Type.CYBER_COMMAND_DECK:
+		Type.CYBER_COMMAND_DECK:
 			return CyberCommandDeck.new()
-		VisualType.Type.QUANTUM_CIRCUIT:
+		Type.QUANTUM_CIRCUIT:
 			return QuantumCircuit.new()
-		VisualType.Type.DESKTOP_CAT:
+		Type.DESKTOP_CAT:
 			return DesktopCat.new()
-		VisualType.Type.GEOMETRIC_GENESIS:
+		Type.GEOMETRIC_GENESIS:
 			return GeometricGenesis.new()
-		VisualType.Type.MATRIX_RAIN:
+		Type.MATRIX_RAIN:
 			return MatrixRain.new()
-		VisualType.Type.FILTER_CAROUSEL:
+		Type.FILTER_CAROUSEL:
 			return FilterCarousel.new()
-		VisualType.Type.INK_LANDSCAPE:
+		Type.INK_LANDSCAPE:
 			return InkLandscape.new()
-		VisualType.Type.TAI_CHI:
+		Type.TAI_CHI:
 			return TaiChi.new()
 	return null
 
@@ -75,7 +95,7 @@ func prepare_effect() -> VisualEffect:
 			return current_effect
 		current_effect.queue_free()
 		current_effect = null
-	var effect := create_effect(AgentSetting.get_visual_type())
+	var effect := create_effect(AgentSetting.get_visual_type() as Type)
 	if effect == null:
 		return null
 	current_effect = effect

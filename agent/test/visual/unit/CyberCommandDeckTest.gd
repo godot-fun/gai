@@ -2,8 +2,7 @@ extends RefCounted
 
 
 static func visual_type_test() -> void:
-	assert(VisualType.is_valid(VisualType.Type.CYBER_COMMAND_DECK))
-	var effect := VisualControl.create_effect(VisualType.Type.CYBER_COMMAND_DECK)
+	var effect := VisualControl.create_effect(VisualControl.Type.CYBER_COMMAND_DECK)
 	assert(effect != null)
 	effect.free()
 	pass

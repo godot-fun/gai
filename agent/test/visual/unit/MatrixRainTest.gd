@@ -2,8 +2,7 @@ extends RefCounted
 
 
 static func visual_type_test() -> void:
-	assert(VisualType.is_valid(VisualType.Type.MATRIX_RAIN))
-	var effect := VisualControl.create_effect(VisualType.Type.MATRIX_RAIN)
+	var effect := VisualControl.create_effect(VisualControl.Type.MATRIX_RAIN)
 	assert(effect != null)
 	effect.free()
 	control.free()

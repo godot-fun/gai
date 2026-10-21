@@ -13,7 +13,7 @@ extends RefCounted
 # Toolbar toggles
 # ----------------------------------------------------------------------------------------------------------------------
 
-## [VisualsButton] — visual presentation shown while an agent run is working.
+## [VisualsButton] — visual presentation id persisted as int (default matches Jarvis).
 const VISUAL_TYPE_KEY := "agent_visual_type"
 ## Render chat bubble bodies as BBCode instead of raw text.
 const MARKDOWN_ENABLED_KEY := "agent_markdown_enabled"
@@ -26,13 +26,12 @@ const AGENT_PROMPT_IN_PROMPT_ENABLED_KEY := "agent_agents_md_in_prompt_enabled"
 const BROWSER_HEADLESS_KEY := "browser_headless"
 
 
-static func get_visual_type() -> VisualType.Type:
-	var visual_type: VisualType.Type = Setting.get_int(VISUAL_TYPE_KEY, VisualType.Type.JARVIS)
-	return visual_type if VisualType.is_valid(visual_type) else VisualType.Type.JARVIS
+static func get_visual_type() -> int:
+	return Setting.get_int(VISUAL_TYPE_KEY, 1)
 
 
-static func set_visual_type(visual_type: VisualType.Type) -> void:
-	if not VisualType.is_valid(visual_type) or get_visual_type() == visual_type:
+static func set_visual_type(visual_type: int) -> void:
+	if get_visual_type() == visual_type:
 		return
 	Setting.set_int(VISUAL_TYPE_KEY, visual_type)
 	Setting.save()

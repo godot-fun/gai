@@ -11,21 +11,21 @@ const SMALL_TURNS := 16
 const LARGE_TURNS := 64
 
 const EFFECT_SPECS: Array[Dictionary] = [
-	{"type": VisualType.Type.JARVIS, "label": "Jarvis"},
-	{"type": VisualType.Type.TRANSFORMER, "label": "Transformer"},
-	{"type": VisualType.Type.REASONING_TREE, "label": "Reasoning Tree"},
-	{"type": VisualType.Type.TOOL_CONSTELLATION, "label": "Tool Constellation"},
-	{"type": VisualType.Type.CONTEXT_MEMORY_RIVER, "label": "Context Memory River"},
-	{"type": VisualType.Type.NEURAL_AURORA, "label": "Neural Aurora"},
-	{"type": VisualType.Type.SEMANTIC_BLACK_HOLE, "label": "Semantic Black Hole"},
-	{"type": VisualType.Type.CYBER_COMMAND_DECK, "label": "Cyber Command Deck"},
-	{"type": VisualType.Type.QUANTUM_CIRCUIT, "label": "Quantum Circuit"},
-	{"type": VisualType.Type.DESKTOP_CAT, "label": "Desktop Cat"},
-	{"type": VisualType.Type.GEOMETRIC_GENESIS, "label": "Geometric Genesis"},
-	{"type": VisualType.Type.MATRIX_RAIN, "label": "Matrix Rain"},
-	{"type": VisualType.Type.FILTER_CAROUSEL, "label": "Filter Carousel"},
-	{"type": VisualType.Type.INK_LANDSCAPE, "label": "Ink Landscape"},
-	{"type": VisualType.Type.TAI_CHI, "label": "Tai Chi"},
+	{"type": VisualControl.Type.JARVIS, "label": "Jarvis"},
+	{"type": VisualControl.Type.TRANSFORMER, "label": "Transformer"},
+	{"type": VisualControl.Type.REASONING_TREE, "label": "Reasoning Tree"},
+	{"type": VisualControl.Type.TOOL_CONSTELLATION, "label": "Tool Constellation"},
+	{"type": VisualControl.Type.CONTEXT_MEMORY_RIVER, "label": "Context Memory River"},
+	{"type": VisualControl.Type.NEURAL_AURORA, "label": "Neural Aurora"},
+	{"type": VisualControl.Type.SEMANTIC_BLACK_HOLE, "label": "Semantic Black Hole"},
+	{"type": VisualControl.Type.CYBER_COMMAND_DECK, "label": "Cyber Command Deck"},
+	{"type": VisualControl.Type.QUANTUM_CIRCUIT, "label": "Quantum Circuit"},
+	{"type": VisualControl.Type.DESKTOP_CAT, "label": "Desktop Cat"},
+	{"type": VisualControl.Type.GEOMETRIC_GENESIS, "label": "Geometric Genesis"},
+	{"type": VisualControl.Type.MATRIX_RAIN, "label": "Matrix Rain"},
+	{"type": VisualControl.Type.FILTER_CAROUSEL, "label": "Filter Carousel"},
+	{"type": VisualControl.Type.INK_LANDSCAPE, "label": "Ink Landscape"},
+	{"type": VisualControl.Type.TAI_CHI, "label": "Tai Chi"},
 ]
 
 const TOOL_CATALOG: Array[Dictionary] = [
@@ -107,7 +107,7 @@ func make_effect_button(label: String, visual_type: int, turn_count: int, large:
 	var button := Button.new()
 	button.text = label
 	button.focus_mode = Control.FOCUS_NONE
-	button.pressed.connect(func() -> void: start_demo(visual_type as VisualType.Type, turn_count, large))
+	button.pressed.connect(func() -> void: start_demo(visual_type as VisualControl.Type, turn_count, large))
 	return button
 
 
@@ -138,7 +138,7 @@ func on_stop_pressed() -> void:
 	pass
 
 
-func start_demo(visual_type: VisualType.Type, turn_count: int, large: bool) -> void:
+func start_demo(visual_type: VisualControl.Type, turn_count: int, large: bool) -> void:
 	if demo_running:
 		# Cancel the in-flight simulation without agent_end — a follow-up agent_start owns the effect.
 		demo_generation += 1
@@ -153,9 +153,9 @@ func start_demo(visual_type: VisualType.Type, turn_count: int, large: bool) -> v
 	pass
 
 
-func select_visual(visual_type: VisualType.Type) -> void:
+func select_visual(visual_type: VisualControl.Type) -> void:
 	if AgentSetting.get_visual_type() != visual_type:
-		AgentSetting.set_visual_type(visual_type)
+		AgentSetting.set_visual_type(visual_type as int)
 	pass
 
 

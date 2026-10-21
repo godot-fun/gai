@@ -2,8 +2,7 @@ extends RefCounted
 
 
 static func visual_type_test() -> void:
-	assert(VisualType.is_valid(VisualType.Type.TOOL_CONSTELLATION))
-	var effect := VisualControl.create_effect(VisualType.Type.TOOL_CONSTELLATION)
+	var effect := VisualControl.create_effect(VisualControl.Type.TOOL_CONSTELLATION)
 	assert(effect != null)
 	effect.free()
 	control.free()

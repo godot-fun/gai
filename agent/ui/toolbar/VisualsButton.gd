@@ -44,8 +44,8 @@ func apply_theme() -> void:
 func update_popup_items() -> void:
 	var selected_type := AgentSetting.get_visual_type()
 	popup.clear()
-	for visual_name: String in VisualType.Type:
-		var visual_type: VisualType.Type = VisualType.Type[visual_name]
+	for visual_name: String in VisualControl.Type:
+		var visual_type: VisualControl.Type = VisualControl.Type[visual_name]
 		var translation_key := "agent.toolbar.visual_" + visual_name.to_lower()
 		popup.add_radio_check_item(I18n.t(translation_key), visual_type)
 		popup.set_item_checked(popup.item_count - 1, selected_type == visual_type)
@@ -70,7 +70,7 @@ func on_mouse_exited() -> void:
 func update_icon(hovered: bool) -> void:
 	var visual_type := AgentSetting.get_visual_type()
 	var icon_color: Color = Colors.secondary_text
-	if visual_type != VisualType.Type.NONE:
+	if visual_type != VisualControl.Type.NONE:
 		icon_color = ThemeColor.accent_theme_color()
 		if hovered:
 			icon_color = icon_color.lightened(0.12)
@@ -92,10 +92,7 @@ func on_pressed() -> void:
 
 
 func on_visual_selected(id: int) -> void:
-	if not VisualType.is_valid(id):
-		return
-	var visual_type: VisualType.Type = id
-	AgentSetting.set_visual_type(visual_type)
+	AgentSetting.set_visual_type(id)
 	update_popup_items()
 	update_icon(button.is_hovered())
 	pass

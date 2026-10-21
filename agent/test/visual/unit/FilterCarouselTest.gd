@@ -2,8 +2,7 @@ extends RefCounted
 
 
 static func visual_type_test() -> void:
-	assert(VisualType.is_valid(VisualType.Type.FILTER_CAROUSEL))
-	var effect := VisualControl.create_effect(VisualType.Type.FILTER_CAROUSEL)
+	var effect := VisualControl.create_effect(VisualControl.Type.FILTER_CAROUSEL)
 	assert(effect != null)
 	effect.free()
 	control.free()

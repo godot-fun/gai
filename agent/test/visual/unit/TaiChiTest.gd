@@ -1,8 +1,7 @@
 extends RefCounted
 
 static func visual_type_test() -> void:
-	assert(VisualType.is_valid(VisualType.Type.TAI_CHI))
-	var effect := VisualControl.create_effect(VisualType.Type.TAI_CHI)
+	var effect := VisualControl.create_effect(VisualControl.Type.TAI_CHI)
 	assert(effect != null)
 	effect.free()
 	control.free()
@@ -255,7 +254,7 @@ func divination_spins_once_and_lands_on_forced_hexagram_test() -> void:
 
 
 func shared_line_glow_does_not_create_a_shader_layer_test() -> void:
-	var effect := VisualControl.create_effect(VisualType.Type.TAI_CHI)
+	var effect := VisualControl.create_effect(VisualControl.Type.TAI_CHI)
 	Engine.get_main_loop().root.add_child.call_deferred(effect)
 	await Engine.get_main_loop().process_frame
 	await Engine.get_main_loop().process_frame
