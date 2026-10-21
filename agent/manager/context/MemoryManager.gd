@@ -27,7 +27,7 @@ static func collect_memory_messages(messages: Array[ChatMessage]) -> Array[ChatM
 	var transcript: Array[ChatMessage] = []
 	for message: ChatMessage in messages:
 		if CompactionPrompt.is_compaction_message(message):
-			transcript.append(ChatMessage.user(CompactionPrompt.format_previous_context(message.content)))
+			transcript.append(ChatMessage.user(CompactionPrompt.build_memory_context(message.content)))
 		elif message.role == ChatMessage.ROLE_USER and StringUtils.is_not_blank(message.content):
 			transcript.append(ChatMessage.user(message.content.strip_edges()))
 		elif message.role == ChatMessage.ROLE_ASSISTANT and StringUtils.is_not_blank(message.content):

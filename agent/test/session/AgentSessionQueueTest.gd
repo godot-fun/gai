@@ -122,7 +122,7 @@ static func memory_messages_drop_thinking_and_tool_protocol_test() -> void:
 	var memory_messages := MemoryManager.collect_memory_messages(messages)
 	assert(memory_messages.size() == 3)
 	assert(memory_messages[0].role == ChatMessage.ROLE_USER)
-	assert(memory_messages[0].content == CompactionPrompt.format_previous_context("previous work"))
+	assert(memory_messages[0].content == CompactionPrompt.build_memory_context("previous work"))
 	assert(memory_messages[1].role == ChatMessage.ROLE_USER and memory_messages[1].content == "question")
 	assert(memory_messages[2].role == ChatMessage.ROLE_ASSISTANT and memory_messages[2].content == "answer")
 	assert(memory_messages[2].reasoning_content.is_empty())

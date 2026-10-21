@@ -4,6 +4,10 @@ extends RefCounted
 ## Model instructions used by conversation compaction and durable memory maintenance.
 
 
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
+
 const SUMMARY_PREFIX := "# Compacted conversation context"
 
 const SUMMARY_REQUEST := """Create a compact continuation summary of the conversation above.
@@ -17,6 +21,21 @@ Preserve every detail needed to continue the work correctly, especially:
 
 Do not address the user. Do not call tools. Return only the continuation summary."""
 
+## Wraps a summary as the system context persisted after compaction.
+static func build_summary_context(summary: String) -> String:
+	return SUMMARY_PREFIX + FileUtils.NEWLINE_LF + summary
+
+## Returns whether [param message] is the system message persisted for a prior compaction.
+static func is_compaction_message(message: ChatMessage) -> bool:
+	return message.role == ChatMessage.ROLE_SYSTEM and message.content.begins_with(SUMMARY_PREFIX)
+
+
+# ---------------------------------------------------------------------------
+# Memory
+# ---------------------------------------------------------------------------
+
+const MEMORY_PREFIX := "Previous compacted context:"
+
 const MEMORY_UPDATE_REQUEST := """Update `.memory/` with durable, reusable information from this conversation.
 
 Work immediately without explaining or planning:
@@ -27,16 +46,6 @@ Work immediately without explaining or planning:
 Avoid duplicates, transcripts, temporary details, and secrets. Keep `focus.md` short and current. Never edit outside `.memory/`. Return only `Done`."""
 
 
-## Wraps a summary as the system context persisted after compaction.
-static func build_summary_context(summary: String) -> String:
-	return SUMMARY_PREFIX + FileUtils.NEWLINE_LF + summary
-
-
 ## Labels a prior summary so the memory-maintenance agent treats it as compacted history.
-static func format_previous_context(summary: String) -> String:
-	return "Previous compacted context:\n" + summary
-
-
-## Returns whether [param message] is the system message persisted for a prior compaction.
-static func is_compaction_message(message: ChatMessage) -> bool:
-	return message.role == ChatMessage.ROLE_SYSTEM and message.content.begins_with(SUMMARY_PREFIX)
+static func build_memory_context(summary: String) -> String:
+	return MEMORY_PREFIX + FileUtils.NEWLINE_LF + summary
