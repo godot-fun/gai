@@ -295,16 +295,7 @@ static func add_chat_entry(session_id: int, kind: String, entry_title: String, b
 ## such as errors, only remove themselves.
 ## Chat only — workspace files are left untouched.
 static func delete_chat_from_entry(session_id: int, entry: ChatEntry) -> void:
-	var deletable_kinds: Array[String] = [
-		ChatEntry.KIND_USER,
-		ChatEntry.KIND_ERROR,
-		ChatEntry.KIND_GIT_DIFF,
-		ChatEntry.KIND_SKILL,
-		ChatEntry.KIND_MEMORY,
-		ChatEntry.KIND_AGENT_PROMPT,
-		ChatEntry.KIND_COMPACTION,
-	]
-	if entry == null or entry.kind not in deletable_kinds:
+	if entry == null:
 		return
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null:
@@ -331,11 +322,13 @@ static func message_index_for_chat_entry(session: AgentSession, entry_idx: int) 
 	if entry_idx < 0 or entry_idx >= session.chat_entries.size():
 		return -1
 	var entry: ChatEntry = session.chat_entries[entry_idx]
-	if entry.kind == ChatEntry.KIND_SKILL or entry.kind == ChatEntry.KIND_MEMORY or entry.kind == ChatEntry.KIND_AGENT_PROMPT or entry.kind == ChatEntry.KIND_COMPACTION:
+	if entry.kind == ChatEntry.KIND_SYSTEM or entry.kind == ChatEntry.KIND_SKILL or entry.kind == ChatEntry.KIND_MEMORY or entry.kind == ChatEntry.KIND_AGENT_PROMPT or entry.kind == ChatEntry.KIND_COMPACTION:
 		for message_idx in range(session.messages.size()):
 			var message: ChatMessage = session.messages[message_idx]
 			var matches := false
-			if entry.kind == ChatEntry.KIND_SKILL:
+			if entry.kind == ChatEntry.KIND_SYSTEM:
+				matches = message.role == ChatMessage.ROLE_SYSTEM and message.content == entry.body
+			elif entry.kind == ChatEntry.KIND_SKILL:
 				matches = SkillPrompt.is_skill_context_message(message)
 			elif entry.kind == ChatEntry.KIND_MEMORY:
 				matches = MemoryPrompt.is_memory_context_message(message)

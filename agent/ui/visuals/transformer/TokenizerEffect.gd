@@ -75,15 +75,6 @@ func _ready() -> void:
 	pass
 
 
-func sync_cutter_theme() -> void:
-	var accent := ThemeColor.accent_theme_color()
-	if cutter_material != null:
-		cutter_material.set_shader_parameter("effect_color", accent)
-	if haze_material != null:
-		haze_material.set_shader_parameter("effect_color", accent)
-	pass
-
-
 func cancel() -> void:
 	begin_play()
 	clear_tokens()
@@ -145,7 +136,9 @@ func build_tokens(tokens: Array[LlamaHelper.Token]) -> void:
 	cutter.z_index = 10
 	cutter_material = create_shader_material(CUTTER_SHADER)
 	cutter.material = cutter_material
-	sync_cutter_theme()
+	var accent := ThemeColor.accent_theme_color()
+	cutter_material.set_shader_parameter("effect_color", accent)
+	haze_material.set_shader_parameter("effect_color", accent)
 	row.add_child(cutter)
 	spawn_ambient_dust()
 	var available_width := maxf(1.0, size.x - ROW_SCREEN_MARGIN * 2.0)

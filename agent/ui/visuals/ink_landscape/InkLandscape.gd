@@ -103,6 +103,9 @@ func create_cloud_canvas() -> void:
 		var material := ShaderMaterial.new()
 		material.shader = load(CLOUD_SHADER_PATH)
 		material.set_shader_parameter("layer_index", float(index))
+		material.set_shader_parameter("cloud_color", Color(0.48, 0.51, 0.49, 1.0) if ThemeColor.is_dark_theme() else Color(0.94, 0.945, 0.925, 1.0))
+		material.set_shader_parameter("ink_color", ink_color())
+		material.set_shader_parameter("dark_theme", 1.0 if ThemeColor.is_dark_theme() else 0.0)
 		var bounds := cloud_layer_bounds(index)
 		material.set_shader_parameter("uv_origin", bounds.position)
 		material.set_shader_parameter("uv_scale", bounds.size)
@@ -112,7 +115,6 @@ func create_cloud_canvas() -> void:
 		cloud_materials.append(material)
 	cloud_canvas = cloud_canvases[-1]
 	cloud_material = cloud_materials[-1]
-	update_shader_theme()
 	pass
 
 
@@ -357,22 +359,6 @@ func update_cloud_shader_state() -> void:
 		material.set_shader_parameter("elapsed", elapsed)
 		material.set_shader_parameter("presence", clampf(0.28 + float(mountains.size()) * 0.055, 0.28, 1.0))
 		material.set_shader_parameter("cloud_reveal", cloud_reveal)
-	pass
-
-
-func update_shader_theme() -> void:
-	for material: ShaderMaterial in cloud_materials:
-		# Dark canvases need restrained grey vapour; near-white clouds turn layered
-		# wisps into opaque horizontal light bars.
-		material.set_shader_parameter("cloud_color", Color(0.48, 0.51, 0.49, 1.0) if ThemeColor.is_dark_theme() else Color(0.94, 0.945, 0.925, 1.0))
-		material.set_shader_parameter("ink_color", ink_color())
-		material.set_shader_parameter("dark_theme", 1.0 if ThemeColor.is_dark_theme() else 0.0)
-	for mountain: MountainState in mountains:
-		var material := mountain.material
-		if material != null:
-			material.set_shader_parameter("ink_color", ink_color())
-			material.set_shader_parameter("background_color", Colors.app_background)
-			material.set_shader_parameter("dark_theme", 1.0 if ThemeColor.is_dark_theme() else 0.0)
 	pass
 
 

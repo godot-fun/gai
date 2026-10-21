@@ -81,7 +81,12 @@ func _ready() -> void:
 	if loaded_shader == null or not is_instance_valid(shader_material):
 		return
 	shader_material.shader = loaded_shader
-	apply_theme()
+	shader_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
+	shader_material.set_shader_parameter("success_color", Colors.success)
+	shader_material.set_shader_parameter("error_color", Colors.error)
+	tool_label.add_theme_font_override("font", Fonts.semibold())
+	tool_label.add_theme_font_size_override("font_size", Typography.label_large_size)
+	tool_label.add_theme_color_override("font_color", ThemeColor.accent_theme_color())
 	pass
 
 
@@ -239,18 +244,6 @@ func complete_playing_tool(result: AgentToolResult) -> void:
 		success_pulse = 1.0
 		tool_label.add_theme_color_override("font_color", Colors.success)
 	tool_result_hold_seconds = TOOL_RESULT_HOLD_SECONDS
-	pass
-
-
-func apply_theme() -> void:
-	if shader_material == null:
-		return
-	shader_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
-	shader_material.set_shader_parameter("success_color", Colors.success)
-	shader_material.set_shader_parameter("error_color", Colors.error)
-	tool_label.add_theme_font_override("font", Fonts.semibold())
-	tool_label.add_theme_font_size_override("font_size", Typography.label_large_size)
-	tool_label.add_theme_color_override("font_color", ThemeColor.accent_theme_color())
 	pass
 
 

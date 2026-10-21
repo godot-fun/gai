@@ -157,18 +157,6 @@ func build_completion_particles() -> void:
 	particle_material.scale_max = 1.35
 	particle_material.damping_min = 12.0
 	particle_material.damping_max = 34.0
-	completion_particles.process_material = particle_material
-	add_child(completion_particles)
-	update_particle_colors()
-	pass
-
-
-func update_particle_colors() -> void:
-	if completion_particles == null:
-		return
-	var particle_material := completion_particles.process_material as ParticleProcessMaterial
-	if particle_material == null:
-		return
 	var gradient := Gradient.new()
 	gradient.offsets = PackedFloat32Array([0.0, 0.32, 0.72, 1.0])
 	gradient.colors = PackedColorArray([
@@ -180,6 +168,8 @@ func update_particle_colors() -> void:
 	var color_ramp := GradientTexture1D.new()
 	color_ramp.gradient = gradient
 	particle_material.color_ramp = color_ramp
+	completion_particles.process_material = particle_material
+	add_child(completion_particles)
 	pass
 
 

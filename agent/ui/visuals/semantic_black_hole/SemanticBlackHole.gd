@@ -79,7 +79,14 @@ func _ready() -> void:
 	if loaded_shader == null or not is_instance_valid(shader_material):
 		return
 	shader_material.shader = loaded_shader
-	apply_theme()
+	shader_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
+	shader_material.set_shader_parameter("success_color", Colors.success)
+	shader_material.set_shader_parameter("error_color", Colors.error)
+	tool_name_label.add_theme_font_override("font", Fonts.semibold())
+	tool_name_label.add_theme_font_size_override("font_size", Typography.label_large_size)
+	tool_status_label.add_theme_font_override("font", Fonts.medium())
+	tool_status_label.add_theme_font_size_override("font_size", Typography.label_small_size)
+	apply_tool_badge_style()
 	pass
 
 
@@ -214,20 +221,6 @@ func advance_success_return(delta: float) -> void:
 		if success_return <= 0.0 and tool_badge_state == ToolBadgeState.RETURNING:
 			set_tool_badge_state(ToolBadgeState.COMPLETE)
 			tool_badge_hold_seconds = COMPLETE_LABEL_SECONDS
-	pass
-
-
-func apply_theme() -> void:
-	if shader_material == null:
-		return
-	shader_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
-	shader_material.set_shader_parameter("success_color", Colors.success)
-	shader_material.set_shader_parameter("error_color", Colors.error)
-	tool_name_label.add_theme_font_override("font", Fonts.semibold())
-	tool_name_label.add_theme_font_size_override("font_size", Typography.label_large_size)
-	tool_status_label.add_theme_font_override("font", Fonts.medium())
-	tool_status_label.add_theme_font_size_override("font_size", Typography.label_small_size)
-	apply_tool_badge_style()
 	pass
 
 
