@@ -70,6 +70,32 @@ func palette_follows_accent_theme_color_test() -> void:
 	pass
 
 
+func radar_envelope_stable_when_pods_added_test() -> void:
+	var effect := CyberCommandDeck.new()
+	effect.size = Vector2(1280.0, 720.0)
+	var center := effect.size * 0.5
+	var empty_radius := effect.radar_radius(center)
+	effect.on_tool_execution_start(1, "read-1", "read", {})
+	assert(is_equal_approx(effect.radar_radius(center), empty_radius))
+	for index in range(CyberCommandDeck.MAX_PODS):
+		effect.on_tool_execution_start(1, "fill-%d" % index, "write", {})
+	assert(is_equal_approx(effect.radar_radius(center), empty_radius))
+	effect.free()
+	pass
+
+
+func tool_pod_caches_title_and_glyph_test() -> void:
+	var effect := CyberCommandDeck.new()
+	effect.on_tool_execution_start(1, "read-1", "read_file", {})
+	assert(effect.pods[0].title == VisualToolFormatter.title_name("read_file").to_upper())
+	assert(effect.pods[0].glyph == VisualToolFormatter.glyph("read_file"))
+	effect.on_tool_execution_start(1, "write-1", "write_file", {})
+	assert(effect.pods[1].title == VisualToolFormatter.title_name("write_file").to_upper())
+	assert(effect.pods[1].glyph == VisualToolFormatter.glyph("write_file"))
+	effect.free()
+	pass
+
+
 func full_deck_replaces_head_without_reflow_test() -> void:
 	var effect := CyberCommandDeck.new()
 	for index in range(CyberCommandDeck.MAX_PODS):

@@ -38,6 +38,15 @@ const ACCENT_COOL_HUE_OFFSET := 0.09
 const HUD_RING_STROKE := 1.0
 ## Mission hex outline — slightly below ring stroke so high-contrast accent does not read heavier than arcs.
 const HUD_HEX_STROKE := 0.65
+## How far the mission hex shrinks during `ENDING` (`1.0 - collapse * this`).
+const CORE_COLLAPSE := 0.82
+## `cos(PI / 6)` — flat-top hex half-width as a fraction of radius.
+const HEX_FLAT_RATIO := 0.866025403784
+const CUBE_EDGES: Array[Vector2i] = [
+	Vector2i(0, 1), Vector2i(1, 3), Vector2i(3, 2), Vector2i(2, 0),
+	Vector2i(4, 5), Vector2i(5, 7), Vector2i(7, 6), Vector2i(6, 4),
+	Vector2i(0, 4), Vector2i(1, 5), Vector2i(2, 6), Vector2i(3, 7),
+]
 
 enum DeckPhase { IDLE, ACTIVE, REASONING, RESPONDING, ENDING }
 enum PodState { NONE = -1, CONNECTING, EXECUTING, COMPLETE, FAILED }
@@ -48,6 +57,8 @@ class ToolPod:
 
 	var id: String
 	var name: String
+	var title: String
+	var glyph: String
 	var slot: int
 	var state: int
 	var pending_state: int
@@ -57,6 +68,8 @@ class ToolPod:
 	func _init(tool_call_id: String, tool_name: String, pod_slot: int, initial_state: int, initial_pending_state: int) -> void:
 		id = tool_call_id
 		name = tool_name
+		title = VisualToolFormatter.title_name(tool_name).to_upper()
+		glyph = VisualToolFormatter.glyph(tool_name)
 		slot = pod_slot
 		state = initial_state
 		pending_state = initial_pending_state
@@ -73,8 +86,18 @@ var scan_wave: float = -1.0
 var collapse: float = 0.0
 var turn_index: int = 0
 var next_replacement_slot: int = 0
-## Per-slot strength 0..1 when the radar beam crosses that pod; decays in `_process`.
-var radar_echoes: Dictionary[int, float] = {}
+## Per-slot strength 0..1 when the radar beam crosses that pod; decays in `_process`. Length is `MAX_PODS`.
+var radar_echoes := PackedFloat32Array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+## Accent-derived HUD colors, refreshed when the theme accent changes.
+static var palette_source := Color(0, 0, 0, 0)
+static var palette_cyan: Color
+static var palette_blue: Color
+static var palette_magenta: Color
+var layout_size := Vector2.ZERO
+var layout_radar_radius := 0.0
+var layout_pod_rects: Array[Rect2] = []
+var scratch_tri := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
+var cube_corners := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
 
 
 func fade_in_seconds() -> float:
@@ -141,7 +164,7 @@ func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: 
 		next_replacement_slot = (next_replacement_slot + 1) % MAX_PODS
 		pod_by_id.erase(pods[slot].id)
 	var pod := ToolPod.new(tool_call_id, tool_name, slot, PodState.CONNECTING, PodState.NONE)
-	radar_echoes.erase(slot)
+	radar_echoes[slot] = 0.0
 	if slot < pods.size():
 		pods[slot] = pod
 	else:
@@ -168,20 +191,13 @@ func _process(delta: float) -> void:
 	var radar_speed := 1.5 if phase == DeckPhase.REASONING else 0.55
 	var previous_radar_angle := radar_angle
 	radar_angle = fmod(radar_angle + delta * radar_speed, TAU)
-	for slot: int in radar_echoes.keys():
-		var echo := maxf(0.0, radar_echoes[slot] - delta / RADAR_ECHO_SECONDS)
-		if echo <= 0.0:
-			radar_echoes.erase(slot)
-		else:
-			radar_echoes[slot] = echo
-	# Only open pods register hits; angle is pod center vs screen center (same as `draw_radar_echoes`).
-	for pod: ToolPod in pods:
-		if pod.open < 0.75:
+	var echo_decay := delta / RADAR_ECHO_SECONDS
+	for slot in range(MAX_PODS):
+		if radar_echoes[slot] <= 0.0:
 			continue
-		var rect := pod_rect(pod.slot, pods.size(), size * 0.5)
-		var target_angle := (rect.get_center() - size * 0.5).angle()
-		if radar_crossed_angle(previous_radar_angle, radar_angle, target_angle):
-			radar_echoes[pod.slot] = 1.0
+		radar_echoes[slot] = maxf(0.0, radar_echoes[slot] - echo_decay)
+	var center := size * 0.5
+	sync_layout(center)
 	activity = move_toward(activity, 0.22, delta * 0.7)
 	for pod: ToolPod in pods:
 		pod.age += delta
@@ -192,6 +208,12 @@ func _process(delta: float) -> void:
 		elif pod.state == PodState.EXECUTING and pod.age >= MIN_EXECUTION_SECONDS and pod.pending_state != PodState.NONE:
 			pod.state = pod.pending_state
 			pod.age = 0.0
+		# Only open pods register hits; angle is pod center vs screen center (same as `draw_radar_echoes`).
+		if pod.open < 0.75:
+			continue
+		var target_angle := (layout_pod_rects[pod.slot].get_center() - center).angle()
+		if radar_crossed_angle(previous_radar_angle, radar_angle, target_angle):
+			radar_echoes[pod.slot] = 1.0
 	if phase == DeckPhase.ENDING:
 		scan_wave = minf(1.0, scan_wave + delta / END_SECONDS)
 		# Core shrink lags slightly so the shockwave reads before the hex collapses.
@@ -203,7 +225,9 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	if size.x < 280.0 or size.y < 220.0:
 		return
+	sync_palette()
 	var center := size * 0.5
+	sync_layout(center)
 	draw_backplane(center)
 	draw_data_rain(center)
 	draw_ambient_energy(center)
@@ -211,10 +235,10 @@ func _draw() -> void:
 	draw_core_hex_underlay(center)
 	draw_radar(center)
 	draw_live_telemetry(center)
-	for index in range(pods.size()):
-		draw_pod_link(pods[index], pod_rect(index, pods.size(), center), center)
-	for index in range(pods.size()):
-		draw_tool_pod(pods[index], pod_rect(index, pods.size(), center), center)
+	for pod: ToolPod in pods:
+		draw_pod_link(pod, layout_pod_rects[pod.slot], center)
+	for pod: ToolPod in pods:
+		draw_tool_pod(pod, layout_pod_rects[pod.slot], center)
 	# Foreground core (cube, labels) above links; hex fill/outline already in `draw_core_hex_underlay`.
 	draw_core(center)
 	draw_orbit_packets(center)
@@ -224,7 +248,7 @@ func _draw() -> void:
 
 
 func draw_live_telemetry(center: Vector2) -> void:
-	var radius := radar_radius(center)
+	var radius := layout_radar_radius
 	# Radar contacts come alive during reasoning and settle while responding.
 	var contact_count := 9 if phase == DeckPhase.REASONING else 5
 	for index in range(contact_count):
@@ -233,7 +257,7 @@ func draw_live_telemetry(center: Vector2) -> void:
 		var distance := radius * (0.38 + fmod(seed * 0.173, 0.58))
 		var position := center + Vector2.from_angle(angle) * distance
 		var blink := 0.35 + 0.65 * absf(sin(elapsed * (1.8 + index * 0.13) + seed))
-		var color := neon_magenta() if index % 4 == 0 else neon_cyan()
+		var color := palette_magenta if index % 4 == 0 else palette_cyan
 		draw_circle(position, 7.0 + blink * 3.0, Color(color, 0.025 * blink))
 		draw_circle(position, 1.8, Color(color, 0.55 * blink))
 		draw_line(position - Vector2(5.0, 0.0), position - Vector2(10.0, 0.0), Color(color, 0.35 * blink), 1.0)
@@ -243,7 +267,7 @@ func draw_live_telemetry(center: Vector2) -> void:
 		var angle := elapsed * -0.12 + float(index) * TAU / 4.0
 		var position := center + Vector2.from_angle(angle) * (radius + 37.0)
 		var label := "%02X:%03d" % [index * 19 + turn_index, int(fmod(elapsed * 37.0 + index * 113.0, 999.0))]
-		draw_string(Fonts.regular(), position, label, HORIZONTAL_ALIGNMENT_LEFT, 70.0, Typography.label_small_size, Color(neon_cyan(), 0.38))
+		draw_string(Fonts.regular(), position, label, HORIZONTAL_ALIGNMENT_LEFT, 70.0, Typography.label_small_size, Color(palette_cyan, 0.38))
 	pass
 
 
@@ -259,7 +283,7 @@ func draw_orbit_packets(center: Vector2) -> void:
 		var angle := elapsed * speed * (-1.0 if lane == 1 else 1.0) + float(index) * TAU / float(orbit_count)
 		var position := center + Vector2.from_angle(angle) * radius
 		var tangent := Vector2.from_angle(angle + PI * 0.5)
-		var color := neon_magenta() if index % 6 == 0 else neon_cyan()
+		var color := palette_magenta if index % 6 == 0 else palette_cyan
 		draw_line(position - tangent * 7.0, position + tangent * 7.0, Color(color, signal_strength), 2.0, true)
 		if index % 3 == 0:
 			draw_circle(position, 4.5, Color(color, 0.07 + activity * 0.025))
@@ -271,7 +295,7 @@ func draw_ambient_energy(center: Vector2) -> void:
 	for layer in range(8, 0, -1):
 		var flare_width := size.x * (0.12 + layer * 0.045)
 		var flare_height := 3.0 + layer * 4.0
-		draw_rect(Rect2(center - Vector2(flare_width * 0.5, flare_height * 0.5), Vector2(flare_width, flare_height)), Color(neon_cyan(), 0.008 * float(9 - layer)), true)
+		draw_rect(Rect2(center - Vector2(flare_width * 0.5, flare_height * 0.5), Vector2(flare_width, flare_height)), Color(palette_cyan, 0.008 * float(9 - layer)), true)
 	pass
 
 
@@ -282,11 +306,11 @@ func draw_edge_telemetry(center: Vector2) -> void:
 	for side: float in [-1.0, 1.0]:
 		var x := rail_inset if side < 0.0 else size.x - rail_inset
 		var inward := -side
-		draw_line(Vector2(x, rail_top), Vector2(x, rail_bottom), Color(neon_blue(), 0.16), 1.0)
+		draw_line(Vector2(x, rail_top), Vector2(x, rail_bottom), Color(palette_blue, 0.16), 1.0)
 		for index in range(7):
 			var y := lerpf(rail_top, rail_bottom, float(index) / 6.0)
 			var hot := index == (int(elapsed * 2.0) + (0 if side < 0.0 else 3)) % 7
-			var color := neon_magenta() if hot else neon_cyan()
+			var color := palette_magenta if hot else palette_cyan
 			var length := 24.0 if index % 3 == 0 else 13.0
 			draw_line(Vector2(x, y), Vector2(x + inward * length, y), Color(color, 0.78 if hot else 0.28), 2.0 if hot else 1.0)
 			if index % 2 == 0:
@@ -295,8 +319,8 @@ func draw_edge_telemetry(center: Vector2) -> void:
 				draw_string(Fonts.regular(), Vector2(text_x, y - 4.0), code, HORIZONTAL_ALIGNMENT_LEFT, 28.0, Typography.label_small_size, Color(color, 0.34))
 	# Phase marker deliberately sits off-axis like a cockpit warning label.
 	var phase_text: String = String(DeckPhase.keys()[phase])
-	draw_string(Fonts.semibold(), Vector2(rail_inset + 13.0, center.y - 9.0), "[ %s ]" % phase_text, HORIZONTAL_ALIGNMENT_LEFT, 110.0, Typography.label_small_size, Color(neon_magenta(), 0.72))
-	draw_string(Fonts.regular(), Vector2(size.x - rail_inset - 132.0, center.y - 9.0), StringUtils.format(I18n.t("agent.visuals.activity"), "%03d" % int(activity * 100.0)), HORIZONTAL_ALIGNMENT_RIGHT, 118.0, Typography.label_small_size, Color(neon_cyan(), 0.68))
+	draw_string(Fonts.semibold(), Vector2(rail_inset + 13.0, center.y - 9.0), "[ %s ]" % phase_text, HORIZONTAL_ALIGNMENT_LEFT, 110.0, Typography.label_small_size, Color(palette_magenta, 0.72))
+	draw_string(Fonts.regular(), Vector2(size.x - rail_inset - 132.0, center.y - 9.0), StringUtils.format(I18n.t("agent.visuals.activity"), "%03d" % int(activity * 100.0)), HORIZONTAL_ALIGNMENT_RIGHT, 118.0, Typography.label_small_size, Color(palette_cyan, 0.68))
 	pass
 
 
@@ -308,7 +332,7 @@ func draw_data_rain(center: Vector2) -> void:
 		var speed := 18.0 + float(index % 7) * 8.0
 		var y := fmod(float(index * 83) + elapsed * speed, maxf(horizon - 54.0, 1.0)) + 54.0
 		var column_height := 12.0 + float(index % 5) * 9.0
-		var color := neon_magenta() if index % 9 == 0 else neon_cyan()
+		var color := palette_magenta if index % 9 == 0 else palette_cyan
 		var alpha := 0.055 + float(index % 4) * 0.014
 		draw_line(Vector2(lane_x, y - column_height), Vector2(lane_x, y), Color(color, alpha), 1.0)
 		draw_rect(Rect2(Vector2(lane_x - 1.0, y), Vector2(3.0, 2.0)), Color(color, alpha * 2.2), true)
@@ -319,9 +343,9 @@ func draw_data_rain(center: Vector2) -> void:
 		var base_height := 8.0 + float((index * 17) % 52)
 		var bounce := absf(sin(elapsed * 7.6 + float(index) * 0.91)) * 22.0 + absf(sin(elapsed * 12.3 + float(index) * 1.27)) * 12.0
 		var block_height := base_height + bounce
-		draw_rect(Rect2(Vector2(x, horizon - block_height), Vector2(block_width, block_height)), Color(neon_blue(), 0.04 + float(index % 3) * 0.012), true)
+		draw_rect(Rect2(Vector2(x, horizon - block_height), Vector2(block_width, block_height)), Color(palette_blue, 0.04 + float(index % 3) * 0.012), true)
 		if index % 3 == 0:
-			draw_line(Vector2(x + block_width * 0.5, horizon - block_height), Vector2(x + block_width * 0.5, horizon - block_height - 11.0), Color(neon_magenta(), 0.13), 1.0)
+			draw_line(Vector2(x + block_width * 0.5, horizon - block_height), Vector2(x + block_width * 0.5, horizon - block_height - 11.0), Color(palette_magenta, 0.13), 1.0)
 	pass
 
 
@@ -332,67 +356,69 @@ func draw_backplane(center: Vector2) -> void:
 	var horizon := center.y + minf(size.y * 0.16, 150.0)
 	for ray in range(-12, 13):
 		var bottom_x := center.x + float(ray) * size.x / 12.0
-		draw_line(Vector2(center.x, horizon), Vector2(bottom_x, size.y), Color(neon_blue(), 0.055), 1.0)
+		draw_line(Vector2(center.x, horizon), Vector2(bottom_x, size.y), Color(palette_blue, 0.055), 1.0)
 	for band in range(11):
 		var amount := float(band) / 10.0
 		var curved := amount * amount
 		var y := lerpf(horizon, size.y, curved)
-		draw_line(Vector2(0.0, y), Vector2(size.x, y), Color(neon_cyan(), 0.045 + amount * 0.035), 1.0)
+		draw_line(Vector2(0.0, y), Vector2(size.x, y), Color(palette_cyan, 0.045 + amount * 0.035), 1.0)
 	# Upper technical grid and major axes.
 	var grid_step := 64.0
 	var drift := fmod(elapsed * 5.0, grid_step)
 	for x in range(-1, int(size.x / grid_step) + 2):
 		var px := float(x) * grid_step + drift
-		draw_line(Vector2(px, 0.0), Vector2(px, horizon), Color(neon_blue(), 0.025), 1.0)
+		draw_line(Vector2(px, 0.0), Vector2(px, horizon), Color(palette_blue, 0.025), 1.0)
 	for y in range(0, int(horizon / grid_step) + 1):
-		draw_line(Vector2(0.0, y * grid_step), Vector2(size.x, y * grid_step), Color(neon_blue(), 0.025), 1.0)
-	draw_line(Vector2(center.x, 0.0), Vector2(center.x, size.y), Color(neon_magenta(), 0.08), 1.0)
+		draw_line(Vector2(0.0, y * grid_step), Vector2(size.x, y * grid_step), Color(palette_blue, 0.025), 1.0)
+	draw_line(Vector2(center.x, 0.0), Vector2(center.x, size.y), Color(palette_magenta, 0.08), 1.0)
 	pass
 
 
 ## Concentric rings, sweep wedge, targeting arc, and pod echo ticks (`draw_radar_echoes`).
 func draw_radar(center: Vector2) -> void:
-	var radius := radar_radius(center)
+	var radius := layout_radar_radius
 	for ring in range(1, 5):
-		var ring_color := neon_cyan() if ring % 2 else neon_blue()
-		draw_arc(center, radius * float(ring) / 4.0, 0.0, TAU, 72, Color(ring_color, 0.1), HUD_RING_STROKE, true)
+		var ring_color := palette_cyan if ring % 2 else palette_blue
+		var tick_radius := radius * float(ring) / 4.0
+		draw_arc(center, tick_radius, 0.0, TAU, 72, Color(ring_color, 0.1), HUD_RING_STROKE, true)
 		for tick in range(24):
-			var tick_angle := float(tick) * TAU / 24.0
-			var tick_radius := radius * float(ring) / 4.0
+			var tick_dir := Vector2.from_angle(float(tick) * TAU / 24.0)
 			var tick_length := 6.0 if tick % 3 == 0 else 3.0
-			draw_line(center + Vector2.from_angle(tick_angle) * tick_radius, center + Vector2.from_angle(tick_angle) * (tick_radius + tick_length), Color(neon_cyan(), 0.22), 1.0)
+			draw_line(center + tick_dir * tick_radius, center + tick_dir * (tick_radius + tick_length), Color(palette_cyan, 0.22), 1.0)
 	draw_radar_echoes(center, radius)
 	var angle := radar_angle
+	scratch_tri[0] = center
 	for slice in range(7):
 		var slice_angle := angle - float(slice) * 0.055
-		var sweep := PackedVector2Array([center, center + Vector2.from_angle(slice_angle - 0.055) * radius, center + Vector2.from_angle(slice_angle) * radius])
-		draw_colored_polygon(sweep, Color(neon_cyan(), (0.015 + activity * 0.012) * float(7 - slice)))
-	draw_line(center, center + Vector2.from_angle(angle) * radius, Color(neon_cyan(), 0.9), 2.0, true)
+		scratch_tri[1] = center + Vector2.from_angle(slice_angle - 0.055) * radius
+		scratch_tri[2] = center + Vector2.from_angle(slice_angle) * radius
+		draw_colored_polygon(scratch_tri, Color(palette_cyan, (0.015 + activity * 0.012) * float(7 - slice)))
+	draw_line(center, center + Vector2.from_angle(angle) * radius, Color(palette_cyan, 0.9), 2.0, true)
 	# A counter-rotating magenta targeting arc keeps the palette from reading monochrome.
 	var target_angle := -elapsed * 0.34
-	draw_arc(center, radius + 13.0, target_angle, target_angle + 0.62, 24, Color(neon_magenta(), 0.72), 3.0, true)
-	draw_circle(center + Vector2.from_angle(target_angle + 0.62) * (radius + 13.0), 3.0, Color(neon_magenta(), 0.95))
+	draw_arc(center, radius + 13.0, target_angle, target_angle + 0.62, 24, Color(palette_magenta, 0.72), 3.0, true)
+	draw_circle(center + Vector2.from_angle(target_angle + 0.62) * (radius + 13.0), 3.0, Color(palette_magenta, 0.95))
 	pass
 
 
 ## Hex fill, facet tint, and outline — drawn before `draw_radar` so the sweep reads through the core.
 func draw_core_hex_underlay(center: Vector2) -> void:
-	var core_scale := 1.0 - collapse * 0.82
-	var radius := CORE_RADIUS * core_scale
+	var radius := core_draw_radius()
 	var visibility := 1.0 - collapse
 	var core_hex := polygon_points(center, radius, 6, PI / 6.0)
 	draw_colored_polygon(core_hex, Color(Colors.deep_surface, 0.96))
+	scratch_tri[0] = center
 	for index in range(6):
-		var facet := PackedVector2Array([center, core_hex[index], core_hex[(index + 1) % 6]])
-		draw_colored_polygon(facet, Color(neon_blue() if index % 2 else neon_cyan(), 0.018 + index * 0.005))
-	draw_hex_outline(core_hex, Color(neon_cyan(), 0.94 * visibility), HUD_HEX_STROKE)
+		scratch_tri[1] = core_hex[index]
+		scratch_tri[2] = core_hex[(index + 1) % 6]
+		draw_colored_polygon(scratch_tri, Color(palette_blue if index % 2 else palette_cyan, 0.018 + index * 0.005))
+	draw_hex_outline(core_hex, Color(palette_cyan, 0.94 * visibility), HUD_HEX_STROKE)
 	pass
 
 
 ## Bus rings, cube, and labels above radar/links. Hex frame is `draw_core_hex_underlay`.
 func draw_core(center: Vector2) -> void:
-	var core_scale := 1.0 - collapse * 0.82
-	var radius := CORE_RADIUS * core_scale
+	var radius := core_draw_radius()
 	var pulse := (sin(elapsed * 4.0) + 1.0) * 0.5
 	var visibility := 1.0 - collapse
 	# A restrained two-stage bus replaces the previous stack of competing rings.
@@ -402,7 +428,7 @@ func draw_core(center: Vector2) -> void:
 		for segment in range(6):
 			var start := rotation + float(segment) * TAU / 6.0
 			var span := 0.34 if ring == 0 else 0.21
-			var ring_color := neon_magenta() if ring == 1 and segment % 3 == 0 else neon_cyan()
+			var ring_color := palette_magenta if ring == 1 and segment % 3 == 0 else palette_cyan
 			draw_arc(center, bus_radius, start, start + span, 10, Color(ring_color, (0.22 + pulse * 0.07) * visibility), 1.8 if ring == 0 else 1.2, true)
 	# Eight compact data blocks form a coherent status ring.
 	for block in range(8):
@@ -410,43 +436,37 @@ func draw_core(center: Vector2) -> void:
 		var block_radius := radius + 38.0
 		var position := center + Vector2.from_angle(angle) * block_radius
 		var tangent := Vector2.from_angle(angle + PI * 0.5)
-		var block_color := neon_magenta() if block % 4 == 0 else neon_cyan()
+		var block_color := palette_magenta if block % 4 == 0 else palette_cyan
 		draw_line(position - tangent * 8.0, position + tangent * 8.0, Color(block_color, (0.5 + pulse * 0.22) * visibility), 3.0, true)
 	# Soft reactor bloom stays behind one stable frame instead of several rotating polygons.
 	for glow in range(7, 0, -1):
-		draw_circle(center, radius + glow * 9.0 + pulse * 3.0, Color(neon_cyan(), 0.006 * float(8 - glow) * visibility))
+		draw_circle(center, radius + glow * 9.0 + pulse * 3.0, Color(palette_cyan, 0.006 * float(8 - glow) * visibility))
 	var energy_center := center
-	draw_circle(energy_center, 15.0 + pulse * 5.0, Color(neon_cyan(), 0.07 * visibility))
+	draw_circle(energy_center, 15.0 + pulse * 5.0, Color(palette_cyan, 0.07 * visibility))
 	draw_energy_cube(energy_center, 8.5 + pulse * 1.8, visibility)
 	if collapse < 0.86:
 		# Flat-top hex left/right vertical edges end at ±radius*0.5; status baseline sits on that bottom line.
 		const CORE_LABEL_GAP := 30.0
 		var status_font := Fonts.medium()
 		var status_size := Typography.label_small_size
-		draw_centered_text(center - Vector2(0.0, CORE_LABEL_GAP), I18n.t("agent.visuals.core"), Fonts.bold(), Typography.title_small_size, Color(neon_cyan(), 0.98))
-		draw_centered_text(center + Vector2(0.0, radius * 0.5), core_status(), status_font, status_size, Color(neon_magenta(), 0.9))
+		draw_centered_text(center - Vector2(0.0, CORE_LABEL_GAP), I18n.t("agent.visuals.core"), Fonts.bold(), Typography.title_small_size, Color(palette_cyan, 0.98))
+		draw_centered_text(center + Vector2(0.0, radius * 0.5), core_status(), status_font, status_size, Color(palette_magenta, 0.9))
 	pass
 
 
 func draw_energy_cube(energy_center: Vector2, half: float, visibility: float) -> void:
 	# Orthographic yaw/pitch wireframe cube — edges only, no filled faces.
 	var xform := Basis.from_euler(Vector3(0.55, elapsed * 0.7, 0.0))
-	var corners := PackedVector2Array()
 	for index in range(8):
 		var local := Vector3(-1.0 if index & 1 else 1.0, -1.0 if index & 2 else 1.0, -1.0 if index & 4 else 1.0)
 		var rotated: Vector3 = xform * local
-		corners.append(energy_center + Vector2(rotated.x, rotated.y) * half)
-	var edges: Array[Vector2i] = [
-		Vector2i(0, 1), Vector2i(1, 3), Vector2i(3, 2), Vector2i(2, 0),
-		Vector2i(4, 5), Vector2i(5, 7), Vector2i(7, 6), Vector2i(6, 4),
-		Vector2i(0, 4), Vector2i(1, 5), Vector2i(2, 6), Vector2i(3, 7),
-	]
+		cube_corners[index] = energy_center + Vector2(rotated.x, rotated.y) * half
 	const EDGE_WIDTH := 1.15
 	const EDGE_INSET := 0.55
-	var accent := neon_cyan()
-	for edge: Vector2i in edges:
-		var from := corners[edge.x]
-		var to := corners[edge.y]
+	var accent := palette_cyan
+	for edge: Vector2i in CUBE_EDGES:
+		var from := cube_corners[edge.x]
+		var to := cube_corners[edge.y]
 		var delta := to - from
 		var length := delta.length()
 		if length <= EDGE_INSET * 2.0:
@@ -463,8 +483,7 @@ func draw_pod_link(pod: ToolPod, rect: Rect2, center: Vector2) -> void:
 		return
 	var left_side := rect.get_center().x < center.x
 	var target := Vector2(rect.end.x if left_side else rect.position.x, rect.get_center().y)
-	var core_radius := CORE_RADIUS * (1.0 - collapse * 0.82)
-	var attach_x := hex_flat_half_width(core_radius)
+	var attach_x := hex_flat_half_width(core_draw_radius())
 	# Slight vertical bias keeps long horizontal segments visually centered on the core.
 	var start := center + Vector2(-attach_x if left_side else attach_x, (target.y - center.y) * 0.18)
 	var elbow := Vector2(lerpf(start.x, target.x, 0.58), target.y)
@@ -484,7 +503,7 @@ func draw_pod_link(pod: ToolPod, rect: Rect2, center: Vector2) -> void:
 		var return_segment := mini(int(return_packet * 3.0), 2)
 		var return_local := fmod(return_packet * 3.0, 1.0)
 		var return_position := path[return_segment].lerp(path[return_segment + 1], return_local)
-		draw_rect(Rect2(return_position - Vector2(2.0, 2.0), Vector2(4.0, 4.0)), Color(neon_magenta(), 0.8), true)
+		draw_rect(Rect2(return_position - Vector2(2.0, 2.0), Vector2(4.0, 4.0)), Color(palette_magenta, 0.8), true)
 	pass
 
 
@@ -510,7 +529,7 @@ func draw_tool_pod(pod: ToolPod, rect: Rect2, center: Vector2) -> void:
 	var is_executing := state == PodState.EXECUTING
 	var active_breath := 0.5 + 0.5 * sin(elapsed * 5.2 + float(pod.slot))
 	# Live beam width × `radar_pod_feedback`; echo adds sustained highlight (0.55 scales decay tail on the panel).
-	var radar_feedback := maxf(radar_pod_feedback(shown, center), float(radar_echoes.get(pod.slot, 0.0)) * 0.55) * open_amount
+	var radar_feedback := maxf(radar_pod_feedback(shown, center), radar_echoes[pod.slot] * 0.55) * open_amount
 	if is_executing:
 		for glow in range(4, 0, -1):
 			draw_polyline(outset_polyline(panel, float(glow) * 3.0), Color(color, (0.018 + active_breath * 0.012) * float(5 - glow)), 4.0, true)
@@ -526,12 +545,10 @@ func draw_tool_pod(pod: ToolPod, rect: Rect2, center: Vector2) -> void:
 	draw_polyline(outline, Color(color, 0.2 if is_executing else 0.12), 9.0 if is_executing else 7.0, true)
 	draw_polyline(outline, Color(color, 0.98 if is_executing else 0.8), 2.2 if is_executing else 1.4, true)
 	draw_line(shown.position + Vector2(cut + 8.0, 0.0), shown.position + Vector2(shown.size.x * 0.84, 0.0), Color(color, 0.98), 3.0)
-	var title := VisualToolFormatter.title_name(pod.name)
-	var glyph := VisualToolFormatter.glyph(pod.name)
 	draw_rect(Rect2(shown.position + Vector2(15.0, 17.0), Vector2(34.0, 34.0)), Color(color, 0.08), true)
 	draw_rect(Rect2(shown.position + Vector2(15.0, 17.0), Vector2(34.0, 34.0)), Color(color, 0.58), false, 1.0)
-	draw_centered_text(shown.position + Vector2(32.0, 40.0), glyph, Fonts.bold(), Typography.label_medium_size, color)
-	draw_string(Fonts.semibold(), shown.position + Vector2(59.0, 27.0), title.to_upper(), HORIZONTAL_ALIGNMENT_LEFT, shown.size.x - 80.0, Typography.label_medium_size, Colors.primary_text)
+	draw_centered_text(shown.position + Vector2(32.0, 40.0), pod.glyph, Fonts.bold(), Typography.label_medium_size, color)
+	draw_string(Fonts.semibold(), shown.position + Vector2(59.0, 27.0), pod.title, HORIZONTAL_ALIGNMENT_LEFT, shown.size.x - 80.0, Typography.label_medium_size, Colors.primary_text)
 	draw_string(Fonts.medium(), shown.position + Vector2(59.0, 49.0), "// " + pod_status(state), HORIZONTAL_ALIGNMENT_LEFT, shown.size.x - 80.0, Typography.label_small_size, color)
 	draw_string(Fonts.regular(), shown.position + Vector2(shown.size.x - 62.0, 49.0), "%02d" % pod.slot, HORIZONTAL_ALIGNMENT_RIGHT, 45.0, Typography.label_small_size, Color(color, 0.7))
 	if is_executing:
@@ -559,18 +576,18 @@ func draw_pod_activity(pod: ToolPod, rect: Rect2, color: Color) -> void:
 	var age := pod.age
 	if state == PodState.CONNECTING:
 		var sweep_x := rect.position.x + fmod(age / CONNECT_SECONDS, 1.0) * rect.size.x
-		draw_rect(Rect2(Vector2(sweep_x - 10.0, rect.position.y + 3.0), Vector2(20.0, rect.size.y - 6.0)), Color(neon_magenta(), 0.045), true)
+		draw_rect(Rect2(Vector2(sweep_x - 10.0, rect.position.y + 3.0), Vector2(20.0, rect.size.y - 6.0)), Color(palette_magenta, 0.045), true)
 		for dot in range(3):
 			var dot_alpha := 0.25 + 0.75 * absf(sin(elapsed * 5.0 + dot * 1.6))
-			draw_circle(rect.position + Vector2(62.0 + dot * 9.0, rect.size.y - 11.0), 1.8, Color(neon_magenta(), dot_alpha))
+			draw_circle(rect.position + Vector2(62.0 + dot * 9.0, rect.size.y - 11.0), 1.8, Color(palette_magenta, dot_alpha))
 		return
 	if state == PodState.EXECUTING:
 		var scan_x := rect.position.x + fmod(elapsed * 0.72 + float(pod.slot) * 0.11, 1.0) * rect.size.x
-		draw_rect(Rect2(Vector2(scan_x - 16.0, rect.position.y + 3.0), Vector2(32.0, rect.size.y - 6.0)), Color(neon_cyan(), 0.055), true)
+		draw_rect(Rect2(Vector2(scan_x - 16.0, rect.position.y + 3.0), Vector2(32.0, rect.size.y - 6.0)), Color(palette_cyan, 0.055), true)
 		for chevron in range(3):
 			var chevron_x := rect.position.x + 58.0 + chevron * 10.0
 			var chevron_y := rect.end.y - 10.0
-			draw_polyline(PackedVector2Array([Vector2(chevron_x, chevron_y - 3.0), Vector2(chevron_x + 4.0, chevron_y), Vector2(chevron_x, chevron_y + 3.0)]), Color(neon_cyan(), 0.4 + chevron * 0.18), 1.3, true)
+			draw_polyline(PackedVector2Array([Vector2(chevron_x, chevron_y - 3.0), Vector2(chevron_x + 4.0, chevron_y), Vector2(chevron_x, chevron_y + 3.0)]), Color(palette_cyan, 0.4 + chevron * 0.18), 1.3, true)
 	if state >= PodState.EXECUTING:
 		draw_pod_waveform(pod, rect, color)
 	if state >= PodState.COMPLETE and age < 0.7:
@@ -598,14 +615,48 @@ func draw_pod_waveform(pod: ToolPod, rect: Rect2, color: Color) -> void:
 func draw_completion_wave(center: Vector2) -> void:
 	var max_radius := size.length() * 0.58
 	var radius := scan_wave * max_radius
-	draw_arc(center, radius, 0.0, TAU, 128, Color(neon_cyan(), (1.0 - scan_wave) * 0.95), 5.0, true)
-	draw_arc(center, maxf(0.0, radius - 18.0), 0.0, TAU, 128, Color(neon_blue(), (1.0 - scan_wave) * 0.3), 15.0, true)
-	draw_arc(center, maxf(0.0, radius - 34.0), 0.0, TAU, 128, Color(neon_magenta(), (1.0 - scan_wave) * 0.48), 2.0, true)
+	draw_arc(center, radius, 0.0, TAU, 128, Color(palette_cyan, (1.0 - scan_wave) * 0.95), 5.0, true)
+	draw_arc(center, maxf(0.0, radius - 18.0), 0.0, TAU, 128, Color(palette_blue, (1.0 - scan_wave) * 0.3), 15.0, true)
+	draw_arc(center, maxf(0.0, radius - 34.0), 0.0, TAU, 128, Color(palette_magenta, (1.0 - scan_wave) * 0.48), 2.0, true)
 	pass
 
 
 ## Fixed grid: even index = left column, odd = right; row = index / 2. Used for layout, links, and radar targeting.
-func pod_rect(index: int, _count: int, center: Vector2) -> Rect2:
+func pod_rect(index: int, center: Vector2) -> Rect2:
+	sync_layout(center)
+	return layout_pod_rects[index]
+
+
+func radar_radius(center: Vector2) -> float:
+	sync_layout(center)
+	return layout_radar_radius
+
+
+func core_draw_radius() -> float:
+	return CORE_RADIUS * (1.0 - collapse * CORE_COLLAPSE)
+
+
+func sync_layout(center: Vector2) -> void:
+	if size == layout_size and layout_pod_rects.size() == MAX_PODS:
+		return
+	layout_size = size
+	layout_pod_rects.resize(MAX_PODS)
+	for index in range(MAX_PODS):
+		layout_pod_rects[index] = compute_pod_rect(index, center)
+	var radius := minf(size.y * RADAR_VIEWPORT_RATIO, RADAR_MAX_RADIUS)
+	# Reserve the full command envelope from the first frame so the radar never jumps
+	# outward as tool pods are added during startup.
+	for index in range(MAX_PODS):
+		var rect := layout_pod_rects[index]
+		radius = maxf(radius, center.distance_to(rect.position) + RADAR_POD_CLEARANCE)
+		radius = maxf(radius, center.distance_to(Vector2(rect.end.x, rect.position.y)) + RADAR_POD_CLEARANCE)
+		radius = maxf(radius, center.distance_to(rect.end) + RADAR_POD_CLEARANCE)
+		radius = maxf(radius, center.distance_to(Vector2(rect.position.x, rect.end.y)) + RADAR_POD_CLEARANCE)
+	layout_radar_radius = radius
+	pass
+
+
+func compute_pod_rect(index: int, center: Vector2) -> Rect2:
 	var width := clampf(size.x * 0.17, 170.0, 260.0)
 	var height := 78.0
 	var side := -1.0 if index % 2 == 0 else 1.0
@@ -613,23 +664,6 @@ func pod_rect(index: int, _count: int, center: Vector2) -> Rect2:
 	var y_offset := (float(row) - 1.5) * (height + 22.0)
 	var x := center.x + side * (minf(size.x * 0.31, 390.0) + width * 0.5) - width * 0.5
 	return Rect2(Vector2(x, center.y + y_offset - height * 0.5), Vector2(width, height))
-
-
-func radar_radius(center: Vector2) -> float:
-	var radius := minf(size.y * RADAR_VIEWPORT_RATIO, RADAR_MAX_RADIUS)
-	# Reserve the full command envelope from the first frame so the radar never jumps
-	# outward as tool pods are added during startup.
-	for index in range(MAX_PODS):
-		var rect := pod_rect(index, MAX_PODS, center)
-		var corners := PackedVector2Array([
-			rect.position,
-			Vector2(rect.end.x, rect.position.y),
-			rect.end,
-			Vector2(rect.position.x, rect.end.y),
-		])
-		for corner: Vector2 in corners:
-			radius = maxf(radius, center.distance_to(corner) + RADAR_POD_CLEARANCE)
-	return radius
 
 
 ## 0..1 while the radar spoke aims near this pod; wider span (×1.45, floor 0.12 rad) lengthens the visible hit window.
@@ -643,26 +677,25 @@ func radar_pod_feedback(rect: Rect2, center: Vector2) -> float:
 ## Tick marks on the radar ring at each echoing pod bearing (strength follows `radar_echoes` decay).
 func draw_radar_echoes(center: Vector2, radius: float) -> void:
 	for pod: ToolPod in pods:
-		var strength := float(radar_echoes.get(pod.slot, 0.0))
+		var strength := radar_echoes[pod.slot]
 		if strength <= 0.0:
 			continue
-		var rect := pod_rect(pod.slot, pods.size(), center)
-		var angle := (rect.get_center() - center).angle()
+		var angle := (layout_pod_rects[pod.slot].get_center() - center).angle()
 		var echo_radius := radius - 10.0
-		var marker := center + Vector2.from_angle(angle) * echo_radius
 		var direction := Vector2.from_angle(angle)
+		var marker := center + direction * echo_radius
 		var tangent := direction.rotated(PI * 0.5)
-		draw_arc(center, echo_radius, angle - 0.055, angle + 0.055, 12, Color(neon_cyan(), strength * 0.75), 1.2, true)
-		draw_arc(center, echo_radius - 8.0, angle - 0.032, angle + 0.032, 10, Color(neon_cyan(), strength * 0.28), 1.0, true)
+		draw_arc(center, echo_radius, angle - 0.055, angle + 0.055, 12, Color(palette_cyan, strength * 0.75), 1.2, true)
+		draw_arc(center, echo_radius - 8.0, angle - 0.032, angle + 0.032, 10, Color(palette_cyan, strength * 0.28), 1.0, true)
 		draw_polyline(PackedVector2Array([
 			marker - direction * 4.0,
 			marker + tangent * 4.0,
 			marker + direction * 4.0,
 			marker - tangent * 4.0,
 			marker - direction * 4.0,
-		]), Color(neon_cyan(), strength * 0.9), 1.0, true)
-		draw_line(marker - tangent * 8.0, marker - tangent * 5.0, Color(neon_cyan(), strength * 0.55), 1.0)
-		draw_line(marker + tangent * 5.0, marker + tangent * 8.0, Color(neon_cyan(), strength * 0.55), 1.0)
+		]), Color(palette_cyan, strength * 0.9), 1.0, true)
+		draw_line(marker - tangent * 8.0, marker - tangent * 5.0, Color(palette_cyan, strength * 0.55), 1.0)
+		draw_line(marker + tangent * 5.0, marker + tangent * 8.0, Color(palette_cyan, strength * 0.55), 1.0)
 	pass
 
 
@@ -704,33 +737,51 @@ static func pod_status(state: int) -> String:
 
 
 static func pod_color(state: int) -> Color:
+	sync_palette()
 	match state:
 		PodState.COMPLETE:
 			return Colors.success
 		PodState.FAILED:
 			return Colors.error
 		PodState.CONNECTING:
-			return neon_magenta()
-	return neon_cyan()
+			return palette_magenta
+	return palette_cyan
 
 
 ## Primary neon tone — follows the user accent.
 static func neon_cyan() -> Color:
-	return ThemeColor.accent_theme_color()
+	sync_palette()
+	return palette_cyan
 
 
 ## Cool secondary tone derived from the accent hue.
 static func neon_blue() -> Color:
-	return accent_shifted(ACCENT_COOL_HUE_OFFSET)
+	sync_palette()
+	return palette_blue
 
 
 ## Hot contrast tone derived from the accent hue.
 static func neon_magenta() -> Color:
-	return accent_shifted(ACCENT_HOT_HUE_OFFSET, 1.05)
+	sync_palette()
+	return palette_magenta
+
+
+static func sync_palette() -> void:
+	var accent := ThemeColor.accent_theme_color()
+	if accent == palette_source:
+		return
+	palette_source = accent
+	palette_cyan = accent
+	palette_blue = accent_shifted_from(accent, ACCENT_COOL_HUE_OFFSET)
+	palette_magenta = accent_shifted_from(accent, ACCENT_HOT_HUE_OFFSET, 1.05)
+	pass
 
 
 static func accent_shifted(hue_offset: float, sat_mul: float = 1.0, val_mul: float = 1.0) -> Color:
-	var base := ThemeColor.accent_theme_color()
+	return accent_shifted_from(ThemeColor.accent_theme_color(), hue_offset, sat_mul, val_mul)
+
+
+static func accent_shifted_from(base: Color, hue_offset: float, sat_mul: float = 1.0, val_mul: float = 1.0) -> Color:
 	return Color.from_hsv(fposmod(base.h + hue_offset, 1.0), clampf(base.s * sat_mul, 0.0, 1.0), clampf(maxf(base.v, 0.72) * val_mul, 0.0, 1.0))
 
 
@@ -743,7 +794,7 @@ func all_pods_finished_holding() -> bool:
 
 ## Horizontal distance from center to the flat vertical edge of a PI/6 hex — shared by `draw_core` and `draw_pod_link`.
 static func hex_flat_half_width(radius: float) -> float:
-	return radius * cos(PI / 6.0)
+	return radius * HEX_FLAT_RATIO
 
 
 static func polygon_points(center: Vector2, radius: float, sides: int, rotation: float) -> PackedVector2Array:
