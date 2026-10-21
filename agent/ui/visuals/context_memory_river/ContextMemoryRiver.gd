@@ -24,7 +24,8 @@ const DECORATIVE_MOTE_COUNT := 7
 const DECORATIVE_TRAIL_SAMPLES := 4
 const DECORATIVE_SPAWN_INTERVAL := 0.55
 const CONTEXT_RING_RADIUS := 52.0
-const OUTPUT_START_OFFSET := 58.0
+## Distance from the lens center to the visible inner ring: intake absorbs on the left, output spirals out on the right.
+const CONTEXT_RING_INSET := 58.0
 const OUTPUT_SPIRAL_TURNS := 3.25
 const OUTPUT_SPIRAL_RADIUS := 11.0
 const OUTPUT_TRAIL_SAMPLES := 8
@@ -34,7 +35,7 @@ const END_OUTPUT_SECONDS := 0.65
 const END_LENS_SECONDS := 0.32
 const END_TIMEOUT_MSEC := 4000
 
-enum StreamType { USER, SYSTEM, HISTORY, FILE, TOOL, WEB, REASONING, ANSWER }
+enum StreamType { USER, SYSTEM, HISTORY, FILE, TOOL, WEB, THINKING, ERROR, ANSWER }
 
 
 class StreamItem extends RefCounted:
@@ -143,16 +144,17 @@ func on_chat_entry_add(_session_id: int, entry: ChatEntry) -> void:
 	var stream_type := stream_type_for_entry(entry)
 	if stream_type < 0:
 		return
-	var fallback := label_for_type(stream_type as StreamType)
-	add_item(stream_type as StreamType, floating_text(entry.body, fallback), weight_for_text(entry.body))
+	var typed := stream_type as StreamType
+	var fallback := label_for_type(typed)
+	add_item(typed, floating_text(entry.body, fallback), weight_for_text(entry.body))
 	pass
 
 
 func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> void:
 	if chunk.strip_edges().is_empty():
 		return
-	var stream_type := StreamType.REASONING if stream_kind == OpenAiClient.STREAM_KIND_REASONING else StreamType.ANSWER
-	var fallback := I18n.t("agent.visuals.thought") if stream_type == StreamType.REASONING else I18n.t("agent.visuals.answer")
+	var stream_type := StreamType.THINKING if stream_kind == OpenAiClient.STREAM_KIND_REASONING else StreamType.ANSWER
+	var fallback := I18n.t("agent.visuals.thought") if stream_type == StreamType.THINKING else I18n.t("agent.visuals.answer")
 	if stream_type == StreamType.ANSWER:
 		output_activity = 1.0
 	else:
@@ -172,15 +174,19 @@ func on_message_complete(_session_id: int, usage: OpenAiUsage) -> void:
 	pass
 
 
+## File tools have no start chat entry; other tools are drawn from [method on_chat_entry_add] only.
 func on_tool_execution_start(_session_id: int, _tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
+	if not ToolHelper.is_file_tool(tool_name):
+		return
 	add_item(stream_type_for_tool_name(tool_name), ToolVisualDisplay.upper_name(tool_name), 0.7)
 	activity = 1.0
 	pass
 
 
-func on_tool_execution_end(_session_id: int, _tool_call_id: String, tool_name: String, result: AgentToolResult) -> void:
-	add_item(stream_type_for_tool_name(tool_name), ToolVisualDisplay.upper_name(tool_name), 0.82 if not result.is_error else 0.45)
+func on_tool_execution_end(_session_id: int, _tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
 	activity = 1.0
+	if result.is_error:
+		output_activity = maxf(output_activity, 0.35)
 	pass
 
 
@@ -205,7 +211,7 @@ func _process(delta: float) -> void:
 		var input_x := lerpf(-50.0, size.x * 0.5, next_progress)
 		# Convert incoming phrases at the visible outer ring instead of letting them
 		# overlap the opaque context body. Backward iteration keeps removal safe.
-		if item.stream_type != StreamType.ANSWER and input_x >= size.x * 0.5 - 58.0:
+		if item.stream_type != StreamType.ANSWER and input_x >= size.x * 0.5 - CONTEXT_RING_INSET:
 			add_absorption_effect(item)
 			items.remove_at(index)
 			activity = 1.0
@@ -245,7 +251,7 @@ func update_decorative_motes(delta: float, center: Vector2) -> void:
 			progress_step = maxf(progress_step, delta / END_INPUT_SECONDS)
 		mote.progress += progress_step
 		var input_x := lerpf(-50.0, center.x, mote.progress)
-		if input_x >= center.x - 58.0:
+		if input_x >= center.x - CONTEXT_RING_INSET:
 			add_absorption_effect(mote)
 			decorative_motes.remove_at(index)
 	pass
@@ -405,7 +411,7 @@ func draw_absorption_effects(center: Vector2) -> void:
 		var label := effect.label
 		var weight := effect.weight
 		var lane_y := effect.lane * 8.0
-		var impact_position := center + Vector2(-58.0, lane_y * 0.34)
+		var impact_position := center + Vector2(-CONTEXT_RING_INSET, lane_y * 0.34)
 		var collapse := smoothstep(0.0, 0.55, phase)
 		var particle_position := impact_position.lerp(center, collapse)
 		var particle_alpha := 1.0 - smoothstep(0.38, 0.72, phase)
@@ -572,12 +578,12 @@ func item_position(progress: float, item: StreamItem, center: Vector2, is_output
 	var lane_offset := source_y - center.y
 	var curve_direction := item.curve_direction
 	if is_output:
-		var x := lerpf(center.x + OUTPUT_START_OFFSET, size.x + 50.0, eased)
+		var x := lerpf(center.x + CONTEXT_RING_INSET, size.x + 50.0, eased)
 		var spiral_envelope := smoothstep(0.0, 0.12, eased)
 		var phase := eased * TAU * OUTPUT_SPIRAL_TURNS + item.source_y_ratio * TAU - elapsed * 0.9
 		return Vector2(x, center.y + sin(phase) * OUTPUT_SPIRAL_RADIUS * spiral_envelope)
 	var input_start := Vector2(-50.0, center.y + lane_offset)
-	var impact := center + Vector2(-58.0, lane_offset * 0.04)
+	var impact := center + Vector2(-CONTEXT_RING_INSET, lane_offset * 0.04)
 	var pull := smoothstep(0.42, 1.0, eased)
 	var drift := sin(progress * TAU * 1.65 + item.source_y_ratio * 9.0 + elapsed * 0.8) * 30.0 * (1.0 - pull)
 	var control_a := Vector2(center.x * 0.2, center.y + lane_offset * 1.28 + curve_direction * 96.0)
@@ -656,7 +662,7 @@ func draw_output(center: Vector2) -> void:
 func output_spiral_position(progress: float, phase_offset: float, center: Vector2) -> Vector2:
 	var envelope := smoothstep(0.0, 0.1, progress)
 	var phase := output_spiral_phase(progress, phase_offset)
-	var x := lerpf(center.x + OUTPUT_START_OFFSET + 4.0, size.x, progress)
+	var x := lerpf(center.x + CONTEXT_RING_INSET + 4.0, size.x, progress)
 	return Vector2(x, center.y + sin(phase) * OUTPUT_SPIRAL_RADIUS * envelope)
 
 
@@ -713,8 +719,14 @@ static func stream_type_for_entry(entry: ChatEntry) -> int:
 			return StreamType.WEB
 		ChatEntry.KIND_RESULT:
 			return StreamType.TOOL
-		ChatEntry.KIND_AGENT, ChatEntry.KIND_THINKING:
+		ChatEntry.KIND_GIT_DIFF:
+			return StreamType.FILE
+		ChatEntry.KIND_THINKING:
+			return StreamType.THINKING
+		ChatEntry.KIND_AGENT:
 			return StreamType.HISTORY
+		ChatEntry.KIND_ERROR:
+			return StreamType.ERROR
 	return -1
 
 
@@ -730,8 +742,10 @@ static func label_for_type(stream_type: StreamType) -> String:
 			return I18n.t("agent.visuals.tool")
 		StreamType.WEB:
 			return I18n.t("agent.visuals.web")
-		StreamType.REASONING:
+		StreamType.THINKING:
 			return I18n.t("agent.visuals.thought")
+		StreamType.ERROR:
+			return I18n.t("agent.visuals.error")
 		StreamType.ANSWER:
 			return I18n.t("agent.visuals.answer")
 	return I18n.t("agent.visuals.history")
@@ -752,8 +766,10 @@ static func neon_base_for_type(stream_type: StreamType) -> Color:
 			return Colors.success
 		StreamType.WEB:
 			return Colors.info
-		StreamType.REASONING:
+		StreamType.THINKING:
 			return Colors.purple
+		StreamType.ERROR:
+			return Colors.error
 		StreamType.ANSWER:
 			return Colors.primary_text
 	return Colors.secondary_text

@@ -14,6 +14,12 @@ static func compaction_entry_maps_to_system_test() -> void:
 	pass
 
 
+static func thinking_entry_maps_to_thinking_stream_test() -> void:
+	var entry := ChatEntry.new(ChatEntry.KIND_THINKING, ChatEntry.TITLE_THINKING, "plan")
+	assert(ContextMemoryRiver.stream_type_for_entry(entry) == ContextMemoryRiver.StreamType.THINKING)
+	pass
+
+
 static func tool_name_stream_types_test() -> void:
 	assert(ContextMemoryRiver.stream_type_for_tool_name(ReadTool.NAME) == ContextMemoryRiver.StreamType.FILE)
 	assert(ContextMemoryRiver.stream_type_for_tool_name(WebSearchTool.NAME) == ContextMemoryRiver.StreamType.WEB)
@@ -60,8 +66,8 @@ static func saturated_stream_preserves_in_flight_items_test() -> void:
 
 static func streaming_fragments_coalesce_test() -> void:
 	var effect := ContextMemoryRiver.new()
-	effect.add_stream_fragment(ContextMemoryRiver.StreamType.REASONING, "follow", "THOUGHT")
-	effect.add_stream_fragment(ContextMemoryRiver.StreamType.REASONING, " path", "THOUGHT")
+	effect.add_stream_fragment(ContextMemoryRiver.StreamType.THINKING, "follow", "THOUGHT")
+	effect.add_stream_fragment(ContextMemoryRiver.StreamType.THINKING, " path", "THOUGHT")
 	assert(effect.items.size() == 1)
 	assert(effect.items[0].label == "follow path")
 	assert(effect.items[0].glyph_advances.size() == effect.items[0].label.length())
