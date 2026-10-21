@@ -23,9 +23,6 @@ var neuron_phases: PackedFloat32Array = PackedFloat32Array()
 var neuron_speeds: PackedFloat32Array = PackedFloat32Array()
 ## Persistent physical velocities. Positions must advance from these velocities and must not spring back to anchors.
 var neuron_velocities: PackedVector3Array = PackedVector3Array()
-var neuron_amps: PackedFloat32Array = PackedFloat32Array()
-var neuron_tangent_a: PackedVector3Array = PackedVector3Array()
-var neuron_tangent_b: PackedVector3Array = PackedVector3Array()
 var neuron_layers: PackedByteArray = PackedByteArray()
 var synapse_pairs_inner: Array[Vector2i] = []
 var synapse_pairs_outer: Array[Vector2i] = []
@@ -412,23 +409,12 @@ func init_motion_params(from_index: int, to_index: int) -> void:
 	neuron_phases.resize(to_index)
 	neuron_speeds.resize(to_index)
 	neuron_velocities.resize(to_index)
-	neuron_amps.resize(to_index)
-	neuron_tangent_a.resize(to_index)
-	neuron_tangent_b.resize(to_index)
 	for i in range(from_index, to_index):
-		var anchor := neuron_anchors[i]
-		var normal := anchor.normalized() if anchor.length_squared() > 0.0001 else Vector3.UP
-		var ref := Vector3.UP if absf(normal.dot(Vector3.UP)) < 0.9 else Vector3.RIGHT
-		var tangent_a := normal.cross(ref).normalized()
-		var tangent_b := normal.cross(tangent_a).normalized()
-		neuron_tangent_a[i] = tangent_a
-		neuron_tangent_b[i] = tangent_b
 		neuron_phases[i] = rng.randf_range(0.0, TAU)
 		neuron_speeds[i] = rng.randf_range(0.4, 1.05)
 		var is_inner := neuron_layers[i] == LAYER_INNER
 		var initial_speed := rng.randf_range(0.055, 0.09) if is_inner else rng.randf_range(0.025, 0.045)
 		neuron_velocities[i] = random_unit_direction() * initial_speed
-		neuron_amps[i] = rng.randf_range(0.012, 0.028) if is_inner else rng.randf_range(0.022, 0.052)
 	pass
 
 

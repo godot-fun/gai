@@ -1,7 +1,6 @@
 func visual_type_test() -> void:
 	assert(VisualType.is_valid(VisualType.Type.INK_LANDSCAPE))
-	var control := VisualControl.new()
-	var effect := control.create_effect(VisualType.Type.INK_LANDSCAPE)
+	var effect := VisualControl.create_effect(VisualType.Type.INK_LANDSCAPE)
 	assert(effect is InkLandscape)
 	effect.free()
 	control.free()

@@ -3,8 +3,7 @@ extends RefCounted
 
 static func neural_aurora_factory_test() -> void:
 	assert(VisualType.is_valid(VisualType.Type.NEURAL_AURORA))
-	var control := VisualControl.new()
-	var effect := control.create_effect(VisualType.Type.NEURAL_AURORA)
+	var effect := VisualControl.create_effect(VisualType.Type.NEURAL_AURORA)
 	assert(effect is NeuralAurora)
 	effect.free()
 	control.free()

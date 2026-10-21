@@ -9,7 +9,6 @@ var progress: float = 0.0
 var speed: float = 0.22
 var alive: bool = false
 var color: Color = Color.WHITE
-var near_neuron_index: int = -1
 
 
 func reset(
@@ -17,8 +16,7 @@ func reset(
 	p_curve: Curve3D,
 	p_char: String,
 	p_color: Color,
-	p_speed: float,
-	p_near_neuron: int
+	p_speed: float
 ) -> void:
 	label = p_label
 	curve = p_curve
@@ -26,7 +24,6 @@ func reset(
 	speed = p_speed
 	alive = true
 	color = p_color
-	near_neuron_index = p_near_neuron
 	label.text = p_char
 	label.modulate = Color(color.r, color.g, color.b, 0.0)
 	label.visible = true

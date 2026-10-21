@@ -53,8 +53,6 @@ var collapse: float = 0.0
 var turn_index: int = 0
 var session_id: int = 0
 var next_replacement_slot: int = 0
-var end_requested: bool = false
-var end_error_message: String = ""
 ## Per-slot strength 0..1 when the radar beam crosses that pod; decays in `_process`.
 var radar_echoes: Dictionary[int, float] = {}
 
@@ -76,8 +74,6 @@ func on_agent_start(p_session_id: int) -> void:
 
 ## Blocks until every pod has reached COMPLETE/FAILED and held for `COMPLETE_HOLD_SECONDS`, then runs the end wave.
 func on_agent_end(error_message: String) -> void:
-	end_requested = true
-	end_error_message = error_message
 	for pod: Dictionary in pods:
 		if int(pod["state"]) < PodState.COMPLETE and int(pod["pending_state"]) < 0:
 			pod["pending_state"] = PodState.FAILED if StringUtils.is_not_blank(error_message) else PodState.COMPLETE
@@ -763,13 +759,6 @@ static func outset_polyline(points: PackedVector2Array, amount: float) -> Packed
 		result.append(point + (point - center).normalized() * amount)
 	result.append(result[0])
 	return result
-
-
-func draw_closed_polyline(points: PackedVector2Array, color: Color, width: float) -> void:
-	var closed := PackedVector2Array(points)
-	closed.append(points[0])
-	draw_polyline(closed, color, width, true)
-	pass
 
 
 ## Six separate edges avoid closed-polyline corner caps looking heavier than `draw_arc` rings.

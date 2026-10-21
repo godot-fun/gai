@@ -17,7 +17,6 @@ var free_labels: Array[Label3D] = []
 var keyword_labels: Array[Label3D] = []
 var shared_curves: Array[Curve3D] = []
 
-var current_phase: OrbPhase.Phase = OrbPhase.Phase.IDLE
 var current_path_style: OrbPhase.PathStyle = OrbPhase.PathStyle.TRANSVERSE
 var display_color: Color = ThemeColor.accent_theme_color()
 var rng: RandomNumberGenerator = RandomNumberGenerator.new()
@@ -108,7 +107,6 @@ func reset_growth() -> void:
 
 
 func set_phase(phase: OrbPhase.Phase) -> void:
-	current_phase = phase
 	current_path_style = OrbPhase.path_style_for(phase)
 	refresh_shared_curves()
 	pass
@@ -198,12 +196,11 @@ func spawn_segment(segment: String) -> void:
 	else:
 		label.font_size = 20
 		label.pixel_size = 0.0018
-	var near_index := rng.randi_range(0, maxi(neuron_net.get_positions().size() - 1, 0))
 	var speed: float = rng.randf_range(OrbVisualScale.PARTICLE_SPEED_MIN, OrbVisualScale.PARTICLE_SPEED_MAX)
 	if current_path_style == OrbPhase.PathStyle.CHAOTIC:
 		speed *= 1.25
 	var particle := CharParticle.new()
-	particle.reset(label, acquire_curve(), segment, display_color, speed, near_index)
+	particle.reset(label, acquire_curve(), segment, display_color, speed)
 	active_particles.append(particle)
 	pass
 

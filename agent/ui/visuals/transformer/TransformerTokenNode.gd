@@ -189,12 +189,6 @@ func apply_neon_colors(color: Color) -> void:
 	pass
 
 
-func refresh_theme() -> void:
-	if not revealed:
-		set_revealed(false)
-	pass
-
-
 static func create_text_effect_material() -> ShaderMaterial:
 	var shader := Shader.new()
 	shader.code = TEXT_EFFECT_SHADER

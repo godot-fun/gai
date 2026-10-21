@@ -21,7 +21,7 @@ func _ready() -> void:
 	pass
 
 
-func create_effect(visual_type: VisualType.Type) -> VisualEffect:
+static func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 	match visual_type:
 		VisualType.Type.JARVIS:
 			return JarvisControl.new()

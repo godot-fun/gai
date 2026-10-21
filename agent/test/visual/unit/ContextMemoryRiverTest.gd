@@ -3,8 +3,7 @@ extends RefCounted
 
 static func visual_type_test() -> void:
 	assert(VisualType.is_valid(VisualType.Type.CONTEXT_MEMORY_RIVER))
-	var control := VisualControl.new()
-	var effect := control.create_effect(VisualType.Type.CONTEXT_MEMORY_RIVER)
+	var effect := VisualControl.create_effect(VisualType.Type.CONTEXT_MEMORY_RIVER)
 	assert(effect is ContextMemoryRiver)
 	effect.free()
 	control.free()

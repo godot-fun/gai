@@ -3,8 +3,7 @@ extends RefCounted
 
 static func visual_type_test() -> void:
 	assert(VisualType.is_valid(VisualType.Type.QUANTUM_CIRCUIT))
-	var control := VisualControl.new()
-	var effect := control.create_effect(VisualType.Type.QUANTUM_CIRCUIT)
+	var effect := VisualControl.create_effect(VisualType.Type.QUANTUM_CIRCUIT)
 	assert(effect != null)
 	effect.free()
 	control.free()

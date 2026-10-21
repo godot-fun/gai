@@ -3,8 +3,7 @@ extends RefCounted
 
 static func visual_type_test() -> void:
 	assert(VisualType.is_valid(VisualType.Type.CYBER_COMMAND_DECK))
-	var control := VisualControl.new()
-	var effect := control.create_effect(VisualType.Type.CYBER_COMMAND_DECK)
+	var effect := VisualControl.create_effect(VisualType.Type.CYBER_COMMAND_DECK)
 	assert(effect != null)
 	effect.free()
 	control.free()
@@ -35,7 +34,6 @@ func completion_sequence_test() -> void:
 	effect.on_agent_start(7)
 	assert(effect.phase == CyberCommandDeck.DeckPhase.ACTIVE)
 	effect.on_agent_end("")
-	assert(effect.end_requested)
 	assert(effect.phase == CyberCommandDeck.DeckPhase.ACTIVE)
 	effect.free()
 	pass

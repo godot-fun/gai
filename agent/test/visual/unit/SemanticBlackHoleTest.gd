@@ -3,8 +3,7 @@ extends RefCounted
 
 static func semantic_black_hole_factory_test() -> void:
 	assert(VisualType.is_valid(VisualType.Type.SEMANTIC_BLACK_HOLE))
-	var control := VisualControl.new()
-	var effect := control.create_effect(VisualType.Type.SEMANTIC_BLACK_HOLE)
+	var effect := VisualControl.create_effect(VisualType.Type.SEMANTIC_BLACK_HOLE)
 	assert(effect is SemanticBlackHole)
 	effect.free()
 	control.free()

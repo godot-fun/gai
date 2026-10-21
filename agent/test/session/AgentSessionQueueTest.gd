@@ -78,6 +78,15 @@ static func compaction_entry_resolves_to_summary_message_test() -> void:
 	pass
 
 
+static func system_entry_resolves_to_system_message_test() -> void:
+	var session := AgentSession.new(42)
+	session.messages.append(ChatMessage.system("system"))
+	session.messages.append(ChatMessage.system("memory"))
+	session.chat_entries.append(ChatEntry.new(ChatEntry.KIND_SYSTEM, ChatEntry.TITLE_SYSTEM, "system"))
+	assert(AgentSessionManager.message_index_for_chat_entry(session, 0) == 0)
+	pass
+
+
 static func compaction_message_identification_test() -> void:
 	assert(CompactionManager.is_compaction_message(ChatMessage.system(CompactionManager.SUMMARY_PREFIX + "\nsummary")))
 	assert(not CompactionManager.is_compaction_message(ChatMessage.system("normal system context")))
