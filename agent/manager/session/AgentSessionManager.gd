@@ -322,7 +322,7 @@ static func message_index_for_chat_entry(session: AgentSession, entry_idx: int) 
 	if entry_idx < 0 or entry_idx >= session.chat_entries.size():
 		return -1
 	var entry: ChatEntry = session.chat_entries[entry_idx]
-	if entry.kind == ChatEntry.KIND_SYSTEM or entry.kind == ChatEntry.KIND_SKILL or entry.kind == ChatEntry.KIND_MEMORY or entry.kind == ChatEntry.KIND_AGENT_PROMPT or entry.kind == ChatEntry.KIND_COMPACTION:
+	if ChatEntry.is_context_kind(entry.kind):
 		for message_idx in range(session.messages.size()):
 			var message: ChatMessage = session.messages[message_idx]
 			var matches := false

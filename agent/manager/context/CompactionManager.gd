@@ -54,9 +54,7 @@ static func compact_session(session_id: int) -> void:
 		AgentEvents.events.compaction_end.emit(session_id, false, ERROR_RUNNING)
 		return
 	var session := AgentSessionStore.load_session(session_id)
-	if (session == null
-		or not AgentSessionManager.has_chat_history(session_id)
-		or not has_compactable_history(session)):
+	if (session == null or not AgentSessionManager.has_chat_history(session_id)):
 		AgentEvents.events.compaction_end.emit(session_id, false, ERROR_EMPTY)
 		return
 
@@ -119,14 +117,6 @@ static func async_generate_summary(client: OpenAiClient, messages: Array[ChatMes
 	state.summary_finished = true
 	pass
 
-
-static func has_compactable_history(session: AgentSession) -> bool:
-	for entry: ChatEntry in session.chat_entries:
-		if not ChatEntry.is_context_kind(entry.kind) and entry.kind != ChatEntry.KIND_COMPACTION:
-			return true
-	return false
-
-
 ## Keeps system-level context while dropping user, assistant, tool, and previous summary turns.
 static func collect_context_messages(messages: Array[ChatMessage]) -> Array[ChatMessage]:
 	var context: Array[ChatMessage] = []
@@ -143,7 +133,7 @@ static func collect_context_messages(messages: Array[ChatMessage]) -> Array[Chat
 static func collect_context_entries(entries: Array[ChatEntry]) -> Array[ChatEntry]:
 	var context: Array[ChatEntry] = []
 	for entry: ChatEntry in entries:
-		if ChatEntry.is_context_kind(entry.kind):
+		if ChatEntry.is_context_kind(entry.kind) and entry.kind != ChatEntry.KIND_COMPACTION:
 			context.append(entry)
 	return context
 

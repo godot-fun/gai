@@ -38,9 +38,9 @@ var body: String = ""
 var details: Dictionary[String, String] = {}
 
 
-## Context entries are seeded into the LLM history (system, skills, memory, AGENTS.md) instead of a chat turn.
+## Context entries are seeded into the LLM history (system, skills, memory, AGENTS.md, compaction summary) instead of a chat turn.
 static func is_context_kind(entry_kind: String) -> bool:
-	return entry_kind == KIND_SYSTEM or entry_kind == KIND_SKILL or entry_kind == KIND_MEMORY or entry_kind == KIND_AGENT_PROMPT
+	return entry_kind == KIND_SYSTEM or entry_kind == KIND_SKILL or entry_kind == KIND_MEMORY or entry_kind == KIND_AGENT_PROMPT or entry_kind == KIND_COMPACTION
 
 
 func _init(
