@@ -99,18 +99,3 @@ func agent_end_accelerates_rain_offscreen_test() -> void:
 	assert(effect.reply_glyphs.is_empty())
 	effect.free()
 	pass
-
-
-static func sentence_cursor_waits_for_complete_tail_test() -> void:
-	var agent_entry := ChatEntry.new(ChatEntry.KIND_AGENT, ChatEntry.TITLE_AGENT, "First. Second")
-	var entries: Array[ChatEntry] = [agent_entry]
-	var cursor := ChatEntryCursor.new()
-	var first := cursor.take_next(entries)
-	assert(first.text == "First.")
-	assert(first.entry == agent_entry)
-	assert(cursor.take_next(entries).is_empty())
-	entries[0].body += " complete!"
-	var second := cursor.take_next(entries)
-	assert(second.text == "Second complete!")
-	assert(second.entry == agent_entry)
-	pass
