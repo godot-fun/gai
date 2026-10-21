@@ -99,6 +99,19 @@ static func take_next_sentence_from_session(session_id: int) -> String:
 	return cursor.take_next(session.chat_entries)
 
 
+## Returns the most recent non-blank entry of [param kind] produced since [param start_index].
+## Unlike the sentence cursor, this is a read-only query and does not advance shared state.
+static func latest_entry_text(session_id: int, start_index: int, kind: String) -> String:
+	var session: AgentSession = AgentSessionStore.load_session(session_id)
+	if session == null:
+		return ""
+	for index in range(session.chat_entries.size() - 1, start_index - 1, -1):
+		var entry: ChatEntry = session.chat_entries[index]
+		if entry.kind == kind and StringUtils.is_not_blank(entry.body):
+			return entry.body
+	return ""
+
+
 static func remove_session(session_id: int) -> void:
 	session_cursors.erase(session_id)
 	pass

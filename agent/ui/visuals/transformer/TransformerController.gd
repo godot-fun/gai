@@ -6,7 +6,6 @@ extends VisualEffect
 ## Enables the full completion animation for visual previews and tests. Production stops immediately.
 static var complete_animation_on_agent_end: bool = false
 
-var session_id: int = 0
 var request_generation: int = 0
 var tokenizer: TokenizerEffect
 var embedding: EmbeddingEffect
@@ -64,7 +63,6 @@ func set_visual_visible(show: bool, animated: bool) -> void:
 
 
 func on_agent_start(session_id: int) -> void:
-	self.session_id = session_id
 	var session := AgentSessionStore.load_session(session_id)
 	run_entry_start = session.chat_entries.size() if session != null else 0
 	var prompt := latest_user_prompt(session_id)
@@ -72,20 +70,20 @@ func on_agent_start(session_id: int) -> void:
 		return
 	request_generation += 1
 	var generation := request_generation
-	run_transformer(prompt, generation)
+	run_transformer(prompt, generation, session_id)
 	pass
 
 
-func on_agent_end(_session_id: int, error_message: String) -> void:
+func on_agent_end(session_id: int, error_message: String) -> void:
 	if complete_animation_on_agent_end and StringUtils.is_blank(error_message):
-		await finish_logits_animation(request_generation)
+		await finish_logits_animation(request_generation, session_id)
 		return
 	request_generation += 1
 	cancel_stages()
 	pass
 
 
-func run_transformer(prompt: String, generation: int) -> void:
+func run_transformer(prompt: String, generation: int, session_id: int) -> void:
 	pipeline_running = true
 	var result := LlamaHelper.TokenizeResult.new()
 	if await VLMServer.async_ensure_server_running() == OK:
@@ -113,7 +111,7 @@ func run_transformer(prompt: String, generation: int) -> void:
 	if generation != request_generation or not is_inside_tree():
 		pipeline_running = false
 		return
-	var thinking_text := collect_run_text(ChatEntry.KIND_THINKING)
+	var thinking_text := collect_run_text(session_id, ChatEntry.KIND_THINKING)
 	thinking_text = StringUtils.truncate(thinking_text, 1024)
 	var low_tokens := await tokenize_text(thinking_text)
 	if generation == request_generation and is_inside_tree():
@@ -124,19 +122,19 @@ func run_transformer(prompt: String, generation: int) -> void:
 	pass
 
 
-func finish_logits_animation(generation: int) -> void:
+func finish_logits_animation(generation: int, session_id: int) -> void:
 	while pipeline_running and generation == request_generation and is_inside_tree():
 		await get_tree().process_frame
 	if generation != request_generation or not is_inside_tree():
 		return
-	var final_text := StringUtils.truncate(latest_run_text(ChatEntry.KIND_AGENT), 1024)
+	var final_text := StringUtils.truncate(latest_run_text(session_id, ChatEntry.KIND_AGENT), 1024)
 	var high_tokens := await tokenize_text(final_text)
 	if generation == request_generation and is_inside_tree():
 		await logits_burst.play_high_probability(high_tokens)
 	pass
 
 
-func collect_run_text(kind: String) -> String:
+func collect_run_text(session_id: int, kind: String) -> String:
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null:
 		return ""
@@ -148,15 +146,8 @@ func collect_run_text(kind: String) -> String:
 	return builder.build_string()
 
 
-func latest_run_text(kind: String) -> String:
-	var session := AgentSessionStore.load_session(session_id)
-	if session == null:
-		return ""
-	for index in range(session.chat_entries.size() - 1, run_entry_start - 1, -1):
-		var entry: ChatEntry = session.chat_entries[index]
-		if entry.kind == kind and StringUtils.is_not_blank(entry.body):
-			return entry.body
-	return ""
+func latest_run_text(session_id: int, kind: String) -> String:
+	return ChatEntryCursor.latest_entry_text(session_id, run_entry_start, kind)
 
 
 func tokenize_text(text: String) -> Array[LlamaHelper.Token]:
