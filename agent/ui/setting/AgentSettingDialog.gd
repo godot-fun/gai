@@ -321,21 +321,6 @@ func style_help_label(label: Label) -> void:
 	pass
 
 
-func style_check_button(check: CheckButton) -> void:
-	check.add_theme_color_override("font_color", Colors.primary_text)
-	check.add_theme_color_override("font_hover_color", Colors.primary_text)
-	check.add_theme_color_override("font_focus_color", Colors.primary_text)
-	check.add_theme_color_override("font_pressed_color", Colors.primary_text)
-	check.add_theme_color_override("font_hover_pressed_color", Colors.primary_text)
-	check.add_theme_color_override("button_checked_color", ThemeColor.accent_theme_color())
-	check.add_theme_constant_override("h_separation", Margin.ma_2)
-	var empty := StyleBoxEmpty.new()
-	StyleBoxHelper.apply_style_box_margin(empty, Margin.ma_0, Margin.ma_1, Margin.ma_2, Margin.ma_1)
-	for state in ["normal", "disabled", "focus", "hover", "pressed", "hover_pressed"]:
-		check.add_theme_stylebox_override(state, empty.duplicate())
-	pass
-
-
 func style_action_button(button: Button) -> void:
 	ButtonStyle.apply_font_colors(button, Colors.primary_text, Colors.primary_text, Colors.primary_text, Colors.secondary_text)
 	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, ControlSize.radius_md, Margin.ma_3, Margin.ma_1,

@@ -289,7 +289,7 @@ func apply_theme() -> void:
 	separator_style.thickness = 1
 	for separator in separators:
 		separator.add_theme_stylebox_override("separator", separator_style)
-	style_check_button(enabled_check)
+	ButtonStyle.apply_check_button(enabled_check)
 	style_option_button(backend_select)
 	style_button(hotkey_button)
 	style_text_edit(prompt_edit)
@@ -388,19 +388,6 @@ func style_option_button(select: OptionButton) -> void:
 
 func style_option_popup(popup: PopupMenu) -> void:
 	PopupMenuStyle.apply(popup)
-	pass
-
-
-func style_check_button(check: CheckButton) -> void:
-	check.add_theme_color_override("font_color", Colors.primary_text)
-	check.add_theme_color_override("font_hover_color", Colors.primary_text)
-	check.add_theme_color_override("button_checked_color", ThemeColor.accent_theme_color())
-	var normal := StyleBoxEmpty.new()
-	check.add_theme_stylebox_override("normal", normal)
-	check.add_theme_stylebox_override("focus", normal.duplicate())
-	check.add_theme_stylebox_override("hover", normal.duplicate())
-	check.add_theme_stylebox_override("pressed", normal.duplicate())
-	check.add_theme_stylebox_override("hover_pressed", normal.duplicate())
 	pass
 
 

@@ -82,7 +82,7 @@ func apply_theme() -> void:
 	ui.style_field_label(language_label)
 	ui.style_field_label(markdown_label)
 	ui.style_option_button(language_select)
-	ui.style_check_button(markdown_toggle_button)
+	ButtonStyle.apply_check_button(markdown_toggle_button)
 	pass
 
 

@@ -47,12 +47,12 @@ theme_override_constants/separation = 10
 
 [node name="Title" type="Label" parent="UiLayer/Ui"]
 layout_mode = 2
-text = "Visual Effect Preview · 统一特效场景"
+text = "Visual Effect Preview · Desktop Coding Agent"
 
 [node name="Hint" type="Label" parent="UiLayer/Ui"]
 layout_mode = 2
 autowrap_mode = 3
-text = "F6 运行。通过真实 AgentEvents 驱动 VisualControl。上行小数据 16 轮；下行大数据 64 轮。每排按钮对应一种特效。"
+text = "Press F6. Stream responses through real AgentEvents into VisualControl (same sequence as AgentLoop). Small payload: 16 turns; large payload: 64 turns. Each button selects one effect. Enable Dual concurrent sessions to run multiple independent sessions with interleaved events."
 
 [node name="Status" type="Label" parent="UiLayer/Ui"]
 layout_mode = 2
@@ -77,13 +77,19 @@ mouse_default_cursor_shape = 2
 layout_mode = 2
 tooltip_text = "Switch theme"
 
+[node name="ConcurrentSessions" type="CheckButton" parent="UiLayer/Ui/Controls"]
+layout_mode = 2
+focus_mode = 0
+tooltip_text = "Run multiple independent sessions while agents are working; one shared VisualControl, events interleaved per turn."
+text = "Dual concurrent sessions"
+
 [node name="SmallRow" type="VBoxContainer" parent="UiLayer/Ui"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
 [node name="Label" type="Label" parent="UiLayer/Ui/SmallRow"]
 layout_mode = 2
-text = "小数据 · 16 轮 · 短用户信息 / 短 thinking · 覆盖各 tool"
+text = "Small payload · 16 turns · short user/thinking · exercises each built-in tool"
 
 [node name="Buttons" type="HBoxContainer" parent="UiLayer/Ui/SmallRow"]
 layout_mode = 2
@@ -95,7 +101,7 @@ theme_override_constants/separation = 4
 
 [node name="Label" type="Label" parent="UiLayer/Ui/LargeRow"]
 layout_mode = 2
-text = "大数据 · 64 轮 · 更长流式内容 · 更高 tool 密度"
+text = "Large payload · 64 turns · denser streams · higher tool-call density"
 
 [node name="Buttons" type="HBoxContainer" parent="UiLayer/Ui/LargeRow"]
 layout_mode = 2

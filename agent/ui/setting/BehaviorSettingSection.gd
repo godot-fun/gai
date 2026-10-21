@@ -98,9 +98,9 @@ func apply_locale() -> void:
 func apply_theme() -> void:
 	super.apply_theme()
 	ui.style_field_label(sandbox_label)
-	ui.style_check_button(sandbox_toggle_button)
+	ButtonStyle.apply_check_button(sandbox_toggle_button)
 	ui.style_field_label(browser_headless_label)
-	ui.style_check_button(browser_headless_toggle_button)
+	ButtonStyle.apply_check_button(browser_headless_toggle_button)
 	ui.style_field_label(restart_web_server_label)
 	ui.style_action_button(restart_web_server_button)
 	pass

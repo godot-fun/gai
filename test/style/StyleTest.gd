@@ -238,3 +238,37 @@ func ButtonStyle_apply_font_colors_test() -> void:
 	assert(button.get_theme_color("font_disabled_color") == Color(Color.BLACK, 0.5))
 	button.free()
 	pass
+
+
+func ButtonStyle_apply_check_button_test() -> void:
+	var check := CheckButton.new()
+	ButtonStyle.apply_check_button(check, Color.BLUE, Color.RED, Color.GREEN, Color.YELLOW, Margin.ma_1, 2, 3, 4, 5)
+	assert(check.get_theme_color("font_color") == Color.BLUE)
+	assert(check.get_theme_color("font_hover_color") == Color.RED)
+	assert(check.get_theme_color("font_pressed_color") == Color.GREEN)
+	assert(check.get_theme_color("button_checked_color") == Color.YELLOW)
+	assert(check.get_theme_constant("h_separation") == Margin.ma_1)
+	var normal: StyleBox = check.get_theme_stylebox("normal")
+	assert(normal.content_margin_left == 2)
+	assert(normal.content_margin_top == 3)
+	assert(normal.content_margin_right == 4)
+	assert(normal.content_margin_bottom == 5)
+	check.free()
+	pass
+
+
+func ButtonStyle_apply_check_button_test() -> void:
+	var check := CheckButton.new()
+	ButtonStyle.apply_check_button(check, Color.BLUE, Color.RED, Color.GREEN, Color.YELLOW, Margin.ma_1, 2, 3, 4, 5)
+	assert(check.get_theme_color("font_color") == Color.BLUE)
+	assert(check.get_theme_color("font_hover_color") == Color.RED)
+	assert(check.get_theme_color("font_pressed_color") == Color.GREEN)
+	assert(check.get_theme_color("button_checked_color") == Color.YELLOW)
+	assert(check.get_theme_constant("h_separation") == Margin.ma_1)
+	var normal: StyleBox = check.get_theme_stylebox("normal")
+	assert(normal.content_margin_left == 2)
+	assert(normal.content_margin_top == 3)
+	assert(normal.content_margin_right == 4)
+	assert(normal.content_margin_bottom == 5)
+	check.free()
+	pass

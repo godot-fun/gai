@@ -186,27 +186,13 @@ func style_preview() -> void:
 func style_toolbar() -> void:
 	var toolbar_style := StyleBoxHelper.create_style_box_flat(Colors.surface, 0, Margin.ma_1, Margin.ma_0)
 	toolbar_panel.add_theme_stylebox_override("panel", toolbar_style)
-	style_check_button(open_on_startup_check)
+	open_on_startup_check.add_theme_font_override("font", Fonts.regular())
+	open_on_startup_check.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	ButtonStyle.apply_check_button(open_on_startup_check, Colors.primary_text, Color.TRANSPARENT, Color.TRANSPARENT, Color.TRANSPARENT, Margin.ma_1,
+		Margin.ma_0, Margin.ma_0, Margin.ma_1, Margin.ma_0)
 	style_mode_button(edit_mode_button)
 	style_mode_button(split_mode_button)
 	style_mode_button(preview_mode_button)
-	pass
-
-
-func style_check_button(check: CheckButton) -> void:
-	check.add_theme_font_override("font", Fonts.regular())
-	check.add_theme_font_size_override("font_size", Typography.label_medium_size)
-	check.add_theme_color_override("font_color", Colors.primary_text)
-	check.add_theme_color_override("font_hover_color", Colors.primary_text)
-	check.add_theme_color_override("font_focus_color", Colors.primary_text)
-	check.add_theme_color_override("font_pressed_color", Colors.primary_text)
-	check.add_theme_color_override("font_hover_pressed_color", Colors.primary_text)
-	check.add_theme_color_override("button_checked_color", ThemeColor.accent_theme_color())
-	check.add_theme_constant_override("h_separation", Margin.ma_1)
-	var empty := StyleBoxEmpty.new()
-	StyleBoxHelper.apply_style_box_margin(empty, Margin.ma_0, Margin.ma_0, Margin.ma_1, Margin.ma_0)
-	for state in ["normal", "disabled", "focus", "hover", "pressed", "hover_pressed"]:
-		check.add_theme_stylebox_override(state, empty.duplicate())
 	pass
 
 

@@ -76,3 +76,32 @@ static func apply_font_colors(
 	button.add_theme_color_override("font_hover_pressed_color", pressed_color)
 	button.add_theme_color_override("font_disabled_color", disabled_color if disabled_color != Color.TRANSPARENT else Color(base_color, 0.5))
 	pass
+
+
+## Theme a [CheckButton] toggle: no button chrome, accent checked indicator, optional label colors.
+##
+## [param hover_color] and [param pressed_color] default to [param base_color] when left transparent.
+## [param checked_color] defaults to [ThemeColor.accent_theme_color].
+## Horizontal margins default symmetric ([code]ma_1[/code]); spacing between icon and label uses [code]h_separation[/code].
+static func apply_check_button(
+	check: CheckButton,
+	base_color: Color = Colors.primary_text,
+	hover_color: Color = Color.TRANSPARENT,
+	pressed_color: Color = Color.TRANSPARENT,
+	checked_color: Color = Color.TRANSPARENT,
+	h_separation: int = Margin.ma_2,
+	margin_left: int = Margin.ma_0,
+	margin_top: int = Margin.ma_1,
+	margin_right: int = Margin.ma_1,
+	margin_bottom: int = Margin.ma_1
+) -> void:
+	var hover := hover_color if hover_color != Color.TRANSPARENT else base_color
+	var pressed := pressed_color if pressed_color != Color.TRANSPARENT else hover
+	apply_font_colors(check, base_color, hover, pressed)
+	check.add_theme_color_override("button_checked_color", checked_color if checked_color != Color.TRANSPARENT else ThemeColor.accent_theme_color())
+	check.add_theme_constant_override("h_separation", h_separation)
+	var empty := StyleBoxEmpty.new()
+	StyleBoxHelper.apply_style_box_margin(empty, margin_left, margin_top, margin_right, margin_bottom)
+	for state: String in ["normal", "disabled", "focus", "hover", "pressed", "hover_pressed"]:
+		check.add_theme_stylebox_override(state, empty.duplicate())
+	pass
