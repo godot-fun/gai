@@ -109,6 +109,19 @@ func tool_pod_caches_title_and_glyph_test() -> void:
 	pass
 
 
+func shared_geometry_helpers_test() -> void:
+	var path := PackedVector2Array([Vector2.ZERO, Vector2(10.0, 0.0), Vector2(10.0, 10.0), Vector2(0.0, 10.0)])
+	assert(CyberCommandDeck.polyline_point(path, 0.0) == Vector2.ZERO)
+	assert(CyberCommandDeck.polyline_point(path, 1.0) == Vector2(10.0, 10.0))
+	var panel := CyberCommandDeck.closed_cut_panel(Rect2(0.0, 0.0, 100.0, 80.0))
+	assert(panel.size() == 7)
+	assert(panel[0] == panel[panel.size() - 1])
+	assert(CyberCommandDeck.cut_panel_points(Rect2(0.0, 0.0, 100.0, 80.0)).size() == 6)
+	var hex := VisualEffect.polygon_points(Vector2.ZERO, 10.0, 6, 0.0)
+	assert(hex.size() == 6)
+	pass
+
+
 func full_deck_replaces_head_without_reflow_test() -> void:
 	var effect := CyberCommandDeck.new()
 	for index in range(CyberCommandDeck.MAX_PODS):

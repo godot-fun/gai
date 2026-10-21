@@ -8,6 +8,12 @@ extends VisualEffect
 ## - Sides: up to `MAX_PODS` tool panels in a fixed 4×2 grid (`pod_rect`); slot 0 replaces oldest when full.
 ## - Radar: radius is precomputed for all `MAX_PODS` slots so rings never resize when tools appear.
 ##
+## Palette (maintainers)
+## - Dark: neon glow on glass. `neon_cyan` is the raw accent; strokes use the authored alphas as-is (`palette_ink = 1`).
+## - Light: ink on paper. `sync_palette` darkens hues into `LIGHT_INK_VALUE_*` and `hud()` multiplies stroke alpha by `LIGHT_INK_ALPHA`.
+## - Do not wash the desktop. Fills use `palette_fill` (dark glass / tinted card), never a full-rect dim.
+## - `_draw` must call `sync_palette()` before any `hud()` / `palette_*` read. Cache keys on accent **and** dark/light.
+##
 ## Paint order (`_draw`): backplate → decor → core hex underlay → radar → pod links → pods → core foreground → orbit → end shockwave.
 ##
 ## Pod lifecycle: CONNECTING → EXECUTING → COMPLETE/FAILED; `pending_state` applies after `MIN_EXECUTION_SECONDS`.
@@ -34,8 +40,9 @@ const RADAR_ECHO_SECONDS := 1.75
 const ACCENT_HOT_HUE_OFFSET := 0.41
 ## Cool secondary hue offset from the accent (keeps the blue grid / bus tones).
 const ACCENT_COOL_HUE_OFFSET := 0.09
-## Light theme prints the HUD as ink on paper: stroke alpha is scaled by this amount.
+## Light-theme stroke alpha multiplier. Authored alphas assume dark glow; ink needs more opacity on white.
 const LIGHT_INK_ALPHA := 2.2
+## Light-theme HSV value band so HUD lines read as ink, not neon lamps (`ink_from`).
 const LIGHT_INK_VALUE_MIN := 0.38
 const LIGHT_INK_VALUE_MAX := 0.52
 ## Stroke width for radar concentric rings.
@@ -92,13 +99,15 @@ var turn_index: int = 0
 var next_replacement_slot: int = 0
 ## Per-slot strength 0..1 when the radar beam crosses that pod; decays in `_process`. Length is `MAX_PODS`.
 var radar_echoes := PackedFloat32Array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-## Accent-derived HUD colors, refreshed when the theme accent or dark/light mode changes.
+## Accent-derived HUD colors from `sync_palette`. Invalidated when accent or dark/light changes.
 static var palette_source := Color(0, 0, 0, 0)
 static var palette_dark := true
+## 1 on dark (authored glow alphas). `LIGHT_INK_ALPHA` on light; applied only through `hud()`.
 static var palette_ink := 1.0
 static var palette_cyan: Color
 static var palette_blue: Color
 static var palette_magenta: Color
+## Core hex and idle pod fill — `Colors.deep_surface` on dark, tinted `Colors.surface` on light.
 static var palette_fill: Color
 var layout_size := Vector2.ZERO
 var layout_radar_radius := 0.0
@@ -413,7 +422,7 @@ func draw_core_hex_underlay(center: Vector2) -> void:
 	var radius := core_draw_radius()
 	var visibility := 1.0 - collapse
 	var core_hex := polygon_points(center, radius, 6, PI / 6.0)
-	draw_colored_polygon(core_hex, Color(palette_fill, 0.96))
+	draw_colored_polygon(core_hex, Color(palette_fill, 0.96)) # fill is already theme-correct; do not run through `hud()`.
 	scratch_tri[0] = center
 	for index in range(6):
 		scratch_tri[1] = core_hex[index]
@@ -500,16 +509,10 @@ func draw_pod_link(pod: ToolPod, rect: Rect2, center: Vector2) -> void:
 	draw_polyline(path, hud(color, 0.08 * open_amount), 8.0, true)
 	draw_polyline(path, hud(color, 0.52 * open_amount), 1.2, true)
 	if state <= PodState.EXECUTING:
-		var packet := fmod(elapsed * 0.72 + float(pod.slot) * 0.13, 1.0)
-		var segment := mini(int(packet * 3.0), 2)
-		var local := fmod(packet * 3.0, 1.0)
-		var position := path[segment].lerp(path[segment + 1], local)
+		var position := polyline_point(path, fmod(elapsed * 0.72 + float(pod.slot) * 0.13, 1.0))
 		draw_circle(position, 6.0, hud(color, 0.1))
 		draw_circle(position, 2.4, hud(color, 0.95))
-		var return_packet := 1.0 - fmod(elapsed * 0.48 + float(pod.slot) * 0.19, 1.0)
-		var return_segment := mini(int(return_packet * 3.0), 2)
-		var return_local := fmod(return_packet * 3.0, 1.0)
-		var return_position := path[return_segment].lerp(path[return_segment + 1], return_local)
+		var return_position := polyline_point(path, 1.0 - fmod(elapsed * 0.48 + float(pod.slot) * 0.19, 1.0))
 		draw_rect(Rect2(return_position - Vector2(2.0, 2.0), Vector2(4.0, 4.0)), hud(palette_magenta, 0.8), true)
 	pass
 
@@ -522,12 +525,8 @@ func draw_tool_pod(pod: ToolPod, rect: Rect2, center: Vector2) -> void:
 	var state := pod.state
 	var color := pod_color(state)
 	var shown := Rect2(rect.position + Vector2(rect.size.x * (1.0 - open_amount) * 0.5, rect.size.y * (1.0 - open_amount) * 0.5), rect.size * open_amount)
+	var panel := cut_panel_points(shown)
 	var cut := minf(15.0, shown.size.x * 0.1)
-	var panel := PackedVector2Array([
-		shown.position + Vector2(cut, 0.0), shown.position + Vector2(shown.size.x, 0.0),
-		shown.end - Vector2(0.0, cut), shown.end - Vector2(cut, 0.0),
-		shown.position + Vector2(0.0, shown.size.y), shown.position + Vector2(0.0, cut),
-	])
 	var shadow := PackedVector2Array()
 	for point: Vector2 in panel:
 		shadow.append(point + Vector2(8.0, 8.0))
@@ -540,7 +539,7 @@ func draw_tool_pod(pod: ToolPod, rect: Rect2, center: Vector2) -> void:
 	if is_executing:
 		for glow in range(4, 0, -1):
 			draw_polyline(outset_polyline(panel, float(glow) * 3.0), hud(color, (0.018 + active_breath * 0.012) * float(5 - glow)), 4.0, true)
-	draw_colored_polygon(panel, hud(color, 0.075 + active_breath * 0.025) if is_executing else Color(palette_fill, 0.94))
+	draw_colored_polygon(panel, hud(color, 0.075 + active_breath * 0.025) if is_executing else Color(palette_fill, 0.94)) # idle fill skips `hud()`; executing tint uses it.
 	if radar_feedback > 0.0:
 		draw_colored_polygon(panel, hud(color, radar_feedback * 0.13))
 		var scan_x := lerpf(shown.position.x, shown.end.x, radar_feedback)
@@ -773,10 +772,12 @@ static func neon_magenta() -> Color:
 	return palette_magenta
 
 
+## Apply stroke/glow alpha. Light theme scales by `palette_ink`; opaque labels clamp to 1.
 static func hud(color: Color, alpha: float) -> Color:
 	return Color(color, clampf(alpha * palette_ink, 0.0, 1.0))
 
 
+## Rebuild HUD colors when accent or appearance changes. Dark keeps neon; light switches to ink.
 static func sync_palette() -> void:
 	var accent := ThemeColor.accent_theme_color()
 	var dark := ThemeColor.is_dark_theme()
@@ -791,6 +792,7 @@ static func sync_palette() -> void:
 		palette_magenta = accent_shifted_from(accent, ACCENT_HOT_HUE_OFFSET, 1.05)
 		palette_fill = Colors.deep_surface
 		return
+	# Ink path: same hue offsets as dark, lower value, slightly higher saturation so lines stay distinct on white.
 	palette_ink = LIGHT_INK_ALPHA
 	palette_cyan = ink_from(accent, 0.0, 1.12)
 	palette_blue = ink_from(accent, ACCENT_COOL_HUE_OFFSET, 1.08)
@@ -799,14 +801,14 @@ static func sync_palette() -> void:
 	pass
 
 
-static func accent_shifted(hue_offset: float, sat_mul: float = 1.0, val_mul: float = 1.0) -> Color:
-	return accent_shifted_from(ThemeColor.accent_theme_color(), hue_offset, sat_mul, val_mul)
-
-
+## Dark-theme companion hue. Value is floored at 0.72 so strokes stay neon on a dark desktop.
 static func accent_shifted_from(base: Color, hue_offset: float, sat_mul: float = 1.0, val_mul: float = 1.0) -> Color:
-	return Color.from_hsv(fposmod(base.h + hue_offset, 1.0), clampf(base.s * sat_mul, 0.0, 1.0), clampf(maxf(base.v, 0.72) * val_mul, 0.0, 1.0))
+	var neon := base
+	neon.v = maxf(base.v, 0.72)
+	return ThemeColor.shift_hsv(neon, hue_offset, sat_mul, val_mul)
 
 
+## Light-theme companion hue. Same offsets as `accent_shifted_from`, but value is clamped into the ink band.
 static func ink_from(base: Color, hue_offset: float, sat_mul: float = 1.0) -> Color:
 	var hue := fposmod(base.h + hue_offset, 1.0)
 	var sat := clampf(maxf(base.s, 0.35) * sat_mul, 0.0, 1.0)
@@ -826,21 +828,28 @@ static func hex_flat_half_width(radius: float) -> float:
 	return radius * HEX_FLAT_RATIO
 
 
-static func polygon_points(center: Vector2, radius: float, sides: int, rotation: float) -> PackedVector2Array:
-	var points := PackedVector2Array()
-	for index in range(sides):
-		points.append(center + Vector2.from_angle(rotation + float(index) * TAU / float(sides)) * radius)
-	return points
+## Sample a polyline by normalized amount 0..1 across equal segment weights (matches the 3-bus packet travel).
+static func polyline_point(path: PackedVector2Array, amount: float) -> Vector2:
+	var last_segment := path.size() - 2
+	var scaled := clampf(amount, 0.0, 1.0) * float(last_segment + 1)
+	var segment := mini(int(scaled), last_segment)
+	return path[segment].lerp(path[segment + 1], fmod(scaled, 1.0))
 
 
-static func closed_cut_panel(rect: Rect2) -> PackedVector2Array:
+## Open cut-corner pod outline (6 vertices). `closed_cut_panel` appends the first point for polylines.
+static func cut_panel_points(rect: Rect2) -> PackedVector2Array:
 	var cut := minf(15.0, rect.size.x * 0.1)
 	return PackedVector2Array([
 		rect.position + Vector2(cut, 0.0), rect.position + Vector2(rect.size.x, 0.0),
 		rect.end - Vector2(0.0, cut), rect.end - Vector2(cut, 0.0),
 		rect.position + Vector2(0.0, rect.size.y), rect.position + Vector2(0.0, cut),
-		rect.position + Vector2(cut, 0.0),
 	])
+
+
+static func closed_cut_panel(rect: Rect2) -> PackedVector2Array:
+	var points := cut_panel_points(rect)
+	points.append(points[0])
+	return points
 
 
 static func outset_polyline(points: PackedVector2Array, amount: float) -> PackedVector2Array:

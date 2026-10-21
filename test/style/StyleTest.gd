@@ -1,4 +1,4 @@
-## Unit tests for [StyleBoxHelper], [ButtonStyle], [Margin], [DisplayScale] and the builders that go through them.
+## Unit tests for [StyleBoxHelper], [ButtonStyle], [Margin], [DisplayScale], [ThemeColor] helpers, and the builders that go through them.
 
 const GRAY := Color(0.5, 0.5, 0.5)
 
@@ -80,6 +80,17 @@ func ColorBase_follow_theme_test() -> void:
 
 	ThemeColor.current_theme = original
 	ThemeColor.refresh_derived_colors()
+	pass
+
+
+func ThemeColor_shift_hsv_test() -> void:
+	var base := Color.from_hsv(0.10, 0.50, 0.80)
+	var shifted := ThemeColor.shift_hsv(base, 0.25, 0.50, 0.50)
+	assert(is_equal_approx(shifted.h, 0.35))
+	assert(is_equal_approx(shifted.s, 0.25))
+	assert(is_equal_approx(shifted.v, 0.40))
+	var wrapped := ThemeColor.shift_hsv(Color.from_hsv(0.90, 1.0, 1.0), 0.20)
+	assert(is_equal_approx(wrapped.h, 0.10))
 	pass
 
 

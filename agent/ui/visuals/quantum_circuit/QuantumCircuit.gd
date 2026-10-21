@@ -143,16 +143,11 @@ static func circuit_color() -> Color:
 
 ## Nearby hues preserve depth without drifting away from the active theme.
 static func phase_color() -> Color:
-	return shifted_accent(ACCENT_COOL_HUE_OFFSET, 0.88, 0.94)
+	return ThemeColor.shift_hsv(ThemeColor.accent_theme_color(), ACCENT_COOL_HUE_OFFSET, 0.88, 0.94)
 
 
 static func tool_color() -> Color:
-	return shifted_accent(ACCENT_WARM_HUE_OFFSET, 0.96, 1.0)
-
-
-static func shifted_accent(hue_offset: float, saturation_multiplier: float, value_multiplier: float) -> Color:
-	var accent := ThemeColor.accent_theme_color()
-	return Color.from_hsv(fposmod(accent.h + hue_offset, 1.0), clampf(accent.s * saturation_multiplier, 0.0, 1.0), clampf(accent.v * value_multiplier, 0.0, 1.0))
+	return ThemeColor.shift_hsv(ThemeColor.accent_theme_color(), ACCENT_WARM_HUE_OFFSET, 0.96, 1.0)
 
 
 func _process(delta: float) -> void:

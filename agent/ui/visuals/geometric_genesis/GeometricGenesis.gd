@@ -757,13 +757,6 @@ static func geometry_kind_for(index: int, complexity: int) -> int:
 	return MATURE_KINDS[index % MATURE_KINDS.size()]
 
 
-static func polygon_points(center: Vector2, radius: float, sides: int, rotation: float) -> PackedVector2Array:
-	var points := PackedVector2Array()
-	for index in range(sides):
-		points.append(center + Vector2.from_angle(rotation + float(index) * TAU / float(sides)) * radius)
-	return points
-
-
 static func partial_polyline(points: PackedVector2Array, amount: float) -> PackedVector2Array:
 	if points.size() < 2 or amount <= 0.0:
 		return PackedVector2Array()

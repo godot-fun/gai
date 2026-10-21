@@ -58,6 +58,14 @@ func draw_centered_text(position: Vector2, text: String, font: Font, font_size: 
 	pass
 
 
+## Regular polygon in local draw space. [param rotation] is the first vertex angle in radians.
+static func polygon_points(center: Vector2, radius: float, sides: int, rotation: float) -> PackedVector2Array:
+	var points := PackedVector2Array()
+	for index in range(sides):
+		points.append(center + Vector2.from_angle(rotation + float(index) * TAU / float(sides)) * radius)
+	return points
+
+
 func on_agent_start(_session_id: int) -> void:
 	pass
 
