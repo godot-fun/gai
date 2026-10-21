@@ -10,21 +10,9 @@ extends Object
 ## Both requests start from [member AgentSession.messages]. The memory agent's prompt, tool calls,
 ## tool results, and final confirmation never enter the summary request or persisted chat history.
 
-const SUMMARY_PREFIX := "# Compacted conversation context"
 const ERROR_RUNNING := "running"
 const ERROR_EMPTY := "empty"
 const ERROR_REQUEST := "request"
-## Tool-free request whose response becomes the new compacted continuation context.
-const COMPACTION_PROMPT := """Create a compact continuation summary of the conversation above.
-
-Preserve every detail needed to continue the work correctly, especially:
-- the user's goals, constraints, and explicit preferences;
-- decisions already made and their reasons;
-- files changed and important implementation details;
-- commands and tests run, including failures;
-- unfinished work, blockers, and concrete next steps.
-
-Do not address the user. Do not call tools. Return only the continuation summary."""
 
 class CompactionState:
 	var summary := StringUtils.EMPTY
@@ -38,11 +26,6 @@ static var compacting_sessions: Dictionary[int, CompactionState] = {}
 
 static func is_compacting(session_id: int) -> bool:
 	return compacting_sessions.has(session_id)
-
-
-## Returns whether [param message] is the system message persisted for a prior compaction.
-static func is_compaction_message(message: ChatMessage) -> bool:
-	return message.role == ChatMessage.ROLE_SYSTEM and message.content.begins_with(SUMMARY_PREFIX)
 
 
 ## Runs memory maintenance and continuation summarization concurrently, then persists the summary.
@@ -72,7 +55,7 @@ static func compact_session(session_id: int) -> void:
 	# Build the summary request again from the original conversation. The memory prompt,
 	# its tool calls, and its confirmation must never become part of the compacted context.
 	var memory_messages := MemoryManager.collect_memory_messages(original_messages)
-	memory_messages.append(ChatMessage.user(COMPACTION_PROMPT))
+	memory_messages.append(ChatMessage.user(CompactionPrompt.SUMMARY_REQUEST))
 	var summary_deadline := Time.get_ticks_msec() + OpenAiClient.REQUEST_TIMEOUT_MILLIS + TimeUtils.MILLIS_PER_SECOND
 
 	async_generate_summary(client, memory_messages, state)
@@ -95,7 +78,7 @@ static func compact_session(session_id: int) -> void:
 		return
 	var compacted_messages := collect_context_messages(session.messages)
 	summary = summary.strip_edges()
-	compacted_messages.append(ChatMessage.system(SUMMARY_PREFIX + FileUtils.NEWLINE_LF + summary))
+	compacted_messages.append(ChatMessage.system(CompactionPrompt.build_summary_context(summary)))
 	session.messages = compacted_messages
 	session.chat_entries = collect_context_entries(session.chat_entries)
 	session.chat_entries.append(ChatEntry.new(
@@ -123,7 +106,7 @@ static func collect_context_messages(messages: Array[ChatMessage]) -> Array[Chat
 	for message: ChatMessage in messages:
 		if message.role != ChatMessage.ROLE_SYSTEM:
 			continue
-		if is_compaction_message(message):
+		if CompactionPrompt.is_compaction_message(message):
 			continue
 		context.append(message)
 	return context

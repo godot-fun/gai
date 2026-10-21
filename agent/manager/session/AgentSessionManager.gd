@@ -341,7 +341,7 @@ static func message_index_for_chat_entry(session: AgentSession, entry_idx: int) 
 			elif entry.kind == ChatEntry.KIND_AGENT_PROMPT:
 				matches = AgentPrompt.is_agent_context_message(message)
 			elif entry.kind == ChatEntry.KIND_COMPACTION:
-				matches = CompactionManager.is_compaction_message(message)
+				matches = CompactionPrompt.is_compaction_message(message)
 			if matches:
 				return message_idx
 		return -1

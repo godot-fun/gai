@@ -59,7 +59,7 @@ static func compaction_keeps_only_context_entries_test() -> void:
 static func compaction_replaces_previous_summary_message_test() -> void:
 	var messages: Array[ChatMessage] = [
 		ChatMessage.system("system"),
-		ChatMessage.system(CompactionManager.SUMMARY_PREFIX + "\nold summary"),
+		ChatMessage.system(CompactionPrompt.build_summary_context("old summary")),
 		ChatMessage.user("new question"),
 	]
 	var context := CompactionManager.collect_context_messages(messages)
@@ -71,7 +71,7 @@ static func compaction_replaces_previous_summary_message_test() -> void:
 static func compaction_entry_resolves_to_summary_message_test() -> void:
 	var session := AgentSession.new(42)
 	session.messages.append(ChatMessage.system("system"))
-	session.messages.append(ChatMessage.system(CompactionManager.SUMMARY_PREFIX + "\nsummary"))
+	session.messages.append(ChatMessage.system(CompactionPrompt.build_summary_context("summary")))
 	session.chat_entries.append(ChatEntry.new(ChatEntry.KIND_SYSTEM, ChatEntry.TITLE_SYSTEM, "system"))
 	session.chat_entries.append(ChatEntry.new(ChatEntry.KIND_COMPACTION, ChatEntry.TITLE_COMPACTION, "summary"))
 	assert(AgentSessionManager.message_index_for_chat_entry(session, 1) == 1)
@@ -88,9 +88,9 @@ static func system_entry_resolves_to_system_message_test() -> void:
 
 
 static func compaction_message_identification_test() -> void:
-	assert(CompactionManager.is_compaction_message(ChatMessage.system(CompactionManager.SUMMARY_PREFIX + "\nsummary")))
-	assert(not CompactionManager.is_compaction_message(ChatMessage.system("normal system context")))
-	assert(not CompactionManager.is_compaction_message(ChatMessage.user(CompactionManager.SUMMARY_PREFIX + "\nsummary")))
+	assert(CompactionPrompt.is_compaction_message(ChatMessage.system(CompactionPrompt.build_summary_context("summary"))))
+	assert(not CompactionPrompt.is_compaction_message(ChatMessage.system("normal system context")))
+	assert(not CompactionPrompt.is_compaction_message(ChatMessage.user(CompactionPrompt.build_summary_context("summary"))))
 	pass
 
 
@@ -112,7 +112,7 @@ static func memory_messages_drop_thinking_and_tool_protocol_test() -> void:
 	tool_call.id = "call-1"
 	var messages: Array[ChatMessage] = [
 		ChatMessage.system("system"),
-		ChatMessage.system(CompactionManager.SUMMARY_PREFIX + "\nprevious work"),
+		ChatMessage.system(CompactionPrompt.build_summary_context("previous work")),
 		ChatMessage.user("   "),
 		ChatMessage.user(" question "),
 		ChatMessage.assistant_tool_calls([tool_call], "", "private thinking"),
@@ -122,7 +122,7 @@ static func memory_messages_drop_thinking_and_tool_protocol_test() -> void:
 	var memory_messages := MemoryManager.collect_memory_messages(messages)
 	assert(memory_messages.size() == 3)
 	assert(memory_messages[0].role == ChatMessage.ROLE_USER)
-	assert(memory_messages[0].content == "Previous compacted context:\nprevious work")
+	assert(memory_messages[0].content == CompactionPrompt.format_previous_context("previous work"))
 	assert(memory_messages[1].role == ChatMessage.ROLE_USER and memory_messages[1].content == "question")
 	assert(memory_messages[2].role == ChatMessage.ROLE_ASSISTANT and memory_messages[2].content == "answer")
 	assert(memory_messages[2].reasoning_content.is_empty())
