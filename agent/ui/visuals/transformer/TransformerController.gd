@@ -63,13 +63,6 @@ func set_visual_visible(show: bool, animated: bool) -> void:
 	pass
 
 
-func reset_visual() -> void:
-	request_generation += 1
-	cancel_stages()
-	modulate = Color.WHITE
-	pass
-
-
 func on_agent_start(value: int) -> void:
 	session_id = value
 	var session := AgentSessionStore.load_session(value)

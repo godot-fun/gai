@@ -62,25 +62,6 @@ func fade_out_seconds() -> float:
 	return 0.5
 
 
-func reset_visual() -> void:
-	columns.clear()
-	active_tools.clear()
-	elapsed = 0.0
-	glyph_clock = 0.0
-	glyph_tick = 0
-	reasoning_energy = 0.0
-	layout_width = -1.0
-	active_session_id = 0
-	sentence_timer = 0.0
-	visual_chat_sentence_cursor.clear()
-	reply_glyphs.clear()
-	reply_sentence_index = 0
-	active_reply_rain_count = 0
-	pending_sentence = ""
-	queue_redraw()
-	pass
-
-
 func on_agent_start(session_id: int) -> void:
 	active_session_id = session_id
 	visual_chat_sentence_cursor.reset_for_session(session_id)

@@ -67,25 +67,6 @@ func fade_out_seconds() -> float:
 	return 0.34
 
 
-func reset_visual() -> void:
-	phase = DeckPhase.IDLE
-	pods.clear()
-	pod_by_id.clear()
-	elapsed = 0.0
-	radar_angle = 0.0
-	activity = 0.0
-	scan_wave = -1.0
-	collapse = 0.0
-	turn_index = 0
-	session_id = 0
-	next_replacement_slot = 0
-	end_requested = false
-	end_error_message = ""
-	radar_echoes.clear()
-	queue_redraw()
-	pass
-
-
 func on_agent_start(p_session_id: int) -> void:
 	session_id = p_session_id
 	phase = DeckPhase.ACTIVE

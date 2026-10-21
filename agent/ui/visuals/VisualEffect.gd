@@ -55,10 +55,6 @@ func draw_centered_text(position: Vector2, text: String, font: Font, font_size: 
 	pass
 
 
-func reset_visual() -> void:
-	pass
-
-
 func on_agent_start(_session_id: int) -> void:
 	pass
 

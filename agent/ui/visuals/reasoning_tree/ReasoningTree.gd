@@ -59,23 +59,6 @@ func fade_out_seconds() -> float:
 	return 0.45
 
 
-func reset_visual() -> void:
-	trunk_growth = 0.0
-	target_trunk_growth = 0.0
-	crown_growth = 0.0
-	target_crown_growth = 0.0
-	turn_index = 0
-	branch_sequence = 0
-	visual_time = 0.0
-	pulse_travel_distances.clear()
-	pulse_spawn_elapsed = 0.0
-	phase_label = I18n.t("agent.visuals.preparing_task")
-	branches.clear()
-	active_tool_indices.clear()
-	queue_redraw()
-	pass
-
-
 func on_agent_start(_session_id: int) -> void:
 	phase_label = I18n.t("agent.visuals.understanding_task")
 	# Stay below the first turn tip so the trunk only grows forward once turns begin.

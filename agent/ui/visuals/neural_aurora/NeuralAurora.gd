@@ -93,32 +93,6 @@ func fade_out_seconds() -> float:
 	return 0.5
 
 
-func reset_visual() -> void:
-	elapsed = 0.0
-	energy = 0.0
-	target_energy = 0.0
-	detail = 0.0
-	target_detail = 0.0
-	output_pulse = 0.0
-	tool_pulse = 0.0
-	tool_angle = 0.0
-	success_pulse = 0.0
-	failure_pulse = 0.0
-	failure_progress = 0.0
-	pending_tool_calls.clear()
-	pending_tool_results.clear()
-	playing_tool.clear()
-	tool_play_seconds = 0.0
-	tool_result_hold_seconds = 0.0
-	direction = 1.0
-	target_direction = 1.0
-	completion = 0.0
-	completing = false
-	ended_with_error = false
-	tool_label.modulate.a = 0.0
-	pass
-
-
 func on_agent_start(_session_id: int) -> void:
 	# Wake the center first. Low detail lets the curtains unfold before reasoning begins.
 	target_energy = 0.72

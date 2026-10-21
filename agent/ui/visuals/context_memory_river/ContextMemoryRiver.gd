@@ -103,29 +103,6 @@ func fade_out_seconds() -> float:
 	return 0.45
 
 
-func reset_visual() -> void:
-	items.clear()
-	absorption_effects.clear()
-	decorative_motes.clear()
-	output_motes.clear()
-	elapsed = 0.0
-	turn_index = 0
-	spawn_index = 0
-	decorative_spawn_index = 0
-	decorative_spawn_timer = 0.0
-	output_spawn_index = 0
-	prompt_tokens = 0
-	completion_tokens = 0
-	activity = 0.0
-	visual_activity = 0.0
-	output_activity = 0.0
-	is_ending = false
-	lens_closing = false
-	lens_close_progress = 0.0
-	queue_redraw()
-	pass
-
-
 func on_agent_start(_session_id: int) -> void:
 	is_ending = false
 	lens_closing = false

@@ -88,12 +88,6 @@ func set_visual_visible(show: bool, animated: bool) -> void:
 	pass
 
 
-func reset_visual() -> void:
-	if jarvis_orb != null:
-		jarvis_orb.reset_growth()
-	pass
-
-
 func on_agent_start(session_id: int) -> void:
 	transition_to(OrbPhase.Phase.AWAKE)
 	active_session_id = session_id

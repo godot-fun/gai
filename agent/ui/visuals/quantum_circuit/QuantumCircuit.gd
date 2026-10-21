@@ -44,23 +44,6 @@ func fade_out_seconds() -> float:
 	return 0.38
 
 
-func reset_visual() -> void:
-	wires.clear()
-	tool_gates.clear()
-	active_wire = {}
-	elapsed = 0.0
-	pulse = 0.0
-	collapse = 0.0
-	readout_height = 0.0
-	completing = false
-	ended_with_error = false
-	turn_serial = 0
-	gate_serial = 0
-	next_replacement_slot = 0
-	queue_redraw()
-	pass
-
-
 func on_agent_start(_session_id: int) -> void:
 	pulse = 1.0
 	pass

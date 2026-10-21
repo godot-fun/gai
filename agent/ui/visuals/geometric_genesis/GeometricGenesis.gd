@@ -79,22 +79,6 @@ func fade_out_seconds() -> float:
 	return 0.5
 
 
-func reset_visual() -> void:
-	seals.clear()
-	active_seal = null
-	active_tools.clear()
-	elapsed = 0.0
-	reasoning_energy = 0.0
-	completion = 0.0
-	completing = false
-	ended_with_error = false
-	turn_serial = 0
-	coordinate_reveal = 0.0
-	formula_layout.clear()
-	queue_redraw()
-	pass
-
-
 func on_agent_start(_session_id: int) -> void:
 	reasoning_energy = 0.35
 	queue_redraw()

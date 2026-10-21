@@ -52,37 +52,6 @@ func fade_out_seconds() -> float:
 	return 0.25
 
 
-func reset_visual() -> void:
-	active_tools.clear()
-	animation_queue.clear()
-	animation_event_active = false
-	active_tool_name = ""
-	reasoning_active = false
-	card_text = ""
-	sit_blend = 0.0
-	paw_blend = 0.0
-	ear_blend = 0.0
-	state_blend = 1.0
-	gaze = Vector2.ZERO
-	body_lean = 0.0
-	impact_pulse = 0.0
-	gesture_blend = 0.0
-	resting_paw_activity = 0.0
-	mouth_blend = 0.35
-	tail_tool_blend = 0.0
-	tail_offset = 0.0
-	tail_velocity = 0.0
-	tail_swing_phase = 0.0
-	tail_bob_phase = 0.0
-	tail_posture = 0.0
-	whisker_phase = 0.0
-	elapsed = 0.0
-	state_seconds = 0.0
-	state = CatState.IDLE
-	queue_redraw()
-	pass
-
-
 func on_agent_start(_session_id: int) -> void:
 	set_state(CatState.THINKING)
 	pass

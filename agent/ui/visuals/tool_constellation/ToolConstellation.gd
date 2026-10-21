@@ -91,30 +91,6 @@ var crt_glitch: float = 0.0
 var field_spread: float = 0.0
 
 
-func reset_visual() -> void:
-	nodes.clear()
-	active_calls.clear()
-	pending_calls.clear()
-	pending_results.clear()
-	playing_call = null
-	playing_seconds = 0.0
-	result_hold_seconds = 0.0
-	turn_index = 0
-	spawn_sequence = 0
-	elapsed = 0.0
-	core_pulse = 0.0
-	absorb_flash = 0.0
-	completion = 0.0
-	completing = false
-	ended_with_error = false
-	stream_buffer = ""
-	stream_kind = ""
-	crt_glitch = 0.0
-	field_spread = 0.0
-	queue_redraw()
-	pass
-
-
 func on_agent_start(_session_id: int) -> void:
 	field_spread = 0.0
 	core_pulse = 1.0

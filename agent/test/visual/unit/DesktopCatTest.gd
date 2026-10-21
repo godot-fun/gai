@@ -19,8 +19,6 @@ func lifecycle_state_test() -> void:
 	assert(cat.state == DesktopCat.CatState.IDLE)
 	cat.on_agent_end("")
 	assert(cat.state == DesktopCat.CatState.SUCCESS)
-	cat.reset_visual()
-	assert(cat.state == DesktopCat.CatState.IDLE)
 	cat.free()
 	pass
 
@@ -98,27 +96,6 @@ static func whiskers_move_out_of_phase_test() -> void:
 	var right_whisker := DesktopCat.whisker_wave(0.5, 1.27)
 	assert(not is_equal_approx(left_whisker, right_whisker))
 	assert(not is_equal_approx(left_whisker, DesktopCat.whisker_wave(0.8, -0.13)))
-	pass
-
-
-func reset_visual_clears_animation_state_test() -> void:
-	var cat := DesktopCat.new()
-	cat.elapsed = 8.0
-	cat.state_seconds = 4.0
-	cat.tail_offset = 6.0
-	cat.tail_velocity = 3.0
-	cat.tail_swing_phase = 2.0
-	cat.tail_bob_phase = 4.0
-	cat.whisker_phase = 5.0
-	cat.reset_visual()
-	assert(cat.elapsed == 0.0)
-	assert(cat.state_seconds == 0.0)
-	assert(cat.tail_offset == 0.0)
-	assert(cat.tail_velocity == 0.0)
-	assert(cat.tail_swing_phase == 0.0)
-	assert(cat.tail_bob_phase == 0.0)
-	assert(cat.whisker_phase == 0.0)
-	cat.free()
 	pass
 
 

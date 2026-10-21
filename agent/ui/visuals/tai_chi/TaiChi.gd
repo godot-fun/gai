@@ -40,18 +40,6 @@ func fade_out_seconds() -> float:
 	return 0.55
 
 
-func reset_visual() -> void:
-	for flow: Variant in [
-		tai_chi_opening_flow, tai_chi_duality_flow, tai_chi_formation_flow,
-		tai_chi_evolution_flow, tai_chi_bagua_flow, tai_chi_carousel_flow,
-		tai_chi_hexagram_flow, tai_chi_divination_flow,
-	]:
-		flow.reset()
-	tai_chi_element_background.reset()
-	queue_redraw()
-	pass
-
-
 func on_agent_start(_session_id: int) -> void:
 	queue_redraw()
 	pass

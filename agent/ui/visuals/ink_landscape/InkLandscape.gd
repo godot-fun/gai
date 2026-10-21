@@ -125,28 +125,6 @@ func fade_out_seconds() -> float:
 	return 0.15
 
 
-func reset_visual() -> void:
-	for mountain: MountainState in mountains:
-		var canvas := mountain.canvas
-		if is_instance_valid(canvas):
-			canvas.queue_free()
-	mountains.clear()
-	birds.clear()
-	elapsed = 0.0
-	reasoning_ink = 0.0
-	completing = false
-	ended_with_error = false
-	turn_serial = 0
-	bird_serial = 0
-	cloud_count = 0
-	cloud_reveal = 0.0
-	current_turn_has_mountain = false
-	set_landscape_alpha(1.0)
-	update_cloud_shader_state()
-	queue_redraw()
-	pass
-
-
 func on_agent_start(_session_id: int) -> void:
 	reasoning_ink = 0.3
 	queue_redraw()

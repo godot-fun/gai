@@ -91,33 +91,6 @@ func fade_out_seconds() -> float:
 	return 0.45
 
 
-func reset_visual() -> void:
-	gravity = 0.0
-	target_gravity = 0.0
-	disk_energy = 0.0
-	target_disk_energy = 0.0
-	reasoning_density = 0.0
-	target_reasoning_density = 0.0
-	jet_energy = 0.0
-	wormhole_open = 0.0
-	target_wormhole_open = 0.0
-	success_return = 0.0
-	success_return_progress = 0.0
-	success_absorb_time = 0.0
-	failure_shock = 0.0
-	context_density = 0.0
-	completion = 0.0
-	completing = false
-	ended_with_error = false
-	tool_badge_state = ToolBadgeState.CONNECTING
-	tool_badge_alpha = 0.0
-	target_tool_badge_alpha = 0.0
-	tool_badge_hold_seconds = 0.0
-	if tool_badge != null:
-		tool_badge.modulate.a = 0.0
-	pass
-
-
 func on_agent_start(_session_id: int) -> void:
 	# Establish the gravity well before making the disk energetic.
 	target_gravity = 0.78

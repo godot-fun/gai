@@ -230,18 +230,6 @@ func _ready() -> void:
 	pass
 
 
-func reset_visual() -> void:
-	active_session_id = 0
-	hold_timer = 0.0
-	preset_cursor = -1
-	preset_order.clear()
-	current_preset_name = ""
-	stop_transition()
-	if filter_material != null:
-		filter_material.set_shader_parameter("strength", 0.0)
-	pass
-
-
 func on_agent_start(session_id: int) -> void:
 	active_session_id = session_id
 	# Stable session data plus the current tick prevents identical ordering on consecutive runs.

@@ -5,7 +5,6 @@ extends Control
 
 
 var current_effect: VisualEffect
-var current_visual_type: VisualType.Type = VisualType.Type.NONE
 
 
 func _ready() -> void:
@@ -60,7 +59,6 @@ func on_agent_start(session_id: int) -> void:
 	var effect := prepare_effect()
 	if effect == null or effect.visible:
 		return
-	effect.reset_visual()
 	effect.on_agent_start(session_id)
 	effect.set_visual_visible(true, true)
 	pass
@@ -68,17 +66,14 @@ func on_agent_start(session_id: int) -> void:
 
 func prepare_effect() -> VisualEffect:
 	if current_effect != null:
-		if current_effect.visible or current_visual_type == AgentSetting.get_visual_type():
+		if current_effect.visible:
 			return current_effect
 		current_effect.queue_free()
 		current_effect = null
-	current_visual_type = VisualType.Type.NONE
-	var visual_type := AgentSetting.get_visual_type()
-	var effect := create_effect(visual_type)
+	var effect := create_effect(AgentSetting.get_visual_type())
 	if effect == null:
 		return null
 	current_effect = effect
-	current_visual_type = visual_type
 	add_child(effect)
 	effect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	return current_effect
