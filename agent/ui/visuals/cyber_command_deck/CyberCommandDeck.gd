@@ -40,7 +40,7 @@ const HUD_RING_STROKE := 1.0
 const HUD_HEX_STROKE := 0.65
 
 enum DeckPhase { IDLE, ACTIVE, REASONING, RESPONDING, ENDING }
-enum PodState { CONNECTING, EXECUTING, COMPLETE, FAILED }
+enum PodState { NONE = -1, CONNECTING, EXECUTING, COMPLETE, FAILED }
 
 ## Runtime state for one tool panel. Keeping this as a class makes pod ownership and fields explicit.
 class ToolPod:
@@ -50,15 +50,16 @@ class ToolPod:
 	var name: String
 	var slot: int
 	var state: int
-	var pending_state: int = -1
+	var pending_state: int
 	var age: float = 0.0
 	var open: float = 0.0
 
-	func _init(tool_call_id: String, tool_name: String, pod_slot: int, initial_state: int) -> void:
+	func _init(tool_call_id: String, tool_name: String, pod_slot: int, initial_state: int, initial_pending_state: int) -> void:
 		id = tool_call_id
 		name = tool_name
 		slot = pod_slot
 		state = initial_state
+		pending_state = initial_pending_state
 		pass
 
 
@@ -93,7 +94,7 @@ func on_agent_start(_session_id: int) -> void:
 ## Blocks until every pod has reached COMPLETE/FAILED and held for `COMPLETE_HOLD_SECONDS`, then runs the end wave.
 func on_agent_end(_session_id: int, error_message: String) -> void:
 	for pod: ToolPod in pods:
-		if pod.state < PodState.COMPLETE and pod.pending_state < 0:
+		if pod.state < PodState.COMPLETE and pod.pending_state == PodState.NONE:
 			pod.pending_state = PodState.FAILED if StringUtils.is_not_blank(error_message) else PodState.COMPLETE
 	if not is_inside_tree():
 		return
@@ -139,7 +140,7 @@ func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: 
 		slot = next_replacement_slot
 		next_replacement_slot = (next_replacement_slot + 1) % MAX_PODS
 		pod_by_id.erase(pods[slot].id)
-	var pod := ToolPod.new(tool_call_id, tool_name, slot, PodState.CONNECTING)
+	var pod := ToolPod.new(tool_call_id, tool_name, slot, PodState.CONNECTING, PodState.NONE)
 	radar_echoes.erase(slot)
 	if slot < pods.size():
 		pods[slot] = pod
@@ -188,7 +189,7 @@ func _process(delta: float) -> void:
 		if pod.state == PodState.CONNECTING and pod.age >= CONNECT_SECONDS:
 			pod.state = PodState.EXECUTING
 			pod.age = 0.0
-		elif pod.state == PodState.EXECUTING and pod.age >= MIN_EXECUTION_SECONDS and pod.pending_state >= 0:
+		elif pod.state == PodState.EXECUTING and pod.age >= MIN_EXECUTION_SECONDS and pod.pending_state != PodState.NONE:
 			pod.state = pod.pending_state
 			pod.age = 0.0
 	if phase == DeckPhase.ENDING:
