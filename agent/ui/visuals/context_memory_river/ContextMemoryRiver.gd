@@ -34,7 +34,7 @@ const END_OUTPUT_SECONDS := 0.65
 const END_LENS_SECONDS := 0.32
 const END_TIMEOUT_MSEC := 4000
 
-enum StreamType { USER, SYSTEM, HISTORY, FILE, TOOL, REASONING, ANSWER }
+enum StreamType { USER, SYSTEM, HISTORY, FILE, TOOL, WEB, REASONING, ANSWER }
 
 
 class StreamItem extends RefCounted:
@@ -173,14 +173,13 @@ func on_message_complete(_session_id: int, usage: OpenAiUsage) -> void:
 
 
 func on_tool_execution_start(_session_id: int, _tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
-	add_item(StreamType.TOOL, ToolVisualDisplay.upper_name(tool_name), 0.7)
+	add_item(stream_type_for_tool_name(tool_name), ToolVisualDisplay.upper_name(tool_name), 0.7)
 	activity = 1.0
 	pass
 
 
 func on_tool_execution_end(_session_id: int, _tool_call_id: String, tool_name: String, result: AgentToolResult) -> void:
-	var stream_type := StreamType.FILE if tool_name.to_lower().contains("read") else StreamType.TOOL
-	add_item(stream_type, ToolVisualDisplay.upper_name(tool_name), 0.82 if not result.is_error else 0.45)
+	add_item(stream_type_for_tool_name(tool_name), ToolVisualDisplay.upper_name(tool_name), 0.82 if not result.is_error else 0.45)
 	activity = 1.0
 	pass
 
@@ -694,15 +693,25 @@ static func floating_text(text: String, fallback: String) -> String:
 	return StringUtils.truncate(compact, MAX_FLOATING_TEXT_LENGTH)
 
 
+static func stream_type_for_tool_name(tool_name: String) -> StreamType:
+	if ToolHelper.is_file_tool(tool_name):
+		return StreamType.FILE
+	if ToolHelper.is_web_tool(tool_name):
+		return StreamType.WEB
+	return StreamType.TOOL
+
+
 static func stream_type_for_entry(entry: ChatEntry) -> int:
+	if ChatEntry.is_context_kind(entry.kind):
+		return StreamType.SYSTEM
 	match entry.kind:
 		ChatEntry.KIND_USER:
 			return StreamType.USER
-		ChatEntry.KIND_SYSTEM, ChatEntry.KIND_SKILL, ChatEntry.KIND_MEMORY, ChatEntry.KIND_AGENT_PROMPT:
-			return StreamType.SYSTEM
-		ChatEntry.KIND_FILE_TOOL:
-			return StreamType.FILE
-		ChatEntry.KIND_TOOL, ChatEntry.KIND_WEB_TOOL, ChatEntry.KIND_RESULT, ChatEntry.KIND_WEB:
+		ChatEntry.KIND_FILE_TOOL, ChatEntry.KIND_WEB_TOOL, ChatEntry.KIND_TOOL:
+			return stream_type_for_tool_name(entry.title)
+		ChatEntry.KIND_WEB:
+			return StreamType.WEB
+		ChatEntry.KIND_RESULT:
 			return StreamType.TOOL
 		ChatEntry.KIND_AGENT, ChatEntry.KIND_THINKING:
 			return StreamType.HISTORY
@@ -719,6 +728,8 @@ static func label_for_type(stream_type: StreamType) -> String:
 			return I18n.t("agent.visuals.file")
 		StreamType.TOOL:
 			return I18n.t("agent.visuals.tool")
+		StreamType.WEB:
+			return I18n.t("agent.visuals.web")
 		StreamType.REASONING:
 			return I18n.t("agent.visuals.thought")
 		StreamType.ANSWER:
@@ -726,23 +737,26 @@ static func label_for_type(stream_type: StreamType) -> String:
 	return I18n.t("agent.visuals.history")
 
 
+## Title / accent hues aligned with [agent/ui/chat/bubble] (File, Tool, WebTool, Thinking, etc.).
 static func neon_base_for_type(stream_type: StreamType) -> Color:
 	match stream_type:
 		StreamType.USER:
-			return Color("59c8ff")
+			return ThemeColor.accent_theme_color()
 		StreamType.SYSTEM:
-			return Color("b894ff")
+			return Colors.secondary_text
 		StreamType.HISTORY:
-			return Color("7e91ae")
+			return Colors.secondary_text
 		StreamType.FILE:
-			return Color("5ee6a8")
+			return Colors.warning
 		StreamType.TOOL:
-			return Color("ffb75e")
+			return Colors.success
+		StreamType.WEB:
+			return Colors.info
 		StreamType.REASONING:
-			return Color("e98cff")
+			return Colors.purple
 		StreamType.ANSWER:
-			return Color("67f0dd")
-	return Color("7e91ae")
+			return Colors.primary_text
+	return Colors.secondary_text
 
 
 static func color_for_type(stream_type: StreamType) -> Color:

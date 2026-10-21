@@ -12,8 +12,9 @@ extends Object
 ##   fill alphas through [method stroke] unchanged (multiplier 1).
 ## - **Light:** clamp HSV value into the ink band ([method ink_color]); multiply every
 ##   stroke alpha by [member LIGHT_INK_ALPHA] via [method stroke].
-## - **Semantic hues** (e.g. stream types in [ContextMemoryRiver]): fixed `neon_base` hex,
-##   then [method appearance_color]. **Accent palettes** (e.g. [CyberCommandDeck] cyan/blue/
+## - **Semantic hues** (e.g. stream types in [ContextMemoryRiver]): [Colors] / [ThemeColor]
+##   swatches matched to chat bubbles, then [method appearance_color]. **Accent palettes**
+##   (e.g. [CyberCommandDeck] cyan/blue/
 ##   magenta): call [method neon_color] / [method ink_color] with hue offsets and per-channel
 ##   sat multipliers in that effect's `sync_palette`.
 ## - Do not use for solid panel fills that should match [Colors.surface] — only strokes,
