@@ -11,6 +11,8 @@ const MAX_TEXT_ITEMS := 32
 const PARTICLE_SPEED := 0.19
 const DEFAULT_CONTEXT_LIMIT := 128_000
 const ABSORPTION_DURATION := 0.62
+## Short labels during ring absorption keep text on the intake side of the lens.
+const ABSORPTION_LABEL_MAX_LENGTH := 40
 const TRAIL_SAMPLE_COUNT := 4
 # Sample history by travelled screen distance rather than frame count. This keeps
 # curve quality stable across frame rates and bounds memory per item.
@@ -407,7 +409,7 @@ func draw_absorption_effects(center: Vector2) -> void:
 	for effect: AbsorptionEffect in absorption_effects:
 		var phase := clampf(effect.age / ABSORPTION_DURATION, 0.0, 1.0)
 		var color := effect.color
-		var label := effect.label
+		var label := StringUtils.truncate(effect.label, ABSORPTION_LABEL_MAX_LENGTH)
 		var weight := effect.weight
 		var lane_y := effect.lane * 8.0
 		var impact_position := center + Vector2(-CONTEXT_RING_INSET, lane_y * 0.34)
@@ -417,7 +419,7 @@ func draw_absorption_effects(center: Vector2) -> void:
 		var text_rotation := clampf((center - impact_position).angle(), -0.42, 0.42)
 		var tail_anchor := text_left_anchor(particle_position, label, text_rotation)
 		draw_line(impact_position, tail_anchor, VisualColor.stroke(color, particle_alpha * 0.24), 1.0 + weight, true)
-		draw_rotated_centered_text(particle_position, label, text_rotation, VisualColor.stroke(color, particle_alpha * 0.92))
+		draw_rotated_right_anchor_text(particle_position, label, text_rotation, VisualColor.stroke(color, particle_alpha * 0.92))
 		var ripple_phase := clampf(phase / 0.82, 0.0, 1.0)
 		var ripple_radius := lerpf(54.0, 84.0, ripple_phase)
 		draw_arc(center, ripple_radius, 0.0, TAU, 72, VisualColor.stroke(color, (1.0 - ripple_phase) * 0.2), 1.6, true)
@@ -453,14 +455,13 @@ func draw_item(item: StreamItem, center: Vector2) -> void:
 	pass
 
 
+## Returns the left tail for a label whose right edge sits at [param position].
 func text_left_anchor(position: Vector2, text: String, rotation: float) -> Vector2:
 	var font := Fonts.medium()
 	var font_size := Typography.label_small_size
 	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	# draw_string uses position.y as its baseline. Align the tail with the visual
-	# center between the font ascent and descent instead of with that baseline.
 	var visual_center_y := (font.get_descent(font_size) - font.get_ascent(font_size)) * 0.5
-	return position + Vector2(-width * 0.5 - 5.0, visual_center_y).rotated(rotation)
+	return position + Vector2(-width - 5.0, visual_center_y).rotated(rotation)
 
 
 ## Lays each glyph directly onto the packet's travelled curve. The newest point
@@ -561,9 +562,14 @@ static func cached_point_at_distance(item: StreamItem, current: Vector2, current
 	return item.path_history[low].lerp(item.path_history[high], (target - item.path_distances[low]) / maxf(span, 0.001))
 
 
-func draw_rotated_centered_text(position: Vector2, text: String, rotation: float, color: Color) -> void:
+## Draws [param text] with its right edge at [param position], extending left only.
+func draw_rotated_right_anchor_text(position: Vector2, text: String, rotation: float, color: Color) -> void:
+	var font := Fonts.medium()
+	var font_size := Typography.label_small_size
+	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var baseline_offset := (font.get_ascent(font_size) - font.get_descent(font_size)) * 0.5
 	draw_set_transform(position, rotation)
-	draw_centered_text(Vector2.ZERO, text, Fonts.medium(), Typography.label_small_size, color)
+	draw_string(font, Vector2(-width, baseline_offset), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	pass
 
