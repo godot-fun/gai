@@ -4,7 +4,6 @@ static func visual_type_test() -> void:
 	var effect := VisualControl.create_effect(VisualControl.Type.TAI_CHI)
 	assert(effect != null)
 	effect.free()
-	control.free()
 	pass
 
 
@@ -279,5 +278,4 @@ func shared_line_glow_does_not_create_a_shader_layer_test() -> void:
 	assert(is_equal_approx(fill_center.x, effect.tai_chi_evolution_flow.content_area(effect.size).get_center().x))
 	effect.get_parent().remove_child(effect)
 	effect.free()
-	control.free()
 	pass

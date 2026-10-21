@@ -5,7 +5,6 @@ static func visual_type_test() -> void:
 	var effect := VisualControl.create_effect(VisualControl.Type.DESKTOP_CAT)
 	assert(effect != null)
 	effect.free()
-	control.free()
 	pass
 
 

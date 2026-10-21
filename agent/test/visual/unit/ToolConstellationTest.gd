@@ -5,7 +5,6 @@ static func visual_type_test() -> void:
 	var effect := VisualControl.create_effect(VisualControl.Type.TOOL_CONSTELLATION)
 	assert(effect != null)
 	effect.free()
-	control.free()
 	pass
 
 
@@ -31,16 +30,16 @@ static func node_and_labels_test() -> void:
 	assert(ToolVisualDisplay.glyph(WebFetchTool.NAME) == "@")
 	assert(ToolVisualDisplay.glyph(WebSearchTool.NAME) == "#")
 	assert(ToolVisualDisplay.glyph_emoji(ReadTool.NAME) == "📚")
-	assert(ToolVisualDisplay.glyph_emoji(WriteTool.NAME) == "✍️")
+	assert(ToolVisualDisplay.glyph_emoji(WriteTool.NAME) == "🖊️")
 	assert(ToolVisualDisplay.glyph_emoji(EditTool.NAME) == "✂️")
 	assert(ToolVisualDisplay.glyph_emoji(BashTool.NAME) == "🐚")
 	assert(ToolVisualDisplay.glyph_emoji(ImageToTextTool.NAME) == "📸")
 	assert(ToolVisualDisplay.glyph_emoji(AudioToTextTool.NAME) == "🎙️")
-	assert(ToolVisualDisplay.glyph_emoji(DeleteTool.NAME) == "🗑")
+	assert(ToolVisualDisplay.glyph_emoji(DeleteTool.NAME) == "❌")
 	assert(ToolVisualDisplay.glyph_emoji(GrepTool.NAME) == "🕵️")
-	assert(ToolVisualDisplay.glyph_emoji(GlobTool.NAME) == "🪄")
+	assert(ToolVisualDisplay.glyph_emoji(GlobTool.NAME) == "⭐")
 	assert(ToolVisualDisplay.glyph_emoji(ListDirTool.NAME) == "📂")
-	assert(ToolVisualDisplay.glyph_emoji(WebFetchTool.NAME) == "📥")
+	assert(ToolVisualDisplay.glyph_emoji(WebFetchTool.NAME) == "📡")
 	assert(ToolVisualDisplay.glyph_emoji(WebSearchTool.NAME) == "🌐")
 	assert(ToolVisualDisplay.glyph_emoji("unknown_tool") == "🤖")
 	assert(ToolVisualDisplay.glyph("unknown_tool") == "UN")

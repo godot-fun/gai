@@ -5,7 +5,6 @@ static func semantic_black_hole_factory_test() -> void:
 	var effect := VisualControl.create_effect(VisualControl.Type.SEMANTIC_BLACK_HOLE)
 	assert(effect is SemanticBlackHole)
 	effect.free()
-	control.free()
 	pass
 
 

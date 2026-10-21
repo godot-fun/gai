@@ -5,7 +5,6 @@ static func visual_type_test() -> void:
 	var effect := VisualControl.create_effect(VisualControl.Type.GEOMETRIC_GENESIS)
 	assert(effect != null)
 	effect.free()
-	control.free()
 	pass
 
 

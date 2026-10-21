@@ -5,7 +5,6 @@ static func neural_aurora_factory_test() -> void:
 	var effect := VisualControl.create_effect(VisualControl.Type.NEURAL_AURORA)
 	assert(effect is NeuralAurora)
 	effect.free()
-	control.free()
 	pass
 
 
