@@ -300,12 +300,6 @@ func initialize_bird_path(bird: BirdState) -> void:
 	pass
 
 
-func on_theme_changed() -> void:
-	update_shader_theme()
-	queue_redraw()
-	pass
-
-
 func _process(delta: float) -> void:
 	if not visible:
 		return

@@ -75,13 +75,6 @@ func _ready() -> void:
 	pass
 
 
-func on_theme_changed() -> void:
-	for token_node in token_nodes:
-		token_node.refresh_theme()
-	sync_cutter_theme()
-	pass
-
-
 func sync_cutter_theme() -> void:
 	var accent := ThemeColor.accent_theme_color()
 	if cutter_material != null:

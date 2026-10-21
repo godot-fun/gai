@@ -98,8 +98,3 @@ func on_tool_execution_end(_tool_call_id: String, _tool_name: String, _agent_too
 
 func on_chat_entry_add(_entry: ChatEntry) -> void:
 	pass
-
-
-func on_theme_changed() -> void:
-	queue_redraw()
-	pass

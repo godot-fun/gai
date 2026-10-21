@@ -10,8 +10,6 @@ var current_effect: VisualEffect
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	gdf.events.theme_changed.connect(on_theme_changed)
-	gdf.events.theme_color_changed.connect(on_theme_changed)
 	AgentEvents.events.agent_start.connect(on_agent_start)
 	AgentEvents.events.session_stop.connect(on_session_stop)
 	AgentEvents.events.turn_start.connect(on_turn_start)
@@ -145,12 +143,6 @@ func on_chat_entry_add(session_id: int, entry: ChatEntry) -> void:
 	var effect := get_running_effect(session_id)
 	if effect != null:
 		effect.on_chat_entry_add(entry)
-	pass
-
-
-func on_theme_changed() -> void:
-	if current_effect != null:
-		current_effect.on_theme_changed()
 	pass
 
 

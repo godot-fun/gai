@@ -103,10 +103,6 @@ func _process(delta: float) -> void:
 	pass
 
 
-func on_theme_changed() -> void:
-	pass
-
-
 func cancel() -> void:
 	begin_play()
 	rotating = false

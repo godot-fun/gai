@@ -53,10 +53,6 @@ func _ready() -> void:
 	pass
 
 
-func on_theme_changed() -> void:
-	pass
-
-
 func set_embedding_effect(value: EmbeddingEffect) -> void:
 	embedding = value
 	pass

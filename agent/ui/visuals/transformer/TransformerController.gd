@@ -45,20 +45,6 @@ func get_visual_type() -> VisualType.Type:
 	return VisualType.Type.TRANSFORMER
 
 
-func on_theme_changed() -> void:
-	if tokenizer != null:
-		tokenizer.on_theme_changed()
-	if embedding != null:
-		embedding.on_theme_changed()
-	if attention != null:
-		attention.on_theme_changed()
-	if transformer_block != null:
-		transformer_block.on_theme_changed()
-	if logits_burst != null:
-		logits_burst.on_theme_changed()
-	pass
-
-
 func set_visual_visible(show: bool, animated: bool) -> void:
 	if active_tween != null and active_tween.is_valid():
 		active_tween.kill()

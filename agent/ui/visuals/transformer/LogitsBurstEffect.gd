@@ -44,10 +44,6 @@ func set_embedding_effect(value: EmbeddingEffect) -> void:
 	pass
 
 
-func on_theme_changed() -> void:
-	pass
-
-
 func play_low_probability(tokens: Array[LlamaHelper.Token]) -> void:
 	low_tokens = tokens
 	low_index = 0

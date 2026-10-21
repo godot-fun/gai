@@ -202,11 +202,6 @@ func on_tool_execution_end(_tool_call_id: String, _tool_name: String, result: Ag
 	pass
 
 
-func on_theme_changed() -> void:
-	apply_theme()
-	pass
-
-
 func _process(delta: float) -> void:
 	if not visible:
 		return

@@ -72,10 +72,6 @@ func palette_follows_accent_theme_color_test() -> void:
 	assert(QuantumCircuit.circuit_color() == ThemeColor.accent_theme_color())
 	assert(QuantumCircuit.phase_color() != first_phase)
 	assert(QuantumCircuit.tool_color() != first_tool)
-	effect.on_theme_changed()
-	assert(effect.circuit_tint == QuantumCircuit.circuit_color())
-	assert(effect.phase_tint == QuantumCircuit.phase_color())
-	assert(effect.tool_tint == QuantumCircuit.tool_color())
 	ThemeColor.theme_color = original
 	ThemeColor.refresh_derived_colors()
 	effect.free()

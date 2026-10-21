@@ -150,12 +150,6 @@ func on_tool_execution_end(tool_call_id: String, _tool_name: String, result: Age
 	pass
 
 
-func on_theme_changed() -> void:
-	refresh_palette()
-	queue_redraw()
-	pass
-
-
 func refresh_palette() -> void:
 	circuit_tint = circuit_color()
 	phase_tint = phase_color()

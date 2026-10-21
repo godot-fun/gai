@@ -156,12 +156,6 @@ func on_tool_execution_end(tool_call_id: String, tool_name: String, result: Agen
 	pass
 
 
-func on_theme_changed() -> void:
-	update_particle_colors()
-	queue_redraw()
-	pass
-
-
 func build_completion_particles() -> void:
 	completion_particles = GPUParticles2D.new()
 	completion_particles.name = "CompletionBurst"
