@@ -56,6 +56,7 @@ static func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 	return null
 
 func on_agent_start(session_id: int) -> void:
+	VisualChatSentenceCursor.remove_session(session_id)
 	var effect := prepare_effect()
 	if effect == null or effect.visible:
 		return
