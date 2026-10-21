@@ -23,7 +23,7 @@ const DECORATIVE_MOTE_COUNT := 7
 const DECORATIVE_TRAIL_SAMPLES := 4
 const DECORATIVE_SPAWN_INTERVAL := 0.55
 const CONTEXT_RING_RADIUS := 52.0
-## Distance from the lens center to the visible inner ring: intake absorbs on the left, output spirals out on the right.
+## Distance from the lens center to the intake impact point on the left ring edge.
 const CONTEXT_RING_INSET := 58.0
 const OUTPUT_SPIRAL_TURNS := 3.25
 const OUTPUT_SPIRAL_RADIUS := 11.0
@@ -583,7 +583,7 @@ func item_position(progress: float, item: StreamItem, center: Vector2, is_output
 	var lane_offset := source_y - center.y
 	var curve_direction := item.curve_direction
 	if is_output:
-		var x := lerpf(center.x + CONTEXT_RING_INSET, size.x + 50.0, eased)
+		var x := lerpf(center.x, size.x + 50.0, eased)
 		var spiral_envelope := smoothstep(0.0, 0.12, eased)
 		var phase := eased * TAU * OUTPUT_SPIRAL_TURNS + item.source_y_ratio * TAU - elapsed * 0.9
 		return Vector2(x, center.y + sin(phase) * OUTPUT_SPIRAL_RADIUS * spiral_envelope)
@@ -667,7 +667,7 @@ func draw_output(center: Vector2) -> void:
 func output_spiral_position(progress: float, phase_offset: float, center: Vector2) -> Vector2:
 	var envelope := smoothstep(0.0, 0.1, progress)
 	var phase := output_spiral_phase(progress, phase_offset)
-	var x := lerpf(center.x + CONTEXT_RING_INSET + 4.0, size.x, progress)
+	var x := lerpf(center.x, size.x + 50.0, progress)
 	return Vector2(x, center.y + sin(phase) * OUTPUT_SPIRAL_RADIUS * envelope)
 
 
