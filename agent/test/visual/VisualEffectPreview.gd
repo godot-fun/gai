@@ -62,7 +62,7 @@ var theme_toggle: ThemeToggle = ThemeToggle.new()
 var theme_color_select: ThemeColorSelect = ThemeColorSelect.new()
 
 var demo_session_id: int = 1_0000
-var demo_session_id_b: int = 0
+var demo_session_id_b: int = 2_0000
 var demo_generation: int = 0
 var demo_running: bool = false
 var tool_serial: int = 0
@@ -187,9 +187,9 @@ func run_agent_events(turn_count: int, large: bool, generation: int) -> void:
 		demo_running = false
 		set_status("Cannot start session.")
 		return
-	var payload_label := "Large payload · %d turns" % turn_count if large else "Small payload · %d turns" % turn_count
-	var mode_label := "%s · dual sessions" % payload_label if session_ids.size() > 1 else payload_label
-	set_status("%s · %s · started" % [mode_label, visual_label()])
+	var payload_label := StringUtils.format("Large payload · {} turns", turn_count) if large else StringUtils.format("Small payload · {} turns", turn_count)
+	var mode_label := StringUtils.format("{} · dual sessions", payload_label) if session_ids.size() > 1 else payload_label
+	set_status(StringUtils.format("{} · {} · started", mode_label, visual_label()))
 	AgentEvents.events.agent_start.emit(session_ids[0])
 	if session_ids.size() > 1:
 		if not await wait_step(pace(0.22, 0.12, large), generation):
@@ -216,14 +216,14 @@ func run_agent_events(turn_count: int, large: bool, generation: int) -> void:
 	if generation != demo_generation:
 		return
 	demo_running = false
-	set_status("%s · %s · complete" % [mode_label, visual_label()])
+	set_status(StringUtils.format("{} · {} · complete", mode_label, visual_label()))
 	pass
 
 
 func play_turn(session_id: int, turn_index: int, turn_count: int, large: bool, generation: int, catalog_offset: int) -> bool:
 	var session_tag := session_tag_for_id(session_id)
-	var status_prefix := "%s · %s" % [visual_label(), session_tag] if StringUtils.is_not_blank(session_tag) else visual_label()
-	set_status("%s · turn %d / %d" % [status_prefix, turn_index + 1, turn_count])
+	var status_prefix := StringUtils.format("{} · {}", visual_label(), session_tag) if StringUtils.is_not_blank(session_tag) else visual_label()
+	set_status(StringUtils.format("{} · turn {} / {}", status_prefix, turn_index + 1, turn_count))
 	AgentEvents.events.turn_start.emit(session_id)
 	if not await wait_step(pace(0.12, 0.05, large), generation):
 		return false
@@ -259,7 +259,7 @@ func play_turn(session_id: int, turn_index: int, turn_count: int, large: bool, g
 
 func play_tool(session_id: int, tool_spec: Dictionary, large: bool, generation: int) -> bool:
 	tool_serial += 1
-	var tool_id := "preview-tool-%d" % tool_serial
+	var tool_id := StringUtils.format("preview-tool-{}", tool_serial)
 	var tool_name := str(tool_spec["name"])
 	var args: Dictionary[String, Variant] = {}
 	var raw_args: Dictionary = tool_spec["args"]
@@ -269,7 +269,7 @@ func play_tool(session_id: int, tool_spec: Dictionary, large: bool, generation: 
 	if not await wait_step(pace(0.45, 0.16, large), generation):
 		return false
 	var failed := bool(tool_spec.get("failed", false))
-	var result := AgentToolResult.error("preview tool failure") if failed else AgentToolResult.ok("preview tool success for %s" % tool_name)
+	var result := AgentToolResult.error("preview tool failure") if failed else AgentToolResult.ok(StringUtils.format("preview tool success for {}", tool_name))
 	AgentEvents.events.tool_execution_end.emit(session_id, tool_id, tool_name, result)
 	return await wait_step(pace(0.22, 0.08, large), generation)
 
@@ -298,38 +298,38 @@ func build_tool_calls(turn_index: int, turn_count: int, large: bool, catalog_off
 
 
 func build_reasoning_chunks(turn_index: int, large: bool, session_tag: String) -> PackedStringArray:
-	var prefix := "%s · " % session_tag if StringUtils.is_not_blank(session_tag) else ""
+	var prefix := StringUtils.format("{} · ", session_tag) if StringUtils.is_not_blank(session_tag) else ""
 	if large:
 		return PackedStringArray([
-			"%sTurn %d goal: inspect the project and plan the next tool call." % [prefix, turn_index + 1],
-			"%sReview context, dependencies, and edge cases." % prefix,
-			"%sBreak work into steps and assess risk." % prefix,
-			"%sCall tools, feed results back to the model, then summarize." % prefix,
+			StringUtils.format("{}Turn {} goal: inspect the project and plan the next tool call.", prefix, turn_index + 1),
+			StringUtils.format("{}Review context, dependencies, and edge cases.", prefix),
+			StringUtils.format("{}Break work into steps and assess risk.", prefix),
+			StringUtils.format("{}Call tools, feed results back to the model, then summarize.", prefix),
 		])
 	return PackedStringArray([
-		"%sTurn %d:" % [prefix, turn_index + 1],
-		"%sShort reasoning before the next action." % prefix,
+		StringUtils.format("{}Turn {}:", prefix, turn_index + 1),
+		StringUtils.format("{}Short reasoning before the next action.", prefix),
 	])
 
 
 func build_content_chunks(turn_index: int, large: bool, is_final: bool, session_tag: String) -> PackedStringArray:
-	var prefix := "%s · " % session_tag if StringUtils.is_not_blank(session_tag) else ""
+	var prefix := StringUtils.format("{} · ", session_tag) if StringUtils.is_not_blank(session_tag) else ""
 	if is_final:
 		if large:
 			return PackedStringArray([
-				"%sSummary across turns:" % prefix,
-				"%sEdits verified; tool traces are complete." % prefix,
-				"%sFinal answer — ending this agent run." % prefix,
+				StringUtils.format("{}Summary across turns:", prefix),
+				StringUtils.format("{}Edits verified; tool traces are complete.", prefix),
+				StringUtils.format("{}Final answer — ending this agent run.", prefix),
 			])
-		return PackedStringArray(["%sDone. Short reply; run complete." % prefix])
+		return PackedStringArray([StringUtils.format("{}Done. Short reply; run complete.", prefix)])
 	if large:
 		return PackedStringArray([
-			"%sTurn %d progress:" % [prefix, turn_index + 1],
-			"%sTool results applied; continuing implementation and checks." % prefix,
-			"%sNext step stays on plan." % prefix,
+			StringUtils.format("{}Turn {} progress:", prefix, turn_index + 1),
+			StringUtils.format("{}Tool results applied; continuing implementation and checks.", prefix),
+			StringUtils.format("{}Next step stays on plan.", prefix),
 		])
 	return PackedStringArray([
-		"%sBrief reply for turn %d." % [prefix, turn_index + 1],
+		StringUtils.format("{}Brief reply for turn {}.", prefix, turn_index + 1),
 	])
 
 
