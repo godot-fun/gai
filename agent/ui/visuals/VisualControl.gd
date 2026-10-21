@@ -1,7 +1,9 @@
 class_name VisualControl
 extends Control
 
-## Single event bridge that routes concurrent runs to one effect for the whole run.
+## Single global event bridge for the visual overlay. All active sessions feed one shared
+## effect, so their animation events may interleave. The overlay begins with the first
+## active run and finishes only after the last run stops; it is not a per-session view.
 
 
 var current_effect: VisualEffect
@@ -58,6 +60,8 @@ static func create_effect(visual_type: VisualType.Type) -> VisualEffect:
 func on_agent_start(session_id: int) -> void:
 	ChatEntryCursor.remove_session(session_id)
 	var effect := prepare_effect()
+	# A visible effect already represents another active run. Its later events are still
+	# forwarded below, but it is deliberately not reset for each concurrent session.
 	if effect == null or effect.visible:
 		return
 	effect.on_agent_start(session_id)
@@ -82,6 +86,7 @@ func prepare_effect() -> VisualEffect:
 
 func on_session_stop(session_id: int, error_message: String) -> void:
 	ChatEntryCursor.remove_session(session_id)
+	# Keep the global overlay alive while any other session is still running.
 	if not RuntimeManager.runtimes.is_empty():
 		return
 	var effect := current_effect

@@ -1,8 +1,9 @@
 class_name ChatEntryCursor
 extends RefCounted
 
-## Incrementally reads complete sentences from live session transcripts. Each session
-## owns a shared cursor, so concurrent effects continue from the correct transcript.
+## Incrementally reads complete sentences from live session transcripts. The visual layer
+## is one shared overlay, but each session owns a cursor so interleaved runs do not reread
+## or skip each other's transcript text. Sentences may still be displayed interleaved.
 
 
 # ---------------------------------------------------------------------------
@@ -78,7 +79,9 @@ func take_sentence(text: String, start_index: int) -> VisualChatSentence:
 static var session_cursors: Dictionary[int, ChatEntryCursor] = {}
 
 
-## Returns the next available complete sentence from any active session.
+## Returns the next available complete sentence from any active session for the shared
+## overlay. This intentionally multiplexes sessions rather than preserving one session's
+## complete visual sequence before moving to another.
 static func take_next_sentence() -> String:
 	for session_id: int in RuntimeManager.runtimes:
 		var sentence := take_next_sentence_from_session(session_id)

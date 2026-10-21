@@ -2,6 +2,8 @@ class_name TransformerController
 extends VisualEffect
 
 ## Orchestrates tokenizer, embedding, and attention transformer-stage animations.
+## This is still one shared overlay: it samples the session that started its current
+## animation rather than maintaining independent transformer pipelines for concurrent runs.
 
 ## Enables the full completion animation for visual previews and tests. Production stops immediately.
 static var complete_animation_on_agent_end: bool = false

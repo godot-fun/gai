@@ -2,8 +2,10 @@
 class_name VisualEffect
 extends Control
 
-## Effect contract used by [VisualControl]. Every hook mirrors its [AgentEvents] payload,
-## including session_id, so effects can keep concurrent runs separate.
+## Effect contract used by [VisualControl]. One shared effect represents all active agent
+## runs: concurrent events may intentionally drive the same animation in arrival order.
+## Hooks retain session_id for event provenance, runtime validation, and transcript lookup;
+## effects do not create a separate visual instance or state machine per session.
 ##
 ## Effects paint on a [CanvasLayer] above the chat. Most effects stay sparse overlays: draw
 ## shapes, glyphs, and glows, but never an accidental full-surface translucent wash. Purpose-built
