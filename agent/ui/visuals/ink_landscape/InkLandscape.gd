@@ -103,7 +103,7 @@ func create_cloud_canvas() -> void:
 		var material := ShaderMaterial.new()
 		material.shader = load(CLOUD_SHADER_PATH)
 		material.set_shader_parameter("layer_index", float(index))
-		material.set_shader_parameter("cloud_color", Color(0.48, 0.51, 0.49, 1.0) if ThemeColor.is_dark_theme() else Color(0.94, 0.945, 0.925, 1.0))
+		material.set_shader_parameter("cloud_color", cloud_color())
 		material.set_shader_parameter("ink_color", ink_color())
 		material.set_shader_parameter("dark_theme", 1.0 if ThemeColor.is_dark_theme() else 0.0)
 		var bounds := cloud_layer_bounds(index)
@@ -478,15 +478,15 @@ func draw_tool_bird(bird: BirdState, field: Rect2) -> void:
 	var departure_alpha := 1.0 - smoothstep(0.42, 1.0, departure)
 	var alpha := (0.56 if result == BirdResult.ERROR else 0.62) * departure_alpha * perspective.y * exit_alpha
 	# Layered strokes give each bird a soft ink belly and two calligraphic wings.
-	draw_circle(center, 4.2 * scale, Color(ink, alpha * 0.42))
-	draw_circle(center + Vector2(3.0, 0.8) * scale, 2.4 * scale, Color(ink, alpha * 0.58))
+	draw_circle(center, 4.2 * scale, VisualColor.stroke(ink, alpha * 0.42))
+	draw_circle(center + Vector2(3.0, 0.8) * scale, 2.4 * scale, VisualColor.stroke(ink, alpha * 0.58))
 	var left_wing := bird_wing_curve(center, span, wing_lift, -1.0, 1.0)
 	var right_wing := bird_wing_curve(center, span, wing_lift, 1.0, 0.88)
-	draw_polyline(left_wing, Color(ink, alpha * 0.18), 5.0 * scale, true)
-	draw_polyline(right_wing, Color(ink, alpha * 0.18), 5.0 * scale, true)
-	draw_polyline(left_wing, Color(ink, alpha), 1.45 * scale, true)
-	draw_polyline(right_wing, Color(ink, alpha), 1.45 * scale, true)
-	draw_line(center + Vector2(3.5, 0.0) * scale, center + Vector2(7.0, -1.0) * scale, Color(ink, alpha * 0.72), 1.0, true)
+	draw_polyline(left_wing, VisualColor.stroke(ink, alpha * 0.18), 5.0 * scale, true)
+	draw_polyline(right_wing, VisualColor.stroke(ink, alpha * 0.18), 5.0 * scale, true)
+	draw_polyline(left_wing, VisualColor.stroke(ink, alpha), 1.45 * scale, true)
+	draw_polyline(right_wing, VisualColor.stroke(ink, alpha), 1.45 * scale, true)
+	draw_line(center + Vector2(3.5, 0.0) * scale, center + Vector2(7.0, -1.0) * scale, VisualColor.stroke(ink, alpha * 0.72), 1.0, true)
 	pass
 
 
@@ -509,7 +509,11 @@ static func cloud_layer_bounds(layer_index: int) -> Rect2:
 
 
 func ink_color() -> Color:
-	return Color(0.78, 0.82, 0.79) if ThemeColor.is_dark_theme() else Color(0.10, 0.12, 0.105)
+	return Color(0.78, 0.82, 0.79) if ThemeColor.is_dark_theme() else Color(0.08, 0.11, 0.13)
+
+
+func cloud_color() -> Color:
+	return Color(0.48, 0.51, 0.49, 1.0) if ThemeColor.is_dark_theme() else Color(0.86, 0.875, 0.855, 1.0)
 
 
 static func bird_position(serial: int, seed: float) -> Vector2:

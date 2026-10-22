@@ -90,9 +90,9 @@ void fragment() {
 	float body = smoothstep(-0.01 - softness * 0.014, 0.022 + softness * 0.03 + edge_noise, edge_distance);
 	body *= smoothstep(base + 0.065, base - 0.025, uv.y);
 	float wet_edge = exp(-abs(edge_distance + edge_noise) * mix(150.0, 76.0, softness)) * mix(0.20, 0.58, depth);
-	// Light paper supports a concentrated wet rim. On a dark canvas that same
-	// value reads as neon, so retain only a restrained broken highlight.
-	wet_edge *= mix(1.0, 0.28 + texture * 0.16, dark_theme);
+	// Dark canvas: full wet rim reads as neon. Light paper: soften the rim so it
+	// stays ink-like instead of a harsh outline on white.
+	wet_edge *= mix(0.52 + texture * 0.14, 0.28 + texture * 0.16, dark_theme);
 	float grain = clamp(texture * 0.78 + noise(vec2(uv.x * 67.0, uv.y * 29.0 + seed * 2.7)) * 0.22, 0.0, 1.0);
 	float local_distance = abs(uv.x - center) / max(mountain_width * mix(4.8, 3.5, depth), 0.001);
 	float bloom = smoothstep(grown + 0.14, grown - 0.10, local_distance);
@@ -116,6 +116,7 @@ void fragment() {
 	// principal outline remains visually dominant.
 	float interior_mask = smoothstep(0.018, 0.070, edge_distance) * (1.0 - smoothstep(0.82, 1.0, down_slope));
 	float texture_detail = (creases * 0.085 + contours * 0.055) * body * bloom * grown * interior_mask * smoothstep(0.25, 0.92, depth);
+	texture_detail *= mix(1.22, 1.0, dark_theme);
 	ink += texture_detail * strength;
 
 	// More distant layers meet higher, thinner fog; foreground layers retain more body.
@@ -127,11 +128,11 @@ void fragment() {
 	// substantially more occlusive so a rear silhouette does not read as a line
 	// drawn across their body. Full opacity made the composition look like flat
 	// grey cutouts and removed the atmospheric overlap between ranges.
-	float occlusion_strength = mix(0.78, 0.96, smoothstep(0.08, 0.96, depth));
-	float occlusion_alpha = coverage * occlusion_strength;
 	// Slightly lighter left slope and darker right slope establish readable volume.
-	float slope_shade = smoothstep(-0.65, 0.85, normalized_x) * mix(0.04, 0.18, depth);
-	float wash = clamp(strength * (0.34 + grain * 0.34 + slope_shade) + texture_detail * mix(0.28, 0.72, depth), 0.0, 0.72);
+	float slope_shade = smoothstep(-0.65, 0.85, normalized_x) * mix(0.04, 0.18, depth) * mix(1.28, 1.0, dark_theme);
+	float wash = clamp(strength * (0.34 + grain * 0.34 + slope_shade) + texture_detail * mix(0.28, 0.72, depth), 0.0, mix(0.68, 0.72, dark_theme));
+	float occlusion_strength = mix(0.78, 0.96, smoothstep(0.08, 0.96, depth)) * mix(0.90, 1.0, dark_theme);
+	float occlusion_alpha = coverage * occlusion_strength;
 	vec3 body_color = mix(background_color.rgb, ink_color.rgb, wash);
 	vec3 final_color = mix(body_color, ink_color.rgb, clamp(wet_edge * strength * 1.8, 0.0, 1.0));
 	COLOR = vec4(final_color, max(ink_alpha, occlusion_alpha) * fade_alpha);
