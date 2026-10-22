@@ -16,7 +16,7 @@ func reasoning_accelerates_rain_test() -> void:
 	pass
 
 
-func answer_creates_bounded_reply_rains_without_evicting_old_glyphs_test() -> void:
+func answer_creates_reply_rains_without_evicting_old_glyphs_test() -> void:
 	var effect := MatrixRain.new()
 	effect.size = Vector2(1280.0, 720.0)
 	effect.ensure_columns()
@@ -24,7 +24,7 @@ func answer_creates_bounded_reply_rains_without_evicting_old_glyphs_test() -> vo
 	var first_text := effect.reply_glyphs[0].text
 	for index in range(80):
 		effect.ingest_sentence("answer %d with enough characters to fill columns." % index)
-	assert(effect.active_reply_rain_count == MatrixRain.MAX_REPLY_RAINS)
+	assert(effect.active_reply_rain_count > MatrixRain.MAX_REPLY_RAINS)
 	assert(effect.reply_glyphs[0].text == first_text)
 	effect.free()
 	pass
@@ -37,10 +37,10 @@ func reply_glyphs_keep_their_character_test() -> void:
 	effect.ingest_sentence("Stable reply rain speed across its characters.")
 	var first_text := effect.reply_glyphs[0].text
 	var first_rain_speed := effect.reply_glyphs[0].speed
-	assert(first_rain_speed >= MatrixRain.MIN_REPLY_RAIN_SPEED)
-	assert(first_rain_speed <= MatrixRain.MAX_REPLY_RAIN_SPEED)
-	for index in range(MatrixRain.REPLY_COLUMN_LENGTH):
-		assert(is_equal_approx(effect.reply_glyphs[index].speed, first_rain_speed))
+	for reply_glyph: MatrixRain.ReplyGlyph in effect.reply_glyphs:
+		assert(reply_glyph.speed >= MatrixRain.MIN_REPLY_RAIN_SPEED)
+		assert(reply_glyph.speed <= MatrixRain.MAX_REPLY_RAIN_SPEED)
+		assert(is_equal_approx(reply_glyph.speed, first_rain_speed))
 	effect.visible = true
 	effect._process(0.5)
 	assert(effect.reply_glyphs[0].text == first_text)
@@ -48,12 +48,11 @@ func reply_glyphs_keep_their_character_test() -> void:
 	pass
 
 
-func full_reply_rain_capacity_rejects_before_consuming_pending_sentence_test() -> void:
+func full_reply_rain_capacity_stops_sentence_consumption_test() -> void:
 	var effect := MatrixRain.new()
 	effect.active_reply_rain_count = MatrixRain.MAX_REPLY_RAINS
-	effect.pending_sentence = "Keep this sentence pending."
 	assert(not effect.offer_next_sentence())
-	assert(effect.pending_sentence == "Keep this sentence pending.")
+	assert(effect.active_reply_rain_count == MatrixRain.MAX_REPLY_RAINS)
 	effect.free()
 	pass
 

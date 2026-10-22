@@ -8,9 +8,7 @@ const MIN_COLUMN_STEP := 22.0
 const MAX_COLUMNS := 112
 const MAX_TRAIL_LENGTH := 22
 const GLYPH_REFRESH_SECONDS := 0.075
-const SENTENCE_INTERVAL_SECONDS := 0.2
 const MAX_REPLY_RAINS := 64
-const REPLY_COLUMN_LENGTH := 18
 const MIN_REPLY_RAIN_SPEED := 80.0
 const MAX_REPLY_RAIN_SPEED := 240.0
 const END_DROP_SECONDS := 0.55
@@ -49,11 +47,9 @@ var glyph_clock: float = 0.0
 var glyph_tick: int = 0
 var reasoning_energy: float = 0.0
 var layout_width: float = -1.0
-var sentence_timer: float = 0.0
 var reply_glyphs: Array[ReplyGlyph] = []
 var reply_sentence_index: int = 0
 var active_reply_rain_count: int = 0
-var pending_sentence: String = ""
 var matrix_color: Color = Color("42f58d").lerp(ThemeColor.accent_theme_color(), 0.34)
 
 
@@ -62,7 +58,6 @@ func fade_out_seconds() -> float:
 
 
 func on_agent_start(_session_id: int) -> void:
-	pending_sentence = ""
 	reasoning_energy = 0.28
 	ensure_columns()
 	queue_redraw()
@@ -70,7 +65,6 @@ func on_agent_start(_session_id: int) -> void:
 
 
 func on_agent_end(_session_id: int, error_message: String) -> void:
-	pending_sentence = ""
 	ensure_columns()
 	for column: RainColumn in columns:
 		var column_exit_y := size.y + float(column.length) * column.step_y + 48.0
@@ -101,7 +95,6 @@ func on_turn_start(_session_id: int) -> void:
 
 
 func on_turn_end(_session_id: int) -> void:
-	drain_available_sentences()
 	reasoning_energy = minf(reasoning_energy, 0.32)
 	pass
 
@@ -152,9 +145,7 @@ func _process(delta: float) -> void:
 		return
 	ensure_columns()
 	elapsed += delta
-	sentence_timer += delta
-	if not RuntimeManager.runtimes.is_empty() and sentence_timer >= SENTENCE_INTERVAL_SECONDS:
-		sentence_timer = fmod(sentence_timer, SENTENCE_INTERVAL_SECONDS)
+	if not RuntimeManager.runtimes.is_empty():
 		offer_next_sentence()
 	glyph_clock += delta
 	if glyph_clock >= GLYPH_REFRESH_SECONDS:
@@ -195,28 +186,11 @@ func clear_tool_column(column: RainColumn) -> void:
 func offer_next_sentence() -> bool:
 	if active_reply_rain_count >= MAX_REPLY_RAINS:
 		return false
-	var sentence := pending_sentence
-	if sentence.is_empty():
-		sentence = ChatEntryCursor.take_next_sentence().text
+	var sentence := ChatEntryCursor.take_next_sentence().text
 	if sentence.is_empty():
 		return false
-	if active_reply_rain_count + reply_rain_count(sentence) > MAX_REPLY_RAINS:
-		pending_sentence = sentence
-		return false
-	pending_sentence = ""
 	ingest_sentence(sentence)
 	return true
-
-
-func drain_available_sentences() -> void:
-	while not RuntimeManager.runtimes.is_empty() and offer_next_sentence():
-		pass
-	pass
-
-
-func reply_rain_count(sentence: String) -> int:
-	var characters := sentence.replace(" ", "").replace("\t", "").replace("\n", "").replace("\r", "")
-	return mini(ceili(float(characters.length()) / float(REPLY_COLUMN_LENGTH)), MAX_REPLY_RAINS)
 
 
 func ingest_sentence(sentence: String) -> void:
@@ -232,24 +206,19 @@ func spawn_reply_rain(sentence: String) -> void:
 	reply_sentence_index += 1
 	var spacing := maxf(MIN_COLUMN_STEP, size.x / float(maxi(columns.size(), 1)))
 	var first_slot: int = (reply_sentence_index * 11) % maxi(columns.size(), 1)
-	var rain_speed: float = 0.0
+	var rain_speed := randf_range(MIN_REPLY_RAIN_SPEED, MAX_REPLY_RAIN_SPEED)
 	for character_index: int in range(characters.length()):
-		var local_column: int = character_index / REPLY_COLUMN_LENGTH
-		var row: int = character_index % REPLY_COLUMN_LENGTH
-		if row == 0:
-			if active_reply_rain_count >= MAX_REPLY_RAINS:
-				return
+		if character_index == 0:
 			active_reply_rain_count += 1
-			rain_speed = randf_range(MIN_REPLY_RAIN_SPEED, MAX_REPLY_RAIN_SPEED)
-		var slot: int = (first_slot + local_column) % maxi(columns.size(), 1)
+		var slot: int = first_slot
 		var x: float = (float(slot) + 0.5) * spacing
-		var start_y: float = -36.0 - float(row) * 22.0 - float(local_column) * 48.0
+		var start_y: float = -36.0 - float(character_index) * 22.0
 		var reply_glyph := ReplyGlyph.new()
 		reply_glyph.text = characters.substr(character_index, 1)
 		reply_glyph.x = x
 		reply_glyph.y = start_y
 		reply_glyph.speed = rain_speed
-		reply_glyph.releases_rain_slot = row == REPLY_COLUMN_LENGTH - 1 or character_index == characters.length() - 1
+		reply_glyph.releases_rain_slot = character_index == characters.length() - 1
 		reply_glyphs.append(reply_glyph)
 	pass
 
