@@ -41,7 +41,6 @@ class ReplyGlyph extends RefCounted:
 
 
 var columns: Array[RainColumn] = []
-var active_tools: Dictionary[String, int] = {}
 var elapsed: float = 0.0
 var glyph_clock: float = 0.0
 var glyph_tick: int = 0
@@ -120,22 +119,19 @@ func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: 
 	column.highlight = 1.0
 	column.release_pending = false
 	column.head_y = -column.step_y
-	active_tools[tool_call_id] = column_index
 	reasoning_energy = 1.0
 	queue_redraw()
 	pass
 
 
 func on_tool_execution_end(_session_id: int, tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
-	if not active_tools.has(tool_call_id):
+	var column_index := find_active_tool_column(tool_call_id)
+	if column_index < 0:
 		return
-	var column_index: int = active_tools[tool_call_id]
-	if column_index >= 0 and column_index < columns.size():
-		var column := columns[column_index]
-		column.tool_state = ToolState.FAILED if result.is_error else ToolState.SUCCESS
-		column.highlight = 1.0
-		column.release_pending = true
-	active_tools.erase(tool_call_id)
+	var column := columns[column_index]
+	column.tool_state = ToolState.FAILED if result.is_error else ToolState.SUCCESS
+	column.highlight = 1.0
+	column.release_pending = true
 	queue_redraw()
 	pass
 
@@ -227,12 +223,7 @@ func ensure_columns() -> void:
 	if size.x < 1.0 or is_equal_approx(layout_width, size.x):
 		return
 	layout_width = size.x
-	var old_tools: Array[RainColumn] = []
-	for column: RainColumn in columns:
-		if not column.tool_id.is_empty():
-			old_tools.append(column)
 	columns.clear()
-	active_tools.clear()
 	var count := clampi(floori(size.x / MIN_COLUMN_STEP), 12, MAX_COLUMNS)
 	var spacing := size.x / float(count)
 	for index in range(count):
@@ -245,19 +236,6 @@ func ensure_columns() -> void:
 		column.step_y = 18.0 + float(random_seed % 4)
 		column.random_seed = random_seed
 		columns.append(column)
-	for old_tool: RainColumn in old_tools:
-		var id := old_tool.tool_id
-		var new_index := find_tool_column(id)
-		if new_index < 0:
-			continue
-		var new_column := columns[new_index]
-		new_column.tool_id = id
-		new_column.tool_label = old_tool.tool_label
-		new_column.tool_state = old_tool.tool_state
-		new_column.highlight = old_tool.highlight
-		new_column.release_pending = old_tool.release_pending
-		if old_tool.tool_state == ToolState.RUNNING:
-			active_tools[id] = new_index
 	pass
 
 
@@ -271,6 +249,13 @@ func find_tool_column(tool_call_id: String) -> int:
 		if columns[index].tool_id.is_empty():
 			return index
 	return preferred
+
+
+func find_active_tool_column(tool_call_id: String) -> int:
+	for index: int in range(columns.size()):
+		if columns[index].tool_id == tool_call_id:
+			return index
+	return -1
 
 
 func _draw() -> void:
