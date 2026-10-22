@@ -53,7 +53,7 @@ static func absorption_spawns_one_output_mote_test() -> void:
 	var effect := ContextMemoryRiver.new()
 	effect.add_item(ContextMemoryRiver.StreamType.TOOL, "READ", 0.5)
 	var item: ContextMemoryRiver.StreamItem = effect.items.pop_front()
-	effect.add_absorption_effect(item, Vector2.ZERO)
+	effect.add_absorption_effect(item)
 	effect.visible = true
 	effect._process(ContextMemoryRiver.ABSORPTION_DURATION * 0.51)
 	assert(effect.output_motes.size() == 1)
@@ -83,12 +83,15 @@ static func output_starts_at_ring_right_edge_test() -> void:
 
 static func output_trail_length_follows_input_width_test() -> void:
 	var effect := ContextMemoryRiver.new()
-	effect.spawn_output_mote(40.0)
-	effect.spawn_output_mote(180.0)
+	effect.size = Vector2(1000.0, 600.0)
+	effect.spawn_output_mote(40.0, 0.84)
+	effect.spawn_output_mote(180.0, 1.16)
 	assert(is_equal_approx(effect.output_motes[0].trail_length, 40.0))
 	assert(is_equal_approx(effect.output_motes[1].trail_length, 180.0))
+	assert(is_equal_approx(effect.output_motes[0].speed, 0.84))
+	assert(is_equal_approx(effect.output_motes[1].speed, 1.16))
 	effect.spawn_output_mote(1000.0)
-	assert(is_equal_approx(effect.output_motes[2].trail_length, ContextMemoryRiver.OUTPUT_TRAIL_MAX_LENGTH))
+	assert(is_equal_approx(effect.output_motes[2].trail_length, 498.0))
 	effect.free()
 	pass
 
