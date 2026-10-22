@@ -165,8 +165,7 @@ func play_completion_burst() -> void:
 	if completion_particles == null or not is_inside_tree():
 		return
 	var base := Vector2(size.x * 0.5, size.y - Margin.ma_8)
-	var crown_center_y := Margin.ma_8 + get_crown_radius()
-	var segment_height := maxf(12.0, (base.y - crown_center_y) / float(MAX_TRUNK_SEGMENTS))
+	var segment_height := get_segment_height()
 	completion_particles.position = trunk_point(base, segment_height, crown_anchor_segment())
 	completion_particles.restart()
 	completion_particles.emitting = true
@@ -212,9 +211,7 @@ func _draw() -> void:
 	if size.x < 120.0 or size.y < 120.0:
 		return
 	var base := Vector2(size.x * 0.5, size.y - Margin.ma_8)
-	var crown_radius := get_crown_radius()
-	var crown_center_y := Margin.ma_8 + crown_radius
-	var segment_height := maxf(12.0, (base.y - crown_center_y) / float(MAX_TRUNK_SEGMENTS))
+	var segment_height := get_segment_height()
 	var accent := contrast_color(ThemeColor.accent_theme_color())
 	# Render branches below the trunk so their flat start caps disappear beneath the trunk stroke.
 	# This produces a clean fork without a gap or a visible circular junction marker.
@@ -240,7 +237,7 @@ func draw_branch(branch: Dictionary, base: Vector2, segment_height: float) -> vo
 	var anchor := trunk_point(base, segment_height, anchor_segment)
 	var direction: float = branch["direction"]
 	var growth: float = branch["growth"]
-	var branch_length := minf(size.x * 0.20, maxf(MIN_BRANCH_LENGTH, segment_height * 2.5))
+	var branch_length := get_branch_length(segment_height)
 	var branch_vector := Vector2.from_angle(float(branch["angle"])) * branch_length
 	var parent_control := branch_curve_control(anchor, anchor + branch_vector, branch_length)
 	var parent_curve := quadratic_curve_points(anchor, parent_control, anchor + branch_vector, growth)
@@ -263,7 +260,7 @@ func draw_branch(branch: Dictionary, base: Vector2, segment_height: float) -> vo
 			draw_branch_label(elbow, direction, String(branch["label"]), Color(color, clampf(0.72 + pulse * 0.22, 0.0, 1.0)))
 		return
 	var completion_growth: float = branch["completion_growth"]
-	var completion_length := maxf(MIN_COMPLETION_LENGTH, branch_length * 0.38)
+	var completion_length := get_completion_length(branch_length)
 	var completion_vector := get_completion_vector(branch, state, completion_length)
 	var tip := elbow + completion_vector * completion_growth
 	if state == BranchState.FAILED:
@@ -366,8 +363,8 @@ func get_leaf_pulse_intensity(branch: Dictionary, segment_height: float, branch_
 func draw_tree_pulses(base: Vector2, segment_height: float, color: Color) -> void:
 	if trunk_growth <= 0.0:
 		return
-	var branch_length := minf(size.x * 0.20, maxf(MIN_BRANCH_LENGTH, segment_height * 2.5))
-	var completion_length := maxf(MIN_COMPLETION_LENGTH, branch_length * 0.38)
+	var branch_length := get_branch_length(segment_height)
+	var completion_length := get_completion_length(branch_length)
 	var trunk_length := trunk_growth * segment_height
 	for pulse_distance in pulse_travel_distances:
 		draw_tree_pulse_at_distance(base, segment_height, color, pulse_distance, trunk_length, branch_length, completion_length)
@@ -409,11 +406,9 @@ func draw_tree_pulse_at_distance(base: Vector2, segment_height: float, color: Co
 
 
 func get_tree_pulse_path_length() -> float:
-	var base_y := size.y - Margin.ma_8
-	var crown_center_y := Margin.ma_8 + get_crown_radius()
-	var segment_height := maxf(12.0, (base_y - crown_center_y) / float(MAX_TRUNK_SEGMENTS))
-	var branch_length := minf(size.x * 0.20, maxf(MIN_BRANCH_LENGTH, segment_height * 2.5))
-	var completion_length := maxf(MIN_COMPLETION_LENGTH, branch_length * 0.38)
+	var segment_height := get_segment_height()
+	var branch_length := get_branch_length(segment_height)
+	var completion_length := get_completion_length(branch_length)
 	return trunk_growth * segment_height + branch_length + completion_length
 
 
@@ -523,6 +518,20 @@ func trunk_point(base: Vector2, segment_height: float, segment: float) -> Vector
 
 func get_crown_radius() -> float:
 	return minf(minf(size.x * CROWN_WIDTH_RATIO, size.y * CROWN_HEIGHT_RATIO), MAX_CROWN_RADIUS)
+
+
+func get_segment_height() -> float:
+	var base_y := size.y - Margin.ma_8
+	var crown_center_y := Margin.ma_8 + get_crown_radius()
+	return maxf(12.0, (base_y - crown_center_y) / float(MAX_TRUNK_SEGMENTS))
+
+
+func get_branch_length(segment_height: float) -> float:
+	return minf(size.x * 0.20, maxf(MIN_BRANCH_LENGTH, segment_height * 2.5))
+
+
+static func get_completion_length(branch_length: float) -> float:
+	return maxf(MIN_COMPLETION_LENGTH, branch_length * 0.38)
 
 
 ## Keep the first blooms compact, then let them open progressively toward full size.
