@@ -36,7 +36,6 @@ var crown_growth: float = 0.0
 var target_crown_growth: float = 0.0
 var turn_index: int = 0
 var branch_sequence: int = 0
-var phase_label: String = ""
 var branches: Array[Dictionary] = []
 var active_tool_indices: Dictionary[String, int] = {}
 var completion_particles: GPUParticles2D
@@ -60,7 +59,6 @@ func fade_out_seconds() -> float:
 
 
 func on_agent_start(_session_id: int) -> void:
-	phase_label = I18n.t("agent.visuals.understanding_task")
 	# Stay below the first turn tip so the trunk only grows forward once turns begin.
 	target_trunk_growth = trunk_growth_for_turn(1) * 0.5
 	queue_redraw()
@@ -69,11 +67,8 @@ func on_agent_start(_session_id: int) -> void:
 
 func on_agent_end(_session_id: int, error_message: String) -> void:
 	if StringUtils.is_blank(error_message):
-		phase_label = I18n.t("agent.visuals.task_complete")
 		target_crown_growth = 1.0
 		play_completion_burst()
-	else:
-		phase_label = I18n.t("agent.visuals.task_stopped") if error_message.begins_with("Stop") else I18n.t("agent.visuals.task_failed")
 	queue_redraw()
 	if is_inside_tree():
 		await get_tree().create_timer(0.9).timeout
@@ -82,7 +77,6 @@ func on_agent_end(_session_id: int, error_message: String) -> void:
 
 func on_turn_start(_session_id: int) -> void:
 	turn_index += 1
-	phase_label = StringUtils.format(I18n.t("agent.visuals.turn_analyzing"), turn_index)
 	# Map turns across the full trunk using AgentLoop.MAX_TURNS so late tools do not pile at the tip.
 	target_trunk_growth = trunk_growth_for_turn(turn_index)
 	queue_redraw()
@@ -90,7 +84,6 @@ func on_turn_start(_session_id: int) -> void:
 
 
 func on_turn_end(_session_id: int) -> void:
-	phase_label = StringUtils.format(I18n.t("agent.visuals.turn_complete"), turn_index)
 	queue_redraw()
 	pass
 
@@ -98,10 +91,7 @@ func on_turn_end(_session_id: int) -> void:
 func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> void:
 	if chunk.is_empty():
 		return
-	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
-		phase_label = StringUtils.format(I18n.t("agent.visuals.turn_reasoning"), maxi(turn_index, 1))
-	else:
-		phase_label = I18n.t("agent.visuals.preparing_answer")
+	if stream_kind != OpenAiClient.STREAM_KIND_REASONING:
 		target_crown_growth = minf(0.82, target_crown_growth + 0.035)
 	queue_redraw()
 	pass
@@ -116,7 +106,6 @@ func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: 
 	branches.append(make_branch(tool_call_id, tool_name, branch_sequence, trunk_growth))
 	branch_sequence += 1
 	active_tool_indices[tool_call_id] = branches.size() - 1
-	phase_label = StringUtils.format(I18n.t("agent.visuals.calling_tool"), ToolVisualDisplay.title_name(tool_name, I18n.t("agent.visuals.tool")))
 	queue_redraw()
 	pass
 
@@ -130,7 +119,6 @@ func on_tool_execution_end(_session_id: int, tool_call_id: String, tool_name: St
 	active_tool_indices.erase(tool_call_id)
 	if not result.is_error:
 		target_trunk_growth = maxf(target_trunk_growth, trunk_growth_for_turn(turn_index))
-	phase_label = I18n.t("agent.visuals.tool_failed") if result.is_error else I18n.t("agent.visuals.tool_complete")
 	queue_redraw()
 	pass
 
@@ -235,7 +223,6 @@ func _draw() -> void:
 	draw_trunk(base, segment_height, accent)
 	draw_tree_pulses(base, segment_height, accent)
 	draw_crown(base, segment_height, accent)
-	draw_status(base)
 	pass
 
 
@@ -504,14 +491,6 @@ func get_crown_pulse_intensity(segment_height: float) -> float:
 	for pulse_distance in pulse_travel_distances:
 		closest_distance = minf(closest_distance, absf(pulse_distance - crown_distance))
 	return clampf(1.0 - closest_distance / LEAF_PULSE_RADIUS, 0.0, 1.0)
-
-
-func draw_status(base: Vector2) -> void:
-	var font := Fonts.semibold()
-	var font_size := Typography.title_small_size
-	var text_width := font.get_string_size(phase_label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	draw_string(font, Vector2(base.x - text_width * 0.5, size.y - Margin.ma_3), phase_label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Colors.primary_text)
-	pass
 
 
 func trunk_point(base: Vector2, segment_height: float, segment: float) -> Vector2:

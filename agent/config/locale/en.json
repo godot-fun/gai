@@ -125,19 +125,7 @@
       "reasoning_bus": "|psi>  UNITARY REASONING BUS",
       "quantum_executing": "● EXECUTING  /  QUANTUM CHANNEL LOCKED",
       "state_error": "STATE ERROR  |X>",
-      "determinate_state": "DETERMINATE STATE  |1>",
-      "preparing_task": "Preparing task",
-      "understanding_task": "Understanding task",
-      "task_complete": "Task complete",
-      "task_stopped": "Task stopped",
-      "task_failed": "Task failed",
-      "turn_analyzing": "Turn {} · Analyzing task",
-      "turn_complete": "Turn {} · Phase complete",
-      "turn_reasoning": "Turn {} · Reasoning",
-      "preparing_answer": "Preparing final answer",
-      "calling_tool": "Calling tool · {}",
-      "tool_failed": "Tool failed · Adjusting approach",
-      "tool_complete": "Tool complete · Continuing task"
+      "determinate_state": "DETERMINATE STATE  |1>"
     },
     "toolbar": {
       "title": "Code Agent Workspace",

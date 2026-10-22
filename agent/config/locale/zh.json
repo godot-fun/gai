@@ -125,19 +125,7 @@
       "reasoning_bus": "|psi>  幺正推理总线",
       "quantum_executing": "● 执行中 / 量子通道已锁定",
       "state_error": "状态错误  |X>",
-      "determinate_state": "确定态  |1>",
-      "preparing_task": "准备任务",
-      "understanding_task": "理解任务",
-      "task_complete": "任务已完成",
-      "task_stopped": "任务已停止",
-      "task_failed": "任务失败",
-      "turn_analyzing": "第 {} 轮 · 分析任务",
-      "turn_complete": "第 {} 轮 · 阶段完成",
-      "turn_reasoning": "第 {} 轮 · 正在分析",
-      "preparing_answer": "整理最终答案",
-      "calling_tool": "调用工具 · {}",
-      "tool_failed": "工具失败 · 调整方案",
-      "tool_complete": "工具完成 · 继续任务"
+      "determinate_state": "确定态  |1>"
     },
     "toolbar": {
       "title": "代码智能体工作区",
