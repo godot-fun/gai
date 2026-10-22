@@ -69,12 +69,7 @@ static func ink_color(base: Color, hue_offset: float = 0.0, sat_mul: float = 1.0
 ## Pick [method neon_color] or [method ink_color] from [ThemeColor.is_dark_theme]. Use for a
 ## single authored swatch per role; pass [param light_sat_mul] / [param dark_sat_mul] when
 ## mirroring command-deck ink saturation tweaks.
-static func appearance_color(
-	base: Color,
-	hue_offset: float = 0.0,
-	dark_sat_mul: float = 1.0,
-	light_sat_mul: float = 1.08,
-) -> Color:
+static func appearance_color(base: Color, hue_offset: float = 0.0, dark_sat_mul: float = 1.0, light_sat_mul: float = 1.08) -> Color:
 	if ThemeColor.is_dark_theme():
 		return neon_color(base, hue_offset, dark_sat_mul)
 	return ink_color(base, hue_offset, light_sat_mul)

@@ -68,6 +68,8 @@ class StreamItem extends RefCounted:
 	# Font metrics are immutable for an item and expensive enough to cache once.
 	var glyph_advances := PackedFloat32Array()
 	var label_width: float = 0.0
+	## [method color_for_type] at spawn; stream type and theme accent are fixed for this packet's life.
+	var stroke_color: Color = Color.WHITE
 	var absorption_triggered: bool = false
 	## Cached for [method input_travel_distance] while [member ContextMemoryRiver.is_ending]; -1 until measured.
 	var cached_input_path_length: float = -1.0
@@ -291,6 +293,7 @@ func spawn_decorative_mote() -> void:
 	mote.speed = randf_range(INPUT_SPEED_MIN, INPUT_SPEED_MAX)
 	mote.source_y_ratio = 0.06 + fmod(float(decorative_spawn_index) * 0.61803398875 + 0.31, 1.0) * 0.88
 	mote.curve_direction = -1.0 if decorative_spawn_index % 2 == 0 else 1.0
+	mote.stroke_color = color_for_type(mote.stream_type)
 	decorative_motes.append(mote)
 	decorative_spawn_index += 1
 	pass
@@ -323,7 +326,7 @@ func update_output_motes(delta: float) -> void:
 ## Keeping this separate from items prevents an absorbed packet from being drawn twice.
 func add_absorption_effect(item: StreamItem, releases_output: bool = true) -> void:
 	var effect := AbsorptionEffect.new()
-	effect.color = color_for_type(item.stream_type)
+	effect.color = item.stroke_color
 	effect.source_width = item.label_width
 	effect.releases_output = releases_output
 	absorption_effects.append(effect)
@@ -348,6 +351,7 @@ func add_item(stream_type: StreamType, label: String) -> void:
 	item.source_y_ratio = source_y_ratio
 	item.curve_direction = curve_direction
 	cache_text_metrics(item)
+	item.stroke_color = color_for_type(item.stream_type)
 	items.append(item)
 	spawn_index += 1
 	queue_redraw()
@@ -405,7 +409,7 @@ func draw_decorative_motes(center: Vector2) -> void:
 		var progress := mote.progress
 		var fade_in := smoothstep(0.0, 0.08, progress)
 		var alpha := fade_in
-		var color := color_for_type(mote.stream_type)
+		var color := mote.stroke_color
 		var trail := PackedVector2Array()
 		var position := item_position(progress, mote, center)
 		if mote.path_history.size() >= 2:
@@ -438,9 +442,8 @@ func draw_absorption_ripples(center: Vector2) -> void:
 
 func draw_item(item: StreamItem, center: Vector2) -> void:
 	var progress := item.progress
-	var stream_type := item.stream_type
 	var position := item_position(progress, item, center)
-	var color := color_for_type(stream_type)
+	var color := item.stroke_color
 	# Incoming sources are semantic, so lay their real labels glyph-by-glyph on
 	# the cached path instead of drawing a rigid horizontal label.
 	var arrival_alpha := smoothstep(0.0, 0.04, progress)
