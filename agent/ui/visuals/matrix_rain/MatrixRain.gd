@@ -49,7 +49,7 @@ var layout_width: float = -1.0
 var reply_glyphs: Array[ReplyGlyph] = []
 var reply_sentence_index: int = 0
 var active_reply_rain_count: int = 0
-var matrix_color: Color = Color("42f58d").lerp(ThemeColor.accent_theme_color(), 0.34)
+var matrix_color: Color = ThemeColor.promote(Color("42f58d").lerp(ThemeColor.accent_theme_color(), 0.34))
 
 
 func fade_out_seconds() -> float:
