@@ -30,7 +30,7 @@ void fragment() {
 	COLOR = vec4(effect_color.rgb * soft, alpha);
 }
 """
-const CUTTER_SHADER := """
+const CUTTER_SHADER_DARK := """
 shader_type canvas_item;
 render_mode blend_add, unshaded;
 
@@ -50,6 +50,29 @@ void fragment() {
 	vec3 color = mix(effect_color.rgb, vec3(1.0), clamp(core * 1.85 + body * 0.4, 0.0, 1.0));
 	color += effect_color.rgb * bloom * 0.5;
 	COLOR = vec4(color * intensity, alpha);
+}
+"""
+const CUTTER_SHADER_LIGHT := """
+shader_type canvas_item;
+render_mode unshaded;
+
+uniform vec4 effect_color : source_color = vec4(0.12, 0.35, 0.28, 1.0);
+uniform float intensity = 1.0;
+
+void fragment() {
+	// Ink blade on light chat backgrounds: saturated accent core, no white mix or additive blow-out.
+	float x = UV.x - 0.5;
+	float core = exp(-pow(abs(x) * 58.0, 2.0));
+	float body = exp(-pow(abs(x) * 22.0, 2.0));
+	float bloom = exp(-pow(abs(x) * 8.0, 2.0));
+	float y_soft = smoothstep(0.0, 0.04, UV.y) * smoothstep(1.0, 0.96, UV.y);
+	float tip = mix(0.85, 1.18, smoothstep(0.0, 1.0, UV.y));
+	float beam = (core * 1.35 + body * 0.5) * tip;
+	float fringe = bloom * 0.42 * tip;
+	float alpha = clamp((beam * 0.95 + fringe * 0.5) * y_soft * intensity, 0.0, 1.0) * COLOR.a;
+	vec3 ink = effect_color.rgb;
+	vec3 color = ink * (core * 1.3 + body * 0.62) + ink * fringe * 0.38;
+	COLOR = vec4(color, alpha);
 }
 """
 
@@ -134,11 +157,12 @@ func build_tokens(tokens: Array[LlamaHelper.Token]) -> void:
 	cutter.position = Vector2(-CUTTER_WIDTH * 0.5, -CUTTER_HEIGHT)
 	cutter.rotation = 0.03
 	cutter.z_index = 10
-	cutter_material = create_shader_material(CUTTER_SHADER)
+	var cutter_shader := CUTTER_SHADER_DARK if ThemeColor.is_dark_theme() else CUTTER_SHADER_LIGHT
+	cutter_material = create_shader_material(cutter_shader)
 	cutter.material = cutter_material
-	var accent := VisualColor.appearance_color(ThemeColor.accent_theme_color())
+	var accent := cutter_accent_color()
 	cutter_material.set_shader_parameter("effect_color", accent)
-	haze_material.set_shader_parameter("effect_color", accent)
+	haze_material.set_shader_parameter("effect_color", VisualColor.appearance_color(ThemeColor.accent_theme_color()))
 	row.add_child(cutter)
 	spawn_ambient_dust()
 	var available_width := maxf(1.0, size.x - ROW_SCREEN_MARGIN * 2.0)
@@ -146,6 +170,17 @@ func build_tokens(tokens: Array[LlamaHelper.Token]) -> void:
 	row.scale = Vector2(fit_scale, fit_scale)
 	row.position = Vector2(size.x + ROW_SCREEN_MARGIN, (size.y - TOKEN_HEIGHT * fit_scale) * 0.5)
 	pass
+
+
+static func cutter_accent_color() -> Color:
+	var accent := VisualColor.appearance_color(ThemeColor.accent_theme_color())
+	if ThemeColor.is_light_theme():
+		return ThemeColor.promote(accent, Colors.am_2)
+	return accent
+
+
+static func cutter_peak_intensity() -> float:
+	return 1.4 if ThemeColor.is_dark_theme() else 1.75
 
 
 static func create_shader_material(code: String) -> ShaderMaterial:
@@ -315,6 +350,7 @@ func animate_cut_stage(generation: int) -> void:
 
 ## Top-to-bottom slash: enter from above → hit → exit below while thinning → shorten out.
 func animate_boundary_cut(generation: int, boundary_index: int, boundary_x: float, targets: Array[float], stage_scale: float, step_duration: float) -> void:
+	var peak_intensity := cutter_peak_intensity()
 	var cutter_x := boundary_x - CUTTER_WIDTH * 0.5
 	var start_y := -CUTTER_HEIGHT - 6.0
 	var hit_y := TOKEN_HEIGHT * 0.42 - CUTTER_HEIGHT * 0.5
@@ -329,7 +365,7 @@ func animate_boundary_cut(generation: int, boundary_index: int, boundary_x: floa
 	enter.tween_property(cutter, "position:y", hit_y, step_duration * 0.34).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	enter.tween_property(cutter, "color:a", 1.0, step_duration * 0.08)
 	if cutter_material != null:
-		enter.tween_method(func(value: float) -> void: cutter_material.set_shader_parameter("intensity", value), 0.35, 1.4, step_duration * 0.34)
+		enter.tween_method(func(value: float) -> void: cutter_material.set_shader_parameter("intensity", value), 0.35, peak_intensity, step_duration * 0.34)
 	await enter.finished
 	if not is_current(generation):
 		return
@@ -345,7 +381,7 @@ func animate_boundary_cut(generation: int, boundary_index: int, boundary_x: floa
 	exit.tween_property(cutter, "scale:x", 0.30, step_duration * 0.28).set_delay(step_duration * 0.10).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	exit.tween_method(func(t: float) -> void: apply_cut_shake(row_rest, boundary_index, t), 0.0, 1.0, step_duration * 0.40)
 	if cutter_material != null:
-		exit.tween_method(func(value: float) -> void: cutter_material.set_shader_parameter("intensity", value), 1.4, 0.85, step_duration * 0.40)
+		exit.tween_method(func(value: float) -> void: cutter_material.set_shader_parameter("intensity", value), peak_intensity, 0.85, step_duration * 0.40)
 	await exit.finished
 	if not is_current(generation):
 		return
