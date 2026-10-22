@@ -31,9 +31,13 @@ const DECORATIVE_MOTE_COUNT := 7
 const DECORATIVE_TRAIL_SAMPLES := 8
 const DECORATIVE_TRAIL_SAMPLE_STEP := 12.0
 const DECORATIVE_SPAWN_INTERVAL := 0.55
-const CONTEXT_RING_RADIUS := 52.0
+const CONTEXT_RING_RADIUS := 36.0
 ## Horizontal threshold for decorative motes reaching the intake side of the lens.
-const CONTEXT_RING_INSET := 58.0
+const CONTEXT_RING_INSET := 42.0
+## Outward ripple reach at absorption: short phrases stay tight, long labels push farther.
+const ABSORPTION_RIPPLE_SPREAD_MIN := 36.0
+const ABSORPTION_RIPPLE_SPREAD_MAX := 120.0
+const ABSORPTION_RIPPLE_WIDTH_REF := 200.0
 const OUTPUT_SPIRAL_TURNS := 3.25
 const OUTPUT_SPIRAL_RADIUS := 11.0
 const OUTPUT_TRAIL_SAMPLES := 8
@@ -42,6 +46,8 @@ const END_INPUT_SECONDS := 0.55
 const END_OUTPUT_SECONDS := 0.65
 const END_LENS_SECONDS := 0.32
 const END_TIMEOUT_MSEC := 4000
+const SHADER_PATH := "res://agent/ui/visuals/context_memory_river/ContextMemoryRiverLens.gdshader"
+const RING_RADIUS_CLOSE := 30.0
 
 enum StreamType { USER, SYSTEM, HISTORY, FILE, TOOL, WEB, THINKING, ERROR, ANSWER }
 
@@ -103,6 +109,26 @@ var is_ending: bool = false
 var lens_closing: bool = false
 var lens_close_progress: float = 0.0
 var stream_pending: Dictionary[int, String] = {}
+var lens_field: ColorRect
+var lens_material: ShaderMaterial
+
+
+func _ready() -> void:
+	super._ready()
+	lens_field = ColorRect.new()
+	lens_field.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lens_field.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	lens_field.show_behind_parent = true
+	lens_material = ShaderMaterial.new()
+	lens_field.material = lens_material
+	add_child(lens_field)
+	var loaded_shader: Shader = await ResourceHelper.async_load(SHADER_PATH)
+	if loaded_shader == null or not is_instance_valid(lens_material):
+		return
+	lens_material.shader = loaded_shader
+	lens_material.set_shader_parameter("ring_radius", CONTEXT_RING_RADIUS)
+	lens_material.set_shader_parameter("ring_radius_close", RING_RADIUS_CLOSE)
+	pass
 
 
 func fade_in_seconds() -> float:
@@ -229,6 +255,7 @@ func _process(delta: float) -> void:
 			absorption_effects.remove_at(index)
 	update_decorative_motes(delta, center)
 	update_output_motes(delta)
+	sync_lens_shader(center)
 	queue_redraw()
 	pass
 
@@ -400,11 +427,8 @@ func _draw() -> void:
 	draw_decorative_motes(center)
 	for item: StreamItem in items:
 		draw_item(item, center)
-	# Intake and output sit below the lens outline, preserving a crisp portal edge
-	# while remaining visible through its transparent center.
-	draw_absorption_effects(center)
+	draw_absorption_ripples(center)
 	draw_output(center)
-	draw_context_window(center)
 	pass
 
 
@@ -433,14 +457,16 @@ func draw_decorative_motes(center: Vector2) -> void:
 	pass
 
 
-## Adds a type-colored core pulse without taking ownership of the incoming text.
-func draw_absorption_effects(center: Vector2) -> void:
+## One monotonic outward ring per intake; lifetime matches [AbsorptionEffect] removal in [_process].
+func draw_absorption_ripples(center: Vector2) -> void:
 	for effect: AbsorptionEffect in absorption_effects:
 		var phase := clampf(effect.age / ABSORPTION_DURATION, 0.0, 1.0)
-		var color := effect.color
 		var ripple_phase := clampf(phase / 0.82, 0.0, 1.0)
-		var ripple_radius := lerpf(54.0, 84.0, ripple_phase)
-		draw_arc(center, ripple_radius, 0.0, TAU, 72, VisualColor.stroke(color, (1.0 - ripple_phase) * 0.2), 1.6, true)
+		var ease := ripple_phase * ripple_phase * (3.0 - 2.0 * ripple_phase)
+		var spread := absorption_ripple_spread(effect.source_width)
+		var radius := CONTEXT_RING_RADIUS + 2.0 + spread * ease
+		var fade := (1.0 - ripple_phase) * (1.0 - ripple_phase)
+		draw_arc(center, radius, 0.0, TAU, 72, absorption_ripple_stroke_color(effect.color, spread, fade), 1.5, true)
 	pass
 
 
@@ -651,40 +677,35 @@ static func cubic_bezier(start: Vector2, control_a: Vector2, control_b: Vector2,
 	return inverse * inverse * inverse * start + 3.0 * inverse * inverse * progress * control_a + 3.0 * inverse * progress * progress * control_b + progress * progress * progress * end
 
 
-func draw_context_window(center: Vector2) -> void:
+func sync_lens_shader(center: Vector2) -> void:
+	if lens_material == null or lens_material.shader == null:
+		return
 	var accent := ThemeColor.accent_theme_color()
-	var absorption := absorption_activity()
 	var ratio := context_ratio()
-	var capacity_color := Colors.error if ratio >= 0.9 else (Colors.warning if ratio >= 0.72 else accent)
-	# A transparent lens replaces the previous solid dashboard. The input collapse
-	# and output braid remain visible through it, making the center read as a
-	# transformation point instead of a separate widget.
-	var close_eased := smoothstep(0.0, 1.0, lens_close_progress)
-	var lens_alpha := 1.0 - close_eased
-	var gauge_radius := lerpf(CONTEXT_RING_RADIUS, 44.0, close_eased)
-	if absorption > 0.0:
-		draw_arc(center, gauge_radius + 7.0 + absorption * 4.0, 0.0, TAU, 64, Color(capacity_color, absorption * 0.08 * lens_alpha), 2.0, true)
-	if lens_closing:
-		var closing_wave_radius := lerpf(CONTEXT_RING_RADIUS, CONTEXT_RING_RADIUS + 30.0, close_eased)
-		draw_arc(center, closing_wave_radius, 0.0, TAU, 64, Color(capacity_color, sin(close_eased * PI) * 0.1), 1.2, true)
-	draw_arc(center, gauge_radius, 0.0, TAU, 72, Color(Colors.subtle_border, 0.34 * lens_alpha), 1.0, true)
-	if ratio > 0.0:
-		draw_arc(center, gauge_radius, -PI * 0.5, -PI * 0.5 + TAU * ratio, maxi(2, int(72.0 * ratio)), Color(capacity_color, 0.92 * lens_alpha), 2.2, true)
-	var text_alpha := 1.0 - smoothstep(0.0, 0.55, lens_close_progress)
-	draw_centered_text(center + Vector2(0.0, 72.0), I18n.t("agent.visuals.context"), Fonts.semibold(), Typography.label_small_size, Color(Colors.primary_text, 0.82 * text_alpha))
-	draw_centered_text(center + Vector2(0.0, 88.0), token_label(), Fonts.regular(), Typography.label_small_size, Color(capacity_color, 0.82 * text_alpha))
+	var pulse_color := Colors.error if ratio >= 0.9 else (Colors.warning if ratio >= 0.72 else accent)
+	lens_material.set_shader_parameter("lens_center_px", center)
+	lens_material.set_shader_parameter("viewport_size", size)
+	lens_material.set_shader_parameter("lens_close", lens_close_progress)
+	lens_material.set_shader_parameter("border_color", Color(Colors.subtle_border, 0.34))
+	lens_material.set_shader_parameter("pulse_color", pulse_color)
 	pass
 
 
-## Combines overlapping intake events into one bounded core response. The clamp
-## avoids a distracting flash when several packets arrive in the same frame.
-func absorption_activity() -> float:
-	var intensity := 0.0
-	for effect: AbsorptionEffect in absorption_effects:
-		var phase := clampf(effect.age / ABSORPTION_DURATION, 0.0, 1.0)
-		var pulse := sin(clampf(phase / 0.62, 0.0, 1.0) * PI) * (1.0 - smoothstep(0.68, 1.0, phase))
-		intensity += pulse * (0.55 + effect.weight * 0.45)
-	return clampf(intensity, 0.0, 1.0)
+static func absorption_ripple_spread(source_width: float) -> float:
+	var width_factor := smoothstep(0.0, ABSORPTION_RIPPLE_WIDTH_REF, maxf(source_width, 0.0))
+	return lerpf(ABSORPTION_RIPPLE_SPREAD_MIN, ABSORPTION_RIPPLE_SPREAD_MAX, width_factor)
+
+
+## Spread maps to stroke strength while hue stays on the stream type color.
+static func absorption_ripple_stroke_color(type_color: Color, spread: float, fade: float) -> Color:
+	var spread_weight := clampf(inverse_lerp(ABSORPTION_RIPPLE_SPREAD_MIN, ABSORPTION_RIPPLE_SPREAD_MAX, spread), 0.0, 1.0)
+	var stroke_alpha := fade * lerpf(0.14, 0.30, spread_weight)
+	var rgb := type_color
+	if type_color.s > 0.04:
+		rgb = Color.from_hsv(type_color.h, lerpf(type_color.s * 0.5, type_color.s, spread_weight), lerpf(type_color.v * 0.85, minf(type_color.v * 1.05, 1.0), spread_weight))
+	else:
+		rgb = type_color.lightened(lerpf(0.22, 0.0, spread_weight))
+	return VisualColor.stroke(rgb, stroke_alpha)
 
 
 ## Answer-colored particles alone communicate generated output. Deliberately do
@@ -737,18 +758,6 @@ func output_spiral_phase(progress: float, phase_offset: float) -> float:
 
 func context_ratio() -> float:
 	return clampf(float(prompt_tokens) / float(maxi(context_limit, 1)), 0.0, 1.0)
-
-
-func token_label() -> String:
-	if prompt_tokens <= 0:
-		return I18n.t("agent.visuals.awaiting_tokens")
-	return "%s / %s" % [compact_number(prompt_tokens), compact_number(context_limit)]
-
-
-static func compact_number(value: int) -> String:
-	if value >= 1000:
-		return "%.1fK" % (float(value) / 1000.0)
-	return str(value)
 
 
 static func weight_for_text(text: String) -> float:

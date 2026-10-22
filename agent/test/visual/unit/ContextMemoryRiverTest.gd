@@ -8,7 +8,6 @@ static func context_usage_test() -> void:
 	usage.completion_tokens = 2_000
 	effect.on_message_complete(1, usage)
 	assert(is_equal_approx(effect.context_ratio(), 0.5))
-	assert(effect.token_label() == "64.0K / 128.0K")
 	effect.free()
 	pass
 
@@ -46,6 +45,13 @@ static func visible_text_items_are_bounded_test() -> void:
 	effect.add_item(ContextMemoryRiver.StreamType.ANSWER, "ANSWER", 0.5)
 	assert(effect.items.size() == ContextMemoryRiver.MAX_TEXT_ITEMS + 1)
 	effect.free()
+	pass
+
+
+static func absorption_ripple_spread_follows_label_width_test() -> void:
+	assert(is_equal_approx(ContextMemoryRiver.absorption_ripple_spread(0.0), ContextMemoryRiver.ABSORPTION_RIPPLE_SPREAD_MIN))
+	assert(ContextMemoryRiver.absorption_ripple_spread(80.0) > ContextMemoryRiver.absorption_ripple_spread(20.0))
+	assert(is_equal_approx(ContextMemoryRiver.absorption_ripple_spread(400.0), ContextMemoryRiver.ABSORPTION_RIPPLE_SPREAD_MAX))
 	pass
 
 
