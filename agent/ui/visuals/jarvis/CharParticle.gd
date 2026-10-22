@@ -1,7 +1,7 @@
 class_name CharParticle
 extends RefCounted
 
-## Single character following a 3D curve — rendered via Label3D billboard.
+## Sentence label following a 3D curve — rendered via Label3D billboard.
 
 var label: Label3D
 var curve: Curve3D
@@ -44,11 +44,3 @@ func update(delta: float) -> bool:
 		label.visible = false
 		return false
 	return true
-
-
-func release() -> void:
-	alive = false
-	if label != null:
-		label.visible = false
-		label.text = ""
-	pass

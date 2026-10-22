@@ -56,11 +56,7 @@ func enqueue_segments(segments: Array[String], stream_char_total: int) -> void:
 
 
 func can_accept_display_load() -> bool:
-	return display_load() < MAX_DISPLAY
-
-
-func display_load() -> int:
-	return active_particles.size() + char_queue.size()
+	return active_particles.size() + char_queue.size() < MAX_DISPLAY
 
 
 func reset_growth() -> void:
@@ -76,11 +72,6 @@ func set_phase(phase: OrbPhase.Phase) -> void:
 	pass
 
 
-func sync_display_color(color: Color) -> void:
-	display_color = color
-	pass
-
-
 func clear_queue() -> void:
 	char_queue.clear()
 	pass
@@ -93,8 +84,6 @@ func apply_orb_font(label: Label3D) -> void:
 
 func refresh_shared_curves() -> void:
 	shared_curves.clear()
-	if neuron_net == null:
-		return
 	var neurons := neuron_net.get_positions()
 	var styles: Array[OrbPhase.PathStyle] = [
 		OrbPhase.PathStyle.TRANSVERSE,
@@ -143,8 +132,6 @@ func acquire_curve() -> Curve3D:
 
 
 func spawn_segment(segment: String) -> void:
-	if neuron_net == null:
-		return
 	var label: Label3D = make_billboard_label(20, 0.0018)
 	var token_len := segment.length()
 	if token_len > 1:

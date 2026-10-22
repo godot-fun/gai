@@ -39,9 +39,7 @@ func on_theme_color_changed() -> void:
 
 
 func _process(delta: float) -> void:
-	if neuron_net != null:
-		neuron_net.wander_speed_scale = spin_speed
-
+	neuron_net.wander_speed_scale = spin_speed
 	orb_color_controller.update(delta)
 	apply_display_color()
 
@@ -76,21 +74,9 @@ func add_step_text(text: String) -> void:
 	if text.is_empty():
 		return
 	stream_char_total += text.length()
-	offer_segments([text])
-	pass
-
-
-func offer_segments(segments: Array[String]) -> void:
-	if segments.is_empty():
-		return
-	char_overlay.enqueue_segments(segments, stream_char_total)
+	char_overlay.enqueue_segments([text], stream_char_total)
 	growth_dirty = true
 	growth_flush_timer = OrbGrowth.NEURON_GROWTH_BATCH_INTERVAL_S
-	pass
-
-
-func can_accept_step_text() -> bool:
-	return char_overlay != null and char_overlay.can_accept_display_load()
 	pass
 
 
@@ -104,7 +90,7 @@ func apply_display_color() -> void:
 	var color: Color = orb_color_controller.display_color
 	neuron_net.apply_display_color(color)
 	rings.apply_display_color(color)
-	char_overlay.sync_display_color(color)
+	char_overlay.display_color = color
 	pass
 
 
@@ -117,10 +103,4 @@ func reset_growth() -> void:
 	growth_flush_timer = 0.0
 	neuron_net.reset_growth()
 	char_overlay.reset_growth()
-	pass
-
-
-func clear_stream_queue() -> void:
-	if char_overlay != null:
-		char_overlay.clear_queue()
 	pass

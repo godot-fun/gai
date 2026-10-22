@@ -24,14 +24,6 @@ static func neuron_count(char_count: int) -> int:
 	return int(lerpf(float(NEURON_MIN), float(NEURON_MAX), level(char_count)))
 
 
-static func keyword_burst(char_count: int) -> int:
-	var growth := level(char_count)
-	return 1 + int(growth * 3.0)
-
-
-static func stream_keyword_cap(char_count: int) -> int:
-	return 1 + int(level(char_count) * 2.0)
-
-
 static func keyword_cap(char_count: int) -> int:
-	return maxi(stream_keyword_cap(char_count), keyword_burst(char_count))
+	var growth := level(char_count)
+	return maxi(1 + int(growth * 2.0), 1 + int(growth * 3.0))

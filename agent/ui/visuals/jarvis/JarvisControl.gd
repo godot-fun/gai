@@ -24,11 +24,13 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	if RuntimeManager.runtimes.is_empty() or jarvis_orb == null:
+	if RuntimeManager.runtimes.is_empty():
 		return
-	if not jarvis_orb.can_accept_step_text():
+	if not jarvis_orb.char_overlay.can_accept_display_load():
 		return
-	offer_next_sentence()
+	var sentence := ChatEntryCursor.take_next_sentence()
+	if not sentence.is_empty():
+		jarvis_orb.add_step_text(sentence.text)
 	pass
 
 
@@ -87,13 +89,6 @@ func on_agent_start(_session_id: int) -> void:
 	pass
 
 
-func offer_next_sentence() -> void:
-	var sentence := ChatEntryCursor.take_next_sentence()
-	if not sentence.is_empty():
-		jarvis_orb.add_step_text(sentence.text)
-	pass
-
-
 func on_agent_end(_session_id: int, error_message: String) -> void:
 	var is_stop: bool = error_message == "Stop." or error_message == "Stop..."
 	var end_phase: OrbPhase.Phase = OrbPhase.Phase.SUCCESS
@@ -107,7 +102,7 @@ func on_agent_end(_session_id: int, error_message: String) -> void:
 
 
 func on_turn_start(_session_id: int) -> void:
-	jarvis_orb.clear_stream_queue()
+	jarvis_orb.char_overlay.clear_queue()
 	transition_to(OrbPhase.Phase.AWAKE)
 	pass
 
@@ -144,8 +139,7 @@ func on_tool_execution_end(_session_id: int, _tool_call_id: String, _tool_name: 
 
 func transition_to(new_phase: OrbPhase.Phase) -> void:
 	phase = new_phase
-	if jarvis_orb != null:
-		jarvis_orb.set_phase(new_phase)
+	jarvis_orb.set_phase(new_phase)
 	pass
 
 
@@ -199,10 +193,8 @@ func finalize_orb_hidden() -> void:
 	modulate.a = 0.0
 	scale = Vector2.ONE
 	phase = OrbPhase.Phase.IDLE
-	if jarvis_orb != null:
-		jarvis_orb.clear_stream_queue()
-		jarvis_orb.reset_growth()
-		jarvis_orb.set_phase(OrbPhase.Phase.IDLE)
+	jarvis_orb.reset_growth()
+	jarvis_orb.set_phase(OrbPhase.Phase.IDLE)
 	pass
 
 
