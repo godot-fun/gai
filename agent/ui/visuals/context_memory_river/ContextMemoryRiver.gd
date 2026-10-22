@@ -32,7 +32,7 @@ const DECORATIVE_TRAIL_SAMPLES := 8
 const DECORATIVE_TRAIL_SAMPLE_STEP := 12.0
 const DECORATIVE_SPAWN_INTERVAL := 0.55
 const CONTEXT_RING_RADIUS := 52.0
-## Distance from the lens center to the intake impact point on the left ring edge.
+## Horizontal threshold for decorative motes reaching the intake side of the lens.
 const CONTEXT_RING_INSET := 58.0
 const OUTPUT_SPIRAL_TURNS := 3.25
 const OUTPUT_SPIRAL_RADIUS := 11.0
@@ -589,8 +589,8 @@ static func cached_point_at_distance(item: StreamItem, current: Vector2, current
 	return item.path_history[low].lerp(item.path_history[high], (target - item.path_distances[low]) / maxf(span, 0.001))
 
 
-## Approaches the ring on the established S-curve, then continues through the
-## lens center far enough for the final glyph to finish its spatial fade.
+## S-curve from the left edge into the lens center, then straight through until
+## the final glyph finishes its spatial fade.
 func item_position(progress: float, item: StreamItem, center: Vector2, is_output: bool) -> Vector2:
 	var eased := smoothstep(0.0, 1.0, progress)
 	var source_y := item.source_y_ratio * size.y
@@ -602,18 +602,18 @@ func item_position(progress: float, item: StreamItem, center: Vector2, is_output
 		var phase := eased * TAU * OUTPUT_SPIRAL_TURNS + item.source_y_ratio * TAU - elapsed * 0.9
 		return Vector2(x, center.y + sin(phase) * OUTPUT_SPIRAL_RADIUS * spiral_envelope)
 	var input_start := Vector2(-50.0, center.y + lane_offset)
-	var impact := center + Vector2(-CONTEXT_RING_INSET, lane_offset * 0.04)
 	if progress >= INPUT_APPROACH_PROGRESS:
 		var through_progress := inverse_lerp(INPUT_APPROACH_PROGRESS, 1.0, progress)
 		var exit := center + Vector2(item.label_width + TEXT_CENTER_FADE_DISTANCE + 8.0, 0.0)
-		return impact.lerp(exit, through_progress)
+		return center.lerp(exit, through_progress)
 	var approach_progress := progress / INPUT_APPROACH_PROGRESS
 	var approach_eased := smoothstep(0.0, 1.0, approach_progress)
 	var pull := smoothstep(0.42, 1.0, approach_eased)
 	var drift := sin(approach_progress * TAU * 1.65 + item.source_y_ratio * 9.0) * 30.0 * (1.0 - pull)
 	var control_a := Vector2(center.x * 0.2, center.y + lane_offset * 1.28 + curve_direction * 96.0)
-	var control_b := Vector2(center.x * 0.68, center.y - lane_offset * 0.52 - curve_direction * 76.0)
-	var position := cubic_bezier(input_start, control_a, control_b, impact, approach_eased)
+	# End tangent aims right so the approach meets the through segment without a kink.
+	var control_b := Vector2(lerpf(center.x * 0.68, center.x - 44.0, pull), lerpf(center.y - lane_offset * 0.52 - curve_direction * 76.0, center.y, pull))
+	var position := cubic_bezier(input_start, control_a, control_b, center, approach_eased)
 	position.y += drift
 	return position
 
