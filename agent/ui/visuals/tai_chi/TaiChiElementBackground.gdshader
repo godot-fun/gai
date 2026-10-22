@@ -5,6 +5,7 @@ uniform vec2 viewport_size = vec2(1920.0, 1080.0);
 uniform float elapsed = 0.0;
 uniform float opacity : hint_range(0.0, 1.0) = 0.0;
 uniform vec4 accent_color : source_color = vec4(0.3, 0.4, 0.7, 1.0);
+uniform float dark_theme : hint_range(0.0, 1.0) = 0.0;
 uniform int effect_mode = 0;
 uniform float seed = 1.0;
 
@@ -229,7 +230,14 @@ void fragment() {
 	}
 	float center_haze = exp(-dot(point, point) * 0.42) * 0.055;
 	float edge_fade = 1.0 - smoothstep(0.25, 1.35, length(point * vec2(0.68, 1.0)));
-	float alpha = clamp((effect * 0.32 + center_haze) * edge_fade * opacity, 0.0, 0.3);
+	// Light surfaces need pigment rather than additive-looking glow: whitening the
+	// accent makes the animation vanish into the app background. On dark surfaces
+	// keep the original luminous treatment, while light mode uses a darker ink
+	// derived from the same element color and a little more visible density.
+	float effect_strength = mix(0.40, 0.32, dark_theme);
+	float maximum_alpha = mix(0.38, 0.30, dark_theme);
+	float alpha = clamp((effect * effect_strength + center_haze) * edge_fade * opacity, 0.0, maximum_alpha);
 	vec3 luminous_color = mix(accent_color.rgb, vec3(1.0), 0.2);
-	COLOR = vec4(luminous_color, alpha);
+	vec3 ink_color = mix(accent_color.rgb, vec3(0.10, 0.15, 0.14), 0.42);
+	COLOR = vec4(mix(ink_color, luminous_color, dark_theme), alpha);
 }

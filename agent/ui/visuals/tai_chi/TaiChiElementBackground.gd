@@ -42,6 +42,7 @@ func update(canvas_size: Vector2, carousel: TaiChiCarouselFlow) -> void:
 	material.set_shader_parameter("elapsed", carousel.carousel_time())
 	material.set_shader_parameter("opacity", opacity)
 	material.set_shader_parameter("accent_color", carousel.background_color(index))
+	material.set_shader_parameter("dark_theme", 1.0 if ThemeColor.is_dark_theme() else 0.0)
 	material.set_shader_parameter("effect_mode", carousel.background_effect(index))
 	material.set_shader_parameter("seed", carousel.background_seed(index))
 	pass
