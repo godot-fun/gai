@@ -167,7 +167,7 @@ func play_completion_burst() -> void:
 	var base := Vector2(size.x * 0.5, size.y - Margin.ma_8)
 	var crown_center_y := Margin.ma_8 + get_crown_radius()
 	var segment_height := maxf(12.0, (base.y - crown_center_y) / float(MAX_TRUNK_SEGMENTS))
-	completion_particles.position = trunk_point(base, segment_height, maxf(trunk_growth, 0.35))
+	completion_particles.position = trunk_point(base, segment_height, crown_anchor_segment())
 	completion_particles.restart()
 	completion_particles.emitting = true
 	pass
@@ -215,7 +215,7 @@ func _draw() -> void:
 	var crown_radius := get_crown_radius()
 	var crown_center_y := Margin.ma_8 + crown_radius
 	var segment_height := maxf(12.0, (base.y - crown_center_y) / float(MAX_TRUNK_SEGMENTS))
-	var accent := ThemeColor.accent_theme_color()
+	var accent := contrast_color(ThemeColor.accent_theme_color())
 	# Render branches below the trunk so their flat start caps disappear beneath the trunk stroke.
 	# This produces a clean fork without a gap or a visible circular junction marker.
 	for branch: Dictionary in branches:
@@ -231,7 +231,7 @@ func draw_trunk(base: Vector2, segment_height: float, accent: Color) -> void:
 		var amount := clampf(trunk_growth - index, 0.0, 1.0)
 		var from := trunk_point(base, segment_height, float(index))
 		var to := from.lerp(trunk_point(base, segment_height, float(index + 1)), amount)
-		draw_line(from, to, Color(accent, lerpf(TRUNK_ALPHA_MIN, TRUNK_ALPHA_MAX, amount)), 3.0 + amount * 2.0, true)
+		draw_line(from, to, Color(accent, visual_alpha(lerpf(TRUNK_ALPHA_MIN, TRUNK_ALPHA_MAX, amount))), visual_stroke_width(3.0 + amount * 2.0), true)
 	pass
 
 
@@ -246,17 +246,17 @@ func draw_branch(branch: Dictionary, base: Vector2, segment_height: float) -> vo
 	var parent_curve := quadratic_curve_points(anchor, parent_control, anchor + branch_vector, growth)
 	var elbow := parent_curve[-1]
 	var state: int = branch["state"]
-	var accent := ThemeColor.accent_theme_color()
-	var color := accent if state == BranchState.RUNNING else (Colors.success if state == BranchState.SUCCESS else Colors.error)
+	var accent := contrast_color(ThemeColor.accent_theme_color())
+	var color := accent if state == BranchState.RUNNING else contrast_color(Colors.success if state == BranchState.SUCCESS else Colors.error)
 	# The tool's parent branch keeps one identity color throughout execution. Completion state is
 	# communicated by the child twig and its tip instead of repainting the whole branch.
-	var parent_color := Colors.secondary_text if state == BranchState.FAILED else accent
+	var parent_color := contrast_color(Colors.secondary_text) if state == BranchState.FAILED else accent
 	var parent_alpha := BRANCH_ALPHA_FAILED if state == BranchState.FAILED else (BRANCH_ALPHA_SUCCESS if state == BranchState.SUCCESS else BRANCH_ALPHA_RUNNING)
 	var pulse := running_pulse(visual_time, float(branch["animation_phase"])) if state == BranchState.RUNNING else 1.0
-	var parent_width := (2.5 if state == BranchState.FAILED else 3.0) + (pulse - 1.0)
+	var parent_width := visual_stroke_width((2.5 if state == BranchState.FAILED else 3.0) + (pulse - 1.0))
 	if state == BranchState.RUNNING:
-		draw_polyline(parent_curve, Color(parent_color, parent_alpha * 0.22 * pulse), 8.0 + pulse * 2.0, true)
-	draw_polyline(parent_curve, Color(parent_color, parent_alpha * pulse), parent_width, true)
+		draw_polyline(parent_curve, Color(parent_color, visual_alpha(parent_alpha * 0.22 * pulse)), visual_stroke_width(8.0 + pulse * 2.0), true)
+	draw_polyline(parent_curve, Color(parent_color, visual_alpha(parent_alpha * pulse)), parent_width, true)
 	if state == BranchState.RUNNING:
 		if growth > 0.72:
 			draw_branch_tip(elbow, direction, state, color, pulse)
@@ -271,7 +271,7 @@ func draw_branch(branch: Dictionary, base: Vector2, segment_height: float) -> vo
 	else:
 		var completion_control := branch_curve_control(elbow, elbow + completion_vector, completion_length * 0.45)
 		var completion_curve := quadratic_curve_points(elbow, completion_control, elbow + completion_vector, completion_growth)
-		draw_polyline(completion_curve, Color(color, COMPLETION_BRANCH_ALPHA), 3.0, true)
+		draw_polyline(completion_curve, Color(color, visual_alpha(COMPLETION_BRANCH_ALPHA)), visual_stroke_width(3.0), true)
 	if completion_growth > 0.72:
 		if state == BranchState.SUCCESS:
 			var leaf_glow := get_leaf_pulse_intensity(branch, segment_height, branch_length, completion_length)
@@ -290,17 +290,17 @@ func draw_failed_twig(elbow: Vector2, tip: Vector2, completion_growth: float, co
 	var first_break := elbow.lerp(tip, 0.58)
 	var second_break := elbow.lerp(tip, 0.70)
 	var fracture := PackedVector2Array([elbow, first_break, first_break + perpendicular, second_break - perpendicular, second_break, tip])
-	draw_polyline(fracture, Color(color, BRANCH_ALPHA_FAILED), 2.5, true)
+	draw_polyline(fracture, Color(color, visual_alpha(BRANCH_ALPHA_FAILED)), visual_stroke_width(2.5), true)
 	pass
 
 
 func draw_branch_tip(tip: Vector2, direction: float, state: int, color: Color, pulse: float = 1.0) -> void:
 	if state == BranchState.RUNNING:
-		draw_circle(tip, 11.0 * pulse, Color(color, 0.06 * pulse))
-		draw_arc(tip, 8.0 * pulse, 0.0, TAU * 0.78, 18, Color(color, 0.72 + pulse * 0.20), 2.0, true)
+		draw_circle(tip, 11.0 * pulse, Color(color, visual_alpha(0.06 * pulse)))
+		draw_arc(tip, 8.0 * pulse, 0.0, TAU * 0.78, 18, Color(color, visual_alpha(0.72 + pulse * 0.20)), visual_stroke_width(2.0), true)
 	else:
-		draw_line(tip - Vector2(5.0, 5.0), tip + Vector2(5.0, 5.0), color, 2.0, true)
-		draw_line(tip + Vector2(-5.0, 5.0), tip + Vector2(5.0, -5.0), color, 2.0, true)
+		draw_line(tip - Vector2(5.0, 5.0), tip + Vector2(5.0, 5.0), color, visual_stroke_width(2.0), true)
+		draw_line(tip + Vector2(-5.0, 5.0), tip + Vector2(5.0, -5.0), color, visual_stroke_width(2.0), true)
 	pass
 
 
@@ -311,11 +311,11 @@ func draw_success_leaves(tip: Vector2, direction: float, branch: Dictionary, com
 	var variant: int = branch["leaf_variant"]
 	var phase: float = branch["animation_phase"]
 	var sway := sin(visual_time * 1.35 + phase * TAU) * 0.075
-	var accent := ThemeColor.accent_theme_color()
-	var leaf_color := Colors.success.lerp(accent, 0.08 + float(variant) * 0.055)
+	var accent := contrast_color(ThemeColor.accent_theme_color())
+	var leaf_color := contrast_color(Colors.success).lerp(accent, 0.08 + float(variant) * 0.055)
 	if pulse_glow > 0.0:
-		draw_circle(tip, 18.0 + pulse_glow * 9.0, Color(leaf_color, pulse_glow * 0.12))
-		draw_circle(tip, 9.0 + pulse_glow * 4.0, Color(leaf_color, pulse_glow * 0.20))
+		draw_circle(tip, 18.0 + pulse_glow * 9.0, Color(leaf_color, visual_alpha(pulse_glow * 0.12)))
+		draw_circle(tip, 9.0 + pulse_glow * 4.0, Color(leaf_color, visual_alpha(pulse_glow * 0.20)))
 	var leaf_length := (17.0 + float(variant) * 2.5) * growth
 	var leaf_width := (7.0 + float((variant + 1) % 3)) * growth
 	var leaf_count: int = branch["leaf_count"]
@@ -326,7 +326,7 @@ func draw_success_leaves(tip: Vector2, direction: float, branch: Dictionary, com
 		# Lift leaf clusters onto a short stem and fan them apart. Larger clusters use narrower
 		# leaves so three- and four-leaf variants stay readable instead of merging into one shape.
 		var stem_tip := tip + Vector2(0.0, -5.0 * growth)
-		draw_line(tip, stem_tip, Color(leaf_color, 0.72), 1.6, true)
+		draw_line(tip, stem_tip, Color(leaf_color, visual_alpha(0.72)), visual_stroke_width(1.6), true)
 		var cluster_width := leaf_width * lerpf(0.72, 0.58, float(leaf_count - 2))
 		for leaf_index in range(leaf_count):
 			var fan_angle := leaf_fan_angle(leaf_index, leaf_count)
@@ -347,9 +347,9 @@ func draw_leaf(origin: Vector2, angle: float, length: float, width: float, color
 	draw_colored_polygon(polygon, Color(color, clampf(alpha, 0.0, 1.0)))
 	var outline := polygon.duplicate()
 	outline.append(polygon[0])
-	draw_polyline(outline, Color(color.lightened(0.22), clampf(alpha + 0.08, 0.0, 1.0)), 1.2, true)
+	draw_polyline(outline, Color(color.lightened(0.22), visual_alpha(clampf(alpha + 0.08, 0.0, 1.0))), visual_stroke_width(1.2), true)
 	var vein_end := origin + Vector2.from_angle(angle) * length * 0.82
-	draw_line(origin, vein_end, Color(color.lightened(0.30), clampf(alpha * 0.62, 0.0, 1.0)), 1.0, true)
+	draw_line(origin, vein_end, Color(color.lightened(0.30), visual_alpha(clampf(alpha * 0.62, 0.0, 1.0))), visual_stroke_width(1.0), true)
 	pass
 
 
@@ -403,7 +403,7 @@ func draw_tree_pulse_at_distance(base: Vector2, segment_height: float, color: Co
 		var completion_vector := get_completion_vector(branch, state, completion_length)
 		var completion_control := branch_curve_control(elbow, elbow + completion_vector, completion_length * 0.45)
 		var completion_progress := completion_distance / completion_length
-		var pulse_color := Colors.error if state == BranchState.FAILED else Colors.success
+		var pulse_color := contrast_color(Colors.error if state == BranchState.FAILED else Colors.success)
 		draw_pulse_light(quadratic_curve_point(elbow, completion_control, elbow + completion_vector, completion_progress), pulse_color)
 	pass
 
@@ -435,9 +435,9 @@ func update_tree_pulses(delta: float) -> void:
 
 
 func draw_pulse_light(point: Vector2, color: Color) -> void:
-	draw_circle(point, 15.0, Color(color, 0.045))
-	draw_circle(point, 8.0, Color(color, 0.12))
-	draw_circle(point, 4.0, Color(color, 0.34))
+	draw_circle(point, 15.0, Color(color, visual_alpha(0.045)))
+	draw_circle(point, 8.0, Color(color, visual_alpha(0.12)))
+	draw_circle(point, 4.0, Color(color, visual_alpha(0.34)))
 	draw_circle(point, 2.0, Color(color, 0.96))
 	pass
 
@@ -447,24 +447,25 @@ func draw_branch_label(tip: Vector2, direction: float, label: String, color: Col
 	var font_size := Typography.label_medium_size
 	var text_width := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 	var position := tip + Vector2(12.0 if direction > 0.0 else -text_width - 12.0, 5.0)
-	draw_string(font, position, label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+	draw_string(font, position, label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Colors.primary_text if ThemeColor.is_light_theme() else color)
 	pass
 
 
 func draw_crown(base: Vector2, segment_height: float, accent: Color) -> void:
 	if crown_growth <= 0.0:
 		return
-	# Short tasks keep a compact tree: the final crown belongs to the actual tip, not an artificial
-	# fully-grown endpoint at the top of the viewport.
-	var center := trunk_point(base, segment_height, maxf(trunk_growth, 0.35))
+	# Keep the crown attached to the current trunk tip while both grow into their final shape.
+	var center := trunk_point(base, segment_height, crown_anchor_segment())
 	var visual_growth := crown_visual_growth(crown_growth)
 	var radius := get_crown_radius() * visual_growth
 	if radius < 1.5:
 		return
 	var pulse_glow := get_crown_pulse_intensity(segment_height)
-	var crown_color := Colors.success.lerp(accent, 0.18)
+	var crown_color := contrast_color(Colors.success).lerp(accent, 0.18)
+	if ThemeColor.is_light_theme():
+		draw_circle(center, radius * 0.92, Color(crown_color, 0.08))
 	if pulse_glow > 0.0:
-		draw_circle(center, radius * 0.48 + pulse_glow * 14.0, Color(crown_color, pulse_glow * 0.07))
+		draw_circle(center, radius * 0.48 + pulse_glow * 14.0, Color(crown_color, visual_alpha(pulse_glow * 0.07)))
 	# A compact seven-leaf terminal bud replaces the old bubble cloud. Outer leaves establish the
 	# silhouette while alternating lengths keep the crown organic and readable at small sizes.
 	for index in range(CROWN_LEAF_COUNT):
@@ -475,14 +476,30 @@ func draw_crown(base: Vector2, segment_height: float, accent: Color) -> void:
 		var leaf_length := radius * 0.46 * length_scale
 		var leaf_width := radius * (0.105 + float((index + 1) % 2) * 0.018)
 		var stem_end := center + Vector2.from_angle(angle + sway) * radius * 0.13
-		draw_line(center, stem_end, Color(crown_color, 0.38 + visual_growth * 0.28), 1.5, true)
+		draw_line(center, stem_end, Color(crown_color, visual_alpha(0.38 + visual_growth * 0.28)), visual_stroke_width(1.5), true)
 		var leaf_color := crown_color.lerp(accent, float(index % 3) * 0.055)
 		draw_leaf(stem_end, angle + sway, leaf_length, leaf_width, leaf_color,
 			0.48 + visual_growth * 0.32 + pulse_glow * 0.18)
 	var core_radius := (3.0 + visual_growth * 4.0) * (1.0 + pulse_glow * 0.22)
-	draw_circle(center, core_radius * 2.2, Color(accent, 0.07 + pulse_glow * 0.08))
+	draw_circle(center, core_radius * 2.2, Color(accent, visual_alpha(0.07 + pulse_glow * 0.08)))
 	draw_circle(center, core_radius, Color(accent, 0.72 + pulse_glow * 0.24))
 	pass
+
+
+func contrast_color(color: Color) -> Color:
+	return ThemeColor.promote(color, Colors.am_3) if ThemeColor.is_light_theme() else color
+
+
+func visual_alpha(alpha: float) -> float:
+	return minf(alpha * 1.55, 1.0) if ThemeColor.is_light_theme() else alpha
+
+
+func visual_stroke_width(width: float) -> float:
+	return width + 0.8 if ThemeColor.is_light_theme() else width
+
+
+func crown_anchor_segment() -> float:
+	return clampf(trunk_growth, 0.0, float(MAX_TRUNK_SEGMENTS))
 
 
 func get_crown_pulse_intensity(segment_height: float) -> float:

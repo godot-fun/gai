@@ -268,6 +268,16 @@ func crown_opens_small_then_reaches_full_size_test() -> void:
 	pass
 
 
+func crown_stays_anchored_to_current_trunk_tip_test() -> void:
+	var tree := ReasoningTree.new()
+	tree.trunk_growth = 0.12
+	assert(is_equal_approx(tree.crown_anchor_segment(), tree.trunk_growth))
+	tree.trunk_growth = float(ReasoningTree.MAX_TRUNK_SEGMENTS) + 1.0
+	assert(is_equal_approx(tree.crown_anchor_segment(), float(ReasoningTree.MAX_TRUNK_SEGMENTS)))
+	tree.free()
+	pass
+
+
 func reasoning_chunks_do_not_accumulate_tree_height_test() -> void:
 	var tree := ReasoningTree.new()
 	tree.on_agent_start(1)
