@@ -62,13 +62,15 @@ class StreamItem extends RefCounted:
 	var curve_direction: float
 	var pulse: float = 1.0
 	# These arrays share indices. Points are oldest -> newest and distances are
-	# monotonically increasing, so trimming the oldest pair requires no rebasing.
+	# monotonically increasing; batch slice trim keeps cumulative distances valid.
 	var path_history := PackedVector2Array()
 	var path_distances := PackedFloat32Array()
 	# Font metrics are immutable for an item and expensive enough to cache once.
 	var glyph_advances := PackedFloat32Array()
 	var label_width: float = 0.0
 	var absorption_triggered: bool = false
+	## Cached for [method input_travel_distance] while [member ContextMemoryRiver.is_ending]; -1 until measured.
+	var cached_input_path_length: float = -1.0
 
 
 class AbsorptionEffect extends RefCounted:
@@ -285,7 +287,9 @@ func advance_semantic_item(item: StreamItem, delta: float, center: Vector2) -> b
 func input_travel_distance(item: StreamItem, delta: float, center: Vector2) -> float:
 	var distance := delta * INPUT_TRAVEL_SPEED * item.speed
 	if is_ending:
-		distance = maxf(distance, input_path_length(item, center) * delta / END_INPUT_SECONDS)
+		if item.cached_input_path_length < 0.0:
+			item.cached_input_path_length = input_path_length(item, center)
+		distance = maxf(distance, item.cached_input_path_length * delta / END_INPUT_SECONDS)
 	return distance
 
 
@@ -513,19 +517,20 @@ func draw_text_on_path(item: StreamItem, current: Vector2, text: String, color: 
 	var ascent := font.get_ascent(font_size)
 	var descent := font.get_descent(font_size)
 	var baseline_offset := (ascent - descent) * 0.5
+	var ahead_on_path := current
 	for index in range(text.length() - 1, -1, -1):
 		var advance := item.glyph_advances[index]
 		distance_from_head += advance * 0.5
 		var glyph_position := cached_point_at_distance(item, current, current_distance, distance_from_head)
-		# Sampling both sides estimates the local tangent. Every glyph gets its own
-		# rotation, allowing the phrase itself to bend around the curve.
-		var before := cached_point_at_distance(item, current, current_distance, distance_from_head + 2.0)
-		var after := cached_point_at_distance(item, current, current_distance, maxf(distance_from_head - 2.0, 0.0))
-		var rotation := clampf((after - before).angle(), -0.72, 0.72)
+		var tangent := ahead_on_path - glyph_position
+		if tangent.length_squared() < 0.01:
+			tangent = Vector2.RIGHT
+		var rotation := clampf(tangent.angle(), -0.72, 0.72)
+		ahead_on_path = glyph_position
 		var glyph_color := color
 		glyph_color.a *= center_fade_alpha(glyph_position.x, center_x)
 		draw_set_transform(glyph_position, rotation)
-		draw_string(font, Vector2(-advance * 0.5, baseline_offset), text.substr(index, 1), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, glyph_color)
+		draw_string(font, Vector2(-advance * 0.5, baseline_offset), text[index], HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, glyph_color)
 		distance_from_head += advance * 0.5
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	# Continue along the same cached path so the tail meets the first glyph without
@@ -573,9 +578,11 @@ func cache_item_path(item: StreamItem, center: Vector2) -> void:
 	item.path_distances.append(path_distance)
 	var text_point_count := ceili((item.label_width + TEXT_CENTER_FADE_DISTANCE + 48.0) / PATH_HISTORY_STEP)
 	var history_limit := mini(maxi(MAX_PATH_HISTORY_POINTS, text_point_count), MAX_TEXT_PATH_HISTORY_POINTS)
-	if item.path_history.size() > history_limit:
-		item.path_history.remove_at(0)
-		item.path_distances.remove_at(0)
+	var history_size := item.path_history.size()
+	if history_size > history_limit:
+		var drop := history_size - history_limit
+		item.path_history = item.path_history.slice(drop, history_size)
+		item.path_distances = item.path_distances.slice(drop, history_size)
 	pass
 
 
@@ -647,16 +654,22 @@ func item_position(progress: float, item: StreamItem, center: Vector2, is_output
 func advance_input_progress(item: StreamItem, center: Vector2, travel_distance: float) -> float:
 	var progress := item.progress
 	var remaining := maxf(travel_distance, 0.0)
+	var position := item_position(progress, item, center, false)
 	while remaining > 0.001 and progress < 1.0:
 		var probe := minf(progress + INPUT_PROGRESS_SAMPLE, 1.0)
-		var sample_distance := item_position(progress, item, center, false).distance_to(item_position(probe, item, center, false))
-		var pixels_per_progress := sample_distance / maxf(probe - progress, 0.0001)
+		var probe_position := item_position(probe, item, center, false)
+		var pixels_per_progress := position.distance_to(probe_position) / maxf(probe - progress, 0.0001)
 		var progress_step := minf(remaining / maxf(pixels_per_progress, 0.001), INPUT_MAX_PROGRESS_STEP)
 		progress_step = minf(progress_step, 1.0 - progress)
 		var next_progress := progress + progress_step
-		var actual_distance := item_position(progress, item, center, false).distance_to(item_position(next_progress, item, center, false))
+		var next_position: Vector2
+		if is_equal_approx(next_progress, probe):
+			next_position = probe_position
+		else:
+			next_position = item_position(next_progress, item, center, false)
 		progress = next_progress
-		remaining -= maxf(actual_distance, 0.001)
+		remaining -= maxf(position.distance_to(next_position), 0.001)
+		position = next_position
 	return progress
 
 
