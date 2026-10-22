@@ -32,8 +32,6 @@ const DECORATIVE_TRAIL_SAMPLES := 8
 const DECORATIVE_TRAIL_SAMPLE_STEP := 12.0
 const DECORATIVE_SPAWN_INTERVAL := 0.55
 const CONTEXT_RING_RADIUS := 36.0
-## Horizontal threshold for decorative motes reaching the intake side of the lens.
-const CONTEXT_RING_INSET := 42.0
 ## Outward ripple reach at absorption: short phrases stay tight, long labels push farther.
 const ABSORPTION_RIPPLE_SPREAD_MIN := 36.0
 const ABSORPTION_RIPPLE_SPREAD_MAX := 120.0
@@ -304,7 +302,7 @@ func update_decorative_motes(delta: float, center: Vector2) -> void:
 		mote.progress = advance_input_progress(mote, center, input_travel_distance(mote, delta, center))
 		var position := item_position(mote.progress, mote, center, false)
 		cache_item_path(mote, center)
-		if position.x >= center.x - CONTEXT_RING_INSET:
+		if position.x >= center.x:
 			add_absorption_effect(mote)
 			decorative_motes.remove_at(index)
 	pass
