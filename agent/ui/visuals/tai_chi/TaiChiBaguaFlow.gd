@@ -96,7 +96,7 @@ func draw_moving_trigram(canvas: Control, evolution: TaiChiEvolutionFlow, center
 	var line_gap := lerpf(7.0, TaiChiHexagramCatalog.ORBIT_TRIGRAM_LINE_GAP, local)
 	var line_width := lerpf(3.0, TaiChiHexagramCatalog.ORBIT_TRIGRAM_LINE_WIDTH, local)
 	var alpha := lerpf(TaiChiTrigramDrawing.SOURCE_ALPHA, TaiChiTrigramDrawing.BASE_ALPHA, local)
-	draw_trigram(canvas, position, rotation, TaiChiHexagramCatalog.TRIGRAM_VALUES[index], width, line_gap, line_width, alpha, local)
+	draw_trigram(canvas, position, rotation, TaiChiHexagramCatalog.TRIGRAM_VALUES[index], width, line_gap, line_width, alpha)
 	var name_position := center + Vector2.from_angle(angle) * (
 		orbit_radius + TaiChiHexagramCatalog.orbit_label_gap(canvas.size.y))
 	var source_name_position := source - Vector2(0.0, 34.0)
@@ -109,9 +109,9 @@ func draw_moving_trigram(canvas: Control, evolution: TaiChiEvolutionFlow, center
 
 
 func draw_trigram(canvas: Control, center: Vector2, rotation: float, value: int, width: float, line_gap: float,
-		line_width: float, alpha: float, local: float = 1.0) -> void:
+		line_width: float, alpha: float) -> void:
 	TaiChiTrigramDrawing.draw_symbol(canvas, center, value, 3, width, line_gap, line_width,
-		alpha * smoothstep(0.0, 0.32, local), rotation)
+		alpha, rotation)
 	pass
 
 
