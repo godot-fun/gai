@@ -34,7 +34,6 @@ func _ready() -> void:
 
 func on_theme_color_changed() -> void:
 	orb_color_controller.set_target(OrbPhase.color_for(phase))
-	push_display_color()
 	pass
 
 
@@ -62,7 +61,6 @@ func set_phase(new_phase: OrbPhase.Phase) -> void:
 			spin_speed = 0.7
 	if new_phase != OrbPhase.Phase.IDLE:
 		neuron_net.pulse_random(0.9)
-	push_display_color()
 	pass
 
 
@@ -71,11 +69,6 @@ func add_step_text(text: String) -> void:
 		return
 	stream_char_total += text.length()
 	char_overlay.enqueue_sentence(text)
-	pass
-
-
-func apply_neuron_growth() -> void:
-	neuron_net.apply_growth(stream_char_total)
 	pass
 
 
@@ -94,6 +87,6 @@ func reset_growth() -> void:
 	orb_color_controller.snap_to(OrbPhase.color_for(OrbPhase.Phase.IDLE))
 	stream_char_total = 0
 	neuron_net.reset_growth()
-	char_overlay.reset_growth()
+	char_overlay.clear_pending_sentences()
 	push_display_color()
 	pass

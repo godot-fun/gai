@@ -83,7 +83,7 @@ func set_visual_visible(show: bool, animated: bool) -> void:
 
 
 func on_agent_start(_session_id: int) -> void:
-	transition_to(OrbPhase.Phase.AWAKE)
+	jarvis_orb.set_phase(OrbPhase.Phase.AWAKE)
 	pass
 
 
@@ -92,7 +92,7 @@ func on_agent_end(_session_id: int, error_message: String) -> void:
 	var end_phase: OrbPhase.Phase = OrbPhase.Phase.SUCCESS
 	if StringUtils.is_not_blank(error_message) and not is_stop:
 		end_phase = OrbPhase.Phase.ERROR
-	transition_to(end_phase)
+	jarvis_orb.set_phase(end_phase)
 	if is_inside_tree():
 		var hold_seconds := 1.1 if end_phase == OrbPhase.Phase.ERROR else 0.75
 		await get_tree().create_timer(hold_seconds).timeout
@@ -100,43 +100,38 @@ func on_agent_end(_session_id: int, error_message: String) -> void:
 
 
 func on_turn_start(_session_id: int) -> void:
-	jarvis_orb.char_overlay.reset_growth()
-	transition_to(OrbPhase.Phase.AWAKE)
+	jarvis_orb.char_overlay.clear_pending_sentences()
+	jarvis_orb.set_phase(OrbPhase.Phase.AWAKE)
 	pass
 
 
 func on_turn_end(_session_id: int) -> void:
-	transition_to(OrbPhase.Phase.TURN_COOLDOWN)
+	jarvis_orb.set_phase(OrbPhase.Phase.TURN_COOLDOWN)
 	pass
 
 
 func on_message_update(_session_id: int, _chunk: String, stream_kind: String) -> void:
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
-		transition_to(OrbPhase.Phase.REASONING)
+		jarvis_orb.set_phase(OrbPhase.Phase.REASONING)
 	elif jarvis_orb.phase != OrbPhase.Phase.TOOL_EXEC:
-		transition_to(OrbPhase.Phase.GENERATING)
+		jarvis_orb.set_phase(OrbPhase.Phase.GENERATING)
 	pass
 
 
 func on_message_complete(_session_id: int, _usage: OpenAiUsage) -> void:
-	jarvis_orb.apply_neuron_growth()
+	jarvis_orb.neuron_net.apply_growth(jarvis_orb.stream_char_total)
 	jarvis_orb.neuron_net.pulse_random(1.0)
 	pass
 
 
 func on_tool_execution_start(_session_id: int, _tool_call_id: String, _tool_name: String, _args: Dictionary[String, Variant]) -> void:
-	transition_to(OrbPhase.Phase.TOOL_EXEC)
+	jarvis_orb.set_phase(OrbPhase.Phase.TOOL_EXEC)
 	pass
 
 
 func on_tool_execution_end(_session_id: int, _tool_call_id: String, _tool_name: String, _agent_tool_result: AgentToolResult) -> void:
 	if jarvis_orb.phase == OrbPhase.Phase.TOOL_EXEC:
-		transition_to(OrbPhase.Phase.AWAKE)
-	pass
-
-
-func transition_to(new_phase: OrbPhase.Phase) -> void:
-	jarvis_orb.set_phase(new_phase)
+		jarvis_orb.set_phase(OrbPhase.Phase.AWAKE)
 	pass
 
 

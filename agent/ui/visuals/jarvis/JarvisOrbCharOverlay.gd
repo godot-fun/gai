@@ -4,7 +4,6 @@ extends Node3D
 ## Short sentences: keyword-style float; long sentences: 3D curve flight.
 
 const MAX_DISPLAY := 16
-const SHARED_CURVE_COUNT := 20
 const MIN_PHRASE_LEN := 2
 ## At or below this length (chars), use orb float; above, use path flight.
 const SHORT_SENTENCE_LEN := 28
@@ -12,7 +11,6 @@ const SHORT_SENTENCE_LEN := 28
 var neuron_net: JarvisOrbNeuronNet
 var char_queue: Array[String] = []
 var active_sentences: Array[FlyingSentence] = []
-var shared_curves: Array[Curve3D] = []
 
 var current_path_style: OrbPhase.PathStyle = OrbPhase.PathStyle.TRANSVERSE
 var display_color: Color = ThemeColor.accent_theme_color()
@@ -24,46 +22,43 @@ var life_scale: float = 1.0
 class FlyingSentence:
 	extends RefCounted
 
-	enum Mode { FLOAT, PATH }
-
 	var label: Label3D
 	var color: Color = Color.WHITE
-	var mode: Mode = Mode.FLOAT
+	var uses_path: bool = false
 
 	var age: float = 0.0
 	var life: float = 7.0
 	var drift_speed: float = OrbVisualScale.SENTENCE_DRIFT_SPEED
-
 	var curve: Curve3D
 	var progress: float = 0.0
 	var path_speed: float = 0.22
 
-	func begin_float(p_label: Label3D, text: String, p_color: Color, p_life: float, p_drift: float) -> void:
-		mode = Mode.FLOAT
+	func prime_label(p_label: Label3D, text: String, p_color: Color) -> void:
 		label = p_label
 		color = p_color
+		label.text = text
+		label.modulate = Color(color.r, color.g, color.b, 0.0)
+		label.visible = true
+		pass
+
+	func begin_float(p_label: Label3D, text: String, p_color: Color, p_life: float, p_drift: float) -> void:
+		uses_path = false
+		prime_label(p_label, text, p_color)
 		age = 0.0
 		life = p_life
 		drift_speed = p_drift
-		label.text = text
-		label.modulate = Color(color.r, color.g, color.b, 0.0)
-		label.visible = true
 		pass
 
 	func begin_path(p_label: Label3D, p_curve: Curve3D, text: String, p_color: Color, p_speed: float) -> void:
-		mode = Mode.PATH
-		label = p_label
+		uses_path = true
+		prime_label(p_label, text, p_color)
 		curve = p_curve
-		color = p_color
 		progress = 0.0
 		path_speed = p_speed
-		label.text = text
-		label.modulate = Color(color.r, color.g, color.b, 0.0)
-		label.visible = true
 		pass
 
 	func advance(delta: float) -> bool:
-		if mode == Mode.FLOAT:
+		if not uses_path:
 			age += delta
 			var t: float = age / life
 			var alpha: float = sin(clampf(t, 0.0, 1.0) * PI) * 0.75
@@ -72,8 +67,7 @@ class FlyingSentence:
 			return age < life
 		progress += delta * path_speed
 		var path_t := clampf(progress, 0.0, 1.0)
-		var pos := curve.sample_baked(path_t * curve.get_baked_length())
-		label.position = pos
+		label.position = curve.sample_baked(path_t * curve.get_baked_length())
 		var fade := sin(path_t * PI)
 		label.modulate = Color(color.r, color.g, color.b, fade * 0.95)
 		return progress < 1.0
@@ -83,13 +77,19 @@ class FlyingSentence:
 func setup(net: JarvisOrbNeuronNet) -> void:
 	neuron_net = net
 	rng.randomize()
-	refresh_shared_curves()
 	pass
 
 
 func _process(delta: float) -> void:
-	spawn_from_queue()
-	update_flying_sentences(delta)
+	while not char_queue.is_empty() and active_sentences.size() < MAX_DISPLAY:
+		spawn_sentence(char_queue.pop_front())
+	var i: int = 0
+	while i < active_sentences.size():
+		if active_sentences[i].advance(delta):
+			i += 1
+			continue
+		active_sentences[i].label.queue_free()
+		active_sentences.remove_at(i)
 	pass
 
 
@@ -105,9 +105,8 @@ func can_accept_display_load() -> bool:
 	return active_sentences.size() + char_queue.size() < MAX_DISPLAY
 
 
-func reset_growth() -> void:
+func clear_pending_sentences() -> void:
 	char_queue.clear()
-	refresh_shared_curves()
 	pass
 
 
@@ -123,22 +122,6 @@ func set_phase(phase: OrbPhase.Phase) -> void:
 		_:
 			drift_speed_scale = 1.0
 			life_scale = 1.0
-	refresh_shared_curves()
-	pass
-
-
-func refresh_shared_curves() -> void:
-	shared_curves.clear()
-	var neurons := neuron_net.get_positions()
-	var styles: Array[OrbPhase.PathStyle] = [
-		OrbPhase.PathStyle.TRANSVERSE,
-		OrbPhase.PathStyle.SPIRAL_IN,
-		OrbPhase.PathStyle.ORBIT,
-		OrbPhase.PathStyle.CHAOTIC,
-	]
-	for _i in SHARED_CURVE_COUNT:
-		var style: OrbPhase.PathStyle = styles[rng.randi_range(0, styles.size() - 1)]
-		shared_curves.append(CharStreamCurves.build(style, neurons, rng))
 	pass
 
 
@@ -156,87 +139,39 @@ func make_billboard_label(font_size: int, pixel_size: float) -> Label3D:
 	pass
 
 
-func spawn_from_queue() -> void:
-	while not char_queue.is_empty() and active_sentences.size() < MAX_DISPLAY:
-		spawn_sentence(char_queue.pop_front())
-	pass
-
-
-func acquire_curve() -> Curve3D:
-	if shared_curves.is_empty():
-		refresh_shared_curves()
-	if shared_curves.is_empty():
-		return CharStreamCurves.build(current_path_style, neuron_net.get_positions(), rng)
-	return shared_curves[rng.randi_range(0, shared_curves.size() - 1)]
+func label_metrics(len: int, short_style: bool) -> Vector2:
+	if short_style:
+		return Vector2(34 if len <= 14 else 22, 0.0022 if len <= 14 else 0.0016)
+	return Vector2(16 if len > 48 else 18, 0.00135 if len > 48 else 0.00155)
 
 
 func spawn_sentence(text: String) -> void:
 	var len := text.length()
+	var metrics := label_metrics(len, len <= SHORT_SENTENCE_LEN)
+	var label: Label3D = make_billboard_label(int(metrics.x), metrics.y)
 	var flying := FlyingSentence.new()
 	if len <= SHORT_SENTENCE_LEN:
-		spawn_short_sentence(text, len, flying)
+		var angle: float = rng.randf() * TAU
+		var radius: float = rng.randf_range(1.15, 1.72)
+		label.position = Vector3(
+			cos(angle) * radius,
+			rng.randf_range(-0.45, 0.55),
+			sin(angle) * radius * 0.55
+		)
+		label.rotation.y = angle
+		var life: float = rng.randf_range(OrbVisualScale.SENTENCE_LIFE_MIN, OrbVisualScale.SENTENCE_LIFE_MAX) * life_scale
+		flying.begin_float(
+			label,
+			text,
+			display_color,
+			life,
+			OrbVisualScale.SENTENCE_DRIFT_SPEED * drift_speed_scale
+		)
 	else:
-		spawn_long_sentence(text, len, flying)
+		var speed: float = rng.randf_range(OrbVisualScale.PARTICLE_SPEED_MIN, OrbVisualScale.PARTICLE_SPEED_MAX)
+		if current_path_style == OrbPhase.PathStyle.CHAOTIC:
+			speed *= 1.25
+		var curve := CharStreamCurves.build(current_path_style, neuron_net.get_positions(), rng)
+		flying.begin_path(label, curve, text, display_color, speed)
 	active_sentences.append(flying)
-	pass
-
-
-func spawn_short_sentence(text: String, len: int, flying: FlyingSentence) -> void:
-	var label: Label3D = make_billboard_label(short_font_size(len), short_pixel_size(len))
-	var angle: float = rng.randf() * TAU
-	var radius: float = rng.randf_range(1.15, 1.72)
-	label.position = Vector3(
-		cos(angle) * radius,
-		rng.randf_range(-0.45, 0.55),
-		sin(angle) * radius * 0.55
-	)
-	label.rotation.y = angle
-	var life: float = rng.randf_range(OrbVisualScale.SENTENCE_LIFE_MIN, OrbVisualScale.SENTENCE_LIFE_MAX) * life_scale
-	var drift: float = OrbVisualScale.SENTENCE_DRIFT_SPEED * drift_speed_scale
-	flying.begin_float(label, text, display_color, life, drift)
-	pass
-
-
-func spawn_long_sentence(text: String, len: int, flying: FlyingSentence) -> void:
-	var label: Label3D = make_billboard_label(long_font_size(len), long_pixel_size(len))
-	var speed: float = rng.randf_range(OrbVisualScale.PARTICLE_SPEED_MIN, OrbVisualScale.PARTICLE_SPEED_MAX)
-	if current_path_style == OrbPhase.PathStyle.CHAOTIC:
-		speed *= 1.25
-	flying.begin_path(label, acquire_curve(), text, display_color, speed)
-	pass
-
-
-func short_font_size(len: int) -> int:
-	return 22 if len > 14 else 34
-
-
-func short_pixel_size(len: int) -> float:
-	return 0.0016 if len > 14 else 0.0022
-
-
-func long_font_size(len: int) -> int:
-	if len > 48:
-		return 16
-	if len > 28:
-		return 18
-	return 20
-
-
-func long_pixel_size(len: int) -> float:
-	if len > 48:
-		return 0.00135
-	if len > 28:
-		return 0.00155
-	return 0.0018
-
-
-func update_flying_sentences(delta: float) -> void:
-	var i: int = 0
-	while i < active_sentences.size():
-		var flying := active_sentences[i]
-		if flying.advance(delta):
-			i += 1
-			continue
-		flying.label.queue_free()
-		active_sentences.remove_at(i)
 	pass
