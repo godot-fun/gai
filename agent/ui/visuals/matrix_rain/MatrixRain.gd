@@ -54,6 +54,7 @@ var reply_glyphs: Array[ReplyGlyph] = []
 var reply_sentence_index: int = 0
 var active_reply_rain_count: int = 0
 var pending_sentence: String = ""
+var matrix_color: Color = Color("42f58d").lerp(ThemeColor.accent_theme_color(), 0.34)
 
 
 func fade_out_seconds() -> float:
@@ -214,11 +215,8 @@ func drain_available_sentences() -> void:
 
 
 func reply_rain_count(sentence: String) -> int:
-	var character_count := 0
-	for character: String in sentence:
-		if not character.strip_edges().is_empty():
-			character_count += 1
-	return mini(ceili(float(character_count) / float(REPLY_COLUMN_LENGTH)), MAX_REPLY_RAINS)
+	var characters := sentence.replace(" ", "").replace("\t", "").replace("\n", "").replace("\r", "")
+	return mini(ceili(float(characters.length()) / float(REPLY_COLUMN_LENGTH)), MAX_REPLY_RAINS)
 
 
 func ingest_sentence(sentence: String) -> void:
@@ -228,10 +226,7 @@ func ingest_sentence(sentence: String) -> void:
 
 
 func spawn_reply_rain(sentence: String) -> void:
-	var characters: String = ""
-	for character: String in sentence:
-		if not character.strip_edges().is_empty():
-			characters += character
+	var characters := sentence.replace(" ", "").replace("\t", "").replace("\n", "").replace("\r", "")
 	if characters.is_empty():
 		return
 	reply_sentence_index += 1
@@ -333,7 +328,7 @@ func draw_reply_glyph(reply_glyph: ReplyGlyph) -> void:
 
 
 func draw_column(column: RainColumn) -> void:
-	var accent := matrix_color()
+	var accent := matrix_color
 	var state := column.tool_state
 	var highlight := column.highlight
 	var color := tool_color(state) if state != ToolState.NONE else accent
@@ -361,11 +356,6 @@ func draw_column(column: RainColumn) -> void:
 		var label_y := head_y - float(trail_length) * step_y - 5.0
 		draw_centered_text(Vector2(x, label_y), column.tool_label, Fonts.semibold(), Typography.label_small_size, Color(color, 0.45 + highlight * 0.5))
 	pass
-
-
-func matrix_color() -> Color:
-	var classic_green := Color("42f58d")
-	return classic_green.lerp(ThemeColor.accent_theme_color(), 0.34)
 
 
 static func tool_color(state: ToolState) -> Color:
