@@ -15,11 +15,10 @@ static func context_usage_test() -> void:
 static func delivered_item_expires_test() -> void:
 	var effect := ContextMemoryRiver.new()
 	effect.size = Vector2(1000.0, 600.0)
-	effect.add_item(ContextMemoryRiver.StreamType.USER, "USER", 0.5)
+	effect.add_item(ContextMemoryRiver.StreamType.USER, "USER")
 	effect.visible = true
 	effect._process(10.0)
 	assert(effect.items.is_empty())
-	assert(effect.activity == 1.0)
 	effect.free()
 	pass
 
@@ -27,23 +26,11 @@ static func delivered_item_expires_test() -> void:
 static func saturated_stream_preserves_in_flight_items_test() -> void:
 	var effect := ContextMemoryRiver.new()
 	for index in range(ContextMemoryRiver.MAX_ITEMS):
-		effect.add_item(ContextMemoryRiver.StreamType.ANSWER, "ANSWER", 0.5)
+		effect.add_item(ContextMemoryRiver.StreamType.USER, "USER")
 	var oldest := effect.items[0]
-	effect.add_item(ContextMemoryRiver.StreamType.ANSWER, "NEW", 0.5)
+	effect.add_item(ContextMemoryRiver.StreamType.USER, "NEW")
 	assert(effect.items.size() == ContextMemoryRiver.MAX_ITEMS)
 	assert(effect.items[0] == oldest)
-	effect.free()
-	pass
-
-
-static func visible_text_items_are_bounded_test() -> void:
-	var effect := ContextMemoryRiver.new()
-	for index in range(ContextMemoryRiver.MAX_TEXT_ITEMS + 4):
-		effect.add_item(ContextMemoryRiver.StreamType.TOOL, "TOOL %d" % index, 0.5)
-	assert(effect.active_text_item_count() == ContextMemoryRiver.MAX_TEXT_ITEMS)
-	assert(effect.items.size() == ContextMemoryRiver.MAX_TEXT_ITEMS)
-	effect.add_item(ContextMemoryRiver.StreamType.ANSWER, "ANSWER", 0.5)
-	assert(effect.items.size() == ContextMemoryRiver.MAX_TEXT_ITEMS + 1)
 	effect.free()
 	pass
 
@@ -57,13 +44,14 @@ static func absorption_ripple_spread_follows_label_width_test() -> void:
 
 static func absorption_spawns_one_output_mote_test() -> void:
 	var effect := ContextMemoryRiver.new()
-	effect.add_item(ContextMemoryRiver.StreamType.TOOL, "READ", 0.5)
+	effect.add_item(ContextMemoryRiver.StreamType.TOOL, "READ")
 	var item: ContextMemoryRiver.StreamItem = effect.items.pop_front()
+	effect.pending_output_widths.append(40.0)
 	effect.add_absorption_effect(item)
 	effect.visible = true
 	effect._process(ContextMemoryRiver.ABSORPTION_DURATION * 0.51)
 	assert(effect.output_motes.size() == 1)
-	assert(effect.absorption_effects[0].output_spawned)
+	assert(effect.absorption_effects[0].output_released)
 	effect.free()
 	pass
 
@@ -106,7 +94,7 @@ static func long_text_crosses_center_before_expiring_test() -> void:
 	var effect := ContextMemoryRiver.new()
 	effect.size = Vector2(1000.0, 600.0)
 	effect.visible = true
-	effect.add_item(ContextMemoryRiver.StreamType.USER, "This deliberately long sentence must keep moving until every glyph crosses the center.", 0.5)
+	effect.add_item(ContextMemoryRiver.StreamType.USER, "This deliberately long sentence must keep moving until every glyph crosses the center.")
 	var item: ContextMemoryRiver.StreamItem = effect.items[0]
 	for _frame in range(400):
 		if item.absorption_triggered:
@@ -133,18 +121,18 @@ static func long_text_keeps_constant_speed_through_lens_test() -> void:
 	var effect := ContextMemoryRiver.new()
 	effect.size = Vector2(1000.0, 600.0)
 	effect.visible = true
-	effect.add_item(ContextMemoryRiver.StreamType.USER, "This deliberately long sentence keeps every glyph evenly spaced while it slides through the lens and dissolves past the center.", 0.5)
+	effect.add_item(ContextMemoryRiver.StreamType.USER, "This deliberately long sentence keeps every glyph evenly spaced while it slides through the lens and dissolves past the center.")
 	var item: ContextMemoryRiver.StreamItem = effect.items[0]
 	var center := effect.size * 0.5
 	var delta := 1.0 / 60.0
 	var frame_budget := delta * ContextMemoryRiver.INPUT_TRAVEL_SPEED * item.speed * 1.05
-	var previous := effect.item_position(item.progress, item, center, false)
+	var previous := effect.item_position(item.progress, item, center)
 	var max_move := 0.0
 	for _frame in range(2000):
 		effect._process(delta)
 		if not effect.items.has(item):
 			break
-		var position := effect.item_position(item.progress, item, center, false)
+		var position := effect.item_position(item.progress, item, center)
 		max_move = maxf(max_move, previous.distance_to(position))
 		previous = position
 	assert(item.absorption_triggered)
@@ -154,4 +142,4 @@ static func long_text_keeps_constant_speed_through_lens_test() -> void:
 
 
 static func item_position_x(item: ContextMemoryRiver.StreamItem, effect: ContextMemoryRiver) -> float:
-	return effect.item_position(item.progress, item, effect.size * 0.5, false).x
+	return effect.item_position(item.progress, item, effect.size * 0.5).x

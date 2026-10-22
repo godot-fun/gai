@@ -4,10 +4,9 @@ extends VisualEffect
 ## A living context map: source material flows into the model, older items recede,
 ## and generated content leaves through the output channel.
 
-const MAX_ITEMS := 96
-# Mirrors MatrixRain's bounded reply slots: curved glyph rendering is relatively
-# expensive, so only this many semantic text phrases may be visible at once.
-const MAX_TEXT_ITEMS := 32
+# Curved glyph rendering is relatively expensive, so only this many semantic
+# text phrases may be visible at once.
+const MAX_ITEMS := 32
 const PARTICLE_SPEED := 0.19
 const INPUT_TRAVEL_SPEED := 240.0
 const INPUT_SPEED_MIN := 0.55
@@ -54,13 +53,11 @@ enum StreamType { USER, SYSTEM, HISTORY, FILE, TOOL, WEB, THINKING, ERROR, ANSWE
 
 
 class StreamItem extends RefCounted:
-	# Event identity and visual weight remain fixed during flight.
+	# Event identity remains fixed during flight.
 	var stream_type: StreamType
 	var label: String
-	var weight: float
 	var progress: float = 0.0
 	var speed: float
-	var lane: int
 	var source_y_ratio: float
 	var curve_direction: float
 	var pulse: float = 1.0
@@ -80,10 +77,9 @@ class AbsorptionEffect extends RefCounted:
 	# Lightweight snapshot detached from an item after it reaches the context ring.
 	var age: float = 0.0
 	var color: Color
-	var weight: float
 	var source_width: float
-	var source_speed: float
-	var output_spawned: bool = false
+	var releases_output: bool = true
+	var output_released: bool = false
 
 
 class OutputMote extends RefCounted:
@@ -97,16 +93,15 @@ var items: Array[StreamItem] = []
 var absorption_effects: Array[AbsorptionEffect] = []
 var decorative_motes: Array[StreamItem] = []
 var output_motes: Array[OutputMote] = []
+var pending_output_widths: Array[float] = []
+var ready_output_slots: int = 0
 var elapsed: float = 0.0
 var spawn_index: int = 0
 var decorative_spawn_index: int = 0
 var decorative_spawn_timer: float = 0.0
 var output_spawn_index: int = 0
 var prompt_tokens: int = 0
-var completion_tokens: int = 0
 var context_limit: int = DEFAULT_CONTEXT_LIMIT
-var activity: float = 0.0
-var visual_activity: float = 0.0
 var output_activity: float = 0.0
 var is_ending: bool = false
 var lens_closing: bool = false
@@ -145,7 +140,8 @@ func on_agent_start(_session_id: int) -> void:
 	is_ending = false
 	lens_closing = false
 	lens_close_progress = 0.0
-	activity = 1.0
+	pending_output_widths.clear()
+	ready_output_slots = 0
 	queue_redraw()
 	pass
 
@@ -166,11 +162,6 @@ func on_agent_end(_session_id: int, _error_message: String) -> void:
 	pass
 
 
-func on_turn_start(_session_id: int) -> void:
-	activity = 1.0
-	pass
-
-
 func on_turn_end(_session_id: int) -> void:
 	output_activity = maxf(output_activity, 0.6)
 	pass
@@ -186,28 +177,23 @@ func on_chat_entry_add(_session_id: int, entry: ChatEntry) -> void:
 		return
 	# Source events need immediate feedback, but their detailed bodies would make
 	# the intake river noisy. The type label keeps the event recognizable.
-	add_item(stream_type as StreamType, label_for_type(stream_type as StreamType), 0.55)
+	add_item(stream_type as StreamType, label_for_type(stream_type as StreamType))
 	pass
 
 
 func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> void:
 	if chunk.strip_edges().is_empty():
 		return
-	var stream_type := StreamType.THINKING if stream_kind == OpenAiClient.STREAM_KIND_REASONING else StreamType.ANSWER
-	if stream_type == StreamType.ANSWER:
+	if stream_kind != OpenAiClient.STREAM_KIND_REASONING:
 		output_activity = 1.0
-	else:
-		activity = 1.0
 	pass
 
 
 func on_message_complete(_session_id: int, usage: OpenAiUsage) -> void:
 	prompt_tokens = maxi(usage.prompt_tokens, 0)
-	completion_tokens = maxi(usage.completion_tokens, 0)
 	# Keep the gauge meaningful for providers whose actual context limit is unknown.
 	while prompt_tokens > context_limit:
 		context_limit *= 2
-	activity = 1.0
 	queue_redraw()
 	pass
 
@@ -216,13 +202,11 @@ func on_message_complete(_session_id: int, usage: OpenAiUsage) -> void:
 func on_tool_execution_start(_session_id: int, _tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	if not ToolHelper.is_file_tool(tool_name):
 		return
-	add_item(stream_type_for_tool_name(tool_name), ToolVisualDisplay.upper_name(tool_name), 0.7)
-	activity = 1.0
+	add_item(stream_type_for_tool_name(tool_name), ToolVisualDisplay.upper_name(tool_name))
 	pass
 
 
 func on_tool_execution_end(_session_id: int, _tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
-	activity = 1.0
 	if result.is_error:
 		output_activity = maxf(output_activity, 0.35)
 	pass
@@ -232,10 +216,6 @@ func _process(delta: float) -> void:
 	if not visible:
 		return
 	elapsed += delta
-	activity = move_toward(activity, 0.0, delta * 0.75)
-	# Event activity is discontinuous; use an exponential follower so drawing never jumps.
-	var activity_follow := 1.0 - exp(-delta * (5.0 if activity > visual_activity else 2.2))
-	visual_activity = lerpf(visual_activity, activity, activity_follow)
 	output_activity = move_toward(output_activity, 0.0, delta * 0.65)
 	if lens_closing:
 		lens_close_progress = minf(lens_close_progress + delta / END_LENS_SECONDS, 1.0)
@@ -243,20 +223,15 @@ func _process(delta: float) -> void:
 	consume_transcript_sentences()
 	for index in range(items.size() - 1, -1, -1):
 		var item := items[index]
-		if item.stream_type == StreamType.ANSWER:
-			item.progress = advance_answer_progress(item, delta)
-		elif advance_semantic_item(item, delta, center):
+		if advance_semantic_item(item, delta, center):
 			items.remove_at(index)
-			continue
-		if item.progress >= 1.0:
-			items.remove_at(index)
-			continue
 	for index in range(absorption_effects.size() - 1, -1, -1):
 		var effect := absorption_effects[index]
 		effect.age += delta
-		if not effect.output_spawned and effect.age >= ABSORPTION_DURATION * 0.5:
-			effect.output_spawned = true
-			spawn_output_mote(effect.source_width, effect.source_speed)
+		if effect.releases_output and not effect.output_released and effect.age >= ABSORPTION_DURATION * 0.5:
+			effect.output_released = true
+			ready_output_slots += 1
+			release_pending_output()
 		if effect.age >= ABSORPTION_DURATION:
 			absorption_effects.remove_at(index)
 	update_decorative_motes(delta, center)
@@ -266,22 +241,14 @@ func _process(delta: float) -> void:
 	pass
 
 
-func advance_answer_progress(item: StreamItem, delta: float) -> float:
-	var progress_step := delta * PARTICLE_SPEED * item.speed
-	if is_ending:
-		progress_step = maxf(progress_step, delta / END_INPUT_SECONDS)
-	return item.progress + progress_step
-
-
 ## Returns true only after the complete phrase has passed through the fade zone.
 func advance_semantic_item(item: StreamItem, delta: float, center: Vector2) -> bool:
-	var previous_position := item_position(item.progress, item, center, false)
+	var previous_position := item_position(item.progress, item, center)
 	var next_progress := advance_input_progress(item, center, input_travel_distance(item, delta, center))
-	var next_position := item_position(next_progress, item, center, false)
+	var next_position := item_position(next_progress, item, center)
 	if not item.absorption_triggered and previous_position.x < center.x and next_position.x >= center.x:
 		item.absorption_triggered = true
 		add_absorption_effect(item)
-		activity = 1.0
 	if next_progress >= 1.0:
 		return true
 	item.progress = next_progress
@@ -310,10 +277,10 @@ func update_decorative_motes(delta: float, center: Vector2) -> void:
 	for index in range(decorative_motes.size() - 1, -1, -1):
 		var mote := decorative_motes[index]
 		mote.progress = advance_input_progress(mote, center, input_travel_distance(mote, delta, center))
-		var position := item_position(mote.progress, mote, center, false)
+		var position := item_position(mote.progress, mote, center)
 		cache_item_path(mote, center)
 		if position.x >= center.x:
-			add_absorption_effect(mote)
+			add_absorption_effect(mote, false)
 			decorative_motes.remove_at(index)
 	pass
 
@@ -354,26 +321,21 @@ func update_output_motes(delta: float) -> void:
 
 ## Captures the minimum packet state needed by the short-lived intake animation.
 ## Keeping this separate from items prevents an absorbed packet from being drawn twice.
-func add_absorption_effect(item: StreamItem) -> void:
+func add_absorption_effect(item: StreamItem, releases_output: bool = true) -> void:
 	var effect := AbsorptionEffect.new()
 	effect.color = color_for_type(item.stream_type)
-	effect.weight = item.weight
 	effect.source_width = item.label_width
-	effect.source_speed = item.speed
+	effect.releases_output = releases_output
 	absorption_effects.append(effect)
 	pass
 
 
-func add_item(stream_type: StreamType, label: String, weight: float) -> void:
+func add_item(stream_type: StreamType, label: String) -> void:
 	if is_ending:
 		return
 	# Never evict a packet that is visibly in transit. At saturation, wait for an
 	# existing packet to reach its destination before admitting another one.
 	if items.size() >= MAX_ITEMS:
-		return
-	# ANSWER items are small output particles and do not pay the per-glyph curved
-	# text cost. Limit only the semantic phrases travelling on the left side.
-	if stream_type != StreamType.ANSWER and active_text_item_count() >= MAX_TEXT_ITEMS:
 		return
 	# A golden-ratio sequence distributes arrivals across the full height without
 	# random state, obvious repetition, or dependence on the current item count.
@@ -382,9 +344,7 @@ func add_item(stream_type: StreamType, label: String, weight: float) -> void:
 	var item := StreamItem.new()
 	item.stream_type = stream_type
 	item.label = label
-	item.weight = clampf(weight, 0.25, 1.0)
 	item.speed = randf_range(INPUT_SPEED_MIN, INPUT_SPEED_MAX)
-	item.lane = (items.size() % 7) - 3
 	item.source_y_ratio = source_y_ratio
 	item.curve_direction = curve_direction
 	cache_text_metrics(item)
@@ -394,16 +354,8 @@ func add_item(stream_type: StreamType, label: String, weight: float) -> void:
 	pass
 
 
-func active_text_item_count() -> int:
-	var count := 0
-	for item: StreamItem in items:
-		if item.stream_type != StreamType.ANSWER:
-			count += 1
-	return count
-
-
 func visual_flow_is_empty() -> bool:
-	return items.is_empty() and decorative_motes.is_empty() and absorption_effects.is_empty() and output_motes.is_empty()
+	return items.is_empty() and decorative_motes.is_empty() and absorption_effects.is_empty() and output_motes.is_empty() and pending_output_widths.is_empty()
 
 
 ## Uses the shared transcript cursor so sentence boundaries match MatrixRain and
@@ -415,9 +367,18 @@ func consume_transcript_sentences() -> void:
 	if sentence.is_empty() or sentence.entry == null:
 		return
 	if sentence.entry.kind == ChatEntry.KIND_THINKING:
-		add_item(StreamType.THINKING, sentence.text, weight_for_text(sentence.text))
+		add_item(StreamType.THINKING, sentence.text)
 	elif sentence.entry.kind == ChatEntry.KIND_AGENT:
-		spawn_output_mote(output_width_for_text(sentence.text))
+		pending_output_widths.append(output_width_for_text(sentence.text))
+		release_pending_output()
+	pass
+
+
+## A generated sentence can leave only after a real source packet reached the lens.
+func release_pending_output() -> void:
+	while ready_output_slots > 0 and not pending_output_widths.is_empty():
+		spawn_output_mote(pending_output_widths.pop_front())
+		ready_output_slots -= 1
 	pass
 
 
@@ -446,7 +407,7 @@ func draw_decorative_motes(center: Vector2) -> void:
 		var alpha := fade_in
 		var color := color_for_type(mote.stream_type)
 		var trail := PackedVector2Array()
-		var position := item_position(progress, mote, center, false)
+		var position := item_position(progress, mote, center)
 		if mote.path_history.size() >= 2:
 			var current_distance := cached_current_distance(mote, position)
 			for sample in range(DECORATIVE_TRAIL_SAMPLES, -1, -1):
@@ -478,32 +439,13 @@ func draw_absorption_ripples(center: Vector2) -> void:
 func draw_item(item: StreamItem, center: Vector2) -> void:
 	var progress := item.progress
 	var stream_type := item.stream_type
-	var is_output := stream_type == StreamType.ANSWER
-	var position := item_position(progress, item, center, is_output)
+	var position := item_position(progress, item, center)
 	var color := color_for_type(stream_type)
-	var weight := item.weight
-	var radius := 3.0 + weight * 3.5
-	var edge_fade := 1.0 - smoothstep(0.86, 1.0, progress)
-	var label := item.label
-	if is_output:
-		# Answers remain compact particles; drawing answer text again would compete
-		# with the chat response and multiply glyph draw calls.
-		var trail_progress := output_trail_length(item.label_width, center) / output_channel_length(center)
-		var trail_points := PackedVector2Array()
-		for trail_index in range(OUTPUT_TRAIL_SAMPLES, -1, -1):
-			var sample_ratio := float(trail_index) / float(OUTPUT_TRAIL_SAMPLES)
-			var sample_progress := maxf(progress - sample_ratio * trail_progress, 0.0)
-			trail_points.append(item_position(sample_progress, item, center, true))
-		if trail_points.size() > 1:
-			draw_polyline(trail_points, VisualColor.stroke(color, edge_fade * 0.18), maxf(1.0, radius * 0.26), true)
-		draw_circle(position, radius * 1.7, VisualColor.stroke(color, edge_fade * 0.06))
-		draw_circle(position, radius * 0.72, VisualColor.stroke(color, edge_fade * 0.88))
-	else:
-		# Incoming sources are semantic, so lay their real labels glyph-by-glyph on
-		# the cached path instead of drawing a rigid horizontal label.
-		var arrival_alpha := smoothstep(0.0, 0.04, progress)
-		var text_alpha := arrival_alpha * (0.76 + item.pulse * 0.18)
-		draw_text_on_path(item, position, label, VisualColor.stroke(color, text_alpha), VisualColor.stroke(color, arrival_alpha * 0.18), center.x)
+	# Incoming sources are semantic, so lay their real labels glyph-by-glyph on
+	# the cached path instead of drawing a rigid horizontal label.
+	var arrival_alpha := smoothstep(0.0, 0.04, progress)
+	var text_alpha := arrival_alpha * (0.76 + item.pulse * 0.18)
+	draw_text_on_path(item, position, item.label, VisualColor.stroke(color, text_alpha), VisualColor.stroke(color, arrival_alpha * 0.18), center.x)
 	pass
 
 
@@ -569,9 +511,7 @@ func cache_text_metrics(item: StreamItem) -> void:
 ## instead of resampling the complete Bézier curve for every glyph every frame.
 ## path_history and path_distances must always be appended and trimmed together.
 func cache_item_path(item: StreamItem, center: Vector2) -> void:
-	if item.stream_type == StreamType.ANSWER:
-		return
-	var position := item_position(item.progress, item, center, false)
+	var position := item_position(item.progress, item, center)
 	if not item.path_history.is_empty() and item.path_history[item.path_history.size() - 1].distance_to(position) < PATH_HISTORY_STEP:
 		return
 	var path_distance := 0.0
@@ -625,16 +565,10 @@ static func cached_point_at_distance(item: StreamItem, current: Vector2, current
 
 ## S-curve from the left edge into the lens center, then straight through until
 ## the final glyph finishes its spatial fade.
-func item_position(progress: float, item: StreamItem, center: Vector2, is_output: bool) -> Vector2:
-	var eased := smoothstep(0.0, 1.0, progress)
+func item_position(progress: float, item: StreamItem, center: Vector2) -> Vector2:
 	var source_y := item.source_y_ratio * size.y
 	var lane_offset := source_y - center.y
 	var curve_direction := item.curve_direction
-	if is_output:
-		var x := lerpf(center.x + CONTEXT_RING_RADIUS, size.x + 50.0, eased)
-		var spiral_envelope := smoothstep(0.0, 0.12, eased)
-		var phase := eased * TAU * OUTPUT_SPIRAL_TURNS + item.source_y_ratio * TAU - elapsed * 0.9
-		return Vector2(x, center.y + sin(phase) * OUTPUT_SPIRAL_RADIUS * spiral_envelope)
 	var input_start := Vector2(-50.0, center.y + lane_offset)
 	if progress >= INPUT_APPROACH_PROGRESS:
 		var through_progress := inverse_lerp(INPUT_APPROACH_PROGRESS, 1.0, progress)
@@ -657,22 +591,22 @@ func item_position(progress: float, item: StreamItem, center: Vector2, is_output
 func advance_input_progress(item: StreamItem, center: Vector2, travel_distance: float) -> float:
 	var progress := item.progress
 	var remaining := maxf(travel_distance, 0.0)
-	var position := item_position(progress, item, center, false)
+	var position := item_position(progress, item, center)
 	while remaining > 0.001 and progress < 1.0:
 		var probe := minf(progress + INPUT_PROGRESS_SAMPLE, 1.0)
-		var probe_position := item_position(probe, item, center, false)
+		var probe_position := item_position(probe, item, center)
 		var pixels_per_progress := position.distance_to(probe_position) / maxf(probe - progress, 0.0001)
 		var progress_step := minf(remaining / maxf(pixels_per_progress, 0.001), INPUT_MAX_PROGRESS_STEP)
 		progress_step = minf(progress_step, 1.0 - progress)
 		var next_progress := progress + progress_step
-		var next_position := probe_position if is_equal_approx(next_progress, probe) else item_position(next_progress, item, center, false)
+		var next_position := probe_position if is_equal_approx(next_progress, probe) else item_position(next_progress, item, center)
 		if position.distance_to(next_position) > remaining:
 			# The straight pass covers far more screen distance per unit of progress
 			# than the approach, so a step estimated on the approach side would fling
 			# a wide phrase across the lens in a single frame. Fit the step to what is
 			# left of the frame budget instead of trusting the local estimate.
 			next_progress = fit_progress_to_distance(item, center, progress, position, next_progress, remaining)
-			next_position = item_position(next_progress, item, center, false)
+			next_position = item_position(next_progress, item, center)
 		progress = next_progress
 		remaining -= maxf(position.distance_to(next_position), 0.001)
 		position = next_position
@@ -687,7 +621,7 @@ func fit_progress_to_distance(item: StreamItem, center: Vector2, low_progress: f
 	var high := high_progress
 	for _pass in range(INPUT_STEP_REFINE_PASSES):
 		var middle := (low + high) * 0.5
-		if position.distance_to(item_position(middle, item, center, false)) <= budget:
+		if position.distance_to(item_position(middle, item, center)) <= budget:
 			low = middle
 		else:
 			high = middle
@@ -696,9 +630,9 @@ func fit_progress_to_distance(item: StreamItem, center: Vector2, low_progress: f
 
 func input_path_length(item: StreamItem, center: Vector2) -> float:
 	var length := 0.0
-	var previous := item_position(0.0, item, center, false)
+	var previous := item_position(0.0, item, center)
 	for index in range(1, 41):
-		var point := item_position(float(index) / 40.0, item, center, false)
+		var point := item_position(float(index) / 40.0, item, center)
 		length += previous.distance_to(point)
 		previous = point
 	return length
@@ -796,10 +730,6 @@ func output_spiral_phase(progress: float, phase_offset: float) -> float:
 
 func context_ratio() -> float:
 	return clampf(float(prompt_tokens) / float(maxi(context_limit, 1)), 0.0, 1.0)
-
-
-static func weight_for_text(text: String) -> float:
-	return clampf(0.3 + float(text.length()) / 240.0, 0.3, 1.0)
 
 
 static func stream_type_for_tool_name(tool_name: String) -> StreamType:
