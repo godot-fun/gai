@@ -1,11 +1,9 @@
 class_name FilterCarousel
 extends VisualEffect
 
-## Cycles through lightweight full-screen post-processing presets while an agent is running.
+## Full-screen post presets advance each assistant turn; tool failures can interrupt with a glitch look.
 
 const SHADER_PATH := "res://agent/ui/visuals/filter_carousel/FilterCarousel.gdshader"
-const HOLD_SECONDS_MIN := 2.4
-const HOLD_SECONDS_MAX := 4.2
 const TRANSITION_SECONDS := 0.32
 
 ## One shader mode can produce several looks through palette and tuning parameters. Keeping the
@@ -209,7 +207,6 @@ var filter_material: ShaderMaterial
 var rng := RandomNumberGenerator.new()
 var preset_order: Array[int] = []
 var preset_cursor: int = -1
-var hold_timer: float = 0.0
 var transition_tween: Tween
 var current_preset_name: String = ""
 
@@ -232,31 +229,19 @@ func _ready() -> void:
 func on_agent_start(_session_id: int) -> void:
 	rng.randomize()
 	rebuild_preset_order()
-	show_next_preset(true)
+	preset_cursor = 0
+	transition_to_preset(preset_order[0], true)
 	pass
 
 
 func on_turn_start(_session_id: int) -> void:
-	if hold_timer < 0.8:
-		hold_timer = 0.8
-	pass
-
-
-func on_tool_execution_start(_session_id: int, _tool_call_id: String, _tool_name: String, _args: Dictionary[String, Variant]) -> void:
-	# Tool execution favors technological effects so the visual language reflects application state.
-	show_preset_from_modes([12, 13, 16])
+	show_next_preset()
 	pass
 
 
 func on_tool_execution_end(_session_id: int, _tool_call_id: String, _tool_name: String, agent_tool_result: AgentToolResult) -> void:
-	# Errors use harsh print treatment; successful tools return through CRT/terminal/blueprint modes.
-	show_preset_from_modes([3] if agent_tool_result.is_error else [8, 9, 14])
-	pass
-
-
-func on_message_update(_session_id: int, _chunk: String, stream_kind: String) -> void:
-	if stream_kind == OpenAiClient.STREAM_KIND_REASONING and hold_timer < 1.2:
-		hold_timer = 1.2
+	if agent_tool_result.is_error:
+		show_preset_from_modes([13])
 	pass
 
 
@@ -270,15 +255,6 @@ func on_agent_end(_session_id: int, error_message: String) -> void:
 	transition_tween = create_tween()
 	transition_tween.tween_method(set_filter_strength, current_strength(), 0.0, 0.45)
 	await transition_tween.finished
-	pass
-
-
-func _process(delta: float) -> void:
-	if RuntimeManager.runtimes.is_empty() or filter_material == null:
-		return
-	hold_timer -= delta
-	if hold_timer <= 0.0 and (transition_tween == null or not transition_tween.is_running()):
-		show_next_preset()
 	pass
 
 
@@ -333,7 +309,6 @@ func transition_to_preset(index: int, immediate: bool = false) -> void:
 		transition_tween.tween_method(set_filter_strength, current_strength(), 0.0, TRANSITION_SECONDS * 0.5)
 		transition_tween.tween_callback(func() -> void: apply_preset(index))
 		transition_tween.tween_method(set_filter_strength, 0.0, 0.82, TRANSITION_SECONDS * 0.5)
-	hold_timer = rng.randf_range(HOLD_SECONDS_MIN, HOLD_SECONDS_MAX)
 	pass
 
 
