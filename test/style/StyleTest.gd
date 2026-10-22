@@ -83,17 +83,6 @@ func ColorBase_follow_theme_test() -> void:
 	pass
 
 
-func ThemeColor_shift_hsv_test() -> void:
-	var base := Color.from_hsv(0.10, 0.50, 0.80)
-	var shifted := ThemeColor.shift_hsv(base, 0.25, 0.50, 0.50)
-	assert(is_equal_approx(shifted.h, 0.35))
-	assert(is_equal_approx(shifted.s, 0.25))
-	assert(is_equal_approx(shifted.v, 0.40))
-	var wrapped := ThemeColor.shift_hsv(Color.from_hsv(0.90, 1.0, 1.0), 0.20)
-	assert(is_equal_approx(wrapped.h, 0.10))
-	pass
-
-
 func ThemeColor_promote_demote_test() -> void:
 	var original := ThemeColor.current_theme
 	ThemeColor.current_theme = ThemeColor.ThemeEnum.DARK

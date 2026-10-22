@@ -43,12 +43,17 @@ static func stroke(color: Color, alpha: float) -> Color:
 	return Color(color, clampf(alpha * ink_alpha(), 0.0, 1.0))
 
 
+## Rotate [param base] on the hue wheel and scale saturation/value (visual palette companions).
+static func shift_hsv(base: Color, hue_offset: float = 0.0, sat_mul: float = 1.0, val_mul: float = 1.0) -> Color:
+	return Color.from_hsv(fposmod(base.h + hue_offset, 1.0), clampf(base.s * sat_mul, 0.0, 1.0), clampf(base.v * val_mul, 0.0, 1.0))
+
+
 ## Dark-theme stroke hue: floor value, then optional hue wheel offset and sat/value scale.
 ## Matches accent-shifted companions (cool/warm) in command-deck style palettes.
 static func neon_color(base: Color, hue_offset: float = 0.0, sat_mul: float = 1.0, val_mul: float = 1.0) -> Color:
 	var neon := base
 	neon.v = maxf(base.v, NEON_VALUE_FLOOR)
-	return ThemeColor.shift_hsv(neon, hue_offset, sat_mul, val_mul)
+	return shift_hsv(neon, hue_offset, sat_mul, val_mul)
 
 
 ## Light-theme stroke hue: same [param hue_offset] as [method neon_color], but value is scaled

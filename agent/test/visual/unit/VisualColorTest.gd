@@ -1,6 +1,17 @@
 extends RefCounted
 
 
+static func shift_hsv_test() -> void:
+	var base := Color.from_hsv(0.10, 0.50, 0.80)
+	var shifted := VisualColor.shift_hsv(base, 0.25, 0.50, 0.50)
+	assert(is_equal_approx(shifted.h, 0.35))
+	assert(is_equal_approx(shifted.s, 0.25))
+	assert(is_equal_approx(shifted.v, 0.40))
+	var wrapped := VisualColor.shift_hsv(Color.from_hsv(0.90, 1.0, 1.0), 0.20)
+	assert(is_equal_approx(wrapped.h, 0.10))
+	pass
+
+
 static func appearance_color_respects_theme_test() -> void:
 	var base := Color("59c8ff")
 	var original := ThemeColor.current_theme
