@@ -137,7 +137,7 @@ func set_revealed(revealed: bool) -> void:
 	stop_reveal_tween()
 	self.revealed = revealed
 	if not revealed:
-		apply_neon_colors(ThemeColor.accent_theme_color())
+		apply_neon_colors(VisualColor.appearance_color(ThemeColor.accent_theme_color()))
 		id_label.text = str(token_id)
 		id_label.modulate.a = 0.0
 		panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_md, Margin.ma_0, Margin.ma_0, Color.TRANSPARENT, 0))
@@ -160,7 +160,7 @@ func play_reveal(duration: float) -> void:
 
 
 func apply_reveal_visuals(display_id: int) -> void:
-	var color := neon_display_color(color_from_token_id(token_id))
+	var color := semantic_display_color(color_from_token_id(token_id))
 	apply_neon_colors(color)
 	id_label.text = str(mini(maxi(display_id, 0), token_id))
 	id_label.add_theme_color_override("font_color", Color(color, 0.82))
@@ -211,6 +211,13 @@ static func color_from_token_id(value: int) -> Color:
 	var g := fposmod(float(value) * 0.414213562373095, 1.0)
 	var b := fposmod(float(value) * 0.732050807568877, 1.0)
 	return Color(r, g, b)
+
+
+## Theme-aware token color after [method color_from_token_id]: neon lift on dark, ink band on light.
+static func semantic_display_color(raw: Color) -> Color:
+	if ThemeColor.is_dark_theme():
+		return neon_display_color(raw)
+	return VisualColor.appearance_color(raw)
 
 
 ## Brightens dark cube colors for neon UI while keeping hue/channel ratios.

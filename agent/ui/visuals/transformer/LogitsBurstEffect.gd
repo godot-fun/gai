@@ -110,7 +110,7 @@ func ensure_layer() -> bool:
 
 
 func spawn_low_token(token: LlamaHelper.Token, sequence: int) -> void:
-	var color := TransformerTokenNode.neon_display_color(TransformerTokenNode.color_from_token_id(token.id))
+	var color := TransformerTokenNode.semantic_display_color(TransformerTokenNode.color_from_token_id(token.id))
 	var label := embedding.make_token_label(low_probability_label(token, sequence), color)
 	burst_layer.add_child(label)
 	label.position = Vector3.ZERO
@@ -139,7 +139,7 @@ static func low_probability_label(token: LlamaHelper.Token, sequence: int) -> St
 func spawn_high_token(token: LlamaHelper.Token, index: int, count: int, generation: int) -> void:
 	if not is_current(generation):
 		return
-	var color := TransformerTokenNode.neon_display_color(TransformerTokenNode.color_from_token_id(token.id))
+	var color := TransformerTokenNode.semantic_display_color(TransformerTokenNode.color_from_token_id(token.id))
 	var label := embedding.make_token_label(TransformerTokenNode.display_piece(token.piece), color)
 	burst_layer.add_child(label)
 	label.position = Vector3.ZERO

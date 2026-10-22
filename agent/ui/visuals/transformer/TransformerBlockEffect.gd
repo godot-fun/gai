@@ -265,7 +265,7 @@ func transform_token(label: Label3D, token: LlamaHelper.Token, layer_index: int)
 	if label == null or not is_instance_valid(label):
 		return
 	var transformed_id := token.id + (layer_index + 1) * 7919
-	var color := TransformerTokenNode.neon_display_color(TransformerTokenNode.color_from_token_id(transformed_id))
+	var color := TransformerTokenNode.semantic_display_color(TransformerTokenNode.color_from_token_id(transformed_id))
 	label.outline_modulate = Color(color, 0.94)
 	label.modulate = Color.WHITE.lerp(color, 0.18)
 	var angle := float((token.id * 31 + layer_index * 47) % 360) * PI / 180.0

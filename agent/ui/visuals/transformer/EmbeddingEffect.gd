@@ -366,7 +366,7 @@ func launch_token_flight(token_index: int, token: LlamaHelper.Token, generation:
 		return
 	if galaxy_root == null or not is_instance_valid(galaxy_root):
 		return
-	var color := TransformerTokenNode.neon_display_color(TransformerTokenNode.color_from_token_id(token.id))
+	var color := TransformerTokenNode.semantic_display_color(TransformerTokenNode.color_from_token_id(token.id))
 	var display := TransformerTokenNode.display_piece(token.piece)
 	var target_local := position_from_color(TransformerTokenNode.color_from_token_id(token.id))
 	var target_world := galaxy_root.to_global(target_local)

@@ -136,7 +136,7 @@ func build_tokens(tokens: Array[LlamaHelper.Token]) -> void:
 	cutter.z_index = 10
 	cutter_material = create_shader_material(CUTTER_SHADER)
 	cutter.material = cutter_material
-	var accent := ThemeColor.accent_theme_color()
+	var accent := VisualColor.appearance_color(ThemeColor.accent_theme_color())
 	cutter_material.set_shader_parameter("effect_color", accent)
 	haze_material.set_shader_parameter("effect_color", accent)
 	row.add_child(cutter)
@@ -397,7 +397,7 @@ func reset_token_shake() -> void:
 
 
 func spawn_cut_particles(at_position: Vector2) -> void:
-	var accent := ThemeColor.accent_theme_color()
+	var accent := VisualColor.appearance_color(ThemeColor.accent_theme_color())
 	var sparks := make_cut_particles(at_position, 14, 0.42, 70.0, 160.0, 1.2, 2.8)
 	sparks.color = Color(1.0, 1.0, 1.0, 0.95)
 	var spark_ramp := Gradient.new()
@@ -421,7 +421,7 @@ func spawn_cut_particles(at_position: Vector2) -> void:
 
 
 func spawn_ambient_dust() -> void:
-	var accent := ThemeColor.accent_theme_color()
+	var accent := VisualColor.appearance_color(ThemeColor.accent_theme_color())
 	var dust := CPUParticles2D.new()
 	dust.position = Vector2(row.size.x * 0.5, TOKEN_HEIGHT * 0.42)
 	dust.z_index = 8
