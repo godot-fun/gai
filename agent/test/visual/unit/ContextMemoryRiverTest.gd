@@ -126,5 +126,32 @@ static func long_text_crosses_center_before_expiring_test() -> void:
 	pass
 
 
+## The straight pass spends much less progress per screen pixel than the approach, so a
+## step estimated on the approach side used to fling wide phrases across the lens and make
+## the visible text collapse in a single frame.
+static func long_text_keeps_constant_speed_through_lens_test() -> void:
+	var effect := ContextMemoryRiver.new()
+	effect.size = Vector2(1000.0, 600.0)
+	effect.visible = true
+	effect.add_item(ContextMemoryRiver.StreamType.USER, "This deliberately long sentence keeps every glyph evenly spaced while it slides through the lens and dissolves past the center.", 0.5)
+	var item: ContextMemoryRiver.StreamItem = effect.items[0]
+	var center := effect.size * 0.5
+	var delta := 1.0 / 60.0
+	var frame_budget := delta * ContextMemoryRiver.INPUT_TRAVEL_SPEED * item.speed * 1.05
+	var previous := effect.item_position(item.progress, item, center, false)
+	var max_move := 0.0
+	for _frame in range(2000):
+		effect._process(delta)
+		if not effect.items.has(item):
+			break
+		var position := effect.item_position(item.progress, item, center, false)
+		max_move = maxf(max_move, previous.distance_to(position))
+		previous = position
+	assert(item.absorption_triggered)
+	assert(max_move <= frame_budget)
+	effect.free()
+	pass
+
+
 static func item_position_x(item: ContextMemoryRiver.StreamItem, effect: ContextMemoryRiver) -> float:
 	return effect.item_position(item.progress, item, effect.size * 0.5, false).x

@@ -19,6 +19,9 @@ const TEXT_CENTER_FADE_DISTANCE := 54.0
 const INPUT_APPROACH_PROGRESS := 0.72
 const INPUT_PROGRESS_SAMPLE := 0.002
 const INPUT_MAX_PROGRESS_STEP := 0.025
+## Halvings used to fit a progress step to the remaining frame budget at the
+## approach/straight-pass boundary, where progress covers very different distances.
+const INPUT_STEP_REFINE_PASSES := 8
 const TRAIL_SAMPLE_COUNT := 9
 const TEXT_TRAIL_SAMPLE_STEP := 12.0
 # Sample history by travelled screen distance rather than frame count. This keeps
@@ -662,15 +665,33 @@ func advance_input_progress(item: StreamItem, center: Vector2, travel_distance: 
 		var progress_step := minf(remaining / maxf(pixels_per_progress, 0.001), INPUT_MAX_PROGRESS_STEP)
 		progress_step = minf(progress_step, 1.0 - progress)
 		var next_progress := progress + progress_step
-		var next_position: Vector2
-		if is_equal_approx(next_progress, probe):
-			next_position = probe_position
-		else:
+		var next_position := probe_position if is_equal_approx(next_progress, probe) else item_position(next_progress, item, center, false)
+		if position.distance_to(next_position) > remaining:
+			# The straight pass covers far more screen distance per unit of progress
+			# than the approach, so a step estimated on the approach side would fling
+			# a wide phrase across the lens in a single frame. Fit the step to what is
+			# left of the frame budget instead of trusting the local estimate.
+			next_progress = fit_progress_to_distance(item, center, progress, position, next_progress, remaining)
 			next_position = item_position(next_progress, item, center, false)
 		progress = next_progress
 		remaining -= maxf(position.distance_to(next_position), 0.001)
 		position = next_position
 	return progress
+
+
+## Narrows [param high_progress] down to the farthest progress whose position stays
+## within [param budget] pixels of [param position]. Travel along the path grows
+## monotonically with progress, so a fixed number of halvings converges.
+func fit_progress_to_distance(item: StreamItem, center: Vector2, low_progress: float, position: Vector2, high_progress: float, budget: float) -> float:
+	var low := low_progress
+	var high := high_progress
+	for _pass in range(INPUT_STEP_REFINE_PASSES):
+		var middle := (low + high) * 0.5
+		if position.distance_to(item_position(middle, item, center, false)) <= budget:
+			low = middle
+		else:
+			high = middle
+	return low
 
 
 func input_path_length(item: StreamItem, center: Vector2) -> float:
