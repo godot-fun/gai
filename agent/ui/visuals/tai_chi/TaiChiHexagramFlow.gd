@@ -18,6 +18,7 @@ const FLIGHT_START := 0.18
 const FLIGHT_END := 0.68
 const ROTATION_START := 0.72
 const INNER_FRAME_RADIUS_RATIO := TaiChiHexagramCatalog.ORBIT_RADIUS_RATIO * 0.63
+const SECTOR_OUTER_RADIUS_RATIO := 0.295
 const OUTER_LINE_GAP := 11.0
 const OUTER_LINE_WIDTH := 4.0
 const INNER_LINE_GAP := 9.0
@@ -150,7 +151,9 @@ func draw_sector_frames(canvas: Control, center: Vector2, short_side: float) -> 
 	var disappear := 1.0 - smoothstep(FLIGHT_END, ROTATION_START, phase)
 	var alpha := appear * disappear * 0.2
 	var inner_radius := short_side * INNER_FRAME_RADIUS_RATIO
-	var outer_radius := short_side * 0.305
+	# Keep the sector rim inside the trigram-label radius. At 0.305 it grazes
+	# the labels during the split, especially at the cardinal directions.
+	var outer_radius := short_side * SECTOR_OUTER_RADIUS_RATIO
 	var half_angle := TAU / 19.0
 	for slot in ROUND_COUNT:
 		var angle := slot_angle(slot)

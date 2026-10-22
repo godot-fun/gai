@@ -158,6 +158,10 @@ func carousel_rotates_and_cycles_all_trigrams_test() -> void:
 func hexagram_flow_combines_and_reveals_sixty_four_symbols_test() -> void:
 	var flow := TaiChiHexagramFlow.new()
 	flow.begin(PI * 0.75)
+	var short_side := 1440.0
+	var label_radius := short_side * 0.275 + minf(58.0, short_side * 0.065)
+	var label_inner_edge := label_radius - 27.0 * 0.5
+	assert(short_side * TaiChiHexagramFlow.SECTOR_OUTER_RADIUS_RATIO <= label_inner_edge - 12.0)
 	assert(TaiChiHexagramCatalog.HEXAGRAM_COUNT == 64)
 	assert(flow.hexagram_value(0, 0) == 63)
 	assert(flow.hexagram_value(7, 7) == 0)
