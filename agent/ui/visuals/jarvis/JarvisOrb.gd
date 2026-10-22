@@ -24,7 +24,7 @@ func _ready() -> void:
 	add_child(neuron_net)
 
 	char_overlay = JarvisOrbCharOverlay.new()
-	char_overlay.setup(neuron_net)
+	char_overlay.neuron_net = neuron_net
 	add_child(char_overlay)
 	orb_color_controller.snap_to(OrbPhase.color_for(OrbPhase.Phase.AWAKE))
 	gdf.events.theme_color_changed.connect(on_theme_color_changed)
@@ -65,10 +65,9 @@ func set_phase(new_phase: OrbPhase.Phase) -> void:
 
 
 func add_step_text(text: String) -> void:
-	if text.is_empty():
+	if not char_overlay.enqueue_sentence(text):
 		return
-	stream_char_total += text.length()
-	char_overlay.enqueue_sentence(text)
+	stream_char_total += text.strip_edges().length()
 	pass
 
 
@@ -87,6 +86,6 @@ func reset_growth() -> void:
 	orb_color_controller.snap_to(OrbPhase.color_for(OrbPhase.Phase.IDLE))
 	stream_char_total = 0
 	neuron_net.reset_growth()
-	char_overlay.clear_pending_sentences()
+	char_overlay.char_queue.clear()
 	push_display_color()
 	pass

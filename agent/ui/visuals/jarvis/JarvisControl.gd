@@ -100,7 +100,7 @@ func on_agent_end(_session_id: int, error_message: String) -> void:
 
 
 func on_turn_start(_session_id: int) -> void:
-	jarvis_orb.char_overlay.clear_pending_sentences()
+	jarvis_orb.char_overlay.char_queue.clear()
 	jarvis_orb.set_phase(OrbPhase.Phase.AWAKE)
 	pass
 
