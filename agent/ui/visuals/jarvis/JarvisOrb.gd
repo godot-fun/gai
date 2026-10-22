@@ -83,16 +83,19 @@ func add_step_text(text: String) -> void:
 func offer_segments(segments: Array[String]) -> void:
 	if segments.is_empty():
 		return
-	char_overlay.stage_segments(segments)
+	char_overlay.enqueue_segments(segments, stream_char_total)
 	growth_dirty = true
-	growth_flush_timer = OrbGrowth.TEXT_BATCH_INTERVAL_S
+	growth_flush_timer = OrbGrowth.NEURON_GROWTH_BATCH_INTERVAL_S
+	pass
+
+
+func can_accept_step_text() -> bool:
+	return char_overlay != null and char_overlay.can_accept_display_load()
 	pass
 
 
 func flush_growth() -> void:
 	growth_dirty = false
-	char_overlay.commit_staged_segments()
-	char_overlay.apply_growth(stream_char_total)
 	neuron_net.apply_growth(stream_char_total)
 	pass
 

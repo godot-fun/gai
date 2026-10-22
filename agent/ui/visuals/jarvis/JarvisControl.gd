@@ -7,7 +7,6 @@ const REVEAL_SCALE_MIN := 0.04
 const REVEAL_DURATION_S := 0.82
 const HIDE_DURATION_S := 0.68
 const ORB_ALPHA := 0.88
-const SENTENCE_INTERVAL_S := 0.2
 
 var phase: OrbPhase.Phase = OrbPhase.Phase.IDLE
 
@@ -15,7 +14,6 @@ var viewport_container: SubViewportContainer
 var sub_viewport: SubViewport
 var jarvis_orb: JarvisOrb
 var orb_tween: Tween
-var sentence_timer: float = 0.0
 
 
 func _ready() -> void:
@@ -25,13 +23,11 @@ func _ready() -> void:
 	pass
 
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if RuntimeManager.runtimes.is_empty() or jarvis_orb == null:
 		return
-	sentence_timer += delta
-	if sentence_timer < SENTENCE_INTERVAL_S:
+	if not jarvis_orb.can_accept_step_text():
 		return
-	sentence_timer = 0.0
 	offer_next_sentence()
 	pass
 
@@ -88,7 +84,6 @@ func set_visual_visible(show: bool, animated: bool) -> void:
 
 func on_agent_start(_session_id: int) -> void:
 	transition_to(OrbPhase.Phase.AWAKE)
-	sentence_timer = 0.0
 	pass
 
 

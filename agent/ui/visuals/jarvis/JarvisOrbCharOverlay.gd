@@ -3,7 +3,7 @@ extends Node3D
 
 ## Sentence-level particle stream rendered as Label3D billboards.
 
-const POOL_SIZE := 320
+const MAX_DISPLAY := 16
 const KEYWORD_POOL := 48
 const SHARED_CURVE_COUNT := 20
 const MIN_PHRASE_LEN := 2
@@ -11,7 +11,6 @@ const MIN_PHRASE_LEN := 2
 var neuron_net: JarvisOrbNeuronNet
 var char_queue: Array[String] = []
 var active_particles: Array[CharParticle] = []
-var free_labels: Array[Label3D] = []
 var keyword_labels: Array[Label3D] = []
 var shared_curves: Array[Curve3D] = []
 
@@ -19,17 +18,13 @@ var current_path_style: OrbPhase.PathStyle = OrbPhase.PathStyle.TRANSVERSE
 var display_color: Color = ThemeColor.accent_theme_color()
 var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 
-var stream_char_total: int = 0
-var max_active: int = OrbGrowth.PARTICLE_CAP_MIN
-var spawn_per_frame: int = OrbGrowth.SPAWN_FRAME_MIN
 var recent_phrases: Array[String] = []
-var staged_segments: Array[String] = []
 
 
 func setup(net: JarvisOrbNeuronNet) -> void:
 	neuron_net = net
 	rng.randomize()
-	build_label_pools()
+	build_keyword_labels()
 	refresh_shared_curves()
 	pass
 
@@ -41,46 +36,34 @@ func _process(delta: float) -> void:
 	pass
 
 
-func stage_segments(segments: Array[String]) -> void:
-	staged_segments.append_array(segments)
-	pass
-
-
-func commit_staged_segments() -> void:
-	if staged_segments.is_empty():
+func enqueue_segments(segments: Array[String], stream_char_total: int) -> void:
+	if segments.is_empty():
 		return
-	var keyword_cap := maxi(OrbGrowth.stream_keyword_cap(stream_char_total), OrbGrowth.keyword_burst(stream_char_total))
+	var keyword_cap := OrbGrowth.keyword_cap(stream_char_total)
 	var keywords: Array[String] = []
 	var seen: Dictionary = {}
-	for segment in staged_segments:
-		var display := display_phrase(segment)
+	for segment in segments:
+		var display := segment.strip_edges()
 		if display.is_empty() or display.length() < MIN_PHRASE_LEN:
 			continue
 		char_queue.append(display)
 		if keywords.size() < keyword_cap and not seen.has(display) and not recent_phrases.has(display):
 			seen[display] = true
 			keywords.append(display)
-	staged_segments.clear()
 	if not keywords.is_empty():
 		spawn_keywords(keywords)
 	pass
 
 
-func display_phrase(raw: String) -> String:
-	return raw.strip_edges()
+func can_accept_display_load() -> bool:
+	return display_load() < MAX_DISPLAY
 
 
-func apply_growth(char_total: int) -> void:
-	stream_char_total = char_total
-	max_active = OrbGrowth.particle_cap(char_total)
-	spawn_per_frame = OrbGrowth.spawn_per_frame(char_total)
-	pass
+func display_load() -> int:
+	return active_particles.size() + char_queue.size()
 
 
 func reset_growth() -> void:
-	stream_char_total = 0
-	max_active = OrbGrowth.PARTICLE_CAP_MIN
-	spawn_per_frame = OrbGrowth.SPAWN_FRAME_MIN
 	recent_phrases.clear()
 	clear_queue()
 	refresh_shared_curves()
@@ -100,7 +83,6 @@ func sync_display_color(color: Color) -> void:
 
 func clear_queue() -> void:
 	char_queue.clear()
-	staged_segments.clear()
 	pass
 
 
@@ -126,15 +108,13 @@ func refresh_shared_curves() -> void:
 	pass
 
 
-func build_label_pools() -> void:
-	for _i in POOL_SIZE:
-		free_labels.append(make_pool_label(20, 0.0018))
+func build_keyword_labels() -> void:
 	for _i in KEYWORD_POOL:
-		keyword_labels.append(make_pool_label(36, 0.0022))
+		keyword_labels.append(make_billboard_label(36, 0.0022))
 	pass
 
 
-func make_pool_label(font_size: int, pixel_size: float) -> Label3D:
+func make_billboard_label(font_size: int, pixel_size: float) -> Label3D:
 	var label := Label3D.new()
 	apply_orb_font(label)
 	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
@@ -149,12 +129,8 @@ func make_pool_label(font_size: int, pixel_size: float) -> Label3D:
 
 
 func spawn_from_queue() -> void:
-	var spawned: int = 0
-	while not char_queue.is_empty() and spawned < spawn_per_frame and active_particles.size() < max_active:
-		if free_labels.is_empty():
-			break
+	while not char_queue.is_empty() and active_particles.size() < MAX_DISPLAY:
 		spawn_segment(char_queue.pop_front())
-		spawned += 1
 	pass
 
 
@@ -167,9 +143,9 @@ func acquire_curve() -> Curve3D:
 
 
 func spawn_segment(segment: String) -> void:
-	if neuron_net == null or free_labels.is_empty():
+	if neuron_net == null:
 		return
-	var label: Label3D = free_labels.pop_back()
+	var label: Label3D = make_billboard_label(20, 0.0018)
 	var token_len := segment.length()
 	if token_len > 1:
 		label.font_size = 16 if token_len > 10 else 18
@@ -193,7 +169,7 @@ func update_particles(delta: float) -> void:
 		if particle.update(delta):
 			i += 1
 			continue
-		free_labels.append(particle.label)
+		particle.label.queue_free()
 		active_particles.remove_at(i)
 	pass
 
@@ -212,7 +188,7 @@ func spawn_keywords(words: Array[String]) -> void:
 			continue
 		var label: Label3D = available.pop_back()
 		recent_phrases.append(word)
-		while recent_phrases.size() > 48:
+		while recent_phrases.size() > KEYWORD_POOL:
 			recent_phrases.pop_front()
 		label.text = word
 		label.set_meta("birth_color", display_color)
