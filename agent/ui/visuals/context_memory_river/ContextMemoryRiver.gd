@@ -686,9 +686,15 @@ func sync_lens_shader(center: Vector2) -> void:
 	lens_material.set_shader_parameter("lens_center_px", center)
 	lens_material.set_shader_parameter("viewport_size", size)
 	lens_material.set_shader_parameter("lens_close", lens_close_progress)
-	lens_material.set_shader_parameter("border_color", Color(Colors.subtle_border, 0.34))
+	lens_material.set_shader_parameter("border_color", lens_ring_border_color())
 	lens_material.set_shader_parameter("pulse_color", pulse_color)
 	pass
+
+
+static func lens_ring_border_color() -> Color:
+	if ThemeColor.is_dark_theme():
+		return Color(Colors.secondary_text, 0.48)
+	return Color(Colors.subtle_border, 0.36)
 
 
 static func absorption_ripple_spread(source_width: float) -> float:
@@ -823,28 +829,28 @@ static func label_for_type(stream_type: StreamType) -> String:
 	return I18n.t("agent.visuals.history")
 
 
-## Title / accent hues aligned with [agent/ui/chat/bubble] (File, Tool, WebTool, Thinking, etc.).
+## Chat-semantic swatches tinted with [ThemeColor.mix_with_accent] so streams follow the active theme.
 static func neon_base_for_type(stream_type: StreamType) -> Color:
 	match stream_type:
 		StreamType.USER:
 			return ThemeColor.accent_theme_color()
 		StreamType.SYSTEM:
-			return Colors.secondary_text
+			return ThemeColor.mix_with_accent(Colors.secondary_text, ThemeColor.ACCENT_MIX_NEUTRAL)
 		StreamType.HISTORY:
-			return Colors.secondary_text
+			return ThemeColor.mix_with_accent(Colors.secondary_text, ThemeColor.ACCENT_MIX_NEUTRAL)
 		StreamType.FILE:
-			return Colors.warning
+			return ThemeColor.mix_with_accent(Colors.warning, ThemeColor.ACCENT_MIX_CHROMATIC)
 		StreamType.TOOL:
-			return Colors.success
+			return ThemeColor.mix_with_accent(Colors.success, ThemeColor.ACCENT_MIX_CHROMATIC)
 		StreamType.WEB:
-			return Colors.info
+			return ThemeColor.mix_with_accent(Colors.info, ThemeColor.ACCENT_MIX_CHROMATIC)
 		StreamType.THINKING:
-			return Colors.purple
+			return ThemeColor.mix_with_accent(Colors.purple, ThemeColor.ACCENT_MIX_CHROMATIC)
 		StreamType.ERROR:
-			return Colors.error
+			return ThemeColor.mix_with_accent(Colors.error, ThemeColor.ACCENT_MIX_ERROR)
 		StreamType.ANSWER:
-			return Colors.primary_text
-	return Colors.secondary_text
+			return ThemeColor.mix_with_accent(Colors.primary_text, ThemeColor.ACCENT_MIX_NEUTRAL)
+	return ThemeColor.mix_with_accent(Colors.secondary_text, ThemeColor.ACCENT_MIX_NEUTRAL)
 
 
 static func color_for_type(stream_type: StreamType) -> Color:

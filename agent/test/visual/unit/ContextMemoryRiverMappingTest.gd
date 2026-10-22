@@ -30,14 +30,15 @@ static func tool_name_stream_types_test() -> void:
 
 
 static func stream_palette_respects_theme_test() -> void:
-	var base := ContextMemoryRiver.neon_base_for_type(ContextMemoryRiver.StreamType.USER)
 	var original := ThemeColor.current_theme
+	var original_accent := ThemeColor.accent_theme_color()
 	ThemeColor.current_theme = ThemeColor.ThemeEnum.DARK
-	var dark := VisualColor.appearance_color(base)
+	var user_dark := VisualColor.appearance_color(ContextMemoryRiver.neon_base_for_type(ContextMemoryRiver.StreamType.USER))
 	ThemeColor.current_theme = ThemeColor.ThemeEnum.LIGHT
-	var light := VisualColor.appearance_color(base)
+	var user_light := VisualColor.appearance_color(ContextMemoryRiver.neon_base_for_type(ContextMemoryRiver.StreamType.USER))
 	ThemeColor.current_theme = original
-	assert(dark.v >= VisualColor.NEON_VALUE_FLOOR)
-	assert(light.v >= VisualColor.LIGHT_INK_VALUE_MIN)
-	assert(light.v <= VisualColor.LIGHT_INK_VALUE_MAX)
+	assert(user_dark.v >= VisualColor.NEON_VALUE_FLOOR)
+	assert(user_light.v >= VisualColor.LIGHT_INK_VALUE_MIN)
+	assert(user_light.v <= VisualColor.LIGHT_INK_VALUE_MAX)
+	assert(ThemeColor.mix_with_accent(Colors.success, ThemeColor.ACCENT_MIX_CHROMATIC).is_equal_approx(Colors.success.lerp(original_accent, ThemeColor.ACCENT_MIX_CHROMATIC)))
 	pass

@@ -78,6 +78,10 @@ const BODY_SATURATION_LIGHT := 0.28
 const BODY_VALUE_DARK := 0.68
 const BODY_VALUE_LIGHT := 0.42
 const SELECTION_MIX := 0.30
+## Default accent share when tinting semantic [Colors] for theme-aware visuals (e.g. agent streams).
+const ACCENT_MIX_CHROMATIC := 0.42
+const ACCENT_MIX_NEUTRAL := 0.28
+const ACCENT_MIX_ERROR := 0.22
 
 ## User-selected accent color; its alpha is preserved for translucent theme effects.
 static var theme_color: Color = DEFAULT_THEME_COLOR
@@ -120,6 +124,11 @@ static func accent_theme_color() -> Color:
 ## Current theme color with the specified alpha for translucent accent effects.
 static func alpha_theme_color(alpha: float) -> Color:
 	return Color(theme_color, alpha)
+
+
+## Theme-aware semantic tint: [param base].lerp(accent, weight), same pattern as [member selection_color].
+static func mix_with_accent(base: Color, accent_weight: float) -> Color:
+	return base.lerp(accent_theme_color(), clampf(accent_weight, 0.0, 1.0))
 
 
 ## Refresh every palette derived from the active appearance. Cards follow the accent hue; semantic,
