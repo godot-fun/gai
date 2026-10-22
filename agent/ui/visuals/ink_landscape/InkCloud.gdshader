@@ -109,9 +109,8 @@ void fragment() {
 	float depth_alpha = mix(0.62, 1.0, layer_index * 0.5);
 	float alpha = cloud * mix(0.44, 0.76, smoothstep(0.12, 0.78, cloud)) * depth_alpha;
 	alpha *= 0.90 + (fibers - 0.5) * 0.20;
-	alpha *= mix(1.0, 0.72, dark_theme);
-	// Ink underside defines cloud form on light paper; dark theme keeps a softer rim.
-	float underside = smoothstep(0.36, 0.92, cloud) * mix(0.058 + fibers * 0.040, 0.035 + fibers * 0.025, dark_theme);
+	alpha *= mix(1.45, 0.72, dark_theme);
+	float underside = smoothstep(0.36, 0.92, cloud) * mix(0.055 + fibers * 0.035, 0.035 + fibers * 0.025, dark_theme);
 	vec3 color = mix(cloud_color.rgb, ink_color.rgb, underside);
-	COLOR = vec4(color, clamp(alpha, 0.0, mix(0.80, 0.56, dark_theme)) * fade_alpha);
+	COLOR = vec4(color, clamp(alpha, 0.0, mix(0.88, 0.56, dark_theme)) * fade_alpha);
 }

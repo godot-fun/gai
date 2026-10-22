@@ -513,7 +513,8 @@ func ink_color() -> Color:
 
 
 func cloud_color() -> Color:
-	return Color(0.48, 0.51, 0.49, 1.0) if ThemeColor.is_dark_theme() else Color(0.86, 0.875, 0.855, 1.0)
+	# Light UI background is ~0.98; a pale gray wash must sit clearly below it to read as cloud.
+	return Color(0.48, 0.51, 0.49, 1.0) if ThemeColor.is_dark_theme() else Color(0.74, 0.77, 0.75, 1.0)
 
 
 static func bird_position(serial: int, seed: float) -> Vector2:
