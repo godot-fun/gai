@@ -1,7 +1,7 @@
 class_name OrbGrowth
 extends RefCounted
 
-## Maps cumulative streamed text volume to orb density (neurons, floating keywords).
+## Maps cumulative streamed text volume to neuron mesh density.
 
 const NEURON_MIN := 128
 const NEURON_MAX := 512
@@ -12,9 +12,6 @@ const CHARS_FOR_FULL := 7000.0
 ## Min seconds between heavy neuron/filament mesh rebuilds.
 const NEURON_REBUILD_COOLDOWN_S := 0.55
 
-## Min seconds between batched neuron mesh growth updates.
-const NEURON_GROWTH_BATCH_INTERVAL_S := 0.12
-
 
 static func level(char_count: int) -> float:
 	return clampf(float(char_count) / CHARS_FOR_FULL, 0.0, 1.0)
@@ -22,8 +19,3 @@ static func level(char_count: int) -> float:
 
 static func neuron_count(char_count: int) -> int:
 	return int(lerpf(float(NEURON_MIN), float(NEURON_MAX), level(char_count)))
-
-
-static func keyword_cap(char_count: int) -> int:
-	var growth := level(char_count)
-	return maxi(1 + int(growth * 2.0), 1 + int(growth * 3.0))

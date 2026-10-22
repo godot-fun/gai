@@ -12,8 +12,7 @@ var spin_speed: float = 0.7
 var stream_char_total: int = 0
 var orb_color_controller: OrbColorController = OrbColorController.new()
 
-var growth_dirty: bool = false
-var growth_flush_timer: float = 0.0
+var applied_display_color: Color = Color.TRANSPARENT
 
 
 func _ready() -> void:
@@ -29,24 +28,20 @@ func _ready() -> void:
 	add_child(char_overlay)
 	orb_color_controller.snap_to(OrbPhase.color_for(OrbPhase.Phase.AWAKE))
 	gdf.events.theme_color_changed.connect(on_theme_color_changed)
-	apply_display_color()
+	push_display_color()
 	pass
 
 
 func on_theme_color_changed() -> void:
 	orb_color_controller.set_target(OrbPhase.color_for(phase))
+	push_display_color()
 	pass
 
 
 func _process(delta: float) -> void:
 	neuron_net.wander_speed_scale = spin_speed
 	orb_color_controller.update(delta)
-	apply_display_color()
-
-	if growth_flush_timer > 0.0:
-		growth_flush_timer = maxf(0.0, growth_flush_timer - delta)
-		if growth_flush_timer <= 0.0 and growth_dirty:
-			flush_growth()
+	push_display_color()
 	pass
 
 
@@ -67,6 +62,7 @@ func set_phase(new_phase: OrbPhase.Phase) -> void:
 			spin_speed = 0.7
 	if new_phase != OrbPhase.Phase.IDLE:
 		neuron_net.pulse_random(0.9)
+	push_display_color()
 	pass
 
 
@@ -74,20 +70,20 @@ func add_step_text(text: String) -> void:
 	if text.is_empty():
 		return
 	stream_char_total += text.length()
-	char_overlay.enqueue_segments([text], stream_char_total)
-	growth_dirty = true
-	growth_flush_timer = OrbGrowth.NEURON_GROWTH_BATCH_INTERVAL_S
+	char_overlay.enqueue_sentence(text)
 	pass
 
 
-func flush_growth() -> void:
-	growth_dirty = false
+func apply_neuron_growth() -> void:
 	neuron_net.apply_growth(stream_char_total)
 	pass
 
 
-func apply_display_color() -> void:
+func push_display_color() -> void:
 	var color: Color = orb_color_controller.display_color
+	if color.is_equal_approx(applied_display_color):
+		return
+	applied_display_color = color
 	neuron_net.apply_display_color(color)
 	rings.apply_display_color(color)
 	char_overlay.display_color = color
@@ -95,12 +91,9 @@ func apply_display_color() -> void:
 
 
 func reset_growth() -> void:
-	if growth_dirty:
-		flush_growth()
 	orb_color_controller.snap_to(OrbPhase.color_for(OrbPhase.Phase.IDLE))
 	stream_char_total = 0
-	growth_dirty = false
-	growth_flush_timer = 0.0
 	neuron_net.reset_growth()
 	char_overlay.reset_growth()
+	push_display_color()
 	pass

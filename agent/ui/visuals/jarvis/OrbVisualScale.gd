@@ -23,11 +23,11 @@ static func ring_radii() -> PackedFloat32Array:
 	var base := outer_shell_extent_max()
 	return PackedFloat32Array([base + 0.08, base + 0.24, base + 0.40])
 
-## Floating keyword labels (seconds).
-const KEYWORD_LIFE_MIN := 5.5
-const KEYWORD_LIFE_MAX := 9.0
-const KEYWORD_DRIFT_SPEED := 0.04
+## Short-sentence float around the orb (seconds).
+const SENTENCE_LIFE_MIN := 5.5
+const SENTENCE_LIFE_MAX := 9.0
+const SENTENCE_DRIFT_SPEED := 0.04
 
-## Char particle path progress speed (lower = longer on screen).
+## Long-sentence path flight (lower = longer on screen).
 const PARTICLE_SPEED_MIN := 0.15
 const PARTICLE_SPEED_MAX := 0.28

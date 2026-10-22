@@ -199,7 +199,6 @@ func apply_display_color(color: Color) -> void:
 		neuron_shader_inner.set_shader_parameter("base_color", Color(color.r, color.g, color.b, 0.92))
 	if neuron_shader_outer != null:
 		neuron_shader_outer.set_shader_parameter("base_color", Color(color.r, color.g, color.b, 0.72))
-	apply_filament_theme_color()
 	pass
 
 

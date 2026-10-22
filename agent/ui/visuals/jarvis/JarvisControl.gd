@@ -8,8 +8,6 @@ const REVEAL_DURATION_S := 0.82
 const HIDE_DURATION_S := 0.68
 const ORB_ALPHA := 0.88
 
-var phase: OrbPhase.Phase = OrbPhase.Phase.IDLE
-
 var viewport_container: SubViewportContainer
 var sub_viewport: SubViewport
 var jarvis_orb: JarvisOrb
@@ -102,7 +100,7 @@ func on_agent_end(_session_id: int, error_message: String) -> void:
 
 
 func on_turn_start(_session_id: int) -> void:
-	jarvis_orb.char_overlay.clear_queue()
+	jarvis_orb.char_overlay.reset_growth()
 	transition_to(OrbPhase.Phase.AWAKE)
 	pass
 
@@ -115,13 +113,13 @@ func on_turn_end(_session_id: int) -> void:
 func on_message_update(_session_id: int, _chunk: String, stream_kind: String) -> void:
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
 		transition_to(OrbPhase.Phase.REASONING)
-	elif phase != OrbPhase.Phase.TOOL_EXEC:
+	elif jarvis_orb.phase != OrbPhase.Phase.TOOL_EXEC:
 		transition_to(OrbPhase.Phase.GENERATING)
 	pass
 
 
 func on_message_complete(_session_id: int, _usage: OpenAiUsage) -> void:
-	jarvis_orb.flush_growth()
+	jarvis_orb.apply_neuron_growth()
 	jarvis_orb.neuron_net.pulse_random(1.0)
 	pass
 
@@ -132,13 +130,12 @@ func on_tool_execution_start(_session_id: int, _tool_call_id: String, _tool_name
 
 
 func on_tool_execution_end(_session_id: int, _tool_call_id: String, _tool_name: String, _agent_tool_result: AgentToolResult) -> void:
-	if phase == OrbPhase.Phase.TOOL_EXEC:
+	if jarvis_orb.phase == OrbPhase.Phase.TOOL_EXEC:
 		transition_to(OrbPhase.Phase.AWAKE)
 	pass
 
 
 func transition_to(new_phase: OrbPhase.Phase) -> void:
-	phase = new_phase
 	jarvis_orb.set_phase(new_phase)
 	pass
 
@@ -192,7 +189,6 @@ func finalize_orb_hidden() -> void:
 	visible = false
 	modulate.a = 0.0
 	scale = Vector2.ONE
-	phase = OrbPhase.Phase.IDLE
 	jarvis_orb.reset_growth()
 	jarvis_orb.set_phase(OrbPhase.Phase.IDLE)
 	pass
