@@ -9,14 +9,19 @@ const MAX_ITEMS := 96
 # expensive, so only this many semantic text phrases may be visible at once.
 const MAX_TEXT_ITEMS := 32
 const PARTICLE_SPEED := 0.19
+const INPUT_TRAVEL_SPEED := 240.0
 const DEFAULT_CONTEXT_LIMIT := 128_000
 const ABSORPTION_DURATION := 0.62
-## Short labels during ring absorption keep text on the intake side of the lens.
-const ABSORPTION_LABEL_MAX_LENGTH := 40
+## Characters remain fully visible up to the lens center, then dissolve over this distance.
+const TEXT_CENTER_FADE_DISTANCE := 54.0
+const INPUT_APPROACH_PROGRESS := 0.72
+const INPUT_PROGRESS_SAMPLE := 0.002
+const INPUT_MAX_PROGRESS_STEP := 0.025
 const TRAIL_SAMPLE_COUNT := 4
 # Sample history by travelled screen distance rather than frame count. This keeps
 # curve quality stable across frame rates and bounds memory per item.
 const MAX_PATH_HISTORY_POINTS := 128
+const MAX_TEXT_PATH_HISTORY_POINTS := 1024
 const PATH_HISTORY_STEP := 2.0
 # A fixed small count adds depth without scaling draw cost with stream traffic.
 const DECORATIVE_MOTE_COUNT := 7
@@ -28,7 +33,8 @@ const CONTEXT_RING_INSET := 58.0
 const OUTPUT_SPIRAL_TURNS := 3.25
 const OUTPUT_SPIRAL_RADIUS := 11.0
 const OUTPUT_TRAIL_SAMPLES := 8
-const OUTPUT_TRAIL_STEP := 0.011
+const OUTPUT_TRAIL_MIN_LENGTH := 28.0
+const OUTPUT_TRAIL_MAX_LENGTH := 280.0
 const END_INPUT_SECONDS := 0.55
 const END_OUTPUT_SECONDS := 0.65
 const END_LENS_SECONDS := 0.32
@@ -56,15 +62,16 @@ class StreamItem extends RefCounted:
 	# Font metrics are immutable for an item and expensive enough to cache once.
 	var glyph_advances := PackedFloat32Array()
 	var label_width: float = 0.0
+	var absorption_triggered: bool = false
 
 
 class AbsorptionEffect extends RefCounted:
 	# Lightweight snapshot detached from an item after it reaches the context ring.
 	var age: float = 0.0
 	var color: Color
-	var label: String
-	var lane: float
+	var origin: Vector2
 	var weight: float
+	var source_width: float
 	var output_spawned: bool = false
 
 
@@ -72,6 +79,7 @@ class OutputMote extends RefCounted:
 	var progress: float = 0.0
 	var speed: float
 	var phase_offset: float
+	var trail_length: float
 
 
 var items: Array[StreamItem] = []
@@ -203,18 +211,23 @@ func _process(delta: float) -> void:
 	var center := size * 0.5
 	for index in range(items.size() - 1, -1, -1):
 		var item := items[index]
-		var progress_step := delta * PARTICLE_SPEED * item.speed
-		if is_ending:
-			progress_step = maxf(progress_step, delta / END_INPUT_SECONDS)
-		var next_progress := item.progress + progress_step
-		var input_x := lerpf(-50.0, size.x * 0.5, next_progress)
-		# Convert incoming phrases at the visible outer ring instead of letting them
-		# overlap the opaque context body. Backward iteration keeps removal safe.
-		if item.stream_type != StreamType.ANSWER and input_x >= size.x * 0.5 - CONTEXT_RING_INSET:
-			add_absorption_effect(item)
-			items.remove_at(index)
-			activity = 1.0
-			continue
+		var next_progress := item.progress
+		if item.stream_type == StreamType.ANSWER:
+			var progress_step := delta * PARTICLE_SPEED * item.speed
+			if is_ending:
+				progress_step = maxf(progress_step, delta / END_INPUT_SECONDS)
+			next_progress += progress_step
+		else:
+			var travel_distance := delta * INPUT_TRAVEL_SPEED * item.speed
+			if is_ending:
+				travel_distance = maxf(travel_distance, input_path_length(item, center) * delta / END_INPUT_SECONDS)
+			var previous_position := item_position(item.progress, item, center, false)
+			next_progress = advance_input_progress(item, center, travel_distance)
+			var next_position := item_position(next_progress, item, center, false)
+			if not item.absorption_triggered and previous_position.x < center.x and next_position.x >= center.x:
+				item.absorption_triggered = true
+				add_absorption_effect(item, center)
+				activity = 1.0
 		if next_progress >= 1.0:
 			items.remove_at(index)
 			continue
@@ -226,7 +239,7 @@ func _process(delta: float) -> void:
 		effect.age += delta
 		if not effect.output_spawned and effect.age >= ABSORPTION_DURATION * 0.5:
 			effect.output_spawned = true
-			spawn_output_mote()
+			spawn_output_mote(effect.source_width)
 		if effect.age >= ABSORPTION_DURATION:
 			absorption_effects.remove_at(index)
 	update_decorative_motes(delta, center)
@@ -251,7 +264,7 @@ func update_decorative_motes(delta: float, center: Vector2) -> void:
 		mote.progress += progress_step
 		var input_x := lerpf(-50.0, center.x, mote.progress)
 		if input_x >= center.x - CONTEXT_RING_INSET:
-			add_absorption_effect(mote)
+			add_absorption_effect(mote, item_position(mote.progress, mote, center, false))
 			decorative_motes.remove_at(index)
 	pass
 
@@ -267,10 +280,11 @@ func spawn_decorative_mote() -> void:
 	pass
 
 
-func spawn_output_mote() -> void:
+func spawn_output_mote(source_width: float = OUTPUT_TRAIL_MIN_LENGTH) -> void:
 	var mote := OutputMote.new()
 	mote.speed = 0.82 + float(output_spawn_index % 5) * 0.08
 	mote.phase_offset = float(output_spawn_index % 6) * TAU / 6.0
+	mote.trail_length = clampf(source_width, OUTPUT_TRAIL_MIN_LENGTH, OUTPUT_TRAIL_MAX_LENGTH)
 	output_motes.append(mote)
 	output_spawn_index += 1
 	output_activity = 1.0
@@ -291,12 +305,12 @@ func update_output_motes(delta: float) -> void:
 
 ## Captures the minimum packet state needed by the short-lived intake animation.
 ## Keeping this separate from items prevents an absorbed packet from being drawn twice.
-func add_absorption_effect(item: StreamItem) -> void:
+func add_absorption_effect(item: StreamItem, origin: Vector2 = Vector2.ZERO) -> void:
 	var effect := AbsorptionEffect.new()
 	effect.color = color_for_type(item.stream_type)
-	effect.label = item.label
-	effect.lane = float(item.lane)
+	effect.origin = origin
 	effect.weight = item.weight
+	effect.source_width = item.label_width
 	absorption_effects.append(effect)
 	pass
 
@@ -403,23 +417,16 @@ func draw_decorative_motes(center: Vector2) -> void:
 	pass
 
 
-## Pulls each incoming packet from the left edge of the context ring into its
-## core, while a type-colored ripple preserves the packet's source identity.
+## Adds a type-colored core pulse without taking ownership of the incoming text.
 func draw_absorption_effects(center: Vector2) -> void:
 	for effect: AbsorptionEffect in absorption_effects:
 		var phase := clampf(effect.age / ABSORPTION_DURATION, 0.0, 1.0)
 		var color := effect.color
-		var label := StringUtils.truncate(effect.label, ABSORPTION_LABEL_MAX_LENGTH)
 		var weight := effect.weight
-		var lane_y := effect.lane * 8.0
-		var impact_position := center + Vector2(-CONTEXT_RING_INSET, lane_y * 0.34)
 		var collapse := smoothstep(0.0, 0.55, phase)
-		var particle_position := impact_position.lerp(center, collapse)
+		var particle_position := effect.origin.lerp(center, collapse)
 		var particle_alpha := 1.0 - smoothstep(0.38, 0.72, phase)
-		var text_rotation := clampf((center - impact_position).angle(), -0.42, 0.42)
-		var tail_anchor := text_left_anchor(particle_position, label, text_rotation)
-		draw_line(impact_position, tail_anchor, VisualColor.stroke(color, particle_alpha * 0.24), 1.0 + weight, true)
-		draw_rotated_right_anchor_text(particle_position, label, text_rotation, VisualColor.stroke(color, particle_alpha * 0.92))
+		draw_circle(particle_position, 2.0 + weight * 2.0, VisualColor.stroke(color, particle_alpha * 0.72))
 		var ripple_phase := clampf(phase / 0.82, 0.0, 1.0)
 		var ripple_radius := lerpf(54.0, 84.0, ripple_phase)
 		draw_arc(center, ripple_radius, 0.0, TAU, 72, VisualColor.stroke(color, (1.0 - ripple_phase) * 0.2), 1.6, true)
@@ -439,10 +446,14 @@ func draw_item(item: StreamItem, center: Vector2) -> void:
 	if is_output:
 		# Answers remain compact particles; drawing answer text again would compete
 		# with the chat response and multiply glyph draw calls.
+		var output_span := maxf(size.x + 50.0 - (center.x + CONTEXT_RING_RADIUS), 1.0)
+		var trail_length := clampf(item.label_width, OUTPUT_TRAIL_MIN_LENGTH, OUTPUT_TRAIL_MAX_LENGTH)
+		var trail_progress := trail_length / output_span
 		var trail_points := PackedVector2Array()
 		for trail_index in range(OUTPUT_TRAIL_SAMPLES, -1, -1):
-			var trail_progress := maxf(progress - float(trail_index) * OUTPUT_TRAIL_STEP, 0.0)
-			trail_points.append(item_position(trail_progress, item, center, true))
+			var sample_ratio := float(trail_index) / float(OUTPUT_TRAIL_SAMPLES)
+			var sample_progress := maxf(progress - sample_ratio * trail_progress, 0.0)
+			trail_points.append(item_position(sample_progress, item, center, true))
 		if trail_points.size() > 1:
 			draw_polyline(trail_points, VisualColor.stroke(color, edge_fade * 0.18), maxf(1.0, radius * 0.26), true)
 		draw_circle(position, radius * 1.7, VisualColor.stroke(color, edge_fade * 0.06))
@@ -450,8 +461,9 @@ func draw_item(item: StreamItem, center: Vector2) -> void:
 	else:
 		# Incoming sources are semantic, so lay their real labels glyph-by-glyph on
 		# the cached path instead of drawing a rigid horizontal label.
-		var text_alpha := edge_fade * (0.76 + item.pulse * 0.18)
-		draw_text_on_path(item, position, label, VisualColor.stroke(color, text_alpha), VisualColor.stroke(color, edge_fade * 0.18))
+		var arrival_alpha := smoothstep(0.0, 0.04, progress)
+		var text_alpha := arrival_alpha * (0.76 + item.pulse * 0.18)
+		draw_text_on_path(item, position, label, VisualColor.stroke(color, text_alpha), VisualColor.stroke(color, arrival_alpha * 0.18), center.x)
 	pass
 
 
@@ -467,7 +479,7 @@ func text_left_anchor(position: Vector2, text: String, rotation: float) -> Vecto
 ## Lays each glyph directly onto the packet's travelled curve. The newest point
 ## is the right edge of the label. Characters are placed in reverse order so the
 ## phrase still reads left-to-right, and the tail continues behind its first glyph.
-func draw_text_on_path(item: StreamItem, current: Vector2, text: String, color: Color, tail_color: Color) -> void:
+func draw_text_on_path(item: StreamItem, current: Vector2, text: String, color: Color, tail_color: Color, center_x: float) -> void:
 	var font := Fonts.medium()
 	var font_size := Typography.label_small_size
 	if item.path_history.size() < 2:
@@ -486,8 +498,10 @@ func draw_text_on_path(item: StreamItem, current: Vector2, text: String, color: 
 		var before := cached_point_at_distance(item, current, current_distance, distance_from_head + 2.0)
 		var after := cached_point_at_distance(item, current, current_distance, maxf(distance_from_head - 2.0, 0.0))
 		var rotation := clampf((after - before).angle(), -0.72, 0.72)
+		var glyph_color := color
+		glyph_color.a *= center_fade_alpha(glyph_position.x, center_x)
 		draw_set_transform(glyph_position, rotation)
-		draw_string(font, Vector2(-advance * 0.5, baseline_offset), text.substr(index, 1), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+		draw_string(font, Vector2(-advance * 0.5, baseline_offset), text.substr(index, 1), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, glyph_color)
 		distance_from_head += advance * 0.5
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	# Continue along the same cached path so the tail meets the first glyph without
@@ -497,8 +511,14 @@ func draw_text_on_path(item: StreamItem, current: Vector2, text: String, color: 
 	for sample in range(TRAIL_SAMPLE_COUNT + 1):
 		var sample_distance := tail_start_distance + float(TRAIL_SAMPLE_COUNT - sample) * 8.0
 		tail_points.append(cached_point_at_distance(item, current, current_distance, sample_distance))
-	draw_polyline(tail_points, tail_color, 1.0, true)
+	var faded_tail_color := tail_color
+	faded_tail_color.a *= center_fade_alpha(tail_points[tail_points.size() - 1].x, center_x)
+	draw_polyline(tail_points, faded_tail_color, 1.0, true)
 	pass
+
+
+static func center_fade_alpha(x: float, center_x: float) -> float:
+	return 1.0 - smoothstep(center_x, center_x + TEXT_CENTER_FADE_DISTANCE, x)
 
 
 func cache_text_metrics(item: StreamItem) -> void:
@@ -527,7 +547,9 @@ func cache_item_path(item: StreamItem, center: Vector2) -> void:
 		path_distance = item.path_distances[item.path_distances.size() - 1] + item.path_history[item.path_history.size() - 1].distance_to(position)
 	item.path_history.append(position)
 	item.path_distances.append(path_distance)
-	if item.path_history.size() > MAX_PATH_HISTORY_POINTS:
+	var text_point_count := ceili((item.label_width + TEXT_CENTER_FADE_DISTANCE + 48.0) / PATH_HISTORY_STEP)
+	var history_limit := mini(maxi(MAX_PATH_HISTORY_POINTS, text_point_count), MAX_TEXT_PATH_HISTORY_POINTS)
+	if item.path_history.size() > history_limit:
 		item.path_history.remove_at(0)
 		item.path_distances.remove_at(0)
 	pass
@@ -574,28 +596,61 @@ func draw_rotated_right_anchor_text(position: Vector2, text: String, rotation: f
 	pass
 
 
-## Uses eased cubic paths so packets accelerate into the context instead of
-## sliding along rigid horizontal lanes. Opposing control points intentionally
-## produce the pronounced S-shaped movement used by the curved text layout.
+## Approaches the ring on the established S-curve, then continues through the
+## lens center far enough for the final glyph to finish its spatial fade.
 func item_position(progress: float, item: StreamItem, center: Vector2, is_output: bool) -> Vector2:
 	var eased := smoothstep(0.0, 1.0, progress)
 	var source_y := item.source_y_ratio * size.y
 	var lane_offset := source_y - center.y
 	var curve_direction := item.curve_direction
 	if is_output:
-		var x := lerpf(center.x, size.x + 50.0, eased)
+		var x := lerpf(center.x + CONTEXT_RING_RADIUS, size.x + 50.0, eased)
 		var spiral_envelope := smoothstep(0.0, 0.12, eased)
 		var phase := eased * TAU * OUTPUT_SPIRAL_TURNS + item.source_y_ratio * TAU - elapsed * 0.9
 		return Vector2(x, center.y + sin(phase) * OUTPUT_SPIRAL_RADIUS * spiral_envelope)
 	var input_start := Vector2(-50.0, center.y + lane_offset)
 	var impact := center + Vector2(-CONTEXT_RING_INSET, lane_offset * 0.04)
-	var pull := smoothstep(0.42, 1.0, eased)
-	var drift := sin(progress * TAU * 1.65 + item.source_y_ratio * 9.0 + elapsed * 0.8) * 30.0 * (1.0 - pull)
+	if progress >= INPUT_APPROACH_PROGRESS:
+		var through_progress := inverse_lerp(INPUT_APPROACH_PROGRESS, 1.0, progress)
+		var exit := center + Vector2(item.label_width + TEXT_CENTER_FADE_DISTANCE + 8.0, 0.0)
+		return impact.lerp(exit, through_progress)
+	var approach_progress := progress / INPUT_APPROACH_PROGRESS
+	var approach_eased := smoothstep(0.0, 1.0, approach_progress)
+	var pull := smoothstep(0.42, 1.0, approach_eased)
+	var drift := sin(approach_progress * TAU * 1.65 + item.source_y_ratio * 9.0) * 30.0 * (1.0 - pull)
 	var control_a := Vector2(center.x * 0.2, center.y + lane_offset * 1.28 + curve_direction * 96.0)
 	var control_b := Vector2(center.x * 0.68, center.y - lane_offset * 0.52 - curve_direction * 76.0)
-	var position := cubic_bezier(input_start, control_a, control_b, impact, eased)
+	var position := cubic_bezier(input_start, control_a, control_b, impact, approach_eased)
 	position.y += drift
 	return position
+
+
+## Advances by screen distance rather than raw Bezier time, keeping the visible
+## speed stable across the curved approach and the straight pass through the lens.
+func advance_input_progress(item: StreamItem, center: Vector2, travel_distance: float) -> float:
+	var progress := item.progress
+	var remaining := maxf(travel_distance, 0.0)
+	while remaining > 0.001 and progress < 1.0:
+		var probe := minf(progress + INPUT_PROGRESS_SAMPLE, 1.0)
+		var sample_distance := item_position(progress, item, center, false).distance_to(item_position(probe, item, center, false))
+		var pixels_per_progress := sample_distance / maxf(probe - progress, 0.0001)
+		var progress_step := minf(remaining / maxf(pixels_per_progress, 0.001), INPUT_MAX_PROGRESS_STEP)
+		progress_step = minf(progress_step, 1.0 - progress)
+		var next_progress := progress + progress_step
+		var actual_distance := item_position(progress, item, center, false).distance_to(item_position(next_progress, item, center, false))
+		progress = next_progress
+		remaining -= maxf(actual_distance, 0.001)
+	return progress
+
+
+func input_path_length(item: StreamItem, center: Vector2) -> float:
+	var length := 0.0
+	var previous := item_position(0.0, item, center, false)
+	for index in range(1, 41):
+		var point := item_position(float(index) / 40.0, item, center, false)
+		length += previous.distance_to(point)
+		previous = point
+	return length
 
 
 static func cubic_bezier(start: Vector2, control_a: Vector2, control_b: Vector2, end: Vector2, progress: float) -> Vector2:
@@ -652,9 +707,12 @@ func draw_output(center: Vector2) -> void:
 		var particle_fade := smoothstep(0.0, 0.06, progress) * (1.0 - smoothstep(0.72, 1.0, progress))
 		var phase := output_spiral_phase(progress, mote.phase_offset)
 		var depth := cos(phase) * 0.5 + 0.5
+		var output_span := maxf(size.x + 50.0 - (center.x + CONTEXT_RING_RADIUS), 1.0)
+		var trail_progress := mote.trail_length / output_span
 		var tail_points := PackedVector2Array()
 		for sample in range(OUTPUT_TRAIL_SAMPLES, -1, -1):
-			var sample_progress := maxf(progress - float(sample) * OUTPUT_TRAIL_STEP, 0.0)
+			var sample_ratio := float(sample) / float(OUTPUT_TRAIL_SAMPLES)
+			var sample_progress := maxf(progress - sample_ratio * trail_progress, 0.0)
 			tail_points.append(output_spiral_position(sample_progress, mote.phase_offset, center))
 		draw_polyline(tail_points, VisualColor.stroke(answer, alpha * particle_fade * 0.16), lerpf(0.8, 1.5, depth), true)
 		var position := tail_points[tail_points.size() - 1]
@@ -667,7 +725,7 @@ func draw_output(center: Vector2) -> void:
 func output_spiral_position(progress: float, phase_offset: float, center: Vector2) -> Vector2:
 	var envelope := smoothstep(0.0, 0.1, progress)
 	var phase := output_spiral_phase(progress, phase_offset)
-	var x := lerpf(center.x, size.x + 50.0, progress)
+	var x := lerpf(center.x + CONTEXT_RING_RADIUS, size.x + 50.0, progress)
 	return Vector2(x, center.y + sin(phase) * OUTPUT_SPIRAL_RADIUS * envelope)
 
 

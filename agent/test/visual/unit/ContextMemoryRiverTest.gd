@@ -15,6 +15,7 @@ static func context_usage_test() -> void:
 
 static func delivered_item_expires_test() -> void:
 	var effect := ContextMemoryRiver.new()
+	effect.size = Vector2(1000.0, 600.0)
 	effect.add_item(ContextMemoryRiver.StreamType.USER, "USER", 0.5)
 	effect.visible = true
 	effect._process(10.0)
@@ -52,10 +53,69 @@ static func absorption_spawns_one_output_mote_test() -> void:
 	var effect := ContextMemoryRiver.new()
 	effect.add_item(ContextMemoryRiver.StreamType.TOOL, "READ", 0.5)
 	var item: ContextMemoryRiver.StreamItem = effect.items.pop_front()
-	effect.add_absorption_effect(item)
+	effect.add_absorption_effect(item, Vector2.ZERO)
 	effect.visible = true
 	effect._process(ContextMemoryRiver.ABSORPTION_DURATION * 0.51)
 	assert(effect.output_motes.size() == 1)
 	assert(effect.absorption_effects[0].output_spawned)
 	effect.free()
 	pass
+
+
+static func text_fades_only_after_lens_center_test() -> void:
+	assert(is_equal_approx(ContextMemoryRiver.center_fade_alpha(499.0, 500.0), 1.0))
+	assert(is_equal_approx(ContextMemoryRiver.center_fade_alpha(500.0, 500.0), 1.0))
+	assert(ContextMemoryRiver.center_fade_alpha(527.0, 500.0) < 1.0)
+	assert(is_zero_approx(ContextMemoryRiver.center_fade_alpha(554.0, 500.0)))
+	pass
+
+
+static func output_starts_at_ring_right_edge_test() -> void:
+	var effect := ContextMemoryRiver.new()
+	effect.size = Vector2(1000.0, 600.0)
+	var center := effect.size * 0.5
+	var start := effect.output_spiral_position(0.0, 0.0, center)
+	assert(is_equal_approx(start.x, center.x + ContextMemoryRiver.CONTEXT_RING_RADIUS))
+	assert(is_equal_approx(start.y, center.y))
+	effect.free()
+	pass
+
+
+static func output_trail_length_follows_input_width_test() -> void:
+	var effect := ContextMemoryRiver.new()
+	effect.spawn_output_mote(40.0)
+	effect.spawn_output_mote(180.0)
+	assert(is_equal_approx(effect.output_motes[0].trail_length, 40.0))
+	assert(is_equal_approx(effect.output_motes[1].trail_length, 180.0))
+	effect.spawn_output_mote(1000.0)
+	assert(is_equal_approx(effect.output_motes[2].trail_length, ContextMemoryRiver.OUTPUT_TRAIL_MAX_LENGTH))
+	effect.free()
+	pass
+
+
+static func long_text_crosses_center_before_expiring_test() -> void:
+	var effect := ContextMemoryRiver.new()
+	effect.size = Vector2(1000.0, 600.0)
+	effect.visible = true
+	effect.add_item(ContextMemoryRiver.StreamType.USER, "This deliberately long sentence must keep moving until every glyph crosses the center.", 0.5)
+	var item: ContextMemoryRiver.StreamItem = effect.items[0]
+	for _frame in range(400):
+		if item.absorption_triggered:
+			break
+		effect._process(0.05)
+	assert(item.absorption_triggered)
+	assert(effect.items.has(item))
+	assert(item_position_x(item, effect) >= effect.size.x * 0.5)
+	assert(effect.absorption_effects.size() == 1)
+	for _frame in range(400):
+		if not effect.items.has(item):
+			break
+		effect._process(0.05)
+	assert(not effect.items.has(item))
+	assert(item.absorption_triggered)
+	effect.free()
+	pass
+
+
+static func item_position_x(item: ContextMemoryRiver.StreamItem, effect: ContextMemoryRiver) -> float:
+	return effect.item_position(item.progress, item, effect.size * 0.5, false).x
