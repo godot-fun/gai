@@ -272,19 +272,30 @@ func field_center() -> Vector2:
 	return size * 0.5 + Vector2(-size.x * 0.03, size.y * 0.015)
 
 
+## Dark themes keep a neon accent; light themes convert it to readable ink.
+func visual_accent() -> Color:
+	return VisualColor.appearance_color(ThemeColor.accent_theme_color())
+
+
+func visual_fill(accent: Color) -> Color:
+	if ThemeColor.is_dark_theme():
+		return Colors.deep_surface
+	return Colors.surface.lerp(accent, 0.08)
+
+
 func draw_deep_space(center: Vector2) -> void:
-	var accent := ThemeColor.accent_theme_color()
+	var accent := visual_accent()
 	for layer in range(RING_LAYER_COUNT, 0, -1):
 		var spread := layer_spread(layer, RING_LAYER_COUNT)
 		if spread <= 0.001:
 			continue
 		var radius := minf(size.x, size.y) * (0.09 + float(layer) * 0.075) * spread
-		draw_circle(center, radius, Color(accent, (0.006 + float(RING_LAYER_COUNT - layer) * 0.003) * spread))
+		draw_circle(center, radius, VisualColor.stroke(accent, (0.006 + float(RING_LAYER_COUNT - layer) * 0.003) * spread))
 	pass
 
 
 func draw_orbits(center: Vector2) -> void:
-	var accent := ThemeColor.accent_theme_color()
+	var accent := visual_accent()
 	var base_spread := layer_spread(2, RING_LAYER_COUNT)
 	if base_spread <= 0.001:
 		return
@@ -297,14 +308,14 @@ func draw_orbits(center: Vector2) -> void:
 		var rotation := elapsed * (0.04 + orbit_index * 0.016) * (-1.0 if orbit_index % 2 else 1.0)
 		for arc_index in range(3):
 			var start := rotation + float(arc_index) * TAU / 3.0 + orbit_index * 0.28
-			draw_arc(center, radius, start, start + 0.78, 30, Color(accent, (0.16 - orbit_index * 0.03) * spread), 1.6, true)
-			draw_circle(center + Vector2.from_angle(start + 0.78) * radius, 2.4, Color(accent, 0.42 * spread))
+			draw_arc(center, radius, start, start + 0.78, 30, VisualColor.stroke(accent, (0.16 - orbit_index * 0.03) * spread), 1.6, true)
+			draw_circle(center + Vector2.from_angle(start + 0.78) * radius, 2.4, VisualColor.stroke(accent, 0.42 * spread))
 	var tick_radius := base_radius + 28.0 * base_spread
 	for tick in range(36):
 		var angle := float(tick) * TAU / 36.0 + elapsed * 0.02
 		var length := (7.0 if tick % 6 == 0 else 2.5) * base_spread
 		var direction := Vector2.from_angle(angle)
-		draw_line(center + direction * tick_radius, center + direction * (tick_radius + length), Color(accent, (0.2 if tick % 6 == 0 else 0.07) * base_spread), 1.2, true)
+		draw_line(center + direction * tick_radius, center + direction * (tick_radius + length), VisualColor.stroke(accent, (0.2 if tick % 6 == 0 else 0.07) * base_spread), 1.2, true)
 	pass
 
 
@@ -312,25 +323,25 @@ func draw_radar_sweep(center: Vector2) -> void:
 	var spread := layer_spread(RING_LAYER_COUNT, RING_LAYER_COUNT)
 	if spread <= 0.001:
 		return
-	var accent := ThemeColor.accent_theme_color()
+	var accent := visual_accent()
 	var radius := (orbit_radius(2.0) + 36.0) * spread
 	var head := radar_head()
 	for trail in range(10, 0, -1):
 		var angle := head - float(trail) * 0.03
-		draw_line(center, center + Vector2.from_angle(angle) * radius, Color(accent, (0.006 + float(10 - trail) * 0.005) * spread), 1.0, true)
-	draw_line(center + Vector2.from_angle(head) * (CORE_RADIUS + 16.0), center + Vector2.from_angle(head) * radius, Color(accent, 0.2 * spread), 1.4, true)
+		draw_line(center, center + Vector2.from_angle(angle) * radius, VisualColor.stroke(accent, (0.006 + float(10 - trail) * 0.005) * spread), 1.0, true)
+	draw_line(center + Vector2.from_angle(head) * (CORE_RADIUS + 16.0), center + Vector2.from_angle(head) * radius, VisualColor.stroke(accent, 0.2 * spread), 1.4, true)
 	pass
 
 
 func draw_star_field(center: Vector2) -> void:
-	var accent := ThemeColor.accent_theme_color()
+	var accent := visual_accent()
 	for index in range(STAR_COUNT):
 		var position := Vector2(fmod(float(index * 197 + 83), maxf(size.x, 1.0)), fmod(float(index * 113 + 47), maxf(size.y, 1.0)))
 		if position.distance_to(center) < CORE_RADIUS * 1.8:
 			continue
 		var twinkle := 0.5 + 0.5 * sin(elapsed * (0.7 + float(index % 5) * 0.13) + index)
 		var alpha := (0.05 + twinkle * 0.18) * (1.0 - completion * 0.7)
-		draw_circle(position, 0.6 + float(index % 4) * 0.35, Color(accent, alpha))
+		draw_circle(position, 0.6 + float(index % 4) * 0.35, VisualColor.stroke(accent, alpha))
 	pass
 
 
@@ -345,7 +356,7 @@ func draw_constellation_links(center: Vector2, fade: float) -> void:
 		var group: PackedInt32Array = turn_groups[turn]
 		group.append(index)
 		turn_groups[turn] = group
-	var accent := ThemeColor.accent_theme_color()
+	var accent := visual_accent()
 	for turn: int in turn_groups.keys():
 		var group: PackedInt32Array = turn_groups[turn]
 		if group.size() < 2:
@@ -358,10 +369,10 @@ func draw_constellation_links(center: Vector2, fade: float) -> void:
 			var next := (edge + 1) % points.size()
 			if points.size() == 2 and edge > 0:
 				break
-			draw_line(points[edge], points[next], Color(link_color, alpha), 1.8 if current_turn else 1.2, true)
-			draw_circle(points[edge], 2.2, Color(link_color, alpha + 0.08))
+			draw_line(points[edge], points[next], VisualColor.stroke(link_color, alpha), 1.8 if current_turn else 1.2, true)
+			draw_circle(points[edge], 2.2, VisualColor.stroke(link_color, alpha + 0.08))
 		if current_turn and points.size() >= 3:
-			draw_colored_polygon(points, Color(link_color, 0.035 * fade))
+			draw_colored_polygon(points, VisualColor.stroke(link_color, 0.035 * fade))
 	pass
 
 
@@ -380,7 +391,7 @@ func angled_constellation_points(group: PackedInt32Array, center: Vector2) -> Pa
 func draw_core(center: Vector2, fade: float) -> void:
 	# Render order is intentional: ambient glow and halo sit behind the opaque chassis;
 	# terminal content sits below scanlines and the edge vignette to read as CRT glass.
-	var accent := ThemeColor.accent_theme_color()
+	var accent := visual_accent()
 	var breath := (sin(elapsed * 2.4) + 1.0) * 0.5
 	var terminal_rect := Rect2(center - TERMINAL_SIZE * 0.5, TERMINAL_SIZE)
 	var glitch_strength := clampf(crt_glitch / CRT_GLITCH_SECONDS, 0.0, 1.0)
@@ -388,21 +399,21 @@ func draw_core(center: Vector2, fade: float) -> void:
 	terminal_rect.position += jitter
 	for glow_index in range(4, 0, -1):
 		var glow_rect := terminal_rect.grow(float(glow_index) * (4.0 + core_pulse * 2.0))
-		draw_rect(glow_rect, Color(accent, (0.007 + breath * 0.003) * fade))
+		draw_rect(glow_rect, VisualColor.stroke(accent, (0.007 + breath * 0.003) * fade))
 	# A restrained circular halo visually seats the rectangular CRT in the radial map.
 	for halo_index in range(2):
 		var halo_radius := TERMINAL_SIZE.x * (0.54 + float(halo_index) * 0.07)
-		draw_arc(center, halo_radius, -PI * 0.86, PI * 0.16, 72, Color(accent, (0.13 - halo_index * 0.045) * fade), 1.2, true)
+		draw_arc(center, halo_radius, -PI * 0.86, PI * 0.16, 72, VisualColor.stroke(accent, (0.13 - halo_index * 0.045) * fade), 1.2, true)
 	if absorb_flash > 0.02:
 		draw_rect(terminal_rect.grow(8.0 + (1.0 - absorb_flash) * 12.0), Color(Colors.success, 0.26 * absorb_flash * fade), false, 2.0)
-	draw_rect(terminal_rect, Color(Colors.deep_surface, 0.98 * fade))
-	draw_rect(terminal_rect, Color(accent, (0.72 + breath * 0.18) * fade), false, 2.0)
+	draw_rect(terminal_rect, Color(visual_fill(accent), 0.98 * fade))
+	draw_rect(terminal_rect, VisualColor.stroke(accent, (0.72 + breath * 0.18) * fade), false, 2.0)
 	var title_rect := Rect2(terminal_rect.position, Vector2(terminal_rect.size.x, 25.0))
-	draw_rect(title_rect, Color(accent, 0.1 * fade))
-	draw_line(title_rect.position + Vector2(0.0, title_rect.size.y), title_rect.end, Color(accent, 0.38 * fade), 1.0)
-	draw_string(Fonts.semibold(), title_rect.position + Vector2(10.0, 17.0), "AGENT://CORE  T%02d" % maxi(turn_index, 1), HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.label_small_size, Color(accent, 0.9 * fade))
+	draw_rect(title_rect, VisualColor.stroke(accent, 0.1 * fade))
+	draw_line(title_rect.position + Vector2(0.0, title_rect.size.y), title_rect.end, VisualColor.stroke(accent, 0.38 * fade), 1.0)
+	draw_string(Fonts.semibold(), title_rect.position + Vector2(10.0, 17.0), "AGENT://CORE  T%02d" % maxi(turn_index, 1), HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.label_small_size, VisualColor.stroke(accent, 0.9 * fade))
 	for light_index in range(3):
-		draw_circle(title_rect.position + Vector2(title_rect.size.x - 13.0 - light_index * 10.0, 12.0), 2.2, Color(accent, (0.28 + light_index * 0.16) * fade))
+		draw_circle(title_rect.position + Vector2(title_rect.size.x - 13.0 - light_index * 10.0, 12.0), 2.2, VisualColor.stroke(accent, (0.28 + light_index * 0.16) * fade))
 	draw_terminal_content(terminal_rect, accent, fade, glitch_strength)
 	draw_crt_scanlines(terminal_rect, accent, fade)
 	draw_crt_vignette(terminal_rect, fade)
@@ -419,16 +430,16 @@ func draw_terminal_content(rect: Rect2, accent: Color, fade: float, glitch_stren
 	# Twenty-four glyphs keeps CJK streams readable instead of relying on Latin-width clipping.
 	var lines := terminal_display_lines(stream_buffer, 24, 2)
 	var cursor_on := fmod(elapsed, 0.8) < 0.52
-	draw_string(Fonts.semibold(), text_origin, "[%s]" % status, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(accent, 0.92 * fade))
-	draw_string(font, text_origin + Vector2(0.0, 18.0), lines[0], HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 24.0, font_size, Color(accent, 0.76 * fade))
-	draw_string(font, text_origin + Vector2(0.0, 35.0), "%s%s" % [lines[1], "▋" if cursor_on else " "], HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 24.0, font_size, Color(accent, 0.86 * fade))
+	draw_string(Fonts.semibold(), text_origin, "[%s]" % status, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, VisualColor.stroke(accent, 0.92 * fade))
+	draw_string(font, text_origin + Vector2(0.0, 18.0), lines[0], HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 24.0, font_size, VisualColor.stroke(accent, 0.76 * fade))
+	draw_string(font, text_origin + Vector2(0.0, 35.0), "%s%s" % [lines[1], "▋" if cursor_on else " "], HORIZONTAL_ALIGNMENT_LEFT, rect.size.x - 24.0, font_size, VisualColor.stroke(accent, 0.86 * fade))
 	var card_rect := Rect2(rect.position + Vector2(10.0, 92.0), Vector2(rect.size.x - 20.0, 66.0))
 	var card_color := Colors.error if glitch_strength > 0.0 else accent
-	draw_rect(card_rect, Color(card_color, (0.08 + glitch_strength * 0.12) * fade))
-	draw_rect(card_rect, Color(card_color, 0.48 * fade), false, 1.0)
-	draw_string(Fonts.semibold(), card_rect.position + Vector2(9.0, 18.0), "$ %s" % current_tool_name(), HORIZONTAL_ALIGNMENT_LEFT, card_rect.size.x - 76.0, font_size, Color(card_color, 0.92 * fade))
-	draw_string(Fonts.semibold(), card_rect.position + Vector2(-9.0, 18.0), current_tool_status(), HORIZONTAL_ALIGNMENT_RIGHT, card_rect.size.x, font_size, Color(card_color, 0.86 * fade))
-	draw_line(card_rect.position + Vector2(9.0, 27.0), card_rect.position + Vector2(card_rect.size.x - 9.0, 27.0), Color(card_color, 0.24 * fade), 1.0)
+	draw_rect(card_rect, VisualColor.stroke(card_color, (0.08 + glitch_strength * 0.12) * fade))
+	draw_rect(card_rect, VisualColor.stroke(card_color, 0.48 * fade), false, 1.0)
+	draw_string(Fonts.semibold(), card_rect.position + Vector2(9.0, 18.0), "$ %s" % current_tool_name(), HORIZONTAL_ALIGNMENT_LEFT, card_rect.size.x - 76.0, font_size, VisualColor.stroke(card_color, 0.92 * fade))
+	draw_string(Fonts.semibold(), card_rect.position + Vector2(-9.0, 18.0), current_tool_status(), HORIZONTAL_ALIGNMENT_RIGHT, card_rect.size.x, font_size, VisualColor.stroke(card_color, 0.86 * fade))
+	draw_line(card_rect.position + Vector2(9.0, 27.0), card_rect.position + Vector2(card_rect.size.x - 9.0, 27.0), VisualColor.stroke(card_color, 0.24 * fade), 1.0)
 	draw_string(font, card_rect.position + Vector2(9.0, 47.0), current_command_arguments(), HORIZONTAL_ALIGNMENT_LEFT, card_rect.size.x - 18.0, font_size, Color(Colors.primary_text, 0.82 * fade))
 	if glitch_strength > 0.0:
 		# These deterministic moving slices mimic horizontal sync loss without introducing
@@ -445,9 +456,9 @@ func draw_crt_scanlines(rect: Rect2, accent: Color, fade: float) -> void:
 	# Keep both subtle because they are drawn over text rather than clipped behind it.
 	for line_index in range(9):
 		var y := rect.position.y + 29.0 + float(line_index) * 16.0
-		draw_line(Vector2(rect.position.x + 2.0, y), Vector2(rect.end.x - 2.0, y), Color(accent, 0.026 * fade), 1.0)
+		draw_line(Vector2(rect.position.x + 2.0, y), Vector2(rect.end.x - 2.0, y), VisualColor.stroke(accent, 0.026 * fade), 1.0)
 	var sweep_y := rect.position.y + 27.0 + fmod(elapsed * 38.0, rect.size.y - 30.0)
-	draw_line(Vector2(rect.position.x + 2.0, sweep_y), Vector2(rect.end.x - 2.0, sweep_y), Color(accent, 0.13 * fade), 2.0)
+	draw_line(Vector2(rect.position.x + 2.0, sweep_y), Vector2(rect.end.x - 2.0, sweep_y), VisualColor.stroke(accent, 0.13 * fade), 2.0)
 	pass
 
 
@@ -532,25 +543,25 @@ static func terminal_display_lines(text: String, line_length: int, line_count: i
 func draw_connection(node: ConstellationNode, center: Vector2, position: Vector2, fade: float) -> void:
 	var growth := node.growth
 	var state := node.state
-	var accent := ThemeColor.accent_theme_color()
+	var accent := visual_accent()
 	var color := accent if state == ExecutionState.RUNNING else (Colors.success if state == ExecutionState.SUCCESS else Colors.error)
 	var points := curved_path(center, position, node.sequence)
 	var visible_points := partial_path(points, growth)
 	if state == ExecutionState.FAILED:
-		draw_broken_curve(visible_points, Color(color, 0.78 * fade))
+		draw_broken_curve(visible_points, VisualColor.stroke(color, 0.78 * fade))
 		draw_failure_sparks(visible_points, color, fade)
 	elif state == ExecutionState.RUNNING:
-		draw_polyline(visible_points, Color(color, 0.04 * fade), 18.0, true)
-		draw_polyline(visible_points, Color(color, 0.13 * fade), 8.0, true)
-		draw_polyline(visible_points, Color(color, 0.68 * fade), 3.0, true)
+		draw_polyline(visible_points, VisualColor.stroke(color, 0.04 * fade), 18.0, true)
+		draw_polyline(visible_points, VisualColor.stroke(color, 0.13 * fade), 8.0, true)
+		draw_polyline(visible_points, VisualColor.stroke(color, 0.68 * fade), 3.0, true)
 	else:
 		# Settled success stays quiet so the live call owns attention.
-		draw_polyline(visible_points, Color(color, 0.02 * fade), 12.0, true)
-		draw_polyline(visible_points, Color(color, 0.08 * fade), 2.0, true)
+		draw_polyline(visible_points, VisualColor.stroke(color, 0.02 * fade), 12.0, true)
+		draw_polyline(visible_points, VisualColor.stroke(color, 0.08 * fade), 2.0, true)
 	if state == ExecutionState.RUNNING and growth > 0.1:
 		for packet_index in range(PACKET_COUNT):
 			var progress := fmod(elapsed * 0.55 + float(packet_index) / float(PACKET_COUNT), 1.0)
-			draw_packet_streak(points, progress * growth, Color(accent, fade), true)
+			draw_packet_streak(points, progress * growth, VisualColor.stroke(accent, fade), true)
 	elif state == ExecutionState.SUCCESS and node.settle < 0.98:
 		draw_packet_streak(points, 1.0 - clampf(node.settle, 0.0, 1.0), Color(Colors.success, fade), false)
 	pass
@@ -560,9 +571,9 @@ func draw_packet_streak(points: PackedVector2Array, amount: float, color: Color,
 	var head := path_point(points, amount)
 	var tail_amount := clampf(amount - (0.045 if outbound else -0.045), 0.0, 1.0)
 	var tail := path_point(points, tail_amount)
-	draw_line(tail, head, Color(color, 0.55), 3.4, true)
-	draw_circle(head, 7.5, Color(color, 0.1))
-	draw_circle(head, 3.4, Color(color, 0.95))
+	draw_line(tail, head, VisualColor.stroke(color, 0.55), 3.4, true)
+	draw_circle(head, 7.5, VisualColor.stroke(color, 0.1))
+	draw_circle(head, 3.4, VisualColor.stroke(color, 0.95))
 	pass
 
 
@@ -573,13 +584,13 @@ func draw_failure_sparks(points: PackedVector2Array, color: Color, fade: float) 
 	for spark in range(4):
 		var angle := float(spark) * TAU / 4.0 + elapsed * 3.2
 		var reach := 6.0 + fmod(elapsed * 22.0 + spark * 9.0, 10.0)
-		draw_line(mid, mid + Vector2.from_angle(angle) * reach, Color(color, 0.55 * fade), 1.4, true)
+		draw_line(mid, mid + Vector2.from_angle(angle) * reach, VisualColor.stroke(color, 0.55 * fade), 1.4, true)
 	pass
 
 
 func draw_tool_node(node: ConstellationNode, position: Vector2, center: Vector2, fade: float) -> void:
 	var state := node.state
-	var accent := ThemeColor.accent_theme_color()
+	var accent := visual_accent()
 	var state_color := accent if state == ExecutionState.RUNNING else (Colors.success if state == ExecutionState.SUCCESS else Colors.error)
 	var growth := node.growth
 	var node_radius := NODE_RADIUS * growth
@@ -592,37 +603,37 @@ func draw_tool_node(node: ConstellationNode, position: Vector2, center: Vector2,
 	position += shake
 	var alpha := fade * lerpf(1.0, 0.55, clampf(node.orbit * 0.35, 0.0, 1.0))
 	if state == ExecutionState.RUNNING:
-		draw_circle(position, node_radius + 11.0, Color(state_color, 0.14 * alpha))
-		draw_circle(position, node_radius + 4.0, Color(state_color, 0.08 * alpha))
+		draw_circle(position, node_radius + 11.0, VisualColor.stroke(state_color, 0.14 * alpha))
+		draw_circle(position, node_radius + 4.0, VisualColor.stroke(state_color, 0.08 * alpha))
 	elif highlight > 0.05:
-		draw_circle(position, node_radius + 10.0, Color(accent, 0.06 * highlight * alpha))
+		draw_circle(position, node_radius + 10.0, VisualColor.stroke(accent, 0.06 * highlight * alpha))
 	var hex := hexagon_points(position, node_radius)
-	draw_colored_polygon(hex, Color(Colors.deep_surface, 0.97 * alpha))
+	draw_colored_polygon(hex, Color(visual_fill(accent), 0.97 * alpha))
 	# Motif owns the hex interior; glyph sits above so letters and icons no longer fight.
 	draw_family_motif(position, node_radius * 0.78, node.family, state_color, alpha * 0.88)
 	var outline := PackedVector2Array(hex)
 	outline.append(hex[0])
 	if state == ExecutionState.FAILED:
-		draw_broken_hex_outline(hex, Color(state_color, 0.9 * alpha), 2.6)
-		draw_failure_mark(position, node_radius * 0.42, Color(state_color, 0.75 * alpha))
+		draw_broken_hex_outline(hex, VisualColor.stroke(state_color, 0.9 * alpha), 2.6)
+		draw_failure_mark(position, node_radius * 0.42, VisualColor.stroke(state_color, 0.75 * alpha))
 	elif state == ExecutionState.RUNNING:
 		var pulse := 0.5 + 0.5 * sin(elapsed * 4.2)
-		draw_polyline(outline, Color(state_color, (0.75 + pulse * 0.25) * alpha), 2.4 + pulse * 1.4, true)
+		draw_polyline(outline, VisualColor.stroke(state_color, (0.75 + pulse * 0.25) * alpha), 2.4 + pulse * 1.4, true)
 	else:
-		draw_polyline(outline, Color(state_color, 0.62 * alpha), 2.0, true)
+		draw_polyline(outline, VisualColor.stroke(state_color, 0.62 * alpha), 2.0, true)
 	if state == ExecutionState.RUNNING:
 		for satellite in range(3):
 			var satellite_angle := elapsed * 1.35 + float(satellite) * TAU / 3.0 + node.sequence
-			draw_circle(position + Vector2.from_angle(satellite_angle) * (node_radius + 15.0), 2.6, Color(state_color, 0.85 * alpha))
-	draw_centered_text(position + Vector2(0.0, -node_radius - Margin.ma_2), ToolVisualDisplay.glyph(node.name), Fonts.semibold(), Typography.label_small_size, Color(state_color, 0.85 * alpha))
+			draw_circle(position + Vector2.from_angle(satellite_angle) * (node_radius + 15.0), 2.6, VisualColor.stroke(state_color, 0.85 * alpha))
+	draw_centered_text(position + Vector2(0.0, -node_radius - Margin.ma_2), ToolVisualDisplay.glyph(node.name), Fonts.semibold(), Typography.label_small_size, VisualColor.stroke(state_color, 0.85 * alpha))
 	var label_position := position + Vector2(0.0, node_radius + Margin.ma_5)
 	draw_centered_text(label_position, ToolVisualDisplay.title_name(node.name), Fonts.semibold(), Typography.label_medium_size, Color(Colors.primary_text, alpha))
 	if state == ExecutionState.RUNNING:
-		draw_centered_text(label_position + Vector2(0.0, Margin.ma_4), I18n.t("agent.visuals.running"), Fonts.medium(), Typography.label_small_size, Color(state_color, 0.9 * alpha))
+		draw_centered_text(label_position + Vector2(0.0, Margin.ma_4), I18n.t("agent.visuals.running"), Fonts.medium(), Typography.label_small_size, VisualColor.stroke(state_color, 0.9 * alpha))
 		if node.arg_count > 0:
 			draw_centered_text(label_position + Vector2(0.0, Margin.ma_8), StringUtils.format(I18n.t("agent.visuals.args"), node.arg_count), Fonts.regular(), Typography.label_small_size, Color(Colors.secondary_text, alpha))
 	elif state == ExecutionState.FAILED:
-		draw_centered_text(label_position + Vector2(0.0, Margin.ma_4), I18n.t("agent.visuals.failed"), Fonts.medium(), Typography.label_small_size, Color(state_color, 0.9 * alpha))
+		draw_centered_text(label_position + Vector2(0.0, Margin.ma_4), I18n.t("agent.visuals.failed"), Fonts.medium(), Typography.label_small_size, VisualColor.stroke(state_color, 0.9 * alpha))
 	pass
 
 
@@ -637,8 +648,8 @@ func draw_broken_hex_outline(hex: PackedVector2Array, color: Color, width: float
 
 func draw_failure_mark(center: Vector2, reach: float, color: Color) -> void:
 	var flash := 0.65 + 0.35 * sin(elapsed * 7.0)
-	draw_line(center + Vector2(-reach, -reach), center + Vector2(reach, reach), Color(color, flash), 2.0, true)
-	draw_line(center + Vector2(reach, -reach), center + Vector2(-reach, reach), Color(color, flash), 2.0, true)
+	draw_line(center + Vector2(-reach, -reach), center + Vector2(reach, reach), VisualColor.stroke(color, flash), 2.0, true)
+	draw_line(center + Vector2(reach, -reach), center + Vector2(-reach, reach), VisualColor.stroke(color, flash), 2.0, true)
 	pass
 
 
@@ -647,50 +658,50 @@ func draw_family_motif(center: Vector2, radius: float, family: int, color: Color
 		ToolFamily.READ:
 			for line in range(3):
 				var y := center.y - radius * 0.45 + float(line) * radius * 0.45
-				draw_line(Vector2(center.x - radius * 0.55, y), Vector2(center.x + radius * 0.55, y), Color(color, alpha), 1.2, true)
+				draw_line(Vector2(center.x - radius * 0.55, y), Vector2(center.x + radius * 0.55, y), VisualColor.stroke(color, alpha), 1.2, true)
 		ToolFamily.WRITE:
-			draw_line(center + Vector2(-radius * 0.45, radius * 0.35), center + Vector2(radius * 0.2, -radius * 0.45), Color(color, alpha), 1.6, true)
-			draw_line(center + Vector2(radius * 0.05, -radius * 0.35), center + Vector2(radius * 0.45, -radius * 0.15), Color(color, alpha), 1.4, true)
+			draw_line(center + Vector2(-radius * 0.45, radius * 0.35), center + Vector2(radius * 0.2, -radius * 0.45), VisualColor.stroke(color, alpha), 1.6, true)
+			draw_line(center + Vector2(radius * 0.05, -radius * 0.35), center + Vector2(radius * 0.45, -radius * 0.15), VisualColor.stroke(color, alpha), 1.4, true)
 		ToolFamily.SEARCH:
-			draw_arc(center + Vector2(-radius * 0.1, -radius * 0.05), radius * 0.42, 0.0, TAU, 28, Color(color, alpha), 1.5, true)
-			draw_line(center + Vector2(radius * 0.18, radius * 0.18), center + Vector2(radius * 0.55, radius * 0.55), Color(color, alpha), 1.8, true)
+			draw_arc(center + Vector2(-radius * 0.1, -radius * 0.05), radius * 0.42, 0.0, TAU, 28, VisualColor.stroke(color, alpha), 1.5, true)
+			draw_line(center + Vector2(radius * 0.18, radius * 0.18), center + Vector2(radius * 0.55, radius * 0.55), VisualColor.stroke(color, alpha), 1.8, true)
 		ToolFamily.SHELL:
-			draw_line(center + Vector2(-radius * 0.4, -radius * 0.15), center + Vector2(-radius * 0.05, 0.0), Color(color, alpha), 1.6, true)
-			draw_line(center + Vector2(-radius * 0.05, 0.0), center + Vector2(-radius * 0.4, radius * 0.15), Color(color, alpha), 1.6, true)
-			draw_line(center + Vector2(0.0, radius * 0.28), center + Vector2(radius * 0.45, radius * 0.28), Color(color, alpha), 1.5, true)
+			draw_line(center + Vector2(-radius * 0.4, -radius * 0.15), center + Vector2(-radius * 0.05, 0.0), VisualColor.stroke(color, alpha), 1.6, true)
+			draw_line(center + Vector2(-radius * 0.05, 0.0), center + Vector2(-radius * 0.4, radius * 0.15), VisualColor.stroke(color, alpha), 1.6, true)
+			draw_line(center + Vector2(0.0, radius * 0.28), center + Vector2(radius * 0.45, radius * 0.28), VisualColor.stroke(color, alpha), 1.5, true)
 		ToolFamily.WEB:
-			draw_arc(center, radius * 0.55, 0.0, TAU, 32, Color(color, alpha), 1.3, true)
-			draw_line(center + Vector2(0.0, -radius * 0.55), center + Vector2(0.0, radius * 0.55), Color(color, alpha * 0.85), 1.1, true)
-			draw_line(center + Vector2(-radius * 0.55, 0.0), center + Vector2(radius * 0.55, 0.0), Color(color, alpha * 0.85), 1.1, true)
+			draw_arc(center, radius * 0.55, 0.0, TAU, 32, VisualColor.stroke(color, alpha), 1.3, true)
+			draw_line(center + Vector2(0.0, -radius * 0.55), center + Vector2(0.0, radius * 0.55), VisualColor.stroke(color, alpha * 0.85), 1.1, true)
+			draw_line(center + Vector2(-radius * 0.55, 0.0), center + Vector2(radius * 0.55, 0.0), VisualColor.stroke(color, alpha * 0.85), 1.1, true)
 		ToolFamily.IMAGE:
-			draw_rect(Rect2(center - Vector2(radius * 0.5, radius * 0.35), Vector2(radius, radius * 0.7)), Color(color, alpha * 0.35), false, 1.3)
-			draw_circle(center + Vector2(-radius * 0.18, -radius * 0.08), radius * 0.12, Color(color, alpha))
-			draw_line(center + Vector2(-radius * 0.35, radius * 0.22), center + Vector2(0.0, -radius * 0.05), Color(color, alpha), 1.3, true)
-			draw_line(center + Vector2(0.0, -radius * 0.05), center + Vector2(radius * 0.4, radius * 0.25), Color(color, alpha), 1.3, true)
+			draw_rect(Rect2(center - Vector2(radius * 0.5, radius * 0.35), Vector2(radius, radius * 0.7)), VisualColor.stroke(color, alpha * 0.35), false, 1.3)
+			draw_circle(center + Vector2(-radius * 0.18, -radius * 0.08), radius * 0.12, VisualColor.stroke(color, alpha))
+			draw_line(center + Vector2(-radius * 0.35, radius * 0.22), center + Vector2(0.0, -radius * 0.05), VisualColor.stroke(color, alpha), 1.3, true)
+			draw_line(center + Vector2(0.0, -radius * 0.05), center + Vector2(radius * 0.4, radius * 0.25), VisualColor.stroke(color, alpha), 1.3, true)
 		ToolFamily.AUDIO:
 			for bar in range(4):
 				var x := center.x - radius * 0.45 + float(bar) * radius * 0.3
 				var height := radius * (0.25 + 0.35 * absf(sin(elapsed * 4.0 + bar)))
-				draw_line(Vector2(x, center.y + height * 0.5), Vector2(x, center.y - height * 0.5), Color(color, alpha), 2.0, true)
+				draw_line(Vector2(x, center.y + height * 0.5), Vector2(x, center.y - height * 0.5), VisualColor.stroke(color, alpha), 2.0, true)
 		_:
-			draw_circle(center, radius * 0.18, Color(color, alpha * 0.7))
+			draw_circle(center, radius * 0.18, VisualColor.stroke(color, alpha * 0.7))
 	pass
 
 
 func draw_completion_dust(center: Vector2) -> void:
-	var accent := ThemeColor.accent_theme_color() if not ended_with_error else Colors.error
+	var accent := visual_accent() if not ended_with_error else Colors.error
 	var ease := completion * completion
 	for index in range(DUST_COUNT):
 		var angle := float(index) * GOLDEN_ANGLE + elapsed * 0.2
 		var distance := (40.0 + float(index % 17) * 18.0) * (0.35 + ease * 1.4)
 		var position := center + Vector2.from_angle(angle) * distance
 		var alpha := (1.0 - ease) * (0.15 + float(index % 4) * 0.08)
-		draw_circle(position, 1.2 + float(index % 3) * 0.7, Color(accent, alpha))
+		draw_circle(position, 1.2 + float(index % 3) * 0.7, VisualColor.stroke(accent, alpha))
 	for index in range(nodes.size()):
 		var node_pos := node_position(index, nodes.size(), center)
 		var outward := (node_pos - center).normalized()
 		var dust_pos := node_pos + outward * ease * 48.0
-		draw_circle(dust_pos, 2.4 * (1.0 - ease), Color(accent, (1.0 - ease) * 0.45))
+		draw_circle(dust_pos, 2.4 * (1.0 - ease), VisualColor.stroke(accent, (1.0 - ease) * 0.45))
 	pass
 
 
@@ -701,7 +712,7 @@ func draw_broken_curve(points: PackedVector2Array, color: Color) -> void:
 	var midpoint_index := points.size() / 2
 	for index in range(midpoint_index - 2, midpoint_index + 2):
 		broken[index] += (points[index] - points[index - 1]).normalized().orthogonal() * (8.0 if index % 2 else -8.0)
-	draw_polyline(broken, Color(color, 0.1), 12.0, true)
+	draw_polyline(broken, VisualColor.stroke(color, 0.1), 12.0, true)
 	draw_polyline(broken, color, 3.0, true)
 	pass
 
@@ -729,7 +740,7 @@ func orbit_radius(orbit: float) -> float:
 	return inner + orbit * step
 
 
-## One ring at a time: expand inside→out, collapse outside→in.
+## One ring at a time: expand inside鈫抩ut, collapse outside鈫抜n.
 func layer_spread(layer_from_inside: int, layer_count: int) -> float:
 	var index := clampi(layer_from_inside, 1, layer_count) - 1
 	var count := float(maxi(layer_count, 1))
