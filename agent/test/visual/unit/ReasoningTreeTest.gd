@@ -62,6 +62,19 @@ func branch_elevation_starts_shallow_and_opens_slowly_test() -> void:
 	pass
 
 
+func upper_branches_are_longer_than_lower_branches_test() -> void:
+	var tree := ReasoningTree.new()
+	tree.size = Vector2(1920.0, 1080.0)
+	var segment_height := tree.get_segment_height()
+	var lower_length := tree.get_branch_length(segment_height, ReasoningTree.ANCHOR_MIN)
+	var upper_length := tree.get_branch_length(segment_height, ReasoningTree.ANCHOR_MAX)
+	assert(lower_length < upper_length)
+	assert(is_equal_approx(upper_length, minf(tree.size.x * ReasoningTree.MAX_BRANCH_WIDTH_RATIO,
+		maxf(ReasoningTree.MIN_BRANCH_LENGTH, segment_height * ReasoningTree.BRANCH_LENGTH_PER_SEGMENT))))
+	tree.free()
+	pass
+
+
 func curved_branch_preserves_endpoints_and_bows_upward_test() -> void:
 	var from := Vector2(100.0, 300.0)
 	var to := Vector2(300.0, 180.0)
@@ -104,6 +117,18 @@ func tree_emits_overlapping_pulses_every_two_seconds_test() -> void:
 	tree.update_tree_pulses(ReasoningTree.TREE_PULSE_INTERVAL)
 	assert(tree.pulse_travel_distances.size() == 2)
 	assert(tree.pulse_travel_distances[0] > tree.pulse_travel_distances[1])
+	tree.free()
+	pass
+
+
+func pulse_path_keeps_full_length_budget_when_lower_branches_are_short_test() -> void:
+	var tree := ReasoningTree.new()
+	tree.size = Vector2(1920.0, 1080.0)
+	tree.trunk_growth = 1.0
+	var segment_height := tree.get_segment_height()
+	var longest_branch := tree.get_branch_length(segment_height, ReasoningTree.ANCHOR_MAX)
+	var expected_length := tree.trunk_growth * segment_height + longest_branch + ReasoningTree.get_completion_length(longest_branch)
+	assert(is_equal_approx(tree.get_tree_pulse_path_length(), expected_length))
 	tree.free()
 	pass
 

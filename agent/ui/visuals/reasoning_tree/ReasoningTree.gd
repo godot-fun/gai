@@ -11,7 +11,11 @@ const CROWN_HEIGHT_RATIO := 0.13
 const CROWN_WIDTH_RATIO := 0.12
 const MAX_CROWN_RADIUS := 180.0
 const CROWN_LEAF_COUNT := 7
-const MIN_BRANCH_LENGTH := 180.0
+const MIN_BRANCH_LENGTH := 170.0
+const MAX_BRANCH_WIDTH_RATIO := 0.30
+const BRANCH_LENGTH_PER_SEGMENT := 3.5
+const BOTTOM_BRANCH_LENGTH_RATIO := 0.45
+const BRANCH_LENGTH_EASE_POWER := 1.10
 const MIN_COMPLETION_LENGTH := 64.0
 const COMPLETION_PARTICLE_COUNT := 96
 const TRUNK_ALPHA_MIN := 0.16
@@ -237,7 +241,7 @@ func draw_branch(branch: Dictionary, base: Vector2, segment_height: float) -> vo
 	var anchor := trunk_point(base, segment_height, anchor_segment)
 	var direction: float = branch["direction"]
 	var growth: float = branch["growth"]
-	var branch_length := get_branch_length(segment_height)
+	var branch_length := get_branch_length(segment_height, anchor_segment)
 	var branch_vector := Vector2.from_angle(float(branch["angle"])) * branch_length
 	var parent_control := branch_curve_control(anchor, anchor + branch_vector, branch_length)
 	var parent_curve := quadratic_curve_points(anchor, parent_control, anchor + branch_vector, growth)
@@ -363,16 +367,14 @@ func get_leaf_pulse_intensity(branch: Dictionary, segment_height: float, branch_
 func draw_tree_pulses(base: Vector2, segment_height: float, color: Color) -> void:
 	if trunk_growth <= 0.0:
 		return
-	var branch_length := get_branch_length(segment_height)
-	var completion_length := get_completion_length(branch_length)
 	var trunk_length := trunk_growth * segment_height
 	for pulse_distance in pulse_travel_distances:
-		draw_tree_pulse_at_distance(base, segment_height, color, pulse_distance, trunk_length, branch_length, completion_length)
+		draw_tree_pulse_at_distance(base, segment_height, color, pulse_distance, trunk_length)
 	pass
 
 
 func draw_tree_pulse_at_distance(base: Vector2, segment_height: float, color: Color, pulse_distance: float,
-		trunk_length: float, branch_length: float, completion_length: float) -> void:
+		trunk_length: float) -> void:
 	if pulse_distance <= trunk_length:
 		var trunk_segment := pulse_distance / segment_height
 		draw_pulse_light(trunk_point(base, segment_height, trunk_segment), color)
@@ -381,6 +383,8 @@ func draw_tree_pulse_at_distance(base: Vector2, segment_height: float, color: Co
 		var distance_after_anchor := pulse_distance - anchor_segment * segment_height
 		if distance_after_anchor < 0.0:
 			continue
+		var branch_length := get_branch_length(segment_height, anchor_segment)
+		var completion_length := get_completion_length(branch_length)
 		var anchor := trunk_point(base, segment_height, anchor_segment)
 		var growth: float = branch["growth"]
 		var branch_vector := Vector2.from_angle(float(branch["angle"])) * branch_length
@@ -407,9 +411,8 @@ func draw_tree_pulse_at_distance(base: Vector2, segment_height: float, color: Co
 
 func get_tree_pulse_path_length() -> float:
 	var segment_height := get_segment_height()
-	var branch_length := get_branch_length(segment_height)
-	var completion_length := get_completion_length(branch_length)
-	return trunk_growth * segment_height + branch_length + completion_length
+	var longest_branch := get_branch_length(segment_height, ANCHOR_MAX)
+	return trunk_growth * segment_height + longest_branch + get_completion_length(longest_branch)
 
 
 func update_tree_pulses(delta: float) -> void:
@@ -526,8 +529,11 @@ func get_segment_height() -> float:
 	return maxf(12.0, (base_y - crown_center_y) / float(MAX_TRUNK_SEGMENTS))
 
 
-func get_branch_length(segment_height: float) -> float:
-	return minf(size.x * 0.20, maxf(MIN_BRANCH_LENGTH, segment_height * 2.5))
+func get_branch_length(segment_height: float, anchor_segment: float) -> float:
+	var longest_length := minf(size.x * MAX_BRANCH_WIDTH_RATIO, maxf(MIN_BRANCH_LENGTH, segment_height * BRANCH_LENGTH_PER_SEGMENT))
+	var height_ratio := clampf(anchor_segment / ANCHOR_MAX, 0.0, 1.0)
+	var length_ratio := lerpf(BOTTOM_BRANCH_LENGTH_RATIO, 1.0, pow(height_ratio, BRANCH_LENGTH_EASE_POWER))
+	return maxf(MIN_BRANCH_LENGTH, longest_length * length_ratio)
 
 
 static func get_completion_length(branch_length: float) -> float:
