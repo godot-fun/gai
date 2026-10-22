@@ -6,7 +6,7 @@ extends Object
 # Color adjustment ratios
 # =============================================================================
 
-## Shared adjustment ratios for [method Color.lightened] and [method Color.darkened].
+## Shared 0.0–1.0 adjustment ratios for [method Color.lightened], [method Color.darkened], and theme/semantic color lerps.
 const am_0: float = 0.00
 const am_1: float = 0.05
 const am_2: float = 0.10

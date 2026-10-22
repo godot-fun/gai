@@ -40,5 +40,5 @@ static func stream_palette_respects_theme_test() -> void:
 	assert(user_dark.v >= VisualColor.NEON_VALUE_FLOOR)
 	assert(user_light.v >= VisualColor.LIGHT_INK_VALUE_MIN)
 	assert(user_light.v <= VisualColor.LIGHT_INK_VALUE_MAX)
-	assert(ThemeColor.mix_with_accent(Colors.success, ThemeColor.ACCENT_MIX_CHROMATIC).is_equal_approx(Colors.success.lerp(original_accent, ThemeColor.ACCENT_MIX_CHROMATIC)))
+	assert(ThemeColor.mix_with_theme_color(Colors.success, Colors.am_8).is_equal_approx(Colors.success.lerp(original_accent, Colors.am_8)))
 	pass

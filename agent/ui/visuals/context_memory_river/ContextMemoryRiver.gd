@@ -829,28 +829,28 @@ static func label_for_type(stream_type: StreamType) -> String:
 	return I18n.t("agent.visuals.history")
 
 
-## Chat-semantic swatches tinted with [ThemeColor.mix_with_accent] so streams follow the active theme.
+## Chat-semantic swatches tinted with [ThemeColor.mix_with_theme_color] so streams follow the active theme.
 static func neon_base_for_type(stream_type: StreamType) -> Color:
 	match stream_type:
 		StreamType.USER:
 			return ThemeColor.accent_theme_color()
 		StreamType.SYSTEM:
-			return ThemeColor.mix_with_accent(Colors.secondary_text, ThemeColor.ACCENT_MIX_NEUTRAL)
+			return ThemeColor.mix_with_theme_color(Colors.secondary_text, Colors.am_6)
 		StreamType.HISTORY:
-			return ThemeColor.mix_with_accent(Colors.secondary_text, ThemeColor.ACCENT_MIX_NEUTRAL)
+			return ThemeColor.mix_with_theme_color(Colors.secondary_text, Colors.am_6)
 		StreamType.FILE:
-			return ThemeColor.mix_with_accent(Colors.warning, ThemeColor.ACCENT_MIX_CHROMATIC)
+			return ThemeColor.mix_with_theme_color(Colors.warning, Colors.am_8)
 		StreamType.TOOL:
-			return ThemeColor.mix_with_accent(Colors.success, ThemeColor.ACCENT_MIX_CHROMATIC)
+			return ThemeColor.mix_with_theme_color(Colors.success, Colors.am_8)
 		StreamType.WEB:
-			return ThemeColor.mix_with_accent(Colors.info, ThemeColor.ACCENT_MIX_CHROMATIC)
+			return ThemeColor.mix_with_theme_color(Colors.info, Colors.am_8)
 		StreamType.THINKING:
-			return ThemeColor.mix_with_accent(Colors.purple, ThemeColor.ACCENT_MIX_CHROMATIC)
+			return ThemeColor.mix_with_theme_color(Colors.purple, Colors.am_8)
 		StreamType.ERROR:
-			return ThemeColor.mix_with_accent(Colors.error, ThemeColor.ACCENT_MIX_ERROR)
+			return ThemeColor.mix_with_theme_color(Colors.error, Colors.am_4)
 		StreamType.ANSWER:
-			return ThemeColor.mix_with_accent(Colors.primary_text, ThemeColor.ACCENT_MIX_NEUTRAL)
-	return ThemeColor.mix_with_accent(Colors.secondary_text, ThemeColor.ACCENT_MIX_NEUTRAL)
+			return ThemeColor.mix_with_theme_color(Colors.primary_text, Colors.am_6)
+	return ThemeColor.mix_with_theme_color(Colors.secondary_text, Colors.am_6)
 
 
 static func color_for_type(stream_type: StreamType) -> Color:
