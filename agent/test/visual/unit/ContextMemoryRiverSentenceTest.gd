@@ -1,25 +1,23 @@
 extends RefCounted
 
 
-static func drain_complete_sentences_test() -> void:
+static func source_entries_use_type_labels_test() -> void:
 	var effect := ContextMemoryRiver.new()
-	assert(effect.drain_complete_sentences(ContextMemoryRiver.StreamType.THINKING, "First. Second.") == "")
-	assert(effect.items.size() == 2)
-	assert(effect.items[0].label == "First.")
-	assert(effect.items[1].label == "Second.")
-	assert(effect.drain_complete_sentences(ContextMemoryRiver.StreamType.TOOL, "res://path.gd") == "res://path.gd")
-	assert(effect.items.size() == 2)
+	var entry := ChatEntry.new(ChatEntry.KIND_USER, ChatEntry.TITLE_USER, "Detailed user prompt that must not become river text.")
+	effect.on_chat_entry_add(1, entry)
+	assert(effect.items.size() == 1)
+	assert(effect.items[0].stream_type == ContextMemoryRiver.StreamType.USER)
+	assert(effect.items[0].label == ContextMemoryRiver.label_for_type(ContextMemoryRiver.StreamType.USER))
 	effect.free()
 	pass
 
 
-static func streaming_fragments_wait_for_sentence_end_test() -> void:
+static func streamed_entries_wait_for_transcript_cursor_test() -> void:
 	var effect := ContextMemoryRiver.new()
-	effect.add_stream_fragment(ContextMemoryRiver.StreamType.THINKING, "follow", "THOUGHT")
+	var thinking := ChatEntry.new(ChatEntry.KIND_THINKING, ChatEntry.TITLE_THINKING, "follow")
+	var agent := ChatEntry.new(ChatEntry.KIND_AGENT, ChatEntry.TITLE_AGENT, "answer")
+	effect.on_chat_entry_add(1, thinking)
+	effect.on_chat_entry_add(1, agent)
 	assert(effect.items.is_empty())
-	effect.add_stream_fragment(ContextMemoryRiver.StreamType.THINKING, " path.", "THOUGHT")
-	assert(effect.items.size() == 1)
-	assert(effect.items[0].label == "follow path.")
-	assert(effect.items[0].glyph_advances.size() == effect.items[0].label.length())
 	effect.free()
 	pass

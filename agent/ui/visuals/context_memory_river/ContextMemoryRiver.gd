@@ -111,7 +111,6 @@ var output_activity: float = 0.0
 var is_ending: bool = false
 var lens_closing: bool = false
 var lens_close_progress: float = 0.0
-var stream_pending: Dictionary[int, String] = {}
 var lens_field: ColorRect
 var lens_material: ShaderMaterial
 
@@ -146,7 +145,6 @@ func on_agent_start(_session_id: int) -> void:
 	is_ending = false
 	lens_closing = false
 	lens_close_progress = 0.0
-	stream_pending.clear()
 	activity = 1.0
 	queue_redraw()
 	pass
@@ -182,7 +180,13 @@ func on_chat_entry_add(_session_id: int, entry: ChatEntry) -> void:
 	var stream_type := stream_type_for_entry(entry)
 	if stream_type < 0:
 		return
-	drain_complete_sentences(stream_type as StreamType, compact_line(entry.body))
+	# Streamed thinking and agent entries grow after this signal. Their complete
+	# sentences are consumed from the transcript by ChatEntryCursor instead.
+	if entry.kind == ChatEntry.KIND_THINKING or entry.kind == ChatEntry.KIND_AGENT:
+		return
+	# Source events need immediate feedback, but their detailed bodies would make
+	# the intake river noisy. The type label keeps the event recognizable.
+	add_item(stream_type as StreamType, label_for_type(stream_type as StreamType), 0.55)
 	pass
 
 
@@ -190,11 +194,9 @@ func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> 
 	if chunk.strip_edges().is_empty():
 		return
 	var stream_type := StreamType.THINKING if stream_kind == OpenAiClient.STREAM_KIND_REASONING else StreamType.ANSWER
-	var fallback := I18n.t("agent.visuals.thought") if stream_type == StreamType.THINKING else I18n.t("agent.visuals.answer")
 	if stream_type == StreamType.ANSWER:
 		output_activity = 1.0
 	else:
-		add_stream_fragment(stream_type, chunk, fallback)
 		activity = 1.0
 	pass
 
@@ -238,6 +240,7 @@ func _process(delta: float) -> void:
 	if lens_closing:
 		lens_close_progress = minf(lens_close_progress + delta / END_LENS_SECONDS, 1.0)
 	var center := size * 0.5
+	consume_transcript_sentences()
 	for index in range(items.size() - 1, -1, -1):
 		var item := items[index]
 		if item.stream_type == StreamType.ANSWER:
@@ -403,26 +406,23 @@ func visual_flow_is_empty() -> bool:
 	return items.is_empty() and decorative_motes.is_empty() and absorption_effects.is_empty() and output_motes.is_empty()
 
 
-## Buffers token chunks until [ChatEntryCursor] sees a complete sentence, matching Matrix/Jarvis.
-func add_stream_fragment(stream_type: StreamType, chunk: String, _fallback: String) -> void:
-	if is_ending:
+## Uses the shared transcript cursor so sentence boundaries match MatrixRain and
+## Jarvis. Incomplete reasoning stays in its ChatEntry until it becomes complete.
+func consume_transcript_sentences() -> void:
+	if is_ending or items.size() >= MAX_ITEMS:
 		return
-	var pending_key := stream_type as int
-	var pending := compact_line(String(stream_pending.get(pending_key, "")) + chunk)
-	stream_pending[pending_key] = drain_complete_sentences(stream_type, pending)
+	var sentence := ChatEntryCursor.take_next_sentence()
+	if sentence.is_empty() or sentence.entry == null:
+		return
+	if sentence.entry.kind == ChatEntry.KIND_THINKING:
+		add_item(StreamType.THINKING, sentence.text, weight_for_text(sentence.text))
+	elif sentence.entry.kind == ChatEntry.KIND_AGENT:
+		spawn_output_mote(output_width_for_text(sentence.text))
 	pass
 
 
-## Emits one [ChatEntryCursor] sentence at a time; returns any unfinished tail.
-func drain_complete_sentences(stream_type: StreamType, text: String) -> String:
-	var rest := text
-	while StringUtils.is_not_blank(rest):
-		var parse := ChatEntryCursor.parse_sentence(rest, 0)
-		if parse.text.is_empty():
-			break
-		add_item(stream_type, parse.text, weight_for_text(parse.text))
-		rest = compact_line(rest.substr(parse.next_index))
-	return rest
+func output_width_for_text(text: String) -> float:
+	return maxf(Fonts.medium().get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.label_small_size).x, OUTPUT_TRAIL_MIN_LENGTH)
 
 
 func _draw() -> void:
@@ -800,13 +800,6 @@ func context_ratio() -> float:
 
 static func weight_for_text(text: String) -> float:
 	return clampf(0.3 + float(text.length()) / 240.0, 0.3, 1.0)
-
-
-static func compact_line(text: String) -> String:
-	var compact := text.replace("\r", " ").replace("\n", " ").replace("\t", " ").strip_edges()
-	while compact.contains("  "):
-		compact = compact.replace("  ", " ")
-	return compact
 
 
 static func stream_type_for_tool_name(tool_name: String) -> StreamType:
