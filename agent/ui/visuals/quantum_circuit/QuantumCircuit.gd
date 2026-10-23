@@ -4,7 +4,7 @@ extends VisualEffect
 ## Each turn becomes a quantum wire. Reasoning creates rotating gates, tools become
 ## controlled operations, and the final answer collapses every wire to one state.
 
-const MAX_WIRES := 12
+const MAX_WIRES := 4
 const GATE_TRAVEL_SECONDS := 0.52
 const MEASURE_SECONDS := 0.9
 const COLLAPSE_SECONDS := 1.45
@@ -138,16 +138,16 @@ func refresh_palette() -> void:
 
 ## Primary circuit tone follows the user's accent color.
 static func circuit_color() -> Color:
-	return ThemeColor.accent_theme_color()
+	return VisualColor.appearance_color(ThemeColor.accent_theme_color())
 
 
 ## Nearby hues preserve depth without drifting away from the active theme.
 static func phase_color() -> Color:
-	return VisualColor.shift_hsv(ThemeColor.accent_theme_color(), ACCENT_COOL_HUE_OFFSET, 0.88, 0.94)
+	return VisualColor.appearance_color(ThemeColor.accent_theme_color(), ACCENT_COOL_HUE_OFFSET, 0.88, 0.96)
 
 
 static func tool_color() -> Color:
-	return VisualColor.shift_hsv(ThemeColor.accent_theme_color(), ACCENT_WARM_HUE_OFFSET, 0.96, 1.0)
+	return VisualColor.appearance_color(ThemeColor.accent_theme_color(), ACCENT_WARM_HUE_OFFSET, 0.96, 1.08)
 
 
 func _process(delta: float) -> void:
@@ -221,13 +221,13 @@ func draw_background() -> void:
 	# Keep the desktop/chat surface optically clear. A full-screen dark wash makes the
 	# content below look blurred even though no blur shader is involved.
 	for x in range(0, int(size.x), 48):
-		draw_line(Vector2(x, 0.0), Vector2(x, size.y), Color(circuit_tint, 0.025), 1.0)
+		draw_line(Vector2(x, 0.0), Vector2(x, size.y), VisualColor.stroke(circuit_tint, 0.025), 1.0)
 	for y in range(0, int(size.y), 48):
-		draw_line(Vector2(0.0, y), Vector2(size.x, y), Color(circuit_tint, 0.025), 1.0)
+		draw_line(Vector2(0.0, y), Vector2(size.x, y), VisualColor.stroke(circuit_tint, 0.025), 1.0)
 	for index in range(24):
 		var x := fmod(float(index * 197) + elapsed * (9.0 + index % 4), maxf(size.x, 1.0))
 		var y := fmod(float(index * 83), maxf(size.y, 1.0))
-		draw_circle(Vector2(x, y), 1.0, Color(phase_tint, 0.12))
+		draw_circle(Vector2(x, y), 1.0, VisualColor.stroke(phase_tint, 0.12))
 	pass
 
 
@@ -240,7 +240,7 @@ func draw_probability_field() -> void:
 		var radius := minf(size.x, size.y) * (0.08 + lobe * 0.038)
 		var offset := Vector2(cos(phase + lobe * 1.7), sin(phase * 1.31 + lobe)) * radius * 0.2
 		var color := phase_tint if lobe % 3 else tool_tint
-		draw_circle(center + offset, radius, Color(color, 0.0045 + pulse * 0.0015))
+		draw_circle(center + offset, radius, VisualColor.stroke(color, 0.0045 + pulse * 0.0015))
 	# Two counter-rotating phase waves cross the full register.
 	for wave in range(2):
 		var points := PackedVector2Array()
@@ -250,7 +250,7 @@ func draw_probability_field() -> void:
 			var envelope := sin(ratio * PI)
 			var y := center.y + sin(ratio * TAU * (2.0 + wave) + elapsed * (1.1 if wave == 0 else -0.8)) * (18.0 + wave * 11.0) * envelope
 			points.append(Vector2(x, y))
-		draw_polyline(points, Color(circuit_tint if wave == 0 else phase_tint, 0.065 + pulse * 0.025), 1.0, true)
+		draw_polyline(points, VisualColor.stroke(circuit_tint if wave == 0 else phase_tint, 0.065 + pulse * 0.025), 1.0, true)
 	pass
 
 
@@ -262,7 +262,7 @@ func draw_qpu_core() -> void:
 	var core_color := Colors.error if ended_with_error else Colors.success if completing else phase_tint
 	for layer in range(12, 0, -1):
 		var radius := base_radius * (0.3 + layer * 0.085)
-		draw_circle(center, radius, Color(core_color, 0.0025 * (13 - layer)))
+		draw_circle(center, radius, VisualColor.stroke(core_color, 0.0025 * (13 - layer)))
 	# Counter-rotating broken rings read as active hardware rather than a flat target.
 	for ring in range(7):
 		var radius := base_radius * (0.44 + ring * 0.13)
@@ -270,7 +270,7 @@ func draw_qpu_core() -> void:
 		for segment in range(4):
 			var start := rotation + segment * TAU / 4.0
 			var span := 0.38 + 0.18 * sin(elapsed + ring * 1.7 + segment)
-			draw_arc(center, radius, start, start + span, 18, Color(circuit_tint if ring % 2 else core_color, 0.11 + ring * 0.026), 0.85 + ring * 0.2, true)
+			draw_arc(center, radius, start, start + span, 18, VisualColor.stroke(circuit_tint if ring % 2 else core_color, 0.11 + ring * 0.026), 0.85 + ring * 0.2, true)
 	# A rotating wireframe polyhedron forms the processor's determinate-state chamber.
 	var vertices := PackedVector2Array()
 	for index in range(8):
@@ -278,19 +278,19 @@ func draw_qpu_core() -> void:
 		var squash := 0.58 + 0.18 * sin(elapsed * 0.7 + index)
 		vertices.append(center + Vector2(cos(angle), sin(angle) * squash) * base_radius * 0.47)
 	vertices.append(vertices[0])
-	draw_polyline(vertices, Color(core_color, 0.68), 1.35, true)
+	draw_polyline(vertices, VisualColor.stroke(core_color, 0.68), 1.35, true)
 	for index in range(4):
-		draw_line(vertices[index], vertices[index + 4], Color(circuit_tint, 0.16), 0.8, true)
+		draw_line(vertices[index], vertices[index + 4], VisualColor.stroke(circuit_tint, 0.16), 0.8, true)
 	var heartbeat := 0.72 + 0.28 * sin(elapsed * 4.0)
-	draw_circle(center, base_radius * 0.19 * heartbeat, Color(core_color, 0.055))
-	draw_arc(center, base_radius * 0.19 * heartbeat, 0.0, TAU, 40, Color(core_color, 0.86), 1.5, true)
-	draw_centered_text(center + Vector2(0.0, 5.0), "QPU", Fonts.semibold(), Typography.label_large_size, Color(core_color, 0.92))
+	draw_circle(center, base_radius * 0.19 * heartbeat, VisualColor.stroke(core_color, 0.055))
+	draw_arc(center, base_radius * 0.19 * heartbeat, 0.0, TAU, 40, VisualColor.stroke(core_color, 0.86), 1.5, true)
+	draw_centered_text(center + Vector2(0.0, 5.0), "QPU", Fonts.semibold(), Typography.label_large_size, VisualColor.stroke(core_color, 0.92))
 	# Radial telemetry makes the core feel connected to the desktop runtime.
 	for ray in range(16):
 		var angle := ray * TAU / 16.0 + elapsed * 0.04
 		var inner := center + Vector2.from_angle(angle) * base_radius * 1.08
 		var outer := center + Vector2.from_angle(angle) * base_radius * (1.13 + (ray % 3) * 0.06)
-		draw_line(inner, outer, Color(circuit_tint if ray % 4 else tool_tint, 0.22), 0.8)
+		draw_line(inner, outer, VisualColor.stroke(circuit_tint if ray % 4 else tool_tint, 0.22), 0.8)
 	pass
 
 
@@ -308,12 +308,12 @@ func draw_entanglements(center_y: float) -> void:
 		var lower_y := lerpf(wire_display_y(wires[lower_index], center_y), size.y * 0.52, settle)
 		var x := lerpf(left, right, 0.19 + fmod(float(index) * 0.217, 0.62))
 		var color := phase_tint if index % 2 else circuit_tint
-		draw_line(Vector2(x, upper_y), Vector2(x, lower_y), Color(color, 0.16), 1.0, true)
-		draw_circle(Vector2(x, upper_y), 3.2, Color(color, 0.78))
-		draw_circle(Vector2(x, lower_y), 6.5, Color(Colors.surface, 0.82))
-		draw_arc(Vector2(x, lower_y), 6.0, 0.0, TAU, 24, Color(color, 0.72), 1.0, true)
+		draw_line(Vector2(x, upper_y), Vector2(x, lower_y), VisualColor.stroke(color, 0.16), 1.0, true)
+		draw_circle(Vector2(x, upper_y), 3.2, VisualColor.stroke(color, 0.78))
+		draw_circle(Vector2(x, lower_y), 6.5, Color(Colors.subtle_border, 0.9))
+		draw_arc(Vector2(x, lower_y), 6.0, 0.0, TAU, 24, VisualColor.stroke(color, 0.72), 1.0, true)
 		var packet_y := lerpf(upper_y, lower_y, 0.5 + 0.5 * sin(elapsed * 2.4 + index))
-		draw_circle(Vector2(x, packet_y), 1.8, Color(color, 0.9))
+		draw_circle(Vector2(x, packet_y), 1.8, VisualColor.stroke(color, 0.9))
 	pass
 
 
@@ -334,7 +334,7 @@ func draw_quantum_readout(center_y: float) -> void:
 		return
 	var top := center_y - height * 0.5
 	var bottom := top + height
-	draw_line(Vector2(x, top), Vector2(x, bottom), Color(phase_tint, 0.14), 1.0)
+	draw_line(Vector2(x, top), Vector2(x, bottom), VisualColor.stroke(phase_tint, 0.14), 1.0)
 	# ~17 ticks over the 120 px minimum height. Length still pulses with elapsed.
 	const TICK_SPACING := 7.5
 	var half_span := height * 0.5
@@ -348,15 +348,15 @@ func draw_quantum_readout(center_y: float) -> void:
 		var probability := 0.25 + 0.75 * absf(sin(elapsed * 0.9 + float(offset) * 2.37))
 		var length := (4.0 + probability * 20.0) * lerpf(0.35, 1.0, edge_fade)
 		var alpha := (0.18 + probability * 0.32) * lerpf(0.25, 1.0, edge_fade)
-		draw_line(Vector2(x - length, y), Vector2(x, y), Color(circuit_tint if offset % 4 else tool_tint, alpha * 0.82), 0.8)
-	draw_string(Fonts.regular(), Vector2(x - 44.0, top - 10.0), "P(q)", HORIZONTAL_ALIGNMENT_CENTER, 40.0, Typography.label_small_size, Color(phase_tint, 0.48))
+		draw_line(Vector2(x - length, y), Vector2(x, y), VisualColor.stroke(circuit_tint if offset % 4 else tool_tint, alpha * 0.82), 0.8)
+	draw_string(Fonts.regular(), Vector2(x - 44.0, top - 10.0), "P(q)", HORIZONTAL_ALIGNMENT_CENTER, 40.0, Typography.label_small_size, VisualColor.stroke(phase_tint, 0.48))
 	pass
 
 
 func draw_header() -> void:
 	# Top bar (rule + live / superposition labels) removed — it competed with the
 	# register. Keep only the footer cue.
-	draw_string(Fonts.regular(), Vector2(38.0, size.y - 27.0), I18n.t("agent.visuals.reasoning_bus"), HORIZONTAL_ALIGNMENT_LEFT, 260.0, Typography.label_small_size, Color(Colors.secondary_text, 0.62))
+	draw_string(Fonts.regular(), Vector2(38.0, size.y - 27.0), I18n.t("agent.visuals.reasoning_bus"), HORIZONTAL_ALIGNMENT_LEFT, 260.0, Typography.label_small_size, VisualColor.stroke(Colors.secondary_text, 0.62))
 	pass
 
 
@@ -371,16 +371,16 @@ func draw_wire(wire: Dictionary, wire_index: int, y: float) -> void:
 	if decoherence > 0.01:
 		draw_decoherent_wire(left, right, y, decoherence, wire_index)
 	else:
-		draw_oscilloscope_wire(wire, left, right, y, Color(circuit_tint, 0.14 + pulse * 0.16), 0.8)
+		draw_oscilloscope_wire(wire, left, right, y, VisualColor.stroke(circuit_tint, 0.14 + pulse * 0.16), 0.8)
 		var phase_x := lerpf(left, right, float(wire["phase"]))
 		for glow in range(3, 0, -1):
-			draw_oscilloscope_wire(wire, left, phase_x, y, Color(circuit_tint, 0.007 * (4 - glow)), 1.0 + glow * 1.4)
-		draw_oscilloscope_wire(wire, left, phase_x, y, Color(circuit_tint, 0.84), 1.25)
+			draw_oscilloscope_wire(wire, left, phase_x, y, VisualColor.stroke(circuit_tint, 0.007 * (4 - glow)), 1.0 + glow * 1.4)
+		draw_oscilloscope_wire(wire, left, phase_x, y, VisualColor.stroke(circuit_tint, 0.84), 1.25)
 		for packet in range(3):
 			var packet_phase := fmod(float(wire["phase"]) - packet * 0.07 + 1.0, 1.0)
 			var packet_x := lerpf(left, right, packet_phase)
-			draw_circle(Vector2(packet_x, y), 1.3 + packet * 0.65, Color(circuit_tint, 0.7 - packet * 0.18))
-	draw_string(Fonts.medium(), Vector2(34.0, y + 5.0), "q%02d" % int(wire["turn"]), HORIZONTAL_ALIGNMENT_LEFT, 48.0, Typography.label_small_size, Color(circuit_tint, 0.58))
+			draw_circle(Vector2(packet_x, y), 1.3 + packet * 0.65, VisualColor.stroke(circuit_tint, 0.7 - packet * 0.18))
+	draw_string(Fonts.medium(), Vector2(34.0, y + 5.0), "q%02d" % int(wire["turn"]), HORIZONTAL_ALIGNMENT_LEFT, 48.0, Typography.label_small_size, VisualColor.stroke(circuit_tint, 0.58))
 	draw_ket(Vector2(right + 24.0, y), "|1>" if collapse > 0.68 and not ended_with_error else "|?>", Colors.success if collapse > 0.68 else phase_tint)
 	var gates: Array = wire["gates"]
 	for gate_index in range(gates.size()):
@@ -392,7 +392,7 @@ func draw_wire(wire: Dictionary, wire_index: int, y: float) -> void:
 			var orbit_angle := float(gate["orbit_angle"]) + sin(elapsed * 0.35 + float(gate["spin"])) * 0.08
 			var orbit_radius := minf(size.x, size.y) * 0.245
 			var orbital_position := core + Vector2.from_angle(orbit_angle) * orbit_radius
-			draw_line(gate_position, orbital_position, Color(tool_tint, 0.14), 0.8, true)
+			draw_line(gate_position, orbital_position, VisualColor.stroke(tool_tint, 0.14), 0.8, true)
 			gate_position = orbital_position
 		draw_gate(gate, gate_position, decoherence)
 	pass
@@ -405,12 +405,12 @@ func draw_active_wire_effect(left: float, right: float, y: float, wire_index: in
 	for layer in range(4, 0, -1):
 		var height := band_height + layer * 8.0
 		var rect := Rect2(Vector2(left - 18.0, y - height * 0.5), Vector2(right - left + 36.0, height))
-		draw_rect(rect, Color(circuit_tint, 0.0018 * (5 - layer)), true)
+		draw_rect(rect, VisualColor.stroke(circuit_tint, 0.0018 * (5 - layer)), true)
 	var scan_ratio := fmod(elapsed * 0.34 + wire_index * 0.071, 1.0)
 	var scan_x := lerpf(left, right, scan_ratio)
 	for glow in range(3, 0, -1):
-		draw_line(Vector2(scan_x, y - band_height * 0.48), Vector2(scan_x, y + band_height * 0.48), Color(circuit_tint, 0.018 * (4 - glow)), 1.0 + glow * 1.8, true)
-	draw_line(Vector2(scan_x, y - band_height * 0.48), Vector2(scan_x, y + band_height * 0.48), Color(circuit_tint, 0.86), 1.0, true)
+		draw_line(Vector2(scan_x, y - band_height * 0.48), Vector2(scan_x, y + band_height * 0.48), VisualColor.stroke(circuit_tint, 0.018 * (4 - glow)), 1.0 + glow * 1.8, true)
+	draw_line(Vector2(scan_x, y - band_height * 0.48), Vector2(scan_x, y + band_height * 0.48), VisualColor.stroke(circuit_tint, 0.86), 1.0, true)
 	# Moving corner brackets make the lane feel selected by the runtime scheduler.
 	var bracket := 13.0
 	var x0 := left - 12.0
@@ -420,10 +420,10 @@ func draw_active_wire_effect(left: float, right: float, y: float, wire_index: in
 	for corner: Vector2 in [Vector2(x0, y0), Vector2(x1, y0), Vector2(x0, y1), Vector2(x1, y1)]:
 		var horizontal := 1.0 if corner.x == x0 else -1.0
 		var vertical := 1.0 if corner.y == y0 else -1.0
-		draw_line(corner, corner + Vector2(horizontal * bracket, 0.0), Color(circuit_tint, 0.48 + breathe * 0.26), 1.0)
-		draw_line(corner, corner + Vector2(0.0, vertical * bracket), Color(circuit_tint, 0.48 + breathe * 0.26), 1.0)
+		draw_line(corner, corner + Vector2(horizontal * bracket, 0.0), VisualColor.stroke(circuit_tint, 0.48 + breathe * 0.26), 1.0)
+		draw_line(corner, corner + Vector2(0.0, vertical * bracket), VisualColor.stroke(circuit_tint, 0.48 + breathe * 0.26), 1.0)
 	var label_position := Vector2(left + 8.0, y - band_height * 0.5 - 7.0)
-	draw_string(Fonts.semibold(), label_position, I18n.t("agent.visuals.quantum_executing"), HORIZONTAL_ALIGNMENT_LEFT, 310.0, Typography.label_small_size, Color(circuit_tint, 0.64 + breathe * 0.22))
+	draw_string(Fonts.semibold(), label_position, I18n.t("agent.visuals.quantum_executing"), HORIZONTAL_ALIGNMENT_LEFT, 310.0, Typography.label_small_size, VisualColor.stroke(circuit_tint, 0.64 + breathe * 0.22))
 	pass
 
 
@@ -483,7 +483,7 @@ func draw_decoherent_wire(left: float, right: float, y: float, amount: float, se
 		var x := lerpf(left, right, float(index) / 38.0)
 		var current := Vector2(x, y + sin(index * 5.13 + seed * 2.7 + elapsed * 18.0) * amount * 7.0)
 		if index % 7 != 0:
-			draw_line(previous, current, Color(Colors.error, 0.25 + amount * 0.5), 1.1, true)
+			draw_line(previous, current, VisualColor.stroke(Colors.error, 0.25 + amount * 0.5), 1.1, true)
 		previous = current
 	pass
 
@@ -497,7 +497,7 @@ func draw_gate(gate: Dictionary, position: Vector2, decoherence: float) -> void:
 	var spin := elapsed * (2.8 if state == GateState.RUNNING else 1.35) + float(gate["spin"])
 	var wake_length := 34.0 + minf(float(gate["age"]) * 16.0, 80.0)
 	for wake in range(3, 0, -1):
-		draw_line(position - Vector2(wake_length + wake * 9.0, 0.0), position - Vector2(radius, 0.0), Color(color, 0.014 * (4 - wake)), float(wake) * 1.5, true)
+		draw_line(position - Vector2(wake_length + wake * 9.0, 0.0), position - Vector2(radius, 0.0), VisualColor.stroke(color, 0.014 * (4 - wake)), float(wake) * 1.5, true)
 	if kind == GateKind.TOOL:
 		draw_tool_control_column(position, radius, color, state)
 	if state == GateState.MEASURED:
@@ -505,18 +505,18 @@ func draw_gate(gate: Dictionary, position: Vector2, decoherence: float) -> void:
 	if state == GateState.FAILED:
 		draw_noise(position, float(gate["event_age"]), decoherence)
 	for ring in range(2, 0, -1):
-		draw_circle(position, radius + ring * 4.0, Color(color, 0.02 * (3 - ring)))
+		draw_circle(position, radius + ring * 4.0, VisualColor.stroke(color, 0.02 * (3 - ring)))
 	var points := PackedVector2Array()
 	for corner in range(4):
 		points.append(position + Vector2.from_angle(spin + PI * 0.25 + corner * PI * 0.5) * radius)
 	points.append(points[0])
-	draw_polyline(points, Color(color, 0.35 if state == GateState.FAILED else 0.86), 1.25, true)
+	draw_polyline(points, VisualColor.stroke(color, 0.35 if state == GateState.FAILED else 0.86), 1.25, true)
 	for satellite in range(3):
 		var satellite_angle := -spin * 0.7 + satellite * TAU / 3.0
 		var satellite_position := position + Vector2.from_angle(satellite_angle) * (radius + 11.0)
-		draw_circle(satellite_position, 1.6, Color(color, 0.66))
+		draw_circle(satellite_position, 1.6, VisualColor.stroke(color, 0.66))
 	var label := String(gate["label"]) if kind == GateKind.TOOL else gate_label(kind)
-	draw_centered_text(position + Vector2(0.0, 5.0), label, Fonts.semibold(), Typography.label_small_size, Color(color, 0.92))
+	draw_centered_text(position + Vector2(0.0, 5.0), label, Fonts.semibold(), Typography.label_small_size, VisualColor.stroke(color, 0.92))
 	pass
 
 
@@ -524,28 +524,28 @@ func draw_tool_control_column(position: Vector2, radius: float, color: Color, st
 	# Tool operations are deliberately wider than a single wire: they temporarily couple
 	# the active qubit to the operating-system/tool plane.
 	var reach := 30.0 + 8.0 * sin(elapsed * 2.0)
-	draw_line(position - Vector2(0.0, radius + reach), position + Vector2(0.0, radius + reach), Color(color, 0.1), 3.0, true)
-	draw_line(position - Vector2(0.0, radius + reach), position + Vector2(0.0, radius + reach), Color(color, 0.52), 1.0, true)
+	draw_line(position - Vector2(0.0, radius + reach), position + Vector2(0.0, radius + reach), VisualColor.stroke(color, 0.1), 3.0, true)
+	draw_line(position - Vector2(0.0, radius + reach), position + Vector2(0.0, radius + reach), VisualColor.stroke(color, 0.52), 1.0, true)
 	for side: float in [-1.0, 1.0]:
 		var endpoint := position + Vector2(0.0, side * (radius + reach))
-		draw_circle(endpoint, 5.0, Color(color, 0.065))
-		draw_arc(endpoint, 4.0, 0.0, TAU, 20, Color(color, 0.68), 1.0, true)
+		draw_circle(endpoint, 5.0, VisualColor.stroke(color, 0.065))
+		draw_arc(endpoint, 4.0, 0.0, TAU, 20, VisualColor.stroke(color, 0.68), 1.0, true)
 	var orbit_radius := radius + 17.0
-	draw_arc(position, orbit_radius, elapsed * 1.7, elapsed * 1.7 + PI * 1.3, 32, Color(color, 0.46), 1.25, true)
+	draw_arc(position, orbit_radius, elapsed * 1.7, elapsed * 1.7 + PI * 1.3, 32, VisualColor.stroke(color, 0.46), 1.25, true)
 	if state == GateState.RUNNING:
 		for index in range(6):
 			var angle := elapsed * 2.2 + index * TAU / 6.0
-			draw_circle(position + Vector2.from_angle(angle) * orbit_radius, 1.8, Color(color, 0.86))
+			draw_circle(position + Vector2.from_angle(angle) * orbit_radius, 1.8, VisualColor.stroke(color, 0.86))
 	pass
 
 
 func draw_measurement_flash(position: Vector2, age: float, color: Color) -> void:
 	var progress := clampf(age / MEASURE_SECONDS, 0.0, 1.0)
 	var radius := 18.0 + progress * 58.0
-	draw_arc(position, radius, 0.0, TAU, 48, Color(color, (1.0 - progress) * 0.64), 1.5, true)
+	draw_arc(position, radius, 0.0, TAU, 48, VisualColor.stroke(color, (1.0 - progress) * 0.64), 1.5, true)
 	for index in range(8):
 		var direction := Vector2.from_angle(index * TAU / 8.0)
-		draw_line(position + direction * 24.0, position + direction * radius, Color(color, (1.0 - progress) * 0.56), 1.0, true)
+		draw_line(position + direction * 24.0, position + direction * radius, VisualColor.stroke(color, (1.0 - progress) * 0.56), 1.0, true)
 	pass
 
 
@@ -554,7 +554,7 @@ func draw_noise(position: Vector2, age: float, amount: float) -> void:
 		var angle := index * 2.19 + elapsed * (2.0 + index % 3)
 		var radius := 18.0 + fmod(index * 17.0 + age * 48.0, 52.0)
 		var p := position + Vector2.from_angle(angle) * radius
-		draw_line(p - Vector2(3.0, 0.0), p + Vector2(3.0 + amount * 5.0, 0.0), Color(Colors.error, 0.5), 1.0)
+		draw_line(p - Vector2(3.0, 0.0), p + Vector2(3.0 + amount * 5.0, 0.0), VisualColor.stroke(Colors.error, 0.5), 1.0)
 	pass
 
 
@@ -574,21 +574,21 @@ func draw_collapse(center_y: float) -> void:
 			var wire_y := lerpf(wire_display_y(wires[index], center_y), center_y, settle)
 			if absf(wire_y - center_y) < 2.0:
 				continue
-			draw_line(Vector2(merge_x, wire_y), Vector2(merge_x, center_y), Color(color, feeder_alpha), 1.5, true)
+			draw_line(Vector2(merge_x, wire_y), Vector2(merge_x, center_y), VisualColor.stroke(color, feeder_alpha), 1.5, true)
 	# One mid-axis inject into the measurement point.
 	var inject_to := Vector2(lerpf(merge_x, measure.x, progress), center_y)
-	draw_line(Vector2(merge_x, center_y), inject_to, Color(color, 0.08 + progress * 0.1), 3.5, true)
-	draw_line(Vector2(merge_x, center_y), inject_to, Color(color, 0.3 + progress * 0.5), 1.25, true)
+	draw_line(Vector2(merge_x, center_y), inject_to, VisualColor.stroke(color, 0.08 + progress * 0.1), 3.5, true)
+	draw_line(Vector2(merge_x, center_y), inject_to, VisualColor.stroke(color, 0.3 + progress * 0.5), 1.25, true)
 	var radius := 22.0 + sin(elapsed * 8.0) * 3.0
-	draw_circle(measure, radius + progress * 36.0, Color(color, 0.035 * progress))
-	draw_arc(measure, radius, 0.0, TAU, 48, Color(color, progress), 1.75, true)
+	draw_circle(measure, radius + progress * 36.0, VisualColor.stroke(color, 0.035 * progress))
+	draw_arc(measure, radius, 0.0, TAU, 48, VisualColor.stroke(color, progress), 1.75, true)
 	if collapse > 0.7:
-		draw_centered_text(Vector2(size.x * 0.5, 86.0), I18n.t("agent.visuals.state_error") if ended_with_error else I18n.t("agent.visuals.determinate_state"), Fonts.semibold(), Typography.title_medium_size, Color(color, progress))
+		draw_centered_text(Vector2(size.x * 0.5, 86.0), I18n.t("agent.visuals.state_error") if ended_with_error else I18n.t("agent.visuals.determinate_state"), Fonts.semibold(), Typography.title_medium_size, VisualColor.stroke(color, progress))
 	pass
 
 
 func draw_ket(position: Vector2, text: String, color: Color) -> void:
-	draw_centered_text(position + Vector2(0.0, 5.0), text, Fonts.medium(), Typography.label_small_size, Color(color, 0.72))
+	draw_centered_text(position + Vector2(0.0, 5.0), text, Fonts.medium(), Typography.label_small_size, VisualColor.stroke(color, 0.72))
 	pass
 
 

@@ -53,7 +53,7 @@ func palette_follows_accent_theme_color_test() -> void:
 	var original: Color = ThemeColor.theme_color
 	ThemeColor.theme_color = Color(0.18, 0.52, 0.96)
 	ThemeColor.refresh_derived_colors()
-	assert(QuantumCircuit.circuit_color() == ThemeColor.accent_theme_color())
+	assert(QuantumCircuit.circuit_color() == VisualColor.appearance_color(ThemeColor.accent_theme_color()))
 	var effect := QuantumCircuit.new()
 	effect.refresh_palette()
 	assert(effect.circuit_tint == QuantumCircuit.circuit_color())
@@ -65,7 +65,7 @@ func palette_follows_accent_theme_color_test() -> void:
 	assert(first_tool != QuantumCircuit.circuit_color())
 	ThemeColor.theme_color = Color(0.95, 0.3, 0.12)
 	ThemeColor.refresh_derived_colors()
-	assert(QuantumCircuit.circuit_color() == ThemeColor.accent_theme_color())
+	assert(QuantumCircuit.circuit_color() == VisualColor.appearance_color(ThemeColor.accent_theme_color()))
 	assert(QuantumCircuit.phase_color() != first_phase)
 	assert(QuantumCircuit.tool_color() != first_tool)
 	ThemeColor.theme_color = original
