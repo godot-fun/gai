@@ -35,10 +35,16 @@ static func user_image(text: String, image_path: String) -> ChatMessage:
 	var msg := ChatMessage.new(ROLE_USER, text)
 	var image_bytes := FileUtils.read_file_to_byte_array(image_path)
 	var image_format := ImageHelper.detect_image_format(image_bytes)
-	var encoded_bytes := ImageHelper.convert_to_png_with_max_size(image_bytes, REMOTE_IMAGE_MAX_SIZE) if image_format == ImageHelper.png else ImageHelper.convert_to_jpg_with_max_size(image_bytes, REMOTE_IMAGE_MAX_SIZE)
+	var encoded_bytes: PackedByteArray
+	var mime_subtype: String
+	if image_format == ImageHelper.png:
+		encoded_bytes = ImageHelper.convert_to_png_with_max_size(image_bytes, REMOTE_IMAGE_MAX_SIZE)
+		mime_subtype = ImageHelper.png
+	else:
+		encoded_bytes = ImageHelper.convert_to_jpg_with_max_size(image_bytes, REMOTE_IMAGE_MAX_SIZE)
+		mime_subtype = "jpeg"
 	if encoded_bytes.is_empty():
 		return msg
-	var mime_subtype := ImageHelper.png if image_format == ImageHelper.png else "jpeg"
 	msg.image_data_url = StringUtils.format("data:image/{};base64,{}", mime_subtype, Marshalls.raw_to_base64(encoded_bytes))
 	return msg
 
