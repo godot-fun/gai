@@ -41,7 +41,7 @@ static func append_markdown_image(label: RichTextLabel, markdown_image: Markdown
 		return
 	if HttpUtils.is_valid_http_url(image_url):
 		var format := ImageHelper.get_image_format(image_url)
-		var cache_path := StringUtils.format("http_{}.{}", image_url.sha256_text(), format)
+		var cache_path := IMAGE_CACHE_DIR.path_join(StringUtils.format("http_{}.{}", image_url.sha256_text(), format))
 		if FileAccess.file_exists(cache_path):
 			load_image_into_label(label, image_url, cache_path)
 			return
@@ -98,7 +98,11 @@ static func download_remote_image_texture(image_url: String, cache_path: String)
 	if response.body.size() > MAX_REMOTE_IMAGE_BYTES:
 		Log.error("markdown image is too large url:[{}] bytes:[{}]", image_url, response.body.size())
 		return null
-	var cache_error := ImageHelper.save_image(response.body, cache_path)
+	var absolute_cache_path := FileUtils.globalize_writable_path(cache_path)
+	if absolute_cache_path.is_empty():
+		Log.error("markdown image cache directory failed path:[{}]", IMAGE_CACHE_DIR)
+		return null
+	var cache_error := ImageHelper.save_image(response.body, absolute_cache_path)
 	if cache_error != OK:
 		Log.error("markdown image cache failed path:[{}] err:[{}]", cache_path, cache_error)
 		return null
@@ -125,4 +129,3 @@ static func set_image_downloading(label: RichTextLabel, image_url: String, downl
 
 static func image_download_meta_key(image_url: String) -> StringName:
 	return StringName("image_" + image_url.sha256_text())
-

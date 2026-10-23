@@ -30,7 +30,7 @@ static func get_image_format(path: String, default_format: String = png) -> Stri
 static func save_image(bytes: PackedByteArray, path: String) -> Error:
 	if bytes.is_empty():
 		return ERR_INVALID_DATA
-	var path_format := get_image_format(path)
+	var path_format := get_image_format(path, "")
 	var image := decode_image(bytes)
 	if image == null:
 		return ERR_FILE_UNRECOGNIZED
