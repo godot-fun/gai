@@ -42,15 +42,7 @@ class DiffBundle extends RefCounted:
 ##                                                   v
 ##                              existence/hash guard prevents stale saves
 
-const DIFF_CACHE_SUBDIR := ".gai/cache/diff"
 const DIFF_CACHE_EXTENSION := "gaidiff"
-const MAX_DIFF_CACHE_BYTES := 128 * FileUtils.BYTES_PER_MB
-
-
-static func _static_init() -> void:
-	var cache_dir := AgentWorkspace.get_root().path_join(DIFF_CACHE_SUBDIR)
-	WorkerThreadPool.add_task(func() -> void: FileUtils.cleanup_cache_folder(cache_dir, MAX_DIFF_CACHE_BYTES))
-	pass
 
 
 ## Appends a git diff chat entry when a completed operation changed files relative to
@@ -117,7 +109,7 @@ static func async_cache_diff(git: GitHelper.Git, reference: String, file_stats: 
 	var patch := diff.output.build_string()
 	if StringUtils.is_blank(patch):
 		return StringUtils.EMPTY
-	var cache_dir := AgentWorkspace.get_root().path_join(DIFF_CACHE_SUBDIR)
+	var cache_dir := CacheManager.get_diff_cache_dir()
 	var mkdir_error := DirAccess.make_dir_recursive_absolute(cache_dir)
 	if mkdir_error != OK:
 		Log.error("agent git diff cache directory create failed path:[{}] error:[{}]", cache_dir, mkdir_error)

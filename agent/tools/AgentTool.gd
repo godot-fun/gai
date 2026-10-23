@@ -8,14 +8,6 @@ const MAX_FILE_RESULTS := 512
 const MAX_FILE_BYTES := FileUtils.BYTES_PER_KB * 128
 const ARG_PARSE_ERROR := "__agent_tool_parse_error"
 const TRUNCATED_SUFFIX := "... (truncated)"
-const WEB_SCREENSHOT_DIR := ".gai/cache/screenshot"
-const MAX_WEB_SCREENSHOT_CACHE_BYTES := 512 * FileUtils.BYTES_PER_MB
-
-
-static func _static_init() -> void:
-	var cache_dir := AgentWorkspace.get_root().path_join(WEB_SCREENSHOT_DIR)
-	WorkerThreadPool.add_task(func() -> void: FileUtils.cleanup_cache_folder(cache_dir, MAX_WEB_SCREENSHOT_CACHE_BYTES))
-	pass
 
 
 var name: String = ""

@@ -30,7 +30,7 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 	var max_results := DEFAULT_MAX_RESULTS
 	if args.has(ARG_MAX_RESULTS):
 		max_results = clampi(int(str(args.get(ARG_MAX_RESULTS, DEFAULT_MAX_RESULTS))), 1, MAX_RESULTS_CAP)
-	var screenshot_path := FileUtils.globalize_writable_path(AgentWorkspace.get_root().path_join(WEB_SCREENSHOT_DIR).path_join(StringUtils.format("search_{}.webp", IdUtils.uuid())))
+	var screenshot_path := FileUtils.globalize_writable_path(CacheManager.get_web_screenshot_cache_dir().path_join(StringUtils.format("search_{}.webp", IdUtils.uuid())))
 	var response := await WebServer.async_search(query, max_results, screenshot_path)
 	if response == null:
 		return AgentToolResult.error(StringUtils.format("error: web search request failed for: {}", query))

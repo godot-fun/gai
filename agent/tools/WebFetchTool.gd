@@ -33,7 +33,7 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 	var max_chars := DEFAULT_MAX_CHARS
 	if args.has(ARG_MAX_CHARS) and str(args.get(ARG_MAX_CHARS, "")).strip_edges().is_valid_int():
 		max_chars = clampi(int(str(args.get(ARG_MAX_CHARS, "")).strip_edges()), 1_000, MAX_CHARS_CAP)
-	var screenshot_path := FileUtils.globalize_writable_path(AgentWorkspace.get_root().path_join(WEB_SCREENSHOT_DIR).path_join(StringUtils.format("fetch_{}.webp", IdUtils.uuid())))
+	var screenshot_path := FileUtils.globalize_writable_path(CacheManager.get_web_screenshot_cache_dir().path_join(StringUtils.format("fetch_{}.webp", IdUtils.uuid())))
 	var response := await WebServer.async_fetch(url, screenshot_path)
 	if response == null:
 		return AgentToolResult.error(StringUtils.format("error: fetch failed: {}", url))
