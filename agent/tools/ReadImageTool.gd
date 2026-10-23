@@ -1,7 +1,7 @@
-class_name ImageToTextTool
+class_name ReadImageTool
 extends AgentTool
 
-const NAME := "image_to_text"
+const NAME := "read_image"
 const ARG_PATH := "path"
 const ARG_PROMPT := "prompt"
 
@@ -10,7 +10,7 @@ const MAX_PROMPT_LENGTH := 4000
 
 func _init() -> void:
 	name = NAME
-	description = "Describe an image or extract its visible text with the local MiniCPM-V vision model. Requires an image path and an instruction prompt."
+	description = "Read an image with the local MiniCPM-V vision model. Supports visual description, OCR, UI analysis, and structured extraction. Requires an image path and an instruction prompt."
 	pass
 
 
@@ -37,7 +37,7 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 	var prompt := StringUtils.truncate(str(args.get(ARG_PROMPT, "")).strip_edges(), MAX_PROMPT_LENGTH)
 	var output := await VLMServer.async_image_to_text(path, prompt)
 	if StringUtils.is_blank(output):
-		return AgentToolResult.error("error: image-to-text returned no text", AgentToolResult.ui_file_details_message(path, "no text returned"))
+		return AgentToolResult.error("error: image reader returned no text", AgentToolResult.ui_file_details_message(path, "no text returned"))
 
 	var text := StringUtils.truncate(output, MAX_OUTPUT, TRUNCATED_SUFFIX)
 	return AgentToolResult.ok(text)

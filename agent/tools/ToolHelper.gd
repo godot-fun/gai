@@ -26,8 +26,8 @@ static func get_tool_call_summary(tool_name: String, args: Dictionary[String, Va
 			body = str(args.get(ListDirTool.ARG_PATH, ""))
 		BashTool.NAME:
 			body = str(args.get(BashTool.ARG_COMMAND, ""))
-		ImageToTextTool.NAME:
-			body = str(args.get(ImageToTextTool.ARG_PATH, "")) + FileUtils.NEWLINE_LF + str(args.get(ImageToTextTool.ARG_PROMPT, ""))
+		ReadImageTool.NAME:
+			body = str(args.get(ReadImageTool.ARG_PATH, "")) + FileUtils.NEWLINE_LF + str(args.get(ReadImageTool.ARG_PROMPT, ""))
 		AudioToTextTool.NAME:
 			body = str(args.get(AudioToTextTool.ARG_PATH, ""))
 		WebSearchTool.NAME:

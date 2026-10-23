@@ -36,7 +36,7 @@ static func glyph(tool_name: String) -> String:
 			return "E"
 		BashTool.NAME:
 			return ">_"
-		ImageToTextTool.NAME:
+		ReadImageTool.NAME:
 			return "IM"
 		AudioToTextTool.NAME:
 			return "AU"
@@ -66,7 +66,7 @@ static func glyph_emoji(tool_name: String) -> String:
 			return "✂️"
 		BashTool.NAME:
 			return "🐚"
-		ImageToTextTool.NAME:
+		ReadImageTool.NAME:
 			return "📸"
 		AudioToTextTool.NAME:
 			return "🎙️"

@@ -12,7 +12,7 @@ static func _static_init() -> void:
 	register(ReadTool.new())
 	register(WriteTool.new())
 	register(EditTool.new())
-	register(ImageToTextTool.new())
+	register(ReadImageTool.new())
 	register(AudioToTextTool.new())
 	
 	# enhance tools
