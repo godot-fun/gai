@@ -215,6 +215,8 @@ func start_demo(visual_type: VisualControl.Type, turn_count: int, large: bool) -
 	var generation := demo_generation
 	var is_active := func() -> bool: return demo_generation == generation
 	await simulate_agent.run_agent_events(self, session.id, turn_count, large, is_active, set_status, visual_label())
+	var session_ids: Array[int] = [session.id]
+	simulate_agent.delete_sessions(session_ids)
 	pass
 
 
@@ -227,12 +229,11 @@ func select_visual(visual_type: VisualControl.Type) -> void:
 func stop_demo(status_text: String, as_error: bool = false) -> void:
 	demo_generation += 1
 	var session_ids := simulate_agent.active_session_ids.duplicate()
-	simulate_agent.clear_running_sessions(session_ids)
 	if as_error:
 		for session_id: int in session_ids:
 			if session_id != 0:
 				AgentEvents.events.agent_end.emit(session_id, "Stop.")
-	simulate_agent.active_session_ids.clear()
+	simulate_agent.delete_sessions(session_ids)
 	if StringUtils.is_not_blank(status_text):
 		set_status(status_text)
 	pass

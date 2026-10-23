@@ -51,6 +51,14 @@ func clear_running_sessions(session_ids: Array[int]) -> void:
 	pass
 
 
+func delete_sessions(session_ids: Array[int]) -> void:
+	clear_running_sessions(session_ids)
+	for session_id: int in session_ids:
+		AgentSessionManager.delete_session(session_id)
+		unregister_session(session_id)
+	pass
+
+
 func unregister_session(session_id: int) -> void:
 	active_session_ids.erase(session_id)
 	pass
