@@ -14,6 +14,21 @@ static func neural_aurora_tool_label_test() -> void:
 	pass
 
 
+static func content_pulse_is_throttled_test() -> void:
+	var effect := NeuralAurora.new()
+	effect.on_message_update(1, "first", "content")
+	assert(effect.output_pulse == 1.0)
+	assert(effect.output_pulse_cooldown == NeuralAurora.OUTPUT_PULSE_INTERVAL)
+	effect.output_pulse = 0.25
+	effect.on_message_update(1, "second", "content")
+	assert(effect.output_pulse == 0.25)
+	effect.advance_output_pulse(NeuralAurora.OUTPUT_PULSE_INTERVAL)
+	effect.on_message_update(1, "third", "content")
+	assert(effect.output_pulse == 1.0)
+	effect.free()
+	pass
+
+
 static func fast_tool_waits_for_full_arc_test() -> void:
 	var effect := NeuralAurora.new()
 	effect.tool_label = Label.new()

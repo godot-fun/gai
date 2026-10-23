@@ -15,6 +15,9 @@ const COMPLETE_SECONDS := 1.35
 const MIN_TOOL_PLAY_SECONDS := 1.05
 const TOOL_RESULT_HOLD_SECONDS := 0.75
 const FAILURE_REVEAL_SECONDS := 0.78
+## Content can arrive every frame. Throttle its wave so output reads as a calm cadence instead
+## of a permanently bright ring.
+const OUTPUT_PULSE_INTERVAL := 0.42
 
 var field: ColorRect
 var tool_label: Label
@@ -31,6 +34,7 @@ var target_detail: float = 0.0
 ## One-shot controls are normalized envelopes. They begin at 1 (or just above 0 for the
 ## travelling tool head), then `_process()` advances or decays them back to rest.
 var output_pulse: float = 0.0
+var output_pulse_cooldown: float = 0.0
 var tool_pulse: float = 0.0
 var tool_angle: float = 0.0
 var success_pulse: float = 0.0
@@ -150,7 +154,9 @@ func on_message_update(_session_id: int, _chunk: String, stream_kind: String) ->
 		target_energy = 1.0
 		target_detail = 1.0
 	else:
-		output_pulse = 1.0
+		if output_pulse_cooldown <= 0.0:
+			output_pulse = 1.0
+			output_pulse_cooldown = OUTPUT_PULSE_INTERVAL
 		target_energy = maxf(target_energy, 0.78)
 	pass
 
@@ -179,7 +185,7 @@ func _process(delta: float) -> void:
 	energy = lerpf(energy, target_energy, 1.0 - exp(-delta * 2.5))
 	detail = lerpf(detail, target_detail, 1.0 - exp(-delta * 3.5))
 	direction = lerpf(direction, target_direction, 1.0 - exp(-delta * 4.0))
-	output_pulse = move_toward(output_pulse, 0.0, delta * 0.52)
+	advance_output_pulse(delta)
 	advance_tool_timeline(delta)
 	# Keep the result at full strength for its readable hold, then let it trail into the next phase.
 	if tool_result_hold_seconds <= 0.0:
@@ -189,6 +195,12 @@ func _process(delta: float) -> void:
 	if completing:
 		completion = minf(completion + delta / COMPLETE_SECONDS, 1.0)
 	set_shader_parameters()
+	pass
+
+
+func advance_output_pulse(delta: float) -> void:
+	output_pulse = move_toward(output_pulse, 0.0, delta * 0.52)
+	output_pulse_cooldown = maxf(0.0, output_pulse_cooldown - delta)
 	pass
 
 

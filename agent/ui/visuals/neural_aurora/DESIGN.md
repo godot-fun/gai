@@ -31,7 +31,7 @@ The effect consists of one full-screen `ColorRect`, one `canvas_item` shader, an
 |---|---|---|
 | `on_agent_start` | Set `target_energy` to `0.72` with low `detail` | The center illuminates and the aurora slowly unfolds |
 | Reasoning `on_message_update` | Raise energy and detail to `1` | Flow activity increases and fine neural ridges appear |
-| Content `on_message_update` | Reset `output_pulse` | A warm wave expands outward from the center |
+| Content `on_message_update` | Trigger `output_pulse` at a short interval | A warm wave expands outward from the center in a measured cadence |
 | `on_tool_execution_start` | Start `tool_pulse` and derive an angle from the tool name | An arc shoots toward the edge and the tool name appears at the top |
 | Tool success | Start `success_pulse` | A green ring flows back toward the center |
 | Tool failure | Start `failure_pulse` | Red radial cracks flash briefly |
@@ -43,7 +43,7 @@ The effect consists of one full-screen `ColorRect`, one `canvas_item` shader, an
 State falls into three categories:
 
 1. Persistent state: `energy`, `detail`, and `direction`. Each uses a current/target pair and an exponential follower so transitions remain consistent across frame rates.
-2. One-shot envelopes: `output_pulse`, `success_pulse`, and `failure_pulse`. An event sets the value to `1`, after which it decays at a rate measured per second.
+2. One-shot envelopes: `output_pulse`, `success_pulse`, and `failure_pulse`. An event sets the value to `1`, after which it decays at a rate measured per second. Content pulses have a brief cooldown, preventing high-frequency stream chunks from creating a continuously bright ring.
 3. Monotonic timelines: `tool_pulse` travels from the center to the edge; `completion` advances from `0` to `1` and never reverses.
 
 `COMPLETE_SECONDS` controls the shader completion duration. `on_agent_end()` waits for that timeline after draining queued tool visuals, so changing the duration must keep the controller and shader composition aligned.

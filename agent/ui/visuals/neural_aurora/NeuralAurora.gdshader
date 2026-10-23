@@ -111,10 +111,12 @@ void fragment() {
 
 	// Completion owns the final composition: compress the field into a luminous ring, break its
 	// edge into quantized noise "dust", then reach zero alpha before the Control fades out.
-	float final_ring = exp(-abs(radius - mix(0.08, 0.33, smoothstep(0.0, 0.55, completion))) * 65.0);
+	// The final ring is a quiet contraction, not a second core flash. Keep it narrow and below
+	// the normal event brightness so completion resolves into stillness before dissolving.
+	float final_ring = exp(-abs(radius - mix(0.08, 0.33, smoothstep(0.0, 0.55, completion))) * 82.0);
 	float dissolve = smoothstep(0.56, 1.0, completion);
 	float dust = smoothstep(0.82, 1.0, noise(floor(p * 180.0) + floor(TIME * 5.0))) * dissolve;
-	color = mix(color, accent_color.rgb * final_ring * 2.2, smoothstep(0.0, 0.75, completion));
+	color = mix(color, accent_color.rgb * final_ring * 1.18, smoothstep(0.0, 0.75, completion));
 	color += accent_color.rgb * dust * smoothstep(0.52, 0.1, abs(radius - 0.34 - dissolve * 0.22));
 	float alpha = clamp(length(color) * 0.78, 0.0, 0.86) * (1.0 - smoothstep(0.88, 1.0, completion));
 	COLOR = vec4(color, alpha);
