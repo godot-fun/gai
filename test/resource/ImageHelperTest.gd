@@ -23,6 +23,33 @@ func image_buffer_decode_test() -> void:
 	pass
 
 
+func convert_to_jpg_with_max_size_test() -> void:
+	var source := Image.create(2400, 1200, false, Image.FORMAT_RGBA8)
+	source.fill(Color.RED)
+	var original := source.save_jpg_to_buffer()
+	var converted := ImageHelper.convert_to_jpg_with_max_size(original, Vector2i(1300, 1300))
+	var decoded := ImageHelper.decode_image(converted)
+	assert(ImageHelper.detect_image_format(converted) == ImageHelper.jpg)
+	assert(decoded != null)
+	assert(decoded.get_size() == Vector2i(1300, 650))
+	assert(ImageHelper.convert_to_jpg_with_max_size(original, Vector2i(2400, 1200)) == original)
+	pass
+
+
+func convert_to_png_with_max_size_test() -> void:
+	var source := Image.create(2400, 1200, false, Image.FORMAT_RGBA8)
+	source.fill(Color.RED)
+	var original := source.save_png_to_buffer()
+	var converted := ImageHelper.convert_to_png_with_max_size(original, Vector2i(1300, 1300))
+	var decoded := ImageHelper.decode_image(converted)
+	assert(ImageHelper.detect_image_format(converted) == ImageHelper.png)
+	assert(decoded != null)
+	assert(decoded.get_size() == Vector2i(1300, 650))
+	assert(ImageHelper.convert_to_png_with_max_size(original, Vector2i(2400, 1200)) == original)
+	assert(ImageHelper.detect_image_format(ImageHelper.convert_to_png_with_max_size(source.save_jpg_to_buffer(), Vector2i(2400, 1200))) == ImageHelper.png)
+	pass
+
+
 func get_image_format_test() -> void:
 	assert(ImageHelper.get_image_format("res://image/photo.PNG") == ImageHelper.png)
 	assert(ImageHelper.get_image_format("https://example.com/photo.webp") == ImageHelper.webp)

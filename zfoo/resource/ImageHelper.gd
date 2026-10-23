@@ -76,6 +76,38 @@ static func decode_image(bytes: PackedByteArray) -> Image:
 		return image
 	return null
 
+# ----------------------------------------------------------------------------------------------------------------------
+## Fits an existing JPEG inside [param max_size] without upscaling; other formats are converted to JPEG.
+## JPEGs already inside the bounds return their original bytes unchanged.
+## Returns an empty byte array when decoding fails or [param max_size] is invalid.
+static func convert_to_jpg_with_max_size(image_bytes: PackedByteArray, max_size: Vector2i, quality: float = 0.90) -> PackedByteArray:
+	if max_size.x <= 0 or max_size.y <= 0:
+		return PackedByteArray()
+	var image := decode_image(image_bytes)
+	if image == null or image.is_empty():
+		return PackedByteArray()
+	var scale := minf(1.0, minf(float(max_size.x) / image.get_width(), float(max_size.y) / image.get_height()))
+	if scale >= 1.0 and detect_image_format(image_bytes) == jpg:
+		return image_bytes
+	if scale < 1.0:
+		image.resize(maxi(1, roundi(image.get_width() * scale)), maxi(1, roundi(image.get_height() * scale)), Image.INTERPOLATE_LANCZOS)
+	return image.save_jpg_to_buffer(clampf(quality, 0.0, 1.0))
+
+
+## Fits an existing PNG inside [param max_size] without upscaling; other formats are converted to PNG.
+## PNGs already inside the bounds return their original bytes unchanged.
+static func convert_to_png_with_max_size(image_bytes: PackedByteArray, max_size: Vector2i) -> PackedByteArray:
+	if max_size.x <= 0 or max_size.y <= 0:
+		return PackedByteArray()
+	var image := decode_image(image_bytes)
+	if image == null or image.is_empty():
+		return PackedByteArray()
+	var scale := minf(1.0, minf(float(max_size.x) / image.get_width(), float(max_size.y) / image.get_height()))
+	if scale >= 1.0 and detect_image_format(image_bytes) == png:
+		return image_bytes
+	image.resize(maxi(1, roundi(image.get_width() * scale)), maxi(1, roundi(image.get_height() * scale)), Image.INTERPOLATE_LANCZOS)
+	return image.save_png_to_buffer()
+
 
 # ----------------------------------------------------------------------------------------------------------------------
 ## Creates a theme-aware image card shown while remote content is loading.
