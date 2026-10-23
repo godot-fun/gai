@@ -106,11 +106,11 @@ void fragment() {
 	color += disk_color * (disk_band + hot_inner * 1.4) * back_mask * 0.48;
 
 	// The photon ring approximates gravitational lensing without sampling the actual chat UI.
-	float lens = ring(radius, horizon_radius + 0.026, 0.006 + reasoning_density * 0.005);
+	float lens = ring(radius, horizon_radius + 0.026, 0.004 + reasoning_density * 0.003);
 	float upper_lens = ring(length(vec2(p.x, (p.y + 0.105) / 0.42)), 0.27, 0.013) * smoothstep(-0.06, 0.1, p.y);
 	color += disk_color * upper_lens * disk_energy * 0.65;
-	vec3 lens_color = mix(accent_color.rgb, vec3(1.0), 0.68);
-	float lens_pulse = 0.55 + disk_energy * 1.15 + breath * 0.35;
+	vec3 lens_color = mix(accent_color.rgb, vec3(1.0), 0.4);
+	float lens_pulse = 0.35 + disk_energy * 0.65 + breath * 0.2;
 	color += lens_color * lens * lens_pulse;
 
 	// The event horizon remains nearly silent and opaque while activity accumulates around it.
@@ -121,11 +121,11 @@ void fragment() {
 	// Keep the photon ring from being cracked by the front disk pass.
 	float disk_over_lens = 1.0 - lens * 0.85;
 	color += disk_color * (disk_band + hot_inner * 1.55) * front_mask * 0.92 * disk_over_lens;
-	color += lens_color * lens * (0.22 + disk_energy * 0.4);
+	color += lens_color * lens * (0.12 + disk_energy * 0.22);
 
 	// Reasoning broadens a subtle interference halo around the photon ring.
 	float reasoning_halo = ring(radius, horizon_radius + 0.055 + sin(TIME * 3.0) * 0.006, 0.012);
-	color += accent_color.rgb * reasoning_halo * reasoning_density * 0.34;
+	color += accent_color.rgb * reasoning_halo * reasoning_density * 0.2;
 
 	// Content leaves as an asymmetric bipolar jet. The secondary jet is intentionally weaker.
 	vec2 jet_dir = normalize(vec2(0.82, -0.57));
@@ -170,7 +170,7 @@ void fragment() {
 	color *= 1.0 - consume * 0.92;
 	color += final_color * (collapse_ring * 1.5 + flash * 2.4 + hawking * evaporation * 0.85);
 
-	float alpha = clamp(length(color) * 0.72 + horizon * gravity * 0.62, 0.0, 0.82);
+	float alpha = clamp(length(color) * 0.68 + horizon * gravity * 0.58, 0.0, 0.72);
 	alpha *= 1.0 - smoothstep(0.91, 1.0, completion);
 	COLOR = vec4(color, alpha);
 }
