@@ -61,8 +61,11 @@ void fragment() {
 	float curtain = pow(clamp(1.0 - abs(sin(flow.x * 2.0 + cloud * 5.4 + t * 0.22)), 0.0, 1.0), 3.2);
 	float horizon = smoothstep(0.66, 0.02, abs(p.y + 0.03 + (cloud - 0.5) * 0.34));
 	float wake = smoothstep(0.72, 0.08, radius) * smoothstep(0.0, 0.85, energy);
-	vec3 cool = mix(accent_color.rgb * 0.32, accent_color.rgb * 1.25 + vec3(0.04, 0.12, 0.18), cloud);
-	vec3 color = cool * curtain * horizon * (0.1 + wake * 0.9);
+	// Keep the atmospheric field quiet near the core, reserving contrast for agent events.
+	// This creates a calm pocket around the orb instead of letting every cloud compete with it.
+	float core_clearance = smoothstep(0.08, 0.42, radius);
+	vec3 cool = mix(accent_color.rgb * 0.28, accent_color.rgb * 0.98 + vec3(0.03, 0.09, 0.14), cloud);
+	vec3 color = cool * curtain * horizon * (0.08 + wake * 0.66) * mix(0.54, 1.0, core_clearance);
 	// Keep the conscious core readable without letting its exponential center bloom into a
 	// distracting white point at high energy. A broader, lower-intensity falloff preserves the
 	// orb's volume and leaves the surrounding aurora as the visual focus.
@@ -70,8 +73,8 @@ void fragment() {
 	color += accent_color.rgb * core_glow * (0.22 + energy * 0.72);
 
 	// Thin thresholded ridges read as neural impulses without introducing individual particles.
-	float neural_cells = smoothstep(0.91, 0.985, sin((flow.x + flow.y) * 26.0 + cloud * 17.0) * 0.5 + 0.5);
-	color += accent_color.rgb * neural_cells * detail * horizon * 0.42;
+	float neural_cells = smoothstep(0.93, 0.99, sin((flow.x + flow.y) * 26.0 + cloud * 17.0) * 0.5 + 0.5);
+	color += accent_color.rgb * neural_cells * detail * horizon * core_clearance * 0.25;
 
 	// Content output: a warm ring repeatedly expands from the core while its CPU envelope lives.
 	float wave_radius = fract(TIME * 0.34) * 0.9;
@@ -80,9 +83,10 @@ void fragment() {
 
 	// Tool execution: a narrow radial arc. `tool_pulse` doubles as the travelling head distance.
 	float angle_delta = abs(atan(sin(angle - tool_angle), cos(angle - tool_angle)));
-	float arc = exp(-angle_delta * 130.0) * smoothstep(0.02, 0.16, radius) * smoothstep(0.95, 0.22, radius);
-	float arc_head = exp(-abs(radius - tool_pulse * 0.9) * 55.0);
-	color += vec3(0.72, 0.92, 1.0) * arc * (0.28 + arc_head * 2.6) * smoothstep(0.0, 0.08, tool_pulse);
+	float arc = exp(-angle_delta * 185.0) * smoothstep(0.09, 0.19, radius) * smoothstep(0.78, 0.28, radius);
+	float arc_head = exp(-abs(radius - tool_pulse * 0.74) * 76.0);
+	vec3 tool_color = mix(accent_color.rgb, vec3(0.72, 0.92, 1.0), 0.38);
+	color += tool_color * arc * (0.16 + arc_head * 1.45) * smoothstep(0.0, 0.1, tool_pulse);
 
 	// Tool result: success contracts inward. Failure is a one-way explosion: moving streak
 	// segments launch at the core, carry their own fading tails, and continue beyond the viewport.
