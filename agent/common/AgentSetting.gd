@@ -24,6 +24,7 @@ const MEMORY_IN_PROMPT_ENABLED_KEY := "agent_memory_in_prompt_enabled"
 ## [AgentPromptToggle] — keep the AGENTS.md project prompt inside new sessions.
 const AGENT_PROMPT_IN_PROMPT_ENABLED_KEY := "agent_agents_md_in_prompt_enabled"
 const BROWSER_HEADLESS_KEY := "browser_headless"
+const READ_IMAGE_WITH_API_KEY := "agent_read_image_with_api"
 
 
 static func get_visual_type() -> int:
@@ -89,6 +90,17 @@ static func get_browser_headless() -> bool:
 
 static func set_browser_headless(enabled: bool) -> void:
 	Setting.set_bool(BROWSER_HEADLESS_KEY, enabled)
+	Setting.save()
+	pass
+
+
+## Uses the configured OpenAI-compatible API for image understanding; disable for local MiniCPM-V.
+static func get_read_image_with_api() -> bool:
+	return Setting.get_bool(READ_IMAGE_WITH_API_KEY, true)
+
+
+static func set_read_image_with_api(enabled: bool) -> void:
+	Setting.set_bool(READ_IMAGE_WITH_API_KEY, enabled)
 	Setting.save()
 	pass
 

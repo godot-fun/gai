@@ -3,6 +3,8 @@ extends SettingSection
 
 var sandbox_toggle_button: CheckButton
 var sandbox_label: Label
+var read_image_with_api_label: Label
+var read_image_with_api_toggle_button: CheckButton
 var browser_headless_label: Label
 var browser_headless_toggle_button: CheckButton
 var restart_web_server_label: Label
@@ -18,6 +20,13 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 	sandbox_toggle_button = ui.add_check_button(sandbox_parts[1], "", SandboxPolicy.is_enabled())
 	sandbox_toggle_button.tooltip_text = I18n.t("agent.settings.sandbox_mode_help")
 	sandbox_toggle_button.toggled.connect(on_sandbox_toggled)
+	var read_image_parts := ui.make_setting_row(parent)
+	read_image_with_api_label = ui.make_label(I18n.t("agent.settings.read_image_remotely"))
+	read_image_with_api_label.tooltip_text = I18n.t("agent.settings.read_image_remotely_help")
+	read_image_parts[0].add_child(read_image_with_api_label)
+	read_image_with_api_toggle_button = ui.add_check_button(read_image_parts[1], "", AgentSetting.get_read_image_with_api())
+	read_image_with_api_toggle_button.tooltip_text = I18n.t("agent.settings.read_image_remotely_help")
+	read_image_with_api_toggle_button.toggled.connect(on_read_image_with_api_toggled)
 	var browser_parts := ui.make_setting_row(parent, 4)
 	browser_headless_label = ui.make_label(I18n.t("agent.settings.browser_headless"))
 	browser_parts[0].add_child(browser_headless_label)
@@ -42,12 +51,18 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 
 func refresh() -> void:
 	ui.refresh_check_button(sandbox_toggle_button, SandboxPolicy.is_enabled())
+	ui.refresh_check_button(read_image_with_api_toggle_button, AgentSetting.get_read_image_with_api())
 	ui.refresh_check_button(browser_headless_toggle_button, AgentSetting.get_browser_headless())
 	pass
 
 
 func on_sandbox_toggled(enabled: bool) -> void:
 	SandboxPolicy.set_enabled(enabled)
+	pass
+
+
+func on_read_image_with_api_toggled(enabled: bool) -> void:
+	AgentSetting.set_read_image_with_api(enabled)
 	pass
 
 
@@ -82,6 +97,9 @@ func apply_locale() -> void:
 	sandbox_label.text = I18n.t("agent.settings.sandbox_mode")
 	sandbox_label.tooltip_text = I18n.t("agent.settings.sandbox_mode_help")
 	sandbox_toggle_button.tooltip_text = I18n.t("agent.settings.sandbox_mode_help")
+	read_image_with_api_label.text = I18n.t("agent.settings.read_image_remotely")
+	read_image_with_api_label.tooltip_text = I18n.t("agent.settings.read_image_remotely_help")
+	read_image_with_api_toggle_button.tooltip_text = I18n.t("agent.settings.read_image_remotely_help")
 	browser_headless_label.text = I18n.t("agent.settings.browser_headless")
 	browser_headless_label.tooltip_text = I18n.t("agent.settings.browser_headless_help")
 	browser_headless_toggle_button.tooltip_text = I18n.t("agent.settings.browser_headless_help")
@@ -99,6 +117,8 @@ func apply_theme() -> void:
 	super.apply_theme()
 	ui.style_field_label(sandbox_label)
 	ButtonStyle.apply_check_button(sandbox_toggle_button)
+	ui.style_field_label(read_image_with_api_label)
+	ButtonStyle.apply_check_button(read_image_with_api_toggle_button)
 	ui.style_field_label(browser_headless_label)
 	ButtonStyle.apply_check_button(browser_headless_toggle_button)
 	ui.style_field_label(restart_web_server_label)

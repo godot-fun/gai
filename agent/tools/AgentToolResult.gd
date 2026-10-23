@@ -38,6 +38,9 @@ var content: String = ""
 var is_error: bool = false
 ## UI-only metadata keyed by the DETAIL_* constants above. Values are strings because every entry is display text.
 var details: Dictionary[String, String] = {}
+## Messages injected after every tool result from the assistant turn has been appended.
+## Image tools use this to return model-readable user image blocks without nesting an LLM call.
+var deferred_messages: Array[ChatMessage] = []
 
 
 func _init(_content: String = "", _is_error: bool = false, _details: Dictionary[String, String] = {}) -> void:

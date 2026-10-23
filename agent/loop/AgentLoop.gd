@@ -34,6 +34,7 @@ static func run(ai_client: OpenAiClient, session: AgentSession) -> void:
 			return
 
 		session.messages.append(ChatMessage.assistant_tool_calls(tool_calls, content, completion.reasoning_content))
+		var deferred_messages: Array[ChatMessage] = []
 		for tool_call: OpenAiToolCall in tool_calls:
 			if RuntimeManager.should_stop(session.id):
 				AgentEvents.events.agent_end.emit(session.id, "Stop...")
@@ -56,6 +57,8 @@ static func run(ai_client: OpenAiClient, session: AgentSession) -> void:
 				agent_tool_result = await tool.async_execute(args, ai_client.cancel_scope)
 			AgentEvents.events.tool_execution_end.emit(session.id, tool_call_id, tool_name, agent_tool_result)
 			session.messages.append(ChatMessage.tool_result(tool_call.id, agent_tool_result.content))
+			deferred_messages.append_array(agent_tool_result.deferred_messages)
+		session.messages.append_array(deferred_messages)
 		AgentEvents.events.turn_end.emit(session.id)
 	AgentEvents.events.agent_end.emit(session.id, "max turns exceeded")
 	pass

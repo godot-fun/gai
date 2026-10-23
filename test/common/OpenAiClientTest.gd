@@ -229,6 +229,28 @@ func chat_message_plain_assistant_without_reasoning_omits_field_test() -> void:
 	pass
 
 
+func chat_message_user_image_wire_shape_test() -> void:
+	var message := ChatMessage.user("Inspect this image")
+	message.image_data_url = "data:image/png;base64,AAAA"
+	var wire := message.to_api_dict()
+	assert(wire["role"] == ChatMessage.ROLE_USER)
+	assert(wire["content"].size() == 2)
+	assert(wire["content"][0] == {"type": "text", "text": "Inspect this image"})
+	assert(wire["content"][1] == {"type": "image_url", "image_url": {"url": message.image_data_url}})
+	pass
+
+
+func chat_message_user_image_roundtrip_test() -> void:
+	var message := ChatMessage.user("Inspect this image")
+	message.image_data_url = "data:image/png;base64,AAAA"
+	var restored: ChatMessage = JsonUtils.json_to_object(JsonUtils.object_to_json(message), ChatMessage)
+	assert(restored != null)
+	assert(restored.role == ChatMessage.ROLE_USER)
+	assert(restored.content == message.content)
+	assert(restored.image_data_url == message.image_data_url)
+	pass
+
+
 func build_request_json_tool_calls_reasoning_test() -> void:
 	var tool_call := OpenAiToolCall.new()
 	tool_call.id = "call_1"

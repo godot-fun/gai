@@ -12,6 +12,8 @@ var tool_call_id: String = ""
 var tool_calls: Array[OpenAiToolCall] = []
 ## Thinking-mode output. Thinking models reject a tool-call turn that drops it.
 var reasoning_content: String = ""
+## Base64 data URL used by model-readable image context. Images are only valid in user messages.
+var image_data_url: String = ""
 
 
 func _init(_role: String = "", _content: String = "") -> void:
@@ -26,6 +28,17 @@ static func system(text: String) -> ChatMessage:
 
 static func user(text: String) -> ChatMessage:
 	return ChatMessage.new(ROLE_USER, text)
+
+
+static func user_image(text: String, image_path: String) -> ChatMessage:
+	var msg := ChatMessage.new(ROLE_USER, text)
+	var image_bytes := FileUtils.read_file_to_byte_array(image_path)
+	var image_format := ImageHelper.detect_image_format(image_bytes)
+	if image_bytes.is_empty() or image_format.is_empty():
+		return msg
+	var mime_subtype := "jpeg" if image_format == ImageHelper.jpg else image_format
+	msg.image_data_url = StringUtils.format("data:image/{};base64,{}", mime_subtype, Marshalls.raw_to_base64(image_bytes))
+	return msg
 
 
 static func assistant(text: String, reasoning: String = "") -> ChatMessage:
@@ -63,6 +76,14 @@ func to_api_dict() -> Dictionary:
 			"tool_calls": tool_calls,
 		}
 		return wire
+	if role == ROLE_USER and StringUtils.is_not_blank(image_data_url):
+		return {
+			"role": role,
+			"content": [
+				{"type": "text", "text": content},
+				{"type": "image_url", "image_url": {"url": image_data_url}},
+			],
+		}
 	var wire := {
 		"role": role,
 		"content": content,

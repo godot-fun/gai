@@ -10,7 +10,7 @@ const MAX_PROMPT_LENGTH := 4000
 
 func _init() -> void:
 	name = NAME
-	description = "Read an image with the local MiniCPM-V vision model. Supports visual description, OCR, UI analysis, and structured extraction. Requires an image path and an instruction prompt."
+	description = "Read an image with the configured vision API or local vision model. Supports visual description, OCR, UI analysis, and structured extraction. Requires an image path and an instruction prompt."
 	pass
 
 
@@ -35,6 +35,13 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 		return AgentToolResult.error(StringUtils.format("error: unsupported image format: {}", path))
 
 	var prompt := StringUtils.truncate(str(args.get(ARG_PROMPT, "")).strip_edges(), MAX_PROMPT_LENGTH)
+	if AgentSetting.get_read_image_with_api():
+		var image_message := ChatMessage.user_image(prompt, path)
+		if StringUtils.is_blank(image_message.image_data_url):
+			return AgentToolResult.error("error: image could not be encoded for the API", AgentToolResult.ui_file_details_message(path, "image encoding failed"))
+		var result := AgentToolResult.ok(StringUtils.format("Image loaded from {} and attached for model inspection.", path))
+		result.deferred_messages.append(image_message)
+		return result
 	var output := await VLMServer.async_image_to_text(path, prompt)
 	if StringUtils.is_blank(output):
 		return AgentToolResult.error("error: image reader returned no text", AgentToolResult.ui_file_details_message(path, "no text returned"))
