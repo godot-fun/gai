@@ -122,7 +122,7 @@ func extract_stream_tool_calls_test() -> void:
 	pass
 
 
-func build_request_json_test() -> void:
+func open_ai_request_to_json_test() -> void:
 	var messages: Array[ChatMessage] = []
 	messages.append(ChatMessage.user("hello"))
 	var request := OpenAiRequest.new("test-model", messages, true)
@@ -132,7 +132,7 @@ func build_request_json_test() -> void:
 	tool.function.description = "Read a file"
 	tool.function.parameters.string_prop("path", "File path", true)
 	request.tools.append(tool)
-	var json := client.build_request_json(request)
+	var json := request.to_json()
 	assert(json.contains("\"model\": \"test-model\""))
 	assert(json.contains("\"stream\": true"))
 	assert(json.contains("\"max_tokens\": 8192"))
@@ -142,22 +142,22 @@ func build_request_json_test() -> void:
 	pass
 
 
-func build_request_json_thinking_disabled_test() -> void:
+func open_ai_request_to_json_thinking_disabled_test() -> void:
 	var messages: Array[ChatMessage] = []
 	messages.append(ChatMessage.user("hello"))
 	var request := OpenAiRequest.new("test-model", messages, false)
 	request.thinking = OpenAiRequest.THINKING_DISABLED
-	var json := client.build_request_json(request)
+	var json := request.to_json()
 	assert(json.contains("\"thinking\": {\"type\": \"disabled\"}"))
 	pass
 
 
-func build_request_json_response_format_json_object_test() -> void:
+func open_ai_request_to_json_response_format_json_object_test() -> void:
 	var messages: Array[ChatMessage] = []
 	messages.append(ChatMessage.user("hello"))
 	var request := OpenAiRequest.new("test-model", messages, false)
 	request.response_format = OpenAiRequest.RESPONSE_FORMAT_JSON_OBJECT
-	var json := client.build_request_json(request)
+	var json := request.to_json()
 	assert(json.contains("\"response_format\": {\"type\": \"json_object\"}"))
 	pass
 
@@ -195,11 +195,11 @@ func parse_stream_chunks_skips_blank_body_test() -> void:
 	pass
 
 
-func build_request_json_escapes_control_characters_test() -> void:
+func open_ai_request_to_json_escapes_control_characters_test() -> void:
 	var messages: Array[ChatMessage] = []
 	messages.append(ChatMessage.tool_result("call_1", "ansi" + char(0x1B) + "[0m"))
 	var request := OpenAiRequest.new("test-model", messages, true)
-	var json := client.build_request_json(request)
+	var json := request.to_json()
 	assert(JSON.parse_string(json) != null)
 	assert(json.contains(r"\u001b"))
 	assert(not json.contains(char(0x1B)))
@@ -251,7 +251,7 @@ func chat_message_user_image_roundtrip_test() -> void:
 	pass
 
 
-func build_request_json_tool_calls_reasoning_test() -> void:
+func open_ai_request_to_json_tool_calls_reasoning_test() -> void:
 	var tool_call := OpenAiToolCall.new()
 	tool_call.id = "call_1"
 	tool_call.function.name = "read"
@@ -259,7 +259,7 @@ func build_request_json_tool_calls_reasoning_test() -> void:
 	messages.append(ChatMessage.user("hi"))
 	messages.append(ChatMessage.assistant_tool_calls([tool_call], "", "thinking"))
 	messages.append(ChatMessage.tool_result("call_1", "ok"))
-	var json := client.build_request_json(OpenAiRequest.new("test-model", messages, true))
+	var json := OpenAiRequest.new("test-model", messages, true).to_json()
 	var parsed: Dictionary = JSON.parse_string(json)
 	var wire_messages: Array = parsed["messages"]
 	assert(wire_messages[1]["reasoning_content"] == "thinking")

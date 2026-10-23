@@ -44,10 +44,6 @@ func check_request(messages: Array[ChatMessage]) -> String:
 	return StringUtils.EMPTY
 
 
-func build_request_json(request: OpenAiRequest) -> String:
-	return request.to_json()
-
-
 # ----------------------------------------------------------------------------------------------------------------------
 func async_chat(prompt: String, system_prompt: String = "", proxy: String = "", response_format: String = "") -> String:
 	return await async_chat_messages(build_messages(prompt, system_prompt), proxy, response_format)
@@ -60,7 +56,7 @@ func async_chat_messages(messages: Array[ChatMessage], proxy: String = "", respo
 	request.thinking = OpenAiRequest.THINKING_DISABLED
 	if StringUtils.is_not_blank(response_format):
 		request.response_format = response_format
-	var response := await HttpHelper.async_post(base_url, build_request_json(request), build_headers(), REQUEST_TIMEOUT_MILLIS, proxy, Callable(), cancel_scope)
+	var response := await HttpHelper.async_post(base_url, request.to_json(), build_headers(), REQUEST_TIMEOUT_MILLIS, proxy, Callable(), cancel_scope)
 	var body := response.get_body_string()
 	Log.info("OpenAI response body:[{}]", StringUtils.truncate(body, 512))
 	if not response.success or response.code != 200:
@@ -107,7 +103,7 @@ func async_chat_messages_stream(messages: Array[ChatMessage], tools: Array[OpenA
 		var remaining := consume_sse_buffer(buffer, on_delta)
 		pending_build.append_if_not_empty(remaining)
 		pass
-	var response := await HttpHelper.async_post(base_url, build_request_json(request), build_headers(true)
+	var response := await HttpHelper.async_post(base_url, request.to_json(), build_headers(true)
 			, REQUEST_TIMEOUT_MILLIS, proxy, on_chunk, cancel_scope)
 	## The final body carries every delta verbatim, so content / reasoning / finish_reason / usage
 	## all come from that one string instead of being accumulated during streaming.
