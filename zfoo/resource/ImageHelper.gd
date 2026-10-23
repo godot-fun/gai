@@ -104,6 +104,20 @@ static func convert_to_png_with_max_size(image_bytes: PackedByteArray, max_size:
 	return image.save_png_to_buffer()
 
 
+## Fits an existing WebP inside [param max_size] without upscaling; other formats are converted to WebP.
+## WebPs already inside the bounds return their original bytes unchanged.
+## Returns an empty byte array when decoding fails or [param max_size] is invalid.
+static func convert_to_webp_with_max_size(image_bytes: PackedByteArray, max_size: Vector2i, quality: float = 0.90) -> PackedByteArray:
+	if max_size.x <= 0 or max_size.y <= 0:
+		return PackedByteArray()
+	var image := decode_image(image_bytes)
+	if image == null or image.is_empty():
+		return PackedByteArray()
+	if not resize_image_to_max_size(image, max_size) and detect_image_format(image_bytes) == webp:
+		return image_bytes
+	return image.save_webp_to_buffer(clampf(quality, 0.0, 1.0))
+
+
 ## Resizes [param image] proportionally only when it exceeds [param max_size].
 ## Returns true when the image dimensions changed.
 static func resize_image_to_max_size(image: Image, max_size: Vector2i) -> bool:

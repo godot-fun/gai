@@ -58,6 +58,29 @@ func convert_to_png_with_max_size_test() -> void:
 	pass
 
 
+func convert_svg_to_png_preserves_transparency_test() -> void:
+	var svg_bytes := "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"2\" height=\"2\"><rect width=\"1\" height=\"1\" fill=\"red\"/></svg>".to_utf8_buffer()
+	var converted := ImageHelper.convert_to_png_with_max_size(svg_bytes, Vector2i(2, 2))
+	var decoded := ImageHelper.decode_image(converted)
+	assert(ImageHelper.detect_image_format(converted) == ImageHelper.png)
+	assert(decoded != null)
+	assert(decoded.get_pixel(1, 1).a == 0.0)
+	pass
+
+
+func convert_to_webp_with_max_size_test() -> void:
+	var source := Image.create(2400, 1200, false, Image.FORMAT_RGBA8)
+	source.fill(Color.RED)
+	var original := source.save_webp_to_buffer()
+	var converted := ImageHelper.convert_to_webp_with_max_size(original, Vector2i(1300, 1300))
+	var decoded := ImageHelper.decode_image(converted)
+	assert(ImageHelper.detect_image_format(converted) == ImageHelper.webp)
+	assert(decoded != null)
+	assert(decoded.get_size() == Vector2i(1300, 650))
+	assert(ImageHelper.convert_to_webp_with_max_size(original, Vector2i(2400, 1200)) == original)
+	pass
+
+
 func get_image_format_test() -> void:
 	assert(ImageHelper.get_image_format("res://image/photo.PNG") == ImageHelper.png)
 	assert(ImageHelper.get_image_format("https://example.com/photo.webp") == ImageHelper.webp)

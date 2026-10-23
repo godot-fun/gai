@@ -37,9 +37,12 @@ static func user_image(text: String, image_path: String) -> ChatMessage:
 	var image_format := ImageHelper.detect_image_format(image_bytes)
 	var encoded_bytes: PackedByteArray
 	var mime_subtype: String
-	if image_format == ImageHelper.png:
+	if image_format == ImageHelper.png or image_format == ImageHelper.svg:
 		encoded_bytes = ImageHelper.convert_to_png_with_max_size(image_bytes, REMOTE_IMAGE_MAX_SIZE)
 		mime_subtype = ImageHelper.png
+	elif image_format == ImageHelper.webp:
+		encoded_bytes = ImageHelper.convert_to_webp_with_max_size(image_bytes, REMOTE_IMAGE_MAX_SIZE)
+		mime_subtype = ImageHelper.webp
 	else:
 		encoded_bytes = ImageHelper.convert_to_jpg_with_max_size(image_bytes, REMOTE_IMAGE_MAX_SIZE)
 		mime_subtype = "jpeg"
