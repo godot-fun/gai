@@ -63,7 +63,11 @@ void fragment() {
 	float wake = smoothstep(0.72, 0.08, radius) * smoothstep(0.0, 0.85, energy);
 	vec3 cool = mix(accent_color.rgb * 0.32, accent_color.rgb * 1.25 + vec3(0.04, 0.12, 0.18), cloud);
 	vec3 color = cool * curtain * horizon * (0.1 + wake * 0.9);
-	color += accent_color.rgb * exp(-radius * (11.0 - energy * 3.0)) * (0.38 + energy * 1.35);
+	// Keep the conscious core readable without letting its exponential center bloom into a
+	// distracting white point at high energy. A broader, lower-intensity falloff preserves the
+	// orb's volume and leaves the surrounding aurora as the visual focus.
+	float core_glow = exp(-radius * (9.5 - energy * 2.0));
+	color += accent_color.rgb * core_glow * (0.22 + energy * 0.72);
 
 	// Thin thresholded ridges read as neural impulses without introducing individual particles.
 	float neural_cells = smoothstep(0.91, 0.985, sin((flow.x + flow.y) * 26.0 + cloud * 17.0) * 0.5 + 0.5);
