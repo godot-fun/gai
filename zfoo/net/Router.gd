@@ -62,7 +62,7 @@ static func at_receiver(decodedPacketInfo: DecodedPacketInfo) -> void:
 	if !ignored_packet_logs.has(packet.get_script()):
 		Log.info("receive packet <- {} [{}] attachment:[{}]", packet.get_script().get_global_name(), JsonUtils.object_to_json(packet), attachment != null)
 
-	if attachment == null || packet.get_script() == Error:
+	if attachment == null:
 		if !packetBus.has(packet.PROTOCOL_ID):
 			Log.error("[protocol:{}][protocolId:{}] has no registration, please register for this protocol", packet.get_script().get_global_name(), packet.PROTOCOL_ID)
 			return
