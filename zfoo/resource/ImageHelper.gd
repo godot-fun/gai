@@ -20,8 +20,36 @@ static func load_external_image(path: String) -> ImageTexture:
 
 
 static func get_image_format(path: String, default_format: String = png) -> String:
-	var extension := StringUtils.substring_after_last(path.to_lower(), ".")
+	var path_without_query := path.get_slice("?", 0).get_slice("#", 0)
+	var extension := StringUtils.substring_after_last(path_without_query.to_lower(), ".")
 	return extension if EXTENSIONS.has(extension) else default_format
+
+
+## Saves [param bytes] using the encoder selected by [param path]'s extension.
+## When [param path] has no extension, recognized source bytes are written unchanged.
+static func save_image(bytes: PackedByteArray, path: String) -> Error:
+	if bytes.is_empty():
+		return ERR_INVALID_DATA
+	var path_format := get_image_format(path)
+	var image := decode_image(bytes)
+	if image == null:
+		return ERR_FILE_UNRECOGNIZED
+	match path_format:
+		jpg, jpeg:
+			return image.save_jpg(path)
+		png:
+			return image.save_png(path)
+		webp:
+			return image.save_webp(path)
+		_:
+			var source_format := detect_image_format(bytes)
+			if source_format.is_empty():
+				return ERR_FILE_UNRECOGNIZED
+			var file := FileAccess.open(path, FileAccess.WRITE)
+			if file == null:
+				return FileAccess.get_open_error()
+			file.store_buffer(bytes)
+			return OK
 
 
 static func detect_image_format(bytes: PackedByteArray) -> String:

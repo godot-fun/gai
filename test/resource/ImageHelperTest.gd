@@ -84,9 +84,29 @@ func convert_to_webp_with_max_size_test() -> void:
 func get_image_format_test() -> void:
 	assert(ImageHelper.get_image_format("res://image/photo.PNG") == ImageHelper.png)
 	assert(ImageHelper.get_image_format("https://example.com/photo.webp") == ImageHelper.webp)
+	assert(ImageHelper.get_image_format("https://example.com/photo.jpg?width=320#preview") == ImageHelper.jpg)
 	assert(ImageHelper.get_image_format("https://example.com/photo") == ImageHelper.png)
 	assert(ImageHelper.get_image_format("res://document.txt") == ImageHelper.png)
 	assert(ImageHelper.get_image_format("res://document.txt", ImageHelper.webp) == ImageHelper.webp)
+	pass
+
+
+func save_image_test() -> void:
+	var image := Image.create(2, 2, false, Image.FORMAT_RGBA8)
+	image.fill(Color.RED)
+	var base_path := "user://image_helper_save_image_test"
+	for extension in [ImageHelper.jpg, ImageHelper.png, ImageHelper.webp]:
+		var path := base_path + "." + extension
+		var source_bytes := image.save_jpg_to_buffer() if extension == ImageHelper.jpg else image.save_png_to_buffer() if extension == ImageHelper.png else image.save_webp_to_buffer()
+		assert(ImageHelper.save_image(source_bytes, ProjectSettings.globalize_path(path)) == OK)
+		assert(ImageHelper.detect_image_format(FileAccess.get_file_as_bytes(path)) == extension)
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	assert(ImageHelper.save_image(image.save_png_to_buffer(), ProjectSettings.globalize_path(base_path + ".svg")) == ERR_FILE_UNRECOGNIZED)
+	var original_png := image.save_png_to_buffer()
+	var original_path := base_path + "_original"
+	assert(ImageHelper.save_image(original_png, ProjectSettings.globalize_path(original_path)) == OK)
+	assert(FileAccess.get_file_as_bytes(original_path) == original_png)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(original_path))
 	pass
 
 
