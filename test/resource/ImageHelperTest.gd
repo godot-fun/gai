@@ -23,6 +23,14 @@ func image_buffer_decode_test() -> void:
 	pass
 
 
+func resize_image_to_max_size_test() -> void:
+	var image := Image.create(2400, 1200, false, Image.FORMAT_RGBA8)
+	assert(ImageHelper.resize_image_to_max_size(image, Vector2i(1300, 1300)))
+	assert(image.get_size() == Vector2i(1300, 650))
+	assert(not ImageHelper.resize_image_to_max_size(image, Vector2i(1300, 1300)))
+	pass
+
+
 func convert_to_jpg_with_max_size_test() -> void:
 	var source := Image.create(2400, 1200, false, Image.FORMAT_RGBA8)
 	source.fill(Color.RED)

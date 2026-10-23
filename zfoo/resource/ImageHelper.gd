@@ -86,11 +86,8 @@ static func convert_to_jpg_with_max_size(image_bytes: PackedByteArray, max_size:
 	var image := decode_image(image_bytes)
 	if image == null or image.is_empty():
 		return PackedByteArray()
-	var scale := minf(1.0, minf(float(max_size.x) / image.get_width(), float(max_size.y) / image.get_height()))
-	if scale >= 1.0 and detect_image_format(image_bytes) == jpg:
+	if not resize_image_to_max_size(image, max_size) and detect_image_format(image_bytes) == jpg:
 		return image_bytes
-	if scale < 1.0:
-		image.resize(maxi(1, roundi(image.get_width() * scale)), maxi(1, roundi(image.get_height() * scale)), Image.INTERPOLATE_LANCZOS)
 	return image.save_jpg_to_buffer(clampf(quality, 0.0, 1.0))
 
 
@@ -102,11 +99,21 @@ static func convert_to_png_with_max_size(image_bytes: PackedByteArray, max_size:
 	var image := decode_image(image_bytes)
 	if image == null or image.is_empty():
 		return PackedByteArray()
-	var scale := minf(1.0, minf(float(max_size.x) / image.get_width(), float(max_size.y) / image.get_height()))
-	if scale >= 1.0 and detect_image_format(image_bytes) == png:
+	if not resize_image_to_max_size(image, max_size) and detect_image_format(image_bytes) == png:
 		return image_bytes
-	image.resize(maxi(1, roundi(image.get_width() * scale)), maxi(1, roundi(image.get_height() * scale)), Image.INTERPOLATE_LANCZOS)
 	return image.save_png_to_buffer()
+
+
+## Resizes [param image] proportionally only when it exceeds [param max_size].
+## Returns true when the image dimensions changed.
+static func resize_image_to_max_size(image: Image, max_size: Vector2i) -> bool:
+	if image == null or image.is_empty() or max_size.x <= 0 or max_size.y <= 0:
+		return false
+	var scale := minf(1.0, minf(float(max_size.x) / image.get_width(), float(max_size.y) / image.get_height()))
+	if scale >= 1.0:
+		return false
+	image.resize(maxi(1, roundi(image.get_width() * scale)), maxi(1, roundi(image.get_height() * scale)), Image.INTERPOLATE_LANCZOS)
+	return true
 
 
 # ----------------------------------------------------------------------------------------------------------------------
