@@ -19,7 +19,7 @@ func image_buffer_decode_test() -> void:
 	source.fill(Color.RED)
 	var decoded := ImageHelper.decode_image(source.save_jpg_to_buffer())
 	assert(decoded != null)
-	assert(decoded.get_size() == Vector2i(2, 2))
+	assert(decoded.image.get_size() == Vector2i(2, 2))
 	pass
 
 
@@ -37,9 +37,9 @@ func convert_to_jpg_with_max_size_test() -> void:
 	var original := source.save_jpg_to_buffer()
 	var converted := ImageHelper.convert_to_jpg_with_max_size(original, Vector2i(1300, 1300))
 	var decoded := ImageHelper.decode_image(converted)
-	assert(ImageHelper.detect_image_format(converted) == ImageHelper.jpg)
 	assert(decoded != null)
-	assert(decoded.get_size() == Vector2i(1300, 650))
+	assert(decoded.format == ImageHelper.jpg)
+	assert(decoded.image.get_size() == Vector2i(1300, 650))
 	assert(ImageHelper.convert_to_jpg_with_max_size(original, Vector2i(2400, 1200)) == original)
 	pass
 
@@ -50,11 +50,11 @@ func convert_to_png_with_max_size_test() -> void:
 	var original := source.save_png_to_buffer()
 	var converted := ImageHelper.convert_to_png_with_max_size(original, Vector2i(1300, 1300))
 	var decoded := ImageHelper.decode_image(converted)
-	assert(ImageHelper.detect_image_format(converted) == ImageHelper.png)
 	assert(decoded != null)
-	assert(decoded.get_size() == Vector2i(1300, 650))
+	assert(decoded.format == ImageHelper.png)
+	assert(decoded.image.get_size() == Vector2i(1300, 650))
 	assert(ImageHelper.convert_to_png_with_max_size(original, Vector2i(2400, 1200)) == original)
-	assert(ImageHelper.detect_image_format(ImageHelper.convert_to_png_with_max_size(source.save_jpg_to_buffer(), Vector2i(2400, 1200))) == ImageHelper.png)
+	assert(ImageHelper.decode_image(ImageHelper.convert_to_png_with_max_size(source.save_jpg_to_buffer(), Vector2i(2400, 1200))).format == ImageHelper.png)
 	pass
 
 
@@ -62,9 +62,9 @@ func convert_svg_to_png_preserves_transparency_test() -> void:
 	var svg_bytes := "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"2\" height=\"2\"><rect width=\"1\" height=\"1\" fill=\"red\"/></svg>".to_utf8_buffer()
 	var converted := ImageHelper.convert_to_png_with_max_size(svg_bytes, Vector2i(2, 2))
 	var decoded := ImageHelper.decode_image(converted)
-	assert(ImageHelper.detect_image_format(converted) == ImageHelper.png)
 	assert(decoded != null)
-	assert(decoded.get_pixel(1, 1).a == 0.0)
+	assert(decoded.format == ImageHelper.png)
+	assert(decoded.image.get_pixel(1, 1).a == 0.0)
 	pass
 
 
@@ -74,9 +74,9 @@ func convert_to_webp_with_max_size_test() -> void:
 	var original := source.save_webp_to_buffer()
 	var converted := ImageHelper.convert_to_webp_with_max_size(original, Vector2i(1300, 1300))
 	var decoded := ImageHelper.decode_image(converted)
-	assert(ImageHelper.detect_image_format(converted) == ImageHelper.webp)
 	assert(decoded != null)
-	assert(decoded.get_size() == Vector2i(1300, 650))
+	assert(decoded.format == ImageHelper.webp)
+	assert(decoded.image.get_size() == Vector2i(1300, 650))
 	assert(ImageHelper.convert_to_webp_with_max_size(original, Vector2i(2400, 1200)) == original)
 	pass
 
@@ -99,14 +99,20 @@ func save_image_test() -> void:
 		var path := base_path + "." + extension
 		var source_bytes := image.save_jpg_to_buffer() if extension == ImageHelper.jpg else image.save_png_to_buffer() if extension == ImageHelper.png else image.save_webp_to_buffer()
 		assert(ImageHelper.save_image(source_bytes, ProjectSettings.globalize_path(path)) == OK)
-		assert(ImageHelper.detect_image_format(FileAccess.get_file_as_bytes(path)) == extension)
+		assert(ImageHelper.decode_image(FileAccess.get_file_as_bytes(path)).format == extension)
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	assert(ImageHelper.save_image(image.save_png_to_buffer(), ProjectSettings.globalize_path(base_path + ".svg")) == ERR_FILE_UNRECOGNIZED)
-	var original_png := image.save_png_to_buffer()
-	var original_path := base_path + "_original"
-	assert(ImageHelper.save_image(original_png, ProjectSettings.globalize_path(original_path)) == OK)
-	assert(FileAccess.get_file_as_bytes(original_path) == original_png)
-	DirAccess.remove_absolute(ProjectSettings.globalize_path(original_path))
+	assert(ImageHelper.save_image(image.save_png_to_buffer(), ProjectSettings.globalize_path(base_path + "_no_extension")) == ERR_FILE_UNRECOGNIZED)
+	pass
+
+
+func decode_image_format_test() -> void:
+	var source := Image.create(2, 2, false, Image.FORMAT_RGBA8)
+	assert(ImageHelper.decode_image(source.save_jpg_to_buffer()).format == ImageHelper.jpg)
+	assert(ImageHelper.decode_image(source.save_png_to_buffer()).format == ImageHelper.png)
+	assert(ImageHelper.decode_image(source.save_webp_to_buffer()).format == ImageHelper.webp)
+	assert(ImageHelper.decode_image("<?xml version=\"1.0\"?><svg xmlns=\"http://www.w3.org/2000/svg\"/>".to_utf8_buffer()).format == ImageHelper.svg)
+	assert(ImageHelper.decode_image(PackedByteArray([0x01, 0x02, 0x03])) == null)
 	pass
 
 

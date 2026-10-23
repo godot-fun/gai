@@ -27,6 +27,15 @@ func FileUtils_read_write_test() -> void:
 	pass
 
 
+func FileUtils_write_byte_array_to_file_test() -> void:
+	var path := "user://fileutils_bytes/nested/data.bin"
+	var bytes := PackedByteArray([0x61, 0x00, 0x62])
+	assert(FileUtils.write_byte_array_to_file(path, bytes))
+	assert(FileUtils.read_file_to_byte_array(path) == bytes)
+	FileUtils.delete_file_or_directory(ProjectSettings.globalize_path("user://fileutils_bytes"))
+	pass
+
+
 func is_relative_to_test() -> void:
 	assert(FileUtils.is_relative_to("C:/workspace", "C:/workspace"))
 	assert(FileUtils.is_relative_to("C:/workspace/src/main.gd", "C:/workspace"))

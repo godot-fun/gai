@@ -132,6 +132,20 @@ static func write_string_to_file(path: String, content: String) -> bool:
 	return error == OK
 
 
+## Writes [param bytes] to [param path], creating parent directories when needed.
+static func write_byte_array_to_file(path: String, bytes: PackedByteArray) -> bool:
+	var absolute := globalize_writable_path(path)
+	if absolute.is_empty():
+		return false
+	var file := FileAccess.open(absolute, FileAccess.WRITE)
+	if file == null:
+		return false
+	file.store_buffer(bytes)
+	var error := file.get_error()
+	file = null
+	return error == OK
+
+
 static func read_file_to_string(filePath: String) -> String:
 	if not FileAccess.file_exists(filePath):
 		return StringUtils.EMPTY

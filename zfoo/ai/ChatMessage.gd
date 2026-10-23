@@ -34,7 +34,10 @@ static func user(text: String) -> ChatMessage:
 static func user_image(text: String, image_path: String) -> ChatMessage:
 	var msg := ChatMessage.new(ROLE_USER, text)
 	var image_bytes := FileUtils.read_file_to_byte_array(image_path)
-	var image_format := ImageHelper.detect_image_format(image_bytes)
+	var decoded_image := ImageHelper.decode_image(image_bytes)
+	if decoded_image == null:
+		return msg
+	var image_format := decoded_image.format
 	var encoded_bytes: PackedByteArray
 	var mime_subtype: String
 	if image_format == ImageHelper.png or image_format == ImageHelper.svg:

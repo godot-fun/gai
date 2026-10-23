@@ -14,6 +14,17 @@ const webp := "webp"
 const EXTENSIONS: PackedStringArray = [bmp, dds, exr, jpg, jpeg, ktx, png, svg, tga, webp]
 
 
+class ImageDecodeResult:
+	var format: String
+	var image: Image
+
+
+	func _init(image_format: String, decoded_image: Image) -> void:
+		format = image_format
+		image = decoded_image
+		pass
+
+
 static func load_external_image(path: String) -> ImageTexture:
 	var image := Image.load_from_file(path)
 	return ImageTexture.create_from_image(image) if image != null and not image.is_empty() else null
@@ -26,32 +37,29 @@ static func get_image_format(path: String, default_format: String = png) -> Stri
 
 
 ## Saves [param bytes] using the encoder selected by [param path]'s extension.
-## When [param path] has no extension, recognized source bytes are written unchanged.
 static func save_image(bytes: PackedByteArray, path: String) -> Error:
 	if bytes.is_empty():
 		return ERR_INVALID_DATA
 	var path_format := get_image_format(path, "")
-	var image := decode_image(bytes)
-	if image == null:
+	if path_format.is_empty():
+		return ERR_FILE_UNRECOGNIZED
+	var decoded_image := decode_image(bytes)
+	if decoded_image == null:
 		return ERR_FILE_UNRECOGNIZED
 	match path_format:
 		jpg, jpeg:
-			return image.save_jpg(path)
+			return decoded_image.image.save_jpg(path)
 		png:
-			return image.save_png(path)
+			return decoded_image.image.save_png(path)
 		webp:
-			return image.save_webp(path)
+			return decoded_image.image.save_webp(path)
 		_:
-			var source_format := detect_image_format(bytes)
-			if source_format.is_empty():
+			if decoded_image.format != path_format:
 				return ERR_FILE_UNRECOGNIZED
-			var file := FileAccess.open(path, FileAccess.WRITE)
-			if file == null:
-				return FileAccess.get_open_error()
-			file.store_buffer(bytes)
-			return OK
+			return OK if FileUtils.write_byte_array_to_file(path, bytes) else ERR_CANT_CREATE
 
 
+## Quickly identifies common image formats from their file signatures.
 static func detect_image_format(bytes: PackedByteArray) -> String:
 	if bytes.size() >= 3 and bytes[0] == 0xff and bytes[1] == 0xd8 and bytes[2] == 0xff:
 		return jpg
@@ -65,43 +73,48 @@ static func detect_image_format(bytes: PackedByteArray) -> String:
 	return ""
 
 
-static func decode_image(bytes: PackedByteArray) -> Image:
+static func decode_image(bytes: PackedByteArray) -> ImageDecodeResult:
 	var image := Image.new()
-	var error := ERR_FILE_UNRECOGNIZED
 	match detect_image_format(bytes):
-		jpg: error = image.load_jpg_from_buffer(bytes)
-		png: error = image.load_png_from_buffer(bytes)
-		webp: error = image.load_webp_from_buffer(bytes)
-		svg: error = image.load_svg_from_buffer(bytes)
-	if error == OK:
-		return image
-
+		jpg:
+			if image.load_jpg_from_buffer(bytes) == OK:
+				return ImageDecodeResult.new(jpg, image)
+		png:
+			if image.load_png_from_buffer(bytes) == OK:
+				return ImageDecodeResult.new(png, image)
+		webp:
+			if image.load_webp_from_buffer(bytes) == OK:
+				return ImageDecodeResult.new(webp, image)
+		svg:
+			if image.load_svg_from_buffer(bytes) == OK:
+				return ImageDecodeResult.new(svg, image)
+	image = Image.new()
 	if image.load_jpg_from_buffer(bytes) == OK:
-		return image
+		return ImageDecodeResult.new(jpg, image)
 	image = Image.new()
 	if image.load_png_from_buffer(bytes) == OK:
-		return image
+		return ImageDecodeResult.new(png, image)
 	image = Image.new()
 	if image.load_webp_from_buffer(bytes) == OK:
-		return image
+		return ImageDecodeResult.new(webp, image)
 	image = Image.new()
 	if image.load_svg_from_buffer(bytes) == OK:
-		return image
+		return ImageDecodeResult.new(svg, image)
 	image = Image.new()
 	if image.load_bmp_from_buffer(bytes) == OK:
-		return image
+		return ImageDecodeResult.new(bmp, image)
 	image = Image.new()
 	if image.load_tga_from_buffer(bytes) == OK:
-		return image
+		return ImageDecodeResult.new(tga, image)
 	image = Image.new()
 	if image.load_dds_from_buffer(bytes) == OK:
-		return image
+		return ImageDecodeResult.new(dds, image)
 	image = Image.new()
 	if image.load_exr_from_buffer(bytes) == OK:
-		return image
+		return ImageDecodeResult.new(exr, image)
 	image = Image.new()
 	if image.load_ktx_from_buffer(bytes) == OK:
-		return image
+		return ImageDecodeResult.new(ktx, image)
 	return null
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -111,10 +124,11 @@ static func decode_image(bytes: PackedByteArray) -> Image:
 static func convert_to_jpg_with_max_size(image_bytes: PackedByteArray, max_size: Vector2i, quality: float = 0.90) -> PackedByteArray:
 	if max_size.x <= 0 or max_size.y <= 0:
 		return PackedByteArray()
-	var image := decode_image(image_bytes)
-	if image == null or image.is_empty():
+	var decoded_image := decode_image(image_bytes)
+	if decoded_image == null or decoded_image.image.is_empty():
 		return PackedByteArray()
-	if not resize_image_to_max_size(image, max_size) and detect_image_format(image_bytes) == jpg:
+	var image := decoded_image.image
+	if not resize_image_to_max_size(image, max_size) and decoded_image.format == jpg:
 		return image_bytes
 	return image.save_jpg_to_buffer(clampf(quality, 0.0, 1.0))
 
@@ -124,10 +138,11 @@ static func convert_to_jpg_with_max_size(image_bytes: PackedByteArray, max_size:
 static func convert_to_png_with_max_size(image_bytes: PackedByteArray, max_size: Vector2i) -> PackedByteArray:
 	if max_size.x <= 0 or max_size.y <= 0:
 		return PackedByteArray()
-	var image := decode_image(image_bytes)
-	if image == null or image.is_empty():
+	var decoded_image := decode_image(image_bytes)
+	if decoded_image == null or decoded_image.image.is_empty():
 		return PackedByteArray()
-	if not resize_image_to_max_size(image, max_size) and detect_image_format(image_bytes) == png:
+	var image := decoded_image.image
+	if not resize_image_to_max_size(image, max_size) and decoded_image.format == png:
 		return image_bytes
 	return image.save_png_to_buffer()
 
@@ -138,10 +153,11 @@ static func convert_to_png_with_max_size(image_bytes: PackedByteArray, max_size:
 static func convert_to_webp_with_max_size(image_bytes: PackedByteArray, max_size: Vector2i, quality: float = 0.90) -> PackedByteArray:
 	if max_size.x <= 0 or max_size.y <= 0:
 		return PackedByteArray()
-	var image := decode_image(image_bytes)
-	if image == null or image.is_empty():
+	var decoded_image := decode_image(image_bytes)
+	if decoded_image == null or decoded_image.image.is_empty():
 		return PackedByteArray()
-	if not resize_image_to_max_size(image, max_size) and detect_image_format(image_bytes) == webp:
+	var image := decoded_image.image
+	if not resize_image_to_max_size(image, max_size) and decoded_image.format == webp:
 		return image_bytes
 	return image.save_webp_to_buffer(clampf(quality, 0.0, 1.0))
 
