@@ -43,7 +43,7 @@ func _init() -> void:
 static func show_recording() -> void:
 	if instance != null and is_instance_valid(instance):
 		return
-	if gdf.gdf_node == null or not gdf.gdf_node.is_inside_tree():
+	if not gdf.is_ready():
 		return
 	instance = SenseWave.new()
 	gdf.gdf_node.add_child(instance)

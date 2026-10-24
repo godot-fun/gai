@@ -82,7 +82,7 @@ func _init() -> void:
 ## Open an empty five-slot sheet near [param screen_anchor]. Caller awaits [signal finished].
 static func open(screen_anchor: Vector2i) -> SensePicker:
 	dismiss()
-	if gdf.gdf_node == null or not gdf.gdf_node.is_inside_tree():
+	if not gdf.is_ready():
 		return null
 	# Capture the typing target before this Window steals activation.
 	if Engine.has_singleton("NativeOS"):

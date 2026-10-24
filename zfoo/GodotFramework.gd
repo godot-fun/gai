@@ -27,6 +27,12 @@ func _notification(what: int) -> void:
 		events.application_end.emit()
 	pass
 
+
+## Whether the framework root node is available in the active scene tree.
+static func is_ready() -> bool:
+	return gdf_node != null and gdf_node.is_inside_tree()
+
+
 ####################################################################################################
 # Layer
 func init_layer() -> void:

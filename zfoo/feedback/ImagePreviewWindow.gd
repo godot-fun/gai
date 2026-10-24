@@ -151,7 +151,7 @@ func apply_theme() -> void:
 
 ## Whether an image preview window is currently open.
 static func is_open() -> bool:
-	return gdf.gdf_node != null and gdf.gdf_node.is_inside_tree() and not gdf.gdf_node.get_tree().get_nodes_in_group(GROUP_NAME).is_empty()
+	return gdf.is_ready() and not gdf.gdf_node.get_tree().get_nodes_in_group(GROUP_NAME).is_empty()
 
 
 ## Load an image from a path, then open it through [method show_image].

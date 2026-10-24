@@ -162,7 +162,7 @@ func on_card_input(event: InputEvent) -> void:
 ## [param i18n_title] and [param i18n_body] may be translation keys; text without a registered
 ## translation is displayed unchanged.
 static func show_toast(i18n_title: String, i18n_body: String, color: Color, corner: Corner = Corner.CORNER_BOTTOM_RIGHT) -> void:
-	if gdf.gdf_node == null or not gdf.gdf_node.is_inside_tree():
+	if not gdf.is_ready():
 		return
 	var toast: DesktopToast = DesktopToast.new()
 	toast.title_text = I18n.t(i18n_title)
