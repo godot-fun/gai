@@ -92,6 +92,7 @@ func _ready() -> void:
 	log_button.setup(log_button_node)
 	sense_input.setup()
 	apply_locale()
+	get_window().window_input.connect(on_window_input)
 
 	# session
 	agent_session_sidebar.reload_sessions()
@@ -100,6 +101,25 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	sense_input.shutdown()
+	pass
+
+
+func on_window_input(event: InputEvent) -> void:
+	if not is_inside_tree() or not get_window().has_focus():
+		return
+	if event is InputEventMouseButton:
+		var mouse := event as InputEventMouseButton
+		if not mouse.pressed or not mouse.ctrl_pressed:
+			return
+		var direction := 0
+		if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
+			direction = 1
+		elif mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			direction = -1
+		if direction == 0:
+			return
+		AgentSetting.step_ui_scale(direction)
+		get_viewport().set_input_as_handled()
 	pass
 
 
