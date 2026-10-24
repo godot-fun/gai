@@ -127,13 +127,12 @@ static func mix_with_theme_color(base: Color, weight: float) -> Color:
 	return base.lerp(Color(theme_color, 1.0), clampf(weight, 0.0, 1.0))
 
 
-## Refresh every palette derived from the active appearance. Cards follow the accent hue; semantic,
-## markdown and file colors select their hand-tuned dark or light variants.
+## Refresh every palette derived from the active appearance. Cards follow the accent hue; semantic
+## and file colors select their hand-tuned dark or light variants. [CodeColors] and [MarkdownColors]
+## listen for [signal gdf.Events.theme_changed] instead of refreshing here.
 static func refresh_derived_colors() -> void:
 	refresh_theme_colors()
 	Colors.refresh()
-	MarkdownColors.refresh()
-	CodeColors.refresh()
 	FileColors.refresh()
 	pass
 

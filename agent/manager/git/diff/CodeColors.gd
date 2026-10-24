@@ -4,9 +4,9 @@ extends Object
 ## Syntax palette for repository source shown in CodeEdit. Like MarkdownColors, these are two
 ## hand-tuned palettes rather than accent-derived colors: every token role keeps predictable
 ## contrast while the user changes the application accent.
-## `ThemeColor` calls `refresh()` whenever the dark/light theme changes.
+## [method _static_init] connects [signal gdf.Events.theme_changed] to [method on_theme_changed].
 
-## The dark palette also provides safe defaults before ThemeColor's first refresh.
+## The dark palette also provides safe defaults before the class loads and [method on_theme_changed] runs.
 const DARK_KEYWORD := Color("ff7ab2")
 const DARK_TYPE := Color("82d2ce")
 const DARK_DECLARATION := Color("c6a0f6")
@@ -41,8 +41,14 @@ static var member: Color = DARK_MEMBER
 static var tag: Color = DARK_TAG
 
 
-## Assignment only: select the hand-tuned set for the active appearance.
-static func refresh() -> void:
+static func _static_init() -> void:
+	gdf.events.theme_changed.connect(on_theme_changed)
+	on_theme_changed()
+	pass
+
+
+## Select the hand-tuned set for the active dark/light appearance.
+static func on_theme_changed() -> void:
 	if ThemeColor.is_dark_theme():
 		apply_dark_palette()
 	else:
