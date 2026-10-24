@@ -63,6 +63,7 @@ func on_sandbox_toggled(enabled: bool) -> void:
 
 func on_read_image_with_api_toggled(enabled: bool) -> void:
 	AgentSetting.set_read_image_with_api(enabled)
+	AgentToolRegistry.reload_tools()
 	pass
 
 

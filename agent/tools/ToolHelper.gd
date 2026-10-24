@@ -27,7 +27,10 @@ static func get_tool_call_summary(tool_name: String, args: Dictionary[String, Va
 		BashTool.NAME:
 			body = str(args.get(BashTool.ARG_COMMAND, ""))
 		ReadImageTool.NAME:
-			body = str(args.get(ReadImageTool.ARG_PATH, "")) + FileUtils.NEWLINE_LF + str(args.get(ReadImageTool.ARG_PROMPT, ""))
+			body = str(args.get(ReadImageTool.ARG_PATH, ""))
+			var image_prompt := str(args.get(ReadImageLocalTool.ARG_PROMPT, "")).strip_edges()
+			if StringUtils.is_not_blank(image_prompt):
+				body += FileUtils.NEWLINE_LF + image_prompt
 		AudioToTextTool.NAME:
 			body = str(args.get(AudioToTextTool.ARG_PATH, ""))
 		WebSearchTool.NAME:
