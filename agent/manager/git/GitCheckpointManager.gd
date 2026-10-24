@@ -154,7 +154,7 @@ static func async_restore(session_id: int, sha: String) -> Error:
 	var diff := await git.async_get_staged_name_status(sha)
 	if diff.exit_code != 0:
 		Log.error("agent checkpoint restore diff failed:[{}]", diff.output.build_string())
-		return ERR_CANT_READ
+		return ERR_FILE_CANT_READ
 	# Added / copied / renamed targets did not exist at the checkpoint — revert removes them.
 	var removed := PackedStringArray()
 	for line in diff.output.build_string().split(FileUtils.NEWLINE_LF, false):
