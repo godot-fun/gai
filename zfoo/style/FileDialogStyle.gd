@@ -133,13 +133,14 @@ static func style_control(node: Node) -> void:
 
 
 static func style_action_button(button: Button, primary: bool) -> void:
+	var fill := ThemeColor.accent_theme_color() if primary else Colors.elevated_surface
 	var normal := StyleBoxHelper.create_style_box_flat(
-		ThemeColor.accent_theme_color() if primary else Colors.elevated_surface,
+		fill,
 		ControlSize.radius_md, Margin.ma_3, Margin.ma_1,
 		ThemeColor.accent_theme_color() if primary else Colors.subtle_border, ControlSize.border_xs
 	)
-	var hover := ButtonStyle.filled(normal, ThemeColor.promote(normal.bg_color, Colors.am_2))
-	var pressed := ButtonStyle.filled(normal, ThemeColor.demote(normal.bg_color, Colors.am_2))
+	var hover := ButtonStyle.filled(normal, fill.lightened(0.12)) if primary else make_button_hover_style(normal)
+	var pressed := ButtonStyle.filled(normal, fill.darkened(0.08)) if primary else make_button_pressed_style(normal)
 	ButtonStyle.apply(button, normal, hover, pressed)
 	var text_color := ThemeColor.inset_surface if primary else ThemeColor.title_color
 	ButtonStyle.apply_font_colors(button, text_color, text_color, text_color, Color(text_color, 0.5))

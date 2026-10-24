@@ -298,6 +298,11 @@ func FileDialogStyle_apply_test() -> void:
 	assert(dialog.theme.get_color("font_color", "Label") == ThemeColor.title_color)
 	var confirm: Button = dialog.get_ok_button()
 	assert((confirm.get_theme_stylebox("normal") as StyleBoxFlat).bg_color == ThemeColor.accent_theme_color())
+	assert((confirm.get_theme_stylebox("hover") as StyleBoxFlat).bg_color == ThemeColor.accent_theme_color().lightened(0.12))
+	assert((confirm.get_theme_stylebox("pressed") as StyleBoxFlat).bg_color == ThemeColor.accent_theme_color().darkened(0.08))
+	var cancel: Button = dialog.get_cancel_button()
+	assert((cancel.get_theme_stylebox("hover") as StyleBoxFlat).bg_color == ThemeColor.selected_surface)
+	assert((cancel.get_theme_stylebox("pressed") as StyleBoxFlat).bg_color == ThemeColor.promote(ThemeColor.selected_surface, Colors.am_2))
 	dialog.free()
 	pass
 
