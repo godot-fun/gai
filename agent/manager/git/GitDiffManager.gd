@@ -114,10 +114,6 @@ static func async_cache_diff(git: GitHelper.Git, reference: String, file_stats: 
 	if StringUtils.is_blank(patch):
 		return StringUtils.EMPTY
 	var cache_dir := CacheManager.get_diff_cache_dir()
-	var mkdir_error := DirAccess.make_dir_recursive_absolute(cache_dir)
-	if mkdir_error != OK:
-		Log.error("agent git diff cache directory create failed path:[{}] error:[{}]", cache_dir, mkdir_error)
-		return StringUtils.EMPTY
 	var files: Array[GitDiffFile] = []
 	for stat_line in file_stats:
 		var parts := stat_line.split("\t", false)

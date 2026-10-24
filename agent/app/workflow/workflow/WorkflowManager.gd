@@ -15,19 +15,11 @@ static func workflow_name_from_path(path: String) -> String:
 	return file_name.get_basename()
 
 
-static func ensure_workflows_dir() -> void:
-	var dir_path := ProjectSettings.globalize_path(USER_WORKFLOWS_DIR)
-	if not DirAccess.dir_exists_absolute(dir_path):
-		DirAccess.make_dir_recursive_absolute(dir_path)
-	pass
-
-
 static func globalized_workflows_dir() -> String:
 	return ProjectSettings.globalize_path(USER_WORKFLOWS_DIR)
 
 
 static func list_saved_workflows() -> Array[String]:
-	ensure_workflows_dir()
 	var result: Array[String] = []
 	var dir := DirAccess.open(USER_WORKFLOWS_DIR)
 	if dir == null:

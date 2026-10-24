@@ -136,7 +136,6 @@ func workflow_connection_round_trip_test() -> void:
 
 
 func workflow_manager_save_load_test() -> void:
-	WorkflowManager.ensure_workflows_dir()
 	var path := WorkflowManager.USER_WORKFLOWS_DIR.path_join("unit_test_roundtrip.workflow.json")
 	var source := build_sample_document()
 

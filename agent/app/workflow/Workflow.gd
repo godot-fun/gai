@@ -66,7 +66,6 @@ func _ready() -> void:
 	WorkflowEvents.events.pipeline_finished.connect(on_pipeline_finished)
 	WorkflowEvents.events.pipeline_stopped.connect(on_pipeline_stopped)
 
-	WorkflowManager.ensure_workflows_dir()
 	pass
 
 
