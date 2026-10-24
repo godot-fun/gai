@@ -325,6 +325,7 @@ func FileDialogStyle_path_option_test() -> void:
 	var hover: StyleBoxFlat = option.get_theme_stylebox("hover") as StyleBoxFlat
 	assert(normal.bg_color == FileDialogStyle.file_list_surface())
 	assert(normal.border_color == Colors.border)
+	assert(normal.border_width_left == ControlSize.border_sm)
 	assert(hover.bg_color == ThemeColor.selected_surface)
 	assert(hover.border_color == ThemeColor.alpha_theme_color(0.85))
 	assert(option.get_theme_color("font_color") == ThemeColor.title_color)

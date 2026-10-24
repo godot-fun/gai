@@ -284,4 +284,4 @@ static func make_field_style() -> StyleBoxFlat:
 	# floating as white cards above it in the light theme. Use the standard control outline here
 	# instead of the subtle separator: the drive selector and editable path need a clear boundary.
 	return StyleBoxHelper.create_style_box_flat(file_list_surface(), ControlSize.radius_sm, Margin.ma_2, Margin.ma_1,
-		Colors.border, ControlSize.border_xs)
+		Colors.border, ControlSize.border_sm)
