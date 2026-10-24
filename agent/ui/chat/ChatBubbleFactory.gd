@@ -15,6 +15,7 @@ static var bubble_types: Dictionary[String, Script] = {
 	ChatEntry.KIND_TOOL: ToolBubble,
 	ChatEntry.KIND_WEB_TOOL: WebToolBubble,
 	ChatEntry.KIND_FILE_TOOL: FileBubble,
+	ChatEntry.KIND_EXPLORER_TOOL: ExplorerBubble,
 	ChatEntry.KIND_GIT_DIFF: GitDiffBubble,
 	ChatEntry.KIND_RESULT: ResultBubble,
 	ChatEntry.KIND_WEB: WebResultBubble,

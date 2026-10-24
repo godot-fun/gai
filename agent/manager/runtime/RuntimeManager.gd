@@ -207,6 +207,9 @@ static func on_message_update(session_id: int, chunk: String, stream_kind: Strin
 static func on_tool_execution_start(session_id: int, _tool_call_id: String, tool_name: String, args: Dictionary[String, Variant]) -> void:
 	if ToolHelper.is_file_tool(tool_name):
 		return
+	if ToolHelper.is_explorer_tool(tool_name):
+		AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_EXPLORER_TOOL, tool_name, ToolHelper.get_tool_call_summary(tool_name, args))
+		return
 	if ToolHelper.is_web_tool(tool_name):
 		AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_WEB_TOOL, tool_name, ToolHelper.get_tool_call_summary(tool_name, args))
 		return

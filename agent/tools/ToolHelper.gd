@@ -11,6 +11,14 @@ static func is_file_tool(tool_name: String) -> bool:
 	)
 
 
+static func is_explorer_tool(tool_name: String) -> bool:
+	return (
+		tool_name == GlobTool.NAME
+		or tool_name == GrepTool.NAME
+		or tool_name == ListDirTool.NAME
+	)
+
+
 static func is_web_tool(tool_name: String) -> bool:
 	return tool_name == WebSearchTool.NAME or tool_name == WebFetchTool.NAME
 
