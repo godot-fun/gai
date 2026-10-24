@@ -85,23 +85,23 @@ static var secondary_text: Color = DARK_MUTED
 # =============================================================================
 
 ## Semantic colors are brighter on dark surfaces and darker on pale surfaces.
-const DARK_ERROR := Color(0.85, 0.30, 0.30)
 const DARK_INFO := Color(0.35, 0.65, 0.95)
-const DARK_WARNING := Color(1.00, 0.65, 0.30)
 const DARK_SUCCESS := Color(0.30, 0.78, 0.45)
+const DARK_WARNING := Color(1.00, 0.65, 0.30)
+const DARK_ERROR := Color(0.85, 0.30, 0.30)
 const DARK_PURPLE := Color(0.72, 0.58, 0.88)
 
-const LIGHT_ERROR := Color(0.86, 0.15, 0.15)
 const LIGHT_INFO := Color(0.15, 0.39, 0.92)
-const LIGHT_WARNING := Color(0.72, 0.28, 0.02)
 const LIGHT_SUCCESS := Color(0.05, 0.50, 0.20)
+const LIGHT_WARNING := Color(0.72, 0.28, 0.02)
+const LIGHT_ERROR := Color(0.86, 0.15, 0.15)
 const LIGHT_PURPLE := Color(0.49, 0.23, 0.93)
 
 ## Active semantic foreground colors. Use these for text, icons and status marks.
-static var error: Color = DARK_ERROR
 static var info: Color = DARK_INFO
-static var warning: Color = DARK_WARNING
 static var success: Color = DARK_SUCCESS
+static var warning: Color = DARK_WARNING
+static var error: Color = DARK_ERROR
 static var purple: Color = DARK_PURPLE
 
 
@@ -163,10 +163,10 @@ static func refresh() -> void:
 	subtle_border = DARK_SUBTLE_BORDER if dark else LIGHT_SUBTLE_BORDER
 	primary_text = DARK_TEXT if dark else LIGHT_TEXT
 	secondary_text = DARK_MUTED if dark else LIGHT_MUTED
-	error = DARK_ERROR if dark else LIGHT_ERROR
 	info = DARK_INFO if dark else LIGHT_INFO
-	warning = DARK_WARNING if dark else LIGHT_WARNING
 	success = DARK_SUCCESS if dark else LIGHT_SUCCESS
+	warning = DARK_WARNING if dark else LIGHT_WARNING
+	error = DARK_ERROR if dark else LIGHT_ERROR
 	purple = DARK_PURPLE if dark else LIGHT_PURPLE
 	info_surface = DARK_INFO_SURFACE if dark else LIGHT_INFO_SURFACE
 	success_surface = DARK_SUCCESS_SURFACE if dark else LIGHT_SUCCESS_SURFACE
