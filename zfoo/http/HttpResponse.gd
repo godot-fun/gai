@@ -25,6 +25,19 @@ func get_body_string() -> String:
 	return body.get_string_from_utf8()
 
 
+func is_redirect() -> bool:
+	return code == HTTPClient.RESPONSE_MOVED_PERMANENTLY or code == HTTPClient.RESPONSE_FOUND or code == HTTPClient.RESPONSE_SEE_OTHER \
+		or code == HTTPClient.RESPONSE_TEMPORARY_REDIRECT or code == HTTPClient.RESPONSE_PERMANENT_REDIRECT
+
+
+func get_header(name: String) -> String:
+	var lower_name := name.to_lower()
+	for header: Variant in headers:
+		if str(header).to_lower() == lower_name:
+			return str(headers[header]).strip_edges()
+	return ""
+
+
 ## Reason text of a failed request: the body when the server answered with one (an API error
 ## payload such as `401 {"error":{"message":"..."}}`, where [member error] stays empty), otherwise
 ## [member error] (a transport failure, which has no status code and no body). Never blank.

@@ -84,7 +84,7 @@ static func get_image_display_size(texture: Texture2D) -> Vector2i:
 
 
 static func download_remote_image_texture(image_url: String, cache_path: String) -> Texture2D:
-	var response := await HttpHelper.async_get(image_url)
+	var response := await HttpHelper.async_get(image_url, AsyncHttp.DEFAULT_TIMEOUT_MILLIS, ApiSetting.get_proxy_address())
 	if not response.success or response.code < 200 or response.code >= 300 or response.body.is_empty():
 		Log.error("markdown image download failed url:[{}] code:[{}]", image_url, response.code)
 		return null

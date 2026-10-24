@@ -68,6 +68,31 @@ static func has_header(headers: PackedStringArray, name: String) -> bool:
 	return false
 
 
+## Resolves an absolute or relative URL reference against [param source_url].
+static func resolve_url(source_url: String, location: String) -> String:
+	var target := location.strip_edges()
+	if is_valid_http_url(target):
+		return target
+	var scheme_end := source_url.find("://")
+	if scheme_end < 0:
+		return ""
+	var scheme := source_url.substr(0, scheme_end)
+	if target.begins_with("//"):
+		return scheme + ":" + target
+	var authority_start := scheme_end + 3
+	var path_start := source_url.find("/", authority_start)
+	var origin := source_url if path_start < 0 else source_url.substr(0, path_start)
+	if target.begins_with("/"):
+		return origin + target
+	var source_path := "/" if path_start < 0 else source_url.substr(path_start)
+	var query_index := source_path.find("?")
+	if query_index >= 0:
+		source_path = source_path.substr(0, query_index)
+	var directory_end := source_path.rfind("/")
+	var directory := "/" if directory_end < 0 else source_path.substr(0, directory_end + 1)
+	return origin + directory + target
+
+
 static func _remove_protocol(url: String) -> String:
 	if url.begins_with("http://"):
 		return url.substr(7)
