@@ -18,13 +18,13 @@ func get_parameters() -> OpenAiToolDef.Parameters:
 func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
 	var raw_path := str(args.get(ARG_PATH, ""))
 	if StringUtils.is_blank(raw_path):
-		return AgentToolResult.error("error: path is required", AgentToolResult.ui_file_details_message("", "path is required"))
+		return AgentToolResult.error("error: path is required", AgentToolResult.ui_file_details("", "path is required"))
 	var path := AgentWorkspace.resolve_path(raw_path)
 	if not SandboxPolicy.check_path_access(path):
-		return AgentToolResult.error(StringUtils.format("error: sandbox denied path outside workspace: {}", path), AgentToolResult.ui_file_details_message(path, "path outside workspace"))
+		return AgentToolResult.error(StringUtils.format("error: sandbox denied path outside workspace: {}", path), AgentToolResult.ui_file_details(path, "path outside workspace"))
 	if not FileAccess.file_exists(path):
 		var error_message := StringUtils.format("error: file not found: {}", path)
-		return AgentToolResult.error(error_message, AgentToolResult.ui_file_details_message(path, "file not found"))
+		return AgentToolResult.error(error_message, AgentToolResult.ui_file_details(path, "file not found"))
 	var content := FileUtils.read_file_to_string(path)
-	return AgentToolResult.ok(StringUtils.truncate(content, MAX_OUTPUT, TRUNCATED_SUFFIX), AgentToolResult.ui_file_details(-1, -1, path))
+	return AgentToolResult.ok(StringUtils.truncate(content, MAX_OUTPUT, TRUNCATED_SUFFIX), AgentToolResult.ui_file_details(path))
 # AgentTool-Interface-Implement-End

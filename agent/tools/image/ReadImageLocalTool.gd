@@ -28,8 +28,8 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 	var prompt := StringUtils.truncate(str(args.get(ARG_PROMPT, "")).strip_edges(), MAX_PROMPT_LENGTH)
 	var output := await VLMServer.async_image_to_text(path, prompt)
 	if StringUtils.is_blank(output):
-		return AgentToolResult.error("error: image-to-text returned no text", AgentToolResult.ui_file_details_message(path, "no text returned"))
+		return AgentToolResult.error("error: image-to-text returned no text", AgentToolResult.ui_file_details(path, "no text returned"))
 
 	var text := StringUtils.truncate(output, MAX_OUTPUT, TRUNCATED_SUFFIX)
-	return AgentToolResult.ok(text, AgentToolResult.ui_file_details(-1, -1, path))
+	return AgentToolResult.ok(text, AgentToolResult.ui_file_details(path))
 # AgentTool-Interface-Implement-End

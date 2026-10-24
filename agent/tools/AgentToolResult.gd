@@ -69,9 +69,9 @@ static func ui_web_details(title: String, body: String, screenshot_path: String)
 	return result
 
 
-## File bubble: title is fixed to the generic result title, the optional extras drive the
-## added/removed line badge and the clickable path. Pass -1 / "" to omit a field.
-static func ui_file_details(lines_added: int = -1, lines_removed: int = -1, path: String = StringUtils.EMPTY, message: String = StringUtils.EMPTY) -> Dictionary[String, String]:
+## File-change bubble: added/removed line counts drive the change badges while path and
+## message provide the remaining details.
+static func ui_file_change_details(lines_added: int, lines_removed: int, path: String = StringUtils.EMPTY, message: String = StringUtils.EMPTY) -> Dictionary[String, String]:
 	var result := ui_details(ChatEntry.TITLE_RESULT)
 	if lines_added >= 0:
 		result[DETAIL_FILE_LINES_ADDED] = str(lines_added)
@@ -83,7 +83,8 @@ static func ui_file_details(lines_added: int = -1, lines_removed: int = -1, path
 		result[DETAIL_FILE_MESSAGE] = message
 	return result
 
-static func ui_file_details_message(path: String = StringUtils.EMPTY, message: String = StringUtils.EMPTY) -> Dictionary[String, String]:
+## File bubble without change counts, such as reads and file-related errors.
+static func ui_file_details(path: String = StringUtils.EMPTY, message: String = StringUtils.EMPTY) -> Dictionary[String, String]:
 	var result := ui_details(ChatEntry.TITLE_RESULT)
 	if StringUtils.is_not_blank(path):
 		result[DETAIL_FILE_PATH] = path

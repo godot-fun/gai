@@ -30,7 +30,7 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 		return AgentToolResult.error(StringUtils.format("error: sandbox denied path outside workspace: {}", path))
 	var result := await async_audio_to_text(path)
 	if result.is_error:
-		return AgentToolResult.error(result.content, AgentToolResult.ui_file_details_message(path, "transcription failed"))
+		return AgentToolResult.error(result.content, AgentToolResult.ui_file_details(path, "transcription failed"))
 	return AgentToolResult.ok(StringUtils.truncate(result.content, MAX_OUTPUT, TRUNCATED_SUFFIX))
 # AgentTool-Interface-Implement-End
 
