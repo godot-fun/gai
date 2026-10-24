@@ -9,11 +9,38 @@ extends Object
 ## Apply the application's dialog, field, list, button, and scrollbar tokens to [param dialog].
 ## The ready-time second pass catches FileDialog controls created when the node enters the scene tree.
 static func apply(dialog: FileDialog) -> void:
+	configure_dismissal(dialog)
 	apply_control_theme(dialog)
 	style_dialog(dialog)
 	refresh_controls(dialog)
 	if not dialog.is_node_ready():
 		dialog.ready.connect(func() -> void: refresh_controls(dialog), CONNECT_ONE_SHOT)
+	pass
+
+
+## FileDialog is reused by settings and workspace selection, so dismiss it by hiding rather than
+## freeing it. `popup_window` makes an outside click emit `close_requested`, matching CommonWindow.
+static func configure_dismissal(dialog: FileDialog) -> void:
+	dialog.popup_window = true
+	dialog.exclusive = false
+	var close_callable := hide_dialog.bind(dialog)
+	if not dialog.close_requested.is_connected(close_callable):
+		dialog.close_requested.connect(close_callable)
+	var input_callable := on_dialog_window_input.bind(dialog)
+	if not dialog.window_input.is_connected(input_callable):
+		dialog.window_input.connect(input_callable)
+	pass
+
+
+static func hide_dialog(dialog: FileDialog) -> void:
+	dialog.hide()
+	pass
+
+
+static func on_dialog_window_input(event: InputEvent, dialog: FileDialog) -> void:
+	if dialog.visible and event.is_action_pressed("ui_cancel"):
+		dialog.hide()
+		dialog.set_input_as_handled()
 	pass
 
 
@@ -54,12 +81,10 @@ static func style_dialog(dialog: FileDialog) -> void:
 	pass
 
 
-## Open a centered FileDialog, then style the controls created by its popup lifecycle.
-static func present_centered(dialog: FileDialog, popup_size: Vector2i = Vector2i.ZERO) -> void:
-	if popup_size == Vector2i.ZERO:
-		dialog.popup_centered()
-	else:
-		dialog.popup_centered(popup_size)
+## Open a centered FileDialog at the same viewport-relative size convention as CommonWindow.
+static func present_centered(dialog: FileDialog, width_percent: int = 60, height_percent: int = 70) -> void:
+	dialog.size = CommonWindow.size_from_viewport_percent(width_percent, height_percent)
+	dialog.popup_centered()
 	dialog.oversampling_override = DisplayScale.compute_ui_scale()
 	apply(dialog)
 	pass

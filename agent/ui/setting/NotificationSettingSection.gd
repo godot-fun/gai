@@ -1,8 +1,6 @@
 class_name NotificationSettingSection
 extends SettingSection
 
-const FOLDER_DIALOG_SIZE: Vector2i = Vector2i(900, 600)
-
 var toast_toggle_button: CheckButton
 var sound_toggle_button: CheckButton
 var toast_label: Label
@@ -77,7 +75,6 @@ func build_folder_dialog(dialog: ConfirmationDialog) -> void:
 	sound_folder_dialog.file_mode = FileDialog.FILE_MODE_OPEN_DIR
 	sound_folder_dialog.access = FileDialog.ACCESS_FILESYSTEM
 	sound_folder_dialog.ok_button_text = I18n.t("common.select")
-	sound_folder_dialog.size = FOLDER_DIALOG_SIZE
 	sound_folder_dialog.dir_selected.connect(on_sound_folder_selected)
 	dialog.add_child(sound_folder_dialog)
 	pass
@@ -141,7 +138,7 @@ func open_sound_folder_dialog() -> void:
 	var folder := AgentSetting.get_notification_sound_folder()
 	if not folder.begins_with("res://") and not folder.begins_with("user://") and DirAccess.dir_exists_absolute(folder):
 		sound_folder_dialog.current_dir = folder
-	FileDialogStyle.present_centered(sound_folder_dialog, FOLDER_DIALOG_SIZE)
+	FileDialogStyle.present_centered(sound_folder_dialog)
 	pass
 
 

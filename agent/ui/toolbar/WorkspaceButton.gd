@@ -15,7 +15,6 @@ func setup(p_button: Button, p_dialog: FileDialog) -> void:
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	button.tooltip_text = workspace_tooltip()
-	dialog.size = AgentLayout.FILE_DIALOG_SIZE
 	button.pressed.connect(on_button_pressed)
 	dialog.dir_selected.connect(on_dir_selected)
 	gdf.events.locale_changed.connect(apply_locale)
