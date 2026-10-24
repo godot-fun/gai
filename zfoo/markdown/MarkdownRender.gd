@@ -30,19 +30,13 @@ static func render_markdown_with_images(label: RichTextLabel, result: MarkdownPa
 	pass
 
 
-## Hover text for inline images: full URL or absolute filesystem path, not markdown alt text.
-static func image_tooltip_text(image_url: String) -> String:
-	if HttpUtils.is_valid_http_url(image_url):
-		return image_url
-	return FileUtils.normalize_path(image_url)
-
-
 static func append_markdown_image(label: RichTextLabel, markdown_image: MarkdownParseResult.MarkdownImage) -> void:
 	var image_url := markdown_image.image_url
 	var is_video := VideoHelper.is_video_path(image_url)
 	label.push_meta(image_url, RichTextLabel.META_UNDERLINE_NEVER)
 	var placeholder := VideoHelper.create_placeholder_texture() if is_video else ImageHelper.create_placeholder_texture()
-	label.add_image(placeholder, 0, 0, Color.WHITE, 5, Rect2(), image_url, false, image_tooltip_text(image_url))
+	var image_tooltip := image_url if HttpUtils.is_valid_http_url(image_url) else FileUtils.normalize_path(image_url)
+	label.add_image(placeholder, 0, 0, Color.WHITE, 5, Rect2(), image_url, false, image_tooltip)
 	label.pop()
 	if is_video:
 		return

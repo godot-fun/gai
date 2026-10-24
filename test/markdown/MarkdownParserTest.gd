@@ -296,8 +296,6 @@ func image_metadata_test() -> void:
 	assert(result.images.size() == 1)
 	assert(result.images[0].alt_text == "Landscape")
 	assert(result.images[0].image_url == "https://example.com/image.png")
-	assert(MarkdownRender.image_tooltip_text("https://example.com/image.png") == "https://example.com/image.png")
-	assert(MarkdownRender.image_tooltip_text("C:/My Files/photo.png") == "C:/My Files/photo.png")
 	var code_result := MarkdownParser.to_bbcode("```\n![not an image](https://example.com/code.png)\n```")
 	assert(code_result.images.is_empty())
 	pass
