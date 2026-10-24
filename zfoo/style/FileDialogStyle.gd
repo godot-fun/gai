@@ -9,18 +9,18 @@ extends Object
 ## Apply the application's dialog, field, list, button, and scrollbar tokens to [param dialog].
 ## The ready-time second pass catches FileDialog controls created when the node enters the scene tree.
 static func apply(dialog: FileDialog) -> void:
-	configure_dismissal(dialog)
+	apply_close(dialog)
 	apply_control_theme(dialog)
-	style_dialog(dialog)
-	refresh_controls(dialog)
+	apply_dialog_style(dialog)
+	apply_control_styles(dialog)
 	if not dialog.is_node_ready():
-		dialog.ready.connect(func() -> void: refresh_controls(dialog), CONNECT_ONE_SHOT)
+		dialog.ready.connect(func() -> void: apply_control_styles(dialog), CONNECT_ONE_SHOT)
 	pass
 
 
 ## FileDialog is reused by settings and workspace selection, so dismiss it by hiding rather than
 ## freeing it. `popup_window` makes an outside click emit `close_requested`, matching CommonWindow.
-static func configure_dismissal(dialog: FileDialog) -> void:
+static func apply_close(dialog: FileDialog) -> void:
 	dialog.popup_window = true
 	dialog.exclusive = false
 	var close_callable := hide_dialog.bind(dialog)
@@ -71,7 +71,7 @@ static func apply_control_theme(dialog: FileDialog) -> void:
 	pass
 
 
-static func style_dialog(dialog: FileDialog) -> void:
+static func apply_dialog_style(dialog: FileDialog) -> void:
 	dialog.transient = true
 	CommonWindow.apply_window_theme(dialog, ThemeColor.accent_surface, ThemeColor.title_color, ThemeColor.title_color)
 	var folder_color := Colors.info.lerp(ThemeColor.accent_theme_color(), 0.35)
@@ -99,7 +99,7 @@ static func style_controls(root: Node) -> void:
 
 ## FileDialog creates its navigation, drive selector, and lists as internal children. Include those
 ## nodes, then restore the two dialog actions after generic button styling has run.
-static func refresh_controls(dialog: FileDialog) -> void:
+static func apply_control_styles(dialog: FileDialog) -> void:
 	style_controls(dialog)
 	style_action_button(dialog.get_ok_button(), true)
 	style_action_button(dialog.get_cancel_button(), false)
