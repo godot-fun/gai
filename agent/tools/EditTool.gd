@@ -46,8 +46,9 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 		return AgentToolResult.error(StringUtils.format("error: old_string found {} times; must be unique (use replace_all to replace all occurrences)", count)
 				, AgentToolResult.ui_file_details_message(path, "old_string is not unique"))
 	var updated := content.replace(old_string, new_string)
-	if not FileUtils.write_string_to_file(path, updated):
-		return AgentToolResult.error(StringUtils.format("error: failed to write file: {}", path), AgentToolResult.ui_file_details_message(path, "failed to write file"))
+	var write_error := FileUtils.write_string_to_file(path, updated)
+	if write_error != OK:
+		return AgentToolResult.error(StringUtils.format("error: failed to write file: {} ({})", path, error_string(write_error)), AgentToolResult.ui_file_details_message(path, "failed to write file: " + error_string(write_error)))
 	var message := StringUtils.format("edited {}", path)
 	var lines_added := FileUtils.count_lines(new_string)
 	var lines_removed := FileUtils.count_lines(old_string)

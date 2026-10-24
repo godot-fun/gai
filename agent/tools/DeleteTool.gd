@@ -29,7 +29,10 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 		var error_message := StringUtils.format("error: file not found: {}", path)
 		return AgentToolResult.error(error_message, AgentToolResult.ui_file_details_message(path, "file not found"))
 	var removed_lines := FileUtils.count_lines(FileUtils.read_file_to_string(path))
-	FileUtils.delete_file_or_directory(path)
+	var delete_error := FileUtils.delete_file_or_directory(path)
+	if delete_error != OK:
+		var error_message := StringUtils.format("error: failed to delete file: {} ({})", path, error_string(delete_error))
+		return AgentToolResult.error(error_message, AgentToolResult.ui_file_details_message(path, "failed to delete file: " + error_string(delete_error)))
 	var message := StringUtils.format("deleted {}", path)
 	return AgentToolResult.ok(message, AgentToolResult.ui_file_details(0, removed_lines, path))
 # AgentTool-Interface-Implement-End

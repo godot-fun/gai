@@ -47,7 +47,7 @@ static func file_tools_reject_outside_workspace_test() -> void:
 static func edit_tool_replace_all_test() -> void:
 	var path := AgentWorkspace.get_root().path_join("agent/test/sandbox/edit-tool-{}.tmp".format([Time.get_ticks_usec()]))
 	var original := "before middle before"
-	assert(FileUtils.write_string_to_file(path, original))
+	assert(FileUtils.write_string_to_file(path, original) == OK)
 	var tool := EditTool.new()
 	var unique_result := await tool.async_execute({EditTool.ARG_PATH: path, EditTool.ARG_OLD_STRING: "before", EditTool.ARG_NEW_STRING: "after"})
 	var unique_rejected := unique_result.is_error and FileUtils.read_file_to_string(path) == original

@@ -155,8 +155,9 @@ static func async_cache_diff(git: GitHelper.Git, reference: String, file_stats: 
 	var bundle := DiffBundle.new()
 	bundle.files = files
 	var patch_path := cache_dir.path_join(str(IdUtils.uuid()) + "." + DIFF_CACHE_EXTENSION)
-	if not FileUtils.write_string_to_file(patch_path, JsonUtils.object_to_json(bundle)):
-		Log.error("agent git diff bundle cache write failed path:[{}]", patch_path)
+	var write_error := FileUtils.write_string_to_file(patch_path, JsonUtils.object_to_json(bundle))
+	if write_error != OK:
+		Log.error("agent git diff bundle cache write failed path:[{}] error:[{}]", patch_path, error_string(write_error))
 		return StringUtils.EMPTY
 	return patch_path
 

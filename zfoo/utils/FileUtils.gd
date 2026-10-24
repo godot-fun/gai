@@ -118,32 +118,33 @@ static func open_file(path: String) -> int:
 		return error
 	return OS.shell_open(folder_path)
 
-# Append content to the file.
-static func write_string_to_file(path: String, content: String) -> bool:
+## Writes [param content] to [param path], creating parent directories when needed.
+## Returns [constant OK] on success or the first filesystem error encountered.
+static func write_string_to_file(path: String, content: String) -> Error:
 	var absolute := globalize_writable_path(path)
 	if absolute.is_empty():
-		return false
+		return ERR_CANT_CREATE
 	var file := FileAccess.open(absolute, FileAccess.WRITE)
 	if file == null:
-		return false
+		return FileAccess.get_open_error()
 	file.store_string(content)
 	var error := file.get_error()
 	file = null
-	return error == OK
+	return error
 
 
 ## Writes [param bytes] to [param path], creating parent directories when needed.
-static func write_byte_array_to_file(path: String, bytes: PackedByteArray) -> bool:
+static func write_byte_array_to_file(path: String, bytes: PackedByteArray) -> Error:
 	var absolute := globalize_writable_path(path)
 	if absolute.is_empty():
-		return false
+		return ERR_CANT_CREATE
 	var file := FileAccess.open(absolute, FileAccess.WRITE)
 	if file == null:
-		return false
+		return FileAccess.get_open_error()
 	file.store_buffer(bytes)
 	var error := file.get_error()
 	file = null
-	return error == OK
+	return error
 
 
 static func read_file_to_string(filePath: String) -> String:
@@ -185,31 +186,35 @@ static func read_file_to_lines(abs_path: String, allow_empty: bool = false) -> P
 ## Deletes [param path] — a file, or a directory with everything inside it.
 ## Directories are removed recursively without following directory links,
 ## so a link is unlinked instead of emptying the folder it points at.
-## Returns false when [param path] does not exist or any entry cannot be removed.
-static func delete_file_or_directory(path: String) -> bool:
+## Returns [constant OK] on success or the first filesystem error encountered.
+static func delete_file_or_directory(path: String) -> Error:
 	if DirAccess.dir_exists_absolute(path):
 		var dir := DirAccess.open(path)
 		if dir == null:
-			return false
+			return DirAccess.get_open_error()
 		for file_name in dir.get_files():
-			if not delete_file_or_directory(path.path_join(file_name)):
-				return false
+			var file_error := delete_file_or_directory(path.path_join(file_name))
+			if file_error != OK:
+				return file_error
 		for directory_name in dir.get_directories():
 			var directory_path := path.path_join(directory_name)
 			if dir.is_link(directory_name):
-				if DirAccess.remove_absolute(directory_path) != OK:
-					return false
+				var link_error := DirAccess.remove_absolute(directory_path)
+				if link_error != OK:
+					return link_error
 				continue
-			if not delete_file_or_directory(directory_path):
-				return false
+			var directory_error := delete_file_or_directory(directory_path)
+			if directory_error != OK:
+				return directory_error
 		dir = null
-		return DirAccess.remove_absolute(path) == OK
+		return DirAccess.remove_absolute(path)
 	if not FileAccess.file_exists(path):
-		return false
+		return ERR_FILE_NOT_FOUND
 	# Git marks loose objects read-only on Windows.
-	if FileAccess.set_read_only_attribute(path, false) != OK:
-		return false
-	return DirAccess.remove_absolute(path) == OK
+	var read_only_error := FileAccess.set_read_only_attribute(path, false)
+	if read_only_error != OK:
+		return read_only_error
+	return DirAccess.remove_absolute(path)
 
 
 # ---------------------------------------------------------------------------

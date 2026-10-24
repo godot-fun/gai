@@ -56,7 +56,10 @@ static func save(path: String, doc: WorkflowDocument) -> void:
 	workflow_name = workflow_name_from_path(current_path)
 	doc.name = workflow_name
 	var json := JsonUtils.object_to_json(doc)
-	FileUtils.write_string_to_file(current_path, json)
+	var write_error := FileUtils.write_string_to_file(current_path, json)
+	if write_error != OK:
+		Log.error("workflow save failed path:[{}] error:[{}]", current_path, error_string(write_error))
+		return
 	Log.info("Saved: [{}]", current_path)
 	pass
 

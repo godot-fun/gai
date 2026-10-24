@@ -99,11 +99,11 @@ static func OSUtils_chinese_folder_path_test() -> void:
 	var root := ProjectSettings.globalize_path("user://OSUtils_中文目录_" + str(TimeUtils.now()) + "_" + str(randi()))
 	var file_path := root.path_join("fixture.txt")
 	assert(DirAccess.make_dir_recursive_absolute(root) == OK)
-	assert(FileUtils.write_string_to_file(file_path, "OSUtilsChinesePathHello"))
+	assert(FileUtils.write_string_to_file(file_path, "OSUtilsChinesePathHello") == OK)
 	var result := await OSUtils.async_execute(chinese_path_argv(file_path), false)
 	var removed := FileUtils.delete_file_or_directory(root)
 	assert(result.exit_code == 0)
-	assert(removed)
+	assert(removed == OK)
 	assert(OSUtils.process_pids.is_empty())
 	pass
 

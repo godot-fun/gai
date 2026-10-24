@@ -484,7 +484,7 @@ func save_current() -> bool:
 	if exists_now != file.new_exists or current_text.sha256_text() != file.new_hash:
 		Alert.alert(I18n.t("git.save_conflict"), Colors.warning)
 		return false
-	if not FileUtils.write_string_to_file(target, right_edit.text):
+	if FileUtils.write_string_to_file(target, right_edit.text) != OK:
 		Alert.alert(StringUtils.format(I18n.t("git.save_failed"), file.new_path), Colors.error)
 		return false
 	baseline_text = right_edit.text

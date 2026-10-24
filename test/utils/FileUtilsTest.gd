@@ -20,7 +20,7 @@ func FileUtils_globalize_writable_path_test() -> void:
 func FileUtils_read_write_test() -> void:
 	var path: String = "./zfoo_test_temp.txt"
 	var content: String = "hello godot!"
-	FileUtils.write_string_to_file(path, content)
+	assert(FileUtils.write_string_to_file(path, content) == OK)
 	var read_content := FileUtils.read_file_to_string(path)
 	assert(content == read_content)
 	FileUtils.delete_file_or_directory(path)
@@ -30,7 +30,7 @@ func FileUtils_read_write_test() -> void:
 func FileUtils_write_byte_array_to_file_test() -> void:
 	var path := "user://fileutils_bytes/nested/data.bin"
 	var bytes := PackedByteArray([0x61, 0x00, 0x62])
-	assert(FileUtils.write_byte_array_to_file(path, bytes))
+	assert(FileUtils.write_byte_array_to_file(path, bytes) == OK)
 	assert(FileUtils.read_file_to_byte_array(path) == bytes)
 	FileUtils.delete_file_or_directory(ProjectSettings.globalize_path("user://fileutils_bytes"))
 	pass
@@ -76,12 +76,12 @@ func get_all_directories_in_folder_test() -> void:
 func delete_file_or_directory_test() -> void:
 	var root := create_fixture_tree()
 	var file_path := root.path_join("src/nested/file.txt")
-	FileUtils.write_string_to_file(file_path, "content")
-	assert(FileUtils.delete_file_or_directory(file_path))
+	assert(FileUtils.write_string_to_file(file_path, "content") == OK)
+	assert(FileUtils.delete_file_or_directory(file_path) == OK)
 	assert(not FileAccess.file_exists(file_path))
-	assert(FileUtils.delete_file_or_directory(root))
+	assert(FileUtils.delete_file_or_directory(root) == OK)
 	assert(not DirAccess.dir_exists_absolute(root))
-	assert(not FileUtils.delete_file_or_directory(root))
+	assert(FileUtils.delete_file_or_directory(root) == ERR_FILE_NOT_FOUND)
 	pass
 
 

@@ -61,7 +61,7 @@ static func remove_checkpoint_repo(git_dir: String) -> bool:
 	if not relative_path.is_valid_int() or int(relative_path) < 0 or int(relative_path) >= CHECKPOINT_REPO_SHARD_COUNT:
 		Log.error("agent checkpoint refused unexpected delete path:[{}]", git_dir)
 		return false
-	if FileUtils.delete_file_or_directory(git_dir):
+	if FileUtils.delete_file_or_directory(git_dir) == OK:
 		return true
 	Log.error("agent checkpoint repository delete failed:[{}]", git_dir)
 	return false
@@ -120,7 +120,7 @@ static func async_cleanup() -> void:
 		var commits := history.output.build_string().strip_edges().split(FileUtils.NEWLINE_LF, false)
 		if commits.size() > MAX_CHECKPOINTS:
 			var boundary := commits[CHECKPOINTS_AFTER_CLEANUP - 1].strip_edges()
-			if not FileUtils.write_string_to_file(git.git_dir.path_join(SHALLOW_FILE), boundary + FileUtils.NEWLINE_LF):
+			if FileUtils.write_string_to_file(git.git_dir.path_join(SHALLOW_FILE), boundary + FileUtils.NEWLINE_LF) != OK:
 				Log.error("agent checkpoint shallow boundary write failed:[{}]", boundary)
 				continue
 		var reflog := await git.async_expire_reflogs()

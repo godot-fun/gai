@@ -30,7 +30,7 @@ static func get_note() -> String:
 static func set_note(content: String) -> bool:
 	if content == get_note():
 		return true
-	return FileUtils.write_string_to_file(NOTE_FILE, content)
+	return FileUtils.write_string_to_file(NOTE_FILE, content) == OK
 
 
 static func set_open_on_startup(enabled: bool) -> void:

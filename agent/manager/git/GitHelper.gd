@@ -88,7 +88,7 @@ static func async_diff_texts(old_text: String, new_text: String) -> OSUtils.Exec
 	var new_user_path := temp_prefix + "-current.txt"
 	var old_path := ProjectSettings.globalize_path(old_user_path)
 	var new_path := ProjectSettings.globalize_path(new_user_path)
-	if not FileUtils.write_string_to_file(old_user_path, old_text) or not FileUtils.write_string_to_file(new_user_path, new_text):
+	if FileUtils.write_string_to_file(old_user_path, old_text) != OK or FileUtils.write_string_to_file(new_user_path, new_text) != OK:
 		DirAccess.remove_absolute(old_path)
 		DirAccess.remove_absolute(new_path)
 		return OSUtils.ExecResult.new()

@@ -52,7 +52,9 @@ static func save_session(session_id: int) -> void:
 		Log.error("agent chat save failed, cannot create dir:[{}]", get_sessions_dir())
 		return
 	var json := JsonUtils.object_to_json(session)
-	FileUtils.write_string_to_file(get_session_path(session.id), json)
+	var write_error := FileUtils.write_string_to_file(get_session_path(session.id), json)
+	if write_error != OK:
+		Log.error("agent chat save failed session_id:[{}] error:[{}]", session.id, error_string(write_error))
 	pass
 
 
@@ -60,7 +62,9 @@ static func delete_session(session_id: int) -> void:
 	if session_id < 0:
 		return
 	sessions.remove(session_id)
-	FileUtils.delete_file_or_directory(get_session_path(session_id))
+	var delete_error := FileUtils.delete_file_or_directory(get_session_path(session_id))
+	if delete_error != OK and delete_error != ERR_FILE_NOT_FOUND:
+		Log.error("agent chat delete failed session_id:[{}] error:[{}]", session_id, error_string(delete_error))
 	pass
 
 

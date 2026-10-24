@@ -29,7 +29,9 @@ static func load_index() -> AgentSessionIndexes:
 
 static func save_index(session_indexes: AgentSessionIndexes) -> void:
 	var json := JsonUtils.object_to_json(session_indexes)
-	FileUtils.write_string_to_file(get_index_path(), json)
+	var write_error := FileUtils.write_string_to_file(get_index_path(), json)
+	if write_error != OK:
+		Log.error("agent session index save failed error:[{}]", error_string(write_error))
 	pass
 
 

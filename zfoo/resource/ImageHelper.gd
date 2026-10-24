@@ -56,7 +56,7 @@ static func save_image(bytes: PackedByteArray, path: String) -> Error:
 		_:
 			if decoded_image.format != path_format:
 				return ERR_FILE_UNRECOGNIZED
-			return OK if FileUtils.write_byte_array_to_file(path, bytes) else ERR_CANT_CREATE
+			return FileUtils.write_byte_array_to_file(path, bytes)
 
 
 ## Quickly identifies common image formats from their file signatures.

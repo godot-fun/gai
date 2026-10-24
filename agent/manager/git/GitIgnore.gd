@@ -166,6 +166,7 @@ static func ensure_exclude_rules(git_dir: String) -> void:
 	## Mandatory rules come last so project negation rules cannot re-include these directories.
 	build.append(MANDATORY_EXCLUDE_RULES)
 	var exclude_rules := build.build_joined(FileUtils.NEWLINE_LF)
-	if not FileUtils.write_string_to_file(git_exclude_path, exclude_rules):
-		Log.error("agent checkpoint exclude write failed:[{}]", git_exclude_path)
+	var write_error := FileUtils.write_string_to_file(git_exclude_path, exclude_rules)
+	if write_error != OK:
+		Log.error("agent checkpoint exclude write failed path:[{}] error:[{}]", git_exclude_path, error_string(write_error))
 	pass
