@@ -30,7 +30,7 @@ static func file_tools_reject_outside_workspace_test() -> void:
 		[GlobTool.new(), {GlobTool.ARG_PATTERN: "*", GlobTool.ARG_PATH: outside_path}],
 		[GrepTool.new(), {GrepTool.ARG_PATTERN: ".", GrepTool.ARG_PATH: outside_path}],
 		[ReadImageLocalTool.new(), {ReadImageLocalTool.ARG_PATH: outside_path, ReadImageLocalTool.ARG_PROMPT: "describe"}],
-		[ReadImageTool.new(), {ReadImageTool.ARG_PATH: outside_path}],
+		[ReadImageRemoteTool.new(), {ReadImageTool.ARG_PATH: outside_path}],
 		[AudioToTextTool.new(), {AudioToTextTool.ARG_PATH: outside_path}],
 	]
 	for entry: Array in tool_args:
@@ -70,7 +70,7 @@ static func required_file_tools_reject_missing_path_test() -> void:
 		[EditTool.new(), {EditTool.ARG_OLD_STRING: "old", EditTool.ARG_NEW_STRING: "new"}],
 		[DeleteTool.new(), {}],
 		[ReadImageLocalTool.new(), {ReadImageLocalTool.ARG_PROMPT: "describe"}],
-		[ReadImageTool.new(), {}],
+		[ReadImageRemoteTool.new(), {}],
 		[AudioToTextTool.new(), {}],
 	]
 	for entry: Array in tool_args:

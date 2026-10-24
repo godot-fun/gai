@@ -1,8 +1,5 @@
-class_name ReadImageTool
-extends AgentTool
-
-const NAME := "read_image"
-const ARG_PATH := "path"
+class_name ReadImageRemoteTool
+extends ReadImageTool
 
 const REMOTE_ATTACH_TEXT := "Image attached for model inspection."
 
@@ -19,16 +16,10 @@ func get_parameters() -> OpenAiToolDef.Parameters:
 
 
 func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
-	var raw_path := str(args.get(ARG_PATH, ""))
-	if StringUtils.is_blank(raw_path):
-		return AgentToolResult.error("error: path is required")
-	var path := AgentWorkspace.resolve_path(raw_path)
-	if not SandboxPolicy.check_path_access(path):
-		return AgentToolResult.error(StringUtils.format("error: sandbox denied path outside workspace: {}", path))
-	if not FileAccess.file_exists(path):
-		return AgentToolResult.error(StringUtils.format("error: image not found: {}", path))
-	if StringUtils.is_blank(ImageHelper.get_image_format(path, StringUtils.EMPTY)):
-		return AgentToolResult.error(StringUtils.format("error: unsupported image format: {}", path))
+	var path_result := resolve_image_path(str(args.get(ARG_PATH, "")))
+	if path_result.is_error:
+		return path_result
+	var path := path_result.content
 
 	var image_message := ChatMessage.user_image(REMOTE_ATTACH_TEXT, path)
 	if StringUtils.is_blank(image_message.image_data_url):

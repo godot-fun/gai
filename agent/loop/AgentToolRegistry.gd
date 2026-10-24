@@ -29,7 +29,7 @@ static func reload_tools() -> void:
 	
 	# image tools
 	if AgentSetting.get_read_image_with_api():
-		register(ReadImageTool.new())
+		register(ReadImageRemoteTool.new())
 	else:
 		register(ReadImageLocalTool.new())
 
