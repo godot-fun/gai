@@ -287,6 +287,10 @@ func FileDialogStyle_apply_test() -> void:
 	var dialog_panel: StyleBoxFlat = dialog.theme.get_stylebox("panel", "AcceptDialog") as StyleBoxFlat
 	var file_list_panel: StyleBoxFlat = dialog.theme.get_stylebox("panel", "ItemListSecondary") as StyleBoxFlat
 	assert(dialog_panel.bg_color == ThemeColor.inset_surface)
+	assert(dialog_panel.expand_margin_left == ControlSize.border_xs)
+	assert(dialog_panel.expand_margin_top == ControlSize.border_xs)
+	assert(dialog_panel.expand_margin_right == ControlSize.border_xs)
+	assert(dialog_panel.expand_margin_bottom == ControlSize.border_xs)
 	assert(file_list_panel.bg_color == FileDialogStyle.file_list_surface())
 	assert(file_list_panel.border_color == Colors.subtle_border)
 	assert(dialog.get_theme_color("folder_icon_color") == Colors.info.lerp(ThemeColor.accent_theme_color(), 0.35))

@@ -273,7 +273,13 @@ static func make_button_pressed_style(normal: StyleBoxFlat) -> StyleBoxFlat:
 
 
 static func make_dialog_body_style() -> StyleBoxFlat:
-	return StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 0, Margin.ma_2, Margin.ma_2)
+	var style := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 0, Margin.ma_2, Margin.ma_2)
+	# Match CommonWindow's all-edge overscan so embedded-window pixel rounding cannot expose a seam.
+	style.expand_margin_left = ControlSize.border_xs
+	style.expand_margin_top = ControlSize.border_xs
+	style.expand_margin_right = ControlSize.border_xs
+	style.expand_margin_bottom = ControlSize.border_xs
+	return style
 
 
 static func make_field_style() -> StyleBoxFlat:
