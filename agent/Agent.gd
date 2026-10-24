@@ -63,6 +63,7 @@ var sense_input: SenseInput = SenseInput.new()
 
 func _ready() -> void:
 	I18nHelper.init_i18n()
+	AgentSetting.apply_ui_scale()
 	apply_layout()
 	apply_theme()
 	gdf.events.theme_changed.connect(apply_theme)

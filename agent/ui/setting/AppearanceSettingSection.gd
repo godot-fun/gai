@@ -5,6 +5,11 @@ var language_label: Label
 var language_select: OptionButton
 var markdown_label: Label
 var markdown_toggle_button: CheckButton
+var display_heading_label: Label
+var ui_scale_label: Label
+var ui_scale_select: OptionButton
+
+const UI_SCALES: Array[float] = [0.50, 0.75, 1.0, 1.15, 1.25, 1.50, 1.75, 2.0, 2.50, 3.0]
 
 
 func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: ConfirmationDialog) -> void:
@@ -35,12 +40,30 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 	markdown_toggle_button = ui.add_check_button(control, "", AgentSetting.get_markdown_enabled())
 	markdown_toggle_button.tooltip_text = I18n.t("agent.settings.markdown_help")
 	markdown_toggle_button.toggled.connect(on_markdown_toggled)
+	ui.add_separator(parent)
+	display_heading_label = ui.add_heading(parent, I18n.t("agent.settings.display"))
+	var scale_parts := ui.make_setting_row(parent)
+	ui_scale_label = ui.make_label(I18n.t("agent.settings.ui_scale"))
+	ui_scale_label.tooltip_text = I18n.t("agent.settings.ui_scale_help")
+	scale_parts[0].add_child(ui_scale_label)
+	ui_scale_select = OptionButton.new()
+	ui_scale_select.custom_minimum_size = Vector2(0, 38)
+	ui_scale_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	ui_scale_select.size_flags_stretch_ratio = AgentSettingDialog.FIELD_CONTROL_RATIO
+	for scale in UI_SCALES:
+		ui_scale_select.add_item("%d%%" % roundi(scale * 100.0))
+		ui_scale_select.set_item_metadata(ui_scale_select.item_count - 1, scale)
+	ui_scale_select.item_selected.connect(on_ui_scale_selected)
+	ui_scale_select.get_popup().popup_hide.connect(ui.request_focus_check)
+	scale_parts[1].add_child(ui_scale_select)
 	select_current_language()
+	select_current_ui_scale()
 	pass
 
 
 func refresh() -> void:
 	select_current_language()
+	select_current_ui_scale()
 	ui.refresh_check_button(markdown_toggle_button, AgentSetting.get_markdown_enabled())
 	pass
 
@@ -62,6 +85,21 @@ func on_language_selected(index: int) -> void:
 	pass
 
 
+func select_current_ui_scale() -> void:
+	var current := clampf(Setting.get_float(AgentSetting.UI_SCALE_KEY, AgentSetting.DEFAULT_UI_SCALE),
+		AgentSetting.MIN_UI_SCALE, AgentSetting.MAX_UI_SCALE)
+	for index in range(ui_scale_select.item_count):
+		if is_equal_approx(float(ui_scale_select.get_item_metadata(index)), current):
+			ui_scale_select.select(index)
+			return
+	pass
+
+
+func on_ui_scale_selected(index: int) -> void:
+	AgentSetting.set_ui_scale(float(ui_scale_select.get_item_metadata(index)))
+	pass
+
+
 func on_markdown_toggled(enabled: bool) -> void:
 	AgentSetting.set_markdown_enabled(enabled)
 	pass
@@ -73,6 +111,9 @@ func apply_locale() -> void:
 	markdown_label.text = I18n.t("agent.settings.markdown")
 	markdown_label.tooltip_text = I18n.t("agent.settings.markdown_help")
 	markdown_toggle_button.tooltip_text = I18n.t("agent.settings.markdown_help")
+	display_heading_label.text = I18n.t("agent.settings.display")
+	ui_scale_label.text = I18n.t("agent.settings.ui_scale")
+	ui_scale_label.tooltip_text = I18n.t("agent.settings.ui_scale_help")
 	select_current_language()
 	pass
 
@@ -81,10 +122,13 @@ func apply_theme() -> void:
 	super.apply_theme()
 	ui.style_field_label(language_label)
 	ui.style_field_label(markdown_label)
+	ui.style_heading(display_heading_label)
+	ui.style_field_label(ui_scale_label)
 	ui.style_option_button(language_select)
+	ui.style_option_button(ui_scale_select)
 	ButtonStyle.apply_check_button(markdown_toggle_button)
 	pass
 
 
 func has_open_popup() -> bool:
-	return language_select.get_popup().visible
+	return language_select.get_popup().visible or ui_scale_select.get_popup().visible
