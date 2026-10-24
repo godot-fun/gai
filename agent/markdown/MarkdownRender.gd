@@ -1,14 +1,7 @@
 class_name MarkdownRender
 extends Object
 
-const IMAGE_CACHE_DIR := "user://markdown"
-const MAX_IMAGE_CACHE_BYTES := 512 * FileUtils.BYTES_PER_MB
 const MAX_REMOTE_IMAGE_BYTES := 20 * FileUtils.BYTES_PER_MB
-
-
-static func _static_init() -> void:
-	WorkerThreadPool.add_task(func() -> void: FileUtils.cleanup_cache_folder(IMAGE_CACHE_DIR, MAX_IMAGE_CACHE_BYTES))
-	pass
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -41,8 +34,7 @@ static func append_markdown_image(label: RichTextLabel, markdown_image: Markdown
 	if is_video:
 		return
 	if HttpUtils.is_valid_http_url(image_url):
-		var format := ImageHelper.get_image_format(image_url)
-		var cache_path := IMAGE_CACHE_DIR.path_join(StringUtils.format("http_{}.{}", image_url.sha256_text(), format))
+		var cache_path := CacheManager.get_markdown_remote_image_cache_path(image_url)
 		if FileAccess.file_exists(cache_path):
 			load_image_into_label(label, image_url, cache_path)
 			return
@@ -101,7 +93,7 @@ static func download_remote_image_texture(image_url: String, cache_path: String)
 		return null
 	var absolute_cache_path := FileUtils.globalize_writable_path(cache_path)
 	if absolute_cache_path.is_empty():
-		Log.error("markdown image cache directory failed path:[{}]", IMAGE_CACHE_DIR)
+		Log.error("markdown image cache directory failed path:[{}]", CacheManager.get_markdown_image_cache_dir())
 		return null
 	var cache_error := ImageHelper.save_image(response.body, absolute_cache_path)
 	if cache_error != OK:
