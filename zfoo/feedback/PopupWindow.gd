@@ -63,6 +63,17 @@ func present_centered(width_percent: int = 70, height_percent: int = 80) -> void
 	pass
 
 
+func set_body(text: String) -> void:
+	text_edit.text = text
+	text_edit.scroll_vertical = text_edit.get_line_count()
+	pass
+
+
+####################################################################################################
+# Static methods
+
+
+
 ## Open a centered read-only window. Width/height are percent of the screen (1–100).
 ## [param i18n_title] and [param i18n_text] may be translation keys; text without a registered
 ## translation is displayed unchanged.
@@ -73,10 +84,4 @@ static func show_window(i18n_title: String, i18n_text: String, width_percent: in
 	gdf.gdf_node.add_child(window)
 	window.set_body(I18n.t(i18n_text))
 	window.present_centered(width_percent, height_percent)
-	pass
-
-
-func set_body(text: String) -> void:
-	text_edit.text = text
-	text_edit.scroll_vertical = text_edit.get_line_count()
 	pass

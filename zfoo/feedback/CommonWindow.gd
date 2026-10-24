@@ -48,46 +48,6 @@ func window_border_color() -> Color:
 	return ThemeColor.title_color
 
 
-## Apply the common embedded-window frame to a [Window]. Use this for built-in windows such as
-## [FileDialog], which cannot inherit [CommonWindow] but should share its title and frame chrome.
-static func apply_window_theme(window: Window, background: Color, title_color: Color, border_color: Color) -> void:
-	window.add_theme_stylebox_override("embedded_border", make_embedded_border(window, background, border_color, BORDER_ALPHA))
-	window.add_theme_stylebox_override("embedded_unfocused_border", make_embedded_border(window, background, border_color, BORDER_ALPHA_UNFOCUSED))
-	window.add_theme_color_override("title_color", title_color)
-	window.add_theme_font_override("title_font", Fonts.semibold())
-	window.add_theme_font_size_override("title_font_size", Typography.title_medium_size)
-	window.add_theme_icon_override("close", tint_theme_icon(window, "close", title_color))
-	window.add_theme_icon_override("close_pressed", tint_theme_icon(window, "close_pressed", Colors.error))
-	pass
-
-
-static func make_embedded_border(window: Window, background: Color, border_color: Color, border_alpha: float) -> StyleBoxFlat:
-	var style: StyleBoxFlat = window.get_theme_stylebox("embedded_border").duplicate() as StyleBoxFlat
-	style.bg_color = background
-	style.set_corner_radius_all(ControlSize.radius_md)
-	style.border_color = Color(border_color, border_alpha)
-	style.set_border_width_all(ControlSize.border_xs)
-	return style
-
-
-static func tint_theme_icon(window: Window, icon_name: String, color: Color) -> ImageTexture:
-	var image := window.get_theme_icon(icon_name).get_image()
-	for y: int in image.get_height():
-		for x: int in image.get_width():
-			var alpha := image.get_pixel(x, y).a
-			image.set_pixel(x, y, Color(color, alpha))
-	return ImageTexture.create_from_image(image)
-
-
-## Size against the root viewport; percentages clamp to 1–100.
-static func size_from_viewport_percent(width_percent: int, height_percent: int) -> Vector2i:
-	var viewport := gdf.gdf_node.get_tree().root.get_visible_rect().size
-	return Vector2i(
-		int(viewport.x * clampf(width_percent, 1.0, 100.0) / 100.0),
-		int(viewport.y * clampf(height_percent, 1.0, 100.0) / 100.0),
-	)
-
-
 ## Center the window and apply embedded-window font oversampling.
 func present_centered(width_percent: int = 70, height_percent: int = 80) -> void:
 	size = size_from_viewport_percent(width_percent, height_percent)
@@ -112,3 +72,51 @@ func on_window_input(event: InputEvent) -> void:
 		on_close_requested()
 		set_input_as_handled()
 	pass
+
+
+####################################################################################################
+# Static methods
+
+
+
+## Apply the common embedded-window frame to a [Window]. Use this for built-in windows such as
+## [FileDialog], which cannot inherit [CommonWindow] but should share its title and frame chrome.
+static func apply_window_theme(window: Window, background: Color, title_color: Color, border_color: Color) -> void:
+	window.add_theme_stylebox_override("embedded_border", make_embedded_border(window, background, border_color, BORDER_ALPHA))
+	window.add_theme_stylebox_override("embedded_unfocused_border", make_embedded_border(window, background, border_color, BORDER_ALPHA_UNFOCUSED))
+	window.add_theme_color_override("title_color", title_color)
+	window.add_theme_font_override("title_font", Fonts.semibold())
+	window.add_theme_font_size_override("title_font_size", Typography.title_medium_size)
+	window.add_theme_icon_override("close", tint_theme_icon(window, "close", title_color))
+	window.add_theme_icon_override("close_pressed", tint_theme_icon(window, "close_pressed", Colors.error))
+	pass
+
+
+
+static func make_embedded_border(window: Window, background: Color, border_color: Color, border_alpha: float) -> StyleBoxFlat:
+	var style: StyleBoxFlat = window.get_theme_stylebox("embedded_border").duplicate() as StyleBoxFlat
+	style.bg_color = background
+	style.set_corner_radius_all(ControlSize.radius_md)
+	style.border_color = Color(border_color, border_alpha)
+	style.set_border_width_all(ControlSize.border_xs)
+	return style
+
+
+
+static func tint_theme_icon(window: Window, icon_name: String, color: Color) -> ImageTexture:
+	var image := window.get_theme_icon(icon_name).get_image()
+	for y: int in image.get_height():
+		for x: int in image.get_width():
+			var alpha := image.get_pixel(x, y).a
+			image.set_pixel(x, y, Color(color, alpha))
+	return ImageTexture.create_from_image(image)
+
+
+
+## Size against the root viewport; percentages clamp to 1–100.
+static func size_from_viewport_percent(width_percent: int, height_percent: int) -> Vector2i:
+	var viewport := gdf.gdf_node.get_tree().root.get_visible_rect().size
+	return Vector2i(
+		int(viewport.x * clampf(width_percent, 1.0, 100.0) / 100.0),
+		int(viewport.y * clampf(height_percent, 1.0, 100.0) / 100.0),
+	)

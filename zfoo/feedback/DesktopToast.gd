@@ -47,97 +47,6 @@ func _init() -> void:
 	pass
 
 
-## Pop a toast in the selected [param corner], which defaults to the bottom-right.
-## [param i18n_title] and [param i18n_body] may be translation keys; text without a registered
-## translation is displayed unchanged.
-static func show_toast(i18n_title: String, i18n_body: String, color: Color, corner: Corner = Corner.CORNER_BOTTOM_RIGHT) -> void:
-	if gdf.gdf_node == null or not gdf.gdf_node.is_inside_tree():
-		return
-	var toast: DesktopToast = DesktopToast.new()
-	toast.title_text = I18n.t(i18n_title)
-	toast.body_text = I18n.t(i18n_body).strip_edges()
-	toast.accent = color
-	toast.toast_corner = corner
-	toasts.append(toast)
-	gdf.gdf_node.add_child(toast)
-	pass
-
-
-## Anchor in the requested corner of the usable screen area (taskbar excluded).
-static func corner_position(window_size: Vector2i, corner: Corner = Corner.CORNER_BOTTOM_RIGHT) -> Vector2i:
-	var screen: int = DisplayServer.window_get_current_screen(DisplayServer.MAIN_WINDOW_ID)
-	var usable: Rect2i = DisplayServer.screen_get_usable_rect(screen)
-	var margin: int = roundi(Margin.ma_6 * DisplayScale.compute_ui_scale())
-	var on_left: bool = corner == Corner.CORNER_TOP_LEFT or corner == Corner.CORNER_BOTTOM_LEFT
-	var on_top: bool = corner == Corner.CORNER_TOP_LEFT or corner == Corner.CORNER_TOP_RIGHT
-	var x: int = usable.position.x + margin if on_left else usable.end.x - window_size.x - margin
-	var y: int = usable.position.y + margin if on_top else usable.end.y - window_size.y - margin
-	return Vector2i(x, y)
-
-
-## Bring the app window back: restore it when minimized, raise it when it is behind, then focus it.
-static func activate_main_window() -> void:
-	var window_id: int = DisplayServer.MAIN_WINDOW_ID
-	var mode: DisplayServer.WindowMode = DisplayServer.window_get_mode(window_id)
-	if mode != DisplayServer.WINDOW_MODE_WINDOWED:
-		# `ShowWindow()` behind a mode change is what restores and activates a hidden window; a plain
-		# `window_move_to_foreground()` is refused by Windows while another app owns the foreground.
-		# Godot drops the maximized flag while minimized, so the cached size decides that case.
-		var restored: DisplayServer.WindowMode = mode
-		if mode == DisplayServer.WINDOW_MODE_MINIMIZED:
-			restored = DisplayServer.WINDOW_MODE_MAXIMIZED if covered_usable_screen(window_id) else DisplayServer.WINDOW_MODE_WINDOWED
-		DisplayServer.window_set_mode(restored, window_id)
-	# Raising to the top works even when the foreground change is denied; drop the flag right after
-	# so the app does not stay above every other window.
-	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_ALWAYS_ON_TOP, true, window_id)
-	DisplayServer.window_move_to_foreground(window_id)
-	SchedulerBus.schedule(drop_topmost.bind(window_id), TOPMOST_MILLIS)
-	pass
-
-
-static func drop_topmost(window_id: int) -> void:
-	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_ALWAYS_ON_TOP, false, window_id)
-	pass
-
-
-## True while the window covers the usable screen — either maximized or minimized from maximized,
-## Godot drops the maximized flag while a window is minimized, so its cached size is all that is left.
-static func covered_usable_screen(window_id: int) -> bool:
-	var window_size: Vector2 = Vector2(DisplayServer.window_get_size_with_decorations(window_id))
-	var usable: Vector2 = Vector2(DisplayServer.screen_get_usable_rect(DisplayServer.window_get_current_screen(window_id)).size)
-	return window_size.x >= usable.x and window_size.y >= usable.y
-
-
-## Stack each corner independently: top toasts grow downward and bottom toasts grow upward.
-## Dismissed toasts leave [member toasts] first, so only a node freed behind our back can still
-## show up here.
-static func relayout() -> void:
-	var top_left_offset: int = 0
-	var top_right_offset: int = 0
-	var bottom_left_offset: int = 0
-	var bottom_right_offset: int = 0
-	var gap: int = roundi(Margin.ma_3 * DisplayScale.compute_ui_scale())
-	for i in range(toasts.size() - 1, -1, -1):
-		var toast: DesktopToast = toasts[i]
-		if not is_instance_valid(toast):
-			continue
-		var anchor: Vector2i = corner_position(toast.size, toast.toast_corner)
-		match toast.toast_corner:
-			Corner.CORNER_TOP_LEFT:
-				toast.position = Vector2i(anchor.x, anchor.y + top_left_offset)
-				top_left_offset += toast.size.y + gap
-			Corner.CORNER_TOP_RIGHT:
-				toast.position = Vector2i(anchor.x, anchor.y + top_right_offset)
-				top_right_offset += toast.size.y + gap
-			Corner.CORNER_BOTTOM_LEFT:
-				toast.position = Vector2i(anchor.x, anchor.y - bottom_left_offset)
-				bottom_left_offset += toast.size.y + gap
-			Corner.CORNER_BOTTOM_RIGHT:
-				toast.position = Vector2i(anchor.x, anchor.y - bottom_right_offset)
-				bottom_right_offset += toast.size.y + gap
-	pass
-
-
 func _ready() -> void:
 	build_card()
 	# Controls only lay out inside a visible window, and the font-metric estimate cannot know how
@@ -241,4 +150,105 @@ func on_card_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
 		activate_main_window()
 		close_toast()
+	pass
+
+
+####################################################################################################
+# Static methods
+
+
+
+## Pop a toast in the selected [param corner], which defaults to the bottom-right.
+## [param i18n_title] and [param i18n_body] may be translation keys; text without a registered
+## translation is displayed unchanged.
+static func show_toast(i18n_title: String, i18n_body: String, color: Color, corner: Corner = Corner.CORNER_BOTTOM_RIGHT) -> void:
+	if gdf.gdf_node == null or not gdf.gdf_node.is_inside_tree():
+		return
+	var toast: DesktopToast = DesktopToast.new()
+	toast.title_text = I18n.t(i18n_title)
+	toast.body_text = I18n.t(i18n_body).strip_edges()
+	toast.accent = color
+	toast.toast_corner = corner
+	toasts.append(toast)
+	gdf.gdf_node.add_child(toast)
+	pass
+
+
+
+## Anchor in the requested corner of the usable screen area (taskbar excluded).
+static func corner_position(window_size: Vector2i, corner: Corner = Corner.CORNER_BOTTOM_RIGHT) -> Vector2i:
+	var screen: int = DisplayServer.window_get_current_screen(DisplayServer.MAIN_WINDOW_ID)
+	var usable: Rect2i = DisplayServer.screen_get_usable_rect(screen)
+	var margin: int = roundi(Margin.ma_6 * DisplayScale.compute_ui_scale())
+	var on_left: bool = corner == Corner.CORNER_TOP_LEFT or corner == Corner.CORNER_BOTTOM_LEFT
+	var on_top: bool = corner == Corner.CORNER_TOP_LEFT or corner == Corner.CORNER_TOP_RIGHT
+	var x: int = usable.position.x + margin if on_left else usable.end.x - window_size.x - margin
+	var y: int = usable.position.y + margin if on_top else usable.end.y - window_size.y - margin
+	return Vector2i(x, y)
+
+
+
+## Bring the app window back: restore it when minimized, raise it when it is behind, then focus it.
+static func activate_main_window() -> void:
+	var window_id: int = DisplayServer.MAIN_WINDOW_ID
+	var mode: DisplayServer.WindowMode = DisplayServer.window_get_mode(window_id)
+	if mode != DisplayServer.WINDOW_MODE_WINDOWED:
+		# `ShowWindow()` behind a mode change is what restores and activates a hidden window; a plain
+		# `window_move_to_foreground()` is refused by Windows while another app owns the foreground.
+		# Godot drops the maximized flag while minimized, so the cached size decides that case.
+		var restored: DisplayServer.WindowMode = mode
+		if mode == DisplayServer.WINDOW_MODE_MINIMIZED:
+			restored = DisplayServer.WINDOW_MODE_MAXIMIZED if covered_usable_screen(window_id) else DisplayServer.WINDOW_MODE_WINDOWED
+		DisplayServer.window_set_mode(restored, window_id)
+	# Raising to the top works even when the foreground change is denied; drop the flag right after
+	# so the app does not stay above every other window.
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_ALWAYS_ON_TOP, true, window_id)
+	DisplayServer.window_move_to_foreground(window_id)
+	SchedulerBus.schedule(drop_topmost.bind(window_id), TOPMOST_MILLIS)
+	pass
+
+
+
+static func drop_topmost(window_id: int) -> void:
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_ALWAYS_ON_TOP, false, window_id)
+	pass
+
+
+
+## True while the window covers the usable screen — either maximized or minimized from maximized,
+## Godot drops the maximized flag while a window is minimized, so its cached size is all that is left.
+static func covered_usable_screen(window_id: int) -> bool:
+	var window_size: Vector2 = Vector2(DisplayServer.window_get_size_with_decorations(window_id))
+	var usable: Vector2 = Vector2(DisplayServer.screen_get_usable_rect(DisplayServer.window_get_current_screen(window_id)).size)
+	return window_size.x >= usable.x and window_size.y >= usable.y
+
+
+
+## Stack each corner independently: top toasts grow downward and bottom toasts grow upward.
+## Dismissed toasts leave [member toasts] first, so only a node freed behind our back can still
+## show up here.
+static func relayout() -> void:
+	var top_left_offset: int = 0
+	var top_right_offset: int = 0
+	var bottom_left_offset: int = 0
+	var bottom_right_offset: int = 0
+	var gap: int = roundi(Margin.ma_3 * DisplayScale.compute_ui_scale())
+	for i in range(toasts.size() - 1, -1, -1):
+		var toast: DesktopToast = toasts[i]
+		if not is_instance_valid(toast):
+			continue
+		var anchor: Vector2i = corner_position(toast.size, toast.toast_corner)
+		match toast.toast_corner:
+			Corner.CORNER_TOP_LEFT:
+				toast.position = Vector2i(anchor.x, anchor.y + top_left_offset)
+				top_left_offset += toast.size.y + gap
+			Corner.CORNER_TOP_RIGHT:
+				toast.position = Vector2i(anchor.x, anchor.y + top_right_offset)
+				top_right_offset += toast.size.y + gap
+			Corner.CORNER_BOTTOM_LEFT:
+				toast.position = Vector2i(anchor.x, anchor.y - bottom_left_offset)
+				bottom_left_offset += toast.size.y + gap
+			Corner.CORNER_BOTTOM_RIGHT:
+				toast.position = Vector2i(anchor.x, anchor.y - bottom_right_offset)
+				bottom_right_offset += toast.size.y + gap
 	pass

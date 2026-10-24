@@ -33,50 +33,6 @@ var move_tween: Tween
 var fade_tween: Tween
 
 
-static func create_alert(i18n_text: String, stripe_color: Color) -> Alert:
-	var card := Alert.new()
-	# A toast never swallows a click meant for the UI underneath it.
-	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_theme_stylebox_override("panel", make_card_style(stripe_color))
-	card.label = Label.new()
-	card.label.text = I18n.t(i18n_text)
-	card.label.vertical_alignment = VerticalAlignment.VERTICAL_ALIGNMENT_CENTER
-	card.label.add_theme_font_override("font", make_font())
-	card.label.add_theme_font_size_override("font_size", Typography.body_large_size)
-	# Near-white on the dark surface, dark on the light one — the accent-tinted card decides this.
-	card.label.add_theme_color_override("font_color", ThemeColor.title_color)
-	card.label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	card.add_child(card.label)
-	card.resize_to_text()
-	return card
-
-
-## Dark surface in the app accent, with the semantic color as a stripe on each side and the card shadow.
-static func make_card_style(stripe_color: Color) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = ThemeColor.accent_surface
-	style.set_corner_radius_all(ControlSize.radius_md)
-	style.content_margin_left = Margin.ma_4
-	style.content_margin_right = Margin.ma_4
-	style.content_margin_top = Margin.ma_3
-	style.content_margin_bottom = Margin.ma_3
-	style.border_color = stripe_color
-	style.set_border_width(SIDE_LEFT, ControlSize.border_md)
-	style.set_border_width(SIDE_RIGHT, ControlSize.border_md)
-	style.shadow_color = Color(0.0, 0.0, 0.0, shadow_alpha_dark if ThemeColor.is_dark_theme() else shadow_alpha_light)
-	style.shadow_size = shadow_size
-	style.shadow_offset = shadow_offset
-	return style
-
-
-## Medium weight at the body letter spacing, so a snackbar reads as part of the app type scale.
-static func make_font() -> Font:
-	var variation := FontVariation.new()
-	variation.base_font = Fonts.medium()
-	variation.spacing_glyph = Typography.letter_spacing_xs
-	return variation
-
-
 ## One line, [constant text_max_width] of text at most. Both axes come from the font metrics instead
 ## of [method Control.get_combined_minimum_size], whose theme cache is only filled once the card
 ## enters the tree: this way sizing, resting slot and entry start are fixed on the very first frame.
@@ -149,6 +105,58 @@ func dismiss() -> void:
 	pass
 
 
+####################################################################################################
+# Static methods
+
+
+
+static func create_alert(i18n_text: String, stripe_color: Color) -> Alert:
+	var card := Alert.new()
+	# A toast never swallows a click meant for the UI underneath it.
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_theme_stylebox_override("panel", make_card_style(stripe_color))
+	card.label = Label.new()
+	card.label.text = I18n.t(i18n_text)
+	card.label.vertical_alignment = VerticalAlignment.VERTICAL_ALIGNMENT_CENTER
+	card.label.add_theme_font_override("font", make_font())
+	card.label.add_theme_font_size_override("font_size", Typography.body_large_size)
+	# Near-white on the dark surface, dark on the light one — the accent-tinted card decides this.
+	card.label.add_theme_color_override("font_color", ThemeColor.title_color)
+	card.label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	card.add_child(card.label)
+	card.resize_to_text()
+	return card
+
+
+
+## Dark surface in the app accent, with the semantic color as a stripe on each side and the card shadow.
+static func make_card_style(stripe_color: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = ThemeColor.accent_surface
+	style.set_corner_radius_all(ControlSize.radius_md)
+	style.content_margin_left = Margin.ma_4
+	style.content_margin_right = Margin.ma_4
+	style.content_margin_top = Margin.ma_3
+	style.content_margin_bottom = Margin.ma_3
+	style.border_color = stripe_color
+	style.set_border_width(SIDE_LEFT, ControlSize.border_md)
+	style.set_border_width(SIDE_RIGHT, ControlSize.border_md)
+	style.shadow_color = Color(0.0, 0.0, 0.0, shadow_alpha_dark if ThemeColor.is_dark_theme() else shadow_alpha_light)
+	style.shadow_size = shadow_size
+	style.shadow_offset = shadow_offset
+	return style
+
+
+
+## Medium weight at the body letter spacing, so a snackbar reads as part of the app type scale.
+static func make_font() -> Font:
+	var variation := FontVariation.new()
+	variation.base_font = Fonts.medium()
+	variation.spacing_glyph = Typography.letter_spacing_xs
+	return variation
+
+
+
 ## Move every live card into its slot.
 static func relayout() -> void:
 	for i in range(alerts.size() - 1, -1, -1):
@@ -156,6 +164,7 @@ static func relayout() -> void:
 		if is_instance_valid(card):
 			card.slide_to(card.slot_position())
 	pass
+
 
 ####################################################################################################
 # Alert

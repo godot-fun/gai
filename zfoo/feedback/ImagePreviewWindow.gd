@@ -8,6 +8,7 @@ const ZOOM_STEP: float = 1.15
 const MAX_WIDTH_PERCENT: float = 80.0
 const MAX_HEIGHT_PERCENT: float = 85.0
 const MIN_WINDOW_SIZE: Vector2i = Vector2i(ControlSize.image_xl, ControlSize.image_lg)
+const GROUP_NAME: StringName = &"image_preview_window"
 
 var scroll: ScrollContainer
 var canvas: Control
@@ -19,6 +20,7 @@ var dragging: bool = false
 
 func _init() -> void:
 	super()
+	add_to_group(GROUP_NAME)
 	min_size = MIN_WINDOW_SIZE
 	scroll = ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -41,32 +43,6 @@ func _init() -> void:
 	canvas.add_child(image_view)
 	apply_theme()
 	pass
-
-
-## Load an image from a path, then open it through [method show_image].
-static func show_window(path: String, i18n_title: String = "Image Preview") -> ImagePreviewWindow:
-	var texture := await ResourceHelper.async_load(path) as Texture2D
-	if texture == null:
-		Log.error("failed to preview image path:[{}]", path)
-		Alert.alert(I18n.t("Unable to load image"), Colors.error)
-		return null
-	var title := StringUtils.format("{} - {}", path.get_file(), I18n.t(i18n_title))
-	return show_image(texture, title)
-
-
-## Open a centered preview using an image resource that is already loaded.
-static func show_image(texture: Texture2D, i18n_title: String = "Image Preview") -> ImagePreviewWindow:
-	var window := create_window(i18n_title)
-	window.set_texture(texture)
-	window.present_image()
-	return window
-
-
-static func create_window(i18n_title: String) -> ImagePreviewWindow:
-	var window := ImagePreviewWindow.new()
-	window.title = I18n.t(i18n_title)
-	gdf.gdf_node.add_child(window)
-	return window
 
 
 func set_texture(texture: Texture2D) -> void:
@@ -168,3 +144,37 @@ func apply_theme() -> void:
 		var background := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 0)
 		container.add_theme_stylebox_override("panel", background)
 	pass
+
+
+####################################################################################################
+# Static methods
+
+## Whether an image preview window is currently open.
+static func is_open() -> bool:
+	return gdf.gdf_node != null and gdf.gdf_node.is_inside_tree() and not gdf.gdf_node.get_tree().get_nodes_in_group(GROUP_NAME).is_empty()
+
+
+## Load an image from a path, then open it through [method show_image].
+static func show_window(path: String, i18n_title: String = "Image Preview") -> ImagePreviewWindow:
+	var texture := await ResourceHelper.async_load(path) as Texture2D
+	if texture == null:
+		Log.error("failed to preview image path:[{}]", path)
+		Alert.alert(I18n.t("Unable to load image"), Colors.error)
+		return null
+	var title := StringUtils.format("{} - {}", path.get_file(), I18n.t(i18n_title))
+	return show_image(texture, title)
+
+
+## Open a centered preview using an image resource that is already loaded.
+static func show_image(texture: Texture2D, i18n_title: String = "Image Preview") -> ImagePreviewWindow:
+	var window := create_window(i18n_title)
+	window.set_texture(texture)
+	window.present_image()
+	return window
+
+
+static func create_window(i18n_title: String) -> ImagePreviewWindow:
+	var window := ImagePreviewWindow.new()
+	window.title = I18n.t(i18n_title)
+	gdf.gdf_node.add_child(window)
+	return window
