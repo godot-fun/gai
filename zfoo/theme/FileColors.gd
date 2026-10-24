@@ -22,6 +22,11 @@ static var text_color: Color = DARK_TEXT
 static var folder_color: Color = DARK_FOLDER
 
 
+static func _static_init() -> void:
+	refresh()
+	pass
+
+
 ## Select resource colors with suitable contrast for the current dark or light theme.
 static func refresh() -> void:
 	var dark := ThemeColor.is_dark_theme()

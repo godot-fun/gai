@@ -140,6 +140,11 @@ static var lime_surface: Color = DARK_LIME_SURFACE
 # Theme refresh
 # =============================================================================
 
+static func _static_init() -> void:
+	refresh()
+	pass
+
+
 ## Select neutral and semantic colors with suitable contrast for the current theme.
 static func refresh() -> void:
 	var dark := ThemeColor.is_dark_theme()

@@ -14,7 +14,6 @@ func _ready() -> void:
 		Audios.init()
 		AudioRecorder.init()
 		LoggerHelper.init()
-		ThemeColor.init()
 		events.application_start.emit()
 	pass
 
