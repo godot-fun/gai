@@ -112,7 +112,9 @@ static func set_read_image_with_api(enabled: bool) -> void:
 ## Extra multiplier on top of Godot's automatic canvas stretch scale.
 const UI_SCALE_KEY := "agent_ui_scale"
 const DEFAULT_UI_SCALE := 1.0
-const UI_SCALES: Array[float] = [0.75, 1.0, 1.15, 1.25, 1.50, 1.75, 2.0]
+const UI_SCALES: Array[float] = [
+	0.75, 0.90, 1.0, 1.05, 1.10, 1.15, 1.20, 1.25, 1.30, 1.35, 1.40, 1.45, 1.50, 1.65, 1.80, 2.0,
+]
 
 
 static func get_ui_scale() -> float:

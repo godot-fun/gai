@@ -232,7 +232,7 @@
       "appearance": "Appearance",
       "language": "Language",
       "ui_scale": "Interface scale",
-      "ui_scale_help": "Scale the entire interface from 75% to 200%. Use 125% or 150% on high-density displays.",
+      "ui_scale_help": "Hold Ctrl and scroll the mouse wheel to change interface scale.",
       "markdown": "Render Markdown",
       "markdown_help": "Render chat content with Markdown formatting.",
       "heading": "AI connection",

@@ -42,6 +42,7 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 	ui_scale_label.tooltip_text = I18n.t("agent.settings.ui_scale_help")
 	scale_parts[0].add_child(ui_scale_label)
 	ui_scale_select = OptionButton.new()
+	ui_scale_select.tooltip_text = I18n.t("agent.settings.ui_scale_help")
 	ui_scale_select.custom_minimum_size = Vector2(0, 38)
 	ui_scale_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ui_scale_select.size_flags_stretch_ratio = AgentSettingDialog.FIELD_CONTROL_RATIO
@@ -107,6 +108,7 @@ func apply_locale() -> void:
 	markdown_toggle_button.tooltip_text = I18n.t("agent.settings.markdown_help")
 	ui_scale_label.text = I18n.t("agent.settings.ui_scale")
 	ui_scale_label.tooltip_text = I18n.t("agent.settings.ui_scale_help")
+	ui_scale_select.tooltip_text = I18n.t("agent.settings.ui_scale_help")
 	select_current_language()
 	pass
 
