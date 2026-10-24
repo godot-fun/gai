@@ -106,66 +106,6 @@ static func set_read_image_with_api(enabled: bool) -> void:
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-# Appearance
-# ----------------------------------------------------------------------------------------------------------------------
-
-## Extra multiplier on top of Godot's automatic canvas stretch scale.
-const UI_SCALE_KEY := "agent_ui_scale"
-const DEFAULT_UI_SCALE := 1.0
-const UI_SCALES: Array[float] = [
-	0.75, 0.90, 1.0, 1.05, 1.10, 1.15, 1.20, 1.25, 1.30, 1.35, 1.40, 1.45, 1.50, 1.65, 1.80, 2.0,
-]
-
-
-static func get_ui_scale() -> float:
-	return clampf(Setting.get_float(UI_SCALE_KEY, DEFAULT_UI_SCALE), UI_SCALES[0], UI_SCALES[-1])
-
-
-## Applies the user's accessibility scale without changing the 2K design baseline.
-static func apply_ui_scale() -> void:
-	var tree := Engine.get_main_loop() as SceneTree
-	if tree == null:
-		return
-	tree.root.content_scale_factor = get_ui_scale()
-	pass
-
-
-static func set_ui_scale(scale: float) -> void:
-	var clamped := clampf(scale, UI_SCALES[0], UI_SCALES[-1])
-	var current := get_ui_scale()
-	if is_equal_approx(current, clamped):
-		return
-	Setting.set_float(UI_SCALE_KEY, clamped)
-	Setting.save()
-	apply_ui_scale()
-	pass
-
-
-## Moves one step in [constant UI_SCALES]; used by settings and Ctrl+mouse wheel.
-static func step_ui_scale(direction: int) -> void:
-	if direction == 0:
-		return
-	var index := find_ui_scale_index(get_ui_scale())
-	index = clampi(index + direction, 0, UI_SCALES.size() - 1)
-	set_ui_scale(UI_SCALES[index])
-	pass
-
-
-static func find_ui_scale_index(scale: float) -> int:
-	for index in range(UI_SCALES.size()):
-		if is_equal_approx(scale, UI_SCALES[index]):
-			return index
-	var nearest := 0
-	var nearest_delta := absf(scale - UI_SCALES[0])
-	for index in range(1, UI_SCALES.size()):
-		var delta := absf(scale - UI_SCALES[index])
-		if delta < nearest_delta:
-			nearest_delta = delta
-			nearest = index
-	return nearest
-
-
-# ----------------------------------------------------------------------------------------------------------------------
 # Notifications
 # ----------------------------------------------------------------------------------------------------------------------
 

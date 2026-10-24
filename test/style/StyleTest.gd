@@ -20,6 +20,48 @@ func DisplayScale_compute_screen_scale_test() -> void:
 	pass
 
 
+static func DisplayScale_step_ui_scale_uses_presets_test() -> void:
+	var saved := DisplayScale.get_ui_scale()
+	DisplayScale.set_ui_scale(1.0)
+	var index := DisplayScale.find_ui_scale_index(1.0)
+	DisplayScale.step_ui_scale(1)
+	assert(is_equal_approx(DisplayScale.get_ui_scale(), DisplayScale.UI_SCALE_PRESETS[index + 1]))
+	DisplayScale.step_ui_scale(-1)
+	assert(is_equal_approx(DisplayScale.get_ui_scale(), 1.0))
+	DisplayScale.set_ui_scale(saved)
+	pass
+
+
+static func DisplayScale_set_ui_scale_snaps_to_preset_test() -> void:
+	var saved := DisplayScale.get_ui_scale()
+	DisplayScale.set_ui_scale(1.07)
+	assert(is_equal_approx(DisplayScale.get_ui_scale(), 1.05))
+	DisplayScale.set_ui_scale(saved)
+	pass
+
+
+static func DisplayScale_migrates_legacy_ui_scale_setting_key_test() -> void:
+	var saved_new := Setting.get_string(DisplayScale.UI_SCALE_SETTING_KEY, "")
+	var saved_legacy := Setting.get_string(DisplayScale.LEGACY_UI_SCALE_SETTING_KEY, "")
+	Setting.set_float(DisplayScale.LEGACY_UI_SCALE_SETTING_KEY, 1.25)
+	Setting.set_string(DisplayScale.UI_SCALE_SETTING_KEY, "")
+	Setting.save()
+	assert(is_equal_approx(DisplayScale.get_ui_scale(), 1.25))
+	DisplayScale.set_ui_scale(1.30)
+	assert(StringUtils.is_blank(Setting.get_string(DisplayScale.LEGACY_UI_SCALE_SETTING_KEY, "")))
+	assert(is_equal_approx(Setting.get_float(DisplayScale.UI_SCALE_SETTING_KEY, 0.0), 1.30))
+	if StringUtils.is_blank(saved_new):
+		Setting.set_string(DisplayScale.UI_SCALE_SETTING_KEY, "")
+	else:
+		Setting.set_string(DisplayScale.UI_SCALE_SETTING_KEY, saved_new)
+	if StringUtils.is_blank(saved_legacy):
+		Setting.set_string(DisplayScale.LEGACY_UI_SCALE_SETTING_KEY, "")
+	else:
+		Setting.set_string(DisplayScale.LEGACY_UI_SCALE_SETTING_KEY, saved_legacy)
+	Setting.save()
+	pass
+
+
 func ColorBase_follow_theme_test() -> void:
 	var original := ThemeColor.current_theme
 	ThemeColor.current_theme = ThemeColor.ThemeEnum.DARK

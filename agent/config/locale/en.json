@@ -233,6 +233,7 @@
       "language": "Language",
       "ui_scale": "Interface scale",
       "ui_scale_help": "Hold Ctrl and scroll the mouse wheel to change interface scale.",
+      "ui_scale_help_mac": "Hold ⌘ and scroll the mouse wheel to change interface scale.",
       "markdown": "Render Markdown",
       "markdown_help": "Render chat content with Markdown formatting.",
       "heading": "AI connection",

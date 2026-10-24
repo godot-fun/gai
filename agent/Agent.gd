@@ -63,7 +63,7 @@ var sense_input: SenseInput = SenseInput.new()
 
 func _ready() -> void:
 	I18nHelper.init_i18n()
-	AgentSetting.apply_ui_scale()
+	DisplayScale.apply_ui_scale()
 	apply_layout()
 	apply_theme()
 	gdf.events.theme_changed.connect(apply_theme)
@@ -109,7 +109,7 @@ func on_window_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseButton:
 		var mouse := event as InputEventMouseButton
-		if not mouse.pressed or not mouse.ctrl_pressed:
+		if not mouse.pressed or (not mouse.ctrl_pressed and not mouse.meta_pressed):
 			return
 		var direction := 0
 		if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
@@ -118,7 +118,7 @@ func on_window_input(event: InputEvent) -> void:
 			direction = -1
 		if direction == 0:
 			return
-		AgentSetting.step_ui_scale(direction)
+		DisplayScale.step_ui_scale(direction)
 		get_viewport().set_input_as_handled()
 	pass
 

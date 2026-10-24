@@ -93,5 +93,7 @@ class Events:
 	signal theme_color_changed
 	## I18n locale
 	signal locale_changed
+	## User interface scale preset changed (see [method DisplayScale.set_ui_scale]).
+	signal ui_scale_changed(scale: float)
 	pass
 ####################################################################################################

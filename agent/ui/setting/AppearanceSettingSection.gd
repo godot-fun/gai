@@ -39,19 +39,20 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 	markdown_toggle_button.toggled.connect(on_markdown_toggled)
 	var scale_parts := ui.make_setting_row(parent)
 	ui_scale_label = ui.make_label(I18n.t("agent.settings.ui_scale"))
-	ui_scale_label.tooltip_text = I18n.t("agent.settings.ui_scale_help")
+	ui_scale_label.tooltip_text = ui_scale_tooltip()
 	scale_parts[0].add_child(ui_scale_label)
 	ui_scale_select = OptionButton.new()
-	ui_scale_select.tooltip_text = I18n.t("agent.settings.ui_scale_help")
+	ui_scale_select.tooltip_text = ui_scale_tooltip()
 	ui_scale_select.custom_minimum_size = Vector2(0, 38)
 	ui_scale_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ui_scale_select.size_flags_stretch_ratio = AgentSettingDialog.FIELD_CONTROL_RATIO
-	for scale in AgentSetting.UI_SCALES:
+	for scale in DisplayScale.UI_SCALE_PRESETS:
 		ui_scale_select.add_item(StringUtils.format("{}%", roundi(scale * 100.0)))
 		ui_scale_select.set_item_metadata(ui_scale_select.item_count - 1, scale)
 	ui_scale_select.item_selected.connect(on_ui_scale_selected)
 	ui_scale_select.get_popup().popup_hide.connect(ui.request_focus_check)
 	scale_parts[1].add_child(ui_scale_select)
+	gdf.events.ui_scale_changed.connect(on_ui_scale_changed)
 	select_current_language()
 	select_current_ui_scale()
 	pass
@@ -82,16 +83,17 @@ func on_language_selected(index: int) -> void:
 
 
 func select_current_ui_scale() -> void:
-	var current := AgentSetting.get_ui_scale()
-	for index in range(ui_scale_select.item_count):
-		if is_equal_approx(float(ui_scale_select.get_item_metadata(index)), current):
-			ui_scale_select.select(index)
-			return
+	ui_scale_select.select(DisplayScale.find_ui_scale_index(DisplayScale.get_ui_scale()))
+	pass
+
+
+func on_ui_scale_changed(_scale: float) -> void:
+	select_current_ui_scale()
 	pass
 
 
 func on_ui_scale_selected(index: int) -> void:
-	AgentSetting.set_ui_scale(float(ui_scale_select.get_item_metadata(index)))
+	DisplayScale.set_ui_scale(float(ui_scale_select.get_item_metadata(index)))
 	pass
 
 
@@ -107,9 +109,16 @@ func apply_locale() -> void:
 	markdown_label.tooltip_text = I18n.t("agent.settings.markdown_help")
 	markdown_toggle_button.tooltip_text = I18n.t("agent.settings.markdown_help")
 	ui_scale_label.text = I18n.t("agent.settings.ui_scale")
-	ui_scale_label.tooltip_text = I18n.t("agent.settings.ui_scale_help")
-	ui_scale_select.tooltip_text = I18n.t("agent.settings.ui_scale_help")
+	ui_scale_label.tooltip_text = ui_scale_tooltip()
+	ui_scale_select.tooltip_text = ui_scale_tooltip()
 	select_current_language()
+	pass
+
+
+func ui_scale_tooltip() -> String:
+	if OSUtils.is_mac():
+		return I18n.t("agent.settings.ui_scale_help_mac")
+	return I18n.t("agent.settings.ui_scale_help")
 	pass
 
 
