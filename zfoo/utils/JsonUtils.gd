@@ -4,22 +4,25 @@ extends Object
 static func json_to_object(json: String, type: Variant) -> Variant:
 	if StringUtils.is_blank(json):
 		return
-	var data = JSON.parse_string(json)
-	if data == null:
-		Log.error("Json pars error:[{}]", json)
+	var parser := JSON.new()
+	if parser.parse(json) != OK:
+		Log.error("JSON object parse failed line:[{}] message:[{}] length:[{}]", parser.get_error_line(), parser.get_error_message(), json.length())
 		return
-	if typeof(data) != TYPE_DICTIONARY:
-		Log.error("Json root type error:[{}]", json)
+	if typeof(parser.data) != TYPE_DICTIONARY:
+		Log.error("JSON object root type invalid actual_type:[{}] length:[{}]", type_string(typeof(parser.data)), json.length())
 		return
-	return dict_to_object(data, type)
+	return dict_to_object(parser.data, type)
 
 
 static func json_to_object_array(json: String, element_type: Variant) -> Array:
 	if StringUtils.is_blank(json):
 		return []
 	var parser := JSON.new()
-	if parser.parse(json) != OK or typeof(parser.data) != TYPE_ARRAY:
-		Log.error("Json array parse error:[{}]", json)
+	if parser.parse(json) != OK:
+		Log.error("JSON array parse failed line:[{}] message:[{}] length:[{}]", parser.get_error_line(), parser.get_error_message(), json.length())
+		return []
+	if typeof(parser.data) != TYPE_ARRAY:
+		Log.error("JSON array root type invalid actual_type:[{}] length:[{}]", type_string(typeof(parser.data)), json.length())
 		return []
 	var result: Array = []
 	for value: Variant in parser.data:
@@ -29,7 +32,6 @@ static func json_to_object_array(json: String, element_type: Variant) -> Array:
 		if element != null:
 			result.append(element)
 	return result
-
 
 static func dict_to_object(data: Dictionary, type: Variant) -> Variant:
 	if !ReflectionUtils.has_empty_constructor(type):

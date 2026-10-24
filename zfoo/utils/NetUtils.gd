@@ -5,8 +5,21 @@ const LOCAL_LOOPBACK_IP: String = "127.0.0.1"
 const PORT_RANGE_MIN: int = 1024
 const PORT_RANGE_MAX: int = 65535
 
+
+## Returns a local IPv4 address. Resolves Windows and POSIX hostname variables first,
+## then falls back to the first local interface address and finally loopback.
 static func local_host() -> String:
-	return IP.resolve_hostname(OS.get_environment("COMPUTERNAME"), IP.Type.TYPE_IPV4)
+	var hostname := OS.get_environment("COMPUTERNAME").strip_edges()
+	if StringUtils.is_blank(hostname):
+		hostname = OS.get_environment("HOSTNAME").strip_edges()
+	if StringUtils.is_not_blank(hostname):
+		var resolved := IP.resolve_hostname(hostname, IP.Type.TYPE_IPV4)
+		if resolved.is_valid_ip_address():
+			return resolved
+	for address: String in IP.get_local_addresses():
+		if address.is_valid_ip_address() and not address.contains(":"):
+			return address
+	return LOCAL_LOOPBACK_IP
 
 
 ## Finds the first bindable loopback TCP port at or above start_port, then releases the probe.

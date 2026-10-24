@@ -2,6 +2,7 @@
 func local_host_test() -> void:
 	var address := NetUtils.local_host()
 	assert(StringUtils.is_not_empty(address))
+	assert(address.is_valid_ip_address() and not address.contains(":"))
 	var parts := address.split(".")
 	assert(parts.size() == 4)
 	for part: String in parts:
