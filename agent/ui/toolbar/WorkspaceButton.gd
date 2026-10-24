@@ -26,6 +26,7 @@ func apply_locale() -> void:
 	button.tooltip_text = workspace_tooltip()
 	dialog.title = I18n.t("agent.workspace.dialog_title")
 	dialog.ok_button_text = I18n.t("common.select")
+	dialog.get_cancel_button().text = I18n.t("common.cancel")
 	pass
 
 

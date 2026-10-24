@@ -140,6 +140,7 @@ func apply_locale() -> void:
 	input_field.placeholder_text = I18n.t("agent.input.placeholder")
 	workspace_dialog.title = I18n.t("agent.workspace.dialog_title")
 	workspace_dialog.ok_button_text = I18n.t("common.select")
+	workspace_dialog.get_cancel_button().text = I18n.t("common.cancel")
 	pass
 
 
