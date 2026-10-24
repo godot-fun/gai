@@ -46,21 +46,21 @@ static func apply_ui_scale() -> void:
 ## Persists a preset, updates the root factor, and emits [signal GodotFramework.Events.ui_scale_changed].
 static func set_ui_scale(scale: float) -> void:
 	var clamped := clampf(scale, UI_SCALE_PRESETS[0], UI_SCALE_PRESETS[-1])
-	var snapped := UI_SCALE_PRESETS[find_ui_scale_index(clamped)]
+	var preset_scale := UI_SCALE_PRESETS[find_ui_scale_index(clamped)]
 	var current := get_ui_scale()
-	if is_equal_approx(current, snapped):
+	if is_equal_approx(current, preset_scale):
 		return
-	Setting.set_float(UI_SCALE_SETTING_KEY, snapped)
+	Setting.set_float(UI_SCALE_SETTING_KEY, preset_scale)
 	if StringUtils.is_not_blank(Setting.get_string(LEGACY_UI_SCALE_SETTING_KEY, "")):
 		Setting.set_string(LEGACY_UI_SCALE_SETTING_KEY, "")
 	Setting.save()
 	apply_ui_scale()
-	gdf.events.ui_scale_changed.emit(snapped)
+	gdf.events.ui_scale_changed.emit(preset_scale)
 	pass
 
 
-## Steps one entry in [constant UI_SCALE_PRESETS] (positive = larger UI).
-static func step_ui_scale(direction: int) -> void:
+## Moves one entry in [constant UI_SCALE_PRESETS] (positive = larger UI).
+static func adjust_ui_scale(direction: int) -> void:
 	if direction == 0:
 		return
 	var index := find_ui_scale_index(get_ui_scale())

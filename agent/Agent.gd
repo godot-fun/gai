@@ -118,7 +118,7 @@ func on_window_input(event: InputEvent) -> void:
 			direction = -1
 		if direction == 0:
 			return
-		DisplayScale.step_ui_scale(direction)
+		DisplayScale.adjust_ui_scale(direction)
 		get_viewport().set_input_as_handled()
 	pass
 
