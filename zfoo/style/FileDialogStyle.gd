@@ -101,8 +101,8 @@ static func style_controls(root: Node) -> void:
 ## nodes, then restore the two dialog actions after generic button styling has run.
 static func apply_control_styles(dialog: FileDialog) -> void:
 	style_controls(dialog)
-	style_action_button(dialog.get_ok_button(), true)
-	style_action_button(dialog.get_cancel_button(), false)
+	style_confirm_button(dialog.get_ok_button())
+	style_cancel_button(dialog.get_cancel_button())
 	pass
 
 
@@ -132,18 +132,29 @@ static func style_control(node: Node) -> void:
 	pass
 
 
-static func style_action_button(button: Button, primary: bool) -> void:
-	var fill := ThemeColor.accent_theme_color() if primary else Colors.elevated_surface
-	var normal := StyleBoxHelper.create_style_box_flat(
-		fill,
+static func style_confirm_button(button: Button) -> void:
+	var fill := ThemeColor.accent_theme_color()
+	var normal := StyleBoxHelper.create_style_box_flat(fill,
 		ControlSize.radius_md, Margin.ma_3, Margin.ma_1,
-		ThemeColor.accent_theme_color() if primary else Colors.subtle_border, ControlSize.border_xs
+		fill, ControlSize.border_xs
 	)
-	var hover := ButtonStyle.filled(normal, fill.lightened(0.12)) if primary else make_button_hover_style(normal)
-	var pressed := ButtonStyle.filled(normal, fill.darkened(0.08)) if primary else make_button_pressed_style(normal)
+	var hover := ButtonStyle.filled(normal, fill.lightened(0.12))
+	var pressed := ButtonStyle.filled(normal, fill.darkened(0.08))
 	ButtonStyle.apply(button, normal, hover, pressed)
-	var text_color := ThemeColor.inset_surface if primary else ThemeColor.title_color
-	ButtonStyle.apply_font_colors(button, text_color, text_color, text_color, Color(text_color, 0.5))
+	ButtonStyle.apply_font_colors(button, ThemeColor.inset_surface, ThemeColor.inset_surface, ThemeColor.inset_surface,
+		Color(ThemeColor.inset_surface, 0.5))
+	pass
+
+
+## Cancel mirrors CommonWindow's close button: quiet title-color at rest, error-red on interaction.
+static func style_cancel_button(button: Button) -> void:
+	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT,
+		ControlSize.radius_md, Margin.ma_3, Margin.ma_1, Color(ThemeColor.title_color, 0.35), ControlSize.border_xs)
+	var hover := ButtonStyle.filled(normal, Colors.error_surface, Colors.error)
+	var pressed := ButtonStyle.filled(normal, Colors.error, Colors.error)
+	ButtonStyle.apply(button, normal, hover, pressed)
+	ButtonStyle.apply_font_colors(button, ThemeColor.title_color, Colors.error, ThemeColor.inset_surface,
+		Color(ThemeColor.title_color, 0.5))
 	pass
 
 
