@@ -15,7 +15,7 @@ static func async_get(url: String, timeout_millis: int = AsyncHttp.DEFAULT_TIMEO
 		if not response.success or not response.is_redirect():
 			return response
 		var location := response.get_header("Location")
-		var redirect_url := HttpUtils.resolve_url(request_url, location)
+		var redirect_url := HttpUtils.resolve_redirect_url(request_url, location)
 		if not HttpUtils.is_valid_http_url(redirect_url):
 			return response
 		request_url = redirect_url

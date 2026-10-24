@@ -69,7 +69,7 @@ static func has_header(headers: PackedStringArray, name: String) -> bool:
 
 
 ## Resolves an absolute or relative URL reference against [param source_url].
-static func resolve_url(source_url: String, location: String) -> String:
+static func resolve_redirect_url(source_url: String, location: String) -> String:
 	var target := location.strip_edges()
 	if is_valid_http_url(target):
 		return target
