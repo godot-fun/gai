@@ -65,6 +65,7 @@ func build_dialog() -> void:
 	content_panel.add_child(card_margin)
 	content_scroll = ScrollContainer.new()
 	content_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	content_scroll.add_theme_constant_override("scrollbar_h_separation", Margin.ma_3)
 	card_margin.add_child(content_scroll)
 	var fields := VBoxContainer.new()
 	fields.size_flags_horizontal = Control.SIZE_EXPAND_FILL

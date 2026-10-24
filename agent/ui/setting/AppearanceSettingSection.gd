@@ -5,7 +5,6 @@ var language_label: Label
 var language_select: OptionButton
 var markdown_label: Label
 var markdown_toggle_button: CheckButton
-var display_heading_label: Label
 var ui_scale_label: Label
 var ui_scale_select: OptionButton
 
@@ -40,8 +39,6 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 	markdown_toggle_button = ui.add_check_button(control, "", AgentSetting.get_markdown_enabled())
 	markdown_toggle_button.tooltip_text = I18n.t("agent.settings.markdown_help")
 	markdown_toggle_button.toggled.connect(on_markdown_toggled)
-	ui.add_separator(parent)
-	display_heading_label = ui.add_heading(parent, I18n.t("agent.settings.display"))
 	var scale_parts := ui.make_setting_row(parent)
 	ui_scale_label = ui.make_label(I18n.t("agent.settings.ui_scale"))
 	ui_scale_label.tooltip_text = I18n.t("agent.settings.ui_scale_help")
@@ -111,7 +108,6 @@ func apply_locale() -> void:
 	markdown_label.text = I18n.t("agent.settings.markdown")
 	markdown_label.tooltip_text = I18n.t("agent.settings.markdown_help")
 	markdown_toggle_button.tooltip_text = I18n.t("agent.settings.markdown_help")
-	display_heading_label.text = I18n.t("agent.settings.display")
 	ui_scale_label.text = I18n.t("agent.settings.ui_scale")
 	ui_scale_label.tooltip_text = I18n.t("agent.settings.ui_scale_help")
 	select_current_language()
@@ -122,7 +118,6 @@ func apply_theme() -> void:
 	super.apply_theme()
 	ui.style_field_label(language_label)
 	ui.style_field_label(markdown_label)
-	ui.style_heading(display_heading_label)
 	ui.style_field_label(ui_scale_label)
 	ui.style_option_button(language_select)
 	ui.style_option_button(ui_scale_select)
