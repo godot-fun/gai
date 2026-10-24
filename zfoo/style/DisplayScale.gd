@@ -13,7 +13,6 @@ extends Object
 ## Presets match the agent appearance setting and Ctrl / ⌘ + mouse wheel shortcuts.
 
 const UI_SCALE_SETTING_KEY := "ui_scale"
-const LEGACY_UI_SCALE_SETTING_KEY := "agent_ui_scale"
 const DEFAULT_UI_SCALE := 1.0
 const UI_SCALE_PRESETS: Array[float] = [
 	0.75, 0.90, 1.0, 1.05, 1.10, 1.15, 1.20, 1.25, 1.30, 1.35, 1.40, 1.45, 1.50, 1.65, 1.80, 2.0,
@@ -22,16 +21,8 @@ const UI_SCALE_PRESETS: Array[float] = [
 
 ## Current preset multiplier (snapped to [constant UI_SCALE_PRESETS]).
 static func get_ui_scale() -> float:
-	var raw := clampf(read_stored_ui_scale(), UI_SCALE_PRESETS[0], UI_SCALE_PRESETS[-1])
+	var raw := clampf(Setting.get_float(UI_SCALE_SETTING_KEY, DEFAULT_UI_SCALE), UI_SCALE_PRESETS[0], UI_SCALE_PRESETS[-1])
 	return UI_SCALE_PRESETS[find_ui_scale_index(raw)]
-
-
-static func read_stored_ui_scale() -> float:
-	if StringUtils.is_not_blank(Setting.get_string(UI_SCALE_SETTING_KEY, "")):
-		return Setting.get_float(UI_SCALE_SETTING_KEY, DEFAULT_UI_SCALE)
-	if StringUtils.is_not_blank(Setting.get_string(LEGACY_UI_SCALE_SETTING_KEY, "")):
-		return Setting.get_float(LEGACY_UI_SCALE_SETTING_KEY, DEFAULT_UI_SCALE)
-	return DEFAULT_UI_SCALE
 
 
 ## Applies [method get_ui_scale] to the root window (call once at startup and after each [method set_ui_scale]).
@@ -51,8 +42,6 @@ static func set_ui_scale(scale: float) -> void:
 	if is_equal_approx(current, preset_scale):
 		return
 	Setting.set_float(UI_SCALE_SETTING_KEY, preset_scale)
-	if StringUtils.is_not_blank(Setting.get_string(LEGACY_UI_SCALE_SETTING_KEY, "")):
-		Setting.set_string(LEGACY_UI_SCALE_SETTING_KEY, "")
 	Setting.save()
 	apply_ui_scale()
 	gdf.events.ui_scale_changed.emit(preset_scale)
