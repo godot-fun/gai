@@ -112,8 +112,11 @@ static func set_read_image_with_api(enabled: bool) -> void:
 ## Extra multiplier on top of Godot's automatic canvas stretch scale.
 const UI_SCALE_KEY := "agent_ui_scale"
 const DEFAULT_UI_SCALE := 1.0
-const MIN_UI_SCALE := 0.50
-const MAX_UI_SCALE := 3.00
+const UI_SCALES: Array[float] = [0.75, 1.0, 1.15, 1.25, 1.50, 1.75, 2.0]
+
+
+static func get_ui_scale() -> float:
+	return clampf(Setting.get_float(UI_SCALE_KEY, DEFAULT_UI_SCALE), UI_SCALES[0], UI_SCALES[-1])
 
 
 ## Applies the user's accessibility scale without changing the 2K design baseline.
@@ -121,13 +124,13 @@ static func apply_ui_scale() -> void:
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null:
 		return
-	tree.root.content_scale_factor = clampf(Setting.get_float(UI_SCALE_KEY, DEFAULT_UI_SCALE), MIN_UI_SCALE, MAX_UI_SCALE)
+	tree.root.content_scale_factor = get_ui_scale()
 	pass
 
 
 static func set_ui_scale(scale: float) -> void:
-	var clamped := clampf(scale, MIN_UI_SCALE, MAX_UI_SCALE)
-	var current := clampf(Setting.get_float(UI_SCALE_KEY, DEFAULT_UI_SCALE), MIN_UI_SCALE, MAX_UI_SCALE)
+	var clamped := clampf(scale, UI_SCALES[0], UI_SCALES[-1])
+	var current := get_ui_scale()
 	if is_equal_approx(current, clamped):
 		return
 	Setting.set_float(UI_SCALE_KEY, clamped)

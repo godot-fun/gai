@@ -230,10 +230,9 @@
     },
     "settings": {
       "appearance": "外观",
-      "display": "显示",
       "language": "语言",
       "ui_scale": "界面缩放",
-      "ui_scale_help": "可将整个界面缩放至 50%～300%；高分辨率屏幕建议使用 125% 或 150%。",
+      "ui_scale_help": "可将整个界面缩放至 75%～200%；高分辨率屏幕建议使用 125% 或 150%。",
       "markdown": "Markdown 渲染",
       "markdown_help": "使用 Markdown 格式渲染聊天内容。",
       "heading": "AI 连接",

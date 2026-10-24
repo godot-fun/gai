@@ -8,8 +8,6 @@ var markdown_toggle_button: CheckButton
 var ui_scale_label: Label
 var ui_scale_select: OptionButton
 
-const UI_SCALES: Array[float] = [0.50, 0.75, 1.0, 1.15, 1.25, 1.50, 1.75, 2.0, 2.50, 3.0]
-
 
 func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: ConfirmationDialog) -> void:
 	super.set_up(p_ui, parent, dialog)
@@ -47,8 +45,8 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 	ui_scale_select.custom_minimum_size = Vector2(0, 38)
 	ui_scale_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ui_scale_select.size_flags_stretch_ratio = AgentSettingDialog.FIELD_CONTROL_RATIO
-	for scale in UI_SCALES:
-		ui_scale_select.add_item("%d%%" % roundi(scale * 100.0))
+	for scale in AgentSetting.UI_SCALES:
+		ui_scale_select.add_item(StringUtils.format("{}%", roundi(scale * 100.0)))
 		ui_scale_select.set_item_metadata(ui_scale_select.item_count - 1, scale)
 	ui_scale_select.item_selected.connect(on_ui_scale_selected)
 	ui_scale_select.get_popup().popup_hide.connect(ui.request_focus_check)
@@ -83,8 +81,7 @@ func on_language_selected(index: int) -> void:
 
 
 func select_current_ui_scale() -> void:
-	var current := clampf(Setting.get_float(AgentSetting.UI_SCALE_KEY, AgentSetting.DEFAULT_UI_SCALE),
-		AgentSetting.MIN_UI_SCALE, AgentSetting.MAX_UI_SCALE)
+	var current := AgentSetting.get_ui_scale()
 	for index in range(ui_scale_select.item_count):
 		if is_equal_approx(float(ui_scale_select.get_item_metadata(index)), current):
 			ui_scale_select.select(index)
