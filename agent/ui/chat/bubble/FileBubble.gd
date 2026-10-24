@@ -38,6 +38,9 @@ func refresh(_entry: ChatEntry) -> void:
 
 
 static func open_file(path: String) -> void:
+	if StringUtils.is_not_blank(ImageHelper.get_image_format(path, StringUtils.EMPTY)):
+		await ImagePreviewWindow.show_window(path)
+		return
 	if FileUtils.open_file(path) != OK:
 		Alert.alert(StringUtils.format(I18n.t("common.file_not_found"), path), Colors.error)
 	pass
