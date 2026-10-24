@@ -621,7 +621,7 @@ func on_input_action_pressed() -> void:
 		return
 	if not ChatInputDependencyGuard.ensure_git_installed(session.id):
 		return
-	if AgentSessionManager.enqueue_message(session.id, text):
+	if AgentSessionManager.add_pending_message(session.id, text):
 		clear_text()
 		collapse_after_send()
 	pass

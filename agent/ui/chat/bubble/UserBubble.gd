@@ -115,7 +115,8 @@ static func on_delete_from_here_pressed(session_id: int, entry: ChatEntry) -> vo
 static func on_revert_pressed(session_id: int, entry: ChatEntry) -> void:
 	AgentEvents.events.chat_input_prefill.emit(entry.body)
 	var sha: String = entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
-	if not await GitCheckpointManager.async_restore(session_id, sha):
+	var restore_error := await GitCheckpointManager.async_restore(session_id, sha)
+	if restore_error != OK:
 		Alert.alert(I18n.t("git.restore_failed"), Colors.error)
 		return
 	AgentSessionManager.delete_chat_from_entry(session_id, entry)

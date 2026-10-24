@@ -418,7 +418,7 @@ func on_right_text_changed() -> void:
 
 
 func select_relative(offset: int) -> void:
-	if not save_current():
+	if save_current() != OK:
 		return
 	selected_index = posmod(selected_index + offset, files.size())
 	load_selected_file()
@@ -471,29 +471,30 @@ static func revert_hunk_text(old_text: String, new_text: String, hunk: GitDiffPa
 
 ## Writes the editable snapshot only when the workspace still matches the post-run cache. This is
 ## optimistic concurrency control: an older chat diff must never overwrite a later agent/user edit.
-func save_current() -> bool:
+func save_current() -> Error:
 	var file := files[selected_index]
 	if not file.can_edit() or not is_dirty():
-		return true
+		return OK
 	var target := FileUtils.normalize_path(workspace_root.path_join(file.new_path))
 	if not FileUtils.is_relative_to(target, workspace_root):
 		Alert.alert(I18n.t("git.save_outside_workspace"), Colors.error)
-		return false
+		return ERR_FILE_NO_PERMISSION
 	var exists_now := FileAccess.file_exists(target)
 	var current_text := FileUtils.read_file_to_string(target) if exists_now else StringUtils.EMPTY
 	if exists_now != file.new_exists or current_text.sha256_text() != file.new_hash:
 		Alert.alert(I18n.t("git.save_conflict"), Colors.warning)
-		return false
-	if FileUtils.write_string_to_file(target, right_edit.text) != OK:
+		return ERR_BUSY
+	var write_error := FileUtils.write_string_to_file(target, right_edit.text)
+	if write_error != OK:
 		Alert.alert(StringUtils.format(I18n.t("git.save_failed"), file.new_path), Colors.error)
-		return false
+		return write_error
 	baseline_text = right_edit.text
 	file.new_text = baseline_text
 	file.new_hash = baseline_text.sha256_text()
 	file.new_exists = true
 	refresh_actions()
 	Alert.alert(I18n.t("git.saved"), Colors.success)
-	return true
+	return OK
 
 
 func on_left_scroll(value: float) -> void:
@@ -534,7 +535,7 @@ func map_diff_line(source_line: float, old_to_new: bool) -> float:
 
 
 func request_close() -> void:
-	if not save_current():
+	if save_current() != OK:
 		return
 	queue_free()
 	pass

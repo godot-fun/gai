@@ -14,11 +14,12 @@ static func get_root() -> String:
 
 
 ## Applies [param path] as workspace root; announces the switch on
-## [signal AgentEvents.events.workspace_changed] so listeners can reload. Returns false for
-## a missing / empty folder.
+## [signal AgentEvents.events.workspace_changed] so listeners can reload.
 static func set_root(path: String) -> bool:
 	var normalized := FileUtils.normalize_path(path)
-	if normalized.is_empty() or not DirAccess.dir_exists_absolute(normalized):
+	if normalized.is_empty():
+		return false
+	if not DirAccess.dir_exists_absolute(normalized):
 		return false
 	Setting.set_string(SETTING_KEY, normalized)
 	Setting.save()

@@ -28,51 +28,52 @@ static func create_git_context(session_id: int) -> GitHelper.Git:
 	return GitHelper.Git.new(git_dir, workspace_root)
 
 
-static func ensure_repo(git: GitHelper.Git) -> bool:
+static func ensure_repo(git: GitHelper.Git) -> Error:
 	var git_dir := git.git_dir
 	if DirAccess.dir_exists_absolute(git_dir):
 		# Supplying --work-tree makes Git report false even for a valid bare repository.
 		var check := await git.async_is_bare()
 		if check.exit_code == 0 and check.output.build_string().strip_edges() == "true":
-			return true
+			return OK
 		# A missing Git executable is an environment failure, not repository corruption.
 		if check.exit_code < 0:
 			Log.error("agent checkpoint validation failed to start git:[{}]", check.output.build_string())
-			return false
+			return ERR_UNAVAILABLE
 		Log.error("agent checkpoint repository is invalid, recreating:[{}]", check.output.build_string())
-		if not remove_checkpoint_repo(git_dir):
-			return false
+		var remove_error := remove_checkpoint_repo(git_dir)
+		if remove_error != OK:
+			return remove_error
 	var mkdir_error := DirAccess.make_dir_recursive_absolute(git_dir.get_base_dir())
 	if mkdir_error != OK:
 		Log.error("agent checkpoint parent directory create failed path:[{}] error:[{}]", git_dir.get_base_dir(), mkdir_error)
-		return false
+		return mkdir_error
 	var init := await git.async_init_bare()
 	if init.exit_code != 0:
 		Log.error("agent checkpoint init failed:[{}]", init.output.build_string())
-		return false
+		return ERR_CANT_CREATE
 	GitIgnore.ensure_exclude_rules(git_dir)
-	return true
+	return OK
 
 
 ## Deletes only the exact shadow repository path after validation has declared it invalid.
-static func remove_checkpoint_repo(git_dir: String) -> bool:
+static func remove_checkpoint_repo(git_dir: String) -> Error:
 	var checkpoints_dir := AgentWorkspace.get_root().path_join(CHECKPOINTS_SUBDIR).simplify_path()
 	var relative_path := git_dir.simplify_path().trim_prefix(checkpoints_dir + "/")
 	if not relative_path.is_valid_int() or int(relative_path) < 0 or int(relative_path) >= CHECKPOINT_REPO_SHARD_COUNT:
 		Log.error("agent checkpoint refused unexpected delete path:[{}]", git_dir)
-		return false
-	if FileUtils.delete_file_or_directory(git_dir) == OK:
-		return true
-	Log.error("agent checkpoint repository delete failed:[{}]", git_dir)
-	return false
+		return ERR_INVALID_PARAMETER
+	var error := FileUtils.delete_file_or_directory(git_dir)
+	if error != OK:
+		Log.error("agent checkpoint repository delete failed:[{}] error:[{}]", git_dir, error_string(error))
+	return error
 
 
-static func stage_workspace(git: GitHelper.Git) -> bool:
+static func stage_workspace(git: GitHelper.Git) -> Error:
 	var add := await git.async_stage_all()
 	if add.exit_code == 0:
-		return true
+		return OK
 	Log.error("agent checkpoint stage failed:[{}]", add.output.build_string())
-	return false
+	return ERR_CANT_CREATE
 
 
 # ---------------------------------------------------------------------------
@@ -82,7 +83,11 @@ static func stage_workspace(git: GitHelper.Git) -> bool:
 ## Commits the current workspace state and returns the commit id; empty when unavailable.
 static func async_snapshot(session_id: int) -> String:
 	var git := create_git_context(session_id)
-	if not await ensure_repo(git) or not await stage_workspace(git):
+	var repo_error := await ensure_repo(git)
+	if repo_error != OK:
+		return StringUtils.EMPTY
+	var stage_error := await stage_workspace(git)
+	if stage_error != OK:
 		return StringUtils.EMPTY
 	var previous_head := await git.async_get_head()
 	if previous_head.exit_code == 0:
@@ -110,7 +115,8 @@ static func async_cleanup() -> void:
 	for repo_shard_index in range(CHECKPOINT_REPO_SHARD_COUNT):
 		var git_dir := workspace_root.path_join(CHECKPOINTS_SUBDIR).path_join(str(repo_shard_index))
 		var git := GitHelper.Git.new(git_dir, workspace_root)
-		if not await ensure_repo(git):
+		var repo_error := await ensure_repo(git)
+		if repo_error != OK:
 			continue
 		GitIgnore.ensure_exclude_rules(git_dir)
 		var history := await git.async_list_commits(MAX_CHECKPOINTS + 1)
@@ -134,17 +140,21 @@ static func async_cleanup() -> void:
 
 
 ## Reverts the workspace to [param sha]: files changed since then are put back, files created since are removed.
-## Returns false when Git cannot complete the restore; callers must keep chat history intact on failure.
-static func async_restore(session_id: int, sha: String) -> bool:
+## Returns an error when Git cannot complete the restore; callers must keep chat history intact on failure.
+static func async_restore(session_id: int, sha: String) -> Error:
 	if StringUtils.is_blank(sha):
-		return false
+		return ERR_INVALID_PARAMETER
 	var git := create_git_context(session_id)
-	if not await ensure_repo(git) or not await stage_workspace(git):
-		return false
+	var repo_error := await ensure_repo(git)
+	if repo_error != OK:
+		return repo_error
+	var stage_error := await stage_workspace(git)
+	if stage_error != OK:
+		return stage_error
 	var diff := await git.async_get_staged_name_status(sha)
 	if diff.exit_code != 0:
 		Log.error("agent checkpoint restore diff failed:[{}]", diff.output.build_string())
-		return false
+		return ERR_CANT_READ
 	# Added / copied / renamed targets did not exist at the checkpoint — revert removes them.
 	var removed := PackedStringArray()
 	for line in diff.output.build_string().split(FileUtils.NEWLINE_LF, false):
@@ -158,7 +168,7 @@ static func async_restore(session_id: int, sha: String) -> bool:
 	var checkout := await git.async_checkout_tree(sha)
 	if checkout.exit_code != 0:
 		Log.error("agent checkpoint restore checkout failed:[{}]", checkout.output.build_string())
-		return false
+		return ERR_CANT_CREATE
 	for path in removed:
 		var absolute_path := AgentWorkspace.get_root().path_join(path)
 		if not FileAccess.file_exists(absolute_path):
@@ -166,5 +176,5 @@ static func async_restore(session_id: int, sha: String) -> bool:
 		var error := DirAccess.remove_absolute(absolute_path)
 		if error != OK:
 			Log.error("agent checkpoint restore delete failed path:[{}] error:[{}]", absolute_path, error)
-			return false
-	return true
+			return error
+	return OK

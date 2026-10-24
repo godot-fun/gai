@@ -47,12 +47,12 @@ static func parse_json_file(path: String) -> LocaleData:
 		Log.error("translation locale is missing path:[{}]", path)
 		return null
 	var data_map: Dictionary[String, String] = {}
-	if not flatten_data(document, [], data_map):
+	if flatten_data(document, [], data_map) != OK:
 		return null
 	return LocaleData.new(locale_name, data_map)
 
 
-static func flatten_data(value: Dictionary, path_parts: Array[String], data_map: Dictionary[String, String]) -> bool:
+static func flatten_data(value: Dictionary, path_parts: Array[String], data_map: Dictionary[String, String]) -> Error:
 	for raw_key: Variant in value:
 		var key := str(raw_key)
 		if path_parts.is_empty() and key == "locale":
@@ -61,22 +61,23 @@ static func flatten_data(value: Dictionary, path_parts: Array[String], data_map:
 		next_parts.append(key)
 		var child: Variant = value[raw_key]
 		if child is Dictionary:
-			if not flatten_data(child as Dictionary, next_parts, data_map):
-				return false
+			var error := flatten_data(child as Dictionary, next_parts, data_map)
+			if error != OK:
+				return error
 			continue
 		if not child is String:
 			Log.error("translation value must be a string key:[{}]", ".".join(next_parts))
-			return false
+			return ERR_INVALID_DATA
 		var dot_key := ".".join(next_parts)
 		if data_map.has(dot_key):
 			Log.error("duplicate translation key:[{}]", dot_key)
-			return false
+			return ERR_ALREADY_EXISTS
 		data_map[dot_key] = child
 		var space_key := " ".join(next_parts)
 		if space_key == dot_key:
 			continue
 		if data_map.has(space_key):
 			Log.error("duplicate translation key:[{}]", space_key)
-			return false
+			return ERR_ALREADY_EXISTS
 		data_map[space_key] = child
-	return true
+	return OK

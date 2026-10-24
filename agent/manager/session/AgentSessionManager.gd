@@ -242,7 +242,7 @@ static func set_title(session_id: int, title: String) -> void:
 # Pending message queue
 # ---------------------------------------------------------------------------
 
-static func enqueue_message(session_id: int, user_text: String) -> bool:
+static func add_pending_message(session_id: int, user_text: String) -> bool:
 	var session_index := get_session_index(session_id)
 	if session_index == null:
 		return false

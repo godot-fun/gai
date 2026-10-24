@@ -100,7 +100,8 @@ static func on_diff_pressed(patch_path: String) -> void:
 
 static func on_revert_pressed(session_id: int, entry: ChatEntry) -> void:
 	var checkpoint: String = entry.details.get(ChatEntry.DETAIL_CHECKPOINT, "")
-	if not await GitCheckpointManager.async_restore(session_id, checkpoint):
+	var restore_error := await GitCheckpointManager.async_restore(session_id, checkpoint)
+	if restore_error != OK:
 		Alert.alert(I18n.t("git.restore_failed"), Colors.error)
 		return
 	AgentSessionManager.delete_chat_from_entry(session_id, entry)

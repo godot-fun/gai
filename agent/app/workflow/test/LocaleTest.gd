@@ -11,7 +11,7 @@ func ensure_translations() -> void:
 
 
 func locale_keys_match_test() -> void:
-	assert(I18nCheck.check_configs([LOCALE_PATH_EN, LOCALE_PATH_ZH]))
+	assert(I18nCheck.check_configs([LOCALE_PATH_EN, LOCALE_PATH_ZH]) == OK)
 	pass
 
 

@@ -54,7 +54,11 @@ static func async_append_git_diff(session_id: int, reference: String) -> void:
 	if StringUtils.is_blank(reference):
 		return
 	var git := GitCheckpointManager.create_git_context(session_id)
-	if not await GitCheckpointManager.ensure_repo(git) or not await GitCheckpointManager.stage_workspace(git):
+	var repo_error := await GitCheckpointManager.ensure_repo(git)
+	if repo_error != OK:
+		return
+	var stage_error := await GitCheckpointManager.stage_workspace(git)
+	if stage_error != OK:
 		return
 	var diff_file_stats := await async_diff_file_stats(git, reference)
 	if diff_file_stats.is_empty():
