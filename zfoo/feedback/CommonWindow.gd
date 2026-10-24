@@ -32,13 +32,7 @@ func _init() -> void:
 
 ## Paint the shared window frame; subclasses should call [code]super()[/code] before styling content.
 func apply_theme() -> void:
-	add_theme_stylebox_override("embedded_border", make_embedded_border(BORDER_ALPHA))
-	add_theme_stylebox_override("embedded_unfocused_border", make_embedded_border(BORDER_ALPHA_UNFOCUSED))
-	add_theme_color_override("title_color", window_title_color())
-	add_theme_font_override("title_font", Fonts.semibold())
-	add_theme_font_size_override("title_font_size", Typography.title_medium_size)
-	add_theme_icon_override("close", tint_theme_icon("close", window_title_color()))
-	add_theme_icon_override("close_pressed", tint_theme_icon("close_pressed", Colors.error))
+	apply_window_theme(self, window_background_color(), window_title_color(), window_border_color())
 	pass
 
 
@@ -54,17 +48,30 @@ func window_border_color() -> Color:
 	return ThemeColor.title_color
 
 
-func make_embedded_border(border_alpha: float) -> StyleBoxFlat:
-	var style: StyleBoxFlat = get_theme_stylebox("embedded_border").duplicate() as StyleBoxFlat
-	style.bg_color = window_background_color()
+## Apply the common embedded-window frame to a [Window]. Use this for built-in windows such as
+## [FileDialog], which cannot inherit [CommonWindow] but should share its title and frame chrome.
+static func apply_window_theme(window: Window, background: Color, title_color: Color, border_color: Color) -> void:
+	window.add_theme_stylebox_override("embedded_border", make_embedded_border(window, background, border_color, BORDER_ALPHA))
+	window.add_theme_stylebox_override("embedded_unfocused_border", make_embedded_border(window, background, border_color, BORDER_ALPHA_UNFOCUSED))
+	window.add_theme_color_override("title_color", title_color)
+	window.add_theme_font_override("title_font", Fonts.semibold())
+	window.add_theme_font_size_override("title_font_size", Typography.title_medium_size)
+	window.add_theme_icon_override("close", tint_theme_icon(window, "close", title_color))
+	window.add_theme_icon_override("close_pressed", tint_theme_icon(window, "close_pressed", Colors.error))
+	pass
+
+
+static func make_embedded_border(window: Window, background: Color, border_color: Color, border_alpha: float) -> StyleBoxFlat:
+	var style: StyleBoxFlat = window.get_theme_stylebox("embedded_border").duplicate() as StyleBoxFlat
+	style.bg_color = background
 	style.set_corner_radius_all(ControlSize.radius_md)
-	style.border_color = Color(window_border_color(), border_alpha)
+	style.border_color = Color(border_color, border_alpha)
 	style.set_border_width_all(ControlSize.border_xs)
 	return style
 
 
-func tint_theme_icon(icon_name: String, color: Color) -> ImageTexture:
-	var image := get_theme_icon(icon_name).get_image()
+static func tint_theme_icon(window: Window, icon_name: String, color: Color) -> ImageTexture:
+	var image := window.get_theme_icon(icon_name).get_image()
 	for y: int in image.get_height():
 		for x: int in image.get_width():
 			var alpha := image.get_pixel(x, y).a

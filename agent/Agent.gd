@@ -67,6 +67,7 @@ func _ready() -> void:
 	apply_layout()
 	apply_theme()
 	gdf.events.theme_changed.connect(apply_theme)
+	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(apply_locale)
 	
 	agent_toolbar.setup(toolbar_panel, toolbar_logo, workspace_button_node)
@@ -148,7 +149,7 @@ func apply_theme() -> void:
 	app_theme.default_font = Fonts.regular()
 	theme = app_theme
 	
-	workspace_dialog.add_theme_font_override("title_font", Fonts.regular())	
+	FileDialogStyle.apply(workspace_dialog)
 	chat_area_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
 	chat_area_panel.queue_redraw()
 	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))

@@ -45,8 +45,7 @@ func refresh() -> void:
 
 func on_button_pressed() -> void:
 	refresh()
-	dialog.popup_centered()
-	dialog.oversampling_override = DisplayScale.compute_ui_scale()
+	FileDialogStyle.present_centered(dialog)
 	pass
 
 

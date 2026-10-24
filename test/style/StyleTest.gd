@@ -249,6 +249,19 @@ func ButtonStyle_apply_font_colors_test() -> void:
 	pass
 
 
+func ButtonStyle_apply_icon_colors_test() -> void:
+	var button := Button.new()
+	ButtonStyle.apply_icon_colors(button, Color.BLACK, Color.RED, Color.GREEN)
+	assert(button.get_theme_color("icon_normal_color") == Color.BLACK)
+	assert(button.get_theme_color("icon_hover_color") == Color.RED)
+	assert(button.get_theme_color("icon_pressed_color") == Color.GREEN)
+	assert(button.get_theme_color("icon_focus_color") == Color.RED)
+	assert(button.get_theme_color("icon_hover_pressed_color") == Color.GREEN)
+	assert(button.get_theme_color("icon_disabled_color") == Color(Color.BLACK, 0.5))
+	button.free()
+	pass
+
+
 func ButtonStyle_apply_check_button_test() -> void:
 	var check := CheckButton.new()
 	ButtonStyle.apply_check_button(check, Color.BLUE, Color.RED, Color.GREEN, Color.YELLOW, Margin.ma_1, 2, 3, 4, 5)
@@ -264,3 +277,57 @@ func ButtonStyle_apply_check_button_test() -> void:
 	assert(normal.content_margin_bottom == 5)
 	check.free()
 	pass
+
+
+func FileDialogStyle_apply_test() -> void:
+	var dialog := FileDialog.new()
+	FileDialogStyle.apply(dialog)
+	var dialog_panel: StyleBoxFlat = dialog.theme.get_stylebox("panel", "AcceptDialog") as StyleBoxFlat
+	var file_list_panel: StyleBoxFlat = dialog.theme.get_stylebox("panel", "ItemListSecondary") as StyleBoxFlat
+	assert(dialog_panel.bg_color == ThemeColor.inset_surface)
+	assert(file_list_panel.bg_color == FileDialogStyle.file_list_surface())
+	assert(file_list_panel.border_color == Colors.subtle_border)
+	assert(dialog.get_theme_color("folder_icon_color") == Colors.info.lerp(ThemeColor.accent_theme_color(), 0.35))
+	assert(dialog.get_theme_color("title_color") == ThemeColor.title_color)
+	assert(dialog.transient)
+	assert(dialog.get_theme_font("title_font") == Fonts.semibold())
+	assert(dialog.theme.get_color("font_color", "Label") == ThemeColor.title_color)
+	var confirm: Button = dialog.get_ok_button()
+	assert((confirm.get_theme_stylebox("normal") as StyleBoxFlat).bg_color == ThemeColor.accent_theme_color())
+	dialog.free()
+	pass
+
+
+func FileDialogStyle_path_option_test() -> void:
+	var option := OptionButton.new()
+	FileDialogStyle.style_path_option(option)
+	var normal: StyleBoxFlat = option.get_theme_stylebox("normal") as StyleBoxFlat
+	var hover: StyleBoxFlat = option.get_theme_stylebox("hover") as StyleBoxFlat
+	assert(normal.bg_color == FileDialogStyle.file_list_surface())
+	assert(normal.border_color == Colors.subtle_border)
+	assert(hover.bg_color == ThemeColor.selected_surface)
+	assert(hover.border_color == ThemeColor.alpha_theme_color(0.85))
+	assert(option.get_theme_color("font_color") == ThemeColor.title_color)
+	option.free()
+	pass
+
+
+func FileDialogStyle_internal_controls_test() -> void:
+	var dialog := FileDialog.new()
+	FileDialogStyle.apply(dialog)
+	var drive_selector := find_internal_option_button(dialog)
+	assert(drive_selector != null)
+	var normal: StyleBoxFlat = drive_selector.get_theme_stylebox("normal") as StyleBoxFlat
+	assert(normal.bg_color == FileDialogStyle.file_list_surface())
+	dialog.free()
+	pass
+
+
+func find_internal_option_button(root: Node) -> OptionButton:
+	for child in root.get_children(true):
+		if child is OptionButton:
+			return child as OptionButton
+		var nested := find_internal_option_button(child)
+		if nested != null:
+			return nested
+	return null

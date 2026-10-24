@@ -141,8 +141,7 @@ func open_sound_folder_dialog() -> void:
 	var folder := AgentSetting.get_notification_sound_folder()
 	if not folder.begins_with("res://") and not folder.begins_with("user://") and DirAccess.dir_exists_absolute(folder):
 		sound_folder_dialog.current_dir = folder
-	sound_folder_dialog.popup_centered(FOLDER_DIALOG_SIZE)
-	sound_folder_dialog.oversampling_override = DisplayScale.compute_ui_scale()
+	FileDialogStyle.present_centered(sound_folder_dialog, FOLDER_DIALOG_SIZE)
 	pass
 
 
@@ -179,6 +178,7 @@ func apply_theme() -> void:
 	ui.style_field_label(sound_folder_label)
 	ui.style_spin_box(sound_seconds_spin)
 	ui.style_line_edit(sound_folder_edit)
+	FileDialogStyle.apply(sound_folder_dialog)
 	pass
 
 
