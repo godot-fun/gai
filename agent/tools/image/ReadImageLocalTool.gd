@@ -31,5 +31,5 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 		return AgentToolResult.error("error: image-to-text returned no text", AgentToolResult.ui_file_details_message(path, "no text returned"))
 
 	var text := StringUtils.truncate(output, MAX_OUTPUT, TRUNCATED_SUFFIX)
-	return AgentToolResult.ok(text)
+	return AgentToolResult.ok(text, AgentToolResult.ui_file_details(-1, -1, path))
 # AgentTool-Interface-Implement-End
