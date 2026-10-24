@@ -58,8 +58,12 @@ func save_clipboard_image() -> String:
 	var image: Image = DisplayServer.clipboard_get_image()
 	if image == null or image.is_empty():
 		return StringUtils.EMPTY
-	var cache_path := MarkdownRender.IMAGE_CACHE_DIR.path_join("clipboard_" + str(IdUtils.uuid()) + ".png")
-	var error := MarkdownRender.save_cached_image(image, cache_path)
+	var cache_path := CacheManager.get_clipboard_cache_dir().path_join("clipboard_" + str(IdUtils.uuid()) + ".png")
+	var absolute_cache_path := FileUtils.globalize_writable_path(cache_path)
+	if absolute_cache_path.is_empty():
+		Log.error("clipboard image cache directory create failed path:[{}]", cache_path)
+		return StringUtils.EMPTY
+	var error := image.save_png(absolute_cache_path)
 	if error != OK:
 		Log.error("clipboard image cache failed path:[{}] err:[{}]", cache_path, error)
 		return StringUtils.EMPTY

@@ -110,14 +110,6 @@ static func download_remote_image_texture(image_url: String, cache_path: String)
 	return texture
 
 
-static func save_cached_image(image: Image, cache_path: String) -> int:
-	var absolute_dir := ProjectSettings.globalize_path(IMAGE_CACHE_DIR)
-	var error := DirAccess.make_dir_recursive_absolute(absolute_dir)
-	if error != OK and error != ERR_ALREADY_EXISTS:
-		return error
-	return image.save_png(ProjectSettings.globalize_path(cache_path))
-
-
 static func set_image_downloading(label: RichTextLabel, image_url: String, downloading: bool) -> void:
 	var meta_key := image_download_meta_key(image_url)
 	if downloading:
