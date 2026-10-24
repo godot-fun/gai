@@ -281,6 +281,7 @@ static func make_dialog_body_style() -> StyleBoxFlat:
 
 static func make_field_style() -> StyleBoxFlat:
 	# The location controls belong to the file browser's innermost reading surface, rather than
-	# floating as white cards above it in the light theme.
+	# floating as white cards above it in the light theme. Use the standard control outline here
+	# instead of the subtle separator: the drive selector and editable path need a clear boundary.
 	return StyleBoxHelper.create_style_box_flat(file_list_surface(), ControlSize.radius_sm, Margin.ma_2, Margin.ma_1,
-		Colors.subtle_border, ControlSize.border_xs)
+		Colors.border, ControlSize.border_xs)
