@@ -134,15 +134,12 @@ static func style_control(node: Node) -> void:
 
 static func style_confirm_button(button: Button) -> void:
 	var fill := ThemeColor.accent_theme_color()
-	var normal := StyleBoxHelper.create_style_box_flat(fill,
-		ControlSize.radius_md, Margin.ma_3, Margin.ma_1,
-		fill, ControlSize.border_xs
-	)
-	var hover := ButtonStyle.filled(normal, fill.lightened(0.12))
-	var pressed := ButtonStyle.filled(normal, fill.darkened(0.08))
+	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT,
+		ControlSize.radius_md, Margin.ma_3, Margin.ma_1, ThemeColor.alpha_theme_color(0.55), ControlSize.border_xs)
+	var hover := ButtonStyle.filled(normal, ThemeColor.selected_surface, fill)
+	var pressed := ButtonStyle.filled(normal, fill, fill)
 	ButtonStyle.apply(button, normal, hover, pressed)
-	ButtonStyle.apply_font_colors(button, ThemeColor.inset_surface, ThemeColor.inset_surface, ThemeColor.inset_surface,
-		Color(ThemeColor.inset_surface, 0.5))
+	ButtonStyle.apply_font_colors(button, fill, fill, ThemeColor.inset_surface, Color(fill, 0.5))
 	pass
 
 
