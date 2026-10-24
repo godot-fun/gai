@@ -85,7 +85,17 @@ func save() -> void:
 
 
 func save_current() -> void:
-	ApiSetting.save(api_url_edit.text, model_edit.text, api_token_edit.text, proxy_address_edit.text)
+	var api_url := api_url_edit.text.strip_edges()
+	if not HttpUtils.is_valid_http_url(api_url):
+		Alert.alert(I18n.t("agent.settings.invalid_api_url"), Colors.error)
+		refresh()
+		return
+	var proxy_address := proxy_address_edit.text.strip_edges()
+	if StringUtils.is_not_blank(proxy_address) and not HttpUtils.is_valid_http_url(proxy_address):
+		Alert.alert(I18n.t("agent.settings.invalid_proxy"), Colors.error)
+		refresh()
+		return
+	ApiSetting.save(api_url, model_edit.text, api_token_edit.text, proxy_address)
 	pass
 
 

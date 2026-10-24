@@ -239,6 +239,8 @@
       "heading": "AI 连接",
       "api_url": "API 地址",
       "api_url_help": "完整的聊天补全接口地址",
+      "invalid_api_url": "请输入合法的 HTTP 或 HTTPS API 地址",
+      "invalid_proxy": "请输入合法的 HTTP 或 HTTPS 代理地址",
       "model_help": "每次请求使用的模型",
       "proxy": "代理",
       "proxy_help": "可选的 HTTP/HTTPS 代理",

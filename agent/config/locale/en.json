@@ -239,6 +239,8 @@
       "heading": "AI connection",
       "api_url": "API url",
       "api_url_help": "Full chat-completions endpoint URL",
+      "invalid_api_url": "Enter a valid HTTP or HTTPS API URL",
+      "invalid_proxy": "Enter a valid HTTP or HTTPS proxy URL",
       "model_help": "Model sent with each request",
       "proxy": "Proxy",
       "proxy_help": "Optional HTTP/HTTPS proxy",
