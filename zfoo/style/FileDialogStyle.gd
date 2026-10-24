@@ -86,6 +86,10 @@ static func style_control(node: Node) -> void:
 		style_line_edit(node as LineEdit)
 	elif node is OptionButton:
 		style_path_option(node as OptionButton)
+	elif node is PopupMenu:
+		PopupMenuStyle.apply(node as PopupMenu)
+	elif node is MenuButton:
+		style_toolbar_button(node as MenuButton)
 	elif node is Button:
 		var button := node as Button
 		if button.theme_type_variation == &"FlatButton":
@@ -180,10 +184,16 @@ static func style_item_list(list: ItemList) -> void:
 	list.add_theme_color_override("font_color", ThemeColor.title_color)
 	list.add_theme_color_override("font_hovered_color", ThemeColor.title_color)
 	list.add_theme_color_override("font_selected_color", ThemeColor.title_color)
+	# Godot otherwise resolves this compound state to its default white text.
+	list.add_theme_color_override("font_hovered_selected_color", ThemeColor.title_color)
 	list.add_theme_stylebox_override("panel", make_file_list_style())
-	list.add_theme_stylebox_override("selected", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, ControlSize.radius_sm))
-	list.add_theme_stylebox_override("selected_focus", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, ControlSize.radius_sm,
-		0, 0, ThemeColor.accent_theme_color(), ControlSize.border_xs))
+	list.add_theme_stylebox_override("hovered", make_file_list_hover_style())
+	var selected := make_file_list_selection_style(ThemeColor.alpha_theme_color(0.72))
+	var selected_focus := make_file_list_selection_style(ThemeColor.accent_theme_color())
+	list.add_theme_stylebox_override("selected", selected)
+	list.add_theme_stylebox_override("selected_focus", selected_focus)
+	list.add_theme_stylebox_override("hovered_selected", selected.duplicate())
+	list.add_theme_stylebox_override("hovered_selected_focus", selected_focus.duplicate())
 	pass
 
 
@@ -196,6 +206,23 @@ static func make_file_list_style() -> StyleBoxFlat:
 
 static func file_list_surface() -> Color:
 	return ThemeColor.inset_surface.lerp(Colors.surface, 0.25)
+
+
+## A distinct, accent-tinted selection is readable over the file browser surface in either theme.
+static func file_list_selection_surface() -> Color:
+	return ThemeColor.inset_surface.lerp(ThemeColor.accent_theme_color(), Colors.am_5)
+
+
+static func make_file_list_hover_style() -> StyleBoxFlat:
+	return StyleBoxHelper.create_style_box_flat(
+		ThemeColor.inset_surface.lerp(ThemeColor.accent_theme_color(), Colors.am_2),
+		ControlSize.radius_sm, 0, 0, ThemeColor.alpha_theme_color(0.45), ControlSize.border_xs
+	)
+
+
+static func make_file_list_selection_style(border_color: Color) -> StyleBoxFlat:
+	return StyleBoxHelper.create_style_box_flat(file_list_selection_surface(), ControlSize.radius_sm, 0, 0,
+		border_color, ControlSize.border_xs)
 
 
 ## Match BubbleContainer's header actions: a selected accent surface gives quiet, non-white hover

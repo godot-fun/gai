@@ -323,6 +323,43 @@ func FileDialogStyle_internal_controls_test() -> void:
 	pass
 
 
+func FileDialogStyle_file_list_selection_test() -> void:
+	var list := ItemList.new()
+	FileDialogStyle.style_item_list(list)
+	var hovered: StyleBoxFlat = list.get_theme_stylebox("hovered") as StyleBoxFlat
+	var selected: StyleBoxFlat = list.get_theme_stylebox("selected") as StyleBoxFlat
+	var hovered_selected: StyleBoxFlat = list.get_theme_stylebox("hovered_selected") as StyleBoxFlat
+	assert(hovered.bg_color == ThemeColor.inset_surface.lerp(ThemeColor.accent_theme_color(), Colors.am_2))
+	assert(selected.bg_color == FileDialogStyle.file_list_selection_surface())
+	assert(hovered_selected.bg_color == FileDialogStyle.file_list_selection_surface())
+	assert(list.get_theme_color("font_selected_color") == ThemeColor.title_color)
+	assert(list.get_theme_color("font_hovered_selected_color") == ThemeColor.title_color)
+	list.free()
+	pass
+
+
+func FileDialogStyle_popup_menu_test() -> void:
+	var dialog := FileDialog.new()
+	var menu := PopupMenu.new()
+	dialog.add_child(menu, false, Node.INTERNAL_MODE_FRONT)
+	FileDialogStyle.apply(dialog)
+	var panel: StyleBoxFlat = menu.get_theme_stylebox("panel") as StyleBoxFlat
+	assert(panel.bg_color == ThemeColor.inset_surface)
+	assert(menu.get_theme_color("font_color") == Colors.primary_text)
+	dialog.free()
+	pass
+
+
+func FileDialogStyle_menu_button_test() -> void:
+	var button := MenuButton.new()
+	FileDialogStyle.style_control(button)
+	var normal: StyleBoxFlat = button.get_theme_stylebox("normal") as StyleBoxFlat
+	assert(normal.bg_color == Color.TRANSPARENT)
+	assert(button.get_theme_color("font_color") == Colors.secondary_text)
+	button.free()
+	pass
+
+
 func find_internal_option_button(root: Node) -> OptionButton:
 	for child in root.get_children(true):
 		if child is OptionButton:
