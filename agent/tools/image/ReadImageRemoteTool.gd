@@ -1,8 +1,6 @@
 class_name ReadImageRemoteTool
 extends ReadImageTool
 
-const REMOTE_ATTACH_TEXT := "Image attached for model inspection."
-
 
 func _init() -> void:
 	name = NAME
@@ -21,10 +19,10 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 		return path_result
 	var path := path_result.content
 
-	var image_message := ChatMessage.user_image(REMOTE_ATTACH_TEXT, path)
+	var image_message := ChatMessage.user_image(StringUtils.EMPTY, path)
 	if StringUtils.is_blank(image_message.image_data_url):
 		return AgentToolResult.error("error: image could not be encoded for the API", AgentToolResult.ui_file_details_message(path, "image encoding failed"))
-	var result := AgentToolResult.ok(StringUtils.format("Image loaded from {} and attached for model inspection.", path))
+	var result := AgentToolResult.ok(StringUtils.format("Image read successfully: {}", path))
 	result.deferred_messages.append(image_message)
 	return result
 # AgentTool-Interface-Implement-End

@@ -251,6 +251,14 @@ func chat_message_user_image_roundtrip_test() -> void:
 	pass
 
 
+func chat_message_user_image_default_caption_test() -> void:
+	var path := ProjectSettings.globalize_path("res://test/asset/explosion_animation.png")
+	var message := ChatMessage.user_image(StringUtils.EMPTY, path)
+	assert(StringUtils.is_not_blank(message.image_data_url))
+	assert(message.content == StringUtils.format("Image read: {}", path))
+	pass
+
+
 func open_ai_request_to_json_tool_calls_reasoning_test() -> void:
 	var tool_call := OpenAiToolCall.new()
 	tool_call.id = "call_1"

@@ -51,6 +51,8 @@ static func user_image(text: String, image_path: String) -> ChatMessage:
 		mime_subtype = "jpeg"
 	if encoded_bytes.is_empty():
 		return msg
+	if StringUtils.is_blank(text):
+		msg.content = StringUtils.format("Image read: {}", image_path)
 	msg.image_data_url = StringUtils.format("data:image/{};base64,{}", mime_subtype, Marshalls.raw_to_base64(encoded_bytes))
 	return msg
 
