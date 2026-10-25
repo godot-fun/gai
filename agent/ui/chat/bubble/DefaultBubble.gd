@@ -2,12 +2,18 @@ class_name DefaultBubble
 extends BubbleContainer
 
 var rich_text: RichTextLabel
+var system_entry: bool = false
 
 ## Basic titled markdown bubble used by system and unknown chat entry kinds.
 
 
+func panel_color() -> Color:
+	return ThemeColor.promote(Colors.info_surface, Colors.am_2) if system_entry else Colors.surface
+
+
 func apply(_session_id: int, entry: ChatEntry) -> void:
-	apply_panel_style(ThemeColor.promote(Colors.info_surface, Colors.am_2) if entry.kind == ChatEntry.KIND_SYSTEM else Colors.surface)
+	system_entry = entry.kind == ChatEntry.KIND_SYSTEM
+	apply_panel_style(panel_color())
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL

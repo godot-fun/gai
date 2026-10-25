@@ -9,8 +9,12 @@ var line_label: Label
 ## Full text lives on ChatEntry.body; the header ··· button opens it in PopupWindow.
 
 
+func panel_color() -> Color:
+	return Colors.grey_surface
+
+
 func apply(_session_id: int, entry: ChatEntry) -> void:
-	apply_panel_style(Colors.grey_surface)
+	apply_panel_style(panel_color())
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL

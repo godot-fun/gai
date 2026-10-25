@@ -16,8 +16,12 @@ static func needs_expand(body: String) -> bool:
 	return StringUtils.is_not_blank(body) and StringUtils.first_lines(body, PREVIEW_LINES) != body
 
 
+func panel_color() -> Color:
+	return Colors.blue_grey_surface
+
+
 func apply(session_id: int, entry: ChatEntry) -> void:
-	apply_panel_style(Colors.blue_grey_surface)
+	apply_panel_style(panel_color())
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL

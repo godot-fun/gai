@@ -3,8 +3,12 @@ extends BubbleContainer
 
 ## Web-tool call bubble showing the query, URL, or primary argument sent to the tool.
 
+func panel_color() -> Color:
+	return Colors.info_surface
+
+
 func apply(_session_id: int, entry: ChatEntry) -> void:
-	apply_panel_style(Colors.info_surface)
+	apply_panel_style(panel_color())
 
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", Margin.ma_2)

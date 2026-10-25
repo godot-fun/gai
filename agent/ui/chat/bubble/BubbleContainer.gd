@@ -12,6 +12,11 @@ func apply(session_id: int, entry: ChatEntry) -> void
 func refresh(entry: ChatEntry) -> void
 
 
+## Stable card background for this bubble; flash highlight restores to this instead of reading StyleBox mid-tween.
+@abstract
+func panel_color() -> Color
+
+
 func _init() -> void:
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pass
@@ -22,22 +27,24 @@ func apply_panel_style(bg_color: Color) -> void:
 	pass
 
 
-## Short flash highlight when this bubble is scrolled into view.
+## Panel that receives the pulse; override when the visible card is not [code]self[/code] (e.g. [UserBubble]).
+func flash_panel() -> PanelContainer:
+	return self
+
+
+## Pulses the panel background when this bubble is scrolled into view (e.g. chat search jump).
 func flash_highlight() -> void:
-	flash_highlight_panel(self, Colors.surface)
-	pass
-
-
-func flash_highlight_panel(panel: PanelContainer, fallback_bg: Color) -> void:
-	modulate = Color.WHITE
-	var restore_bg := fallback_bg
-	var current := panel.get_theme_stylebox("panel")
-	if current is StyleBoxFlat:
-		restore_bg = (current as StyleBoxFlat).bg_color
-	panel.add_theme_stylebox_override("panel", create_panel_style(ThemeColor.promote(ThemeColor.selected_surface)))
-	var tween := create_tween()
-	tween.tween_interval(3)
-	tween.tween_callback(func() -> void: panel.add_theme_stylebox_override("panel", create_panel_style(restore_bg)))
+	var panel := flash_panel()
+	var base_color := panel_color()
+	var style := create_panel_style(base_color)
+	panel.add_theme_stylebox_override("panel", style)
+	var apply_pulse := func(weight: float) -> void: style.bg_color = base_color.lerp(Colors.warning, weight)
+	var tween := panel.create_tween()
+	for pulse_index in 4:
+		var peak := 0.6 if pulse_index == 0 else 0.51
+		tween.tween_method(apply_pulse, 0.0, peak, 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		tween.tween_method(apply_pulse, peak, 0.0, 0.34).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	tween.tween_callback(func() -> void: panel.add_theme_stylebox_override("panel", create_panel_style(base_color)))
 	pass
 
 

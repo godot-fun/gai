@@ -8,8 +8,12 @@ var resume_button: Button
 
 const MAX_LINES: int = 28
 
+func panel_color() -> Color:
+	return Colors.surface
+
+
 func apply(session_id: int, entry: ChatEntry) -> void:
-	apply_panel_style(Colors.surface)
+	apply_panel_style(panel_color())
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL

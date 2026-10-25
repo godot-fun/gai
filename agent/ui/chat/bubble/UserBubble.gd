@@ -1,7 +1,7 @@
 class_name UserBubble
 extends BubbleContainer
 
-var content_panel: PanelContainer
+var inset_panel: PanelContainer
 var rich_text: RichTextLabel
 
 ## User message bubble with a moving accent border shared with the chat input.
@@ -19,24 +19,23 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 	clip_contents = false
 
 	# Keep the overlay layout outside PanelContainer's child sorting so the animated border
-	# can extend beyond the content panel.
+	# can extend beyond the inset panel.
 	var host := Control.new()
 	host.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.clip_contents = false
 	add_child(host)
 
-	var panel: PanelContainer = PanelContainer.new()
-	content_panel = panel
-	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	panel.set_offsets_preset(Control.PRESET_FULL_RECT)
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_theme_stylebox_override("panel", create_panel_style(ThemeColor.inset_surface))
-	host.add_child(panel)
+	inset_panel = PanelContainer.new()
+	inset_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	inset_panel.set_offsets_preset(Control.PRESET_FULL_RECT)
+	inset_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inset_panel.add_theme_stylebox_override("panel", create_panel_style(panel_color()))
+	host.add_child(inset_panel)
 
 	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.add_theme_constant_override("separation", Margin.ma_2)
-	panel.add_child(vbox)
+	inset_panel.add_child(vbox)
 
 	var header: HBoxContainer = HBoxContainer.new()
 	header.add_theme_constant_override("separation", Margin.ma_2)
@@ -88,12 +87,20 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 	moving_border.set_highlight_strength(BORDER_HIGHLIGHT_STRENGTH)
 	host.add_child(moving_border)
 
-	panel.minimum_size_changed.connect(sync_layout.bind(host, panel, moving_border))
-	panel.resized.connect(sync_layout.bind(host, panel, moving_border))
-	host.resized.connect(sync_layout.bind(host, panel, moving_border))
+	inset_panel.minimum_size_changed.connect(sync_layout.bind(host, inset_panel, moving_border))
+	inset_panel.resized.connect(sync_layout.bind(host, inset_panel, moving_border))
+	host.resized.connect(sync_layout.bind(host, inset_panel, moving_border))
 
-	sync_layout.call_deferred(host, panel, moving_border)
+	sync_layout.call_deferred(host, inset_panel, moving_border)
 	pass
+
+
+func panel_color() -> Color:
+	return ThemeColor.inset_surface
+
+
+func flash_panel() -> PanelContainer:
+	return inset_panel
 
 
 func refresh(entry: ChatEntry) -> void:
@@ -101,13 +108,6 @@ func refresh(entry: ChatEntry) -> void:
 		return
 	rich_text.visible = StringUtils.is_not_blank(entry.body)
 	MarkdownHelper.update_rich_text_label_text(rich_text, entry.body, AgentSetting.get_markdown_enabled())
-	pass
-
-
-func flash_highlight() -> void:
-	add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-	if content_panel != null:
-		flash_highlight_panel(content_panel, ThemeColor.inset_surface)
 	pass
 
 

@@ -8,8 +8,12 @@ var line_label: Label
 ## Web-tool result bubble with a text preview and an optional browser screenshot.
 
 
+func panel_color() -> Color:
+	return Colors.grey_surface
+
+
 func apply(_session_id: int, entry: ChatEntry) -> void:
-	apply_panel_style(Colors.grey_surface)
+	apply_panel_style(panel_color())
 
 	var vbox := VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL

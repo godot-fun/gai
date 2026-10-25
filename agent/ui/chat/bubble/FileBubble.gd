@@ -4,8 +4,12 @@ extends BubbleContainer
 ## File-change result bubble with added/removed line counts.
 
 
+func panel_color() -> Color:
+	return Colors.warning_surface
+
+
 func apply(_session_id: int, entry: ChatEntry) -> void:
-	apply_panel_style(Colors.warning_surface)
+	apply_panel_style(panel_color())
 
 	var header := HBoxContainer.new()
 	header.add_theme_constant_override("separation", Margin.ma_2)
