@@ -20,6 +20,11 @@ func _init() -> void:
 	pass
 
 
+func _ready() -> void:
+	focus_at_end.call_deferred()
+	pass
+
+
 func build_children() -> void:
 	var row := HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL

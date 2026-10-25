@@ -20,12 +20,12 @@ var debounce_timer: Timer
 func _init() -> void:
 	super()
 	gdf.events.locale_changed.connect(apply_locale)
-	build_layout()
+	build_window()
 	apply_locale()
 	pass
 
 
-func build_layout() -> void:
+func build_window() -> void:
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", Margin.ma_3)
@@ -260,7 +260,6 @@ static func show_search() -> void:
 	var window := SearchWindow.new()
 	gdf.gdf_node.add_child(window)
 	window.present_right(50, 70)
-	window.query_input.focus_at_end.call_deferred()
 	if StringUtils.is_not_blank(window.query_input.line_edit.text):
 		window.debounce_timer.stop()
 		window.search(window.query_input.line_edit.text)
