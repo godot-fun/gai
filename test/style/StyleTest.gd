@@ -250,6 +250,23 @@ func ButtonStyle_apply_option_button_test() -> void:
 	pass
 
 
+func LineEditStyle_apply_line_edit_test() -> void:
+	var edit := LineEdit.new()
+	edit.clear_button_enabled = true
+	var normal := StyleBoxHelper.create_style_box_flat(Color(0.2, 0.2, 0.2), 6, Margin.ma_2, Margin.ma_1, Color.WHITE, 1)
+	LineEditStyle.apply_line_edit(edit, normal, Color.BLACK, Color.GRAY, Color.BLUE)
+	var focus: StyleBoxFlat = edit.get_theme_stylebox("focus") as StyleBoxFlat
+	assert(edit.get_theme_color("font_color") == Color.BLACK)
+	assert(edit.get_theme_color("font_placeholder_color") == Color.GRAY)
+	assert(edit.get_theme_color("selection_color") == Color.BLUE)
+	assert(focus.border_color == ThemeColor.accent_theme_color())
+	assert(focus.border_width_left == ControlSize.border_sm)
+	assert(edit.get_theme_stylebox("read_only") != normal)
+	assert(edit.get_theme_color("clear_button_color") == Colors.secondary_text)
+	edit.free()
+	pass
+
+
 ## Same hole on the text side: the default theme paints focus and hover-pressed text near white,
 ## so a button that only overrides normal / hover / pressed goes blank on a light surface.
 func ButtonStyle_apply_font_colors_test() -> void:

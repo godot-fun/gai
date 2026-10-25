@@ -116,7 +116,8 @@ static func style_control(node: Node, label_texts: Dictionary[String, String] = 
 	if node is Control:
 		apply_tooltip_text(node as Control, label_texts)
 	if node is LineEdit:
-		style_line_edit(node as LineEdit)
+		LineEditStyle.apply_line_edit(node as LineEdit, make_field_style(), ThemeColor.title_color, ThemeColor.body_color,
+			ThemeColor.selection_color, Margin.ma_0)
 	elif node is OptionButton:
 		style_path_option(node as OptionButton)
 	elif node is PopupMenu:
@@ -230,21 +231,6 @@ static func style_path_option(option: OptionButton) -> void:
 	ButtonStyle.apply_font_colors(option, ThemeColor.title_color, ThemeColor.title_color, ThemeColor.title_color)
 	ButtonStyle.apply_icon_colors(option, Colors.secondary_text, ThemeColor.title_color, ThemeColor.accent_theme_color())
 	PopupMenuStyle.apply(option.get_popup())
-	pass
-
-
-static func style_line_edit(edit: LineEdit) -> void:
-	edit.add_theme_color_override("font_color", ThemeColor.title_color)
-	edit.add_theme_color_override("font_placeholder_color", ThemeColor.body_color)
-	edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
-	edit.add_theme_color_override("selection_color", ThemeColor.selection_color)
-	var normal := make_field_style()
-	var focus := normal.duplicate() as StyleBoxFlat
-	focus.border_color = ThemeColor.accent_theme_color()
-	edit.add_theme_stylebox_override("normal", normal)
-	edit.add_theme_stylebox_override("focus", focus)
-	edit.add_theme_stylebox_override("read_only", normal.duplicate())
-	LineEditStyle.apply_clear_button(edit)
 	pass
 
 

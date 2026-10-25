@@ -257,7 +257,7 @@ func apply_theme() -> void:
 	style_option_button(backend_select)
 	style_button(hotkey_button)
 	style_text_edit(prompt_edit)
-	style_line_edit(search_edit)
+	LineEditStyle.apply_line_edit(search_edit, make_input_style(), ThemeColor.title_color, Color(ThemeColor.body_color, 0.78))
 	style_results()
 	pass
 
@@ -298,23 +298,6 @@ func apply_locale() -> void:
 
 func make_input_style() -> StyleBoxFlat:
 	return StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 7, Margin.ma_3, Margin.ma_0, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
-
-
-func style_line_edit(edit: LineEdit) -> void:
-	edit.add_theme_color_override("font_color", ThemeColor.title_color)
-	edit.add_theme_color_override("font_placeholder_color", Color(ThemeColor.body_color, 0.78))
-	edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
-	edit.add_theme_color_override("font_selected_color", ThemeColor.title_color)
-	edit.add_theme_color_override("selection_color", ThemeColor.selection_color)
-	edit.caret_blink = true
-	var normal := make_input_style()
-	var focus := normal.duplicate() as StyleBoxFlat
-	focus.border_color = ThemeColor.accent_theme_color()
-	focus.set_border_width_all(ControlSize.border_sm)
-	edit.add_theme_stylebox_override("normal", normal)
-	edit.add_theme_stylebox_override("focus", focus)
-	LineEditStyle.apply_clear_button(edit)
-	pass
 
 
 func style_text_edit(edit: TextEdit) -> void:

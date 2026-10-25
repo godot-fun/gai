@@ -258,28 +258,12 @@ func style_option_button(select: OptionButton) -> void:
 	pass
 
 
-func style_line_edit(edit: LineEdit) -> void:
-	edit.add_theme_color_override("font_color", Colors.primary_text)
-	edit.add_theme_color_override("font_placeholder_color", Colors.secondary_text.darkened(0.08))
-	edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
-	edit.caret_blink = true
-	var normal := make_input_style()
-	var focus := normal.duplicate() as StyleBoxFlat
-	focus.border_color = ThemeColor.accent_theme_color()
-	focus.set_border_width_all(ControlSize.border_sm)
-	edit.add_theme_stylebox_override("normal", normal)
-	edit.add_theme_stylebox_override("focus", focus)
-	edit.add_theme_stylebox_override("read_only", normal.duplicate())
-	LineEditStyle.apply_clear_button(edit)
-	pass
-
-
 func make_input_style() -> StyleBoxFlat:
 	return StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 7, Margin.ma_3, Margin.ma_0, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
 
 
 func style_spin_box(spin: SpinBox) -> void:
-	style_line_edit(spin.get_line_edit())
+	LineEditStyle.apply_line_edit(spin.get_line_edit(), make_input_style())
 	spin.add_theme_color_override("font_color", Colors.primary_text)
 	spin.add_theme_color_override("font_placeholder_color", Colors.secondary_text)
 	spin.add_theme_color_override("up_icon_modulate", Colors.primary_text)
