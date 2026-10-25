@@ -27,8 +27,7 @@ static func apply(dialog: FileDialog, label_texts: Dictionary[String, String] = 
 ## FileDialog is reused by settings and workspace selection, so dismiss it by hiding rather than
 ## freeing it. `popup_window` makes an outside click emit `close_requested`, matching CommonWindow.
 static func apply_close(dialog: FileDialog) -> void:
-	dialog.popup_window = true
-	dialog.exclusive = false
+	dialog.exclusive = true
 	var close_callable := hide_dialog.bind(dialog)
 	if not dialog.close_requested.is_connected(close_callable):
 		dialog.close_requested.connect(close_callable)
