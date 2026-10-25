@@ -236,6 +236,20 @@ func ButtonStyle_apply_test() -> void:
 	pass
 
 
+func ButtonStyle_apply_option_button_test() -> void:
+	var option := OptionButton.new()
+	var normal := StyleBoxHelper.create_style_box_flat(Color(0.2, 0.2, 0.2), 6, Margin.ma_2, Margin.ma_1, Color.WHITE, 1)
+	ButtonStyle.apply_option_button(option, normal, Color.BLACK)
+	var hover: StyleBoxFlat = option.get_theme_stylebox("hover") as StyleBoxFlat
+	assert(option.get_theme_stylebox("normal") == normal)
+	assert(hover.border_color == ThemeColor.accent_theme_color())
+	assert((option.get_theme_stylebox("pressed") as StyleBoxFlat).border_color == ThemeColor.accent_theme_color())
+	assert((option.get_theme_stylebox("focus") as StyleBoxFlat).border_color == ThemeColor.accent_theme_color())
+	assert(option.get_theme_color("font_color") == Color.BLACK)
+	option.free()
+	pass
+
+
 ## Same hole on the text side: the default theme paints focus and hover-pressed text near white,
 ## so a button that only overrides normal / hover / pressed goes blank on a light surface.
 func ButtonStyle_apply_font_colors_test() -> void:

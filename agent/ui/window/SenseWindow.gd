@@ -334,12 +334,7 @@ func style_text_edit(edit: TextEdit) -> void:
 
 
 func style_option_button(select: OptionButton) -> void:
-	ButtonStyle.apply_font_colors(select, Colors.primary_text, Colors.primary_text, Colors.primary_text)
-	var normal: StyleBoxFlat = make_input_style()
-	var hover: StyleBoxFlat = normal.duplicate() as StyleBoxFlat
-	hover.border_color = ThemeColor.accent_theme_color()
-	ButtonStyle.apply(select, normal, hover, hover.duplicate())
-	PopupMenuStyle.apply(select.get_popup())
+	ButtonStyle.apply_option_button(select, make_input_style())
 	pass
 
 

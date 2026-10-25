@@ -124,3 +124,14 @@ static func apply_check_button(
 	for state: String in ["normal", "disabled", "focus", "hover", "pressed", "hover_pressed"]:
 		check.add_theme_stylebox_override(state, empty.duplicate())
 	pass
+
+
+## Apply standard dropdown states: the normal surface gains an accent outline while hovered,
+## pressed, or focused, and retains the shared text colors in every state.
+static func apply_option_button(option: OptionButton, normal: StyleBoxFlat, text_color: Color = Colors.primary_text) -> void:
+	var hover: StyleBoxFlat = normal.duplicate() as StyleBoxFlat
+	hover.border_color = ThemeColor.accent_theme_color()
+	apply(option, normal, hover, hover.duplicate())
+	apply_font_colors(option, text_color, text_color, text_color)
+	PopupMenuStyle.apply(option.get_popup())
+	pass

@@ -251,12 +251,7 @@ func style_action_button(button: Button) -> void:
 
 
 func style_option_button(select: OptionButton) -> void:
-	ButtonStyle.apply_font_colors(select, Colors.primary_text, Colors.primary_text, Colors.primary_text)
-	var normal := make_input_style()
-	var hover := normal.duplicate() as StyleBoxFlat
-	hover.border_color = ThemeColor.accent_theme_color()
-	ButtonStyle.apply(select, normal, hover, hover.duplicate())
-	PopupMenuStyle.apply(select.get_popup())
+	ButtonStyle.apply_option_button(select, make_input_style())
 	select.get_popup().add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(
 		ThemeColor.card_surface, ControlSize.radius_lg, Margin.ma_1, Margin.ma_1,
 		Color(ThemeColor.title_color, 0.10), ControlSize.border_xs))
