@@ -213,7 +213,8 @@ func style_mode_button(button: Button) -> void:
 		normal, ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), Colors.am_2),
 		ThemeColor.accent_theme_color())
 	var disabled := ButtonStyle.filled(normal, Colors.surface, Colors.subtle_border)
-	ButtonStyle.apply(button, normal, hover, pressed, disabled)
+	ButtonStyle.apply_style(button, normal, hover, pressed)
+	button.add_theme_stylebox_override("disabled", disabled)
 	var icon_path := str(button.get_meta("note_icon_path", ""))
 	var icon_color := ThemeColor.accent_theme_color() if button.button_pressed else Colors.primary_text
 	button.icon = make_icon(icon_path, icon_color)

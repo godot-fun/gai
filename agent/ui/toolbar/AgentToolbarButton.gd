@@ -12,10 +12,10 @@ static func style(button: Button, tooltip: String) -> void:
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, ThemeColor.accent_theme_color())
 
 	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1, Colors.subtle_border, ControlSize.border_xs)
-	ButtonStyle.apply(button, normal,
+	ButtonStyle.apply_style(button, normal,
 		ButtonStyle.filled(normal, Colors.hover_surface),
-		ButtonStyle.filled(normal, ThemeColor.selected_surface),
-		null, ButtonStyle.filled(normal, ThemeColor.promote(ThemeColor.selected_surface, Colors.am_2)))
+		ButtonStyle.filled(normal, ThemeColor.selected_surface))
+	button.add_theme_stylebox_override("hover_pressed", ButtonStyle.filled(normal, ThemeColor.promote(ThemeColor.selected_surface, Colors.am_2)))
 	pass
 
 
@@ -34,8 +34,8 @@ static func style_round(button: Button, tooltip: String) -> void:
 
 	# Equal margins keep the button square (sm×sm); asymmetric h/v margins stretch it into an ellipse.
 	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.sm / 2, Margin.ma_1, Margin.ma_1, Colors.subtle_border, ControlSize.border_xs)
-	ButtonStyle.apply(button, normal,
+	ButtonStyle.apply_style(button, normal,
 		ButtonStyle.filled(normal, Colors.hover_surface),
-		ButtonStyle.filled(normal, ThemeColor.selected_surface),
-		null, ButtonStyle.filled(normal, ThemeColor.promote(ThemeColor.selected_surface, Colors.am_2)))
+		ButtonStyle.filled(normal, ThemeColor.selected_surface))
+	button.add_theme_stylebox_override("hover_pressed", ButtonStyle.filled(normal, ThemeColor.promote(ThemeColor.selected_surface, Colors.am_2)))
 	pass

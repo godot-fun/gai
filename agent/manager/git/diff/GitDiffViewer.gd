@@ -626,5 +626,6 @@ func style_compact_button(button: Button) -> void:
 	var hover := ButtonStyle.filled(normal, ThemeColor.selected_surface, ThemeColor.accent_theme_color())
 	var pressed := ButtonStyle.filled(normal, ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), Colors.am_2), ThemeColor.accent_theme_color())
 	var disabled := ButtonStyle.filled(normal, Colors.surface, Colors.subtle_border)
-	ButtonStyle.apply(button, normal, hover, pressed, disabled)
+	ButtonStyle.apply_style(button, normal, hover, pressed)
+	button.add_theme_stylebox_override("disabled", disabled)
 	pass

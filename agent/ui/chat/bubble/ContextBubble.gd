@@ -114,5 +114,5 @@ static func style_expand_button(button: Button) -> void:
 	hover.set_corner_radius_all(4)
 
 	# Pressed looks exactly like hover here, so the two states share one box.
-	ButtonStyle.apply(button, normal, hover, hover)
+	ButtonStyle.apply_style(button, normal, hover, hover)
 	pass

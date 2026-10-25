@@ -1,7 +1,7 @@
 class_name ButtonStyle
 extends Object
 
-## Button and panel state styling: install the state set a [Button] needs. The boxes themselves
+## Shared [BaseButton] state styling: install the state set a button needs. The boxes themselves
 ## are built by [StyleBoxHelper]; hover and pressed fills use [method ThemeColor.promote] and
 ## [method ThemeColor.demote] so contrast stays correct when the theme flips.
 ##
@@ -11,7 +11,7 @@ extends Object
 ## Typical use:
 ## [codeblock]
 ## var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 6, Margin.ma_2, Margin.ma_1, ThemeColor.accent_theme_color(), ControlSize.border_xs)
-## ButtonStyle.apply(button, normal,
+## ButtonStyle.apply_style(button, normal,
 ## 	ButtonStyle.filled(normal, ThemeColor.promote(ThemeColor.card_surface, Colors.am_2)),
 ## 	ButtonStyle.filled(normal, ThemeColor.inset_surface, ThemeColor.accent_theme_color()))
 ## [/codeblock]
@@ -30,33 +30,26 @@ static func filled(base: StyleBoxFlat, fill: Color, border_color: Color = Color.
 	return style
 
 
-## Install the button states. [param disabled] falls back to a copy of [param normal] and
-## [param hover_pressed] to a copy of [param pressed]; [code]focus[/code] always mirrors
-## [param hover].
+## Apply normal, hover, and pressed states. [code]focus[/code] mirrors [param hover], disabled
+## mirrors [param normal], and hover-pressed mirrors [param pressed]. Override a derived state
+## directly when a particular button needs a distinct appearance.
 ##
-## [param hover_pressed] must not be left out: Godot resolves a missing item from the default
+## The hover-pressed override must not be omitted: Godot resolves a missing item from the default
 ## theme, so a button that only overrides normal / hover / pressed paints the engine's own box
 ## while it is pressed *and* hovered.
-static func apply(
-	button: Button,
-	normal: StyleBoxFlat,
-	hover: StyleBoxFlat,
-	pressed: StyleBoxFlat,
-	disabled: StyleBoxFlat = null,
-	hover_pressed: StyleBoxFlat = null
-) -> void:
+static func apply_style(button: BaseButton, normal: StyleBoxFlat, hover: StyleBoxFlat, pressed: StyleBoxFlat) -> void:
 	button.add_theme_stylebox_override("normal", normal)
 	button.add_theme_stylebox_override("hover", hover)
 	button.add_theme_stylebox_override("pressed", pressed)
 	button.add_theme_stylebox_override("focus", hover.duplicate() as StyleBoxFlat)
-	button.add_theme_stylebox_override("disabled", disabled if disabled != null else normal.duplicate() as StyleBoxFlat)
-	button.add_theme_stylebox_override("hover_pressed", hover_pressed if hover_pressed != null else pressed.duplicate() as StyleBoxFlat)
+	button.add_theme_stylebox_override("disabled", normal.duplicate() as StyleBoxFlat)
+	button.add_theme_stylebox_override("hover_pressed", pressed.duplicate() as StyleBoxFlat)
 	pass
 
 
 ## Text colors for the same states, one per `font_*_color` theme item: focus mirrors
 ## [param hover_color] and hover-pressed mirrors [param pressed_color], the same pairing
-## [method apply] uses for the boxes.
+## [method apply_style] uses for the boxes.
 ##
 ## Those two are not optional — an item left out is resolved from the default theme, whose focus
 ## and hover-pressed text are near white and would vanish on a light surface.
@@ -131,7 +124,7 @@ static func apply_check_button(
 static func apply_option_button(option: OptionButton, normal: StyleBoxFlat, text_color: Color = Colors.primary_text) -> void:
 	var hover: StyleBoxFlat = normal.duplicate() as StyleBoxFlat
 	hover.border_color = ThemeColor.accent_theme_color()
-	apply(option, normal, hover, hover.duplicate())
+	apply_style(option, normal, hover, hover.duplicate())
 	apply_font_colors(option, text_color, text_color, text_color)
 	PopupMenuStyle.apply(option.get_popup())
 	pass

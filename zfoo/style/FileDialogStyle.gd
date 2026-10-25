@@ -183,7 +183,7 @@ static func style_confirm_button(button: Button) -> void:
 		ControlSize.radius_md, Margin.ma_3, Margin.ma_1, ThemeColor.alpha_theme_color(0.55), ControlSize.border_xs)
 	var hover := ButtonStyle.filled(normal, ThemeColor.selected_surface, fill)
 	var pressed := ButtonStyle.filled(normal, fill, fill)
-	ButtonStyle.apply(button, normal, hover, pressed)
+	ButtonStyle.apply_style(button, normal, hover, pressed)
 	ButtonStyle.apply_font_colors(button, fill, fill, ThemeColor.inset_surface, Color(fill, 0.5))
 	pass
 
@@ -194,7 +194,7 @@ static func style_cancel_button(button: Button) -> void:
 		ControlSize.radius_md, Margin.ma_3, Margin.ma_1, Color(ThemeColor.title_color, 0.35), ControlSize.border_xs)
 	var hover := ButtonStyle.filled(normal, Colors.error_surface, Colors.error)
 	var pressed := ButtonStyle.filled(normal, Colors.error, Colors.error)
-	ButtonStyle.apply(button, normal, hover, pressed)
+	ButtonStyle.apply_style(button, normal, hover, pressed)
 	ButtonStyle.apply_font_colors(button, ThemeColor.title_color, Colors.error, ThemeColor.inset_surface,
 		Color(ThemeColor.title_color, 0.5))
 	pass
@@ -203,7 +203,7 @@ static func style_cancel_button(button: Button) -> void:
 static func style_button(button: Button) -> void:
 	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_sm, Margin.ma_2, Margin.ma_1,
 		Colors.subtle_border, ControlSize.border_xs)
-	ButtonStyle.apply(button, normal,
+	ButtonStyle.apply_style(button, normal,
 		make_button_hover_style(normal),
 		make_button_pressed_style(normal))
 	ButtonStyle.apply_font_colors(button, ThemeColor.title_color, ThemeColor.title_color, ThemeColor.title_color)
@@ -213,7 +213,7 @@ static func style_button(button: Button) -> void:
 ## Compact toolbar controls remain visually quiet until hovered or pressed.
 static func style_toolbar_button(button: Button) -> void:
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_sm, Margin.ma_2, Margin.ma_1)
-	ButtonStyle.apply(button, normal,
+	ButtonStyle.apply_style(button, normal,
 		make_button_hover_style(normal),
 		make_button_pressed_style(normal))
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, ThemeColor.title_color, ThemeColor.title_color)
@@ -227,7 +227,7 @@ static func style_path_option(option: OptionButton) -> void:
 	var normal := make_field_style()
 	var hover := make_button_hover_style(normal)
 	var pressed := make_button_pressed_style(normal)
-	ButtonStyle.apply(option, normal, hover, pressed)
+	ButtonStyle.apply_style(option, normal, hover, pressed)
 	ButtonStyle.apply_font_colors(option, ThemeColor.title_color, ThemeColor.title_color, ThemeColor.title_color)
 	ButtonStyle.apply_icon_colors(option, Colors.secondary_text, ThemeColor.title_color, ThemeColor.accent_theme_color())
 	PopupMenuStyle.apply(option.get_popup())

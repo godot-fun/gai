@@ -107,7 +107,8 @@ func style_result_button(result: Button) -> void:
 	var hover := normal.duplicate() as StyleBoxFlat
 	hover.bg_color = ThemeColor.selected_surface
 	hover.border_color = ThemeColor.accent_theme_color()
-	ButtonStyle.apply(result, normal, hover, hover.duplicate(), normal.duplicate(), normal.duplicate())
+	ButtonStyle.apply_style(result, normal, hover, hover.duplicate())
+	result.add_theme_stylebox_override("hover_pressed", normal.duplicate())
 	style_result_labels(result)
 	pass
 
@@ -271,4 +272,3 @@ static func show_search() -> void:
 		window.debounce_timer.stop()
 		window.search(window.query_input.line_edit.text)
 	pass
-

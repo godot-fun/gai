@@ -325,7 +325,7 @@ func style_button(control: Button) -> void:
 	ButtonStyle.apply_font_colors(control, Colors.primary_text, Colors.primary_text, ThemeColor.accent_theme_color())
 	var normal := make_input_style()
 	var hover := ButtonStyle.filled(normal, ThemeColor.promote(ThemeColor.card_surface, Colors.am_2))
-	ButtonStyle.apply(control, normal, hover, ButtonStyle.filled(normal, ThemeColor.selected_surface))
+	ButtonStyle.apply_style(control, normal, hover, ButtonStyle.filled(normal, ThemeColor.selected_surface))
 	pass
 
 

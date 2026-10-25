@@ -246,7 +246,8 @@ func style_action_button(button: Button) -> void:
 		Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
 	var hover := normal.duplicate() as StyleBoxFlat
 	hover.border_color = ThemeColor.accent_theme_color()
-	ButtonStyle.apply(button, normal, hover, hover.duplicate(), normal.duplicate(), normal.duplicate())
+	ButtonStyle.apply_style(button, normal, hover, hover.duplicate())
+	button.add_theme_stylebox_override("hover_pressed", normal.duplicate())
 	pass
 
 

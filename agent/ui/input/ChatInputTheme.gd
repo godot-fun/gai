@@ -50,10 +50,10 @@ static func apply_send_button(send_button: Button, stop_action: bool, show_activ
 	var base_color := Color.TRANSPARENT if show_shader_effect else ThemeColor.accent_theme_color()
 	var radius: int = int(ControlSize.md * 0.5)
 	var normal := StyleBoxHelper.create_style_box_flat(base_color, radius, Margin.ma_1, Margin.ma_1)
-	ButtonStyle.apply(send_button, normal,
+	ButtonStyle.apply_style(send_button, normal,
 		ButtonStyle.filled(normal, base_color.lightened(0.10)),
-		ButtonStyle.filled(normal, base_color.darkened(0.08)),
-		ButtonStyle.filled(normal, base_color.darkened(0.25)))
+		ButtonStyle.filled(normal, base_color.darkened(0.08)))
+	send_button.add_theme_stylebox_override("disabled", ButtonStyle.filled(normal, base_color.darkened(0.25)))
 	send_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	send_button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	send_button.disabled = compacting
@@ -113,7 +113,7 @@ static func apply_queue_action_button(button: Button) -> void:
 	button.add_theme_constant_override("icon_max_width", ControlSize.xs)
 	button.add_theme_constant_override("icon_max_height", ControlSize.xs)
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.sm / 2, Margin.ma_1, Margin.ma_1)
-	ButtonStyle.apply(button, normal,
+	ButtonStyle.apply_style(button, normal,
 		ButtonStyle.filled(normal, ThemeColor.selected_surface),
 		ButtonStyle.filled(normal, ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), Colors.am_2)))
 	pass

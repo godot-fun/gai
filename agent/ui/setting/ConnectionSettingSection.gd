@@ -248,7 +248,7 @@ func style_history_row(row: PanelContainer) -> void:
 func style_history_button(button: Button) -> void:
 	ButtonStyle.apply_font_colors(button, Colors.primary_text, Colors.primary_text, Colors.primary_text)
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, 5, Margin.ma_2, Margin.ma_2)
-	ButtonStyle.apply(button, normal, normal.duplicate() as StyleBoxFlat, normal.duplicate() as StyleBoxFlat)
+	ButtonStyle.apply_style(button, normal, normal.duplicate() as StyleBoxFlat, normal.duplicate() as StyleBoxFlat)
 	pass
 
 
@@ -256,5 +256,5 @@ func style_history_delete_button(button: Button) -> void:
 	# Mirror LineEdit's clear affordance: a quiet glyph with no separate button background.
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, Colors.primary_text)
 	var empty := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, 0)
-	ButtonStyle.apply(button, empty, empty.duplicate() as StyleBoxFlat, empty.duplicate() as StyleBoxFlat)
+	ButtonStyle.apply_style(button, empty, empty.duplicate() as StyleBoxFlat, empty.duplicate() as StyleBoxFlat)
 	pass

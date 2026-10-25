@@ -175,7 +175,7 @@ func style_toolbar_button(button: Button) -> void:
 	button.add_theme_font_override("font", Fonts.medium())
 	button.add_theme_font_size_override("font_size", Typography.label_large_size)
 	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1, Colors.subtle_border, ControlSize.border_xs)
-	ButtonStyle.apply(button, normal,
+	ButtonStyle.apply_style(button, normal,
 		ButtonStyle.filled(normal, ThemeColor.promote(Colors.control_surface, Colors.am_2)),
 		ButtonStyle.filled(normal, ThemeColor.demote(Colors.control_surface, Colors.am_2)))
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, ThemeColor.accent_theme_color())
@@ -188,10 +188,10 @@ func style_payload_button(button: Button) -> void:
 	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1, Colors.subtle_border, ControlSize.border_xs)
 	var selected := ButtonStyle.filled(normal, ThemeColor.promote(Colors.control_surface, Colors.am_2), ThemeColor.accent_theme_color())
 	if button.button_pressed:
-		ButtonStyle.apply(button, selected, selected, selected)
+		ButtonStyle.apply_style(button, selected, selected, selected)
 		ButtonStyle.apply_font_colors(button, ThemeColor.accent_theme_color(), ThemeColor.accent_theme_color(), ThemeColor.accent_theme_color())
 	else:
-		ButtonStyle.apply(button, normal,
+		ButtonStyle.apply_style(button, normal,
 			ButtonStyle.filled(normal, ThemeColor.promote(Colors.control_surface, Colors.am_2)),
 			ButtonStyle.filled(normal, ThemeColor.demote(Colors.control_surface, Colors.am_2)))
 		ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, ThemeColor.accent_theme_color())
