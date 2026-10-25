@@ -338,10 +338,7 @@ func style_option_button(select: OptionButton) -> void:
 	var normal: StyleBoxFlat = make_input_style()
 	var hover: StyleBoxFlat = normal.duplicate() as StyleBoxFlat
 	hover.border_color = ThemeColor.accent_theme_color()
-	select.add_theme_stylebox_override("normal", normal)
-	select.add_theme_stylebox_override("hover", hover)
-	select.add_theme_stylebox_override("pressed", hover.duplicate())
-	select.add_theme_stylebox_override("focus", hover.duplicate())
+	ButtonStyle.apply(select, normal, hover, hover.duplicate())
 	PopupMenuStyle.apply(select.get_popup())
 	pass
 
