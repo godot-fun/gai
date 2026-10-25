@@ -34,9 +34,9 @@ func flash_highlight_panel(panel: PanelContainer, fallback_bg: Color) -> void:
 	var current := panel.get_theme_stylebox("panel")
 	if current is StyleBoxFlat:
 		restore_bg = (current as StyleBoxFlat).bg_color
-	panel.add_theme_stylebox_override("panel", create_panel_style(ThemeColor.selected_surface))
+	panel.add_theme_stylebox_override("panel", create_panel_style(ThemeColor.promote(ThemeColor.selected_surface)))
 	var tween := create_tween()
-	tween.tween_interval(0.85)
+	tween.tween_interval(3)
 	tween.tween_callback(func() -> void: panel.add_theme_stylebox_override("panel", create_panel_style(restore_bg)))
 	pass
 
