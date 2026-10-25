@@ -88,7 +88,7 @@ static func style_resume_button(button: Button) -> void:
 	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.alpha_theme_color(0.08),5,
 		Margin.ma_3,Margin.ma_1,ThemeColor.alpha_theme_color(0.35),ControlSize.border_xs)
 	ButtonStyle.apply_style(button, normal,
-		ButtonStyle.filled(normal, ThemeColor.alpha_theme_color(0.16), ThemeColor.alpha_theme_color(0.55)),
-		ButtonStyle.filled(normal, ThemeColor.alpha_theme_color(0.22)))
-	button.add_theme_stylebox_override("disabled", ButtonStyle.filled(normal, ThemeColor.alpha_theme_color(0.04), ThemeColor.alpha_theme_color(0.12)))
+		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.alpha_theme_color(0.16), ThemeColor.alpha_theme_color(0.55)),
+		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.alpha_theme_color(0.22)))
+	button.add_theme_stylebox_override("disabled", StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.alpha_theme_color(0.04), ThemeColor.alpha_theme_color(0.12)))
 	pass

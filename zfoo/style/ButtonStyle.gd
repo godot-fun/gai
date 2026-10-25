@@ -12,22 +12,9 @@ extends Object
 ## [codeblock]
 ## var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 6, Margin.ma_2, Margin.ma_1, ThemeColor.accent_theme_color(), ControlSize.border_xs)
 ## ButtonStyle.apply_style(button, normal,
-## 	ButtonStyle.filled(normal, ThemeColor.promote(ThemeColor.card_surface, Colors.am_2)),
-## 	ButtonStyle.filled(normal, ThemeColor.inset_surface, ThemeColor.accent_theme_color()))
+## 	StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.card_surface, Colors.am_2)),
+## 	StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.inset_surface, ThemeColor.accent_theme_color()))
 ## [/codeblock]
-
-## A copy of [param base] with a new fill — how the hover / pressed / disabled box of a button is
-## derived from its normal box, so the border, padding and corners are written only once.
-##
-## A transparent [param border_color] keeps the outline of [param base]; pass one only for a state
-## whose outline changes. Pass a state box as [param base] when the next state builds on it instead
-## of on the normal box.
-static func filled(base: StyleBoxFlat, fill: Color, border_color: Color = Color.TRANSPARENT) -> StyleBoxFlat:
-	var style: StyleBoxFlat = base.duplicate() as StyleBoxFlat
-	style.bg_color = fill
-	if border_color != Color.TRANSPARENT:
-		style.border_color = border_color
-	return style
 
 
 ## Apply normal, hover, and pressed states. [code]focus[/code] mirrors [param hover], disabled

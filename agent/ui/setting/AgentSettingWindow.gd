@@ -264,26 +264,7 @@ func make_input_style() -> StyleBoxFlat:
 
 
 func style_spin_box(spin: SpinBox) -> void:
-	LineEditStyle.apply_line_edit(spin.get_line_edit(), make_input_style())
-	spin.add_theme_color_override("font_color", Colors.primary_text)
-	spin.add_theme_color_override("font_placeholder_color", Colors.secondary_text)
-	spin.add_theme_color_override("up_icon_modulate", Colors.primary_text)
-	spin.add_theme_color_override("down_icon_modulate", Colors.primary_text)
-	spin.add_theme_color_override("up_hover_icon_modulate", ThemeColor.accent_theme_color())
-	spin.add_theme_color_override("down_hover_icon_modulate", ThemeColor.accent_theme_color())
-	spin.add_theme_color_override("up_pressed_icon_modulate", ThemeColor.accent_theme_color())
-	spin.add_theme_color_override("down_pressed_icon_modulate", ThemeColor.accent_theme_color())
-	var normal := make_input_style()
-	normal.content_margin_left = Margin.ma_0
-	normal.content_margin_right = Margin.ma_0
-	var hover := ButtonStyle.filled(normal, Colors.hover_surface)
-	for side in ["up", "down"]:
-		spin.add_theme_stylebox_override(side + "_background", normal)
-		spin.add_theme_stylebox_override(side + "_background_hovered", hover)
-		spin.add_theme_stylebox_override(side + "_background_pressed", hover.duplicate())
-		spin.add_theme_stylebox_override(side + "_background_disabled", normal.duplicate())
-	spin.add_theme_stylebox_override("field_and_buttons_separator", StyleBoxEmpty.new())
-	spin.add_theme_stylebox_override("up_down_buttons_separator", StyleBoxEmpty.new())
+	RangeStyle.apply_spin_box(spin)
 	pass
 
 

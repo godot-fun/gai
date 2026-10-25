@@ -73,6 +73,6 @@ static func style_view_button(button: Button) -> void:
 	var border := ThemeColor.demote(Colors.secondary_text, Colors.am_2)
 	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.promote(Colors.blue_grey_surface, Colors.am_2), 4, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
 	ButtonStyle.apply_style(button, normal,
-		ButtonStyle.filled(normal, ThemeColor.promote(Colors.blue_grey_surface, Colors.am_3), Colors.secondary_text),
-		ButtonStyle.filled(normal, ThemeColor.demote(Colors.blue_grey_surface, Colors.am_2), Colors.secondary_text))
+		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(Colors.blue_grey_surface, Colors.am_3), Colors.secondary_text),
+		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.demote(Colors.blue_grey_surface, Colors.am_2), Colors.secondary_text))
 	pass

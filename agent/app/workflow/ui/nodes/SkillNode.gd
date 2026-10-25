@@ -262,6 +262,6 @@ func style_node_button(button: Button) -> void:
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, Colors.primary_text)
 	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_2, Colors.subtle_border, ControlSize.border_xs)
 	ButtonStyle.apply_style(button, normal,
-		ButtonStyle.filled(normal, Colors.hover_surface),
-		ButtonStyle.filled(normal, ThemeColor.selected_surface))
+		StyleBoxHelper.duplicate_with_bg_color(normal, Colors.hover_surface),
+		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface))
 	pass

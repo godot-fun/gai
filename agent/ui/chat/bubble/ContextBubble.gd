@@ -110,7 +110,7 @@ static func style_expand_button(button: Button) -> void:
 	ButtonStyle.apply_font_colors(button, theme_color, ThemeColor.promote(theme_color, Colors.am_2), ThemeColor.demote(theme_color, Colors.am_2))
 
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, 0, Margin.ma_1, Margin.ma_0)
-	var hover := ButtonStyle.filled(normal, ThemeColor.alpha_theme_color(0.12))
+	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.alpha_theme_color(0.12))
 	hover.set_corner_radius_all(4)
 
 	# Pressed looks exactly like hover here, so the two states share one box.

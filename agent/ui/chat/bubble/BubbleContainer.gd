@@ -68,6 +68,6 @@ static func style_header_button(button: Button, bubble_bg: Color, tooltip: Strin
 
 	var normal := StyleBoxHelper.create_style_box_flat(bubble_bg, 4, Margin.ma_2, Margin.ma_0, ThemeColor.alpha_theme_color(0.45), ControlSize.border_xs)
 	ButtonStyle.apply_style(button, normal,
-		ButtonStyle.filled(normal, ThemeColor.selected_surface, ThemeColor.alpha_theme_color(0.85)),
-		ButtonStyle.filled(normal, ThemeColor.promote(ThemeColor.selected_surface, Colors.am_2), theme_color))
+		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface, ThemeColor.alpha_theme_color(0.85)),
+		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.selected_surface, Colors.am_2), theme_color))
 	pass

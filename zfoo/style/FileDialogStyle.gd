@@ -181,8 +181,8 @@ static func style_confirm_button(button: Button) -> void:
 	var fill := ThemeColor.accent_theme_color()
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT,
 		ControlSize.radius_md, Margin.ma_3, Margin.ma_1, ThemeColor.alpha_theme_color(0.55), ControlSize.border_xs)
-	var hover := ButtonStyle.filled(normal, ThemeColor.selected_surface, fill)
-	var pressed := ButtonStyle.filled(normal, fill, fill)
+	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface, fill)
+	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, fill, fill)
 	ButtonStyle.apply_style(button, normal, hover, pressed)
 	ButtonStyle.apply_font_colors(button, fill, fill, ThemeColor.inset_surface, Color(fill, 0.5))
 	pass
@@ -192,8 +192,8 @@ static func style_confirm_button(button: Button) -> void:
 static func style_cancel_button(button: Button) -> void:
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT,
 		ControlSize.radius_md, Margin.ma_3, Margin.ma_1, Color(ThemeColor.title_color, 0.35), ControlSize.border_xs)
-	var hover := ButtonStyle.filled(normal, Colors.error_surface, Colors.error)
-	var pressed := ButtonStyle.filled(normal, Colors.error, Colors.error)
+	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, Colors.error_surface, Colors.error)
+	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, Colors.error, Colors.error)
 	ButtonStyle.apply_style(button, normal, hover, pressed)
 	ButtonStyle.apply_font_colors(button, ThemeColor.title_color, Colors.error, ThemeColor.inset_surface,
 		Color(ThemeColor.title_color, 0.5))
@@ -293,11 +293,11 @@ static func make_file_list_selection_style(border_color: Color) -> StyleBoxFlat:
 ## Match BubbleContainer's header actions: a selected accent surface gives quiet, non-white hover
 ## feedback, and the pressed state increases contrast without changing the button's geometry.
 static func make_button_hover_style(normal: StyleBoxFlat) -> StyleBoxFlat:
-	return ButtonStyle.filled(normal, ThemeColor.selected_surface, ThemeColor.alpha_theme_color(0.85))
+	return StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface, ThemeColor.alpha_theme_color(0.85))
 
 
 static func make_button_pressed_style(normal: StyleBoxFlat) -> StyleBoxFlat:
-	return ButtonStyle.filled(normal, ThemeColor.promote(ThemeColor.selected_surface, Colors.am_2), ThemeColor.accent_theme_color())
+	return StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.selected_surface, Colors.am_2), ThemeColor.accent_theme_color())
 
 
 static func make_dialog_body_style() -> StyleBoxFlat:

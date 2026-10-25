@@ -427,9 +427,9 @@ func style_run_button() -> void:
 func apply_run_button_style(base_color: Color) -> void:
 	var normal := StyleBoxHelper.create_style_box_flat(base_color, ControlSize.radius_md, Margin.ma_2, Margin.ma_1)
 	ButtonStyle.apply_style(run_button, normal,
-		ButtonStyle.filled(normal, base_color.lightened(0.12)),
-		ButtonStyle.filled(normal, base_color.darkened(0.08)))
-	run_button.add_theme_stylebox_override("hover_pressed", ButtonStyle.filled(normal, base_color.darkened(0.02)))
+		StyleBoxHelper.duplicate_with_bg_color(normal, base_color.lightened(0.12)),
+		StyleBoxHelper.duplicate_with_bg_color(normal, base_color.darkened(0.08)))
+	run_button.add_theme_stylebox_override("hover_pressed", StyleBoxHelper.duplicate_with_bg_color(normal, base_color.darkened(0.02)))
 	pass
 
 

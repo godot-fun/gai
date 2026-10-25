@@ -195,18 +195,18 @@ func card_components_test() -> void:
 	pass
 
 
-## Every state box is a copy of the normal one with a new fill, so the border, padding and corners
+## Every state box is a copy of the normal one with a new background color, so the border, padding and corners
 ## only have to be written once — this is the copy that keeps them.
-func ButtonStyle_filled_test() -> void:
+func StyleBoxHelper_duplicate_with_bg_color_test() -> void:
 	var normal := StyleBoxHelper.create_style_box_flat(Color(0.2, 0.2, 0.2), 6, Margin.ma_2, Margin.ma_1, Color.WHITE, 1)
-	var hover := ButtonStyle.filled(normal, Color(0.3, 0.3, 0.3))
+	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, Color(0.3, 0.3, 0.3))
 	assert(hover.bg_color == Color(0.3, 0.3, 0.3))
 	assert(hover.border_color == normal.border_color and hover.get_margin(SIDE_LEFT) == Margin.ma_2)
 	assert(hover.corner_radius_top_left == 6)
 	assert(normal.bg_color == Color(0.2, 0.2, 0.2))
 
 	# A border color is only written when one is given, so a state keeps the normal outline by default.
-	var outlined := ButtonStyle.filled(normal, Color(0.3, 0.3, 0.3), Color.RED)
+	var outlined := StyleBoxHelper.duplicate_with_bg_color(normal, Color(0.3, 0.3, 0.3), Color.RED)
 	assert(outlined.border_color == Color.RED and normal.border_color == Color.WHITE)
 	pass
 
@@ -215,8 +215,8 @@ func ButtonStyle_filled_test() -> void:
 ## so the helper has to set it. This is what that regression looked like.
 func ButtonStyle_apply_test() -> void:
 	var normal := StyleBoxHelper.create_style_box_flat(Color(0.2, 0.2, 0.2), 6, Margin.ma_2, Margin.ma_1, Color.WHITE, 1)
-	var hover := ButtonStyle.filled(normal, Color(0.3, 0.3, 0.3))
-	var pressed := ButtonStyle.filled(normal, Color(0.1, 0.1, 0.1))
+	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, Color(0.3, 0.3, 0.3))
+	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, Color(0.1, 0.1, 0.1))
 
 	var button := Button.new()
 	ButtonStyle.apply_style(button, normal, hover, pressed)
@@ -233,6 +233,17 @@ func ButtonStyle_apply_test() -> void:
 
 	button.free()
 	bare.free()
+	pass
+
+
+func RangeStyle_apply_spin_box_test() -> void:
+	var spin := SpinBox.new()
+	RangeStyle.apply_spin_box(spin)
+	assert((spin.get_line_edit().get_theme_stylebox("normal") as StyleBoxFlat).bg_color == ThemeColor.card_surface)
+	assert(spin.get_theme_color("up_icon_modulate") == Colors.primary_text)
+	assert((spin.get_theme_stylebox("up_background_hovered") as StyleBoxFlat).bg_color == Colors.hover_surface)
+	assert(spin.get_theme_stylebox("field_and_buttons_separator") is StyleBoxEmpty)
+	spin.free()
 	pass
 
 

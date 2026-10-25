@@ -61,8 +61,8 @@ func create_path_row(port_id: String, label_text: String, port_type: int) -> HBo
 	ButtonStyle.apply_font_colors(browse, Colors.secondary_text, Colors.primary_text, Colors.primary_text)
 	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_1, Margin.ma_1, Colors.subtle_border, ControlSize.border_xs)
 	ButtonStyle.apply_style(browse, normal,
-		ButtonStyle.filled(normal, Colors.hover_surface),
-		ButtonStyle.filled(normal, ThemeColor.selected_surface))
+		StyleBoxHelper.duplicate_with_bg_color(normal, Colors.hover_surface),
+		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface))
 	browse.pressed.connect(func() -> void: open_browse(port_id, port_type))
 	row.add_child(browse)
 	return row
