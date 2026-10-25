@@ -53,10 +53,14 @@ func build_layout() -> void:
 	results_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	results_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	content.add_child(results_scroll)
+	var results_pad := MarginContainer.new()
+	results_pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	results_pad.add_theme_constant_override("margin_right", Margin.ma_1)
+	results_scroll.add_child(results_pad)
 	results_list = VBoxContainer.new()
 	results_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	results_list.add_theme_constant_override("separation", Margin.ma_1)
-	results_scroll.add_child(results_list)
+	results_pad.add_child(results_list)
 	debounce_timer = Timer.new()
 	debounce_timer.one_shot = true
 	debounce_timer.wait_time = SEARCH_DEBOUNCE_MILLIS / float(TimeUtils.MILLIS_PER_SECOND)
@@ -79,6 +83,9 @@ func style_content() -> void:
 	container.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface))
 	pass
 
+
+func dismiss_on_focus_out() -> bool:
+	return false
 
 func style_results_scroll() -> void:
 	results_scroll.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
