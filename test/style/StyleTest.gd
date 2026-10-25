@@ -349,7 +349,7 @@ func ButtonStyle_apply_icon_colors_test() -> void:
 
 func ButtonStyle_apply_check_button_test() -> void:
 	var check := CheckButton.new()
-	ButtonStyle.apply_check_button(check, Color.BLUE, Color.RED, Color.GREEN, Color.YELLOW, Margin.ma_1, 2, 3, 4, 5)
+	ButtonStyle.apply_check_button(check, Color.BLUE, Color.RED, Color.GREEN, Color.YELLOW, Margin.ma_1, 3, 4, 5, 2)
 	assert(check.get_theme_color("font_color") == Color.BLUE)
 	assert(check.get_theme_color("font_hover_color") == Color.RED)
 	assert(check.get_theme_color("font_pressed_color") == Color.GREEN)

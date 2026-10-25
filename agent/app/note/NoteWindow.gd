@@ -188,8 +188,7 @@ func style_toolbar() -> void:
 	toolbar_panel.add_theme_stylebox_override("panel", toolbar_style)
 	open_on_startup_check.add_theme_font_override("font", Fonts.regular())
 	open_on_startup_check.add_theme_font_size_override("font_size", Typography.label_medium_size)
-	ButtonStyle.apply_check_button(open_on_startup_check, Colors.primary_text, Color.TRANSPARENT, Color.TRANSPARENT, Color.TRANSPARENT, Margin.ma_1,
-		Margin.ma_0, Margin.ma_0, Margin.ma_1, Margin.ma_0)
+	ButtonStyle.apply_check_button(open_on_startup_check)
 	style_mode_button(edit_mode_button)
 	style_mode_button(split_mode_button)
 	style_mode_button(preview_mode_button)

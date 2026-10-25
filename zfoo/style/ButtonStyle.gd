@@ -22,7 +22,7 @@ static func theme_normal_style() -> StyleBoxFlat:
 
 ## Hover fill for [param normal]: quiet selected surface with a soft accent outline.
 static func theme_hover_style_for(normal: StyleBoxFlat) -> StyleBoxFlat:
-	return StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface, ThemeColor.alpha_theme_color(0.85))
+	return StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface, ThemeColor.alpha_theme_color(Weights.w_10))
 
 
 ## Pressed fill for [param normal]: stronger selected surface; [param border_color] defaults to accent.
@@ -94,27 +94,23 @@ static func apply_icon_colors(button: BaseButton, base_color: Color, hover_color
 	pass
 
 
-## Theme a [CheckButton] toggle: no button chrome, accent checked indicator, optional label colors.
-##
-## [param hover_color] and [param pressed_color] default to [param base_color] when left transparent.
-## [param checked_color] defaults to [ThemeColor.accent_theme_color].
-## Horizontal margins default symmetric ([code]ma_1[/code]); spacing between icon and label uses [code]h_separation[/code].
+## Theme a [CheckButton]: no button chrome, accent checked indicator, optional label colors.
+## Text and checked colors default from [Colors] and [ThemeColor]; override any slot when a control needs a custom ramp.
+## Empty style-box padding uses the same top / right / bottom / left order as [method StyleBoxHelper.apply_margin].
 static func apply_check_button(
 	check: CheckButton,
-	base_color: Color = Colors.primary_text,
-	hover_color: Color = Color.TRANSPARENT,
-	pressed_color: Color = Color.TRANSPARENT,
-	checked_color: Color = Color.TRANSPARENT,
+	normal_color: Color = Colors.primary_text,
+	hover_color: Color = ThemeColor.promote(Colors.primary_text, Weights.w_2),
+	pressed_color: Color = ThemeColor.demote(Colors.primary_text, Weights.w_2),
+	checked_color: Color = ThemeColor.accent_theme_color(),
 	h_separation: int = Margin.ma_2,
-	margin_left: int = Margin.ma_0,
 	margin_top: int = Margin.ma_1,
 	margin_right: int = Margin.ma_1,
-	margin_bottom: int = Margin.ma_1
+	margin_bottom: int = Margin.ma_1,
+	margin_left: int = Margin.ma_0
 ) -> void:
-	var hover := hover_color if hover_color != Color.TRANSPARENT else base_color
-	var pressed := pressed_color if pressed_color != Color.TRANSPARENT else hover
-	apply_font_colors(check, base_color, hover, pressed)
-	check.add_theme_color_override("button_checked_color", checked_color if checked_color != Color.TRANSPARENT else ThemeColor.accent_theme_color())
+	apply_font_colors(check, normal_color, hover_color, pressed_color)
+	check.add_theme_color_override("button_checked_color", checked_color)
 	check.add_theme_constant_override("h_separation", h_separation)
 	var empty := StyleBoxEmpty.new()
 	StyleBoxHelper.apply_margin(empty, margin_top, margin_right, margin_bottom, margin_left)
