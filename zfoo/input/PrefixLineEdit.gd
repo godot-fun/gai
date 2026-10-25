@@ -82,9 +82,11 @@ func refresh_prefix_icon() -> void:
 	if shell_normal == null:
 		return
 	if StringUtils.is_not_blank(prefix_icon_path):
-		apply_prefix_icon(prefix_icon, prefix_icon_path)
+		prefix_icon.texture = null
+		load_prefix_icon(prefix_icon_path)
 		prefix_icon.visible = true
 	else:
+		prefix_icon.texture = null
 		prefix_icon.visible = false
 	pass
 
@@ -94,21 +96,15 @@ static func make_default_field_style() -> StyleBoxFlat:
 		Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
 
 
-static func load_tinted_svg(path: String, color: Color, scale: float = 1.0) -> ImageTexture:
-	var svg := FileAccess.get_file_as_string(path)
-	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
-	var image := Image.new()
-	if image.load_svg_from_string(svg, scale) != OK:
-		return ImageTexture.new()
-	return ImageTexture.create_from_image(image)
-	pass
-
-
-static func apply_prefix_icon(icon: TextureRect, path: String) -> void:
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.custom_minimum_size = ControlSize.square(ControlSize.xs)
-	icon.texture = load_tinted_svg(path, Colors.secondary_text)
+func load_prefix_icon(path: String) -> void:
+	prefix_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	prefix_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	prefix_icon.custom_minimum_size = ControlSize.square(ControlSize.xs)
+	var texture: Texture2D = await ResourceHelper.async_load(path)
+	if texture == null:
+		return
+	prefix_icon.texture = texture
+	prefix_icon.self_modulate = Colors.secondary_text
 	pass
 
 
