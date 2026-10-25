@@ -9,8 +9,8 @@ var ui_scale_label: Label
 var ui_scale_select: OptionButton
 
 
-func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: ConfirmationDialog) -> void:
-	super.set_up(p_ui, parent, dialog)
+func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, window: Window) -> void:
+	super.set_up(p_ui, parent, window)
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.appearance"))
 	var group := ui.make_field_group(parent)
 	var parts := ui.make_setting_row(group)
@@ -25,7 +25,6 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 		language_select.add_item(config.language)
 		language_select.set_item_metadata(language_select.item_count - 1, locale)
 	language_select.item_selected.connect(on_language_selected)
-	language_select.get_popup().popup_hide.connect(ui.request_focus_check)
 	parts[1].add_child(language_select)
 	var markdown_parts := ui.make_setting_row(parent)
 	markdown_label = ui.make_label(I18n.t("agent.settings.markdown"))
@@ -50,7 +49,6 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 		ui_scale_select.add_item(StringUtils.format("{}%", roundi(scale * 100.0)))
 		ui_scale_select.set_item_metadata(ui_scale_select.item_count - 1, scale)
 	ui_scale_select.item_selected.connect(on_ui_scale_selected)
-	ui_scale_select.get_popup().popup_hide.connect(ui.request_focus_check)
 	scale_parts[1].add_child(ui_scale_select)
 	gdf.events.ui_scale_changed.connect(on_ui_scale_changed)
 	select_current_language()
@@ -131,7 +129,3 @@ func apply_theme() -> void:
 	ui.style_option_button(ui_scale_select)
 	ButtonStyle.apply_check_button(markdown_toggle_button)
 	pass
-
-
-func has_open_popup() -> bool:
-	return language_select.get_popup().visible or ui_scale_select.get_popup().visible

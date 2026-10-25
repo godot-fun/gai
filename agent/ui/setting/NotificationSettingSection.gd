@@ -14,8 +14,8 @@ var sound_folder_dialog: FileDialog
 var folder_field_typing: bool = false
 
 
-func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: ConfirmationDialog) -> void:
-	super.set_up(p_ui, parent, dialog)
+func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, window: Window) -> void:
+	super.set_up(p_ui, parent, window)
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.notification"))
 	var toast_parts := ui.make_setting_row(parent)
 	toast_label = ui.make_label(I18n.t("agent.settings.notification_window"))
@@ -47,7 +47,7 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 	sound_folder_edit.text_changed.connect(on_sound_folder_text_changed)
 	sound_folder_row.add_child(sound_folder_edit)
 	ui.bind_auto_save(sound_folder_edit, save)
-	build_folder_dialog(dialog)
+	build_folder_dialog(window)
 	update_sound_options_visible(AgentSetting.get_notification_sound())
 	pass
 
@@ -69,7 +69,7 @@ func add_sound_seconds_controls(label_parent: HBoxContainer, spin_parent: HBoxCo
 	pass
 
 
-func build_folder_dialog(dialog: ConfirmationDialog) -> void:
+func build_folder_dialog(window: Window) -> void:
 	sound_folder_dialog = FileDialog.new()
 	sound_folder_dialog.title = I18n.t("agent.settings.sound_folder_title")
 	sound_folder_dialog.file_mode = FileDialog.FILE_MODE_OPEN_DIR
@@ -77,7 +77,7 @@ func build_folder_dialog(dialog: ConfirmationDialog) -> void:
 	sound_folder_dialog.ok_button_text = I18n.t("common.select")
 	sound_folder_dialog.get_cancel_button().text = I18n.t("common.cancel")
 	sound_folder_dialog.dir_selected.connect(on_sound_folder_selected)
-	dialog.add_child(sound_folder_dialog)
+	window.add_child(sound_folder_dialog)
 	pass
 
 
@@ -180,7 +180,3 @@ func apply_theme() -> void:
 	ui.style_line_edit(sound_folder_edit)
 	FileDialogStyle.apply(sound_folder_dialog, I18nHelper.file_dialog_label_texts())
 	pass
-
-
-func has_open_popup() -> bool:
-	return sound_folder_dialog.visible

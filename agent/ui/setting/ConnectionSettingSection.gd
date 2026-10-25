@@ -15,14 +15,14 @@ var api_token_edit: LineEdit
 var proxy_address_edit: LineEdit
 
 
-func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: ConfirmationDialog) -> void:
-	super.set_up(p_ui, parent, dialog)
+func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, window: Window) -> void:
+	super.set_up(p_ui, parent, window)
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.heading"))
 	var api_result := add_field(parent, I18n.t("agent.settings.api_url"), "https://api.example.com/v1/chat/completions", I18n.t("agent.settings.api_url_help"))
 	api_url_edit = api_result[0]
 	api_url_label = api_result[1]
 	api_url_edit.gui_input.connect(on_api_url_input)
-	set_up_history_panel(dialog)
+	set_up_history_panel(window)
 	var model_result := add_field(parent, I18n.t("common.model"), ApiSetting.DEFAULT_MODEL, I18n.t("agent.settings.model_help"))
 	model_edit = model_result[0]
 	model_label = model_result[1]
@@ -39,13 +39,13 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: Confirmatio
 	pass
 
 
-func set_up_history_panel(dialog: ConfirmationDialog) -> void:
+func set_up_history_panel(window: Window) -> void:
 	# A Window stretches direct Control children to its content rect. Use a passive full-size layer
-	# so the panel remains a small, explicitly positioned child instead of covering the dialog.
+	# so the panel remains a small, explicitly positioned child instead of covering the window.
 	history_layer = Control.new()
 	history_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	history_layer.z_index = 100
-	dialog.add_child(history_layer)
+	window.add_child(history_layer)
 	history_panel = PanelContainer.new()
 	history_panel.visible = false
 	history_layer.add_child(history_panel)
@@ -53,7 +53,7 @@ func set_up_history_panel(dialog: ConfirmationDialog) -> void:
 	history_list.add_theme_constant_override("separation", Margin.ma_1)
 	history_panel.add_child(history_list)
 	api_url_edit.focus_exited.connect(hide_history_panel)
-	dialog.window_input.connect(on_dialog_input)
+	window.window_input.connect(on_window_input)
 	pass
 
 
@@ -144,7 +144,7 @@ func on_api_url_input(event: InputEvent) -> void:
 
 ## Close the history when a click lands outside both its anchor field and floating panel.
 ## Read the position through a Control because Window input coordinates differ under canvas stretch.
-func on_dialog_input(event: InputEvent) -> void:
+func on_window_input(event: InputEvent) -> void:
 	if not history_panel.visible:
 		return
 	if event is InputEventMouseMotion:
@@ -224,7 +224,7 @@ func apply_theme() -> void:
 		ui.style_help_label(help)
 	for edit in [api_url_edit, model_edit, api_token_edit, proxy_address_edit]:
 		ui.style_line_edit(edit)
-	var panel_style := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 7, Margin.ma_1, Margin.ma_1, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
+	var panel_style := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 7, Margin.ma_1, Margin.ma_1, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
 	history_panel.add_theme_stylebox_override("panel", panel_style)
 	for row: PanelContainer in history_list.get_children():
 		var content := row.get_child(0) as HBoxContainer

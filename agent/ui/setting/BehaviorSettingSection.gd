@@ -11,8 +11,8 @@ var restart_web_server_label: Label
 var restart_web_server_button: Button
 
 
-func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, dialog: ConfirmationDialog) -> void:
-	super.set_up(p_ui, parent, dialog)
+func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, window: Window) -> void:
+	super.set_up(p_ui, parent, window)
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.agent_behavior"))
 	var sandbox_parts := ui.make_setting_row(parent)
 	sandbox_label = ui.make_label(I18n.t("agent.settings.sandbox_mode"))

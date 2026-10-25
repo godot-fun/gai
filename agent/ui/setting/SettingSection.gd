@@ -5,7 +5,7 @@ var ui: AgentSettingDialog
 var heading_label: Label
 
 
-func set_up(p_ui: AgentSettingDialog, _parent: VBoxContainer, _dialog: ConfirmationDialog) -> void:
+func set_up(p_ui: AgentSettingDialog, _parent: VBoxContainer, _window: Window) -> void:
 	ui = p_ui
 	pass
 
@@ -26,7 +26,3 @@ func apply_theme() -> void:
 	if heading_label != null:
 		ui.style_heading(heading_label)
 	pass
-
-
-func has_open_popup() -> bool:
-	return false

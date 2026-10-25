@@ -1,5 +1,5 @@
 class_name AgentSettingDialog
-extends RefCounted
+extends CommonWindow
 
 ## Settings dialog shell. Each top-level settings category owns its controls and persistence.
 
@@ -9,60 +9,48 @@ const FIELD_CONTROL_RATIO: float = 3.0
 const SETTINGS_ICON_PATH: String = "res://agent/asset/image/icon/settings.svg"
 
 var button: Button
-var dialog: ConfirmationDialog
-var content_panel: PanelContainer
 var content_scroll: ScrollContainer
 var sections: Array[SettingSection] = []
 var separators: Array[HSeparator] = []
 
 
+func _init() -> void:
+	super()
+	min_size = DIALOG_SIZE
+	max_size = DIALOG_SIZE
+	unresizable = true
+	exclusive = false
+	pass
+
+
 func setup(p_button: Button) -> void:
 	button = p_button
-	build_dialog()
+	gdf.gdf_node.add_child(self)
+	build_window()
 	button.pressed.connect(on_button_pressed)
 	button.mouse_entered.connect(on_mouse_entered)
 	button.mouse_exited.connect(on_mouse_exited)
-	gdf.events.theme_changed.connect(apply_theme)
-	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(apply_locale)
+	apply_locale()
 	apply_theme()
 	pass
 
 
-func build_dialog() -> void:
-	dialog = ConfirmationDialog.new()
-	dialog.title = ""
-	dialog.borderless = true
-	dialog.min_size = DIALOG_SIZE
-	dialog.max_size = DIALOG_SIZE
-	dialog.unresizable = true
-	dialog.exclusive = false
-	var dialog_theme := Theme.new()
-	dialog_theme.default_font = Fonts.regular()
-	dialog.theme = dialog_theme
-	dialog.add_theme_font_override("title_font", Fonts.regular())
-	dialog.focus_exited.connect(on_dialog_focus_exited)
-	dialog.visibility_changed.connect(on_dialog_visibility_changed)
-	button.add_child(dialog)
-	dialog.get_ok_button().hide()
-	dialog.get_cancel_button().hide()
-
+func build_window() -> void:
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", Margin.ma_5)
 	margin.add_theme_constant_override("margin_right", Margin.ma_5)
 	margin.add_theme_constant_override("margin_top", Margin.ma_3)
 	margin.add_theme_constant_override("margin_bottom", Margin.ma_3)
-	dialog.add_child(margin)
+	container.add_child(margin)
 
-	content_panel = PanelContainer.new()
-	content_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	margin.add_child(content_panel)
 	var card_margin := MarginContainer.new()
 	card_margin.add_theme_constant_override("margin_left", Margin.ma_5)
 	card_margin.add_theme_constant_override("margin_right", Margin.ma_5)
 	card_margin.add_theme_constant_override("margin_top", Margin.ma_4)
 	card_margin.add_theme_constant_override("margin_bottom", Margin.ma_4)
-	content_panel.add_child(card_margin)
+	card_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	margin.add_child(card_margin)
 	content_scroll = ScrollContainer.new()
 	content_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	content_scroll.add_theme_constant_override("scrollbar_h_separation", Margin.ma_3)
@@ -79,7 +67,7 @@ func build_dialog() -> void:
 		NotificationSettingSection.new(),
 	]
 	for index in range(sections.size()):
-		sections[index].set_up(self, fields, dialog)
+		sections[index].set_up(self, fields, self)
 		if index < sections.size() - 1:
 			add_separator(fields)
 	pass
@@ -209,42 +197,27 @@ func refresh_check_button(check: CheckButton, enabled: bool) -> void:
 func on_button_pressed() -> void:
 	for section in sections:
 		section.refresh()
-	dialog.popup_centered(DIALOG_SIZE)
-	dialog.size = DIALOG_SIZE
-	dialog.oversampling_override = DisplayScale.compute_ui_scale()
+	size = DIALOG_SIZE
+	popup_centered()
+	oversampling_override = DisplayScale.compute_ui_scale()
 	pass
 
 
-func on_dialog_visibility_changed() -> void:
-	if dialog.visible:
-		return
+func on_close_requested() -> void:
 	for section in sections:
 		section.save()
+	hide()
 	pass
 
 
-func on_dialog_focus_exited() -> void:
-	check_dialog_focus.call_deferred()
-	pass
-
-
-func request_focus_check() -> void:
-	check_dialog_focus.call_deferred()
-	pass
-
-
-func check_dialog_focus() -> void:
-	if not dialog.visible:
-		return
-	for section in sections:
-		if section.has_open_popup():
-			return
-	if not dialog.has_focus():
-		dialog.hide()
+## Settings owns embedded menus and file pickers, so losing focus is not a dismissal. The inherited
+## close button and Escape handler still call [method on_close_requested].
+func _notification(_what: int) -> void:
 	pass
 
 
 func apply_locale() -> void:
+	title = I18n.t("agent.settings.tooltip")
 	for section in sections:
 		section.apply_locale()
 	apply_theme()
@@ -252,10 +225,11 @@ func apply_locale() -> void:
 
 
 func apply_theme() -> void:
+	super()
 	AgentToolbarButton.style_round(button, I18n.t("agent.settings.tooltip"))
 	update_icon(button.is_hovered())
 	ScrollBarStyle.apply(content_scroll.get_v_scroll_bar())
-	style_dialog()
+	style_content()
 	for section in sections:
 		section.apply_theme()
 	pass
@@ -286,19 +260,10 @@ func make_icon(color: Color) -> ImageTexture:
 	return ImageTexture.create_from_image(image)
 
 
-func style_dialog() -> void:
-	if dialog == null:
-		return
-	var dialog_style := StyleBoxHelper.create_style_box_flat(ThemeColor.accent_surface)
-	dialog_style.expand_margin_right = Margin.ma_1
-	dialog_style.expand_margin_bottom = Margin.ma_1
-	dialog_style.content_margin_bottom = Margin.ma_4
-	dialog.add_theme_stylebox_override("panel", dialog_style)
-	dialog.add_theme_stylebox_override("embedded_border", StyleBoxEmpty.new())
-	dialog.add_theme_stylebox_override("embedded_unfocused_border", StyleBoxEmpty.new())
-	dialog.add_theme_constant_override("resize_margin", Margin.ma_0)
-	dialog.add_theme_constant_override("buttons_separation", Margin.ma_0)
-	content_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+## Match [PopupWindow]'s themed content treatment: CommonWindow paints the shared frame, while
+## this window puts settings controls on the inset reading surface.
+func style_content() -> void:
+	container.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface))
 	var separator_style := StyleBoxLine.new()
 	separator_style.color = ThemeColor.accent_theme_color()
 	separator_style.thickness = 1
@@ -324,7 +289,7 @@ func style_help_label(label: Label) -> void:
 
 func style_action_button(button: Button) -> void:
 	ButtonStyle.apply_font_colors(button, Colors.primary_text, Colors.primary_text, Colors.primary_text, Colors.secondary_text)
-	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, ControlSize.radius_md, Margin.ma_3, Margin.ma_1,
+	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_md, Margin.ma_3, Margin.ma_1,
 		Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
 	var hover := normal.duplicate() as StyleBoxFlat
 	hover.border_color = ThemeColor.accent_theme_color()
@@ -342,6 +307,9 @@ func style_option_button(select: OptionButton) -> void:
 	select.add_theme_stylebox_override("pressed", hover.duplicate())
 	select.add_theme_stylebox_override("focus", hover.duplicate())
 	PopupMenuStyle.apply(select.get_popup())
+	select.get_popup().add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(
+		ThemeColor.card_surface, ControlSize.radius_lg, Margin.ma_1, Margin.ma_1,
+		Color(ThemeColor.title_color, 0.10), ControlSize.border_xs))
 	pass
 
 
@@ -361,7 +329,7 @@ func style_line_edit(edit: LineEdit) -> void:
 
 
 func make_input_style() -> StyleBoxFlat:
-	return StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 7, Margin.ma_3, Margin.ma_0, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
+	return StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 7, Margin.ma_3, Margin.ma_0, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
 
 
 func style_spin_box(spin: SpinBox) -> void:
