@@ -120,11 +120,11 @@ static func style_control(node: Node, label_texts: Dictionary[String, String] = 
 		PopupMenuStyle.apply(popup_menu)
 		apply_popup_menu_text(popup_menu, label_texts)
 	elif node is MenuButton:
-		style_toolbar_button(node as MenuButton)
+		ButtonStyle.apply_icon_button(node as MenuButton)
 	elif node is Button:
 		var button := node as Button
 		if button.theme_type_variation == &"FlatButton":
-			style_toolbar_button(button)
+			ButtonStyle.apply_icon_button(button)
 		else:
 			style_button(button)
 	elif node is Tree:
@@ -197,15 +197,6 @@ static func style_button(button: Button) -> void:
 		Colors.subtle_border, ControlSize.border_xs)
 	ButtonStyle.apply_style(button, normal)
 	ButtonStyle.apply_font_colors(button, ThemeColor.title_color, ThemeColor.title_color, ThemeColor.title_color)
-	pass
-
-
-## Compact toolbar controls remain visually quiet until hovered or pressed.
-static func style_toolbar_button(button: BaseButton) -> void:
-	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_sm, Margin.ma_2, Margin.ma_1)
-	ButtonStyle.apply_style(button, normal)
-	ButtonStyle.apply_font_colors(button, Colors.secondary_text, ThemeColor.title_color, ThemeColor.title_color)
-	ButtonStyle.apply_icon_colors(button, Colors.secondary_text, ThemeColor.title_color, ThemeColor.accent_theme_color())
 	pass
 
 

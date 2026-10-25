@@ -334,6 +334,17 @@ func ButtonStyle_apply_font_colors_test() -> void:
 	pass
 
 
+func ButtonStyle_apply_icon_button_test() -> void:
+	var button := Button.new()
+	ButtonStyle.apply_icon_button(button)
+	var normal: StyleBoxFlat = button.get_theme_stylebox("normal") as StyleBoxFlat
+	assert(normal.bg_color == Color.TRANSPARENT)
+	assert(button.get_theme_color("font_color") == Colors.secondary_text)
+	assert(button.get_theme_color("icon_pressed_color") == ThemeColor.accent_theme_color())
+	button.free()
+	pass
+
+
 func ButtonStyle_apply_icon_colors_test() -> void:
 	var button := Button.new()
 	ButtonStyle.apply_icon_colors(button, Color.BLACK, Color.RED, Color.GREEN)

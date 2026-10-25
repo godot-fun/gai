@@ -14,6 +14,11 @@ extends Object
 ## [/codeblock]
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+# BaseButton
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 ## Standard card-surface button chrome shared by dialog and toolbar controls.
 static func theme_normal_style() -> StyleBoxFlat:
 	return StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1,
@@ -94,21 +99,15 @@ static func apply_icon_colors(button: BaseButton, base_color: Color, hover_color
 	pass
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+# CheckButton
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 ## Theme a [CheckButton]: no button chrome, accent checked indicator, optional label colors.
 ## Text and checked colors default from [Colors] and [ThemeColor]; override any slot when a control needs a custom ramp.
 ## Empty style-box padding uses the same top / right / bottom / left order as [method StyleBoxHelper.apply_margin].
-static func apply_check_button(
-	check: CheckButton,
-	normal_color: Color = Colors.primary_text,
-	hover_color: Color = ThemeColor.promote(Colors.primary_text, Weights.w_2),
-	pressed_color: Color = ThemeColor.demote(Colors.primary_text, Weights.w_2),
-	checked_color: Color = ThemeColor.accent_theme_color(),
-	h_separation: int = Margin.ma_2,
-	margin_top: int = Margin.ma_1,
-	margin_right: int = Margin.ma_1,
-	margin_bottom: int = Margin.ma_1,
-	margin_left: int = Margin.ma_0
-) -> void:
+static func apply_check_button(check: CheckButton, normal_color: Color = Colors.primary_text, hover_color: Color = ThemeColor.promote(Colors.primary_text, Weights.w_2), pressed_color: Color = ThemeColor.demote(Colors.primary_text, Weights.w_2), checked_color: Color = ThemeColor.accent_theme_color(), h_separation: int = Margin.ma_2, margin_top: int = Margin.ma_1, margin_right: int = Margin.ma_1, margin_bottom: int = Margin.ma_1, margin_left: int = Margin.ma_0) -> void:
 	apply_font_colors(check, normal_color, hover_color, pressed_color)
 	check.add_theme_color_override("button_checked_color", checked_color)
 	check.add_theme_constant_override("h_separation", h_separation)
@@ -119,6 +118,11 @@ static func apply_check_button(
 	pass
 
 
+# ----------------------------------------------------------------------------------------------------------------------
+# OptionButton
+# ----------------------------------------------------------------------------------------------------------------------
+
+
 ## Apply standard dropdown states: the normal surface gains an accent outline while hovered,
 ## pressed, or focused, and retains the shared text colors in every state.
 static func apply_option_button(option: OptionButton, normal: StyleBoxFlat = LineEditStyle.theme_normal_style(), text_color: Color = Colors.primary_text) -> void:
@@ -127,4 +131,18 @@ static func apply_option_button(option: OptionButton, normal: StyleBoxFlat = Lin
 	apply_style(option, normal, hover, hover.duplicate())
 	apply_font_colors(option, text_color, text_color, text_color)
 	PopupMenuStyle.apply(option.get_popup())
+	pass
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Button
+# ----------------------------------------------------------------------------------------------------------------------
+
+
+## Icon-first [Button] and [MenuButton] (for example FileDialog [code]FlatButton[/code]): transparent chrome, muted at rest, stronger on hover.
+static func apply_icon_button(button: Button, normal: Color = Colors.secondary_text, hover: Color = ThemeColor.title_color, press: Color = ThemeColor.accent_theme_color()) -> void:
+	var box_normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_sm, Margin.ma_2, Margin.ma_1)
+	apply_style(button, box_normal)
+	apply_font_colors(button, normal, hover, hover)
+	apply_icon_colors(button, normal, hover, press)
 	pass
