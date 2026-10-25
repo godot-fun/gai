@@ -6,10 +6,11 @@ const MAX_RESULTS := 100
 const MAX_SNIPPET_LENGTH := 260
 ## Typing pause before the scan runs — it walks every entry of every session, so per-keystroke is too heavy.
 const SEARCH_DEBOUNCE_MILLIS := 1000
+const QUERY_ICON_PATH := "res://agent/asset/image/icon/search.svg"
 
 static var query: String = ""
 
-var query_edit: LineEdit
+var query_input: PrefixLineEdit
 var status_label: Label
 var results_scroll: ScrollContainer
 var results_list: VBoxContainer
@@ -37,14 +38,13 @@ func build_layout() -> void:
 	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content.add_theme_constant_override("separation", Margin.ma_2)
 	margin.add_child(content)
-	query_edit = LineEdit.new()
-	query_edit.custom_minimum_size = Vector2(0, 42)
-	query_edit.clear_button_enabled = true
-	query_edit.keep_editing_on_text_submit = true
-	query_edit.text = query
-	query_edit.text_changed.connect(on_query_changed)
-	query_edit.text_submitted.connect(on_query_submitted)
-	content.add_child(query_edit)
+	query_input = PrefixLineEdit.new()
+	query_input.apply_prefix(QUERY_ICON_PATH)
+	query_input.line_edit.keep_editing_on_text_submit = true
+	query_input.line_edit.text = query
+	query_input.line_edit.text_changed.connect(on_query_changed)
+	query_input.line_edit.text_submitted.connect(on_query_submitted)
+	content.add_child(query_input)
 	status_label = Label.new()
 	status_label.add_theme_font_size_override("font_size", Typography.label_small_size)
 	content.add_child(status_label)
@@ -74,7 +74,7 @@ func apply_theme() -> void:
 	style_content()
 	status_label.add_theme_color_override("font_color", Colors.secondary_text)
 	style_results_scroll()
-	style_query_edit()
+	query_input.apply_theme_style()
 	pass
 
 
@@ -126,10 +126,10 @@ func style_result_labels(result: Button) -> void:
 
 func apply_locale() -> void:
 	title = I18n.t("agent.search.title")
-	query_edit.placeholder_text = I18n.t("agent.search.placeholder")
-	if not query_edit.editable:
+	query_input.line_edit.placeholder_text = I18n.t("agent.search.placeholder")
+	if not query_input.line_edit.editable:
 		status_label.text = I18n.t("agent.search.loading")
-	elif StringUtils.is_blank(query_edit.text):
+	elif StringUtils.is_blank(query_input.line_edit.text):
 		status_label.text = I18n.t("agent.search.hint")
 	apply_theme()
 	pass
@@ -153,7 +153,7 @@ func on_query_submitted(raw_query: String) -> void:
 
 
 func on_debounce_timeout() -> void:
-	search(query_edit.text)
+	search(query_input.line_edit.text)
 	pass
 
 
@@ -174,13 +174,13 @@ func search(raw_query: String) -> void:
 		var active_session_id: int = session_ids[active_index]
 		session_ids.remove_at(active_index)
 		session_ids.push_front(active_session_id)
-	var restore_query_focus := query_edit.has_focus()
-	query_edit.editable = false
+	var restore_query_focus := query_input.line_edit.has_focus()
+	query_input.line_edit.editable = false
 	status_label.text = I18n.t("agent.search.loading")
 	await AgentSessionStore.async_load_sessions()
-	query_edit.editable = true
+	query_input.line_edit.editable = true
 	if restore_query_focus and visible:
-		query_edit.grab_focus()
+		query_input.line_edit.grab_focus()
 	clear_results()
 	var match_count := 0
 	for session_id: int in session_ids:
@@ -250,30 +250,6 @@ func clear_results() -> void:
 	pass
 
 
-func make_input_style() -> StyleBoxFlat:
-	return StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 7, Margin.ma_2, Margin.ma_1, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
-
-
-func style_query_edit() -> void:
-	query_edit.add_theme_color_override("font_color", Colors.primary_text)
-	query_edit.add_theme_color_override("font_placeholder_color", Colors.secondary_text.darkened(0.08))
-	query_edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
-	query_edit.add_theme_color_override("font_selected_color", Colors.primary_text)
-	query_edit.add_theme_color_override("selection_color", ThemeColor.selection_color)
-	query_edit.caret_blink = true
-	var normal := make_input_style()
-	var hover := normal.duplicate() as StyleBoxFlat
-	hover.border_color = ThemeColor.accent_theme_color()
-	var focus := hover.duplicate() as StyleBoxFlat
-	focus.set_border_width_all(ControlSize.border_sm)
-	query_edit.add_theme_stylebox_override("normal", normal)
-	query_edit.add_theme_stylebox_override("hover", hover)
-	query_edit.add_theme_stylebox_override("focus", focus)
-	query_edit.add_theme_stylebox_override("read_only", normal.duplicate())
-	LineEditStyle.apply_clear_button(query_edit)
-	pass
-
-
 ####################################################################################################
 # Static methods
 
@@ -284,11 +260,11 @@ static func show_search() -> void:
 	var window := SearchWindow.new()
 	gdf.gdf_node.add_child(window)
 	window.present_right(50, 70)
-	window.query_edit.grab_focus()
-	window.query_edit.select_all()
-	if StringUtils.is_not_blank(window.query_edit.text):
+	window.query_input.line_edit.grab_focus()
+	window.query_input.line_edit.select_all()
+	if StringUtils.is_not_blank(window.query_input.line_edit.text):
 		window.debounce_timer.stop()
-		window.search(window.query_edit.text)
+		window.search(window.query_input.line_edit.text)
 	pass
 
 
