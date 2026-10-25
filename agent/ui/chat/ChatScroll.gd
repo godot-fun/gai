@@ -115,6 +115,8 @@ func reveal_entry(entry_index: int) -> void:
 	var entry_y := active_chat_list.position.y + entry_control.position.y
 	var max_scroll := maxf(vbar.min_value, vbar.max_value - vbar.page)
 	vbar.value = clampf(entry_y - Margin.ma_5, vbar.min_value, max_scroll)
+	if entry_control is BubbleContainer:
+		(entry_control as BubbleContainer).flash_highlight()
 	pass
 
 

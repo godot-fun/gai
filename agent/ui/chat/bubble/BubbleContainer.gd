@@ -22,6 +22,25 @@ func apply_panel_style(bg_color: Color) -> void:
 	pass
 
 
+## Short flash highlight when this bubble is scrolled into view.
+func flash_highlight() -> void:
+	flash_highlight_panel(self, Colors.surface)
+	pass
+
+
+func flash_highlight_panel(panel: PanelContainer, fallback_bg: Color) -> void:
+	modulate = Color.WHITE
+	var restore_bg := fallback_bg
+	var current := panel.get_theme_stylebox("panel")
+	if current is StyleBoxFlat:
+		restore_bg = (current as StyleBoxFlat).bg_color
+	panel.add_theme_stylebox_override("panel", create_panel_style(ThemeColor.selected_surface))
+	var tween := create_tween()
+	tween.tween_interval(0.85)
+	tween.tween_callback(func() -> void: panel.add_theme_stylebox_override("panel", create_panel_style(restore_bg)))
+	pass
+
+
 static func create_panel_style(bg_color: Color) -> StyleBoxFlat:
 	var style := StyleBoxHelper.create_style_box_flat(bg_color, 8, Margin.ma_3, Margin.ma_3)
 	if ThemeColor.is_light_theme():

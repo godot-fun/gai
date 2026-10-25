@@ -1,6 +1,7 @@
 class_name UserBubble
 extends BubbleContainer
 
+var content_panel: PanelContainer
 var rich_text: RichTextLabel
 
 ## User message bubble with a moving accent border shared with the chat input.
@@ -25,6 +26,7 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 	add_child(host)
 
 	var panel: PanelContainer = PanelContainer.new()
+	content_panel = panel
 	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	panel.set_offsets_preset(Control.PRESET_FULL_RECT)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -99,6 +101,13 @@ func refresh(entry: ChatEntry) -> void:
 		return
 	rich_text.visible = StringUtils.is_not_blank(entry.body)
 	MarkdownHelper.update_rich_text_label_text(rich_text, entry.body, AgentSetting.get_markdown_enabled())
+	pass
+
+
+func flash_highlight() -> void:
+	add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	if content_panel != null:
+		flash_highlight_panel(content_panel, ThemeColor.inset_surface)
 	pass
 
 
