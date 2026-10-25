@@ -241,7 +241,7 @@ func style_help_label(label: Label) -> void:
 
 
 func style_action_button(button: Button) -> void:
-	ButtonStyle.apply_font_colors(button, Colors.primary_text, Colors.primary_text, Colors.primary_text, Colors.secondary_text)
+	ButtonStyle.apply_font_colors(button, Colors.primary_text, Colors.primary_text, Colors.primary_text)
 	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_md, Margin.ma_3, Margin.ma_1,
 		Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
 	var hover := normal.duplicate() as StyleBoxFlat

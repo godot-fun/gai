@@ -35,45 +35,33 @@ static func apply_style(button: BaseButton, normal: StyleBoxFlat, hover: StyleBo
 
 
 ## Text colors for the same states, one per `font_*_color` theme item: focus mirrors
-## [param hover_color] and hover-pressed mirrors [param pressed_color], the same pairing
+## [param hover] and hover-pressed mirrors [param pressed], the same pairing
 ## [method apply_style] uses for the boxes.
 ##
 ## Those two are not optional — an item left out is resolved from the default theme, whose focus
 ## and hover-pressed text are near white and would vanish on a light surface.
 ##
-## [param disabled_color] defaults to [param base_color] at half alpha.
-static func apply_font_colors(
-	button: BaseButton,
-	base_color: Color,
-	hover_color: Color,
-	pressed_color: Color,
-	disabled_color: Color = Color.TRANSPARENT
-) -> void:
-	button.add_theme_color_override("font_color", base_color)
-	button.add_theme_color_override("font_hover_color", hover_color)
-	button.add_theme_color_override("font_pressed_color", pressed_color)
-	button.add_theme_color_override("font_focus_color", hover_color)
-	button.add_theme_color_override("font_hover_pressed_color", pressed_color)
-	button.add_theme_color_override("font_disabled_color", disabled_color if disabled_color != Color.TRANSPARENT else Color(base_color, 0.5))
+## Disabled text defaults to [param normal] at half alpha.
+static func apply_font_colors(button: BaseButton, normal: Color, hover: Color, pressed: Color) -> void:
+	button.add_theme_color_override("font_color", normal)
+	button.add_theme_color_override("font_hover_color", hover)
+	button.add_theme_color_override("font_pressed_color", pressed)
+	button.add_theme_color_override("font_focus_color", hover)
+	button.add_theme_color_override("font_hover_pressed_color", pressed)
+	button.add_theme_color_override("font_disabled_color", Color(normal, Weights.w_8))
 	pass
 
 
 ## Icon colors for the same interaction states as [method apply_font_colors]. This keeps icon-only
 ## toolbar buttons from falling back to the engine's white pressed/hover icon colors in light UI.
-## [param disabled_color] defaults to [param base_color] at half alpha.
-static func apply_icon_colors(
-	button: BaseButton,
-	base_color: Color,
-	hover_color: Color,
-	pressed_color: Color,
-	disabled_color: Color = Color.TRANSPARENT
-) -> void:
+## Disabled icons default to [param base_color] at half alpha.
+static func apply_icon_colors(button: BaseButton, base_color: Color, hover_color: Color, pressed_color: Color) -> void:
 	button.add_theme_color_override("icon_normal_color", base_color)
 	button.add_theme_color_override("icon_hover_color", hover_color)
 	button.add_theme_color_override("icon_pressed_color", pressed_color)
 	button.add_theme_color_override("icon_focus_color", hover_color)
 	button.add_theme_color_override("icon_hover_pressed_color", pressed_color)
-	button.add_theme_color_override("icon_disabled_color", disabled_color if disabled_color != Color.TRANSPARENT else Color(base_color, 0.5))
+	button.add_theme_color_override("icon_disabled_color", Color(base_color, Weights.w_8))
 	pass
 
 

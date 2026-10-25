@@ -101,7 +101,7 @@ func style_results_scroll() -> void:
 
 func style_result_button(result: Button) -> void:
 	result.text = ""
-	ButtonStyle.apply_font_colors(result, Colors.primary_text, Colors.primary_text, Colors.primary_text, Colors.secondary_text)
+	ButtonStyle.apply_font_colors(result, Colors.primary_text, Colors.primary_text, Colors.primary_text)
 	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1,
 		Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
 	var hover := normal.duplicate() as StyleBoxFlat

@@ -621,7 +621,7 @@ func window_border_color() -> Color:
 
 
 func style_compact_button(button: Button) -> void:
-	ButtonStyle.apply_font_colors(button, Colors.primary_text, Colors.primary_text, Colors.primary_text, Colors.secondary_text)
+	ButtonStyle.apply_font_colors(button, Colors.primary_text, Colors.primary_text, Colors.primary_text)
 	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_sm, Margin.ma_1, Margin.ma_0, Colors.subtle_border, ControlSize.border_xs)
 	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface, ThemeColor.accent_theme_color())
 	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), Weights.w_2), ThemeColor.accent_theme_color())

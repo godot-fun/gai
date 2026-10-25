@@ -82,7 +82,7 @@ static func apply_dialog_style(dialog: FileDialog) -> void:
 	var folder_color := Colors.info.lerp(ThemeColor.accent_theme_color(), 0.35)
 	dialog.add_theme_color_override("folder_icon_color", folder_color)
 	dialog.add_theme_color_override("file_icon_color", Color(Colors.secondary_text, 0.78))
-	dialog.add_theme_color_override("file_disabled_color", Color(Colors.secondary_text, 0.50))
+	dialog.add_theme_color_override("file_disabled_color", Color(Colors.secondary_text, Weights.w_8))
 	pass
 
 
@@ -184,7 +184,7 @@ static func style_confirm_button(button: Button) -> void:
 	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface, fill)
 	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, fill, fill)
 	ButtonStyle.apply_style(button, normal, hover, pressed)
-	ButtonStyle.apply_font_colors(button, fill, fill, ThemeColor.inset_surface, Color(fill, 0.5))
+	ButtonStyle.apply_font_colors(button, fill, fill, ThemeColor.inset_surface)
 	pass
 
 
@@ -195,8 +195,7 @@ static func style_cancel_button(button: Button) -> void:
 	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, Colors.error_surface, Colors.error)
 	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, Colors.error, Colors.error)
 	ButtonStyle.apply_style(button, normal, hover, pressed)
-	ButtonStyle.apply_font_colors(button, ThemeColor.title_color, Colors.error, ThemeColor.inset_surface,
-		Color(ThemeColor.title_color, 0.5))
+	ButtonStyle.apply_font_colors(button, ThemeColor.title_color, Colors.error, ThemeColor.inset_surface)
 	pass
 
 
