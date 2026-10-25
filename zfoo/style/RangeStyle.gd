@@ -14,8 +14,8 @@ static func apply_spin_box(spin: SpinBox) -> void:
 	button_normal.content_margin_left = Margin.ma_0
 	button_normal.content_margin_right = Margin.ma_0
 	var theme_color := ThemeColor.accent_theme_color()
-	var hover := StyleBoxHelper.duplicate_with_bg_color(button_normal, ThemeColor.demote(theme_color, Colors.am_2))
-	var pressed := StyleBoxHelper.duplicate_with_bg_color(button_normal, ThemeColor.promote(theme_color, Colors.am_2))
+	var hover := StyleBoxHelper.duplicate_with_bg_color(button_normal, ThemeColor.selected_surface, ThemeColor.alpha_theme_color(0.85))
+	var pressed := StyleBoxHelper.duplicate_with_bg_color(button_normal, ThemeColor.promote(ThemeColor.selected_surface, Colors.am_4), theme_color)
 	spin.add_theme_stylebox_override("field_and_buttons_separator", StyleBoxEmpty.new())
 	spin.add_theme_stylebox_override("up_down_buttons_separator", StyleBoxEmpty.new())
 
