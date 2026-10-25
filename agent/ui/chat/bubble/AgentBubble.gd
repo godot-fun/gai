@@ -3,7 +3,7 @@ extends BubbleContainer
 
 var rich_text: RichTextLabel
 
-## Agent reply bubble 鈥?markdown body; header copy puts ChatEntry.body on the clipboard.
+## Agent reply bubble markdown body; header copy puts ChatEntry.body on the clipboard.
 
 
 func panel_color() -> Color:

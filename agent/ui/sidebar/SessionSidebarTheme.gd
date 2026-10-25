@@ -25,7 +25,7 @@ static func pinned_separator() -> StyleBoxLine:
 	return line
 
 
-## "New Agent" 鈥?outlined in the theme color, filled while hovered / pressed.
+## "New Agent" outlined in the theme color, filled while hovered / pressed.
 static func apply_new_session_button(button: Button) -> void:
 	var theme_color: Color = ThemeColor.accent_theme_color()
 	button.flat = false
@@ -44,7 +44,7 @@ static func apply_new_session_button(button: Button) -> void:
 # Chat rows
 # ---------------------------------------------------------------------------
 
-## Row background 鈥?selected beats hovered, transparent otherwise.
+## Row background selected beats hovered, transparent otherwise.
 static func row(selected: bool, hovered: bool) -> StyleBoxFlat:
 	var style := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_md)
 	StyleBoxHelper.apply_style_box_margin(style, Margin.ma_3, Margin.ma_1, Margin.ma_1, Margin.ma_1)
