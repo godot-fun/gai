@@ -2,6 +2,28 @@ class_name MarkdownHelper
 extends Object
 
 ## RichTextLabel construction and interaction helpers for rendered Markdown bodies.
+##
+## TODO
+## ----
+## Transient substring highlight (e.g. chat search jump). Godot 4.6 stable only exposes
+## [method RichTextLabel.select_all] and [method RichTextLabel.deselect] — no range
+## [code]select(from, to)[/code]. Wait for engine PR godotengine/godot#84715 (proposal
+## godotengine/godot-proposals#5517), then add:
+##
+## - [code]highlight_matching_text(label: RichTextLabel, needle: String) -> void[/code]
+##   Case-insensitive match in [method RichTextLabel.get_parsed_text]; highlight every
+##   non-overlapping occurrence (or first only — pick one). Uses [method apply_selection_theme]
+##   colors via [method RichTextLabel.select] / [method RichTextLabel.deselect] after
+##   a short hold (~2s), not BBCode [bgcolor].
+## - [code]select_parsed_range(label: RichTextLabel, start: int, end: int) -> void[/code]
+##   Map parsed-text indices to engine selection (exact API TBD when #84715 merges).
+## - [code]find_all_match_starts(text: String, needle: String) -> Array[int][/code]
+##   Shared index scan for [method highlight_matching_text].
+##
+## Call site: extend [code]BubbleContainer.flash_highlight(search_needle)[/code] →
+## [code]flash_search_needle(needle)[/code] → [method highlight_matching_text] (from
+## [code]ChatScroll.reveal_entry[/code] when [code]chat_search_result_selected[/code] carries
+## the query).
 
 # ---------------------------------------------------------------------------
 # RichTextLabel body (markdown UI)
