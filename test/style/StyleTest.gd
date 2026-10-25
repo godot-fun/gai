@@ -241,7 +241,9 @@ func RangeStyle_apply_spin_box_test() -> void:
 	RangeStyle.apply_spin_box(spin)
 	assert((spin.get_line_edit().get_theme_stylebox("normal") as StyleBoxFlat).bg_color == ThemeColor.card_surface)
 	assert(spin.get_theme_color("up_icon_modulate") == Colors.primary_text)
-	assert((spin.get_theme_stylebox("up_background_hovered") as StyleBoxFlat).bg_color == Colors.hover_surface)
+	var theme_color := ThemeColor.accent_theme_color()
+	assert((spin.get_theme_stylebox("up_background_hovered") as StyleBoxFlat).bg_color == ThemeColor.promote(theme_color, Colors.am_2))
+	assert((spin.get_theme_stylebox("up_background_pressed") as StyleBoxFlat).bg_color == ThemeColor.demote(theme_color, Colors.am_2))
 	assert(spin.get_theme_stylebox("field_and_buttons_separator") is StyleBoxEmpty)
 	spin.free()
 	pass
