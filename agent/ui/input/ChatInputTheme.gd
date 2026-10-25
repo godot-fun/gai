@@ -27,7 +27,7 @@ static func build_wrap_style(expanded: bool) -> StyleBoxFlat:
 
 static func apply_field(input_field: TextEdit) -> void:
 	var input_style := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, 0, Margin.ma_3, Margin.ma_3)
-	input_style.content_margin_right = Margin.ma_13
+	input_style.content_margin_right = Margin.ma_12
 	input_field.add_theme_stylebox_override("normal", input_style)
 	input_field.add_theme_stylebox_override("focus", input_style.duplicate())
 	input_field.add_theme_stylebox_override("read_only", input_style.duplicate())
@@ -110,8 +110,8 @@ static func apply_queue_action_button(button: Button) -> void:
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.flat = false
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.add_theme_constant_override("icon_max_width", ControlSize.xs)
-	button.add_theme_constant_override("icon_max_height", ControlSize.xs)
+	button.add_theme_constant_override("icon_max_width", ControlSize.icon_md)
+	button.add_theme_constant_override("icon_max_height", ControlSize.icon_md)
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.sm / 2, Margin.ma_1, Margin.ma_1)
 	ButtonStyle.apply_style(button, normal,
 		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface),

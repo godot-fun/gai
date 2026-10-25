@@ -31,7 +31,3 @@ const ma_9: int = 36
 const ma_10: int = 40
 const ma_11: int = 44
 const ma_12: int = 48
-const ma_13: int = 52
-const ma_14: int = 56
-const ma_15: int = 60
-const ma_16: int = 64

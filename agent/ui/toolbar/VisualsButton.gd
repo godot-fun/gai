@@ -4,6 +4,7 @@ extends RefCounted
 ## Toolbar button for selecting the visual presentation used during agent runs.
 
 const SPARKLE_ICON_PATH: String = "res://agent/asset/image/icon/sparkle.svg"
+const POPUP_MIN_WIDTH: int = 192
 
 var button: Button
 var popup: PopupMenu
@@ -83,7 +84,7 @@ func update_icon(hovered: bool) -> void:
 func on_pressed() -> void:
 	update_popup_items()
 	var content_size := popup.get_contents_minimum_size()
-	var popup_size := Vector2i(maxi(int(content_size.x), Margin.ma_16 * 3), int(content_size.y))
+	var popup_size := Vector2i(maxi(int(content_size.x), POPUP_MIN_WIDTH), int(content_size.y))
 	var button_center_x := int(button.global_position.x + button.size.x * 0.5)
 	var popup_position := Vector2i(button_center_x - int(popup_size.x * 0.5), int(button.global_position.y + button.size.y + Margin.ma_1))
 	popup.popup(Rect2i(popup_position, popup_size))

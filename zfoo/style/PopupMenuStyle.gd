@@ -3,9 +3,6 @@ extends Object
 
 ## Shared theme-aware styling for option and radio popup menus.
 
-const RADIO_ICON_SIZE: int = Margin.ma_4
-
-
 static func apply(popup: PopupMenu) -> void:
 	popup.add_theme_font_override("font", Fonts.regular())
 	popup.add_theme_color_override("font_color", Colors.primary_text)
@@ -27,7 +24,8 @@ static func apply(popup: PopupMenu) -> void:
 
 
 static func make_radio_icon(checked: bool, color: Color) -> ImageTexture:
-	var center := RADIO_ICON_SIZE * 0.5
+	var icon_size := ControlSize.icon_sm
+	var center := icon_size * 0.5
 	var outer_radius := center - ControlSize.border_sm
 	var inner_radius := center * 0.375
 	var color_html := color.to_html(false)
@@ -39,7 +37,7 @@ static func make_radio_icon(checked: bool, color: Color) -> ImageTexture:
 		+ "{}"
 		+ "</svg>"
 	)
-	var svg := StringUtils.format(svg_template, RADIO_ICON_SIZE, RADIO_ICON_SIZE, RADIO_ICON_SIZE, RADIO_ICON_SIZE,
+	var svg := StringUtils.format(svg_template, icon_size, icon_size, icon_size, icon_size,
 		center, center, outer_radius, color_html, ControlSize.border_sm, inner_circle)
 	var image := Image.new()
 	if image.load_svg_from_string(svg) != OK:

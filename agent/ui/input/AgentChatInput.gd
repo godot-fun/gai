@@ -522,14 +522,13 @@ func refresh_queue() -> void:
 	header.setup(
 		StringUtils.format(I18n.t("agent.input.queued"), session.pending_messages.size()),
 		I18n.t("agent.input.continue_queue"),
-		ChatInputTheme.make_resume_icon(ControlSize.xs, ThemeColor.accent_theme_color()), true)
+		ChatInputTheme.make_resume_icon(ControlSize.icon_md, ThemeColor.accent_theme_color()), true)
 	if not RuntimeManager.is_running(session.id):
 		header.action_pressed.connect(RuntimeManager.try_run_next_message.bind(session.id))
 	else:
 		header.action_button.visible = false
 	queue_rows.add_child(header)
-	var delete_icon := ChatInputTheme.make_trash_icon(
-		ControlSize.xs, ThemeColor.accent_theme_color())
+	var delete_icon := ChatInputTheme.make_trash_icon(ControlSize.icon_md, ThemeColor.accent_theme_color())
 	for queued: String in session.pending_messages:
 		var row := ChatInputQueueRow.new()
 		row.setup(queued.replace(FileUtils.NEWLINE_LF, " "), I18n.t("agent.input.delete_queued"), delete_icon, false)

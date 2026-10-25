@@ -1,12 +1,22 @@
 class_name ControlSize
 extends Object
 
+## Icon size scale for artwork inside controls. Keep this separate from control sizes so the
+## visible glyph can be smaller than its clickable area.
+const icon_xs: int = 12
+const icon_sm: int = 16
+const icon_md: int = 20
+const icon_lg: int = 24
+const icon_xl: int = 28
+const icon_xxl: int = 32
+
+
 ## Control size scale: control heights, square sizes and shared corner radii, in px.
 ##
 ## Six tiers, each one 8px ([code]Margin.ma_2[/code]) above the previous, so every value lands on the
 ## same 4px grid as the rest of the layout and is a [Margin] step: xs 20 ([code]ma_5[/code]),
 ## sm 28 ([code]ma_7[/code]), md 36 ([code]ma_9[/code]), lg 44 ([code]ma_11[/code]),
-## xl 52 ([code]ma_13[/code]), xxl 60 ([code]ma_15[/code]).
+## xl 52, xxl 60.
 ##
 ## The tiers are deliberately sparse: a control picks a tier, it does not pick a number. Sizes between
 ## two tiers are not a missing constant — they are a sign the control should be sitting on one of them.

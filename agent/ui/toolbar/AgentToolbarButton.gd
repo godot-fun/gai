@@ -28,8 +28,8 @@ static func style_round(button: Button, tooltip: String) -> void:
 	button.flat = false
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.add_theme_font_size_override("font_size", Typography.label_small_size)
-	button.add_theme_constant_override("icon_max_width", ControlSize.xs)
-	button.add_theme_constant_override("icon_max_height", ControlSize.xs)
+	button.add_theme_constant_override("icon_max_width", ControlSize.icon_md)
+	button.add_theme_constant_override("icon_max_height", ControlSize.icon_md)
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, ThemeColor.accent_theme_color())
 
 	# Equal margins keep the button square (sm×sm); asymmetric h/v margins stretch it into an ellipse.
