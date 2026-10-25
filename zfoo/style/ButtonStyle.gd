@@ -121,11 +121,10 @@ static func apply_check_button(
 
 ## Apply standard dropdown states: the normal surface gains an accent outline while hovered,
 ## pressed, or focused, and retains the shared text colors in every state.
-static func apply_option_button(option: OptionButton, normal: StyleBoxFlat = null, text_color: Color = Colors.primary_text) -> void:
-	var resolved_normal := normal if normal != null else LineEditStyle.theme_normal_style()
-	var hover: StyleBoxFlat = resolved_normal.duplicate() as StyleBoxFlat
+static func apply_option_button(option: OptionButton, normal: StyleBoxFlat = LineEditStyle.theme_normal_style(), text_color: Color = Colors.primary_text) -> void:
+	var hover: StyleBoxFlat = normal.duplicate() as StyleBoxFlat
 	hover.border_color = ThemeColor.accent_theme_color()
-	apply_style(option, resolved_normal, hover, hover.duplicate())
+	apply_style(option, normal, hover, hover.duplicate())
 	apply_font_colors(option, text_color, text_color, text_color)
 	PopupMenuStyle.apply(option.get_popup())
 	pass
