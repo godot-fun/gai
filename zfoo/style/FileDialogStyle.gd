@@ -245,6 +245,7 @@ static func style_line_edit(edit: LineEdit) -> void:
 	edit.add_theme_stylebox_override("normal", normal)
 	edit.add_theme_stylebox_override("focus", focus)
 	edit.add_theme_stylebox_override("read_only", normal.duplicate())
+	LineEditStyle.apply_clear_button(edit)
 	pass
 
 

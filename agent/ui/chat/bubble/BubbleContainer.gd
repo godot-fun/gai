@@ -36,15 +36,12 @@ func flash_panel() -> PanelContainer:
 func flash_highlight() -> void:
 	var panel := flash_panel()
 	var base_color := panel_color()
-	var style := create_panel_style(base_color)
-	panel.add_theme_stylebox_override("panel", style)
+	var style := panel.get_theme_stylebox("panel") as StyleBoxFlat
 	var apply_pulse := func(weight: float) -> void: style.bg_color = base_color.lerp(Colors.warning, weight)
 	var tween := panel.create_tween()
-	for pulse_index in 4:
-		var peak := 0.6 if pulse_index == 0 else 0.51
-		tween.tween_method(apply_pulse, 0.0, peak, 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		tween.tween_method(apply_pulse, peak, 0.0, 0.34).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-	tween.tween_callback(func() -> void: panel.add_theme_stylebox_override("panel", create_panel_style(base_color)))
+	for _i in 4:
+		tween.tween_method(apply_pulse, 0.0, 0.6, 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		tween.tween_method(apply_pulse, 0.6, 0.0, 0.34).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
 	pass
 
 

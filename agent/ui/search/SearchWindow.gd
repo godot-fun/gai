@@ -270,6 +270,7 @@ func style_query_edit() -> void:
 	query_edit.add_theme_stylebox_override("hover", hover)
 	query_edit.add_theme_stylebox_override("focus", focus)
 	query_edit.add_theme_stylebox_override("read_only", normal.duplicate())
+	LineEditStyle.apply_clear_button(query_edit)
 	pass
 
 

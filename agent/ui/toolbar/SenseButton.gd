@@ -354,6 +354,7 @@ func style_line_edit(edit: LineEdit) -> void:
 	focus.set_border_width_all(ControlSize.border_sm)
 	edit.add_theme_stylebox_override("normal", normal)
 	edit.add_theme_stylebox_override("focus", focus)
+	LineEditStyle.apply_clear_button(edit)
 	pass
 
 
