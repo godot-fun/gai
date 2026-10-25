@@ -193,7 +193,7 @@ static func handle_meta_clicked(meta: Variant) -> void:
 		return
 	if url.begins_with("res://") or url.begins_with("user://") or url.is_absolute_path():
 		if ImageHelper.EXTENSIONS.has(url.get_extension().to_lower()):
-			ImagePreviewWindow.show_window(url)
+			ImagePreviewWindow.show_window(url, I18n.t("common.image_preview"))
 			return
 		var local_path := ProjectSettings.globalize_path(url)
 		var local_error := FileUtils.open_file(local_path)

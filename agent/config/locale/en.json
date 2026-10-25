@@ -21,6 +21,7 @@
     "file_not_found": "File not found: {}",
     "audio": "Audio",
     "image": "Image",
+    "image_preview": "Image Preview",
     "video": "Video",
     "text": "Text",
     "folder": "Folder",

@@ -21,6 +21,7 @@
     "file_not_found": "文件不存在：{}",
     "audio": "音频",
     "image": "图片",
+    "image_preview": "图片预览",
     "video": "视频",
     "text": "文本",
     "folder": "文件夹",
