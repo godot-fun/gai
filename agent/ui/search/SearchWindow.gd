@@ -260,8 +260,7 @@ static func show_search() -> void:
 	var window := SearchWindow.new()
 	gdf.gdf_node.add_child(window)
 	window.present_right(50, 70)
-	window.query_input.line_edit.grab_focus()
-	window.query_input.line_edit.select_all()
+	window.query_input.focus_at_end.call_deferred()
 	if StringUtils.is_not_blank(window.query_input.line_edit.text):
 		window.debounce_timer.stop()
 		window.search(window.query_input.line_edit.text)

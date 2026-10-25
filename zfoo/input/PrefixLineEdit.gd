@@ -118,3 +118,10 @@ func refresh_shell_style() -> void:
 	else:
 		add_theme_stylebox_override("panel", shell_normal)
 	pass
+
+
+func focus_at_end() -> void:
+	line_edit.grab_focus()
+	line_edit.deselect()
+	line_edit.caret_column = line_edit.text.length()
+	pass
