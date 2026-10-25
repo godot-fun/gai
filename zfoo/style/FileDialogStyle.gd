@@ -55,7 +55,7 @@ static func apply_control_theme(dialog: FileDialog) -> void:
 	var theme := Theme.new()
 	theme.default_font = Fonts.regular()
 	var file_list := make_file_list_style()
-	var field := make_field_style()
+	var field := LineEditStyle.theme_normal_style()
 	var field_focus := field.duplicate() as StyleBoxFlat
 	field_focus.border_color = ThemeColor.accent_theme_color()
 	# FileDialog inherits its background panel from AcceptDialog, not from FileDialog itself.
@@ -112,9 +112,9 @@ static func style_control(node: Node, label_texts: Dictionary[String, String] = 
 	if node is Control:
 		apply_tooltip_text(node as Control, label_texts)
 	if node is LineEdit:
-		LineEditStyle.apply(node as LineEdit)
+		LineEditStyle.apply(node as LineEdit, LineEditStyle.theme_normal_style(), ThemeColor.title_color)
 	elif node is OptionButton:
-		ButtonStyle.apply_option_button(node as OptionButton)
+		ButtonStyle.apply_option_button(node as OptionButton, LineEditStyle.theme_normal_style(), ThemeColor.title_color)
 	elif node is PopupMenu:
 		var popup_menu := node as PopupMenu
 		PopupMenuStyle.apply(popup_menu)
@@ -274,8 +274,3 @@ static func make_dialog_body_style() -> StyleBoxFlat:
 	style.expand_margin_right = ControlSize.border_xs
 	style.expand_margin_bottom = ControlSize.border_xs
 	return style
-
-
-static func make_field_style() -> StyleBoxFlat:
-	return StyleBoxHelper.create_style_box_flat(file_list_surface(), ControlSize.radius_sm, Margin.ma_2, Margin.ma_1,
-		Colors.border, ControlSize.border_sm)

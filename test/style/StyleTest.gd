@@ -417,10 +417,10 @@ func FileDialogStyle_path_option_test() -> void:
 	FileDialogStyle.style_path_option(option)
 	var normal: StyleBoxFlat = option.get_theme_stylebox("normal") as StyleBoxFlat
 	var hover: StyleBoxFlat = option.get_theme_stylebox("hover") as StyleBoxFlat
-	assert(normal.bg_color == FileDialogStyle.file_list_surface())
-	assert(normal.border_color == Colors.border)
-	assert(normal.border_width_left == ControlSize.border_sm)
-	assert(hover.bg_color == FileDialogStyle.file_list_surface())
+	assert(normal.bg_color == ThemeColor.card_surface)
+	assert(normal.border_color == Color(ThemeColor.title_color, Weights.w_2))
+	assert(normal.border_width_left == ControlSize.border_xs)
+	assert(hover.bg_color == ThemeColor.card_surface)
 	assert(hover.border_color == ThemeColor.accent_theme_color())
 	assert(option.get_theme_color("font_color") == ThemeColor.title_color)
 	option.free()
@@ -433,7 +433,7 @@ func FileDialogStyle_internal_controls_test() -> void:
 	var drive_selector := find_internal_option_button(dialog)
 	assert(drive_selector != null)
 	var normal: StyleBoxFlat = drive_selector.get_theme_stylebox("normal") as StyleBoxFlat
-	assert(normal.bg_color == FileDialogStyle.file_list_surface())
+	assert(normal.bg_color == ThemeColor.card_surface)
 	dialog.free()
 	pass
 
