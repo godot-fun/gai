@@ -4,7 +4,7 @@ extends CommonWindow
 ## Settings dialog shell. Each top-level settings category owns its controls and persistence.
 
 const FIELD_LABEL_RATIO: float = 1.0
-const FIELD_CONTROL_RATIO: float = 3.0
+const FIELD_CONTROL_RATIO: float = 5.0
 const SETTINGS_ICON_PATH: String = "res://agent/asset/image/icon/settings.svg"
 
 var button: Button
@@ -105,17 +105,20 @@ func make_field_group(parent: Container) -> VBoxContainer:
 	return group
 
 
-## Builds an aligned two-column or four-column settings row.
+## Builds a settings row on the shared 1:5 grid.
+## Returned slot indices: 2-col [0] label, [1] control; 4-col [0] label, [1–3] control thirds; 6-col [0] label, [1–5] control fifths.
 func make_setting_row(parent: Container, column_count: int = 2) -> Array[HBoxContainer]:
-	assert(column_count == 2 or column_count == 4)
+	assert(column_count == 2 or column_count == 4 or column_count == 6)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", Margin.ma_3)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(row)
+	# Column 1 — label band (1 part of the 1:5 grid).
 	var label_column := HBoxContainer.new()
 	label_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label_column.size_flags_stretch_ratio = FIELD_LABEL_RATIO
 	row.add_child(label_column)
+	# Columns 2–6 — control band (5 parts); subdivided when column_count is 4 or 6.
 	var control_column := HBoxContainer.new()
 	control_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	control_column.size_flags_stretch_ratio = FIELD_CONTROL_RATIO
@@ -123,12 +126,14 @@ func make_setting_row(parent: Container, column_count: int = 2) -> Array[HBoxCon
 	if column_count == 2:
 		var two_columns: Array[HBoxContainer] = [label_column, control_column]
 		return two_columns
+	var control_slot_count := 3 if column_count == 4 else 5
 	var controls := HBoxContainer.new()
 	controls.add_theme_constant_override("separation", Margin.ma_3)
 	controls.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	control_column.add_child(controls)
 	var columns: Array[HBoxContainer] = [label_column]
-	for _index in range(3):
+	for _slot_index in range(control_slot_count):
+		# Control sub-column: index 1..3 (4-col row) or 1..5 (6-col row).
 		var column := HBoxContainer.new()
 		column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		controls.add_child(column)

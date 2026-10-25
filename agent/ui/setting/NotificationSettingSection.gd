@@ -17,23 +17,45 @@ var folder_field_typing: bool = false
 func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, window: Window) -> void:
 	super.set_up(p_ui, parent, window)
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.notification"))
-	var toast_parts := ui.make_setting_row(parent)
+	var notification_parts := ui.make_setting_row(parent, 6)
+	# Column 1 — popup notification label (label band).
 	toast_label = ui.make_label(I18n.t("agent.settings.notification_window"))
-	toast_parts[0].add_child(toast_label)
+	style_notification_row_label(toast_label)
+	notification_parts[0].add_child(toast_label)
 	toast_label.tooltip_text = I18n.t("agent.settings.notification_window_help")
-	toast_toggle_button = ui.add_check_button(toast_parts[1], "", AgentSetting.get_notification_window())
+	# Column 2 — popup notification toggle (control band, 1/5).
+	toast_toggle_button = ui.add_check_button(notification_parts[1], "", AgentSetting.get_notification_window())
+	toast_toggle_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	toast_toggle_button.tooltip_text = I18n.t("agent.settings.notification_window_help")
 	toast_toggle_button.toggled.connect(on_toast_toggled)
-	var sound_parts := ui.make_setting_row(parent, 4)
+	# Column 3 — sound notification label (control band, 2/5).
 	sound_label = ui.make_label(I18n.t("agent.settings.notification_sound"))
-	sound_parts[0].add_child(sound_label)
+	style_notification_row_label(sound_label)
+	notification_parts[2].add_child(sound_label)
 	sound_label.tooltip_text = I18n.t("agent.settings.notification_sound_help")
-	sound_toggle_button = ui.add_check_button(sound_parts[1], "", AgentSetting.get_notification_sound())
+	# Column 4 — sound notification toggle (control band, 3/5).
+	sound_toggle_button = ui.add_check_button(notification_parts[3], "", AgentSetting.get_notification_sound())
+	sound_toggle_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	sound_toggle_button.tooltip_text = I18n.t("agent.settings.notification_sound_help")
 	sound_toggle_button.toggled.connect(on_sound_toggled)
-	add_sound_seconds_controls(sound_parts[2], sound_parts[3])
+	# Column 5 — sound duration label (control band, 4/5).
+	sound_seconds_label = ui.make_label(I18n.t("agent.settings.sound_duration"))
+	style_notification_row_label(sound_seconds_label)
+	notification_parts[4].add_child(sound_seconds_label)
+	# Column 6 — sound duration spin box (control band, 5/5).
+	sound_seconds_spin = SpinBox.new()
+	sound_seconds_spin.min_value = AgentSetting.MIN_SOUND_SECONDS
+	sound_seconds_spin.max_value = AgentSetting.MAX_SOUND_SECONDS
+	sound_seconds_spin.step = 1
+	sound_seconds_spin.suffix = " s"
+	sound_seconds_spin.custom_minimum_size = Vector2(0, 34)
+	sound_seconds_spin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	sound_seconds_spin.value = AgentSetting.get_notification_sound_seconds()
+	sound_seconds_spin.value_changed.connect(on_sound_seconds_changed)
+	notification_parts[5].add_child(sound_seconds_spin)
 	var folder_parts := ui.make_setting_row(parent)
 	sound_folder_row = folder_parts[1]
+	# Column 1 — sound folder label (label band).
 	sound_folder_label = ui.make_label(I18n.t("agent.settings.sound_folder"))
 	folder_parts[0].add_child(sound_folder_label)
 	sound_folder_label.tooltip_text = I18n.t("agent.settings.sound_folder_help")
@@ -45,6 +67,7 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, window: Window) -> 
 	sound_folder_edit.tooltip_text = I18n.t("agent.settings.sound_folder_help")
 	sound_folder_edit.gui_input.connect(on_sound_folder_input)
 	sound_folder_edit.text_changed.connect(on_sound_folder_text_changed)
+	# Column 2 — sound folder path (full control band).
 	sound_folder_row.add_child(sound_folder_edit)
 	ui.bind_auto_save(sound_folder_edit, save)
 	build_folder_dialog(window)
@@ -52,20 +75,10 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, window: Window) -> 
 	pass
 
 
-func add_sound_seconds_controls(label_parent: HBoxContainer, spin_parent: HBoxContainer) -> void:
-	sound_seconds_label = ui.make_label(I18n.t("agent.settings.sound_duration"))
-	sound_seconds_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label_parent.add_child(sound_seconds_label)
-	sound_seconds_spin = SpinBox.new()
-	sound_seconds_spin.min_value = AgentSetting.MIN_SOUND_SECONDS
-	sound_seconds_spin.max_value = AgentSetting.MAX_SOUND_SECONDS
-	sound_seconds_spin.step = 1
-	sound_seconds_spin.suffix = " s"
-	sound_seconds_spin.custom_minimum_size = Vector2(104, 34)
-	sound_seconds_spin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	sound_seconds_spin.value = AgentSetting.get_notification_sound_seconds()
-	sound_seconds_spin.value_changed.connect(on_sound_seconds_changed)
-	spin_parent.add_child(sound_seconds_spin)
+func style_notification_row_label(label: Label) -> void:
+	label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	label.clip_text = true
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pass
 
 
