@@ -85,7 +85,7 @@ static func apply_queue_badge(badge: Label, collapsed: bool, queue_count: int) -
 static func apply_queue_scroll(scroll: ScrollContainer) -> void:
 	var empty := StyleBoxEmpty.new()
 	scroll.add_theme_stylebox_override("panel", empty)
-	ScrollBarStyle.apply_custom(scroll.get_v_scroll_bar(), ScrollBarStyle.thickness_md, ThemeColor.body_color, ThemeColor.promote(ThemeColor.theme_color, Weights.w_7), ThemeColor.promote(ThemeColor.theme_color, Weights.w_4))
+	ScrollBarStyle.apply_custom(scroll.get_v_scroll_bar(), ScrollBarStyle.Thickness.MD, ThemeColor.body_color, ThemeColor.promote(ThemeColor.theme_color, Weights.w_7), ThemeColor.promote(ThemeColor.theme_color, Weights.w_4))
 	pass
 
 

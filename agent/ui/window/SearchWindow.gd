@@ -91,7 +91,7 @@ func dismiss_on_focus_out() -> bool:
 
 func style_results_scroll() -> void:
 	results_scroll.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
-	ScrollBarStyle.apply_custom(results_scroll.get_v_scroll_bar(), ScrollBarStyle.thickness_md, ThemeColor.body_color,
+	ScrollBarStyle.apply_custom(results_scroll.get_v_scroll_bar(), ScrollBarStyle.Thickness.MD, ThemeColor.body_color,
 		ThemeColor.promote(ThemeColor.theme_color, Weights.w_7), ThemeColor.promote(ThemeColor.theme_color, Weights.w_4), true)
 	for child: Node in results_list.get_children():
 		if child is Button:
