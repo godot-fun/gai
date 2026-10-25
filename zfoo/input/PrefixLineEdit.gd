@@ -99,7 +99,7 @@ static func make_default_field_style() -> StyleBoxFlat:
 func load_prefix_icon(path: String) -> void:
 	prefix_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	prefix_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	prefix_icon.custom_minimum_size = ControlSize.square(ControlSize.xs)
+	prefix_icon.custom_minimum_size = ControlSize.square(ControlSize.icon_md)
 	var texture: Texture2D = await ResourceHelper.async_load(path)
 	if texture == null:
 		return

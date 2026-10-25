@@ -400,11 +400,11 @@ func on_pipeline_finished(success: bool, message: String) -> void:
 func set_run_button_running(running: bool) -> void:
 	if running:
 		apply_run_button_style(Colors.error)
-		run_button.icon = make_stop_icon(Typography.title_small_size, Color.WHITE)
+		run_button.icon = make_stop_icon(ControlSize.icon_sm, Color.WHITE)
 		run_button.text = tr("common.stop")
 	else:
 		apply_run_button_style(Colors.success)
-		run_button.icon = make_play_icon(Typography.title_small_size, Color.WHITE)
+		run_button.icon = make_play_icon(ControlSize.icon_sm, Color.WHITE)
 		run_button.text = tr("common.run")
 	pass
 
@@ -416,10 +416,10 @@ func style_run_button() -> void:
 	ButtonStyle.apply_font_colors(run_button, Color.WHITE, Color.WHITE, Color.WHITE)
 	run_button.focus_mode = Control.FOCUS_NONE
 	run_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	run_button.icon = make_play_icon(Typography.title_small_size, Color.WHITE)
+	run_button.icon = make_play_icon(ControlSize.icon_sm, Color.WHITE)
 	run_button.text = tr("common.run")
-	run_button.add_theme_constant_override("icon_max_width", Typography.title_small_size)
-	run_button.add_theme_constant_override("icon_max_height", Typography.title_small_size)
+	run_button.add_theme_constant_override("icon_max_width", ControlSize.icon_sm)
+	run_button.add_theme_constant_override("icon_max_height", ControlSize.icon_sm)
 	run_button.add_theme_constant_override("h_separation", Margin.ma_2)
 	pass
 

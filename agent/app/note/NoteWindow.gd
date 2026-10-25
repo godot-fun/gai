@@ -203,8 +203,8 @@ func style_mode_button(button: Button) -> void:
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.custom_minimum_size = ControlSize.square(ControlSize.sm)
-	button.add_theme_constant_override("icon_max_width", Margin.ma_4)
-	button.add_theme_constant_override("icon_max_height", Margin.ma_4)
+	button.add_theme_constant_override("icon_max_width", ControlSize.icon_sm)
+	button.add_theme_constant_override("icon_max_height", ControlSize.icon_sm)
 	var normal := StyleBoxHelper.create_style_box_flat(
 		Colors.control_surface, ControlSize.radius_sm, Margin.ma_1, Margin.ma_1,
 		Colors.subtle_border, ControlSize.border_xs)
