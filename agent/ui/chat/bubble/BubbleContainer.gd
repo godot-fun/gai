@@ -64,10 +64,10 @@ static func style_header_button(button: Button, bubble_bg: Color, tooltip: Strin
 	button.add_theme_font_size_override("font_size", Typography.label_small_size)
 
 	var theme_color: Color = ThemeColor.accent_theme_color()
-	ButtonStyle.apply_font_colors(button, theme_color, ThemeColor.promote(theme_color, Colors.am_2), ThemeColor.demote(theme_color, Colors.am_2))
+	ButtonStyle.apply_font_colors(button, theme_color, ThemeColor.promote(theme_color, Weights.w_2), ThemeColor.demote(theme_color, Weights.w_2))
 
 	var normal := StyleBoxHelper.create_style_box_flat(bubble_bg, 4, Margin.ma_2, Margin.ma_0, ThemeColor.alpha_theme_color(0.45), ControlSize.border_xs)
 	ButtonStyle.apply_style(button, normal,
 		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface, ThemeColor.alpha_theme_color(0.85)),
-		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.selected_surface, Colors.am_2), theme_color))
+		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.selected_surface, Weights.w_2), theme_color))
 	pass

@@ -108,11 +108,11 @@ func ColorBase_follow_theme_test() -> void:
 func ThemeColor_promote_demote_test() -> void:
 	var original := ThemeColor.current_theme
 	ThemeColor.current_theme = ThemeColor.ThemeEnum.DARK
-	assert(ThemeColor.promote(GRAY, Colors.am_2) == GRAY.lightened(Colors.am_2))
-	assert(ThemeColor.demote(GRAY, Colors.am_2) == GRAY.darkened(Colors.am_2))
+	assert(ThemeColor.promote(GRAY, Weights.w_2) == GRAY.lightened(Weights.w_2))
+	assert(ThemeColor.demote(GRAY, Weights.w_2) == GRAY.darkened(Weights.w_2))
 	ThemeColor.current_theme = ThemeColor.ThemeEnum.LIGHT
-	assert(ThemeColor.promote(GRAY, Colors.am_2) == GRAY.darkened(Colors.am_2))
-	assert(ThemeColor.demote(GRAY, Colors.am_2) == GRAY.lightened(Colors.am_2))
+	assert(ThemeColor.promote(GRAY, Weights.w_2) == GRAY.darkened(Weights.w_2))
+	assert(ThemeColor.demote(GRAY, Weights.w_2) == GRAY.lightened(Weights.w_2))
 	ThemeColor.current_theme = original
 	pass
 
@@ -242,8 +242,8 @@ func RangeStyle_apply_spin_box_test() -> void:
 	assert((spin.get_line_edit().get_theme_stylebox("normal") as StyleBoxFlat).bg_color == ThemeColor.card_surface)
 	assert(spin.get_theme_color("up_icon_modulate") == Colors.primary_text)
 	var theme_color := ThemeColor.accent_theme_color()
-	assert((spin.get_theme_stylebox("up_background_hovered") as StyleBoxFlat).bg_color == ThemeColor.promote(theme_color, Colors.am_2))
-	assert((spin.get_theme_stylebox("up_background_pressed") as StyleBoxFlat).bg_color == ThemeColor.demote(theme_color, Colors.am_2))
+	assert((spin.get_theme_stylebox("up_background_hovered") as StyleBoxFlat).bg_color == ThemeColor.promote(theme_color, Weights.w_2))
+	assert((spin.get_theme_stylebox("up_background_pressed") as StyleBoxFlat).bg_color == ThemeColor.demote(theme_color, Weights.w_2))
 	assert(spin.get_theme_stylebox("field_and_buttons_separator") is StyleBoxEmpty)
 	spin.free()
 	pass
@@ -423,7 +423,7 @@ func FileDialogStyle_file_list_selection_test() -> void:
 	var hovered: StyleBoxFlat = list.get_theme_stylebox("hovered") as StyleBoxFlat
 	var selected: StyleBoxFlat = list.get_theme_stylebox("selected") as StyleBoxFlat
 	var hovered_selected: StyleBoxFlat = list.get_theme_stylebox("hovered_selected") as StyleBoxFlat
-	assert(hovered.bg_color == ThemeColor.inset_surface.lerp(ThemeColor.accent_theme_color(), Colors.am_2))
+	assert(hovered.bg_color == ThemeColor.inset_surface.lerp(ThemeColor.accent_theme_color(), Weights.w_2))
 	assert(selected.bg_color == FileDialogStyle.file_list_selection_surface())
 	assert(hovered_selected.bg_color == FileDialogStyle.file_list_selection_surface())
 	assert(list.get_theme_color("font_selected_color") == ThemeColor.title_color)

@@ -210,7 +210,7 @@ func style_mode_button(button: Button) -> void:
 		Colors.subtle_border, ControlSize.border_xs)
 	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface, ThemeColor.accent_theme_color())
 	var pressed := StyleBoxHelper.duplicate_with_bg_color(
-		normal, ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), Colors.am_2),
+		normal, ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), Weights.w_2),
 		ThemeColor.accent_theme_color())
 	var disabled := StyleBoxHelper.duplicate_with_bg_color(normal, Colors.surface, Colors.subtle_border)
 	ButtonStyle.apply_style(button, normal, hover, pressed)

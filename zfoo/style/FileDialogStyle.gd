@@ -275,12 +275,12 @@ static func file_list_surface() -> Color:
 
 ## A distinct, accent-tinted selection is readable over the file browser surface in either theme.
 static func file_list_selection_surface() -> Color:
-	return ThemeColor.inset_surface.lerp(ThemeColor.accent_theme_color(), Colors.am_5)
+	return ThemeColor.inset_surface.lerp(ThemeColor.accent_theme_color(), Weights.w_5)
 
 
 static func make_file_list_hover_style() -> StyleBoxFlat:
 	return StyleBoxHelper.create_style_box_flat(
-		ThemeColor.inset_surface.lerp(ThemeColor.accent_theme_color(), Colors.am_2),
+		ThemeColor.inset_surface.lerp(ThemeColor.accent_theme_color(), Weights.w_2),
 		ControlSize.radius_sm, 0, 0, ThemeColor.alpha_theme_color(0.45), ControlSize.border_xs
 	)
 
@@ -297,7 +297,7 @@ static func make_button_hover_style(normal: StyleBoxFlat) -> StyleBoxFlat:
 
 
 static func make_button_pressed_style(normal: StyleBoxFlat) -> StyleBoxFlat:
-	return StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.selected_surface, Colors.am_2), ThemeColor.accent_theme_color())
+	return StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.selected_surface, Weights.w_2), ThemeColor.accent_theme_color())
 
 
 static func make_dialog_body_style() -> StyleBoxFlat:

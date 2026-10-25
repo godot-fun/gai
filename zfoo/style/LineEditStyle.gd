@@ -9,7 +9,7 @@ static func apply_line_edit(
 	edit: LineEdit,
 	normal: StyleBoxFlat,
 	font_color: Color = Colors.primary_text,
-	placeholder_color: Color = ThemeColor.demote(Colors.secondary_text, Colors.am_2),
+	placeholder_color: Color = ThemeColor.demote(Colors.secondary_text, Weights.w_2),
 	selection_color: Color = ThemeColor.selection_color,
 	focus_border_width: int = ControlSize.border_sm
 ) -> void:

@@ -8,7 +8,7 @@ var system_entry: bool = false
 
 
 func panel_color() -> Color:
-	return ThemeColor.promote(Colors.info_surface, Colors.am_2) if system_entry else Colors.surface
+	return ThemeColor.promote(Colors.info_surface, Weights.w_2) if system_entry else Colors.surface
 
 
 func apply(_session_id: int, entry: ChatEntry) -> void:

@@ -793,22 +793,22 @@ static func neon_base_for_type(stream_type: StreamType) -> Color:
 		StreamType.USER:
 			return ThemeColor.accent_theme_color()
 		StreamType.SYSTEM:
-			return ThemeColor.mix_with_theme_color(Colors.secondary_text, Colors.am_6)
+			return ThemeColor.mix_with_theme_color(Colors.secondary_text, Weights.w_6)
 		StreamType.HISTORY:
-			return ThemeColor.mix_with_theme_color(Colors.secondary_text, Colors.am_6)
+			return ThemeColor.mix_with_theme_color(Colors.secondary_text, Weights.w_6)
 		StreamType.FILE:
-			return ThemeColor.mix_with_theme_color(Colors.warning, Colors.am_8)
+			return ThemeColor.mix_with_theme_color(Colors.warning, Weights.w_7)
 		StreamType.TOOL:
-			return ThemeColor.mix_with_theme_color(Colors.success, Colors.am_8)
+			return ThemeColor.mix_with_theme_color(Colors.success, Weights.w_7)
 		StreamType.WEB:
-			return ThemeColor.mix_with_theme_color(Colors.info, Colors.am_8)
+			return ThemeColor.mix_with_theme_color(Colors.info, Weights.w_7)
 		StreamType.THINKING:
-			return ThemeColor.mix_with_theme_color(Colors.purple, Colors.am_8)
+			return ThemeColor.mix_with_theme_color(Colors.purple, Weights.w_7)
 		StreamType.ERROR:
-			return ThemeColor.mix_with_theme_color(Colors.error, Colors.am_4)
+			return ThemeColor.mix_with_theme_color(Colors.error, Weights.w_4)
 		StreamType.ANSWER:
-			return ThemeColor.mix_with_theme_color(Colors.primary_text, Colors.am_6)
-	return ThemeColor.mix_with_theme_color(Colors.secondary_text, Colors.am_6)
+			return ThemeColor.mix_with_theme_color(Colors.primary_text, Weights.w_6)
+	return ThemeColor.mix_with_theme_color(Colors.secondary_text, Weights.w_6)
 
 
 static func color_for_type(stream_type: StreamType) -> Color:

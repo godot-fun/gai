@@ -3,26 +3,6 @@ extends Object
 
 
 # =============================================================================
-# Color adjustment ratios
-# =============================================================================
-
-## Shared 0.0–1.0 adjustment ratios for [method Color.lightened], [method Color.darkened], and theme/semantic color lerps.
-const am_0: float = 0.00
-const am_1: float = 0.05
-const am_2: float = 0.10
-const am_3: float = 0.15
-const am_4: float = 0.20
-const am_5: float = 0.25
-const am_6: float = 0.30
-const am_7: float = 0.35
-const am_8: float = 0.40
-const am_9: float = 0.45
-const am_10: float = 0.50
-const am_11: float = 0.55
-const am_12: float = 0.60
-
-
-# =============================================================================
 # Neutral application colors
 # =============================================================================
 

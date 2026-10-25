@@ -545,7 +545,7 @@ func refresh_queue() -> void:
 func apply_queue_theme() -> void:
 	# Keep the queue visually quieter than the composer, without stacking another floating shadow.
 	var style := ChatInputTheme.build_wrap_style(true)
-	style.bg_color = ThemeColor.promote(Colors.info_surface, Colors.am_2)
+	style.bg_color = ThemeColor.promote(Colors.info_surface, Weights.w_2)
 	style.shadow_color = Color.TRANSPARENT
 	style.shadow_size = 0
 	style.shadow_offset = Vector2.ZERO

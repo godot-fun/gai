@@ -302,7 +302,7 @@ func make_input_style() -> StyleBoxFlat:
 
 func style_text_edit(edit: TextEdit) -> void:
 	edit.add_theme_color_override("font_color", Colors.primary_text)
-	edit.add_theme_color_override("font_placeholder_color", ThemeColor.demote(Colors.secondary_text, Colors.am_2))
+	edit.add_theme_color_override("font_placeholder_color", ThemeColor.demote(Colors.secondary_text, Weights.w_2))
 	edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
 	edit.add_theme_color_override("selection_color", ThemeColor.selected_surface)
 	edit.caret_blink = true
@@ -324,7 +324,7 @@ func style_option_button(select: OptionButton) -> void:
 func style_button(control: Button) -> void:
 	ButtonStyle.apply_font_colors(control, Colors.primary_text, Colors.primary_text, ThemeColor.accent_theme_color())
 	var normal := make_input_style()
-	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.card_surface, Colors.am_2))
+	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.card_surface, Weights.w_2))
 	ButtonStyle.apply_style(control, normal, hover, StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface))
 	pass
 
@@ -340,7 +340,7 @@ func style_results() -> void:
 	results.add_theme_stylebox_override("hovered", StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 6))
 	results.add_theme_stylebox_override("selected", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, 6))
 	results.add_theme_stylebox_override("selected_focus", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, 6, 0, 0, Color(ThemeColor.accent_theme_color(), 0.72), ControlSize.border_xs))
-	ScrollBarStyle.apply_custom(results.get_v_scroll_bar(), ScrollBarStyle.thickness_md, ThemeColor.body_color, ThemeColor.promote(ThemeColor.theme_color, Colors.am_8), ThemeColor.promote(ThemeColor.theme_color, Colors.am_4), true)
+	ScrollBarStyle.apply_custom(results.get_v_scroll_bar(), ScrollBarStyle.thickness_md, ThemeColor.body_color, ThemeColor.promote(ThemeColor.theme_color, Weights.w_7), ThemeColor.promote(ThemeColor.theme_color, Weights.w_4), true)
 	pass
 
 

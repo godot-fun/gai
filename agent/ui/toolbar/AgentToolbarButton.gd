@@ -15,7 +15,7 @@ static func style(button: Button, tooltip: String) -> void:
 	ButtonStyle.apply_style(button, normal,
 		StyleBoxHelper.duplicate_with_bg_color(normal, Colors.hover_surface),
 		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface))
-	button.add_theme_stylebox_override("hover_pressed", StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.selected_surface, Colors.am_2)))
+	button.add_theme_stylebox_override("hover_pressed", StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.selected_surface, Weights.w_2)))
 	pass
 
 
@@ -37,5 +37,5 @@ static func style_round(button: Button, tooltip: String) -> void:
 	ButtonStyle.apply_style(button, normal,
 		StyleBoxHelper.duplicate_with_bg_color(normal, Colors.hover_surface),
 		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface))
-	button.add_theme_stylebox_override("hover_pressed", StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.selected_surface, Colors.am_2)))
+	button.add_theme_stylebox_override("hover_pressed", StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.selected_surface, Weights.w_2)))
 	pass

@@ -333,8 +333,8 @@ func make_entry_row(index: int, label_size: int, body_size: int, body_font: Font
 	var radius := roundi(ControlSize.radius_sm * screen_scale)
 	var row_bg := Color(ThemeColor.card_surface, ROW_ALPHA)
 	var normal := StyleBoxHelper.create_style_box_flat(row_bg, radius, Margin.ma_4, Margin.ma_3, Colors.subtle_border, ControlSize.border_xs)
-	var hover := StyleBoxHelper.create_style_box_flat(ThemeColor.promote(row_bg, Colors.am_2), radius, Margin.ma_4, Margin.ma_3, ThemeColor.accent_theme_color(), ControlSize.border_xs)
-	var selected := StyleBoxHelper.create_style_box_flat(ThemeColor.promote(row_bg, Colors.am_3), radius, Margin.ma_4, Margin.ma_3, ThemeColor.accent_theme_color(), ControlSize.border_sm)
+	var hover := StyleBoxHelper.create_style_box_flat(ThemeColor.promote(row_bg, Weights.w_2), radius, Margin.ma_4, Margin.ma_3, ThemeColor.accent_theme_color(), ControlSize.border_xs)
+	var selected := StyleBoxHelper.create_style_box_flat(ThemeColor.promote(row_bg, Weights.w_3), radius, Margin.ma_4, Margin.ma_3, ThemeColor.accent_theme_color(), ControlSize.border_sm)
 	row_normal_styles.append(normal)
 	row_hover_styles.append(hover)
 	row_selected_styles.append(selected)
@@ -391,8 +391,8 @@ func make_cancel_row(label_size: int) -> PanelContainer:
 	var radius := roundi(ControlSize.radius_sm * screen_scale)
 	var row_bg := Color(ThemeColor.card_surface, ROW_ALPHA)
 	cancel_normal_style = StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, radius, Margin.ma_3, Margin.ma_2)
-	cancel_hover_style = StyleBoxHelper.create_style_box_flat(ThemeColor.promote(row_bg, Colors.am_2), radius, Margin.ma_3, Margin.ma_2, ThemeColor.accent_theme_color(), ControlSize.border_xs)
-	cancel_selected_style = StyleBoxHelper.create_style_box_flat(ThemeColor.promote(row_bg, Colors.am_3), radius, Margin.ma_3, Margin.ma_2, ThemeColor.accent_theme_color(), ControlSize.border_sm)
+	cancel_hover_style = StyleBoxHelper.create_style_box_flat(ThemeColor.promote(row_bg, Weights.w_2), radius, Margin.ma_3, Margin.ma_2, ThemeColor.accent_theme_color(), ControlSize.border_xs)
+	cancel_selected_style = StyleBoxHelper.create_style_box_flat(ThemeColor.promote(row_bg, Weights.w_3), radius, Margin.ma_3, Margin.ma_2, ThemeColor.accent_theme_color(), ControlSize.border_sm)
 	row.add_theme_stylebox_override("panel", cancel_normal_style)
 	row.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	row.gui_input.connect(func(event: InputEvent) -> void:

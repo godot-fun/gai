@@ -175,7 +175,7 @@ func build_tokens(tokens: Array[LlamaHelper.Token]) -> void:
 static func cutter_accent_color() -> Color:
 	var accent := VisualColor.appearance_color(ThemeColor.accent_theme_color())
 	if ThemeColor.is_light_theme():
-		return ThemeColor.promote(accent, Colors.am_2)
+		return ThemeColor.promote(accent, Weights.w_2)
 	return accent
 
 

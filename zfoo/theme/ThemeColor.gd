@@ -159,14 +159,14 @@ static func derive_theme_color(saturation: float, value: float) -> Color:
 ## Increase a color's contrast against the active theme background.
 ## Dark themes lighten the color; light themes darken it. [param amount] uses the same `0.0` to
 ## `1.0` adjustment ratio as [method Color.lightened] and [method Color.darkened]; defaults to
-## [member Colors.am_2], the usual hover / emphasis step.
-static func promote(color: Color, amount: float = Colors.am_2) -> Color:
+## [member Weights.w_2], the usual hover / emphasis step.
+static func promote(color: Color, amount: float = Weights.w_2) -> Color:
 	return color.lightened(amount) if is_dark_theme() else color.darkened(amount)
 
 
 ## Decrease a color's contrast against the active theme background.
 ## Dark themes darken the color; light themes lighten it. [param amount] uses the same `0.0` to
 ## `1.0` adjustment ratio as [method Color.lightened] and [method Color.darkened]; defaults to
-## [member Colors.am_2], the same default step as [method promote].
-static func demote(color: Color, amount: float = Colors.am_2) -> Color:
+## [member Weights.w_2], the same default step as [method promote].
+static func demote(color: Color, amount: float = Weights.w_2) -> Color:
 	return color.darkened(amount) if is_dark_theme() else color.lightened(amount)

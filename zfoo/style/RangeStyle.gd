@@ -6,7 +6,7 @@ extends Object
 static func apply_spin_box(spin: SpinBox) -> void:
 	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 
 			ControlSize.radius_md, Margin.ma_3, Margin.ma_0,
-		Color(ThemeColor.title_color, Colors.am_2), ControlSize.border_xs)
+		Color(ThemeColor.title_color, Weights.w_2), ControlSize.border_xs)
 	LineEditStyle.apply_line_edit(spin.get_line_edit(), normal)
 	spin.add_theme_color_override("font_color", Colors.primary_text)
 	spin.add_theme_color_override("font_placeholder_color", Colors.secondary_text)
@@ -15,7 +15,7 @@ static func apply_spin_box(spin: SpinBox) -> void:
 	button_normal.content_margin_right = Margin.ma_0
 	var theme_color := ThemeColor.accent_theme_color()
 	var hover := StyleBoxHelper.duplicate_with_bg_color(button_normal, ThemeColor.selected_surface, ThemeColor.alpha_theme_color(0.85))
-	var pressed := StyleBoxHelper.duplicate_with_bg_color(button_normal, ThemeColor.promote(ThemeColor.selected_surface, Colors.am_4), theme_color)
+	var pressed := StyleBoxHelper.duplicate_with_bg_color(button_normal, ThemeColor.promote(ThemeColor.selected_surface, Weights.w_4), theme_color)
 	spin.add_theme_stylebox_override("field_and_buttons_separator", StyleBoxEmpty.new())
 	spin.add_theme_stylebox_override("up_down_buttons_separator", StyleBoxEmpty.new())
 

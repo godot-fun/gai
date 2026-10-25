@@ -60,7 +60,7 @@ func apply_theme_style(base_style: StyleBoxFlat = null) -> void:
 	shell_focus = shell_hover.duplicate() as StyleBoxFlat
 	shell_focus.set_border_width_all(ControlSize.border_sm)
 	line_edit.add_theme_color_override("font_color", Colors.primary_text)
-	line_edit.add_theme_color_override("font_placeholder_color", ThemeColor.demote(Colors.secondary_text, Colors.am_2))
+	line_edit.add_theme_color_override("font_placeholder_color", ThemeColor.demote(Colors.secondary_text, Weights.w_2))
 	line_edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
 	line_edit.add_theme_color_override("font_selected_color", Colors.primary_text)
 	line_edit.add_theme_color_override("selection_color", ThemeColor.selection_color)

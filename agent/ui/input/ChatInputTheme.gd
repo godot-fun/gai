@@ -85,7 +85,7 @@ static func apply_queue_badge(badge: Label, collapsed: bool, queue_count: int) -
 static func apply_queue_scroll(scroll: ScrollContainer) -> void:
 	var empty := StyleBoxEmpty.new()
 	scroll.add_theme_stylebox_override("panel", empty)
-	ScrollBarStyle.apply_custom(scroll.get_v_scroll_bar(), ScrollBarStyle.thickness_md, ThemeColor.body_color, ThemeColor.promote(ThemeColor.theme_color, Colors.am_8), ThemeColor.promote(ThemeColor.theme_color, Colors.am_4))
+	ScrollBarStyle.apply_custom(scroll.get_v_scroll_bar(), ScrollBarStyle.thickness_md, ThemeColor.body_color, ThemeColor.promote(ThemeColor.theme_color, Weights.w_7), ThemeColor.promote(ThemeColor.theme_color, Weights.w_4))
 	pass
 
 
@@ -115,7 +115,7 @@ static func apply_queue_action_button(button: Button) -> void:
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.sm / 2, Margin.ma_1, Margin.ma_1)
 	ButtonStyle.apply_style(button, normal,
 		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface),
-		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), Colors.am_2)))
+		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), Weights.w_2)))
 	pass
 
 

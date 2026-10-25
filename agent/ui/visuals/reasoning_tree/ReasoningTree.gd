@@ -485,7 +485,7 @@ func draw_crown(base: Vector2, segment_height: float, accent: Color) -> void:
 
 
 func contrast_color(color: Color) -> Color:
-	return ThemeColor.promote(color, Colors.am_3) if ThemeColor.is_light_theme() else color
+	return ThemeColor.promote(color, Weights.w_3) if ThemeColor.is_light_theme() else color
 
 
 func visual_alpha(alpha: float) -> float:
