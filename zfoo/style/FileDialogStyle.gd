@@ -241,12 +241,9 @@ static func make_outline_action_normal(border_color: Color) -> StyleBoxFlat:
 ## A lightly lifted, misty version of the inset surface separates the lists without the stark
 ## pure-white card effect, while retaining the active theme hue.
 static func make_file_list_style() -> StyleBoxFlat:
-	return StyleBoxHelper.create_style_box_flat(file_list_surface(), ControlSize.radius_sm, Margin.ma_1, Margin.ma_1,
+	return StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_sm, Margin.ma_1, Margin.ma_1,
 		Colors.subtle_border, ControlSize.border_xs)
 
-
-static func file_list_surface() -> Color:
-	return ThemeColor.inset_surface.lerp(Colors.surface, 0.25)
 
 
 ## A distinct, accent-tinted selection is readable over the file browser surface in either theme.
