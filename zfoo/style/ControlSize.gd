@@ -1,12 +1,12 @@
 class_name ControlSize
 extends Object
 
-## Control size scale: control heights, square sizes and shared corner radii, in px.
+## Shared UI size tokens for controls, icons, corner radii, borders and image previews, in px.
 ##
-## Six tiers, each one 8px ([code]Margin.ma_2[/code]) above the previous, so every value lands on the
-## same 4px grid as the rest of the layout and is a [Margin] step: xs 20 ([code]ma_5[/code]),
-## sm 28 ([code]ma_7[/code]), md 36 ([code]ma_9[/code]), lg 44 ([code]ma_11[/code]),
-## xl 52, xxl 60.
+## The control tiers follow Vuetify and Material button sizing: xs 20, sm 28, md 36, lg 44 and
+## xl 52 are separated by 8px ([code]Margin.ma_2[/code]) and align to the shared 4px layout grid.
+## xxl 60 extends that scale for prominent desktop controls. Icon artwork has its own smaller scale
+## so a control's visible glyph remains smaller than its clickable area.
 ##
 ## The tiers are deliberately sparse: a control picks a tier, it does not pick a number. Sizes between
 ## two tiers are not a missing constant — they are a sign the control should be sitting on one of them.
