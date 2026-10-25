@@ -3,21 +3,17 @@ extends CommonWindow
 
 ## Settings dialog shell. Each top-level settings category owns its controls and persistence.
 
-const DIALOG_SIZE: Vector2i = Vector2i(680, 1000)
 const FIELD_LABEL_RATIO: float = 1.0
 const FIELD_CONTROL_RATIO: float = 3.0
 const SETTINGS_ICON_PATH: String = "res://agent/asset/image/icon/settings.svg"
 
 var button: Button
-var content_scroll: ScrollContainer
 var sections: Array[SettingSection] = []
 var separators: Array[HSeparator] = []
 
 
 func _init() -> void:
 	super()
-	min_size = DIALOG_SIZE
-	max_size = DIALOG_SIZE
 	exclusive = false
 	pass
 
@@ -50,14 +46,11 @@ func build_window() -> void:
 	card_margin.add_theme_constant_override("margin_bottom", Margin.ma_4)
 	card_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	margin.add_child(card_margin)
-	content_scroll = ScrollContainer.new()
-	content_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	content_scroll.add_theme_constant_override("scrollbar_h_separation", Margin.ma_3)
-	card_margin.add_child(content_scroll)
 	var fields := VBoxContainer.new()
 	fields.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	fields.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	fields.add_theme_constant_override("separation", Margin.ma_3)
-	content_scroll.add_child(fields)
+	card_margin.add_child(fields)
 
 	sections = [
 		AppearanceSettingSection.new(),
@@ -196,9 +189,7 @@ func refresh_check_button(check: CheckButton, enabled: bool) -> void:
 func on_button_pressed() -> void:
 	for section in sections:
 		section.refresh()
-	size = DIALOG_SIZE
-	popup_centered()
-	oversampling_override = DisplayScale.compute_ui_scale()
+	present_centered(30, 70)
 	pass
 
 
@@ -225,7 +216,6 @@ func apply_theme() -> void:
 	super()
 	AgentToolbarButton.style_round(button, I18n.t("agent.settings.tooltip"))
 	update_icon(button.is_hovered())
-	ScrollBarStyle.apply(content_scroll.get_v_scroll_bar())
 	style_content()
 	for section in sections:
 		section.apply_theme()
