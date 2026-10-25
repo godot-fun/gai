@@ -27,7 +27,6 @@ func _init(p_sense_input: SenseInput) -> void:
 	sense_input = p_sense_input
 	min_size = Vector2i(640, 680)
 	add_to_group(GROUP_NAME)
-	focus_exited.connect(on_window_focus_exited)
 	gdf.events.locale_changed.connect(apply_locale)
 	build_window()
 	apply_locale()
@@ -77,7 +76,6 @@ func build_window() -> void:
 	backend_select.add_item(I18n.t("agent.sense.local_model"))
 	backend_select.add_item(I18n.t("agent.sense.remote_model"))
 	backend_select.item_selected.connect(on_backend_selected)
-	backend_select.get_popup().popup_hide.connect(on_option_popup_hide)
 	model_field.add_child(backend_select)
 	var hotkey_field := make_inline_field(quick_settings, I18n.t("agent.sense.hotkey"))
 	hotkey_button = Button.new()
@@ -272,22 +270,6 @@ func style_content() -> void:
 
 func dismiss_on_focus_out() -> bool:
 	return false
-
-
-func check_window_focus() -> void:
-	if visible and not backend_select.get_popup().visible and not has_focus():
-		on_close_requested()
-	pass
-
-
-func on_window_focus_exited() -> void:
-	check_window_focus.call_deferred()
-	pass
-
-
-func on_option_popup_hide() -> void:
-	check_window_focus.call_deferred()
-	pass
 
 
 func apply_locale() -> void:
