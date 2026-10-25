@@ -7,7 +7,13 @@ extends Object
 
 
 ## Apply the application's dialog, field, list, button, and scrollbar tokens to [param dialog].
-## The ready-time second pass catches FileDialog controls created when the node enters the scene tree.
+## [param label_texts] maps Godot's built-in English captions to caller-resolved display text.
+## Its keys must be the original strings exposed by FileDialog (for example, [code]"Path:"[/code],
+## [code]"View items as a list."[/code], or [code]"Sort by Name (Ascending)"[/code]); values are
+## applied to matching labels, control tooltips, and PopupMenu entries. Missing keys preserve
+## Godot's original text. Callers own translation and pass a fresh map when the locale changes,
+## keeping this reusable style helper independent of I18n. The ready-time second pass catches
+## FileDialog controls created when the node enters the scene tree.
 static func apply(dialog: FileDialog, label_texts: Dictionary[String, String] = {}) -> void:
 	apply_close(dialog)
 	apply_control_theme(dialog)
@@ -107,6 +113,7 @@ static func apply_control_styles(dialog: FileDialog, label_texts: Dictionary[Str
 
 
 static func style_control(node: Node, label_texts: Dictionary[String, String] = {}) -> void:
+	# Tooltips are held by every Control subtype, whereas labels and popup items need type-specific APIs.
 	if node is Control:
 		apply_tooltip_text(node as Control, label_texts)
 	if node is LineEdit:

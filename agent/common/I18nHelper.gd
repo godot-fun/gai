@@ -36,6 +36,7 @@ static func file_dialog_label_texts() -> Dictionary[String, String]:
 		"Favorites:": I18n.t("file_dialog.favorites"),
 		"Recent:": I18n.t("file_dialog.recent"),
 		"Directories & Files:": I18n.t("file_dialog.directories_and_files"),
+		# Toolbar button tooltips.
 		"Go to previous folder.": I18n.t("file_dialog.tooltip_previous_folder"),
 		"Go to next folder.": I18n.t("file_dialog.tooltip_next_folder"),
 		"Go to parent folder.": I18n.t("file_dialog.tooltip_parent_folder"),
@@ -47,6 +48,7 @@ static func file_dialog_label_texts() -> Dictionary[String, String]:
 		"View items as a list.": I18n.t("file_dialog.tooltip_list"),
 		"Toggle the visibility of the filter for file names.": I18n.t("file_dialog.tooltip_toggle_filename_filter"),
 		"Sort files": I18n.t("file_dialog.tooltip_sort_files"),
+		# PopupMenu entries opened by the sort button.
 		"Sort by Name (Ascending)": I18n.t("file_dialog.sort_name_ascending"),
 		"Sort by Name (Descending)": I18n.t("file_dialog.sort_name_descending"),
 		"Sort by Type (Ascending)": I18n.t("file_dialog.sort_type_ascending"),
