@@ -12,20 +12,42 @@ var ui_scale_select: OptionButton
 func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, window: Window) -> void:
 	super.set_up(p_ui, parent, window)
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.appearance"))
-	var group := ui.make_field_group(parent)
-	var parts := ui.make_setting_row(group)
+	var locale_scale_parts := ui.make_setting_row(parent, 6)
+	# Control-band width weights: two cols per dropdown (2+0+1+2+0 = 5).
+	locale_scale_parts[1].size_flags_stretch_ratio = 2.0
+	locale_scale_parts[2].size_flags_stretch_ratio = 0.0
+	locale_scale_parts[3].size_flags_stretch_ratio = 1.0
+	locale_scale_parts[4].size_flags_stretch_ratio = 2.0
+	locale_scale_parts[5].size_flags_stretch_ratio = 0.0
+	# Column 1 — language label (label band).
 	language_label = ui.make_label(I18n.t("agent.settings.language"))
-	parts[0].add_child(language_label)
+	style_appearance_grid_label(language_label)
+	locale_scale_parts[0].add_child(language_label)
+	# Columns 2–3 — language selector (two control columns).
 	language_select = OptionButton.new()
 	language_select.custom_minimum_size = Vector2(0, 38)
 	language_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	language_select.size_flags_stretch_ratio = AgentSettingDialog.FIELD_CONTROL_RATIO
 	for locale in I18nHelper.LOCALE_PATHS:
 		var config: I18nHelper.LocaleConfig = I18nHelper.LOCALE_PATHS[locale]
 		language_select.add_item(config.language)
 		language_select.set_item_metadata(language_select.item_count - 1, locale)
 	language_select.item_selected.connect(on_language_selected)
-	parts[1].add_child(language_select)
+	locale_scale_parts[1].add_child(language_select)
+	# Column 4 — UI scale label (one control column).
+	ui_scale_label = ui.make_label(I18n.t("agent.settings.ui_scale"))
+	ui_scale_label.tooltip_text = ui_scale_tooltip()
+	style_appearance_grid_label(ui_scale_label)
+	locale_scale_parts[3].add_child(ui_scale_label)
+	# Columns 5–6 — UI scale selector (two control columns).
+	ui_scale_select = OptionButton.new()
+	ui_scale_select.tooltip_text = ui_scale_tooltip()
+	ui_scale_select.custom_minimum_size = Vector2(0, 38)
+	ui_scale_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for scale in DisplayScale.UI_SCALE_PRESETS:
+		ui_scale_select.add_item(StringUtils.format("{}%", roundi(scale * 100.0)))
+		ui_scale_select.set_item_metadata(ui_scale_select.item_count - 1, scale)
+	ui_scale_select.item_selected.connect(on_ui_scale_selected)
+	locale_scale_parts[4].add_child(ui_scale_select)
 	var markdown_parts := ui.make_setting_row(parent)
 	markdown_label = ui.make_label(I18n.t("agent.settings.markdown"))
 	markdown_parts[0].add_child(markdown_label)
@@ -36,23 +58,16 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, window: Window) -> 
 	markdown_toggle_button = ui.add_check_button(control, "", AgentSetting.get_markdown_enabled())
 	markdown_toggle_button.tooltip_text = I18n.t("agent.settings.markdown_help")
 	markdown_toggle_button.toggled.connect(on_markdown_toggled)
-	var scale_parts := ui.make_setting_row(parent)
-	ui_scale_label = ui.make_label(I18n.t("agent.settings.ui_scale"))
-	ui_scale_label.tooltip_text = ui_scale_tooltip()
-	scale_parts[0].add_child(ui_scale_label)
-	ui_scale_select = OptionButton.new()
-	ui_scale_select.tooltip_text = ui_scale_tooltip()
-	ui_scale_select.custom_minimum_size = Vector2(0, 38)
-	ui_scale_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	ui_scale_select.size_flags_stretch_ratio = AgentSettingDialog.FIELD_CONTROL_RATIO
-	for scale in DisplayScale.UI_SCALE_PRESETS:
-		ui_scale_select.add_item(StringUtils.format("{}%", roundi(scale * 100.0)))
-		ui_scale_select.set_item_metadata(ui_scale_select.item_count - 1, scale)
-	ui_scale_select.item_selected.connect(on_ui_scale_selected)
-	scale_parts[1].add_child(ui_scale_select)
 	gdf.events.ui_scale_changed.connect(on_ui_scale_changed)
 	select_current_language()
 	select_current_ui_scale()
+	pass
+
+
+func style_appearance_grid_label(label: Label) -> void:
+	label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	label.clip_text = true
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pass
 
 

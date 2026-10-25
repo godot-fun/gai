@@ -27,17 +27,23 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, window: Window) -> 
 	read_image_with_api_toggle_button = ui.add_check_button(read_image_parts[1], "", AgentSetting.get_read_image_with_api())
 	read_image_with_api_toggle_button.tooltip_text = I18n.t("agent.settings.read_image_remotely_help")
 	read_image_with_api_toggle_button.toggled.connect(on_read_image_with_api_toggled)
-	var browser_parts := ui.make_setting_row(parent, 4)
+	var browser_parts := ui.make_setting_row(parent, 6)
+	# Column 1 — browser headless label (label band).
 	browser_headless_label = ui.make_label(I18n.t("agent.settings.browser_headless"))
+	style_browser_row_label(browser_headless_label)
 	browser_parts[0].add_child(browser_headless_label)
 	browser_headless_label.tooltip_text = I18n.t("agent.settings.browser_headless_help")
+	# Column 2 — browser headless toggle (control band, 1/5).
 	browser_headless_toggle_button = ui.add_check_button(browser_parts[1], "", AgentSetting.get_browser_headless())
+	browser_headless_toggle_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	browser_headless_toggle_button.tooltip_text = I18n.t("agent.settings.browser_headless_help")
 	browser_headless_toggle_button.toggled.connect(on_browser_headless_toggled)
+	# Column 3 — browser service label (control band, 2/5).
 	restart_web_server_label = ui.make_label(I18n.t("agent.settings.browser_service"))
-	restart_web_server_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	style_browser_row_label(restart_web_server_label)
 	restart_web_server_label.tooltip_text = I18n.t("agent.settings.restart_browser_service_help")
 	browser_parts[2].add_child(restart_web_server_label)
+	# Column 4 — restart browser service button (control band, 3/5).
 	restart_web_server_button = Button.new()
 	restart_web_server_button.text = I18n.t("agent.settings.restart_browser_service")
 	restart_web_server_button.tooltip_text = I18n.t("agent.settings.restart_browser_service_help")
@@ -46,6 +52,14 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, window: Window) -> 
 	restart_web_server_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	restart_web_server_button.pressed.connect(on_restart_web_server_pressed)
 	browser_parts[3].add_child(restart_web_server_button)
+	# Columns 5–6 — unused; keeps alignment with the 6-column notification row.
+	pass
+
+
+func style_browser_row_label(label: Label) -> void:
+	label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	label.clip_text = true
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pass
 
 
