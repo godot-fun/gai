@@ -139,7 +139,7 @@ func open_sound_folder_dialog() -> void:
 	var folder := AgentSetting.get_notification_sound_folder()
 	if not folder.begins_with("res://") and not folder.begins_with("user://") and DirAccess.dir_exists_absolute(folder):
 		sound_folder_dialog.current_dir = folder
-	FileDialogStyle.present_centered(sound_folder_dialog)
+	FileDialogStyle.present_centered(sound_folder_dialog, 60, 70, I18nHelper.file_dialog_label_texts())
 	pass
 
 
@@ -164,6 +164,7 @@ func apply_locale() -> void:
 	sound_folder_dialog.title = I18n.t("agent.settings.sound_folder_title")
 	sound_folder_dialog.ok_button_text = I18n.t("common.select")
 	sound_folder_dialog.get_cancel_button().text = I18n.t("common.cancel")
+	FileDialogStyle.apply(sound_folder_dialog, I18nHelper.file_dialog_label_texts())
 	pass
 
 
@@ -177,7 +178,7 @@ func apply_theme() -> void:
 	ui.style_field_label(sound_folder_label)
 	ui.style_spin_box(sound_seconds_spin)
 	ui.style_line_edit(sound_folder_edit)
-	FileDialogStyle.apply(sound_folder_dialog)
+	FileDialogStyle.apply(sound_folder_dialog, I18nHelper.file_dialog_label_texts())
 	pass
 
 

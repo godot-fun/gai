@@ -344,6 +344,35 @@ func FileDialogStyle_internal_controls_test() -> void:
 	pass
 
 
+func FileDialogStyle_apply_label_text_test() -> void:
+	var label := Label.new()
+	label.text = "Favorites:"
+	FileDialogStyle.apply_label_text(label, {"Favorites:": "收藏夹："})
+	assert(label.text == "收藏夹：")
+	assert(label.get_meta("file_dialog_label_source") == "Favorites:")
+	label.free()
+	pass
+
+
+func FileDialogStyle_apply_tooltip_text_test() -> void:
+	var button := Button.new()
+	button.tooltip_text = "View items as a grid of thumbnails."
+	FileDialogStyle.apply_tooltip_text(button, {"View items as a grid of thumbnails.": "以缩略图网格方式查看项目。"})
+	assert(button.tooltip_text == "以缩略图网格方式查看项目。")
+	assert(button.get_meta("file_dialog_tooltip_source") == "View items as a grid of thumbnails.")
+	button.free()
+	pass
+
+
+func FileDialogStyle_apply_popup_menu_text_test() -> void:
+	var popup_menu := PopupMenu.new()
+	popup_menu.add_item("Sort by Name (Ascending)")
+	FileDialogStyle.apply_popup_menu_text(popup_menu, {"Sort by Name (Ascending)": "按名称排序（升序）"})
+	assert(popup_menu.get_item_text(0) == "按名称排序（升序）")
+	popup_menu.free()
+	pass
+
+
 func FileDialogStyle_file_list_selection_test() -> void:
 	var list := ItemList.new()
 	FileDialogStyle.style_item_list(list)

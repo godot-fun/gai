@@ -141,6 +141,7 @@ func apply_locale() -> void:
 	workspace_dialog.title = I18n.t("agent.workspace.dialog_title")
 	workspace_dialog.ok_button_text = I18n.t("common.select")
 	workspace_dialog.get_cancel_button().text = I18n.t("common.cancel")
+	FileDialogStyle.apply(workspace_dialog, I18nHelper.file_dialog_label_texts())
 	pass
 
 
@@ -150,7 +151,7 @@ func apply_theme() -> void:
 	app_theme.default_font = Fonts.regular()
 	theme = app_theme
 	
-	FileDialogStyle.apply(workspace_dialog)
+	FileDialogStyle.apply(workspace_dialog, I18nHelper.file_dialog_label_texts())
 	chat_area_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
 	chat_area_panel.queue_redraw()
 	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))

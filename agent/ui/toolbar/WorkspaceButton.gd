@@ -27,6 +27,7 @@ func apply_locale() -> void:
 	dialog.title = I18n.t("agent.workspace.dialog_title")
 	dialog.ok_button_text = I18n.t("common.select")
 	dialog.get_cancel_button().text = I18n.t("common.cancel")
+	FileDialogStyle.apply(dialog, I18nHelper.file_dialog_label_texts())
 	pass
 
 
@@ -45,7 +46,7 @@ func refresh() -> void:
 
 func on_button_pressed() -> void:
 	refresh()
-	FileDialogStyle.present_centered(dialog)
+	FileDialogStyle.present_centered(dialog, 60, 70, I18nHelper.file_dialog_label_texts())
 	pass
 
 

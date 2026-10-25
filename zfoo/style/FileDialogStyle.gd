@@ -8,13 +8,13 @@ extends Object
 
 ## Apply the application's dialog, field, list, button, and scrollbar tokens to [param dialog].
 ## The ready-time second pass catches FileDialog controls created when the node enters the scene tree.
-static func apply(dialog: FileDialog) -> void:
+static func apply(dialog: FileDialog, label_texts: Dictionary[String, String] = {}) -> void:
 	apply_close(dialog)
 	apply_control_theme(dialog)
 	apply_dialog_style(dialog)
-	apply_control_styles(dialog)
+	apply_control_styles(dialog, label_texts)
 	if not dialog.is_node_ready():
-		dialog.ready.connect(func() -> void: apply_control_styles(dialog), CONNECT_ONE_SHOT)
+		dialog.ready.connect(func() -> void: apply_control_styles(dialog, label_texts), CONNECT_ONE_SHOT)
 	pass
 
 
@@ -82,37 +82,41 @@ static func apply_dialog_style(dialog: FileDialog) -> void:
 
 
 ## Open a centered FileDialog at the same viewport-relative size convention as CommonWindow.
-static func present_centered(dialog: FileDialog, width_percent: int = 60, height_percent: int = 70) -> void:
+static func present_centered(dialog: FileDialog, width_percent: int = 60, height_percent: int = 70, label_texts: Dictionary[String, String] = {}) -> void:
 	dialog.size = CommonWindow.size_from_viewport_percent(width_percent, height_percent)
 	dialog.popup_centered()
 	dialog.oversampling_override = DisplayScale.compute_ui_scale()
-	apply(dialog)
+	apply(dialog, label_texts)
 	pass
 
 
-static func style_controls(root: Node) -> void:
+static func style_controls(root: Node, label_texts: Dictionary[String, String]) -> void:
 	for child in root.get_children(true):
-		style_control(child)
-		style_controls(child)
+		style_control(child, label_texts)
+		style_controls(child, label_texts)
 	pass
 
 
 ## FileDialog creates its navigation, drive selector, and lists as internal children. Include those
 ## nodes, then restore the two dialog actions after generic button styling has run.
-static func apply_control_styles(dialog: FileDialog) -> void:
-	style_controls(dialog)
+static func apply_control_styles(dialog: FileDialog, label_texts: Dictionary[String, String]) -> void:
+	style_controls(dialog, label_texts)
 	style_confirm_button(dialog.get_ok_button())
 	style_cancel_button(dialog.get_cancel_button())
 	pass
 
 
-static func style_control(node: Node) -> void:
+static func style_control(node: Node, label_texts: Dictionary[String, String] = {}) -> void:
+	if node is Control:
+		apply_tooltip_text(node as Control, label_texts)
 	if node is LineEdit:
 		style_line_edit(node as LineEdit)
 	elif node is OptionButton:
 		style_path_option(node as OptionButton)
 	elif node is PopupMenu:
-		PopupMenuStyle.apply(node as PopupMenu)
+		var popup_menu := node as PopupMenu
+		PopupMenuStyle.apply(popup_menu)
+		apply_popup_menu_text(popup_menu, label_texts)
 	elif node is MenuButton:
 		style_toolbar_button(node as MenuButton)
 	elif node is Button:
@@ -128,7 +132,41 @@ static func style_control(node: Node) -> void:
 	elif node is ScrollBar:
 		ScrollBarStyle.apply(node as ScrollBar)
 	elif node is Label:
-		(node as Label).add_theme_color_override("font_color", ThemeColor.title_color)
+		var label := node as Label
+		apply_label_text(label, label_texts)
+		label.add_theme_color_override("font_color", ThemeColor.title_color)
+	pass
+
+
+## FileDialog owns these labels internally, so callers supply their already-resolved text. Keep
+## the original caption as metadata so refreshing an open dialog works after its text changes.
+static func apply_label_text(label: Label, label_texts: Dictionary[String, String]) -> void:
+	var source := str(label.get_meta("file_dialog_label_source", label.text))
+	if label_texts.has(source):
+		label.set_meta("file_dialog_label_source", source)
+		label.text = label_texts[source]
+	pass
+
+
+## Buttons and menus created by FileDialog also keep their captions internally as tooltips.
+static func apply_tooltip_text(control: Control, label_texts: Dictionary[String, String]) -> void:
+	var source := str(control.get_meta("file_dialog_tooltip_source", control.tooltip_text))
+	if label_texts.has(source):
+		control.set_meta("file_dialog_tooltip_source", source)
+		control.tooltip_text = label_texts[source]
+	pass
+
+
+## Preserve each internal menu item's original caption so locale refreshes do not need to know
+## which popup owns it. This leaves item metadata untouched for menus that use it for behavior.
+static func apply_popup_menu_text(popup_menu: PopupMenu, label_texts: Dictionary[String, String]) -> void:
+	var sources := popup_menu.get_meta("file_dialog_popup_menu_sources", {}) as Dictionary
+	for index in range(popup_menu.item_count):
+		var source := str(sources.get(index, popup_menu.get_item_text(index)))
+		if label_texts.has(source):
+			sources[index] = source
+			popup_menu.set_item_text(index, label_texts[source])
+	popup_menu.set_meta("file_dialog_popup_menu_sources", sources)
 	pass
 
 
