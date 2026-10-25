@@ -6,7 +6,7 @@ extends Object
 ## Values follow a 4px step scale, e.g. [code]Margin.ma_4[/code] == 16. The constants are ints
 ## because that is what theme constants ask for; the float size properties (`content_margin_*`,
 ## offsets, custom minimum size) take them as-is, since int to float is a lossless conversion.
-## All four sides of a box at once go through [method StyleBoxHelper.apply_style_box_margin].
+## All four sides of a box at once go through [method StyleBoxHelper.apply_margin].
 ## Typical use:
 ## [codeblock]
 ## var margin := MarginContainer.new()

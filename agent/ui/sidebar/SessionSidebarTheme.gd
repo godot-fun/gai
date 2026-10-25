@@ -47,7 +47,7 @@ static func apply_new_session_button(button: Button) -> void:
 ## Row background selected beats hovered, transparent otherwise.
 static func row(selected: bool, hovered: bool) -> StyleBoxFlat:
 	var style := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_md)
-	StyleBoxHelper.apply_style_box_margin(style, Margin.ma_3, Margin.ma_1, Margin.ma_1, Margin.ma_1)
+	StyleBoxHelper.apply_margin(style, Margin.ma_1, Margin.ma_1, Margin.ma_1, Margin.ma_3)
 	if selected:
 		style.bg_color = ThemeColor.selected_surface
 	elif hovered:

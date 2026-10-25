@@ -100,7 +100,7 @@ static func apply_check_button(
 	check.add_theme_color_override("button_checked_color", checked_color if checked_color != Color.TRANSPARENT else ThemeColor.accent_theme_color())
 	check.add_theme_constant_override("h_separation", h_separation)
 	var empty := StyleBoxEmpty.new()
-	StyleBoxHelper.apply_style_box_margin(empty, margin_left, margin_top, margin_right, margin_bottom)
+	StyleBoxHelper.apply_margin(empty, margin_top, margin_right, margin_bottom, margin_left)
 	for state: String in ["normal", "disabled", "focus", "hover", "pressed", "hover_pressed"]:
 		check.add_theme_stylebox_override(state, empty.duplicate())
 	pass

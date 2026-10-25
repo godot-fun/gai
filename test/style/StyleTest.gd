@@ -139,15 +139,15 @@ func StyleBoxHelper_create_style_box_flat_test() -> void:
 	pass
 
 
-func StyleBoxHelper_apply_style_box_margin_test() -> void:
+func StyleBoxHelper_apply_margin_test() -> void:
 	var style := StyleBoxHelper.create_style_box_flat(Color.WHITE, 4)
-	StyleBoxHelper.apply_style_box_margin(style, Margin.ma_3, Margin.ma_2, Margin.ma_1, Margin.ma_0)
+	StyleBoxHelper.apply_margin(style, Margin.ma_2, Margin.ma_1, Margin.ma_0, Margin.ma_3)
 	assert(style.get_margin(SIDE_LEFT) == Margin.ma_3 and style.get_margin(SIDE_RIGHT) == Margin.ma_1)
 	assert(style.get_margin(SIDE_TOP) == Margin.ma_2 and style.get_margin(SIDE_BOTTOM) == Margin.ma_0)
 
 	# Base class on purpose: an empty box takes the same padding as a filled one.
 	var empty := StyleBoxEmpty.new()
-	StyleBoxHelper.apply_style_box_margin(empty, Margin.ma_1, Margin.ma_1, Margin.ma_1, Margin.ma_1)
+	StyleBoxHelper.apply_margin(empty, Margin.ma_1, Margin.ma_1, Margin.ma_1, Margin.ma_1)
 	assert(empty.get_margin(SIDE_LEFT) == Margin.ma_1)
 	pass
 

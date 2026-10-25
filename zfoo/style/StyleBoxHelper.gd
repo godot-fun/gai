@@ -6,7 +6,7 @@ extends Object
 ##
 ## Padding comes from the [Margin] scale, so a box is written in the same 4px steps as the rest of
 ## the layout: symmetric through [method create_style_box_flat], per-side through
-## [method apply_style_box_margin].
+## [method apply_margin].
 ##
 ## Typical use:
 ## [codeblock]
@@ -47,12 +47,12 @@ static func duplicate_with_bg_color(base: StyleBoxFlat, bg_color: Color, border_
 	return style
 
 
-## All four padding sides in one call (left, top, right, bottom) — for asymmetrical boxes.
+## All four padding sides in CSS clockwise order (top, right, bottom, left) — for asymmetrical boxes.
 ## Edits [param style] in place; takes the [StyleBox] base class, so an empty box or a line box
 ## gets the same treatment.
-static func apply_style_box_margin(style: StyleBox, left: int, top: int, right: int, bottom: int) -> void:
-	style.content_margin_left = left
+static func apply_margin(style: StyleBox, top: int, right: int, bottom: int, left: int) -> void:
 	style.content_margin_top = top
 	style.content_margin_right = right
 	style.content_margin_bottom = bottom
+	style.content_margin_left = left
 	pass
