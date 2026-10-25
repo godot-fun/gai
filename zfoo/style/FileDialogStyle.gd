@@ -55,7 +55,7 @@ static func apply_control_theme(dialog: FileDialog) -> void:
 	var theme := Theme.new()
 	theme.default_font = Fonts.regular()
 	var file_list := make_file_list_style()
-	var field := LineEditStyle.theme_normal_style()
+	var field := file_dialog_field_style()
 	var field_focus := field.duplicate() as StyleBoxFlat
 	field_focus.border_color = ThemeColor.accent_theme_color()
 	# FileDialog inherits its background panel from AcceptDialog, not from FileDialog itself.
@@ -112,9 +112,12 @@ static func style_control(node: Node, label_texts: Dictionary[String, String] = 
 	if node is Control:
 		apply_tooltip_text(node as Control, label_texts)
 	if node is LineEdit:
-		LineEditStyle.apply(node as LineEdit, LineEditStyle.theme_normal_style(), ThemeColor.title_color)
+		var path_edit := node as LineEdit
+		LineEditStyle.apply(path_edit, file_dialog_field_style(), ThemeColor.title_color, ThemeColor.demote(Colors.secondary_text, Weights.w_2),
+			ThemeColor.selection_color, Margin.ma_0)
+		path_edit.custom_minimum_size.y = maxi(path_edit.custom_minimum_size.y, ControlSize.md)
 	elif node is OptionButton:
-		ButtonStyle.apply_option_button(node as OptionButton, LineEditStyle.theme_normal_style(), ThemeColor.title_color)
+		style_path_option(node as OptionButton)
 	elif node is PopupMenu:
 		var popup_menu := node as PopupMenu
 		PopupMenuStyle.apply(popup_menu)
@@ -236,6 +239,23 @@ static func apply_browser_font_colors(control: Control) -> void:
 static func make_outline_action_normal(border_color: Color) -> StyleBoxFlat:
 	return StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT,
 		ControlSize.radius_md, Margin.ma_3, Margin.ma_1, border_color, ControlSize.border_xs)
+
+
+## Path bar fields use vertical padding; shared [method LineEditStyle.theme_normal_style] uses [member Margin.ma_0] and reads too flat in FileDialog rows.
+static func file_dialog_field_style() -> StyleBoxFlat:
+	return StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_md, Margin.ma_3, Margin.ma_1,
+		Color(ThemeColor.title_color, Weights.w_2), ControlSize.border_xs)
+
+
+## Drive selector matches the path [LineEdit] so the location row reads as one control.
+static func style_path_option(option: OptionButton) -> void:
+	var normal := file_dialog_field_style()
+	var hover := normal.duplicate() as StyleBoxFlat
+	hover.border_color = ThemeColor.accent_theme_color()
+	ButtonStyle.apply_style(option, normal, hover, hover.duplicate())
+	ButtonStyle.apply_font_colors(option, ThemeColor.title_color, ThemeColor.title_color, ThemeColor.title_color)
+	PopupMenuStyle.apply(option.get_popup())
+	pass
 
 
 ## A lightly lifted, misty version of the inset surface separates the lists without the stark
