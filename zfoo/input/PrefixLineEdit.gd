@@ -59,9 +59,20 @@ func apply_theme_style(base_style: StyleBoxFlat = null) -> void:
 	shell_hover.border_color = ThemeColor.accent_theme_color()
 	shell_focus = shell_hover.duplicate() as StyleBoxFlat
 	shell_focus.set_border_width_all(ControlSize.border_sm)
-	LineEditStyle.apply_field_text(line_edit)
-	LineEditStyle.apply_transparent_field(line_edit)
-	LineEditStyle.apply_clear_button(line_edit)
+	line_edit.add_theme_color_override("font_color", Colors.primary_text)
+	line_edit.add_theme_color_override("font_placeholder_color", ThemeColor.demote(Colors.secondary_text, Colors.am_2))
+	line_edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
+	line_edit.add_theme_color_override("font_selected_color", Colors.primary_text)
+	line_edit.add_theme_color_override("selection_color", ThemeColor.selection_color)
+	line_edit.caret_blink = true
+	var empty := StyleBoxEmpty.new()
+	line_edit.add_theme_stylebox_override("normal", empty)
+	line_edit.add_theme_stylebox_override("hover", empty)
+	line_edit.add_theme_stylebox_override("focus", empty)
+	line_edit.add_theme_stylebox_override("read_only", empty)
+	if line_edit.clear_button_enabled:
+		line_edit.add_theme_color_override("clear_button_color", Colors.secondary_text)
+		line_edit.add_theme_color_override("clear_button_color_pressed", ThemeColor.accent_theme_color())
 	refresh_prefix_icon()
 	refresh_shell_style()
 	pass
