@@ -9,7 +9,7 @@ var ui_scale_label: Label
 var ui_scale_select: OptionButton
 
 
-func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, window: Window) -> void:
+func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> void:
 	super.set_up(p_ui, parent, window)
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.appearance"))
 	var locale_scale_parts := ui.make_setting_row(parent, 6)
@@ -54,7 +54,7 @@ func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, window: Window) -> 
 	markdown_label.tooltip_text = I18n.t("agent.settings.markdown_help")
 	var control := ui.make_option_row(markdown_parts[1], Margin.ma_0)
 	control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	control.size_flags_stretch_ratio = AgentSettingDialog.FIELD_CONTROL_RATIO
+	control.size_flags_stretch_ratio = AgentSettingWindow.FIELD_CONTROL_RATIO
 	markdown_toggle_button = ui.add_check_button(control, "", AgentSetting.get_markdown_enabled())
 	markdown_toggle_button.tooltip_text = I18n.t("agent.settings.markdown_help")
 	markdown_toggle_button.toggled.connect(on_markdown_toggled)

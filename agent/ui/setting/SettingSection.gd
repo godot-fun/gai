@@ -1,11 +1,11 @@
 class_name SettingSection
 extends RefCounted
 
-var ui: AgentSettingDialog
+var ui: AgentSettingWindow
 var heading_label: Label
 
 
-func set_up(p_ui: AgentSettingDialog, _parent: VBoxContainer, _window: Window) -> void:
+func set_up(p_ui: AgentSettingWindow, _parent: VBoxContainer, _window: Window) -> void:
 	ui = p_ui
 	pass
 

@@ -5,7 +5,7 @@ extends RefCounted
 ## (Jarvis orb, Markdown rendering, skill index / memory / AGENTS.md prompts).
 ##
 ## Behavior lives in [AgentNotification] and the matching `agent/ui/toolbar` toggle; the fields are
-## edited by [AgentSettingDialog].
+## edited by [AgentSettingWindow].
 ##
 ## Setters that change an already rendered UI announce it on [AgentEvents].
 

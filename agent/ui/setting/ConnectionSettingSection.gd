@@ -15,7 +15,7 @@ var api_token_edit: LineEdit
 var proxy_address_edit: LineEdit
 
 
-func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, window: Window) -> void:
+func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> void:
 	super.set_up(p_ui, parent, window)
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.heading"))
 	var api_result := add_field(parent, I18n.t("agent.settings.api_url"), "https://api.example.com/v1/chat/completions", I18n.t("agent.settings.api_url_help"))

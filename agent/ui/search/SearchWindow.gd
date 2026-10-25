@@ -7,6 +7,7 @@ const MAX_SNIPPET_LENGTH := 260
 ## Typing pause before the scan runs — it walks every entry of every session, so per-keystroke is too heavy.
 const SEARCH_DEBOUNCE_MILLIS := 1000
 const QUERY_ICON_PATH := "res://agent/asset/image/icon/search.svg"
+const GROUP_NAME: StringName = &"search_window"
 
 static var query: String = ""
 
@@ -19,6 +20,7 @@ var debounce_timer: Timer
 
 func _init() -> void:
 	super()
+	add_to_group(GROUP_NAME)
 	gdf.events.locale_changed.connect(apply_locale)
 	build_window()
 	apply_locale()
@@ -78,7 +80,7 @@ func apply_theme() -> void:
 	pass
 
 
-## Match [AgentSettingDialog]: [CommonWindow] paints the frame; [member container] is the inset reading surface.
+## Match [AgentSettingWindow]: [CommonWindow] paints the frame; [member container] is the inset reading surface.
 func style_content() -> void:
 	container.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface))
 	pass
@@ -255,8 +257,13 @@ func clear_results() -> void:
 
 
 
+static func is_open() -> bool:
+	return gdf.is_ready() and not gdf.gdf_node.get_tree().get_nodes_in_group(GROUP_NAME).is_empty()
+
+
 static func show_search() -> void:
-	close_open_windows()
+	if is_open():
+		return
 	var window := SearchWindow.new()
 	gdf.gdf_node.add_child(window)
 	window.present_right(50, 70)
@@ -265,12 +272,3 @@ static func show_search() -> void:
 		window.search(window.query_input.line_edit.text)
 	pass
 
-
-static func close_open_windows() -> void:
-	var open: Array[SearchWindow] = []
-	for child in gdf.gdf_node.get_children():
-		if child is SearchWindow:
-			open.push_back(child)
-	for window in open:
-		window.on_close_requested()
-	pass

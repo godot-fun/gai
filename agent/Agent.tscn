@@ -189,7 +189,7 @@ layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 
-[node name="AgentSettingButton" type="Button" parent="Root/Toolbar/ToolbarRow/AgentSettingWrap"]
+[node name="SettingButton" type="Button" parent="Root/Toolbar/ToolbarRow/AgentSettingWrap"]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4

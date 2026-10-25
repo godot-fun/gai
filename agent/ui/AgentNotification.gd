@@ -3,7 +3,7 @@ extends RefCounted
 
 ## Desktop notifications for agent runs — a toast pops up top-right while the app is active or
 ## bottom-right while it is in the background, plus an optional sound clip. Both are toggled in
-## [AgentSettingDialog] and persisted through [AgentNotifySetting].
+## [AgentSettingWindow] and persisted through [AgentNotifySetting].
 
 
 ## Fade of the notification sound when it starts and when its configured duration elapses.

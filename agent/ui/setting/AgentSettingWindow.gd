@@ -1,33 +1,22 @@
-class_name AgentSettingDialog
+class_name AgentSettingWindow
 extends CommonWindow
 
-## Settings dialog shell. Each top-level settings category owns its controls and persistence.
+## Settings window shell. Each top-level settings category owns its controls and persistence.
 
 const FIELD_LABEL_RATIO: float = 1.0
 const FIELD_CONTROL_RATIO: float = 5.0
-const SETTINGS_ICON_PATH: String = "res://agent/asset/image/icon/settings.svg"
-
-var button: Button
+const GROUP_NAME: StringName = &"agent_setting_window"
 var sections: Array[SettingSection] = []
 var separators: Array[HSeparator] = []
 
 
 func _init() -> void:
 	super()
+	add_to_group(GROUP_NAME)
 	exclusive = false
-	pass
-
-
-func setup(p_button: Button) -> void:
-	button = p_button
-	gdf.gdf_node.add_child(self)
-	build_window()
-	button.pressed.connect(on_button_pressed)
-	button.mouse_entered.connect(on_mouse_entered)
-	button.mouse_exited.connect(on_mouse_exited)
 	gdf.events.locale_changed.connect(apply_locale)
+	build_window()
 	apply_locale()
-	apply_theme()
 	pass
 
 
@@ -191,7 +180,7 @@ func refresh_check_button(check: CheckButton, enabled: bool) -> void:
 	pass
 
 
-func on_button_pressed() -> void:
+func open() -> void:
 	for section in sections:
 		section.refresh()
 	present_centered(30, 70)
@@ -201,7 +190,7 @@ func on_button_pressed() -> void:
 func on_close_requested() -> void:
 	for section in sections:
 		section.save()
-	hide()
+	queue_free()
 	pass
 
 
@@ -219,37 +208,10 @@ func apply_locale() -> void:
 
 func apply_theme() -> void:
 	super()
-	AgentToolbarButton.style_round(button, I18n.t("agent.settings.tooltip"))
-	update_icon(button.is_hovered())
 	style_content()
 	for section in sections:
 		section.apply_theme()
 	pass
-
-
-func on_mouse_entered() -> void:
-	update_icon(true)
-	pass
-
-
-func on_mouse_exited() -> void:
-	update_icon(false)
-	pass
-
-
-func update_icon(hovered: bool) -> void:
-	var icon_color := Colors.primary_text if hovered else Colors.secondary_text
-	button.icon = make_icon(icon_color)
-	pass
-
-
-func make_icon(color: Color) -> ImageTexture:
-	var svg := FileAccess.get_file_as_string(SETTINGS_ICON_PATH)
-	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
-	var image := Image.new()
-	if image.load_svg_from_string(svg, 2.0) != OK:
-		return ImageTexture.new()
-	return ImageTexture.create_from_image(image)
 
 
 ## Match [PopupWindow]'s themed content treatment: CommonWindow paints the shared frame, while
@@ -346,4 +308,21 @@ func style_spin_box(spin: SpinBox) -> void:
 		spin.add_theme_stylebox_override(side + "_background_disabled", normal.duplicate())
 	spin.add_theme_stylebox_override("field_and_buttons_separator", StyleBoxEmpty.new())
 	spin.add_theme_stylebox_override("up_down_buttons_separator", StyleBoxEmpty.new())
+	pass
+
+
+####################################################################################################
+# Static methods
+
+
+static func is_open() -> bool:
+	return gdf.is_ready() and not gdf.gdf_node.get_tree().get_nodes_in_group(GROUP_NAME).is_empty()
+
+
+static func show_setting() -> void:
+	if is_open():
+		return
+	var window := AgentSettingWindow.new()
+	gdf.gdf_node.add_child(window)
+	window.open()
 	pass

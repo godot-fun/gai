@@ -35,7 +35,7 @@ extends Control
 @onready var log_button_node: Button = $Root/Toolbar/ToolbarRow/LogButtonWrap/LogButton
 @onready var theme_color_select_node: Button = $Root/Toolbar/ToolbarRow/ThemeColorSelectWrap/ThemeColorSelect
 @onready var theme_toggle_button: Button = $Root/Toolbar/ToolbarRow/ThemeToggleWrap/ThemeToggleButton
-@onready var agent_setting_button: Button = $Root/Toolbar/ToolbarRow/AgentSettingWrap/AgentSettingButton
+@onready var setting_button_node: Button = $Root/Toolbar/ToolbarRow/AgentSettingWrap/SettingButton
 @onready var agent_setting_wrap: MarginContainer = $Root/Toolbar/ToolbarRow/AgentSettingWrap
 @onready var workspace_dialog: FileDialog = $WorkspaceDialog
 
@@ -54,7 +54,7 @@ var skill_toggle: SkillToggle = SkillToggle.new()
 var agent_prompt_toggle: AgentPromptToggle = AgentPromptToggle.new()
 var compaction_button: CompactionButton = CompactionButton.new()
 var memory_toggle: MemoryToggle = MemoryToggle.new()
-var agent_setting_dialog: AgentSettingDialog = AgentSettingDialog.new()
+var setting_button: SettingButton = SettingButton.new()
 var agent_session_sidebar: AgentSessionSidebar = AgentSessionSidebar.new()
 var agent_chat_view: AgentChatView = AgentChatView.new()
 var agent_notification: AgentNotification = AgentNotification.new()
@@ -84,7 +84,7 @@ func _ready() -> void:
 	agent_chat_input.setup(input_bar, input_wrap, input_inner, input_field, send_button)
 	theme_color_select.setup(theme_color_select_node)
 	theme_toggle.setup(theme_toggle_button)
-	agent_setting_dialog.setup(agent_setting_button)
+	setting_button.setup(setting_button_node)
 	workspace_button.setup(workspace_button_node, workspace_dialog)
 	workflow_button.setup(workflow_button_node, workspace_button_node)
 	sense_button.setup(sense_button_node, sense_input)

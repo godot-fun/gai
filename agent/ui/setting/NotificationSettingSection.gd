@@ -14,7 +14,7 @@ var sound_folder_dialog: FileDialog
 var folder_field_typing: bool = false
 
 
-func set_up(p_ui: AgentSettingDialog, parent: VBoxContainer, window: Window) -> void:
+func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> void:
 	super.set_up(p_ui, parent, window)
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.notification"))
 	var notification_parts := ui.make_setting_row(parent, 6)
