@@ -13,6 +13,7 @@ var container: PanelContainer
 
 
 func _init() -> void:
+	exclusive = true
 	transient = true
 	visible = false
 	container = PanelContainer.new()

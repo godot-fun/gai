@@ -47,7 +47,6 @@ func build_dialog() -> void:
 	dialog.min_size = Vector2i(640, 680)
 	dialog.transient = true
 	dialog.unresizable = true
-	dialog.exclusive = false
 	dialog.visible = false
 	var dialog_theme := Theme.new()
 	dialog_theme.default_font = Fonts.regular()

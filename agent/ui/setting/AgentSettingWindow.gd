@@ -13,7 +13,6 @@ var separators: Array[HSeparator] = []
 func _init() -> void:
 	super()
 	add_to_group(GROUP_NAME)
-	exclusive = false
 	gdf.events.locale_changed.connect(apply_locale)
 	build_window()
 	apply_locale()
