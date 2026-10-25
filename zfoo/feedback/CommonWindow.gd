@@ -56,6 +56,17 @@ func present_centered(width_percent: int = 70, height_percent: int = 80) -> void
 	pass
 
 
+## Size against the viewport and show near the root viewport's right edge (vertically centered), inset by [constant Margin.ma_6].
+func present_right(width_percent: int = 70, height_percent: int = 80) -> void:
+	size = size_from_viewport_percent(width_percent, height_percent)
+	var viewport_size := gdf.gdf_node.get_tree().root.get_visible_rect().size
+	var x := int(viewport_size.x - size.x - Margin.ma_6)
+	var y := int((viewport_size.y - size.y) * 0.5)
+	popup(Rect2i(x, y, size.x, size.y))
+	oversampling_override = DisplayScale.compute_ui_scale()
+	pass
+
+
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT and visible and dismiss_on_focus_out():
 		on_close_requested.call_deferred()

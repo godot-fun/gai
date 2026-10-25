@@ -238,7 +238,6 @@ func make_snippet(body: String, needle: String) -> String:
 
 
 func on_result_pressed(session_id: int, entry_index: int) -> void:
-	on_close_requested()
 	if not AgentSessionManager.is_active(session_id):
 		AgentSessionManager.select_session(session_id)
 	AgentEvents.events.chat_search_result_selected.emit(session_id, entry_index)
@@ -283,7 +282,7 @@ static func show_search() -> void:
 	close_open_windows()
 	var window := SearchWindow.new()
 	gdf.gdf_node.add_child(window)
-	window.present_centered(50, 70)
+	window.present_right(50, 70)
 	window.query_edit.grab_focus()
 	window.query_edit.select_all()
 	if StringUtils.is_not_blank(window.query_edit.text):
