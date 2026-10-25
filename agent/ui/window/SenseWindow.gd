@@ -302,7 +302,7 @@ func make_input_style() -> StyleBoxFlat:
 
 func style_text_edit(edit: TextEdit) -> void:
 	edit.add_theme_color_override("font_color", Colors.primary_text)
-	edit.add_theme_color_override("font_placeholder_color", Colors.secondary_text.darkened(0.08))
+	edit.add_theme_color_override("font_placeholder_color", ThemeColor.demote(Colors.secondary_text, Colors.am_2))
 	edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
 	edit.add_theme_color_override("selection_color", ThemeColor.selected_surface)
 	edit.caret_blink = true

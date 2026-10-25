@@ -7,7 +7,7 @@ extends Object
 static func apply_field_text(
 	edit: LineEdit,
 	font_color: Color = Colors.primary_text,
-	placeholder_color: Color = Colors.secondary_text.darkened(0.08),
+	placeholder_color: Color = ThemeColor.demote(Colors.secondary_text, Colors.am_2),
 	selection_color: Color = ThemeColor.selection_color
 ) -> void:
 	edit.add_theme_color_override("font_color", font_color)
@@ -41,7 +41,7 @@ static func apply_line_edit(
 	edit: LineEdit,
 	normal: StyleBoxFlat,
 	font_color: Color = Colors.primary_text,
-	placeholder_color: Color = Colors.secondary_text.darkened(0.08),
+	placeholder_color: Color = ThemeColor.demote(Colors.secondary_text, Colors.am_2),
 	selection_color: Color = ThemeColor.selection_color,
 	focus_border_width: int = ControlSize.border_sm
 ) -> void:
