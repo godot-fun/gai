@@ -10,7 +10,7 @@ extends Object
 ##
 ## Typical use:
 ## [codeblock]
-## ButtonStyle.apply_style(button, ButtonStyle.theme_normal_style(), ButtonStyle.theme_hover_style(), ButtonStyle.theme_pressed_style())
+## ButtonStyle.apply_style(button)
 ## [/codeblock]
 
 
@@ -20,14 +20,24 @@ static func theme_normal_style() -> StyleBoxFlat:
 		ThemeColor.accent_theme_color(), ControlSize.border_xs)
 
 
-## Hover state paired with [method theme_normal_style]: quiet selected surface with a soft accent outline.
+## Hover fill for [param normal]: quiet selected surface with a soft accent outline.
+static func theme_hover_style_for(normal: StyleBoxFlat) -> StyleBoxFlat:
+	return StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface, ThemeColor.alpha_theme_color(0.85))
+
+
+## Pressed fill for [param normal]: stronger selected surface; [param border_color] defaults to accent.
+static func theme_pressed_style_for(normal: StyleBoxFlat, border_color: Color = ThemeColor.accent_theme_color()) -> StyleBoxFlat:
+	return StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.selected_surface, Weights.w_2), border_color)
+
+
+## Default hover box paired with [method theme_normal_style].
 static func theme_hover_style() -> StyleBoxFlat:
-	return StyleBoxHelper.duplicate_with_bg_color(theme_normal_style(), ThemeColor.selected_surface, ThemeColor.alpha_theme_color(0.85))
+	return theme_hover_style_for(theme_normal_style())
 
 
-## Pressed state paired with [method theme_normal_style]: stronger selected surface with accent outline.
+## Default pressed box paired with [method theme_normal_style].
 static func theme_pressed_style() -> StyleBoxFlat:
-	return StyleBoxHelper.duplicate_with_bg_color(theme_normal_style(), ThemeColor.promote(ThemeColor.selected_surface, Weights.w_2), ThemeColor.accent_theme_color())
+	return theme_pressed_style_for(theme_normal_style())
 
 
 ## Apply normal, hover, and pressed states. [code]focus[/code] mirrors [param hover], disabled
@@ -37,13 +47,19 @@ static func theme_pressed_style() -> StyleBoxFlat:
 ## The hover-pressed override must not be omitted: Godot resolves a missing item from the default
 ## theme, so a button that only overrides normal / hover / pressed paints the engine's own box
 ## while it is pressed *and* hovered.
-static func apply_style(button: BaseButton, normal: StyleBoxFlat, hover: StyleBoxFlat, pressed: StyleBoxFlat) -> void:
-	button.add_theme_stylebox_override("normal", normal)
-	button.add_theme_stylebox_override("hover", hover)
-	button.add_theme_stylebox_override("pressed", pressed)
-	button.add_theme_stylebox_override("focus", hover.duplicate() as StyleBoxFlat)
-	button.add_theme_stylebox_override("disabled", normal.duplicate() as StyleBoxFlat)
-	button.add_theme_stylebox_override("hover_pressed", pressed.duplicate() as StyleBoxFlat)
+##
+## Style boxes default to [method theme_normal_style] and its paired hover / pressed states.
+## Omitted [param hover] and [param pressed] are derived from the resolved [param normal].
+static func apply_style(button: BaseButton, normal: StyleBoxFlat = null, hover: StyleBoxFlat = null, pressed: StyleBoxFlat = null) -> void:
+	var resolved_normal := normal if normal != null else theme_normal_style()
+	var resolved_hover := hover if hover != null else theme_hover_style_for(resolved_normal)
+	var resolved_pressed := pressed if pressed != null else theme_pressed_style_for(resolved_normal)
+	button.add_theme_stylebox_override("normal", resolved_normal)
+	button.add_theme_stylebox_override("hover", resolved_hover)
+	button.add_theme_stylebox_override("pressed", resolved_pressed)
+	button.add_theme_stylebox_override("focus", resolved_hover.duplicate() as StyleBoxFlat)
+	button.add_theme_stylebox_override("disabled", resolved_normal.duplicate() as StyleBoxFlat)
+	button.add_theme_stylebox_override("hover_pressed", resolved_pressed.duplicate() as StyleBoxFlat)
 	pass
 
 
@@ -109,10 +125,11 @@ static func apply_check_button(
 
 ## Apply standard dropdown states: the normal surface gains an accent outline while hovered,
 ## pressed, or focused, and retains the shared text colors in every state.
-static func apply_option_button(option: OptionButton, normal: StyleBoxFlat, text_color: Color = Colors.primary_text) -> void:
-	var hover: StyleBoxFlat = normal.duplicate() as StyleBoxFlat
+static func apply_option_button(option: OptionButton, normal: StyleBoxFlat = null, text_color: Color = Colors.primary_text) -> void:
+	var resolved_normal := normal if normal != null else LineEditStyle.theme_normal_style()
+	var hover: StyleBoxFlat = resolved_normal.duplicate() as StyleBoxFlat
 	hover.border_color = ThemeColor.accent_theme_color()
-	apply_style(option, normal, hover, hover.duplicate())
+	apply_style(option, resolved_normal, hover, hover.duplicate())
 	apply_font_colors(option, text_color, text_color, text_color)
 	PopupMenuStyle.apply(option.get_popup())
 	pass

@@ -254,7 +254,7 @@ func apply_theme() -> void:
 	for separator in separators:
 		separator.add_theme_stylebox_override("separator", separator_style)
 	ButtonStyle.apply_check_button(enabled_check)
-	style_option_button(backend_select)
+	ButtonStyle.apply_option_button(backend_select)
 	style_button(hotkey_button)
 	style_text_edit(prompt_edit)
 	LineEditStyle.apply(search_edit)
@@ -309,11 +309,6 @@ func style_text_edit(edit: TextEdit) -> void:
 	edit.add_theme_stylebox_override("normal", normal)
 	edit.add_theme_stylebox_override("focus", focus)
 	edit.add_theme_stylebox_override("read_only", normal.duplicate())
-	pass
-
-
-func style_option_button(select: OptionButton) -> void:
-	ButtonStyle.apply_option_button(select, LineEditStyle.theme_normal_style())
 	pass
 
 

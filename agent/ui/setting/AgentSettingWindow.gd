@@ -251,14 +251,6 @@ func style_action_button(button: Button) -> void:
 	pass
 
 
-func style_option_button(select: OptionButton) -> void:
-	ButtonStyle.apply_option_button(select, LineEditStyle.theme_normal_style())
-	select.get_popup().add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(
-		ThemeColor.card_surface, ControlSize.radius_lg, Margin.ma_1, Margin.ma_1,
-		Color(ThemeColor.title_color, 0.10), ControlSize.border_xs))
-	pass
-
-
 func style_spin_box(spin: SpinBox) -> void:
 	RangeStyle.apply_spin_box(spin)
 	pass

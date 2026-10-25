@@ -34,9 +34,7 @@ static func apply_new_session_button(button: Button) -> void:
 
 	var border := ThemeColor.alpha_theme_color(0.55 if ThemeColor.is_dark_theme() else 0.45)
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_md, Margin.ma_3, Margin.ma_2, border, ControlSize.border_xs)
-	ButtonStyle.apply_style(button, normal,
-		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface, ThemeColor.alpha_theme_color(0.85)),
-		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.selected_surface, Weights.w_2), theme_color))
+	ButtonStyle.apply_style(button, normal)
 	pass
 
 
