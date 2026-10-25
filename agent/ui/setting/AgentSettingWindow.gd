@@ -252,15 +252,11 @@ func style_action_button(button: Button) -> void:
 
 
 func style_option_button(select: OptionButton) -> void:
-	ButtonStyle.apply_option_button(select, make_input_style())
+	ButtonStyle.apply_option_button(select, LineEditStyle.make_normal_style())
 	select.get_popup().add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(
 		ThemeColor.card_surface, ControlSize.radius_lg, Margin.ma_1, Margin.ma_1,
 		Color(ThemeColor.title_color, 0.10), ControlSize.border_xs))
 	pass
-
-
-func make_input_style() -> StyleBoxFlat:
-	return StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 7, Margin.ma_3, Margin.ma_0, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
 
 
 func style_spin_box(spin: SpinBox) -> void:

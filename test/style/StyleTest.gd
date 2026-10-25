@@ -263,11 +263,11 @@ func ButtonStyle_apply_option_button_test() -> void:
 	pass
 
 
-func LineEditStyle_apply_line_edit_test() -> void:
+func LineEditStyle_apply_test() -> void:
 	var edit := LineEdit.new()
 	edit.clear_button_enabled = true
 	var normal := StyleBoxHelper.create_style_box_flat(Color(0.2, 0.2, 0.2), 6, Margin.ma_2, Margin.ma_1, Color.WHITE, 1)
-	LineEditStyle.apply_line_edit(edit, normal, Color.BLACK, Color.GRAY, Color.BLUE)
+	LineEditStyle.apply(edit, normal, Color.BLACK, Color.GRAY, Color.BLUE)
 	var focus: StyleBoxFlat = edit.get_theme_stylebox("focus") as StyleBoxFlat
 	assert(edit.get_theme_color("font_color") == Color.BLACK)
 	assert(edit.get_theme_color("font_placeholder_color") == Color.GRAY)
@@ -277,6 +277,29 @@ func LineEditStyle_apply_line_edit_test() -> void:
 	assert(edit.get_theme_stylebox("read_only") != normal)
 	assert(edit.get_theme_color("clear_button_color") == Colors.secondary_text)
 	edit.free()
+	pass
+
+
+func LineEditStyle_apply_default_style_test() -> void:
+	var edit := LineEdit.new()
+	LineEditStyle.apply(edit)
+	var normal: StyleBoxFlat = edit.get_theme_stylebox("normal") as StyleBoxFlat
+	assert(normal.bg_color == ThemeColor.card_surface)
+	assert(normal.corner_radius_top_left == ControlSize.radius_md)
+	assert(normal.get_margin(SIDE_LEFT) == Margin.ma_3)
+	assert(normal.border_color == Color(ThemeColor.title_color, Weights.w_2))
+	assert(normal.border_width_left == ControlSize.border_xs)
+	assert(edit.get_theme_stylebox("focus") is StyleBoxFlat)
+	edit.free()
+	pass
+
+
+func LineEditStyle_make_normal_style_test() -> void:
+	var normal := LineEditStyle.make_normal_style()
+	assert(normal.bg_color == ThemeColor.card_surface)
+	assert(normal.corner_radius_top_left == ControlSize.radius_md)
+	assert(normal.get_margin(SIDE_LEFT) == Margin.ma_3)
+	assert(normal.border_color == Color(ThemeColor.title_color, Weights.w_2))
 	pass
 
 

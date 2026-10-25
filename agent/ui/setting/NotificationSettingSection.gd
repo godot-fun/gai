@@ -190,6 +190,6 @@ func apply_theme() -> void:
 	ui.style_field_label(sound_seconds_label)
 	ui.style_field_label(sound_folder_label)
 	ui.style_spin_box(sound_seconds_spin)
-	LineEditStyle.apply_line_edit(sound_folder_edit, ui.make_input_style())
+	LineEditStyle.apply(sound_folder_edit)
 	FileDialogStyle.apply(sound_folder_dialog, I18nHelper.file_dialog_label_texts())
 	pass

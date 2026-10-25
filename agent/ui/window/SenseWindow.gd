@@ -257,7 +257,7 @@ func apply_theme() -> void:
 	style_option_button(backend_select)
 	style_button(hotkey_button)
 	style_text_edit(prompt_edit)
-	LineEditStyle.apply_line_edit(search_edit, make_input_style(), ThemeColor.title_color, Color(ThemeColor.body_color, 0.78))
+	LineEditStyle.apply(search_edit)
 	style_results()
 	pass
 
@@ -296,17 +296,13 @@ func apply_locale() -> void:
 	pass
 
 
-func make_input_style() -> StyleBoxFlat:
-	return StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 7, Margin.ma_3, Margin.ma_0, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
-
-
 func style_text_edit(edit: TextEdit) -> void:
 	edit.add_theme_color_override("font_color", Colors.primary_text)
 	edit.add_theme_color_override("font_placeholder_color", ThemeColor.demote(Colors.secondary_text, Weights.w_2))
 	edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
 	edit.add_theme_color_override("selection_color", ThemeColor.selected_surface)
 	edit.caret_blink = true
-	var normal := make_input_style()
+	var normal := LineEditStyle.make_normal_style()
 	var focus := normal.duplicate() as StyleBoxFlat
 	focus.border_color = ThemeColor.accent_theme_color()
 	focus.set_border_width_all(ControlSize.border_sm)
@@ -317,13 +313,13 @@ func style_text_edit(edit: TextEdit) -> void:
 
 
 func style_option_button(select: OptionButton) -> void:
-	ButtonStyle.apply_option_button(select, make_input_style())
+	ButtonStyle.apply_option_button(select, LineEditStyle.make_normal_style())
 	pass
 
 
 func style_button(control: Button) -> void:
 	ButtonStyle.apply_font_colors(control, Colors.primary_text, Colors.primary_text, ThemeColor.accent_theme_color())
-	var normal := make_input_style()
+	var normal := LineEditStyle.make_normal_style()
 	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.card_surface, Weights.w_2))
 	ButtonStyle.apply_style(control, normal, hover, StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface))
 	pass

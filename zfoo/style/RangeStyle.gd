@@ -4,10 +4,8 @@ extends Object
 ## Apply the shared [SpinBox] treatment. The embedded line edit uses the themed card surface;
 ## compact increment and decrement controls derive their normal and hover boxes from it.
 static func apply_spin_box(spin: SpinBox) -> void:
-	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 
-			ControlSize.radius_md, Margin.ma_3, Margin.ma_0,
-		Color(ThemeColor.title_color, Weights.w_2), ControlSize.border_xs)
-	LineEditStyle.apply_line_edit(spin.get_line_edit(), normal)
+	var normal := LineEditStyle.make_normal_style()
+	LineEditStyle.apply(spin.get_line_edit())
 	spin.add_theme_color_override("font_color", Colors.primary_text)
 	spin.add_theme_color_override("font_placeholder_color", Colors.secondary_text)
 	var button_normal: StyleBoxFlat = normal.duplicate() as StyleBoxFlat

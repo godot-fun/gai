@@ -116,7 +116,7 @@ static func style_control(node: Node, label_texts: Dictionary[String, String] = 
 	if node is Control:
 		apply_tooltip_text(node as Control, label_texts)
 	if node is LineEdit:
-		LineEditStyle.apply_line_edit(node as LineEdit, make_field_style(), ThemeColor.title_color, ThemeColor.body_color,
+		LineEditStyle.apply(node as LineEdit, make_field_style(), ThemeColor.title_color, ThemeColor.body_color,
 			ThemeColor.selection_color, Margin.ma_0)
 	elif node is OptionButton:
 		style_path_option(node as OptionButton)
