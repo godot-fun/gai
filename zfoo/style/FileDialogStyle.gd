@@ -54,24 +54,21 @@ static func on_dialog_window_input(event: InputEvent, dialog: FileDialog) -> voi
 static func apply_control_theme(dialog: FileDialog) -> void:
 	var theme := Theme.new()
 	theme.default_font = Fonts.regular()
+	var file_list := make_file_list_style()
+	var field := make_field_style()
+	var field_focus := field.duplicate() as StyleBoxFlat
+	field_focus.border_color = ThemeColor.accent_theme_color()
 	# FileDialog inherits its background panel from AcceptDialog, not from FileDialog itself.
-	# Match CommonWindow's content surface, then keep dense lists and fields neutral for scanning.
 	theme.set_stylebox("panel", "AcceptDialog", make_dialog_body_style())
-	theme.set_stylebox("panel", "ItemList", make_file_list_style())
-	theme.set_stylebox("panel", "ItemListSecondary", make_file_list_style())
+	theme.set_stylebox("panel", "ItemList", file_list)
+	theme.set_stylebox("panel", "ItemListSecondary", file_list)
 	theme.set_stylebox("panel", "Panel", StyleBoxEmpty.new())
 	theme.set_stylebox("panel", "PanelContainer", StyleBoxEmpty.new())
-	theme.set_stylebox("normal", "LineEdit", make_field_style())
-	theme.set_stylebox("read_only", "LineEdit", make_field_style())
-	var focus_field := make_field_style()
-	focus_field.border_color = ThemeColor.accent_theme_color()
-	theme.set_stylebox("focus", "LineEdit", focus_field)
-	theme.set_color("font_color", "Label", ThemeColor.title_color)
-	theme.set_color("font_color", "HeaderSmall", ThemeColor.title_color)
-	theme.set_color("font_color", "Tree", ThemeColor.title_color)
-	theme.set_color("font_color", "ItemList", ThemeColor.title_color)
-	theme.set_color("font_color", "ItemListSecondary", ThemeColor.title_color)
-	theme.set_color("font_color", "LineEdit", ThemeColor.title_color)
+	theme.set_stylebox("normal", "LineEdit", field)
+	theme.set_stylebox("read_only", "LineEdit", field.duplicate())
+	theme.set_stylebox("focus", "LineEdit", field_focus)
+	for type_name: StringName in [&"Label", &"HeaderSmall", &"Tree", &"ItemList", &"ItemListSecondary", &"LineEdit"]:
+		theme.set_color("font_color", type_name, ThemeColor.title_color)
 	dialog.theme = theme
 	pass
 
@@ -112,14 +109,12 @@ static func apply_control_styles(dialog: FileDialog, label_texts: Dictionary[Str
 
 
 static func style_control(node: Node, label_texts: Dictionary[String, String] = {}) -> void:
-	# Tooltips are held by every Control subtype, whereas labels and popup items need type-specific APIs.
 	if node is Control:
 		apply_tooltip_text(node as Control, label_texts)
 	if node is LineEdit:
-		LineEditStyle.apply(node as LineEdit, make_field_style(), ThemeColor.title_color, ThemeColor.body_color,
-			ThemeColor.selection_color, Margin.ma_0)
+		LineEditStyle.apply(node as LineEdit)
 	elif node is OptionButton:
-		style_path_option(node as OptionButton)
+		ButtonStyle.apply_option_button(node as OptionButton)
 	elif node is PopupMenu:
 		var popup_menu := node as PopupMenu
 		PopupMenuStyle.apply(popup_menu)
@@ -179,8 +174,7 @@ static func apply_popup_menu_text(popup_menu: PopupMenu, label_texts: Dictionary
 
 static func style_confirm_button(button: Button) -> void:
 	var fill := ThemeColor.accent_theme_color()
-	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT,
-		ControlSize.radius_md, Margin.ma_3, Margin.ma_1, ThemeColor.alpha_theme_color(0.55), ControlSize.border_xs)
+	var normal := make_outline_action_normal(ThemeColor.alpha_theme_color(0.55))
 	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface, fill)
 	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, fill, fill)
 	ButtonStyle.apply_style(button, normal, hover, pressed)
@@ -190,8 +184,7 @@ static func style_confirm_button(button: Button) -> void:
 
 ## Cancel mirrors CommonWindow's close button: quiet title-color at rest, error-red on interaction.
 static func style_cancel_button(button: Button) -> void:
-	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT,
-		ControlSize.radius_md, Margin.ma_3, Margin.ma_1, Color(ThemeColor.title_color, 0.35), ControlSize.border_xs)
+	var normal := make_outline_action_normal(Color(ThemeColor.title_color, 0.35))
 	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, Colors.error_surface, Colors.error)
 	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, Colors.error, Colors.error)
 	ButtonStyle.apply_style(button, normal, hover, pressed)
@@ -208,7 +201,7 @@ static func style_button(button: Button) -> void:
 
 
 ## Compact toolbar controls remain visually quiet until hovered or pressed.
-static func style_toolbar_button(button: Button) -> void:
+static func style_toolbar_button(button: BaseButton) -> void:
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_sm, Margin.ma_2, Margin.ma_1)
 	ButtonStyle.apply_style(button, normal)
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, ThemeColor.title_color, ThemeColor.title_color)
@@ -216,33 +209,20 @@ static func style_toolbar_button(button: Button) -> void:
 	pass
 
 
-## The drive selector shares the path field's surface and focus treatment, so the two controls
-## read as one location bar instead of a dark dropdown beside a light text field.
-static func style_path_option(option: OptionButton) -> void:
-	var normal := make_field_style()
-	ButtonStyle.apply_style(option, normal)
-	ButtonStyle.apply_font_colors(option, ThemeColor.title_color, ThemeColor.title_color, ThemeColor.title_color)
-	ButtonStyle.apply_icon_colors(option, Colors.secondary_text, ThemeColor.title_color, ThemeColor.accent_theme_color())
-	PopupMenuStyle.apply(option.get_popup())
-	pass
-
-
 static func style_tree(tree: Tree) -> void:
-	tree.add_theme_color_override("font_color", ThemeColor.title_color)
-	tree.add_theme_color_override("font_hovered_color", ThemeColor.title_color)
-	tree.add_theme_color_override("font_selected_color", ThemeColor.title_color)
+	apply_browser_font_colors(tree)
 	tree.add_theme_stylebox_override("panel", make_file_list_style())
-	tree.add_theme_stylebox_override("selected", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, ControlSize.radius_sm))
-	tree.add_theme_stylebox_override("selected_focus", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, ControlSize.radius_sm,
-		0, 0, ThemeColor.accent_theme_color(), ControlSize.border_xs))
+	var selected := StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, ControlSize.radius_sm)
+	var selected_focus := selected.duplicate() as StyleBoxFlat
+	selected_focus.border_color = ThemeColor.accent_theme_color()
+	selected_focus.set_border_width_all(ControlSize.border_xs)
+	tree.add_theme_stylebox_override("selected", selected)
+	tree.add_theme_stylebox_override("selected_focus", selected_focus)
 	pass
 
 
 static func style_item_list(list: ItemList) -> void:
-	list.add_theme_color_override("font_color", ThemeColor.title_color)
-	list.add_theme_color_override("font_hovered_color", ThemeColor.title_color)
-	list.add_theme_color_override("font_selected_color", ThemeColor.title_color)
-	# Godot otherwise resolves this compound state to its default white text.
+	apply_browser_font_colors(list)
 	list.add_theme_color_override("font_hovered_selected_color", ThemeColor.title_color)
 	list.add_theme_stylebox_override("panel", make_file_list_style())
 	list.add_theme_stylebox_override("hovered", make_file_list_hover_style())
@@ -253,6 +233,18 @@ static func style_item_list(list: ItemList) -> void:
 	list.add_theme_stylebox_override("hovered_selected", selected.duplicate())
 	list.add_theme_stylebox_override("hovered_selected_focus", selected_focus.duplicate())
 	pass
+
+
+static func apply_browser_font_colors(control: Control) -> void:
+	control.add_theme_color_override("font_color", ThemeColor.title_color)
+	control.add_theme_color_override("font_hovered_color", ThemeColor.title_color)
+	control.add_theme_color_override("font_selected_color", ThemeColor.title_color)
+	pass
+
+
+static func make_outline_action_normal(border_color: Color) -> StyleBoxFlat:
+	return StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT,
+		ControlSize.radius_md, Margin.ma_3, Margin.ma_1, border_color, ControlSize.border_xs)
 
 
 ## A lightly lifted, misty version of the inset surface separates the lists without the stark
@@ -294,8 +286,5 @@ static func make_dialog_body_style() -> StyleBoxFlat:
 
 
 static func make_field_style() -> StyleBoxFlat:
-	# The location controls belong to the file browser's innermost reading surface, rather than
-	# floating as white cards above it in the light theme. Use the standard control outline here
-	# instead of the subtle separator: the drive selector and editable path need a clear boundary.
 	return StyleBoxHelper.create_style_box_flat(file_list_surface(), ControlSize.radius_sm, Margin.ma_2, Margin.ma_1,
 		Colors.border, ControlSize.border_sm)
