@@ -202,9 +202,7 @@ static func style_cancel_button(button: Button) -> void:
 static func style_button(button: Button) -> void:
 	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_sm, Margin.ma_2, Margin.ma_1,
 		Colors.subtle_border, ControlSize.border_xs)
-	ButtonStyle.apply_style(button, normal,
-		make_button_hover_style(normal),
-		make_button_pressed_style(normal))
+	ButtonStyle.apply_style(button, normal, duplicate_button_hover_style(normal), duplicate_button_pressed_style(normal))
 	ButtonStyle.apply_font_colors(button, ThemeColor.title_color, ThemeColor.title_color, ThemeColor.title_color)
 	pass
 
@@ -212,9 +210,7 @@ static func style_button(button: Button) -> void:
 ## Compact toolbar controls remain visually quiet until hovered or pressed.
 static func style_toolbar_button(button: Button) -> void:
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_sm, Margin.ma_2, Margin.ma_1)
-	ButtonStyle.apply_style(button, normal,
-		make_button_hover_style(normal),
-		make_button_pressed_style(normal))
+	ButtonStyle.apply_style(button, normal, duplicate_button_hover_style(normal), duplicate_button_pressed_style(normal))
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, ThemeColor.title_color, ThemeColor.title_color)
 	ButtonStyle.apply_icon_colors(button, Colors.secondary_text, ThemeColor.title_color, ThemeColor.accent_theme_color())
 	pass
@@ -224,8 +220,8 @@ static func style_toolbar_button(button: Button) -> void:
 ## read as one location bar instead of a dark dropdown beside a light text field.
 static func style_path_option(option: OptionButton) -> void:
 	var normal := make_field_style()
-	var hover := make_button_hover_style(normal)
-	var pressed := make_button_pressed_style(normal)
+	var hover := duplicate_button_hover_style(normal)
+	var pressed := duplicate_button_pressed_style(normal)
 	ButtonStyle.apply_style(option, normal, hover, pressed)
 	ButtonStyle.apply_font_colors(option, ThemeColor.title_color, ThemeColor.title_color, ThemeColor.title_color)
 	ButtonStyle.apply_icon_colors(option, Colors.secondary_text, ThemeColor.title_color, ThemeColor.accent_theme_color())
@@ -289,13 +285,12 @@ static func make_file_list_selection_style(border_color: Color) -> StyleBoxFlat:
 		border_color, ControlSize.border_xs)
 
 
-## Match BubbleContainer's header actions: a selected accent surface gives quiet, non-white hover
-## feedback, and the pressed state increases contrast without changing the button's geometry.
-static func make_button_hover_style(normal: StyleBoxFlat) -> StyleBoxFlat:
+## Hover / pressed fills for a non-default [param normal] surface (toolbar, path field, control chrome).
+static func duplicate_button_hover_style(normal: StyleBoxFlat) -> StyleBoxFlat:
 	return StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface, ThemeColor.alpha_theme_color(0.85))
 
 
-static func make_button_pressed_style(normal: StyleBoxFlat) -> StyleBoxFlat:
+static func duplicate_button_pressed_style(normal: StyleBoxFlat) -> StyleBoxFlat:
 	return StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.selected_surface, Weights.w_2), ThemeColor.accent_theme_color())
 
 

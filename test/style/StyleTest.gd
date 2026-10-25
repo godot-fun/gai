@@ -236,6 +236,22 @@ func ButtonStyle_apply_test() -> void:
 	pass
 
 
+func ButtonStyle_theme_style_test() -> void:
+	var normal := ButtonStyle.theme_normal_style()
+	assert(normal.bg_color == ThemeColor.card_surface)
+	assert(normal.corner_radius_top_left == ControlSize.radius_md)
+	assert(normal.get_margin(SIDE_LEFT) == Margin.ma_2)
+	assert(normal.border_color == ThemeColor.accent_theme_color())
+	var hover := ButtonStyle.theme_hover_style()
+	var pressed := ButtonStyle.theme_pressed_style()
+	assert(hover.bg_color == ThemeColor.selected_surface)
+	assert(hover.border_color == ThemeColor.alpha_theme_color(0.85))
+	assert(pressed.bg_color == ThemeColor.promote(ThemeColor.selected_surface, Weights.w_2))
+	assert(pressed.border_color == ThemeColor.accent_theme_color())
+	assert(hover.get_margin(SIDE_LEFT) == normal.get_margin(SIDE_LEFT))
+	pass
+
+
 func RangeStyle_apply_spin_box_test() -> void:
 	var spin := SpinBox.new()
 	RangeStyle.apply_spin_box(spin)
@@ -294,8 +310,8 @@ func LineEditStyle_apply_default_style_test() -> void:
 	pass
 
 
-func LineEditStyle_make_normal_style_test() -> void:
-	var normal := LineEditStyle.make_normal_style()
+func LineEditStyle_theme_normal_style_test() -> void:
+	var normal := LineEditStyle.theme_normal_style()
 	assert(normal.bg_color == ThemeColor.card_surface)
 	assert(normal.corner_radius_top_left == ControlSize.radius_md)
 	assert(normal.get_margin(SIDE_LEFT) == Margin.ma_3)

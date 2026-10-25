@@ -302,7 +302,7 @@ func style_text_edit(edit: TextEdit) -> void:
 	edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
 	edit.add_theme_color_override("selection_color", ThemeColor.selected_surface)
 	edit.caret_blink = true
-	var normal := LineEditStyle.make_normal_style()
+	var normal := LineEditStyle.theme_normal_style()
 	var focus := normal.duplicate() as StyleBoxFlat
 	focus.border_color = ThemeColor.accent_theme_color()
 	focus.set_border_width_all(ControlSize.border_sm)
@@ -313,13 +313,13 @@ func style_text_edit(edit: TextEdit) -> void:
 
 
 func style_option_button(select: OptionButton) -> void:
-	ButtonStyle.apply_option_button(select, LineEditStyle.make_normal_style())
+	ButtonStyle.apply_option_button(select, LineEditStyle.theme_normal_style())
 	pass
 
 
 func style_button(control: Button) -> void:
 	ButtonStyle.apply_font_colors(control, Colors.primary_text, Colors.primary_text, ThemeColor.accent_theme_color())
-	var normal := LineEditStyle.make_normal_style()
+	var normal := LineEditStyle.theme_normal_style()
 	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.card_surface, Weights.w_2))
 	ButtonStyle.apply_style(control, normal, hover, StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface))
 	pass

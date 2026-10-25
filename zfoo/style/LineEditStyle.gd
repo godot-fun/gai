@@ -4,8 +4,8 @@ extends Object
 ## LineEdit affordances beyond field StyleBoxes. Godot's default clear-button tint targets dark UI.
 
 
-## Create the standard card-surface field box shared by line edits and spin boxes.
-static func make_normal_style() -> StyleBoxFlat:
+## Standard card-surface field box shared by line edits and spin boxes.
+static func theme_normal_style() -> StyleBoxFlat:
 	return StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface,
 		ControlSize.radius_md, Margin.ma_3, Margin.ma_0,
 		Color(ThemeColor.title_color, Weights.w_2), ControlSize.border_xs)
@@ -14,7 +14,7 @@ static func make_normal_style() -> StyleBoxFlat:
 ## Apply the shared editable field treatment while allowing callers to supply their own surface.
 static func apply(
 	edit: LineEdit,
-	normal: StyleBoxFlat = make_normal_style(),
+	normal: StyleBoxFlat = theme_normal_style(),
 	font_color: Color = Colors.primary_text,
 	placeholder_color: Color = ThemeColor.demote(Colors.secondary_text, Weights.w_2),
 	selection_color: Color = ThemeColor.selection_color,

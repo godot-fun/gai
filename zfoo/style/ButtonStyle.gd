@@ -10,11 +10,24 @@ extends Object
 ##
 ## Typical use:
 ## [codeblock]
-## var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 6, Margin.ma_2, Margin.ma_1, ThemeColor.accent_theme_color(), ControlSize.border_xs)
-## ButtonStyle.apply_style(button, normal,
-## 	StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(ThemeColor.card_surface, Weights.w_2)),
-## 	StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.inset_surface, ThemeColor.accent_theme_color()))
+## ButtonStyle.apply_style(button, ButtonStyle.theme_normal_style(), ButtonStyle.theme_hover_style(), ButtonStyle.theme_pressed_style())
 ## [/codeblock]
+
+
+## Standard card-surface button chrome shared by dialog and toolbar controls.
+static func theme_normal_style() -> StyleBoxFlat:
+	return StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1,
+		ThemeColor.accent_theme_color(), ControlSize.border_xs)
+
+
+## Hover state paired with [method theme_normal_style]: quiet selected surface with a soft accent outline.
+static func theme_hover_style() -> StyleBoxFlat:
+	return StyleBoxHelper.duplicate_with_bg_color(theme_normal_style(), ThemeColor.selected_surface, ThemeColor.alpha_theme_color(0.85))
+
+
+## Pressed state paired with [method theme_normal_style]: stronger selected surface with accent outline.
+static func theme_pressed_style() -> StyleBoxFlat:
+	return StyleBoxHelper.duplicate_with_bg_color(theme_normal_style(), ThemeColor.promote(ThemeColor.selected_surface, Weights.w_2), ThemeColor.accent_theme_color())
 
 
 ## Apply normal, hover, and pressed states. [code]focus[/code] mirrors [param hover], disabled
