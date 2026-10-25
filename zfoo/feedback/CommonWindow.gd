@@ -57,9 +57,15 @@ func present_centered(width_percent: int = 70, height_percent: int = 80) -> void
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT and visible:
+	if what == NOTIFICATION_WM_WINDOW_FOCUS_OUT and visible and dismiss_on_focus_out():
 		on_close_requested.call_deferred()
 	pass
+
+
+## When [code]true[/code], losing window focus dismisses through [method on_close_requested] (see [PopupWindow]).
+## Override to [code]false[/code] when the window owns embedded popups or file pickers that steal focus.
+func dismiss_on_focus_out() -> bool:
+	return true
 
 
 func on_close_requested() -> void:

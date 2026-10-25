@@ -18,7 +18,6 @@ func _init() -> void:
 	super()
 	min_size = DIALOG_SIZE
 	max_size = DIALOG_SIZE
-	unresizable = true
 	exclusive = false
 	pass
 
@@ -210,10 +209,8 @@ func on_close_requested() -> void:
 	pass
 
 
-## Settings owns embedded menus and file pickers, so losing focus is not a dismissal. The inherited
-## close button and Escape handler still call [method on_close_requested].
-func _notification(_what: int) -> void:
-	pass
+func dismiss_on_focus_out() -> bool:
+	return false
 
 
 func apply_locale() -> void:
