@@ -1,16 +1,6 @@
 class_name ControlSize
 extends Object
 
-## Icon size scale for artwork inside controls. Keep this separate from control sizes so the
-## visible glyph can be smaller than its clickable area.
-const icon_xs: int = 12
-const icon_sm: int = 16
-const icon_md: int = 20
-const icon_lg: int = 24
-const icon_xl: int = 28
-const icon_xxl: int = 32
-
-
 ## Control size scale: control heights, square sizes and shared corner radii, in px.
 ##
 ## Six tiers, each one 8px ([code]Margin.ma_2[/code]) above the previous, so every value lands on the
@@ -45,45 +35,40 @@ const xl: int = 52
 const xxl: int = 60
 
 
-## Smallest radius: subtle rounding for compact indicators and hairline surfaces.
+## Icon size scale for artwork inside controls. Keep this separate from control sizes so the
+## visible glyph can be smaller than its clickable area.
+const icon_xs: int = 12
+const icon_sm: int = 16
+const icon_md: int = 20
+const icon_lg: int = 24
+const icon_xl: int = 28
+const icon_xxl: int = 32
+
+
+## Corner radius scale for controls and surfaces.
 const radius_xs: int = 2
-## Compact radius: chips, tags and tightly packed row controls.
 const radius_sm: int = 4
-## Default radius: buttons, selects, inputs and selectable rows.
 const radius_md: int = 6
-## Prominent radius: nodes, dialogs and medium cards.
 const radius_lg: int = 8
-## Hero radius: search bars, input bars and large floating surfaces.
 const radius_xl: int = 12
-## Largest radius: showcase controls and prominent floating containers.
 const radius_xxl: int = 16
 
 
-## Hairline border: separators, subtle outlines and ordinary control frames.
+## Border thickness scale for separators, outlines and accents.
 const border_xs: int = 1
-## Emphasized border: focus rings and selected control outlines.
 const border_sm: int = 2
-## Accent border: semantic stripes and prominent edge markers.
 const border_md: int = 3
-## Prominent border: strong selection frames and compact decorative bands.
 const border_lg: int = 4
-## Wide border: large control accents and display outlines.
 const border_xl: int = 5
-## Widest border: hero surfaces and highly emphasized decorative frames.
 const border_xxl: int = 6
 
 
-## Smallest image width: compact thumbnails and avatars.
+## Image width scale for thumbnails, previews and content artwork.
 const image_xs: int = 160
-## Compact image width: thumbnails and dense list previews.
 const image_sm: int = 240
-## Default image width: inline images in text content.
 const image_md: int = 320
-## Large image width: cards and expanded previews.
 const image_lg: int = 480
-## Extra-large image width: prominent content previews.
 const image_xl: int = 640
-## Largest image width: hero images and full content previews.
 const image_xxl: int = 800
 
 
