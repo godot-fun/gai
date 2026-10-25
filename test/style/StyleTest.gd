@@ -385,7 +385,7 @@ func FileDialogStyle_apply_test() -> void:
 	assert(dialog_panel.expand_margin_top == ControlSize.border_xs)
 	assert(dialog_panel.expand_margin_right == ControlSize.border_xs)
 	assert(dialog_panel.expand_margin_bottom == ControlSize.border_xs)
-	assert(file_list_panel.bg_color == FileDialogStyle.file_list_surface())
+	assert(file_list_panel.bg_color == ThemeColor.card_surface)
 	assert(file_list_panel.border_color == Colors.subtle_border)
 	assert(dialog.get_theme_color("folder_icon_color") == Colors.info.lerp(ThemeColor.accent_theme_color(), 0.35))
 	assert(dialog.get_theme_color("title_color") == ThemeColor.title_color)

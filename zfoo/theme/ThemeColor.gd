@@ -61,9 +61,9 @@ const INSET_SATURATION_DARK := 0.24
 const INSET_SATURATION_LIGHT := 0.08
 const INSET_VALUE_DARK := 0.10
 const INSET_VALUE_LIGHT := 0.93
-const CARD_SATURATION_DARK := 0.27
+const CARD_SATURATION_DARK := 0.20
 const CARD_SATURATION_LIGHT := 0.10
-const CARD_VALUE_DARK := 0.16
+const CARD_VALUE_DARK := 0.19
 const CARD_VALUE_LIGHT := 0.87
 const DARK_SELECTED_SURFACE_BASE := Color(0.14, 0.15, 0.18)
 const LIGHT_SELECTED_SURFACE_BASE := Color(1.00, 1.00, 1.00)
@@ -86,7 +86,7 @@ static var accent_surface: Color = Colors.DARK_SURFACE
 ## Background for content areas inside those panels.
 static var inset_surface := Color(0.09, 0.10, 0.12)
 ## Background for cards inside a content area.
-static var card_surface := Color(0.14, 0.15, 0.18)
+static var card_surface := Color(0.17, 0.18, 0.21)
 ## Large-area surface color for selected rows, nodes and pressed controls.
 static var selected_surface: Color = DARK_SELECTED_SURFACE_BASE
 ## High-contrast primary text color displayed on accent-derived card surfaces.
