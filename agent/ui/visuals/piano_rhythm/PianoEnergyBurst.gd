@@ -25,23 +25,17 @@ var age: float = 0.0
 var duration: float = 0.0
 
 
-func setup(origin: Vector2, impact_color: Color, random_seed: float, style: int) -> void:
+func setup(origin: Vector2, impact_color: Color, random_seed: float, impact_weight: float) -> void:
 	position = origin
 	energy_color = impact_color
-	duration = randf_range(0.46, 0.74)
-	var particle_count := randi_range(18, 32)
-	match style:
-		1:
-			particle_count = randi_range(10, 17)
-		2:
-			particle_count = randi_range(30, 44)
-		3:
-			particle_count = randi_range(22, 32)
-		4:
-			particle_count = randi_range(26, 38)
+	var weight := clampf(impact_weight, 0.0, 1.0)
+	duration = randf_range(lerpf(0.36, 0.52, weight), lerpf(0.58, 0.86, weight))
+	var count_min := roundi(lerpf(10.0, 22.0, weight))
+	var count_max := roundi(lerpf(18.0, 48.0, weight))
+	var particle_count := randi_range(mini(count_min, count_max), maxi(count_min, count_max))
 	for index in range(particle_count):
 		var particle := EnergyParticle.new()
-		configure_particle(particle, index, style)
+		configure_particle(particle, weight)
 		particle.life = particle.max_life
 		particles.append(particle)
 	var shader_material := ShaderMaterial.new()
@@ -52,39 +46,16 @@ func setup(origin: Vector2, impact_color: Color, random_seed: float, style: int)
 	pass
 
 
-func configure_particle(particle: EnergyParticle, index: int, style: int) -> void:
+func configure_particle(particle: EnergyParticle, weight: float) -> void:
 	var angle := randf_range(PI * 0.08, PI * 0.92)
-	var speed := randf_range(92.0, 245.0)
-	particle.max_life = randf_range(0.26, duration)
-	particle.size = randf_range(1.3, 3.4)
-	particle.drag = randf_range(1.5, 3.0)
-	particle.gravity = randf_range(72.0, 150.0)
-	particle.trail_scale = randf_range(0.72, 1.18)
-	match style:
-		1: # Narrow, falling strings for held notes.
-			angle = PI * 0.5 + randf_range(-0.22, 0.22)
-			speed = randf_range(78.0, 165.0)
-			particle.max_life = randf_range(0.38, duration)
-			particle.size = randf_range(1.0, 2.1)
-			particle.trail_scale = randf_range(1.5, 2.4)
-		2: # Fast wide shards for short notes.
-			angle = randf_range(PI * 0.02, PI * 0.98)
-			speed = randf_range(165.0, 340.0)
-			particle.size = randf_range(1.2, 4.2)
-			particle.trail_scale = randf_range(1.2, 2.0)
-		3: # Two opposing fans for chords.
-			angle = randf_range(0.12, 0.48) if index % 2 == 0 else randf_range(PI - 0.48, PI - 0.12)
-			speed = randf_range(145.0, 260.0)
-			particle.max_life = randf_range(0.32, duration)
-			particle.trail_scale = randf_range(1.0, 1.7)
-		4: # Slow, low-gravity star dust for successful events.
-			angle = randf_range(0.0, PI)
-			speed = randf_range(42.0, 138.0)
-			particle.max_life = randf_range(0.42, duration)
-			particle.size = randf_range(1.0, 2.7)
-			particle.drag = randf_range(2.8, 4.4)
-			particle.gravity = randf_range(18.0, 58.0)
-			particle.trail_scale = randf_range(0.35, 0.82)
+	var speed_min := lerpf(72.0, 145.0, weight)
+	var speed_max := lerpf(165.0, 360.0, weight)
+	var speed := randf_range(speed_min, speed_max)
+	particle.max_life = randf_range(lerpf(0.22, 0.30, weight), duration)
+	particle.size = randf_range(lerpf(0.9, 1.5, weight), lerpf(2.0, 5.4, weight))
+	particle.drag = randf_range(lerpf(2.2, 1.6, weight), lerpf(3.4, 2.4, weight))
+	particle.gravity = randf_range(lerpf(88.0, 62.0, weight), lerpf(158.0, 118.0, weight))
+	particle.trail_scale = randf_range(lerpf(0.62, 0.92, weight), lerpf(1.05, 2.2, weight))
 	particle.velocity = Vector2.from_angle(angle) * speed + Vector2(0.0, randf_range(12.0, 54.0))
 	particle.color = energy_color.lerp(Color.WHITE, randf_range(0.05, 0.34))
 	pass

@@ -3,6 +3,8 @@ extends VisualEffect
 
 ## An inverted piano-roll overlay: notes rise from the reading area and resolve into
 ## a compact keyboard at the top, leaving the lower chat surface unobstructed.
+## Each note binds one transcript sentence at spawn; sentence weight drives speed,
+## impact particles, and floating text together.
 
 const MIN_LANES := 6
 const MAX_LANES := 12
@@ -18,10 +20,18 @@ const BOTTOM_SAFE_SPACE := 112.0
 const MAX_NOTES := 72
 const NOTE_HEAD_RADIUS := 9.0
 const HIT_LINGER_SECONDS := 0.22
+const MAX_FLOATING_LINES := 12
+const FLOAT_LINE_SPEED := 92.0
+const FLOAT_LINE_LIFE := 4.4
+const FLOAT_LINE_MAX_WIDTH := 420.0
+const FLOAT_FONT_SIZE_MIN := 8
+const FLOAT_FONT_SIZE_MAX := 24
+const SENTENCE_WEIGHT_CHARS := 140.0
+const NOTE_SPEED_MIN := 235.0
+const NOTE_SPEED_MAX := 495.0
 
 enum NoteState { RISING, HIT }
 enum NoteKind { ANSWER, REASONING, TOOL_RUNNING, TOOL_SUCCESS, TOOL_FAILED }
-enum ImpactStyle { PLASMA_RING, STRING_RIPPLE, CRYSTAL_SHARDS, CHORD_ARC, STARDUST }
 
 
 class PianoNote extends RefCounted:
@@ -44,10 +54,22 @@ class PianoNote extends RefCounted:
 	var dynamic_mark: String = ""
 	var staccato: bool = false
 	var fermata: bool = false
+	var sentence_text: String = ""
+	var weight: float = 0.35
 	var visual
 
 
+class FloatingLine extends RefCounted:
+	var text: String = ""
+	var position: Vector2 = Vector2.ZERO
+	var color: Color = Color.WHITE
+	var font_size: int = Typography.label_small_size
+	var age: float = 0.0
+	var life: float = FLOAT_LINE_LIFE
+
+
 var notes: Array[PianoNote] = []
+var floating_lines: Array[FloatingLine] = []
 var key_glows: Array[float] = []
 var key_colors: Array[Color] = []
 var lane_count: int = MIN_LANES
@@ -71,13 +93,13 @@ func on_agent_start(_session_id: int) -> void:
 	ensure_layout()
 	for lane in range(lane_count):
 		if lane % 3 == 0:
-			spawn_note(lane, NoteKind.REASONING, 0.58, 0.0, "")
+			spawn_note(lane, NoteKind.REASONING)
 	queue_redraw()
 	pass
 
 
 func on_turn_start(_session_id: int) -> void:
-	spawn_phrase(2, NoteKind.REASONING, 0.76)
+	spawn_phrase(2, NoteKind.REASONING)
 	pass
 
 
@@ -86,15 +108,15 @@ func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> 
 		return
 	var kind := NoteKind.REASONING if stream_kind == OpenAiClient.STREAM_KIND_REASONING else NoteKind.ANSWER
 	var density := clampi(chunk.length() / 28 + 1, 1, 4)
-	spawn_phrase(density, kind, 0.92 + float(density) * 0.08)
+	spawn_phrase(density, kind)
 	pass
 
 
 func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	ensure_layout()
 	var lane := positive_mod(tool_call_id.hash(), lane_count)
-	spawn_note(lane, NoteKind.TOOL_RUNNING, 0.7, 70.0, compact_tool_name(tool_name))
-	spawn_note(positive_mod(lane + 3, lane_count), NoteKind.TOOL_RUNNING, 0.64, 52.0, "")
+	spawn_note(lane, NoteKind.TOOL_RUNNING, compact_tool_name(tool_name))
+	spawn_note(positive_mod(lane + 3, lane_count), NoteKind.TOOL_RUNNING)
 	pass
 
 
@@ -102,12 +124,12 @@ func on_tool_execution_end(_session_id: int, tool_call_id: String, _tool_name: S
 	ensure_layout()
 	var lane := positive_mod(tool_call_id.hash(), lane_count)
 	var kind := NoteKind.TOOL_FAILED if result.is_error else NoteKind.TOOL_SUCCESS
-	spawn_note(lane, kind, 1.34, 0.0, "")
+	spawn_note(lane, kind)
 	pass
 
 
 func on_turn_end(_session_id: int) -> void:
-	spawn_phrase(1, NoteKind.ANSWER, 0.7)
+	spawn_phrase(1, NoteKind.ANSWER)
 	pass
 
 
@@ -130,66 +152,136 @@ func _process(delta: float) -> void:
 				note.visual.set_hit()
 				key_glows[note.lane] = 1.0
 				key_colors[note.lane] = note_color_for_note(note)
-				spawn_energy_burst(Vector2(key_center_for_lane(note.lane), hit_y()), note_color_for_note(note), particle_style_for_note(note))
+				spawn_energy_burst(Vector2(key_center_for_lane(note.lane), hit_y()), note_color_for_note(note), note.weight)
+				spawn_floating_line_on_impact(note)
 		else:
 			note.linger -= delta
 			if note.linger <= 0.0:
 				note.visual.queue_free()
 				notes.remove_at(index)
+	for index in range(floating_lines.size() - 1, -1, -1):
+		var line := floating_lines[index]
+		line.age += delta
+		line.position.y -= FLOAT_LINE_SPEED * delta
+		if line.age >= line.life:
+			floating_lines.remove_at(index)
 	queue_redraw()
 	pass
 
 
-func spawn_energy_burst(origin: Vector2, impact_color: Color, style: int) -> void:
+func spawn_floating_line_on_impact(note: PianoNote) -> void:
+	if note.is_rest:
+		return
+	var text := note.sentence_text.strip_edges()
+	if text.is_empty():
+		return
+	var impact_color := note_color_for_note(note)
+	var font_size := floating_font_size_for_note(note)
+	var origin := Vector2(key_center_for_lane(note.lane), hit_y())
+	spawn_floating_line(trim_line_text(text, font_size), origin, impact_color, font_size)
+	pass
+
+
+func spawn_floating_line(text: String, origin: Vector2, color: Color, font_size: int = Typography.label_small_size) -> void:
+	if floating_lines.size() >= MAX_FLOATING_LINES:
+		floating_lines.pop_front()
+	var line := FloatingLine.new()
+	line.text = text
+	line.position = origin
+	line.color = color
+	line.font_size = font_size
+	floating_lines.append(line)
+	queue_redraw()
+	pass
+
+
+## Weak impacts draw from a narrow low band; strong impacts draw from a wider high band.
+func floating_font_band_for_note(note: PianoNote) -> Vector2i:
+	var strength := note.weight
+	var band_min := lerpf(float(FLOAT_FONT_SIZE_MIN), float(FLOAT_FONT_SIZE_MAX) * 0.58, strength)
+	var band_max := lerpf(float(FLOAT_FONT_SIZE_MIN) + 3.0, float(FLOAT_FONT_SIZE_MAX), strength)
+	band_max = maxf(band_max, band_min + 2.0)
+	band_min = clampf(band_min, float(FLOAT_FONT_SIZE_MIN), float(FLOAT_FONT_SIZE_MAX))
+	band_max = clampf(band_max, band_min, float(FLOAT_FONT_SIZE_MAX))
+	return Vector2i(roundi(band_min), roundi(band_max))
+
+
+func floating_font_size_for_note(note: PianoNote) -> int:
+	var band := floating_font_band_for_note(note)
+	if band.x >= band.y:
+		return band.x
+	return randi_range(band.x, band.y)
+
+
+func trim_line_text(text: String, font_size: int = Typography.label_small_size) -> String:
+	var font := Fonts.medium()
+	if font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x <= FLOAT_LINE_MAX_WIDTH:
+		return text
+	var trimmed := text
+	while trimmed.length() > 3 and font.get_string_size(trimmed + "…", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x > FLOAT_LINE_MAX_WIDTH:
+		trimmed = trimmed.substr(0, trimmed.length() - 1)
+	return trimmed + "…"
+
+
+func spawn_energy_burst(origin: Vector2, impact_color: Color, impact_weight: float) -> void:
 	ensure_render_layers()
 	var burst := PianoEnergyBurst.new()
-	burst.setup(origin, impact_color, randf(), style)
+	burst.setup(origin, impact_color, randf(), impact_weight)
 	impact_layer.add_child(burst)
 	pass
 
 
-func impact_style_for_note(note: PianoNote) -> int:
-	if note.chord_steps.size() > 1:
-		return ImpactStyle.CHORD_ARC
-	if note.kind == NoteKind.TOOL_SUCCESS:
-		return ImpactStyle.STARDUST
-	if note.length > 0.0 or note.duration == MusicNotationRenderer.Duration.WHOLE or note.duration == MusicNotationRenderer.Duration.HALF:
-		return ImpactStyle.STRING_RIPPLE
-	if note.staccato or note.duration == MusicNotationRenderer.Duration.SIXTEENTH or note.duration == MusicNotationRenderer.Duration.THIRTY_SECOND:
-		return ImpactStyle.CRYSTAL_SHARDS
-	return ImpactStyle.PLASMA_RING
+func weight_for_sentence(text: String, kind: NoteKind) -> float:
+	var stripped := text.strip_edges()
+	if not stripped.is_empty():
+		return clampf(float(stripped.length()) / SENTENCE_WEIGHT_CHARS, 0.06, 1.0)
+	return kind_fallback_weight(kind)
 
 
-func particle_style_for_note(note: PianoNote) -> int:
-	var semantic_style := impact_style_for_note(note)
-	if semantic_style != ImpactStyle.PLASMA_RING:
-		return semantic_style
-	# Ordinary notes deliberately rotate through several particle patterns instead of repeating one burst.
-	return positive_mod(int(note.seed), 3) * 2
+func kind_fallback_weight(kind: NoteKind) -> float:
+	match kind:
+		NoteKind.TOOL_SUCCESS:
+			return 0.86
+		NoteKind.TOOL_FAILED:
+			return 0.34
+		NoteKind.TOOL_RUNNING:
+			return 0.52
+		NoteKind.REASONING:
+			return 0.38
+	return 0.46
 
 
-func spawn_phrase(count: int, kind: NoteKind, energy: float) -> void:
+func speed_for_weight(weight: float) -> float:
+	return lerpf(NOTE_SPEED_MIN, NOTE_SPEED_MAX, clampf(weight, 0.0, 1.0))
+
+
+func spawn_phrase(count: int, kind: NoteKind) -> void:
 	ensure_layout()
 	for offset in range(count):
 		var lane := positive_mod(melody_step * 3 + offset * 2 + int(melody_step / 3), lane_count)
 		var delay := float(offset) * 42.0
-		spawn_note(lane, kind, energy, 0.0, "", delay)
+		spawn_note(lane, kind, "", delay)
 		melody_step += 1
 	queue_redraw()
 	pass
 
 
-func spawn_note(lane: int, kind: NoteKind, energy: float, length: float, label: String, spawn_offset: float = 0.0) -> void:
+func spawn_note(lane: int, kind: NoteKind, label: String = "", spawn_offset: float = 0.0) -> void:
 	ensure_layout()
 	if notes.size() >= MAX_NOTES:
 		return
+	var sentence := ChatEntryCursor.take_next_sentence()
+	var text := "" if sentence.is_empty() else sentence.text.strip_edges()
 	var note := PianoNote.new()
 	note.lane = clampi(lane, 0, lane_count - 1)
 	note.y = spawn_y() + spawn_offset
-	note.speed = 260.0 + energy * 170.0
-	note.length = length
 	note.kind = kind
 	note.label = label
+	note.sentence_text = text
+	note.weight = weight_for_sentence(text, kind)
+	note.is_rest = text.is_empty() and kind == NoteKind.REASONING
+	note.speed = speed_for_weight(note.weight)
+	note.length = lerpf(8.0, 96.0, note.weight)
 	note.seed = float(melody_step * 19 + notes.size() * 7)
 	configure_notation(note)
 	ensure_render_layers()
@@ -219,25 +311,35 @@ func ensure_render_layers() -> void:
 
 
 func configure_notation(note: PianoNote) -> void:
-	var variation := positive_mod(melody_step + notes.size() * 3, 12)
-	note.duration = variation % 6
-	note.is_rest = note.kind == NoteKind.REASONING and variation == 5
-	note.accidental = -1 if variation == 3 else (1 if variation == 8 else 0)
-	note.dotted = variation == 4 or variation == 10
-	note.tie = variation == 6
-	note.triplet = variation == 9
-	note.staccato = variation == 1 or variation == 7
-	note.fermata = variation == 11
+	note.chord_steps = PackedInt32Array()
+	note.tie = false
+	note.triplet = false
+	note.fermata = false
+	note.dotted = false
+	note.staccato = false
+	if note.is_rest:
+		note.duration = MusicNotationRenderer.Duration.QUARTER
+		return
 	if note.kind == NoteKind.TOOL_RUNNING:
 		note.duration = MusicNotationRenderer.Duration.HALF
 		note.chord_steps = PackedInt32Array([-4, 0, 3])
 		note.dynamic_mark = "mf"
-	elif note.kind == NoteKind.TOOL_SUCCESS:
+		return
+	if note.kind == NoteKind.TOOL_SUCCESS:
 		note.chord_steps = PackedInt32Array([0, 4])
 		note.dynamic_mark = "f"
 	elif note.kind == NoteKind.TOOL_FAILED:
 		note.chord_steps = PackedInt32Array([0, -3])
 		note.dynamic_mark = "p"
+	if note.weight >= 0.72:
+		note.duration = MusicNotationRenderer.Duration.HALF
+		note.dotted = note.weight >= 0.88
+	elif note.weight >= 0.42:
+		note.duration = MusicNotationRenderer.Duration.QUARTER
+	else:
+		note.duration = MusicNotationRenderer.Duration.SIXTEENTH
+		note.staccato = true
+	note.accidental = -1 if note.weight < 0.22 else (1 if note.weight > 0.78 else 0)
 	pass
 
 
@@ -302,32 +404,17 @@ func _draw() -> void:
 	if size.x < 180.0 or size.y < 160.0:
 		return
 	ensure_layout()
-	draw_stage()
-	draw_tracks()
 	draw_keyboard()
+	draw_floating_lines()
 	pass
 
 
-func draw_stage() -> void:
-	var keyboard := keyboard_rect()
-	var stage_rect := Rect2(0.0, keyboard.position.y - 10.0, size.x, keyboard.size.y + HIT_GAP + 24.0)
-	draw_rect(stage_rect, Color(ThemeColor.accent_theme_color(), 0.045), true)
-	MusicNotationRenderer.draw_staff(self, Rect2(0.0, hit_y() - 34.0, size.x, 30.0), ThemeColor.accent_theme_color())
-	MusicNotationRenderer.draw_treble_clef(self, Vector2(20.0, hit_y() - 20.0), ThemeColor.accent_theme_color())
-	MusicNotationRenderer.draw_bass_clef(self, Vector2(55.0, hit_y() - 20.0), ThemeColor.accent_theme_color())
-	MusicNotationRenderer.draw_pedal(self, Vector2(size.x - 100.0, hit_y() - 38.0), Vector2(size.x - 14.0, hit_y() - 38.0), ThemeColor.accent_theme_color())
-	pass
-
-
-func draw_tracks() -> void:
-	var rail_bottom := spawn_y() + 16.0
-	for lane in range(lane_count):
-		var alpha := 0.035 + key_glows[lane] * 0.20
-		var x := key_center_for_lane(lane)
-		draw_line(Vector2(x, hit_y()), Vector2(x, rail_bottom), VisualColor.stroke(lane_color(lane), alpha), 1.0)
-	var hit_color := ThemeColor.accent_theme_color()
-	draw_line(Vector2(0.0, hit_y()), Vector2(size.x, hit_y()), Color(hit_color, 0.22), 4.0)
-	draw_line(Vector2(0.0, hit_y()), Vector2(size.x, hit_y()), Color(hit_color, 0.82), 1.0)
+func draw_floating_lines() -> void:
+	var font := Fonts.medium()
+	for line: FloatingLine in floating_lines:
+		var progress := clampf(line.age / line.life, 0.0, 1.0)
+		var alpha := sin(progress * PI) * 0.92
+		draw_centered_text(line.position, line.text, font, line.font_size, Color(line.color, alpha))
 	pass
 
 
@@ -343,8 +430,6 @@ func draw_keyboard() -> void:
 	var lower_shade_color := Color(Colors.LIGHT_DEEP_SURFACE, 0.14) if light_theme else Color(Colors.deep_surface, 0.10)
 	var black_key_color := Color(Colors.DARK_DEEP_SURFACE, 0.46)
 	draw_rect(keyboard.grow(5.0), chassis_color, true)
-	draw_rect(Rect2(keyboard.position - Vector2(0.0, 4.0), Vector2(keyboard.size.x, 5.0)), Color(accent, 0.22), true)
-	draw_rect(Rect2(keyboard.position + Vector2(0.0, keyboard.size.y), Vector2(keyboard.size.x, 5.0)), Color(Colors.DARK_DEEP_SURFACE, 0.20), true)
 	for key_index in range(WHITE_KEY_COUNT):
 		var glow := glow_for_white_key(key_index)
 		var press_offset := glow * 3.0
