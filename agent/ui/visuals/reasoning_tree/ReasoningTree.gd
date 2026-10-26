@@ -81,8 +81,8 @@ func on_agent_end(_session_id: int, error_message: String) -> void:
 
 func on_turn_start(_session_id: int) -> void:
 	turn_index += 1
-	# Map turns across the full trunk using AgentLoop.MAX_TURNS so late tools do not pile at the tip.
-	target_trunk_growth = trunk_growth_for_turn(turn_index)
+	# Map turns across the full trunk using the configured limit so late tools do not pile at the tip.
+	target_trunk_growth = trunk_growth_for_turn(turn_index, AgentSetting.get_max_turns())
 	queue_redraw()
 	pass
 
@@ -615,8 +615,8 @@ static func running_pulse(time: float, phase: float) -> float:
 
 
 ## Grow more of the trunk in early turns, then ease gently toward the crown.
-static func trunk_growth_for_turn(turn: int) -> float:
-	var turn_progress := clampf(float(turn) / float(AgentLoop.MAX_TURNS), 0.0, 1.0)
+static func trunk_growth_for_turn(turn: int, max_turns: int = AgentSetting.DEFAULT_MAX_TURNS) -> float:
+	var turn_progress := clampf(float(turn) / float(max_turns), 0.0, 1.0)
 	var eased_progress := 1.0 - pow(1.0 - turn_progress, TRUNK_GROWTH_EASE_POWER)
 	return eased_progress * float(MAX_TRUNK_SEGMENTS)
 

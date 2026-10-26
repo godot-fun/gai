@@ -271,6 +271,8 @@
       "agent_behavior": "智能体行为",
       "sandbox_mode": "安全模式",
       "sandbox_mode_help": "文件工具仅限当前工作区；Bash 会拦截常见的高风险命令，但无法做到完全隔离。",
+      "max_turns": "最大轮次",
+      "max_turns_help": "单次智能体运行允许的最大模型与工具调用轮次。",
       "read_image_remotely": "远程大模型识图",
       "read_image_remotely_help": "将图片附加到下一轮请求，由当前配置的 OpenAI 兼容模型直接读取；关闭后使用本地 MiniCPM-V 模型。",
       "browser_headless": "浏览器无头模式",

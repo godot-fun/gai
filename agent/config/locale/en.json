@@ -271,6 +271,8 @@
       "agent_behavior": "Agent behavior",
       "sandbox_mode": "Safety mode",
       "sandbox_mode_help": "File tools are limited to the current workspace; Bash blocks common high-risk commands but cannot provide complete isolation.",
+      "max_turns": "Maximum turns",
+      "max_turns_help": "Maximum number of model and tool rounds allowed in one agent run.",
       "read_image_remotely": "Remote image recognition",
       "read_image_remotely_help": "Attach images to the next request so the configured OpenAI-compatible model reads them directly. Turn off to use the local MiniCPM-V model.",
       "browser_headless": "Browser headless",

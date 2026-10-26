@@ -3,6 +3,8 @@ extends SettingSection
 
 var sandbox_toggle_button: CheckButton
 var sandbox_label: Label
+var max_turns_label: Label
+var max_turns_spin: SpinBox
 var read_image_with_api_label: Label
 var read_image_with_api_toggle_button: CheckButton
 var browser_headless_label: Label
@@ -14,12 +16,25 @@ var restart_web_server_button: Button
 func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> void:
 	super.set_up(p_ui, parent, window)
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.agent_behavior"))
-	var sandbox_parts := ui.make_setting_row(parent)
+	var sandbox_parts := ui.make_setting_row(parent, 6)
 	sandbox_label = ui.make_label(I18n.t("agent.settings.sandbox_mode"))
 	sandbox_parts[0].add_child(sandbox_label)
 	sandbox_toggle_button = ui.add_check_button(sandbox_parts[1], "", SandboxPolicy.is_enabled())
 	sandbox_toggle_button.tooltip_text = I18n.t("agent.settings.sandbox_mode_help")
 	sandbox_toggle_button.toggled.connect(on_sandbox_toggled)
+	max_turns_label = ui.make_label(I18n.t("agent.settings.max_turns"))
+	max_turns_label.tooltip_text = I18n.t("agent.settings.max_turns_help")
+	sandbox_parts[2].add_child(max_turns_label)
+	max_turns_spin = SpinBox.new()
+	max_turns_spin.min_value = AgentSetting.MIN_MAX_TURNS
+	max_turns_spin.max_value = AgentSetting.MAX_MAX_TURNS
+	max_turns_spin.step = 1
+	max_turns_spin.custom_minimum_size = Vector2(0, 34)
+	max_turns_spin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	max_turns_spin.tooltip_text = I18n.t("agent.settings.max_turns_help")
+	max_turns_spin.value = AgentSetting.get_max_turns()
+	max_turns_spin.value_changed.connect(on_max_turns_changed)
+	sandbox_parts[3].add_child(max_turns_spin)
 	var read_image_parts := ui.make_setting_row(parent)
 	read_image_with_api_label = ui.make_label(I18n.t("agent.settings.read_image_remotely"))
 	read_image_with_api_label.tooltip_text = I18n.t("agent.settings.read_image_remotely_help")
@@ -65,6 +80,7 @@ func style_browser_row_label(label: Label) -> void:
 
 func refresh() -> void:
 	ui.refresh_check_button(sandbox_toggle_button, SandboxPolicy.is_enabled())
+	max_turns_spin.set_value_no_signal(AgentSetting.get_max_turns())
 	ui.refresh_check_button(read_image_with_api_toggle_button, AgentSetting.get_read_image_with_api())
 	ui.refresh_check_button(browser_headless_toggle_button, AgentSetting.get_browser_headless())
 	pass
@@ -72,6 +88,11 @@ func refresh() -> void:
 
 func on_sandbox_toggled(enabled: bool) -> void:
 	SandboxPolicy.set_enabled(enabled)
+	pass
+
+
+func on_max_turns_changed(turns: float) -> void:
+	AgentSetting.set_max_turns(roundi(turns))
 	pass
 
 
@@ -112,6 +133,9 @@ func apply_locale() -> void:
 	sandbox_label.text = I18n.t("agent.settings.sandbox_mode")
 	sandbox_label.tooltip_text = I18n.t("agent.settings.sandbox_mode_help")
 	sandbox_toggle_button.tooltip_text = I18n.t("agent.settings.sandbox_mode_help")
+	max_turns_label.text = I18n.t("agent.settings.max_turns")
+	max_turns_label.tooltip_text = I18n.t("agent.settings.max_turns_help")
+	max_turns_spin.tooltip_text = I18n.t("agent.settings.max_turns_help")
 	read_image_with_api_label.text = I18n.t("agent.settings.read_image_remotely")
 	read_image_with_api_label.tooltip_text = I18n.t("agent.settings.read_image_remotely_help")
 	read_image_with_api_toggle_button.tooltip_text = I18n.t("agent.settings.read_image_remotely_help")
@@ -132,6 +156,8 @@ func apply_theme() -> void:
 	super.apply_theme()
 	ui.style_field_label(sandbox_label)
 	ButtonStyle.apply_check_button(sandbox_toggle_button)
+	ui.style_field_label(max_turns_label)
+	ui.style_spin_box(max_turns_spin)
 	ui.style_field_label(read_image_with_api_label)
 	ButtonStyle.apply_check_button(read_image_with_api_toggle_button)
 	ui.style_field_label(browser_headless_label)

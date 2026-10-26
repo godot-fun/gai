@@ -42,7 +42,7 @@ func later_branch_tips_are_always_higher_test() -> void:
 	var previous_parent_y := INF
 	var previous_completed_y := INF
 	for index in range(ReasoningTree.MAX_BRANCHES * 2):
-		var turn_growth := ReasoningTree.trunk_growth_for_turn(mini(index / 3 + 1, AgentLoop.MAX_TURNS))
+		var turn_growth := ReasoningTree.trunk_growth_for_turn(mini(index / 3 + 1, AgentSetting.DEFAULT_MAX_TURNS))
 		var branch := ReasoningTree.make_branch("call-%d" % index, "tool", index, turn_growth)
 		var anchor_y := -ReasoningTree.branch_anchor_segment(branch) * SEGMENT_HEIGHT
 		var parent_y := anchor_y + Vector2.from_angle(float(branch["angle"])).y * BRANCH_LENGTH
@@ -317,13 +317,14 @@ func reasoning_chunks_do_not_accumulate_tree_height_test() -> void:
 
 
 func turns_ease_out_across_trunk_test() -> void:
+	var max_turns := AgentSetting.DEFAULT_MAX_TURNS
 	assert(is_equal_approx(ReasoningTree.trunk_growth_for_turn(0), 0.0))
-	assert(is_equal_approx(ReasoningTree.trunk_growth_for_turn(AgentLoop.MAX_TURNS), float(ReasoningTree.MAX_TRUNK_SEGMENTS)))
-	var midpoint := ReasoningTree.trunk_growth_for_turn(AgentLoop.MAX_TURNS / 2)
+	assert(is_equal_approx(ReasoningTree.trunk_growth_for_turn(max_turns), float(ReasoningTree.MAX_TRUNK_SEGMENTS)))
+	var midpoint := ReasoningTree.trunk_growth_for_turn(max_turns / 2)
 	assert(midpoint > float(ReasoningTree.MAX_TRUNK_SEGMENTS) * 0.5)
 	assert(midpoint < float(ReasoningTree.MAX_TRUNK_SEGMENTS) * 0.65)
 	var early_step := ReasoningTree.trunk_growth_for_turn(2) - ReasoningTree.trunk_growth_for_turn(1)
-	var late_step := ReasoningTree.trunk_growth_for_turn(AgentLoop.MAX_TURNS) - ReasoningTree.trunk_growth_for_turn(AgentLoop.MAX_TURNS - 1)
+	var late_step := ReasoningTree.trunk_growth_for_turn(max_turns) - ReasoningTree.trunk_growth_for_turn(max_turns - 1)
 	assert(early_step > late_step)
 	var tree := ReasoningTree.new()
 	tree.on_agent_start(1)
@@ -336,8 +337,9 @@ func turns_ease_out_across_trunk_test() -> void:
 
 
 func late_turn_branches_stay_below_tip_until_max_turns_test() -> void:
-	var mid := ReasoningTree.trunk_growth_for_turn(AgentLoop.MAX_TURNS / 2)
-	var late := ReasoningTree.trunk_growth_for_turn(AgentLoop.MAX_TURNS - 1)
+	var max_turns := AgentSetting.DEFAULT_MAX_TURNS
+	var mid := ReasoningTree.trunk_growth_for_turn(max_turns / 2)
+	var late := ReasoningTree.trunk_growth_for_turn(max_turns - 1)
 	assert(mid < float(ReasoningTree.MAX_TRUNK_SEGMENTS) * 0.65)
 	assert(late < float(ReasoningTree.MAX_TRUNK_SEGMENTS))
 	assert(late > mid)

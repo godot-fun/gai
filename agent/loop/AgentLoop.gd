@@ -1,13 +1,11 @@
 class_name AgentLoop
 extends RefCounted
 
-const MAX_TURNS := 64
-
 ## Core agent loop: LLM call → tool execution → repeat until done.
 static func run(ai_client: OpenAiClient, session: AgentSession) -> void:
 	var turn := 0
 	AgentEvents.events.agent_start.emit(session.id)
-	while turn < MAX_TURNS:
+	while turn < AgentSetting.get_max_turns():
 		turn += 1
 		if RuntimeManager.should_stop(session.id):
 			AgentEvents.events.agent_end.emit(session.id, "Stop.")
