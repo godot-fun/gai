@@ -4,7 +4,7 @@ extends Node2D
 ## A short-lived, physically moving energy burst. Unlike the ion shader's radial mask,
 ## these particles carry velocity, drag, gravity, and independent lifetimes.
 
-const ENERGY_SHADER_PATH := "res://agent/ui/visuals/piano_rhythm/piano_energy_burst.gdshader"
+const ENERGY_SHADER: Shader = preload("res://agent/ui/visuals/piano_rhythm/piano_energy_burst.gdshader")
 
 
 class EnergyParticle extends RefCounted:
@@ -39,7 +39,7 @@ func setup(origin: Vector2, impact_color: Color, random_seed: float, impact_weig
 		particle.life = particle.max_life
 		particles.append(particle)
 	var shader_material := ShaderMaterial.new()
-	shader_material.shader = load(ENERGY_SHADER_PATH) as Shader
+	shader_material.shader = ENERGY_SHADER
 	shader_material.set_shader_parameter("energy_color", energy_color)
 	shader_material.set_shader_parameter("seed", random_seed)
 	material = shader_material

@@ -124,6 +124,7 @@ func on_window_input(event: InputEvent) -> void:
 
 
 func apply_layout() -> void:
+	toolbar_panel.custom_minimum_size.y = AgentLayout.TOOLBAR_HEIGHT
 	body_split.split_offset = AgentLayout.SIDEBAR_DEFAULT_WIDTH
 	sidebar_panel.custom_minimum_size.x = AgentLayout.SIDEBAR_MIN_WIDTH
 	toolbar_row.add_theme_constant_override("separation", Margin.ma_4)

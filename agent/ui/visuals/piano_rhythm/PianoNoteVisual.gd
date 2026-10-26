@@ -4,7 +4,7 @@ extends Node2D
 ## One engraved glyph and its shader-ready visual state. PianoRhythm owns timing; this node
 ## owns its canvas drawing and per-note material parameters.
 
-const NOTE_SHADER_PATH := "res://agent/ui/visuals/piano_rhythm/piano_note.gdshader"
+const NOTE_SHADER: Shader = preload("res://agent/ui/visuals/piano_rhythm/piano_note.gdshader")
 
 var note_color: Color = Color.WHITE
 var note_length: float = 0.0
@@ -21,7 +21,7 @@ func setup(p_color: Color, p_length: float, p_notation: MusicNotationRenderer.No
 	rest = p_rest
 	label = p_label
 	var shader_material := ShaderMaterial.new()
-	shader_material.shader = load(NOTE_SHADER_PATH) as Shader
+	shader_material.shader = NOTE_SHADER
 	shader_material.set_shader_parameter("note_tint", note_color)
 	shader_material.set_shader_parameter("seed", random_seed)
 	material = shader_material
@@ -43,9 +43,9 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	var shimmer := 0.86 + sin(shader_clock * 5.0) * 0.10
-	draw_circle(Vector2.ZERO, 22.0, Color(note_color, 0.05 * shimmer))
-	draw_circle(Vector2.ZERO, 14.0, Color(note_color, 0.10 * shimmer))
+	# The shader animates the shimmer; the canvas halo is a static backdrop under the glyph.
+	draw_circle(Vector2.ZERO, 22.0, Color(note_color, 0.04))
+	draw_circle(Vector2.ZERO, 14.0, Color(note_color, 0.09))
 	if note_length > 0.0:
 		draw_energy_trail()
 	if rest:

@@ -114,7 +114,7 @@ func sentence_weight_drives_speed_and_font_band_test() -> void:
 	var short_weight := effect.weight_for_sentence(short_text, effect.NoteKind.ANSWER)
 	var long_weight := effect.weight_for_sentence(long_text, effect.NoteKind.ANSWER)
 	assert(long_weight > short_weight)
-	assert(effect.speed_for_weight(long_weight) > effect.speed_for_weight(short_weight))
+	assert(effect.rise_seconds_for_weight(long_weight) < effect.rise_seconds_for_weight(short_weight))
 	var soft := effect.PianoNote.new()
 	soft.weight = short_weight
 	var hard := effect.PianoNote.new()

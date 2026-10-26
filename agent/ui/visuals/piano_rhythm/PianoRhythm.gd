@@ -22,8 +22,8 @@ const FLOAT_LINE_MAX_WIDTH := 420.0
 const FLOAT_FONT_SIZE_MIN := 8
 const FLOAT_FONT_SIZE_MAX := 24
 const SENTENCE_WEIGHT_CHARS := 140.0
-const NOTE_SPEED_MIN := 235.0
-const NOTE_SPEED_MAX := 495.0
+const NOTE_RISE_SECONDS_MAX := 1.9
+const NOTE_RISE_SECONDS_MIN := 0.9
 ## One note leaves the beat every half second, so a text burst never prints a wall of glyphs.
 const NOTE_SPAWN_INTERVAL := 0.5
 
@@ -116,8 +116,11 @@ func _process(delta: float) -> void:
 		return
 	ensure_layout()
 	spawn_clock = maxf(spawn_clock - delta, 0.0)
+	var keyboard_animating := false
 	for lane in range(key_glows.size()):
-		key_glows[lane] = move_toward(key_glows[lane], 0.0, delta * 3.8)
+		if key_glows[lane] > 0.0:
+			key_glows[lane] = move_toward(key_glows[lane], 0.0, delta * 3.8)
+			keyboard_animating = true
 	for index in range(notes.size() - 1, -1, -1):
 		var note := notes[index]
 		if note.state == NoteState.RISING:
@@ -130,6 +133,7 @@ func _process(delta: float) -> void:
 				note.linger = HIT_LINGER_SECONDS
 				note.visual.set_hit()
 				var impact_color := note_color_for_note(note)
+				keyboard_animating = true
 				key_glows[note.lane] = 1.0
 				key_colors[note.lane] = impact_color
 				var burst := PianoEnergyBurst.new()
@@ -147,7 +151,10 @@ func _process(delta: float) -> void:
 		line.position.y -= FLOAT_LINE_SPEED * delta
 		if line.age >= line.life:
 			floating_lines.remove_at(index)
-	queue_redraw()
+	# Notes animate inside their own layers, so the keyboard and text only need a repaint when
+	# a key is pressed or a floating line is alive.
+	if keyboard_animating or not floating_lines.is_empty():
+		queue_redraw()
 	pass
 
 
@@ -217,8 +224,10 @@ func weight_for_sentence(text: String, kind: NoteKind) -> float:
 	return 0.46
 
 
-func speed_for_weight(weight: float) -> float:
-	return lerpf(NOTE_SPEED_MIN, NOTE_SPEED_MAX, clampf(weight, 0.0, 1.0))
+## Heavier sentences cross the reading area faster, but the distance never changes the rhythm:
+## the rise keeps a fixed duration band so a tall window does not delay every impact.
+func rise_seconds_for_weight(weight: float) -> float:
+	return lerpf(NOTE_RISE_SECONDS_MAX, NOTE_RISE_SECONDS_MIN, clampf(weight, 0.0, 1.0))
 
 
 ## One note per call and never more than one per beat: the event spawns it directly, or the
@@ -240,15 +249,16 @@ func spawn_note(lane: int, kind: NoteKind, label: String = "") -> void:
 		return
 	var sentence := ChatEntryCursor.take_next_sentence()
 	var text := "" if sentence.is_empty() else sentence.text.strip_edges()
+	var bottom := maxf(hit_y() + 120.0, size.y - BOTTOM_SAFE_SPACE)
 	var note := PianoNote.new()
 	note.lane = clampi(lane, 0, WHITE_KEY_COUNT - 1)
-	note.y = maxf(hit_y() + 120.0, size.y - BOTTOM_SAFE_SPACE)
+	note.y = bottom
 	note.kind = kind
 	note.label = label
 	note.sentence_text = text
 	note.weight = weight_for_sentence(text, kind)
 	note.is_rest = text.is_empty() and kind == NoteKind.REASONING
-	note.speed = speed_for_weight(note.weight)
+	note.speed = (bottom - hit_y()) / rise_seconds_for_weight(note.weight)
 	note.length = lerpf(8.0, 96.0, note.weight)
 	note.seed = float(melody_step * 19 + notes.size() * 7)
 	note.notation = build_notation(note)
@@ -320,8 +330,9 @@ func ensure_layout() -> void:
 	pass
 
 
+## The keyboard hangs below the app toolbar, so its keys never cover the toolbar buttons.
 func keyboard_rect() -> Rect2:
-	return Rect2(0.0, 0.0, size.x, clampf(size.y * 0.18, MIN_KEYBOARD_HEIGHT, MAX_KEYBOARD_HEIGHT))
+	return Rect2(0.0, float(AgentLayout.TOOLBAR_HEIGHT), size.x, clampf(size.y * 0.18, MIN_KEYBOARD_HEIGHT, MAX_KEYBOARD_HEIGHT))
 
 
 func hit_y() -> float:
@@ -369,7 +380,9 @@ func draw_keyboard() -> void:
 	var key_outline := Color(Colors.DARK_MUTED_BORDER, 0.36) if light_theme else Color(Colors.primary_text, 0.26)
 	var lower_shade_color := Color(Colors.LIGHT_DEEP_SURFACE, 0.14) if light_theme else Color(Colors.deep_surface, 0.10)
 	var black_key_color := Color(Colors.DARK_DEEP_SURFACE, 0.46)
-	draw_rect(keyboard.grow(5.0), chassis_color, true)
+	# Chassis lip: 5px on the sides and below, so it never tints the toolbar above the keys.
+	draw_rect(Rect2(keyboard.position - Vector2(5.0, 0.0), keyboard.size + Vector2(10.0, 5.0)), chassis_color, true)
+	var label_font := Fonts.medium()
 	for key_index in range(WHITE_KEY_COUNT):
 		var glow := key_glows[key_index]
 		var press_offset := glow * 3.0
@@ -383,7 +396,7 @@ func draw_keyboard() -> void:
 			draw_rect(Rect2(key_rect.position.x + 2.0, key_rect.end.y - 7.0, maxf(1.0, key_rect.size.x - 4.0), 4.0), Color(color_for_white_key(key_index), glow * 0.66), true)
 		if key_index % 7 == 0:
 			var octave_label := "C%d" % (key_index / 7 + 1)
-			draw_centered_text(Vector2(key_rect.get_center().x, key_rect.end.y - 15.0), octave_label, Fonts.medium(), Typography.label_small_size, Color(Colors.DARK_DEEP_SURFACE, 0.38))
+			draw_centered_text(Vector2(key_rect.get_center().x, key_rect.end.y - 15.0), octave_label, label_font, Typography.label_small_size, Color(Colors.DARK_DEEP_SURFACE, 0.38))
 	# White key dividers start below the black keys, so a divider never splits a black key in two.
 	var black_bottom := keyboard.position.y + keyboard.size.y * BLACK_KEY_HEIGHT_RATIO
 	for key_index in range(WHITE_KEY_COUNT + 1):
@@ -391,6 +404,8 @@ func draw_keyboard() -> void:
 		var divider_x := minf(float(key_index) * key_width, keyboard.end.x - 0.5)
 		var divider_top := black_bottom if covered else keyboard.position.y
 		draw_line(Vector2(divider_x, divider_top), Vector2(divider_x, keyboard.end.y), key_outline, 1.0)
+	# Close the frame: the dividers no longer carry a per-key bottom border.
+	draw_line(Vector2(0.0, keyboard.end.y), Vector2(keyboard.end.x, keyboard.end.y), key_outline, 1.0)
 	for key_index in range(WHITE_KEY_COUNT - 1):
 		# Black keys sit after C, D, F, G, and A inside each octave.
 		if not (key_index % 7 in [0, 1, 3, 4, 5]):
