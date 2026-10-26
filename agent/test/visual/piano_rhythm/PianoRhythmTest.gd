@@ -1,12 +1,23 @@
 extends RefCounted
 
 const PIANO_RHYTHM_SCRIPT := preload("res://agent/ui/visuals/piano_rhythm/PianoRhythm.gd")
+const PIANO_ENERGY_BURST_SCRIPT := preload("res://agent/ui/visuals/piano_rhythm/PianoEnergyBurst.gd")
 
 
 static func visual_type_test() -> void:
 	var effect := VisualControl.create_effect(VisualControl.Type.PIANO_RHYTHM)
 	assert(effect.get_script() == PIANO_RHYTHM_SCRIPT)
 	effect.free()
+	pass
+
+
+func impact_builds_harmonic_ribbons_test() -> void:
+	var burst := PIANO_ENERGY_BURST_SCRIPT.new()
+	burst.setup(Vector2(200.0, 120.0), Color(0.12, 0.96, 0.78), 0.42, 0.85)
+	assert(burst.ribbons.size() >= 2)
+	assert(burst.particles.size() >= 10)
+	assert(burst.ribbons[0].length > 0.0)
+	burst.free()
 	pass
 
 

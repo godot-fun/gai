@@ -8,7 +8,8 @@ extends VisualEffect
 
 const MIN_KEYBOARD_HEIGHT := 132.0
 const MAX_KEYBOARD_HEIGHT := 190.0
-const HIT_GAP := 18.0
+# Impacts originate exactly on the key edge so the note and its energy read as one gesture.
+const HIT_GAP := 0.0
 const WHITE_KEY_COUNT := 52
 const BLACK_KEY_HEIGHT_RATIO := 0.62
 const BLACK_KEY_WIDTH_RATIO := 0.58

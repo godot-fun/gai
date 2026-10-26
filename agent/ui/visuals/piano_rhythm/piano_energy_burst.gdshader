@@ -7,10 +7,13 @@ uniform float impact_strength : hint_range(0.0, 1.0) = 0.5;
 
 
 void fragment() {
-	float phase = TIME * (11.0 + impact_strength * 7.0) + seed * 19.0;
-	float grain = sin((SCREEN_UV.x * 83.0 + SCREEN_UV.y * 57.0 + seed * 19.0) * 6.283185 + phase * 0.31);
-	float flicker = 0.89 + grain * 0.07 + sin(phase + SCREEN_UV.x * 13.0) * 0.04;
-	float spark = pow(max(sin(phase * 1.61 + SCREEN_UV.x * 29.0 - SCREEN_UV.y * 23.0), 0.0), 10.0);
-	float energy = (0.11 + impact_strength * 0.11 + spark * 0.20) * COLOR.a;
-	COLOR.rgb = COLOR.rgb * flicker + energy_color.rgb * energy + vec3(spark * COLOR.a * 0.15);
+	float phase = TIME * (8.0 + impact_strength * 9.0) + seed * 19.0;
+	float fracture = sin(SCREEN_UV.x * 410.0 - SCREEN_UV.y * 260.0 + phase * 1.7);
+	float shimmer = pow(max(fracture, 0.0), 12.0);
+	float grain = sin((SCREEN_UV.x * 107.0 + SCREEN_UV.y * 73.0 + seed * 23.0) * 6.283185 + phase * 0.27);
+	float flicker = 0.92 + grain * 0.045 + shimmer * 0.12;
+	float energy = (0.07 + impact_strength * 0.10 + shimmer * 0.18) * COLOR.a;
+	// The note supplies the hue. Fractures are white-hot highlights, never a fixed blue tint.
+	vec3 refracted = mix(COLOR.rgb, vec3(1.0), shimmer * 0.12);
+	COLOR.rgb = refracted * flicker + energy_color.rgb * energy + vec3(shimmer * COLOR.a * 0.12);
 }
