@@ -6,7 +6,6 @@ extends VisualEffect
 ## Each note binds one transcript sentence at spawn; sentence weight drives speed,
 ## impact particles, and floating text together.
 
-const KEYBOARD_TOP := 0.0
 const MIN_KEYBOARD_HEIGHT := 132.0
 const MAX_KEYBOARD_HEIGHT := 190.0
 const HIT_GAP := 18.0
@@ -62,7 +61,6 @@ var notes: Array[PianoNote] = []
 var floating_lines: Array[FloatingLine] = []
 var key_glows: Array[float] = []
 var key_colors: Array[Color] = []
-var lane_count: int = WHITE_KEY_COUNT
 var melody_step: int = 0
 var spawn_clock: float = 0.0
 var note_layer: Node2D
@@ -98,7 +96,7 @@ func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> 
 
 
 func on_tool_execution_start(_session_id: int, _tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
-	request_note(NoteKind.TOOL_RUNNING, compact_tool_name(tool_name))
+	request_note(NoteKind.TOOL_RUNNING, ToolVisualDisplay.upper_name(tool_name).left(10))
 	pass
 
 
@@ -134,7 +132,9 @@ func _process(delta: float) -> void:
 				var impact_color := note_color_for_note(note)
 				key_glows[note.lane] = 1.0
 				key_colors[note.lane] = impact_color
-				spawn_energy_burst(Vector2(lane_x, hit_y()), impact_color, note.weight)
+				var burst := PianoEnergyBurst.new()
+				burst.setup(Vector2(lane_x, hit_y()), impact_color, randf(), note.weight)
+				impact_layer.add_child(burst)
 				spawn_floating_line_on_impact(note)
 		else:
 			note.linger -= delta
@@ -158,7 +158,8 @@ func spawn_floating_line_on_impact(note: PianoNote) -> void:
 	if text.is_empty():
 		return
 	var impact_color := note_color_for_note(note)
-	var font_size := floating_font_size_for_note(note)
+	var band := floating_font_band_for_note(note)
+	var font_size := band.x if band.x >= band.y else randi_range(band.x, band.y)
 	var origin := Vector2(key_center_for_lane(note.lane), hit_y())
 	spawn_floating_line(trim_line_text(text, font_size), origin, impact_color, font_size)
 	pass
@@ -172,6 +173,8 @@ func spawn_floating_line(text: String, origin: Vector2, color: Color, font_size:
 	line.position = origin
 	line.color = color
 	line.font_size = font_size
+	# Fade out completely before the line reaches the top edge, otherwise it is clipped mid-fade.
+	line.life = clampf((origin.y - 12.0) / FLOAT_LINE_SPEED, 0.6, FLOAT_LINE_LIFE)
 	floating_lines.append(line)
 	queue_redraw()
 	pass
@@ -188,13 +191,6 @@ func floating_font_band_for_note(note: PianoNote) -> Vector2i:
 	return Vector2i(ceili(band_min), floori(band_max))
 
 
-func floating_font_size_for_note(note: PianoNote) -> int:
-	var band := floating_font_band_for_note(note)
-	if band.x >= band.y:
-		return band.x
-	return randi_range(band.x, band.y)
-
-
 func trim_line_text(text: String, font_size: int = Typography.label_small_size) -> String:
 	var font := Fonts.medium()
 	if font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x <= FLOAT_LINE_MAX_WIDTH:
@@ -205,22 +201,10 @@ func trim_line_text(text: String, font_size: int = Typography.label_small_size) 
 	return trimmed + "…"
 
 
-func spawn_energy_burst(origin: Vector2, impact_color: Color, impact_weight: float) -> void:
-	ensure_render_layers()
-	var burst := PianoEnergyBurst.new()
-	burst.setup(origin, impact_color, randf(), impact_weight)
-	impact_layer.add_child(burst)
-	pass
-
-
 func weight_for_sentence(text: String, kind: NoteKind) -> float:
 	var stripped := text.strip_edges()
 	if not stripped.is_empty():
 		return clampf(float(stripped.length()) / SENTENCE_WEIGHT_CHARS, 0.06, 1.0)
-	return kind_fallback_weight(kind)
-
-
-func kind_fallback_weight(kind: NoteKind) -> float:
 	match kind:
 		NoteKind.TOOL_SUCCESS:
 			return 0.86
@@ -242,16 +226,12 @@ func speed_for_weight(weight: float) -> float:
 func request_note(kind: NoteKind, label: String = "") -> void:
 	if spawn_clock > 0.0:
 		return
-	spawn_note(next_melody_lane(), kind, label)
+	# Steps three keys at a time so consecutive notes never repeat a lane.
+	spawn_note(melody_step * 3 % WHITE_KEY_COUNT, kind, label)
 	melody_step += 1
 	spawn_clock = NOTE_SPAWN_INTERVAL
 	queue_redraw()
 	pass
-
-
-## Every third key with a slow drift walks the keyboard instead of repeating one lane.
-func next_melody_lane() -> int:
-	return positive_mod(melody_step * 3 + int(melody_step / 3), lane_count)
 
 
 func spawn_note(lane: int, kind: NoteKind, label: String = "") -> void:
@@ -261,8 +241,8 @@ func spawn_note(lane: int, kind: NoteKind, label: String = "") -> void:
 	var sentence := ChatEntryCursor.take_next_sentence()
 	var text := "" if sentence.is_empty() else sentence.text.strip_edges()
 	var note := PianoNote.new()
-	note.lane = clampi(lane, 0, lane_count - 1)
-	note.y = spawn_y()
+	note.lane = clampi(lane, 0, WHITE_KEY_COUNT - 1)
+	note.y = maxf(hit_y() + 120.0, size.y - BOTTOM_SAFE_SPACE)
 	note.kind = kind
 	note.label = label
 	note.sentence_text = text
@@ -302,7 +282,7 @@ func ensure_render_layers() -> void:
 ## the melody reads as a score instead of random glyphs.
 func build_notation(note: PianoNote) -> MusicNotationRenderer.Note:
 	var notation := MusicNotationRenderer.Note.new()
-	notation.step = positive_mod(note.lane, 7) - 3
+	notation.step = note.lane % 7 - 3
 	if note.is_rest:
 		notation.duration = MusicNotationRenderer.Duration.QUARTER
 		return notation
@@ -332,25 +312,20 @@ func build_notation(note: PianoNote) -> MusicNotationRenderer.Note:
 func ensure_layout() -> void:
 	if key_glows.size() == WHITE_KEY_COUNT:
 		return
-	lane_count = WHITE_KEY_COUNT
-	key_glows.resize(lane_count)
+	key_glows.resize(WHITE_KEY_COUNT)
 	key_glows.fill(0.0)
-	key_colors.resize(lane_count)
-	for index in range(lane_count):
-		key_colors[index] = lane_color(index)
+	# Each hit writes its own impact color; the initial value only has to be a valid color.
+	key_colors.resize(WHITE_KEY_COUNT)
+	key_colors.fill(ThemeColor.accent_theme_color())
 	pass
 
 
 func keyboard_rect() -> Rect2:
-	return Rect2(0.0, KEYBOARD_TOP, size.x, clampf(size.y * 0.18, MIN_KEYBOARD_HEIGHT, MAX_KEYBOARD_HEIGHT))
+	return Rect2(0.0, 0.0, size.x, clampf(size.y * 0.18, MIN_KEYBOARD_HEIGHT, MAX_KEYBOARD_HEIGHT))
 
 
 func hit_y() -> float:
 	return keyboard_rect().end.y + HIT_GAP
-
-
-func spawn_y() -> float:
-	return maxf(hit_y() + 120.0, size.y - BOTTOM_SAFE_SPACE)
 
 
 func key_center_for_lane(lane: int) -> float:
@@ -359,14 +334,8 @@ func key_center_for_lane(lane: int) -> float:
 	return (float(key_index) + 0.5) * key_width
 
 
-func glow_for_white_key(key_index: int) -> float:
-	if key_index < 0 or key_index >= key_glows.size():
-		return 0.0
-	return key_glows[key_index]
-
-
 func color_for_white_key(key_index: int) -> Color:
-	if key_index >= 0 and key_index < key_glows.size() and key_glows[key_index] > 0.02:
+	if key_glows[key_index] > 0.02:
 		return key_colors[key_index]
 	return ThemeColor.accent_theme_color()
 
@@ -402,7 +371,7 @@ func draw_keyboard() -> void:
 	var black_key_color := Color(Colors.DARK_DEEP_SURFACE, 0.46)
 	draw_rect(keyboard.grow(5.0), chassis_color, true)
 	for key_index in range(WHITE_KEY_COUNT):
-		var glow := glow_for_white_key(key_index)
+		var glow := key_glows[key_index]
 		var press_offset := glow * 3.0
 		var key_rect := Rect2(float(key_index) * key_width + 0.5, keyboard.position.y + press_offset, key_width - 1.0, keyboard.size.y - press_offset)
 		var fill := white_key_base.lerp(Color(accent.lightened(0.42), 0.38), glow * 0.68)
@@ -410,18 +379,25 @@ func draw_keyboard() -> void:
 		var lower_shade := Rect2(key_rect.position + Vector2(1.0, key_rect.size.y * 0.68), Vector2(maxf(1.0, key_rect.size.x - 2.0), key_rect.size.y * 0.32 - 1.0))
 		draw_rect(lower_shade, Color(lower_shade_color, maxf(0.08, lower_shade_color.a - glow * 0.10)), true)
 		draw_line(key_rect.position + Vector2(1.0, 2.0), Vector2(key_rect.end.x - 1.0, key_rect.position.y + 2.0), Color.WHITE, 0.24)
-		draw_rect(key_rect, key_outline, false, 1.0, true)
 		if glow > 0.02:
 			draw_rect(Rect2(key_rect.position.x + 2.0, key_rect.end.y - 7.0, maxf(1.0, key_rect.size.x - 4.0), 4.0), Color(color_for_white_key(key_index), glow * 0.66), true)
 		if key_index % 7 == 0:
 			var octave_label := "C%d" % (key_index / 7 + 1)
 			draw_centered_text(Vector2(key_rect.get_center().x, key_rect.end.y - 15.0), octave_label, Fonts.medium(), Typography.label_small_size, Color(Colors.DARK_DEEP_SURFACE, 0.38))
+	# White key dividers start below the black keys, so a divider never splits a black key in two.
+	var black_bottom := keyboard.position.y + keyboard.size.y * BLACK_KEY_HEIGHT_RATIO
+	for key_index in range(WHITE_KEY_COUNT + 1):
+		var covered := key_index > 0 and key_index < WHITE_KEY_COUNT and (key_index - 1) % 7 in [0, 1, 3, 4, 5]
+		var divider_x := minf(float(key_index) * key_width, keyboard.end.x - 0.5)
+		var divider_top := black_bottom if covered else keyboard.position.y
+		draw_line(Vector2(divider_x, divider_top), Vector2(divider_x, keyboard.end.y), key_outline, 1.0)
 	for key_index in range(WHITE_KEY_COUNT - 1):
-		if not has_black_key_after(key_index):
+		# Black keys sit after C, D, F, G, and A inside each octave.
+		if not (key_index % 7 in [0, 1, 3, 4, 5]):
 			continue
 		var black_width := key_width * BLACK_KEY_WIDTH_RATIO
-		var left_glow := glow_for_white_key(key_index)
-		var right_glow := glow_for_white_key(key_index + 1)
+		var left_glow := key_glows[key_index]
+		var right_glow := key_glows[key_index + 1]
 		var glow := maxf(left_glow, right_glow)
 		var impact_color := color_for_white_key(key_index) if left_glow >= right_glow else color_for_white_key(key_index + 1)
 		var press_offset := glow * 2.0
@@ -432,11 +408,6 @@ func draw_keyboard() -> void:
 		draw_line(Vector2(black_key.position.x + 1.0, black_key.end.y - 2.0), Vector2(black_key.end.x - 1.0, black_key.end.y - 2.0), Color(Color.BLACK, 0.34), 1.0)
 		draw_rect(black_key, Color(Colors.DARK_BORDER, 0.42), false, 1.0, true)
 	pass
-
-
-static func has_black_key_after(white_key_index: int) -> bool:
-	var scale_index := white_key_index % 7
-	return scale_index == 0 or scale_index == 1 or scale_index == 3 or scale_index == 4 or scale_index == 5
 
 
 func note_color_for_note(note: PianoNote) -> Color:
@@ -453,7 +424,7 @@ func note_color_for_note(note: PianoNote) -> Color:
 
 
 func lane_color(lane: int, hue_nudge: float = 0.0, value_scale: float = 1.0) -> Color:
-	var lane_ratio := float(lane) / float(maxi(lane_count - 1, 1))
+	var lane_ratio := float(lane) / float(WHITE_KEY_COUNT - 1)
 	# Keep the whole piano inside the user's accent family: low notes are deeper and warmer,
 	# high notes are brighter and cooler, but never travel far enough to become a rainbow.
 	var accent := ThemeColor.accent_theme_color()
@@ -462,12 +433,3 @@ func lane_color(lane: int, hue_nudge: float = 0.0, value_scale: float = 1.0) -> 
 	var base := VisualColor.appearance_color(accent, hue_offset, saturation_scale)
 	base.v = clampf(base.v * lerpf(0.76, 1.16, lane_ratio) * value_scale, 0.0, 1.0)
 	return base
-
-
-static func positive_mod(value: int, modulus: int) -> int:
-	return ((value % modulus) + modulus) % modulus
-
-
-static func compact_tool_name(tool_name: String) -> String:
-	var label := ToolVisualDisplay.upper_name(tool_name)
-	return label.left(10)

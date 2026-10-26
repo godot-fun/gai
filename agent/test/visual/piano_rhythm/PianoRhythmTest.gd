@@ -44,9 +44,8 @@ func white_key_lanes_are_one_to_one_test() -> void:
 	var effect := PIANO_RHYTHM_SCRIPT.new()
 	effect.size = Vector2(1280.0, 720.0)
 	effect.ensure_layout()
-	assert(effect.lane_count == PianoRhythm.WHITE_KEY_COUNT)
 	var key_width := effect.size.x / float(PianoRhythm.WHITE_KEY_COUNT)
-	for lane in range(effect.lane_count):
+	for lane in range(PianoRhythm.WHITE_KEY_COUNT):
 		assert(is_equal_approx(effect.key_center_for_lane(lane), (float(lane) + 0.5) * key_width))
 	effect.free()
 	pass
@@ -95,6 +94,18 @@ func floating_line_rises_and_fades_test() -> void:
 	pass
 
 
+func floating_line_fades_before_leaving_the_top_test() -> void:
+	var effect := PIANO_RHYTHM_SCRIPT.new()
+	effect.size = Vector2(1280.0, 720.0)
+	effect.spawn_floating_line("Rising melody text.", Vector2(200.0, effect.hit_y()), Color.WHITE)
+	var line: PianoRhythm.FloatingLine = effect.floating_lines[0]
+	assert(line.life <= PianoRhythm.FLOAT_LINE_LIFE)
+	# The line must reach zero alpha inside the overlay instead of being clipped by the top edge.
+	assert(effect.hit_y() - line.life * PianoRhythm.FLOAT_LINE_SPEED >= 0.0)
+	effect.free()
+	pass
+
+
 func sentence_weight_drives_speed_and_font_band_test() -> void:
 	var effect := PIANO_RHYTHM_SCRIPT.new()
 	effect.size = Vector2(1280.0, 720.0)
@@ -131,7 +142,7 @@ func full_note_capacity_keeps_visible_notes_test() -> void:
 	var effect := PIANO_RHYTHM_SCRIPT.new()
 	effect.size = Vector2(1280.0, 720.0)
 	for index in range(PianoRhythm.MAX_NOTES):
-		effect.spawn_note(index % effect.lane_count, effect.NoteKind.ANSWER)
+		effect.spawn_note(index % PianoRhythm.WHITE_KEY_COUNT, effect.NoteKind.ANSWER)
 	var first_note := effect.notes[0]
 	effect.spawn_note(0, effect.NoteKind.ANSWER)
 	assert(effect.notes.size() == PianoRhythm.MAX_NOTES)
