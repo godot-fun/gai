@@ -31,6 +31,7 @@ func setup(p_color: Color, p_length: float, p_notation: MusicNotationRenderer.No
 
 func set_hit() -> void:
 	visible = false
+	set_process(false)
 	pass
 
 

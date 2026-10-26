@@ -116,6 +116,7 @@ func _process(delta: float) -> void:
 		return
 	ensure_layout()
 	spawn_clock = maxf(spawn_clock - delta, 0.0)
+	var hit := hit_y()
 	var keyboard_animating := false
 	for lane in range(key_glows.size()):
 		if key_glows[lane] > 0.0:
@@ -127,8 +128,8 @@ func _process(delta: float) -> void:
 			note.y -= note.speed * delta
 			var lane_x := key_center_for_lane(note.lane)
 			note.visual.position = Vector2(lane_x, note.y)
-			if note.y <= hit_y():
-				note.y = hit_y()
+			if note.y <= hit:
+				note.y = hit
 				note.state = NoteState.HIT
 				note.linger = HIT_LINGER_SECONDS
 				note.visual.set_hit()
@@ -137,7 +138,7 @@ func _process(delta: float) -> void:
 				key_glows[note.lane] = 1.0
 				key_colors[note.lane] = impact_color
 				var burst := PianoEnergyBurst.new()
-				burst.setup(Vector2(lane_x, hit_y()), impact_color, randf(), note.weight)
+				burst.setup(Vector2(lane_x, hit), impact_color, randf(), note.weight)
 				impact_layer.add_child(burst)
 				spawn_floating_line_on_impact(note)
 		else:
@@ -239,7 +240,6 @@ func request_note(kind: NoteKind, label: String = "") -> void:
 	spawn_note(melody_step * 3 % WHITE_KEY_COUNT, kind, label)
 	melody_step += 1
 	spawn_clock = NOTE_SPAWN_INTERVAL
-	queue_redraw()
 	pass
 
 
@@ -375,11 +375,16 @@ func draw_keyboard() -> void:
 	var accent := ThemeColor.accent_theme_color()
 	var light_theme := not ThemeColor.is_dark_theme()
 	# The keyboard is an overlay, not a panel: low alpha preserves readability of chat below it.
-	var chassis_color := Color(Colors.LIGHT_CHROME_SURFACE, 0.16) if light_theme else Color(Colors.deep_surface, 0.20)
-	var white_key_base := Color(Colors.LIGHT_SURFACE, 0.20) if light_theme else Color(0.93, 0.94, 0.95, 0.16)
-	var key_outline := Color(Colors.DARK_MUTED_BORDER, 0.36) if light_theme else Color(Colors.primary_text, 0.26)
-	var lower_shade_color := Color(Colors.LIGHT_DEEP_SURFACE, 0.14) if light_theme else Color(Colors.deep_surface, 0.10)
-	var black_key_color := Color(Colors.DARK_DEEP_SURFACE, 0.46)
+	# Dark surfaces need a higher alpha floor, otherwise translucent keys sink into the background.
+	var chassis_color := Color(Colors.LIGHT_CHROME_SURFACE, 0.16) if light_theme else Color(Colors.deep_surface, 0.42)
+	var white_key_base := Color(Colors.LIGHT_SURFACE, 0.20) if light_theme else Color(Colors.LIGHT_SURFACE, 0.30)
+	var key_outline := Color(Colors.DARK_MUTED_BORDER, 0.36) if light_theme else Color(Colors.primary_text, 0.40)
+	var lower_shade_color := Color(Colors.LIGHT_DEEP_SURFACE, 0.14) if light_theme else Color(Colors.deep_surface, 0.30)
+	var black_key_color := Color(Colors.DARK_DEEP_SURFACE, 0.46) if light_theme else Color(Colors.deep_surface, 0.85)
+	var octave_label_color := Color(Colors.DARK_DEEP_SURFACE, 0.38) if light_theme else Color(Colors.primary_text, 0.42)
+	# A pressed key has to read brighter than its neighbours in both themes, so the dark palette
+	# lifts the accent instead of tinting the key with a darker color.
+	var press_fill := Color(accent.lightened(0.42), 0.38) if light_theme else Color(accent.lightened(0.70), 0.90)
 	# Chassis lip: 5px on the sides and below, so it never tints the toolbar above the keys.
 	draw_rect(Rect2(keyboard.position - Vector2(5.0, 0.0), keyboard.size + Vector2(10.0, 5.0)), chassis_color, true)
 	var label_font := Fonts.medium()
@@ -387,16 +392,16 @@ func draw_keyboard() -> void:
 		var glow := key_glows[key_index]
 		var press_offset := glow * 3.0
 		var key_rect := Rect2(float(key_index) * key_width + 0.5, keyboard.position.y + press_offset, key_width - 1.0, keyboard.size.y - press_offset)
-		var fill := white_key_base.lerp(Color(accent.lightened(0.42), 0.38), glow * 0.68)
+		var fill := white_key_base.lerp(press_fill, glow * 0.78)
 		draw_rect(key_rect, fill, true)
 		var lower_shade := Rect2(key_rect.position + Vector2(1.0, key_rect.size.y * 0.68), Vector2(maxf(1.0, key_rect.size.x - 2.0), key_rect.size.y * 0.32 - 1.0))
-		draw_rect(lower_shade, Color(lower_shade_color, maxf(0.08, lower_shade_color.a - glow * 0.10)), true)
+		draw_rect(lower_shade, Color(lower_shade_color, maxf(0.08, lower_shade_color.a - glow * 0.30)), true)
 		draw_line(key_rect.position + Vector2(1.0, 2.0), Vector2(key_rect.end.x - 1.0, key_rect.position.y + 2.0), Color.WHITE, 0.24)
 		if glow > 0.02:
 			draw_rect(Rect2(key_rect.position.x + 2.0, key_rect.end.y - 7.0, maxf(1.0, key_rect.size.x - 4.0), 4.0), Color(color_for_white_key(key_index), glow * 0.66), true)
 		if key_index % 7 == 0:
 			var octave_label := "C%d" % (key_index / 7 + 1)
-			draw_centered_text(Vector2(key_rect.get_center().x, key_rect.end.y - 15.0), octave_label, label_font, Typography.label_small_size, Color(Colors.DARK_DEEP_SURFACE, 0.38))
+			draw_centered_text(Vector2(key_rect.get_center().x, key_rect.end.y - 15.0), octave_label, label_font, Typography.label_small_size, octave_label_color)
 	# White key dividers start below the black keys, so a divider never splits a black key in two.
 	var black_bottom := keyboard.position.y + keyboard.size.y * BLACK_KEY_HEIGHT_RATIO
 	for key_index in range(WHITE_KEY_COUNT + 1):
