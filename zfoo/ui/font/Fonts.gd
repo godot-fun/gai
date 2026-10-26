@@ -18,6 +18,12 @@ static var semibold_font: FontFile
 static var bold_font: FontFile
 
 
+## Applies the bundled regular font to controls and standalone windows without a local Theme.
+static func _static_init() -> void:
+	ThemeDB.fallback_font = regular()
+	pass
+
+
 static func light() -> Font:
 	if light_font == null:
 		light_font = load(LIGHT_PATH) as FontFile
