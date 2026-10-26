@@ -68,7 +68,7 @@ class StreamItem extends RefCounted:
 	# Font metrics are immutable for an item and expensive enough to cache once.
 	var glyph_advances := PackedFloat32Array()
 	var label_width: float = 0.0
-	## [method color_for_type] at spawn; stream type and theme accent are fixed for this packet's life.
+	## Resolved from its source entry or stream type at spawn, then fixed for this packet's life.
 	var stroke_color: Color = Color.WHITE
 	var absorption_triggered: bool = false
 	## Cached for [method input_travel_distance] while [member ContextMemoryRiver.is_ending]; -1 until measured.
@@ -89,6 +89,7 @@ class OutputMote extends RefCounted:
 	var speed: float
 	var phase_offset: float
 	var trail_length: float
+	var color: Color = Color.WHITE
 
 
 var items: Array[StreamItem] = []
@@ -96,6 +97,7 @@ var absorption_effects: Array[AbsorptionEffect] = []
 var decorative_motes: Array[StreamItem] = []
 var output_motes: Array[OutputMote] = []
 var pending_output_widths: Array[float] = []
+var pending_output_colors: Array[Color] = []
 var ready_output_slots: int = 0
 var elapsed: float = 0.0
 var spawn_index: int = 0
@@ -143,6 +145,7 @@ func on_agent_start(_session_id: int) -> void:
 	lens_closing = false
 	lens_close_progress = 0.0
 	pending_output_widths.clear()
+	pending_output_colors.clear()
 	ready_output_slots = 0
 	queue_redraw()
 	pass
@@ -179,7 +182,7 @@ func on_chat_entry_add(_session_id: int, entry: ChatEntry) -> void:
 		return
 	# Source events need immediate feedback, but their detailed bodies would make
 	# the intake river noisy. The type label keeps the event recognizable.
-	add_item(stream_type as StreamType, label_for_type(stream_type as StreamType))
+	add_item(stream_type as StreamType, label_for_type(stream_type as StreamType), entry)
 	pass
 
 
@@ -299,11 +302,12 @@ func spawn_decorative_mote() -> void:
 	pass
 
 
-func spawn_output_mote(source_width: float = OUTPUT_TRAIL_MIN_LENGTH, source_speed: float = 1.0) -> void:
+func spawn_output_mote(source_width: float = OUTPUT_TRAIL_MIN_LENGTH, source_speed: float = 1.0, color: Color = Color.WHITE) -> void:
 	var mote := OutputMote.new()
 	mote.speed = source_speed
 	mote.phase_offset = float(output_spawn_index % 6) * TAU / 6.0
 	mote.trail_length = output_trail_length(source_width, size * 0.5)
+	mote.color = color
 	output_motes.append(mote)
 	output_spawn_index += 1
 	output_activity = 1.0
@@ -333,7 +337,7 @@ func add_absorption_effect(item: StreamItem, releases_output: bool = true) -> vo
 	pass
 
 
-func add_item(stream_type: StreamType, label: String) -> void:
+func add_item(stream_type: StreamType, label: String, entry: ChatEntry = null) -> void:
 	if is_ending:
 		return
 	# Never evict a packet that is visibly in transit. At saturation, wait for an
@@ -351,7 +355,7 @@ func add_item(stream_type: StreamType, label: String) -> void:
 	item.source_y_ratio = source_y_ratio
 	item.curve_direction = curve_direction
 	cache_text_metrics(item)
-	item.stroke_color = color_for_type(item.stream_type)
+	item.stroke_color = VisualColor.appearance_color(ChatBubbleFactory.panel_color_for_entry(entry)) if entry != null else color_for_type(item.stream_type)
 	items.append(item)
 	spawn_index += 1
 	queue_redraw()
@@ -371,9 +375,10 @@ func consume_transcript_sentences() -> void:
 	if sentence.is_empty() or sentence.entry == null:
 		return
 	if sentence.entry.kind == ChatEntry.KIND_THINKING:
-		add_item(StreamType.THINKING, sentence.text)
+		add_item(StreamType.THINKING, sentence.text, sentence.entry)
 	elif sentence.entry.kind == ChatEntry.KIND_AGENT:
 		pending_output_widths.append(output_width_for_text(sentence.text))
+		pending_output_colors.append(VisualColor.appearance_color(ChatBubbleFactory.panel_color_for_entry(sentence.entry)))
 		release_pending_output()
 	pass
 
@@ -381,7 +386,7 @@ func consume_transcript_sentences() -> void:
 ## A generated sentence can leave only after a real source packet reached the lens.
 func release_pending_output() -> void:
 	while ready_output_slots > 0 and not pending_output_widths.is_empty():
-		spawn_output_mote(pending_output_widths.pop_front())
+		spawn_output_mote(pending_output_widths.pop_front(), 1.0, pending_output_colors.pop_front())
 		ready_output_slots -= 1
 	pass
 
@@ -687,7 +692,6 @@ static func absorption_ripple_stroke_color(type_color: Color, spread: float, fad
 ## not add a solid channel, glow band, or text label here: those compete with the
 ## river and duplicate information already carried by the particle color.
 func draw_output(center: Vector2) -> void:
-	var answer := color_for_type(StreamType.ANSWER)
 	var alpha := 0.22 + output_activity * 0.5
 	# No permanent output rail: each generated mote carries only its own curved
 	# history, leaving negative space between responses.
@@ -702,11 +706,11 @@ func draw_output(center: Vector2) -> void:
 			var sample_ratio := float(sample) / float(OUTPUT_TRAIL_SAMPLES)
 			var sample_progress := maxf(progress - sample_ratio * trail_progress, 0.0)
 			tail_points.append(output_spiral_position(sample_progress, mote.phase_offset, center))
-		draw_polyline(tail_points, VisualColor.stroke(answer, alpha * particle_fade * 0.16), lerpf(0.8, 1.5, depth), true)
+		draw_polyline(tail_points, VisualColor.stroke(mote.color, alpha * particle_fade * 0.16), lerpf(0.8, 1.5, depth), true)
 		var position := tail_points[tail_points.size() - 1]
 		var radius := lerpf(2.0, 4.2 + output_activity, depth)
-		draw_circle(position, radius * 2.0, VisualColor.stroke(answer, alpha * particle_fade * 0.07))
-		draw_circle(position, radius, VisualColor.stroke(answer, alpha * particle_fade * lerpf(0.48, 1.0, depth)))
+		draw_circle(position, radius * 2.0, VisualColor.stroke(mote.color, alpha * particle_fade * 0.07))
+		draw_circle(position, radius, VisualColor.stroke(mote.color, alpha * particle_fade * lerpf(0.48, 1.0, depth)))
 	pass
 
 

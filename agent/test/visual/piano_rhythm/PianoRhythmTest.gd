@@ -70,6 +70,28 @@ func failed_tool_uses_error_note_test() -> void:
 	effect.on_tool_execution_end(1, "tool-piano", "read_file", AgentToolResult.error("no access"))
 	assert(effect.notes.size() == 1)
 	assert(effect.notes[0].kind == effect.NoteKind.TOOL_FAILED)
+	assert(effect.note_color_for_note(effect.notes[0]) == VisualColor.appearance_color(Colors.error))
+	effect.free()
+	pass
+
+
+func successful_tool_uses_success_color_test() -> void:
+	var effect := PIANO_RHYTHM_SCRIPT.new()
+	var note := effect.PianoNote.new()
+	note.kind = effect.NoteKind.TOOL_SUCCESS
+	assert(effect.note_color_for_note(note) == VisualColor.appearance_color(Colors.success))
+	effect.free()
+	pass
+
+
+func text_note_uses_source_entry_color_test() -> void:
+	var effect := PIANO_RHYTHM_SCRIPT.new()
+	var note := effect.PianoNote.new()
+	note.kind = effect.NoteKind.ANSWER
+	note.entry_kind = ChatEntry.KIND_THINKING
+	assert(effect.note_color_for_note(note) == VisualColor.appearance_color(ChatBubbleFactory.panel_color_for_kind(note.entry_kind)))
+	note.entry_kind = ChatEntry.KIND_WEB
+	assert(effect.note_color_for_note(note) == VisualColor.appearance_color(ChatBubbleFactory.panel_color_for_kind(note.entry_kind)))
 	effect.free()
 	pass
 

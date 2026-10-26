@@ -44,6 +44,7 @@ class PianoNote extends RefCounted:
 	var notation: MusicNotationRenderer.Note = MusicNotationRenderer.Note.new()
 	var is_rest: bool = false
 	var sentence_text: String = ""
+	var entry_kind: String = ""
 	var weight: float = 0.35
 	var visual: PianoNoteVisual
 
@@ -256,6 +257,7 @@ func spawn_note(lane: int, kind: NoteKind, label: String = "") -> void:
 	note.kind = kind
 	note.label = label
 	note.sentence_text = text
+	note.entry_kind = "" if sentence.entry == null else sentence.entry.kind
 	note.weight = weight_for_sentence(text, kind)
 	note.is_rest = text.is_empty() and kind == NoteKind.REASONING
 	note.speed = (bottom - hit_y()) / rise_seconds_for_weight(note.weight)
@@ -432,16 +434,17 @@ func draw_keyboard() -> void:
 
 func note_color_for_note(note: PianoNote) -> Color:
 	match note.kind:
-		NoteKind.REASONING:
-			return lane_color(note.lane, 0.035, 0.84)
-		NoteKind.TOOL_RUNNING:
-			return lane_color(note.lane, -0.025, 1.12)
 		NoteKind.TOOL_SUCCESS:
-			return lane_color(note.lane, 0.032, 1.30)
+			return VisualColor.appearance_color(Colors.success)
 		NoteKind.TOOL_FAILED:
-			return lane_color(note.lane, -0.032, 0.62)
+			return VisualColor.appearance_color(Colors.error)
+	if not note.entry_kind.is_empty():
+		return VisualColor.appearance_color(ChatBubbleFactory.panel_color_for_kind(note.entry_kind))
+	if note.kind == NoteKind.REASONING:
+		return lane_color(note.lane, 0.035, 0.84)
+	if note.kind == NoteKind.TOOL_RUNNING:
+		return VisualColor.appearance_color(Colors.success)
 	return lane_color(note.lane, 0.0, 1.12)
-
 
 func lane_color(lane: int, hue_nudge: float = 0.0, value_scale: float = 1.0) -> Color:
 	var lane_ratio := float(lane) / float(WHITE_KEY_COUNT - 1)
