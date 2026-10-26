@@ -156,12 +156,6 @@ func make_line_edit(placeholder: String) -> LineEdit:
 	return edit
 
 
-func bind_auto_save(edit: LineEdit, saver: Callable) -> void:
-	edit.focus_exited.connect(saver)
-	edit.text_submitted.connect(func(_text: String) -> void: saver.call())
-	pass
-
-
 func add_check_button(parent: Container, label_text: String, enabled: bool) -> CheckButton:
 	var check := CheckButton.new()
 	check.text = label_text
@@ -187,6 +181,10 @@ func open() -> void:
 
 
 func on_close_requested() -> void:
+	# SpinBox keeps typed text in its inner LineEdit until focus leaves; LineEdit.text is always current.
+	var focus_owner := get_viewport().gui_get_focus_owner()
+	if focus_owner is Control and is_ancestor_of(focus_owner):
+		(focus_owner as Control).release_focus()
 	for section in sections:
 		section.save()
 	queue_free()

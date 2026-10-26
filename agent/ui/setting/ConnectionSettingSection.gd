@@ -34,8 +34,6 @@ func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> 
 	var proxy_result := add_field(parent, I18n.t("agent.settings.proxy"), "http://127.0.0.1:10809", I18n.t("agent.settings.proxy_help"))
 	proxy_address_edit = proxy_result[0]
 	proxy_label = proxy_result[1]
-	for edit in [api_url_edit, model_edit, api_token_edit, proxy_address_edit]:
-		ui.bind_auto_save(edit, save_current)
 	pass
 
 

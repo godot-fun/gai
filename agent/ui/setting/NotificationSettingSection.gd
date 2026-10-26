@@ -69,7 +69,6 @@ func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> 
 	sound_folder_edit.text_changed.connect(on_sound_folder_text_changed)
 	# Column 2 — sound folder path (full control band).
 	sound_folder_row.add_child(sound_folder_edit)
-	ui.bind_auto_save(sound_folder_edit, save)
 	build_folder_dialog(window)
 	update_sound_options_visible(AgentSetting.get_notification_sound())
 	pass
@@ -105,6 +104,7 @@ func refresh() -> void:
 
 
 func save() -> void:
+	AgentSetting.set_notification_sound_seconds(roundi(sound_seconds_spin.value))
 	AgentSetting.set_notification_sound_folder(sound_folder_edit.text)
 	pass
 
