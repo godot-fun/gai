@@ -37,7 +37,6 @@ extends Control
 @onready var theme_toggle_button: Button = $Root/Toolbar/ToolbarRow/ThemeToggleWrap/ThemeToggleButton
 @onready var setting_button_node: Button = $Root/Toolbar/ToolbarRow/AgentSettingWrap/SettingButton
 @onready var agent_setting_wrap: MarginContainer = $Root/Toolbar/ToolbarRow/AgentSettingWrap
-@onready var workspace_dialog: FileDialog = $WorkspaceDialog
 
 var agent_toolbar: AgentToolbar = AgentToolbar.new()
 var workspace_button: WorkspaceButton = WorkspaceButton.new()
@@ -85,7 +84,7 @@ func _ready() -> void:
 	theme_color_select.setup(theme_color_select_node)
 	theme_toggle.setup(theme_toggle_button)
 	setting_button.setup(setting_button_node)
-	workspace_button.setup(workspace_button_node, workspace_dialog)
+	workspace_button.setup(workspace_button_node)
 	workflow_button.setup(workflow_button_node, workspace_button_node)
 	sense_button.setup(sense_button_node, sense_input)
 	note_button.setup(note_button_node)
@@ -138,10 +137,6 @@ func apply_layout() -> void:
 
 func apply_locale() -> void:
 	input_field.placeholder_text = I18n.t("agent.input.placeholder")
-	workspace_dialog.title = I18n.t("agent.workspace.dialog_title")
-	workspace_dialog.ok_button_text = I18n.t("common.select")
-	workspace_dialog.get_cancel_button().text = I18n.t("common.cancel")
-	FileDialogStyle.apply(workspace_dialog, I18nHelper.file_dialog_label_texts())
 	pass
 
 
@@ -151,7 +146,6 @@ func apply_theme() -> void:
 	app_theme.default_font = Fonts.regular()
 	theme = app_theme
 	
-	FileDialogStyle.apply(workspace_dialog, I18nHelper.file_dialog_label_texts())
 	chat_area_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
 	chat_area_panel.queue_redraw()
 	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))

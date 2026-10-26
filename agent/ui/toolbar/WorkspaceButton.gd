@@ -6,28 +6,22 @@ extends RefCounted
 ## switch on [signal AgentEvents.events.workspace_changed].
 
 var button: Button
-var dialog: FileDialog
 
 
-func setup(p_button: Button, p_dialog: FileDialog) -> void:
+func setup(p_button: Button) -> void:
 	button = p_button
-	dialog = p_dialog
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	button.tooltip_text = workspace_tooltip()
 	button.pressed.connect(on_button_pressed)
-	dialog.dir_selected.connect(on_dir_selected)
 	gdf.events.locale_changed.connect(apply_locale)
+	AgentEvents.events.workspace_changed.connect(on_workspace_changed)
 	refresh()
 	pass
 
 
 func apply_locale() -> void:
 	button.tooltip_text = workspace_tooltip()
-	dialog.title = I18n.t("agent.workspace.dialog_title")
-	dialog.ok_button_text = I18n.t("common.select")
-	dialog.get_cancel_button().text = I18n.t("common.cancel")
-	FileDialogStyle.apply(dialog, I18nHelper.file_dialog_label_texts())
 	pass
 
 
@@ -37,21 +31,15 @@ func workspace_tooltip() -> String:
 
 ## Sync the button label and the picker start folder with [method AgentWorkspace.get_root].
 func refresh() -> void:
-	var workspace_root := AgentWorkspace.get_root()
-	button.text = workspace_root
-	if DirAccess.dir_exists_absolute(workspace_root):
-		dialog.current_dir = workspace_root
+	button.text = AgentWorkspace.get_root()
 	pass
 
 
 func on_button_pressed() -> void:
-	refresh()
-	FileDialogStyle.present_centered(dialog, 60, 70, I18nHelper.file_dialog_label_texts())
+	WorkspaceWindow.show_workspace()
 	pass
 
 
-func on_dir_selected(path: String) -> void:
-	if not AgentWorkspace.set_root(path):
-		return
+func on_workspace_changed(_path: String) -> void:
 	refresh()
 	pass

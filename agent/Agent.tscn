@@ -329,9 +329,3 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("2_visual")
-
-[node name="WorkspaceDialog" type="FileDialog" parent="." unique_id=1482164299]
-title = "Open a Directory"
-ok_button_text = "Select"
-file_mode = 2
-access = 2
