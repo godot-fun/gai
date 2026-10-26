@@ -23,6 +23,7 @@ enum Type {
 	FILTER_CAROUSEL,
 	INK_LANDSCAPE,
 	TAI_CHI,
+	PIANO_RHYTHM,
 }
 
 
@@ -75,6 +76,8 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return InkLandscape.new()
 		Type.TAI_CHI:
 			return TaiChi.new()
+		Type.PIANO_RHYTHM:
+			return PianoRhythm.new()
 	return null
 
 func on_agent_start(session_id: int) -> void:
