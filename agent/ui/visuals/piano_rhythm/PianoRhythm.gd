@@ -6,9 +6,6 @@ extends VisualEffect
 ## Each note binds one transcript sentence at spawn; sentence weight drives speed,
 ## impact particles, and floating text together.
 
-const MIN_LANES := 6
-const MAX_LANES := 12
-const MIN_LANE_WIDTH := 72.0
 const KEYBOARD_TOP := 0.0
 const MIN_KEYBOARD_HEIGHT := 132.0
 const MAX_KEYBOARD_HEIGHT := 190.0
@@ -17,7 +14,7 @@ const WHITE_KEY_COUNT := 52
 const BLACK_KEY_HEIGHT_RATIO := 0.62
 const BLACK_KEY_WIDTH_RATIO := 0.58
 const BOTTOM_SAFE_SPACE := 112.0
-const MAX_NOTES := 72
+const MAX_NOTES := 18
 const HIT_LINGER_SECONDS := 0.22
 const MAX_FLOATING_LINES := 12
 const FLOAT_LINE_SPEED := 92.0
@@ -63,7 +60,7 @@ var notes: Array[PianoNote] = []
 var floating_lines: Array[FloatingLine] = []
 var key_glows: Array[float] = []
 var key_colors: Array[Color] = []
-var lane_count: int = MIN_LANES
+var lane_count: int = WHITE_KEY_COUNT
 var elapsed: float = 0.0
 var melody_step: int = 0
 var note_layer: Node2D
@@ -333,10 +330,9 @@ func build_notation(note: PianoNote) -> MusicNotationRenderer.Note:
 
 
 func ensure_layout() -> void:
-	var target_lanes := clampi(floori(size.x / MIN_LANE_WIDTH), MIN_LANES, MAX_LANES)
-	if target_lanes == lane_count and key_glows.size() == lane_count and key_colors.size() == lane_count:
+	if lane_count == WHITE_KEY_COUNT and key_glows.size() == WHITE_KEY_COUNT and key_colors.size() == WHITE_KEY_COUNT:
 		return
-	lane_count = target_lanes
+	lane_count = WHITE_KEY_COUNT
 	key_glows.resize(lane_count)
 	key_colors.resize(lane_count)
 	for index in range(key_glows.size()):
@@ -358,35 +354,27 @@ func spawn_y() -> float:
 
 
 func lane_rect(lane: int) -> Rect2:
-	var width := size.x / float(maxi(lane_count, 1))
-	return Rect2(float(lane) * width, 0.0, width, size.y)
-
-
-func white_key_index_for_lane(lane: int) -> int:
-	return clampi(roundi(float(lane) / float(maxi(lane_count - 1, 1)) * float(WHITE_KEY_COUNT - 1)), 0, WHITE_KEY_COUNT - 1)
+	var key_width := size.x / float(WHITE_KEY_COUNT)
+	var key_index := clampi(lane, 0, WHITE_KEY_COUNT - 1)
+	return Rect2(float(key_index) * key_width, 0.0, key_width, size.y)
 
 
 func key_center_for_lane(lane: int) -> float:
 	var key_width := size.x / float(WHITE_KEY_COUNT)
-	return (float(white_key_index_for_lane(lane)) + 0.5) * key_width
+	var key_index := clampi(lane, 0, WHITE_KEY_COUNT - 1)
+	return (float(key_index) + 0.5) * key_width
 
 
 func glow_for_white_key(key_index: int) -> float:
-	var glow := 0.0
-	for lane in range(key_glows.size()):
-		if white_key_index_for_lane(lane) == key_index:
-			glow = maxf(glow, key_glows[lane])
-	return glow
+	if key_index < 0 or key_index >= key_glows.size():
+		return 0.0
+	return key_glows[key_index]
 
 
 func color_for_white_key(key_index: int) -> Color:
-	var strongest_glow := 0.0
-	var color := ThemeColor.accent_theme_color()
-	for lane in range(key_glows.size()):
-		if white_key_index_for_lane(lane) == key_index and key_glows[lane] > strongest_glow:
-			strongest_glow = key_glows[lane]
-			color = key_colors[lane]
-	return color
+	if key_index >= 0 and key_index < key_glows.size() and key_glows[key_index] > 0.02:
+		return key_colors[key_index]
+	return ThemeColor.accent_theme_color()
 
 
 func _draw() -> void:

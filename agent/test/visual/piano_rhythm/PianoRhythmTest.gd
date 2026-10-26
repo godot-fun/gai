@@ -23,6 +23,18 @@ func messages_and_tools_create_rising_notes_test() -> void:
 	pass
 
 
+func white_key_lanes_are_one_to_one_test() -> void:
+	var effect := PIANO_RHYTHM_SCRIPT.new()
+	effect.size = Vector2(1280.0, 720.0)
+	effect.ensure_layout()
+	assert(effect.lane_count == PianoRhythm.WHITE_KEY_COUNT)
+	var key_width := effect.size.x / float(PianoRhythm.WHITE_KEY_COUNT)
+	for lane in range(effect.lane_count):
+		assert(is_equal_approx(effect.key_center_for_lane(lane), (float(lane) + 0.5) * key_width))
+	effect.free()
+	pass
+
+
 func rising_note_hits_top_keyboard_test() -> void:
 	var effect := PIANO_RHYTHM_SCRIPT.new()
 	effect.size = Vector2(1280.0, 720.0)
