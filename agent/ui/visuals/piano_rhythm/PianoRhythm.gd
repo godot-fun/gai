@@ -439,7 +439,7 @@ func note_color_for_note(note: PianoNote) -> Color:
 		NoteKind.TOOL_FAILED:
 			return VisualColor.appearance_color(Colors.error)
 	if not note.entry_kind.is_empty():
-		return VisualColor.appearance_color(ChatBubbleFactory.panel_color_for_kind(note.entry_kind))
+		return ChatEntryCursor.color_for_entry_kind(note.entry_kind)
 	if note.kind == NoteKind.REASONING:
 		return lane_color(note.lane, 0.035, 0.84)
 	if note.kind == NoteKind.TOOL_RUNNING:

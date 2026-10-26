@@ -24,6 +24,13 @@ static func parse_sentence_test() -> void:
 	pass
 
 
+static func entry_color_mixes_bubble_panel_with_theme_test() -> void:
+	var panel_color := ChatBubbleFactory.panel_color_for_kind(ChatEntry.KIND_THINKING)
+	var expected := VisualColor.appearance_color(ThemeColor.mix_with_theme_color(panel_color, Weights.w_7))
+	assert(ChatEntryCursor.color_for_entry_kind(ChatEntry.KIND_THINKING) == expected)
+	pass
+
+
 static func session_cursor_cache_isolated_test() -> void:
 	ChatEntryCursor.remove_session(91)
 	ChatEntryCursor.remove_session(92)

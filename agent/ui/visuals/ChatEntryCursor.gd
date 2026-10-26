@@ -132,6 +132,12 @@ static func latest_entry_text(session_id: int, start_index: int, kind: String) -
 	return ""
 
 
+## Derives an effect-ready entry color from its chat bubble panel and the active theme accent.
+static func color_for_entry_kind(entry_kind: String) -> Color:
+	var panel_color := ChatBubbleFactory.panel_color_for_kind(entry_kind)
+	return VisualColor.appearance_color(ThemeColor.mix_with_theme_color(panel_color, Weights.w_5))
+
+
 static func remove_session(session_id: int) -> void:
 	session_cursors.erase(session_id)
 	pass

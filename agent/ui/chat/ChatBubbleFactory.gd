@@ -45,12 +45,6 @@ static func append(chat_list: VBoxContainer, session_id: int, entry: ChatEntry) 
 static var panel_colors: Dictionary[String, Color] = {}
 
 
-## Resolves the same base color used by the chat bubble for an entry kind.
-## Effects can pass the result through [VisualColor] for their own contrast treatment.
-static func panel_color_for_entry(entry: ChatEntry) -> Color:
-	return panel_color_for_kind(entry.kind)
-
-
 static func panel_color_for_kind(entry_kind: String) -> Color:
 	var color: Color = panel_colors.get(entry_kind, Colors.surface)
 	return color

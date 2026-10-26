@@ -89,9 +89,9 @@ func text_note_uses_source_entry_color_test() -> void:
 	var note := effect.PianoNote.new()
 	note.kind = effect.NoteKind.ANSWER
 	note.entry_kind = ChatEntry.KIND_THINKING
-	assert(effect.note_color_for_note(note) == VisualColor.appearance_color(ChatBubbleFactory.panel_color_for_kind(note.entry_kind)))
+	assert(effect.note_color_for_note(note) == ChatEntryCursor.color_for_entry_kind(note.entry_kind))
 	note.entry_kind = ChatEntry.KIND_WEB
-	assert(effect.note_color_for_note(note) == VisualColor.appearance_color(ChatBubbleFactory.panel_color_for_kind(note.entry_kind)))
+	assert(effect.note_color_for_note(note) == ChatEntryCursor.color_for_entry_kind(note.entry_kind))
 	effect.free()
 	pass
 

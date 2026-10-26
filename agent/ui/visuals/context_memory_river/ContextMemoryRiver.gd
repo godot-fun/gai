@@ -355,7 +355,7 @@ func add_item(stream_type: StreamType, label: String, entry: ChatEntry = null) -
 	item.source_y_ratio = source_y_ratio
 	item.curve_direction = curve_direction
 	cache_text_metrics(item)
-	item.stroke_color = VisualColor.appearance_color(ChatBubbleFactory.panel_color_for_entry(entry)) if entry != null else color_for_type(item.stream_type)
+	item.stroke_color = ChatEntryCursor.color_for_entry_kind(entry.kind) if entry != null else color_for_type(item.stream_type)
 	items.append(item)
 	spawn_index += 1
 	queue_redraw()
@@ -378,7 +378,7 @@ func consume_transcript_sentences() -> void:
 		add_item(StreamType.THINKING, sentence.text, sentence.entry)
 	elif sentence.entry.kind == ChatEntry.KIND_AGENT:
 		pending_output_widths.append(output_width_for_text(sentence.text))
-		pending_output_colors.append(VisualColor.appearance_color(ChatBubbleFactory.panel_color_for_entry(sentence.entry)))
+		pending_output_colors.append(ChatEntryCursor.color_for_entry_kind(sentence.entry.kind))
 		release_pending_output()
 	pass
 
