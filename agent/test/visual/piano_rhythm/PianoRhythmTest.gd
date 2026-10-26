@@ -10,22 +10,12 @@ static func visual_type_test() -> void:
 	pass
 
 
-func every_event_generates_one_note_on_a_fixed_beat_test() -> void:
+func message_events_wait_for_transcript_consumption_test() -> void:
 	var effect := PIANO_RHYTHM_SCRIPT.new()
 	effect.size = Vector2(1280.0, 720.0)
 	effect.visible = true
 	effect.on_message_update(1, "A concise streamed answer for the melody.", OpenAiClient.STREAM_KIND_CONTENT)
-	assert(effect.notes.size() == 1)
-	# A second event inside the beat is dropped rather than stacked or queued.
-	effect.on_message_update(1, "A second streamed chunk.", OpenAiClient.STREAM_KIND_CONTENT)
-	effect.on_tool_execution_start(1, "tool-piano", "read_file", {})
-	assert(effect.notes.size() == 1)
-	effect._process(PianoRhythm.NOTE_SPAWN_INTERVAL * 0.5)
-	effect.on_message_update(1, "A third streamed chunk.", OpenAiClient.STREAM_KIND_CONTENT)
-	assert(effect.notes.size() == 1)
-	effect._process(PianoRhythm.NOTE_SPAWN_INTERVAL * 0.5)
-	effect.on_message_update(1, "A fourth streamed chunk.", OpenAiClient.STREAM_KIND_CONTENT)
-	assert(effect.notes.size() == 2)
+	assert(effect.notes.is_empty())
 	effect.free()
 	pass
 

@@ -20,12 +20,10 @@ const FLOAT_LINE_SPEED := 92.0
 const FLOAT_LINE_LIFE := 4.4
 const FLOAT_LINE_MAX_WIDTH := 420.0
 const FLOAT_FONT_SIZE_MIN := 8
-const FLOAT_FONT_SIZE_MAX := 24
+const FLOAT_FONT_SIZE_MAX := 18
 const SENTENCE_WEIGHT_CHARS := 140.0
 const NOTE_RISE_SECONDS_MAX := 1.9
 const NOTE_RISE_SECONDS_MIN := 0.9
-## One note leaves the beat every half second, so a text burst never prints a wall of glyphs.
-const NOTE_SPAWN_INTERVAL := 0.5
 
 enum NoteState { RISING, HIT }
 enum NoteKind { ANSWER, REASONING, TOOL_RUNNING, TOOL_SUCCESS, TOOL_FAILED }
@@ -63,7 +61,6 @@ var floating_lines: Array[FloatingLine] = []
 var key_glows: Array[float] = []
 var key_colors: Array[Color] = []
 var melody_step: int = 0
-var spawn_clock: float = 0.0
 var note_layer: Node2D
 var impact_layer: Control
 
@@ -78,24 +75,6 @@ func fade_in_seconds() -> float:
 	return 0.38
 
 
-func on_agent_start(_session_id: int) -> void:
-	request_note(NoteKind.REASONING)
-	pass
-
-
-func on_turn_start(_session_id: int) -> void:
-	request_note(NoteKind.REASONING)
-	pass
-
-
-func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> void:
-	if chunk.is_empty():
-		return
-	var kind := NoteKind.REASONING if stream_kind == OpenAiClient.STREAM_KIND_REASONING else NoteKind.ANSWER
-	request_note(kind)
-	pass
-
-
 func on_tool_execution_start(_session_id: int, _tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	request_note(NoteKind.TOOL_RUNNING, ToolVisualDisplay.upper_name(tool_name).left(10))
 	pass
@@ -107,16 +86,11 @@ func on_tool_execution_end(_session_id: int, _tool_call_id: String, _tool_name: 
 	pass
 
 
-func on_turn_end(_session_id: int) -> void:
-	request_note(NoteKind.ANSWER)
-	pass
-
-
 func _process(delta: float) -> void:
 	if not visible:
 		return
 	ensure_layout()
-	spawn_clock = maxf(spawn_clock - delta, 0.0)
+	spawn_transcript_note()
 	var hit := hit_y()
 	var keyboard_animating := false
 	for lane in range(key_glows.size()):
@@ -157,6 +131,18 @@ func _process(delta: float) -> void:
 	# a key is pressed or a floating line is alive.
 	if keyboard_animating or not floating_lines.is_empty():
 		queue_redraw()
+	pass
+
+
+## Reads at most one completed transcript sentence per frame and turns it into a note immediately.
+func spawn_transcript_note() -> void:
+	if notes.size() >= MAX_NOTES:
+		return
+	var sentence := ChatEntryCursor.take_next_sentence()
+	if sentence.is_empty() or sentence.entry == null:
+		return
+	var kind := NoteKind.REASONING if sentence.entry.kind == ChatEntry.KIND_THINKING else NoteKind.ANSWER
+	request_note(kind, "", sentence.text.strip_edges(), sentence.entry.kind)
 	pass
 
 
@@ -232,24 +218,20 @@ func rise_seconds_for_weight(weight: float) -> float:
 	return lerpf(NOTE_RISE_SECONDS_MAX, NOTE_RISE_SECONDS_MIN, clampf(weight, 0.0, 1.0))
 
 
-## One note per call and never more than one per beat: the event spawns it directly, or the
-## beat is still resting and the event is dropped. [constant MAX_NOTES] bounds the visible notes.
-func request_note(kind: NoteKind, label: String = "") -> void:
-	if spawn_clock > 0.0:
+## Adds an event or transcript note. [constant MAX_NOTES] bounds the visible score.
+func request_note(kind: NoteKind, label: String = "", text: String = "", entry_kind: String = "") -> void:
+	if notes.size() >= MAX_NOTES:
 		return
 	# Steps three keys at a time so consecutive notes never repeat a lane.
-	spawn_note(melody_step * 3 % WHITE_KEY_COUNT, kind, label)
+	spawn_note(melody_step * 3 % WHITE_KEY_COUNT, kind, label, text, entry_kind)
 	melody_step += 1
-	spawn_clock = NOTE_SPAWN_INTERVAL
 	pass
 
 
-func spawn_note(lane: int, kind: NoteKind, label: String = "") -> void:
+func spawn_note(lane: int, kind: NoteKind, label: String = "", text: String = "", entry_kind: String = "") -> void:
 	ensure_layout()
 	if notes.size() >= MAX_NOTES:
 		return
-	var sentence := ChatEntryCursor.take_next_sentence()
-	var text := "" if sentence.is_empty() else sentence.text.strip_edges()
 	var bottom := maxf(hit_y() + 120.0, size.y - BOTTOM_SAFE_SPACE)
 	var note := PianoNote.new()
 	note.lane = clampi(lane, 0, WHITE_KEY_COUNT - 1)
@@ -257,7 +239,7 @@ func spawn_note(lane: int, kind: NoteKind, label: String = "") -> void:
 	note.kind = kind
 	note.label = label
 	note.sentence_text = text
-	note.entry_kind = "" if sentence.entry == null else sentence.entry.kind
+	note.entry_kind = entry_kind
 	note.weight = weight_for_sentence(text, kind)
 	note.is_rest = text.is_empty() and kind == NoteKind.REASONING
 	note.speed = (bottom - hit_y()) / rise_seconds_for_weight(note.weight)
