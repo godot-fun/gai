@@ -99,7 +99,7 @@ func _process(delta: float) -> void:
 	var keyboard_animating := false
 	for lane in range(key_glows.size()):
 		if key_glows[lane] > 0.0:
-			key_glows[lane] = move_toward(key_glows[lane], 0.0, delta * 3.8)
+			key_glows[lane] = move_toward(key_glows[lane], 0.0, delta / HIT_LINGER_SECONDS)
 			keyboard_animating = true
 	for index in range(notes.size() - 1, -1, -1):
 		var note := notes[index]
