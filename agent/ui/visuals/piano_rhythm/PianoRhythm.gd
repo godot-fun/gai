@@ -14,7 +14,8 @@ const BLACK_KEY_HEIGHT_RATIO := 0.62
 const BLACK_KEY_WIDTH_RATIO := 0.58
 const BOTTOM_SAFE_SPACE := 112.0
 const MAX_NOTES := 28
-const HIT_LINGER_SECONDS := 0.22
+# Keeps stopped GPU afterimages alive long enough to fade after the key impact.
+const HIT_LINGER_SECONDS := 0.72
 const MAX_FLOATING_LINES := 12
 const FLOAT_LINE_SPEED := 92.0
 const FLOAT_LINE_LIFE := 4.4

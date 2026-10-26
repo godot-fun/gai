@@ -7,6 +7,26 @@ const TRAIL_PARTICLE_LIFETIME: float = 0.24
 const TRAIL_PARTICLE_COUNT: int = 18
 const AFTERIMAGE_LIFETIME: float = 0.66
 const AFTERIMAGE_COUNT: int = 6
+const AFTERIMAGE_TEXTURE_SIZE := Vector2i(128, 128)
+
+
+class NoteAfterimageRenderer extends Node2D:
+	var notation: MusicNotationRenderer.Note = MusicNotationRenderer.Note.new()
+	var rest: bool = false
+
+	func setup(p_notation: MusicNotationRenderer.Note, p_rest: bool) -> void:
+		notation = p_notation
+		rest = p_rest
+		queue_redraw()
+		pass
+
+	func _draw() -> void:
+		var center := Vector2(64.0, 72.0)
+		if rest:
+			MusicNotationRenderer.draw_rest(self, center, Color.WHITE, notation.duration)
+		else:
+			MusicNotationRenderer.draw_note(self, center, Color.WHITE, notation)
+		pass
 
 var note_color: Color = Color.WHITE
 var notation: MusicNotationRenderer.Note = MusicNotationRenderer.Note.new()
@@ -15,9 +35,9 @@ var label: String = ""
 var glyph_visible: bool = true
 var trail_particles: GPUParticles2D
 var afterimage_particles: GPUParticles2D
+var afterimage_viewport: SubViewport
 
 static var trail_texture: ImageTexture
-static var afterimage_texture: ImageTexture
 
 
 func setup(p_color: Color, p_notation: MusicNotationRenderer.Note, p_rest: bool, p_label: String) -> void:
@@ -90,7 +110,7 @@ func build_afterimage_particles() -> void:
 	afterimage_particles.randomness = 0.12
 	afterimage_particles.local_coords = false
 	afterimage_particles.visibility_rect = Rect2(-88.0, -56.0, 176.0, 288.0)
-	afterimage_particles.texture = get_afterimage_texture()
+	afterimage_particles.texture = create_afterimage_texture()
 	var particle_material := ParticleProcessMaterial.new()
 	particle_material.direction = Vector3(0.0, 1.0, 0.0)
 	particle_material.spread = 5.0
@@ -99,8 +119,8 @@ func build_afterimage_particles() -> void:
 	particle_material.gravity = Vector3(0.0, 4.0, 0.0)
 	particle_material.damping_min = 1.0
 	particle_material.damping_max = 4.0
-	particle_material.scale_min = 0.94
-	particle_material.scale_max = 1.35
+	particle_material.scale_min = 0.52
+	particle_material.scale_max = 0.76
 	particle_material.scale_curve = make_afterimage_scale_curve()
 	particle_material.color_ramp = make_afterimage_ramp()
 	afterimage_particles.process_material = particle_material
@@ -144,6 +164,20 @@ func make_afterimage_scale_curve() -> CurveTexture:
 	return scale_curve
 
 
+## Rasterizes this exact note's notation once, then lets the GPU reuse it for every residual particle.
+func create_afterimage_texture() -> Texture2D:
+	afterimage_viewport = SubViewport.new()
+	afterimage_viewport.name = "AfterimageNotationTexture"
+	afterimage_viewport.size = AFTERIMAGE_TEXTURE_SIZE
+	afterimage_viewport.transparent_bg = true
+	afterimage_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+	var renderer := NoteAfterimageRenderer.new()
+	renderer.setup(notation, rest)
+	afterimage_viewport.add_child(renderer)
+	add_child(afterimage_viewport)
+	return afterimage_viewport.get_texture()
+
+
 static func get_trail_texture() -> ImageTexture:
 	if trail_texture != null:
 		return trail_texture
@@ -157,21 +191,3 @@ static func get_trail_texture() -> ImageTexture:
 			image.set_pixel(x, y, Color(1.0, 1.0, 1.0, alpha))
 	trail_texture = ImageTexture.create_from_image(image)
 	return trail_texture
-
-
-## A compact eighth-note silhouette shared by every afterimage emitter.
-static func get_afterimage_texture() -> ImageTexture:
-	if afterimage_texture != null:
-		return afterimage_texture
-	const TEXTURE_SIZE: int = 32
-	var image := Image.create(TEXTURE_SIZE, TEXTURE_SIZE, false, Image.FORMAT_RGBA8)
-	for y in range(TEXTURE_SIZE):
-		for x in range(TEXTURE_SIZE):
-			var head := Vector2((float(x) - 11.5) / 7.0, (float(y) - 22.0) / 5.0).length() <= 1.0
-			var stem := x >= 17 and x <= 20 and y >= 5 and y <= 22
-			var flag_top := 5 + int(float(x - 19) * 0.48)
-			var flag := x >= 19 and x <= 27 and y >= flag_top and y <= flag_top + 3
-			if head or stem or flag:
-				image.set_pixel(x, y, Color.WHITE)
-	afterimage_texture = ImageTexture.create_from_image(image)
-	return afterimage_texture
