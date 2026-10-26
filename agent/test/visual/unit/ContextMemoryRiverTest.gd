@@ -46,7 +46,7 @@ static func absorption_spawns_one_output_mote_test() -> void:
 	var effect := ContextMemoryRiver.new()
 	effect.add_item(ContextMemoryRiver.StreamType.TOOL, "READ")
 	var item: ContextMemoryRiver.StreamItem = effect.items.pop_front()
-	effect.pending_output_widths.append(40.0)
+	effect.pending_outputs.append(ContextMemoryRiver.PendingOutput.new(40.0, Color.WHITE))
 	effect.add_absorption_effect(item)
 	effect.visible = true
 	effect._process(ContextMemoryRiver.ABSORPTION_DURATION * 0.51)

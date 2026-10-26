@@ -90,7 +90,11 @@ func _process(delta: float) -> void:
 	if not visible:
 		return
 	ensure_layout()
-	spawn_transcript_note()
+	if notes.size() < MAX_NOTES:
+		var sentence := ChatEntryCursor.take_next_sentence()
+		if not sentence.is_empty() and sentence.entry != null:
+			var kind := NoteKind.REASONING if sentence.entry.kind == ChatEntry.KIND_THINKING else NoteKind.ANSWER
+			request_note(kind, "", sentence.text.strip_edges(), sentence.entry.kind)
 	var hit := hit_y()
 	var keyboard_animating := false
 	for lane in range(key_glows.size()):
@@ -132,19 +136,6 @@ func _process(delta: float) -> void:
 	if keyboard_animating or not floating_lines.is_empty():
 		queue_redraw()
 	pass
-
-
-## Reads at most one completed transcript sentence per frame and turns it into a note immediately.
-func spawn_transcript_note() -> void:
-	if notes.size() >= MAX_NOTES:
-		return
-	var sentence := ChatEntryCursor.take_next_sentence()
-	if sentence.is_empty() or sentence.entry == null:
-		return
-	var kind := NoteKind.REASONING if sentence.entry.kind == ChatEntry.KIND_THINKING else NoteKind.ANSWER
-	request_note(kind, "", sentence.text.strip_edges(), sentence.entry.kind)
-	pass
-
 
 func spawn_floating_line_on_impact(note: PianoNote) -> void:
 	if note.is_rest:

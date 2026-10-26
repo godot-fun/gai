@@ -10,13 +10,23 @@ static func visual_type_test() -> void:
 	pass
 
 
-func message_events_wait_for_transcript_consumption_test() -> void:
+func process_consumes_transcript_sentence_test() -> void:
+	var session := AgentSessionStore.create_session()
+	session.chat_entries.append(ChatEntry.new(ChatEntry.KIND_USER, ChatEntry.TITLE_USER, ""))
+	session.chat_entries.append(ChatEntry.new(ChatEntry.KIND_AGENT, ChatEntry.TITLE_AGENT, "A complete answer."))
+	ChatEntryCursor.remove_session(session.id)
+	RuntimeManager.get_or_create_runtime(session.id)
 	var effect := PIANO_RHYTHM_SCRIPT.new()
 	effect.size = Vector2(1280.0, 720.0)
 	effect.visible = true
-	effect.on_message_update(1, "A concise streamed answer for the melody.", OpenAiClient.STREAM_KIND_CONTENT)
-	assert(effect.notes.is_empty())
+	effect._process(0.0)
+	assert(effect.notes.size() == 1)
+	assert(effect.notes[0].sentence_text == "A complete answer.")
+	assert(effect.notes[0].entry_kind == ChatEntry.KIND_AGENT)
 	effect.free()
+	RuntimeManager.remove_runtime(session.id)
+	AgentSessionStore.sessions.remove(session.id)
+	ChatEntryCursor.remove_session(session.id)
 	pass
 
 

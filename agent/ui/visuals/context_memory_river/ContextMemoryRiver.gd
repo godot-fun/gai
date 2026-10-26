@@ -49,7 +49,7 @@ const END_TIMEOUT_MSEC := 4000
 const SHADER_PATH := "res://agent/ui/visuals/context_memory_river/ContextMemoryRiverLens.gdshader"
 const RING_RADIUS_CLOSE := 30.0
 
-enum StreamType { USER, SYSTEM, HISTORY, FILE, TOOL, WEB, THINKING, ERROR, ANSWER }
+enum StreamType { USER, SYSTEM, HISTORY, FILE, TOOL, WEB, THINKING, ERROR }
 
 
 class StreamItem extends RefCounted:
@@ -92,12 +92,22 @@ class OutputMote extends RefCounted:
 	var color: Color = Color.WHITE
 
 
+class PendingOutput extends RefCounted:
+	var width: float = 0.0
+	var color: Color = Color.WHITE
+
+
+	func _init(p_width: float, p_color: Color) -> void:
+		width = p_width
+		color = p_color
+		pass
+
+
 var items: Array[StreamItem] = []
 var absorption_effects: Array[AbsorptionEffect] = []
 var decorative_motes: Array[StreamItem] = []
 var output_motes: Array[OutputMote] = []
-var pending_output_widths: Array[float] = []
-var pending_output_colors: Array[Color] = []
+var pending_outputs: Array[PendingOutput] = []
 var ready_output_slots: int = 0
 var elapsed: float = 0.0
 var spawn_index: int = 0
@@ -144,8 +154,7 @@ func on_agent_start(_session_id: int) -> void:
 	is_ending = false
 	lens_closing = false
 	lens_close_progress = 0.0
-	pending_output_widths.clear()
-	pending_output_colors.clear()
+	pending_outputs.clear()
 	ready_output_slots = 0
 	queue_redraw()
 	pass
@@ -363,7 +372,7 @@ func add_item(stream_type: StreamType, label: String, entry: ChatEntry = null) -
 
 
 func visual_flow_is_empty() -> bool:
-	return items.is_empty() and decorative_motes.is_empty() and absorption_effects.is_empty() and output_motes.is_empty() and pending_output_widths.is_empty()
+	return items.is_empty() and decorative_motes.is_empty() and absorption_effects.is_empty() and output_motes.is_empty() and pending_outputs.is_empty()
 
 
 ## Uses the shared transcript cursor so sentence boundaries match MatrixRain and
@@ -377,16 +386,16 @@ func consume_transcript_sentences() -> void:
 	if sentence.entry.kind == ChatEntry.KIND_THINKING:
 		add_item(StreamType.THINKING, sentence.text, sentence.entry)
 	elif sentence.entry.kind == ChatEntry.KIND_AGENT:
-		pending_output_widths.append(output_width_for_text(sentence.text))
-		pending_output_colors.append(ChatEntryCursor.color_for_entry_kind(sentence.entry.kind))
+		pending_outputs.append(PendingOutput.new(output_width_for_text(sentence.text), ChatEntryCursor.color_for_entry_kind(sentence.entry.kind)))
 		release_pending_output()
 	pass
 
 
 ## A generated sentence can leave only after a real source packet reached the lens.
 func release_pending_output() -> void:
-	while ready_output_slots > 0 and not pending_output_widths.is_empty():
-		spawn_output_mote(pending_output_widths.pop_front(), 1.0, pending_output_colors.pop_front())
+	while ready_output_slots > 0 and not pending_outputs.is_empty():
+		var pending: PendingOutput = pending_outputs.pop_front()
+		spawn_output_mote(pending.width, 1.0, pending.color)
 		ready_output_slots -= 1
 	pass
 
@@ -786,8 +795,6 @@ static func label_for_type(stream_type: StreamType) -> String:
 			return I18n.t("agent.visuals.thought")
 		StreamType.ERROR:
 			return I18n.t("agent.visuals.error")
-		StreamType.ANSWER:
-			return I18n.t("agent.visuals.answer")
 	return I18n.t("agent.visuals.history")
 
 
@@ -810,8 +817,6 @@ static func neon_base_for_type(stream_type: StreamType) -> Color:
 			return ThemeColor.mix_with_theme_color(Colors.purple, Weights.w_7)
 		StreamType.ERROR:
 			return ThemeColor.mix_with_theme_color(Colors.error, Weights.w_4)
-		StreamType.ANSWER:
-			return ThemeColor.mix_with_theme_color(Colors.primary_text, Weights.w_6)
 	return ThemeColor.mix_with_theme_color(Colors.secondary_text, Weights.w_6)
 
 
