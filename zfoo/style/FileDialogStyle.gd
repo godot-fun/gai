@@ -113,11 +113,10 @@ static func style_control(node: Node, label_texts: Dictionary[String, String] = 
 		apply_tooltip_text(node as Control, label_texts)
 	if node is LineEdit:
 		var path_edit := node as LineEdit
-		LineEditStyle.apply(path_edit, file_dialog_field_style(), ThemeColor.title_color, ThemeColor.demote(Colors.secondary_text, Weights.w_2),
-			ThemeColor.selection_color, Margin.ma_0)
+		LineEditStyle.apply(path_edit)
 		path_edit.custom_minimum_size.y = maxi(path_edit.custom_minimum_size.y, ControlSize.md)
 	elif node is OptionButton:
-		style_path_option(node as OptionButton)
+		ButtonStyle.apply_option_button(node as OptionButton)
 	elif node is PopupMenu:
 		var popup_menu := node as PopupMenu
 		PopupMenuStyle.apply(popup_menu)
