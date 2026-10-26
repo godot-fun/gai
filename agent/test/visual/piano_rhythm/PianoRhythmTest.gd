@@ -109,3 +109,49 @@ func full_note_capacity_keeps_visible_notes_test() -> void:
 	assert(effect.notes[0] == first_note)
 	effect.free()
 	pass
+
+
+func stem_direction_follows_pitch_test() -> void:
+	assert(MusicNotationRenderer.stem_points_up(PackedInt32Array([-1])))
+	assert(not MusicNotationRenderer.stem_points_up(PackedInt32Array([1])))
+	assert(not MusicNotationRenderer.stem_points_up(PackedInt32Array([0])))
+	# The head farthest from the middle line decides, so a low chord keeps the stem up.
+	assert(MusicNotationRenderer.stem_points_up(PackedInt32Array([-4, 0, 3])))
+	assert(not MusicNotationRenderer.stem_points_up(PackedInt32Array([0, 5])))
+	pass
+
+
+func chord_heads_merge_base_step_without_duplicates_test() -> void:
+	var note := MusicNotationRenderer.Note.new()
+	note.step = 0
+	note.chord_steps = PackedInt32Array([0, 4])
+	var steps := MusicNotationRenderer.chord_steps_for(note)
+	assert(steps.size() == 2)
+	assert(steps[0] == 0)
+	assert(steps[1] == 4)
+	var heads := MusicNotationRenderer.layout_heads(steps, Vector2.ZERO, MusicNotationRenderer.HEAD_WIDTH)
+	assert(heads.size() == 2)
+	assert(is_equal_approx(heads[0].y - heads[1].y, MusicNotationRenderer.STEP * 4.0))
+	pass
+
+
+func second_interval_splits_heads_horizontally_test() -> void:
+	var steps := PackedInt32Array([0, 1])
+	var heads := MusicNotationRenderer.layout_heads(steps, Vector2.ZERO, MusicNotationRenderer.HEAD_WIDTH)
+	assert(is_equal_approx(heads[1].x, MusicNotationRenderer.HEAD_WIDTH * 0.62))
+	pass
+
+
+func glyph_bottom_clears_stems_and_dynamics_test() -> void:
+	var down_stem := MusicNotationRenderer.Note.new()
+	assert(MusicNotationRenderer.glyph_bottom(down_stem) >= MusicNotationRenderer.STEM_LENGTH)
+	var low_chord := MusicNotationRenderer.Note.new()
+	low_chord.chord_steps = PackedInt32Array([-3])
+	var up_stem := MusicNotationRenderer.Note.new()
+	up_stem.step = -1
+	assert(MusicNotationRenderer.glyph_bottom(low_chord) > MusicNotationRenderer.glyph_bottom(up_stem))
+	var with_dynamic := MusicNotationRenderer.Note.new()
+	with_dynamic.step = -1
+	with_dynamic.dynamic_mark = "p"
+	assert(MusicNotationRenderer.glyph_bottom(with_dynamic) > MusicNotationRenderer.glyph_bottom(up_stem))
+	pass

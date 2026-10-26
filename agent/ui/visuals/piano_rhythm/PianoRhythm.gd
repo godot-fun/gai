@@ -18,7 +18,6 @@ const BLACK_KEY_HEIGHT_RATIO := 0.62
 const BLACK_KEY_WIDTH_RATIO := 0.58
 const BOTTOM_SAFE_SPACE := 112.0
 const MAX_NOTES := 72
-const NOTE_HEAD_RADIUS := 9.0
 const HIT_LINGER_SECONDS := 0.22
 const MAX_FLOATING_LINES := 12
 const FLOAT_LINE_SPEED := 92.0
@@ -44,16 +43,8 @@ class PianoNote extends RefCounted:
 	var label: String = ""
 	var linger: float = 0.0
 	var seed: float = 0.0
-	var duration: int = 2
+	var notation: MusicNotationRenderer.Note = MusicNotationRenderer.Note.new()
 	var is_rest: bool = false
-	var accidental: int = 0
-	var dotted: bool = false
-	var chord_steps := PackedInt32Array()
-	var tie: bool = false
-	var triplet: bool = false
-	var dynamic_mark: String = ""
-	var staccato: bool = false
-	var fermata: bool = false
 	var sentence_text: String = ""
 	var weight: float = 0.35
 	var visual
@@ -203,7 +194,7 @@ func floating_font_band_for_note(note: PianoNote) -> Vector2i:
 	band_max = maxf(band_max, band_min + 2.0)
 	band_min = clampf(band_min, float(FLOAT_FONT_SIZE_MIN), float(FLOAT_FONT_SIZE_MAX))
 	band_max = clampf(band_max, band_min, float(FLOAT_FONT_SIZE_MAX))
-	return Vector2i(roundi(band_min), roundi(band_max))
+	return Vector2i(ceili(band_min), floori(band_max))
 
 
 func floating_font_size_for_note(note: PianoNote) -> int:
@@ -283,10 +274,10 @@ func spawn_note(lane: int, kind: NoteKind, label: String = "", spawn_offset: flo
 	note.speed = speed_for_weight(note.weight)
 	note.length = lerpf(8.0, 96.0, note.weight)
 	note.seed = float(melody_step * 19 + notes.size() * 7)
-	configure_notation(note)
+	note.notation = build_notation(note)
 	ensure_render_layers()
 	var visual := PianoNoteVisual.new()
-	visual.setup(note_color_for_note(note), note.length, note.duration, note.is_rest, note.accidental, note.dotted, note.chord_steps, note.tie, note.triplet, note.dynamic_mark, note.staccato, note.fermata, note.label, positive_mod(note.lane, 7) - 3, note.seed)
+	visual.setup(note_color_for_note(note), note.length, note.notation, note.is_rest, note.label, note.seed)
 	visual.set_note_position(Vector2(key_center_for_lane(note.lane), note.y))
 	note_layer.add_child(visual)
 	note.visual = visual
@@ -310,37 +301,35 @@ func ensure_render_layers() -> void:
 	pass
 
 
-func configure_notation(note: PianoNote) -> void:
-	note.chord_steps = PackedInt32Array()
-	note.tie = false
-	note.triplet = false
-	note.fermata = false
-	note.dotted = false
-	note.staccato = false
+## Maps one agent event onto printed notation. Weight decides note value and accidental so
+## the melody reads as a score instead of random glyphs.
+func build_notation(note: PianoNote) -> MusicNotationRenderer.Note:
+	var notation := MusicNotationRenderer.Note.new()
+	notation.step = positive_mod(note.lane, 7) - 3
 	if note.is_rest:
-		note.duration = MusicNotationRenderer.Duration.QUARTER
-		return
+		notation.duration = MusicNotationRenderer.Duration.QUARTER
+		return notation
 	if note.kind == NoteKind.TOOL_RUNNING:
-		note.duration = MusicNotationRenderer.Duration.HALF
-		note.chord_steps = PackedInt32Array([-4, 0, 3])
-		note.dynamic_mark = "mf"
-		return
+		notation.duration = MusicNotationRenderer.Duration.HALF
+		notation.chord_steps = PackedInt32Array([-4, 0, 3])
+		notation.dynamic_mark = "mf"
+		return notation
 	if note.kind == NoteKind.TOOL_SUCCESS:
-		note.chord_steps = PackedInt32Array([0, 4])
-		note.dynamic_mark = "f"
+		notation.chord_steps = PackedInt32Array([0, 4])
+		notation.dynamic_mark = "f"
 	elif note.kind == NoteKind.TOOL_FAILED:
-		note.chord_steps = PackedInt32Array([0, -3])
-		note.dynamic_mark = "p"
+		notation.chord_steps = PackedInt32Array([0, -3])
+		notation.dynamic_mark = "p"
 	if note.weight >= 0.72:
-		note.duration = MusicNotationRenderer.Duration.HALF
-		note.dotted = note.weight >= 0.88
+		notation.duration = MusicNotationRenderer.Duration.HALF
+		notation.dotted = note.weight >= 0.88
 	elif note.weight >= 0.42:
-		note.duration = MusicNotationRenderer.Duration.QUARTER
+		notation.duration = MusicNotationRenderer.Duration.QUARTER
 	else:
-		note.duration = MusicNotationRenderer.Duration.SIXTEENTH
-		note.staccato = true
-	note.accidental = -1 if note.weight < 0.22 else (1 if note.weight > 0.78 else 0)
-	pass
+		notation.duration = MusicNotationRenderer.Duration.SIXTEENTH
+		notation.staccato = true
+	notation.accidental = -1 if note.weight < 0.22 else (1 if note.weight > 0.78 else 0)
+	return notation
 
 
 func ensure_layout() -> void:

@@ -1,43 +1,25 @@
 class_name PianoNoteVisual
 extends Node2D
 
-## One score glyph and its shader-ready visual state. PianoRhythm owns timing; this node
+## One engraved glyph and its shader-ready visual state. PianoRhythm owns timing; this node
 ## owns its canvas drawing and per-note material parameters.
 
 const NOTE_SHADER_PATH := "res://agent/ui/visuals/piano_rhythm/piano_note.gdshader"
 
 var note_color: Color = Color.WHITE
 var note_length: float = 0.0
-var note_duration: int = MusicNotationRenderer.Duration.QUARTER
+var notation: MusicNotationRenderer.Note = MusicNotationRenderer.Note.new()
 var rest: bool = false
-var accidental: int = 0
-var dotted: bool = false
-var chord_steps := PackedInt32Array()
-var tie: bool = false
-var triplet: bool = false
-var dynamic_mark: String = ""
-var staccato: bool = false
-var fermata: bool = false
 var label: String = ""
-var pitch_step: int = 0
 var shader_clock: float = 0.0
 
 
-func setup(p_color: Color, p_length: float, p_duration: int, p_rest: bool, p_accidental: int, p_dotted: bool, p_chord_steps: PackedInt32Array, p_tie: bool, p_triplet: bool, p_dynamic_mark: String, p_staccato: bool, p_fermata: bool, p_label: String, p_pitch_step: int, random_seed: float) -> void:
+func setup(p_color: Color, p_length: float, p_notation: MusicNotationRenderer.Note, p_rest: bool, p_label: String, random_seed: float) -> void:
 	note_color = p_color
 	note_length = p_length
-	note_duration = p_duration
+	notation = p_notation
 	rest = p_rest
-	accidental = p_accidental
-	dotted = p_dotted
-	chord_steps = p_chord_steps
-	tie = p_tie
-	triplet = p_triplet
-	dynamic_mark = p_dynamic_mark
-	staccato = p_staccato
-	fermata = p_fermata
 	label = p_label
-	pitch_step = p_pitch_step
 	var shader_material := ShaderMaterial.new()
 	shader_material.shader = load(NOTE_SHADER_PATH) as Shader
 	shader_material.set_shader_parameter("note_tint", note_color)
@@ -70,18 +52,23 @@ func _draw() -> void:
 	draw_circle(Vector2.ZERO, 22.0, Color(note_color, 0.05 * shimmer))
 	draw_circle(Vector2.ZERO, 14.0, Color(note_color, 0.10 * shimmer))
 	if note_length > 0.0:
-		draw_line(Vector2(0.0, 8.0), Vector2(0.0, note_length), Color(note_color, 0.26), 5.0)
-		draw_line(Vector2(0.0, 8.0), Vector2(0.0, note_length), Color(note_color, 0.60), 1.0)
+		draw_energy_trail()
 	if rest:
-		MusicNotationRenderer.draw_rest(self, Vector2.ZERO, note_color, note_duration)
+		MusicNotationRenderer.draw_rest(self, Vector2.ZERO, note_color, notation.duration)
 	else:
-		MusicNotationRenderer.draw_note(self, Vector2.ZERO, note_color, note_duration, pitch_step, accidental, dotted, chord_steps, tie, triplet, dynamic_mark, staccato, fermata)
+		MusicNotationRenderer.draw_note(self, Vector2.ZERO, note_color, notation)
 	if not label.is_empty():
-		draw_centered_text(Vector2(0.0, 46.0), label, Fonts.semibold(), Typography.label_small_size, Color(note_color, 0.82))
+		var label_y := MusicNotationRenderer.glyph_bottom(notation) + float(MusicNotationRenderer.DYNAMIC_FONT_SIZE) + 4.0
+		MusicNotationRenderer.draw_centered_text(self, Vector2(0.0, label_y), label, Fonts.semibold(), MusicNotationRenderer.DYNAMIC_FONT_SIZE, Color(note_color, 0.72))
 	pass
 
 
-func draw_centered_text(position: Vector2, text: String, font: Font, font_size: int, text_color: Color) -> void:
-	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	draw_string(font, position - Vector2(width * 0.5, 0.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, text_color)
+## The falling energy wake behind the glyph. It starts below the engraved silhouette
+## instead of crossing it, so the note itself stays readable.
+func draw_energy_trail() -> void:
+	var trail_top := MusicNotationRenderer.glyph_bottom(notation) + 4.0
+	var trail_bottom := maxf(note_length, trail_top + 14.0)
+	var trail := PackedVector2Array([Vector2(0.0, trail_top), Vector2(0.0, trail_bottom)])
+	MusicNotationRenderer.draw_stroke(self, trail, 11.0, 3.0, Color(note_color, 0.09))
+	MusicNotationRenderer.draw_stroke(self, trail, 4.5, 1.0, Color(note_color, 0.24))
 	pass
