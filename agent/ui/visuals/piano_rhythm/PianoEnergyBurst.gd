@@ -32,7 +32,7 @@ func setup(origin: Vector2, impact_color: Color, random_seed: float, impact_weig
 	duration = randf_range(lerpf(0.36, 0.52, weight), lerpf(0.58, 0.86, weight))
 	var count_min := roundi(lerpf(10.0, 22.0, weight))
 	var count_max := roundi(lerpf(18.0, 48.0, weight))
-	var particle_count := randi_range(mini(count_min, count_max), maxi(count_min, count_max))
+	var particle_count := randi_range(count_min, count_max)
 	for index in range(particle_count):
 		var particle := EnergyParticle.new()
 		configure_particle(particle, weight)

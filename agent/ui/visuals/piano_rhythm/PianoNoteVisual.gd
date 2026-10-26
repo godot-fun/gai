@@ -29,11 +29,6 @@ func setup(p_color: Color, p_length: float, p_notation: MusicNotationRenderer.No
 	pass
 
 
-func set_note_position(next_position: Vector2) -> void:
-	position = next_position
-	pass
-
-
 func set_hit() -> void:
 	visible = false
 	pass

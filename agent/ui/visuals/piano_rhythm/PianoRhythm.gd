@@ -14,7 +14,7 @@ const WHITE_KEY_COUNT := 52
 const BLACK_KEY_HEIGHT_RATIO := 0.62
 const BLACK_KEY_WIDTH_RATIO := 0.58
 const BOTTOM_SAFE_SPACE := 112.0
-const MAX_NOTES := 18
+const MAX_NOTES := 28
 const HIT_LINGER_SECONDS := 0.22
 const MAX_FLOATING_LINES := 12
 const FLOAT_LINE_SPEED := 92.0
@@ -25,6 +25,8 @@ const FLOAT_FONT_SIZE_MAX := 24
 const SENTENCE_WEIGHT_CHARS := 140.0
 const NOTE_SPEED_MIN := 235.0
 const NOTE_SPEED_MAX := 495.0
+## One note leaves the beat every half second, so a text burst never prints a wall of glyphs.
+const NOTE_SPAWN_INTERVAL := 0.5
 
 enum NoteState { RISING, HIT }
 enum NoteKind { ANSWER, REASONING, TOOL_RUNNING, TOOL_SUCCESS, TOOL_FAILED }
@@ -44,7 +46,7 @@ class PianoNote extends RefCounted:
 	var is_rest: bool = false
 	var sentence_text: String = ""
 	var weight: float = 0.35
-	var visual
+	var visual: PianoNoteVisual
 
 
 class FloatingLine extends RefCounted:
@@ -61,8 +63,8 @@ var floating_lines: Array[FloatingLine] = []
 var key_glows: Array[float] = []
 var key_colors: Array[Color] = []
 var lane_count: int = WHITE_KEY_COUNT
-var elapsed: float = 0.0
 var melody_step: int = 0
+var spawn_clock: float = 0.0
 var note_layer: Node2D
 var impact_layer: Control
 
@@ -78,16 +80,12 @@ func fade_in_seconds() -> float:
 
 
 func on_agent_start(_session_id: int) -> void:
-	ensure_layout()
-	for lane in range(lane_count):
-		if lane % 3 == 0:
-			spawn_note(lane, NoteKind.REASONING)
-	queue_redraw()
+	request_note(NoteKind.REASONING)
 	pass
 
 
 func on_turn_start(_session_id: int) -> void:
-	spawn_phrase(2, NoteKind.REASONING)
+	request_note(NoteKind.REASONING)
 	pass
 
 
@@ -95,29 +93,23 @@ func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> 
 	if chunk.is_empty():
 		return
 	var kind := NoteKind.REASONING if stream_kind == OpenAiClient.STREAM_KIND_REASONING else NoteKind.ANSWER
-	var density := clampi(chunk.length() / 28 + 1, 1, 4)
-	spawn_phrase(density, kind)
+	request_note(kind)
 	pass
 
 
-func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
-	ensure_layout()
-	var lane := positive_mod(tool_call_id.hash(), lane_count)
-	spawn_note(lane, NoteKind.TOOL_RUNNING, compact_tool_name(tool_name))
-	spawn_note(positive_mod(lane + 3, lane_count), NoteKind.TOOL_RUNNING)
+func on_tool_execution_start(_session_id: int, _tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
+	request_note(NoteKind.TOOL_RUNNING, compact_tool_name(tool_name))
 	pass
 
 
-func on_tool_execution_end(_session_id: int, tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
-	ensure_layout()
-	var lane := positive_mod(tool_call_id.hash(), lane_count)
+func on_tool_execution_end(_session_id: int, _tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
 	var kind := NoteKind.TOOL_FAILED if result.is_error else NoteKind.TOOL_SUCCESS
-	spawn_note(lane, kind)
+	request_note(kind)
 	pass
 
 
 func on_turn_end(_session_id: int) -> void:
-	spawn_phrase(1, NoteKind.ANSWER)
+	request_note(NoteKind.ANSWER)
 	pass
 
 
@@ -125,22 +117,24 @@ func _process(delta: float) -> void:
 	if not visible:
 		return
 	ensure_layout()
-	elapsed += delta
+	spawn_clock = maxf(spawn_clock - delta, 0.0)
 	for lane in range(key_glows.size()):
 		key_glows[lane] = move_toward(key_glows[lane], 0.0, delta * 3.8)
 	for index in range(notes.size() - 1, -1, -1):
 		var note := notes[index]
 		if note.state == NoteState.RISING:
 			note.y -= note.speed * delta
-			note.visual.set_note_position(Vector2(key_center_for_lane(note.lane), note.y))
+			var lane_x := key_center_for_lane(note.lane)
+			note.visual.position = Vector2(lane_x, note.y)
 			if note.y <= hit_y():
 				note.y = hit_y()
 				note.state = NoteState.HIT
 				note.linger = HIT_LINGER_SECONDS
 				note.visual.set_hit()
+				var impact_color := note_color_for_note(note)
 				key_glows[note.lane] = 1.0
-				key_colors[note.lane] = note_color_for_note(note)
-				spawn_energy_burst(Vector2(key_center_for_lane(note.lane), hit_y()), note_color_for_note(note), note.weight)
+				key_colors[note.lane] = impact_color
+				spawn_energy_burst(Vector2(lane_x, hit_y()), impact_color, note.weight)
 				spawn_floating_line_on_impact(note)
 		else:
 			note.linger -= delta
@@ -243,18 +237,24 @@ func speed_for_weight(weight: float) -> float:
 	return lerpf(NOTE_SPEED_MIN, NOTE_SPEED_MAX, clampf(weight, 0.0, 1.0))
 
 
-func spawn_phrase(count: int, kind: NoteKind) -> void:
-	ensure_layout()
-	for offset in range(count):
-		var lane := positive_mod(melody_step * 3 + offset * 2 + int(melody_step / 3), lane_count)
-		var delay := float(offset) * 42.0
-		spawn_note(lane, kind, "", delay)
-		melody_step += 1
+## One note per call and never more than one per beat: the event spawns it directly, or the
+## beat is still resting and the event is dropped. [constant MAX_NOTES] bounds the visible notes.
+func request_note(kind: NoteKind, label: String = "") -> void:
+	if spawn_clock > 0.0:
+		return
+	spawn_note(next_melody_lane(), kind, label)
+	melody_step += 1
+	spawn_clock = NOTE_SPAWN_INTERVAL
 	queue_redraw()
 	pass
 
 
-func spawn_note(lane: int, kind: NoteKind, label: String = "", spawn_offset: float = 0.0) -> void:
+## Every third key with a slow drift walks the keyboard instead of repeating one lane.
+func next_melody_lane() -> int:
+	return positive_mod(melody_step * 3 + int(melody_step / 3), lane_count)
+
+
+func spawn_note(lane: int, kind: NoteKind, label: String = "") -> void:
 	ensure_layout()
 	if notes.size() >= MAX_NOTES:
 		return
@@ -262,7 +262,7 @@ func spawn_note(lane: int, kind: NoteKind, label: String = "", spawn_offset: flo
 	var text := "" if sentence.is_empty() else sentence.text.strip_edges()
 	var note := PianoNote.new()
 	note.lane = clampi(lane, 0, lane_count - 1)
-	note.y = spawn_y() + spawn_offset
+	note.y = spawn_y()
 	note.kind = kind
 	note.label = label
 	note.sentence_text = text
@@ -275,7 +275,7 @@ func spawn_note(lane: int, kind: NoteKind, label: String = "", spawn_offset: flo
 	ensure_render_layers()
 	var visual := PianoNoteVisual.new()
 	visual.setup(note_color_for_note(note), note.length, note.notation, note.is_rest, note.label, note.seed)
-	visual.set_note_position(Vector2(key_center_for_lane(note.lane), note.y))
+	visual.position = Vector2(key_center_for_lane(note.lane), note.y)
 	note_layer.add_child(visual)
 	note.visual = visual
 	notes.append(note)
@@ -330,13 +330,13 @@ func build_notation(note: PianoNote) -> MusicNotationRenderer.Note:
 
 
 func ensure_layout() -> void:
-	if lane_count == WHITE_KEY_COUNT and key_glows.size() == WHITE_KEY_COUNT and key_colors.size() == WHITE_KEY_COUNT:
+	if key_glows.size() == WHITE_KEY_COUNT:
 		return
 	lane_count = WHITE_KEY_COUNT
 	key_glows.resize(lane_count)
+	key_glows.fill(0.0)
 	key_colors.resize(lane_count)
-	for index in range(key_glows.size()):
-		key_glows[index] = 0.0
+	for index in range(lane_count):
 		key_colors[index] = lane_color(index)
 	pass
 
@@ -351,12 +351,6 @@ func hit_y() -> float:
 
 func spawn_y() -> float:
 	return maxf(hit_y() + 120.0, size.y - BOTTOM_SAFE_SPACE)
-
-
-func lane_rect(lane: int) -> Rect2:
-	var key_width := size.x / float(WHITE_KEY_COUNT)
-	var key_index := clampi(lane, 0, WHITE_KEY_COUNT - 1)
-	return Rect2(float(key_index) * key_width, 0.0, key_width, size.y)
 
 
 func key_center_for_lane(lane: int) -> float:
