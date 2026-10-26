@@ -42,6 +42,7 @@ func setup(origin: Vector2, impact_color: Color, random_seed: float, impact_weig
 	shader_material.shader = ENERGY_SHADER
 	shader_material.set_shader_parameter("energy_color", energy_color)
 	shader_material.set_shader_parameter("seed", random_seed)
+	shader_material.set_shader_parameter("impact_strength", weight)
 	material = shader_material
 	pass
 

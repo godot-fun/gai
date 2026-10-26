@@ -19,8 +19,8 @@ const MAX_FLOATING_LINES := 12
 const FLOAT_LINE_SPEED := 92.0
 const FLOAT_LINE_LIFE := 4.4
 const FLOAT_LINE_MAX_WIDTH := 420.0
-const FLOAT_FONT_SIZE_MIN := 8
-const FLOAT_FONT_SIZE_MAX := 18
+const FLOAT_FONT_SIZE_MIN := 12
+const FLOAT_FONT_SIZE_MAX := 36
 const SENTENCE_WEIGHT_CHARS := 140.0
 const NOTE_RISE_SECONDS_MAX := 1.9
 const NOTE_RISE_SECONDS_MIN := 0.9
@@ -33,12 +33,10 @@ class PianoNote extends RefCounted:
 	var lane: int = 0
 	var y: float = 0.0
 	var speed: float = 0.0
-	var length: float = 0.0
 	var state: NoteState = NoteState.RISING
 	var kind: NoteKind = NoteKind.ANSWER
 	var label: String = ""
 	var linger: float = 0.0
-	var seed: float = 0.0
 	var notation: MusicNotationRenderer.Note = MusicNotationRenderer.Note.new()
 	var is_rest: bool = false
 	var sentence_text: String = ""
@@ -234,12 +232,10 @@ func spawn_note(lane: int, kind: NoteKind, label: String = "", text: String = ""
 	note.weight = weight_for_sentence(text, kind)
 	note.is_rest = text.is_empty() and kind == NoteKind.REASONING
 	note.speed = (bottom - hit_y()) / rise_seconds_for_weight(note.weight)
-	note.length = lerpf(8.0, 96.0, note.weight)
-	note.seed = float(melody_step * 19 + notes.size() * 7)
 	note.notation = build_notation(note)
 	ensure_render_layers()
 	var visual := PianoNoteVisual.new()
-	visual.setup(note_color_for_note(note), note.length, note.notation, note.is_rest, note.label, note.seed)
+	visual.setup(note_color_for_note(note), note.notation, note.is_rest, note.label)
 	visual.position = Vector2(key_center_for_lane(note.lane), note.y)
 	note_layer.add_child(visual)
 	note.visual = visual
