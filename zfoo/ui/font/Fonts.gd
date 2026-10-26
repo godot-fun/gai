@@ -5,11 +5,11 @@ const EXTENSIONS: PackedStringArray = ["ttf", "otf", "woff", "woff2"]
 
 ## Noto Sans SC (SIL Open Font License 1.1).
 
-const LIGHT_PATH := "res://zfoo/font/NotoSansSC-Light.woff2"
-const REGULAR_PATH := "res://zfoo/font/NotoSansSC-Regular.woff2"
-const MEDIUM_PATH := "res://zfoo/font/NotoSansSC-Medium.woff2"
-const SEMIBOLD_PATH := "res://zfoo/font/NotoSansSC-SemiBold.woff2"
-const BOLD_PATH := "res://zfoo/font/NotoSansSC-Bold.woff2"
+const LIGHT_PATH := "res://zfoo/ui/font/NotoSansSC-Light.woff2"
+const REGULAR_PATH := "res://zfoo/ui/font/NotoSansSC-Regular.woff2"
+const MEDIUM_PATH := "res://zfoo/ui/font/NotoSansSC-Medium.woff2"
+const SEMIBOLD_PATH := "res://zfoo/ui/font/NotoSansSC-SemiBold.woff2"
+const BOLD_PATH := "res://zfoo/ui/font/NotoSansSC-Bold.woff2"
 
 static var light_font: FontFile
 static var regular_font: FontFile

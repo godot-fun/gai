@@ -7,7 +7,7 @@ extends ColorRect
 ## a circle; applying it to a non-square rectangle creates a capsule. Ellipses and arbitrary outlines
 ## are not supported.
 
-const BORDER_SHADER: Shader = preload("res://zfoo/shader/moving_accent_border.gdshader")
+const BORDER_SHADER: Shader = preload("res://zfoo/ui/shader/moving_accent_border.gdshader")
 
 ## A negative value selects the capsule shape and derives its radius from the current height.
 var corner_radius: float = -1.0

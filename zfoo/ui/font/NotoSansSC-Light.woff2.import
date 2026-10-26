@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://bcafx5s1lg3f6"
-path="res://.godot/imported/NotoSansSC-Regular.woff2-faa77de617257522655f5177a5fb7a51.fontdata"
+uid="uid://c0yvla5ykanmi"
+path="res://.godot/imported/NotoSansSC-Light.woff2-9414bccd7dfb8c87428af7c2d7151370.fontdata"
 
 [deps]
 
-source_file="res://zfoo/font/NotoSansSC-Regular.woff2"
-dest_files=["res://.godot/imported/NotoSansSC-Regular.woff2-faa77de617257522655f5177a5fb7a51.fontdata"]
+source_file="res://zfoo/ui/font/NotoSansSC-Light.woff2"
+dest_files=["res://.godot/imported/NotoSansSC-Light.woff2-9414bccd7dfb8c87428af7c2d7151370.fontdata"]
 
 [params]
 

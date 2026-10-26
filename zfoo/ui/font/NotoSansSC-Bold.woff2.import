@@ -3,12 +3,12 @@
 importer="font_data_dynamic"
 type="FontFile"
 uid="uid://8lwadmd82qij"
-path="res://.godot/imported/NotoSansSC-Bold.woff2-8ab6a3706fac645a54abf1160388c9e0.fontdata"
+path="res://.godot/imported/NotoSansSC-Bold.woff2-fec4b0aa8128587c6633d2c5c1cc453c.fontdata"
 
 [deps]
 
-source_file="res://zfoo/font/NotoSansSC-Bold.woff2"
-dest_files=["res://.godot/imported/NotoSansSC-Bold.woff2-8ab6a3706fac645a54abf1160388c9e0.fontdata"]
+source_file="res://zfoo/ui/font/NotoSansSC-Bold.woff2"
+dest_files=["res://.godot/imported/NotoSansSC-Bold.woff2-fec4b0aa8128587c6633d2c5c1cc453c.fontdata"]
 
 [params]
 
