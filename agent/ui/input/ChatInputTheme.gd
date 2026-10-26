@@ -91,9 +91,7 @@ static func apply_queue_scroll(scroll: ScrollContainer) -> void:
 
 static func apply_queue_row(row: PanelContainer, title: Label, header: bool, hovered: bool) -> void:
 	var guide_color := Color(Colors.border, 0.65)
-	var row_style := StyleBoxHelper.create_style_box_flat(
-		Colors.hover_surface if hovered else Color.TRANSPARENT, ControlSize.radius_md,
-		Margin.ma_1, Margin.ma_1)
+	var row_style := StyleBoxHelper.create_style_box_flat(Colors.hover_surface if hovered else Color.TRANSPARENT, ControlSize.radius_md, Margin.ma_3, Margin.ma_1)
 	row_style.border_color = guide_color
 	row_style.set_border_width(SIDE_BOTTOM, ControlSize.border_xs)
 	row.add_theme_stylebox_override("panel", row_style)

@@ -548,9 +548,9 @@ func apply_queue_theme() -> void:
 	style.shadow_color = Color.TRANSPARENT
 	style.shadow_size = 0
 	style.shadow_offset = Vector2.ZERO
-	style.content_margin_left = Margin.ma_3
+	style.content_margin_left = Margin.ma_0
 	style.content_margin_top = Margin.ma_1
-	style.content_margin_right = Margin.ma_3
+	style.content_margin_right = Margin.ma_0
 	style.content_margin_bottom = Margin.ma_1
 	queue_panel.add_theme_stylebox_override("panel", style)
 	ChatInputTheme.apply_queue_scroll(queue_scroll)
