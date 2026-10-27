@@ -1,6 +1,7 @@
 class_name PixelCityLayer
 extends Node2D
 
+const BuildingProfile = preload("res://agent/ui/visuals/cyberpunk_skyline/PixelBuildingProfile.gd")
 const CLUSTER_SIZE := 6
 
 @export var parallax_factor: float = 0.24
@@ -8,6 +9,7 @@ const CLUSTER_SIZE := 6
 @export var distant: bool = false
 
 var buildings: Array[PixelBuilding] = []
+var occlusion_rectangles: Array[Rect2] = []
 
 
 func update_visual(viewport_size: Vector2, pixel: float, camera_x: float, elapsed: float, daylight: float, city_energy: float, rain_intensity: float) -> void:
@@ -25,9 +27,10 @@ func update_visual(viewport_size: Vector2, pixel: float, camera_x: float, elapse
 		var min_height := 0.055 if distant else 0.09
 		var max_height := 0.16 if distant else 0.29
 		var height := viewport_size.y * lerpf(min_height, max_height, cluster_height_mix(world_index, distant))
+		var profile := BuildingProfile.new(world_index, distant)
 		var group_gap := pixel * 3.0 if posmod(world_index, CLUSTER_SIZE) == CLUSTER_SIZE - 1 else 0.0
-		var width_variation := pixel * floorf(PixelCity.stable_random(world_index, 67) * 3.0)
-		var width := spacing - pixel * 2.0 - width_variation * 0.5 if distant else spacing - pixel + width_variation
+		var width_variation := pixel * float(profile.width_steps)
+		var width := spacing - pixel * 2.0 - width_variation * 0.5 if distant else spacing - pixel - width_variation * 0.35
 		width = maxf(pixel * 4.0, width - group_gap)
 		# City visuals live above chat. Broad building fills therefore stay lighter
 		# than compact overlay controls, while the distant layer recedes even further.
@@ -37,8 +40,22 @@ func update_visual(viewport_size: Vector2, pixel: float, camera_x: float, elapse
 		# continuously. Quantizing this x position made slow parallax jump a full pixel
 		# block at a time (up to eight screen pixels on large windows).
 		building.position = Vector2(x, snappedf(viewport_size.y * horizon_ratio, pixel))
-		building.configure(world_index, pixel, width, height, elapsed, daylight, city_energy, body_opacity, distant)
+		building.configure(profile, pixel, width, height, elapsed, daylight, city_energy, body_opacity)
+		building.set_occlusion_rectangles(occlusion_rectangles)
 	pass
+
+
+func set_occlusion_rectangles(new_rectangles: Array[Rect2]) -> void:
+	occlusion_rectangles = new_rectangles
+	pass
+
+
+func body_occlusion_rectangles() -> Array[Rect2]:
+	var result: Array[Rect2] = []
+	for building: PixelBuilding in buildings:
+		for body_rect: Rect2 in building.body_rects():
+			result.append(Rect2(building.position + body_rect.position, body_rect.size))
+	return result
 
 
 ## Buildings share a group-scale height envelope with a smaller per-building

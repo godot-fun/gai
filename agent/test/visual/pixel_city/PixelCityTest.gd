@@ -1,5 +1,7 @@
 extends RefCounted
 
+const BuildingProfile = preload("res://agent/ui/visuals/cyberpunk_skyline/PixelBuildingProfile.gd")
+
 
 static func visual_type_test() -> void:
 	var effect := VisualControl.create_effect(VisualControl.Type.PIXEL_CITY)
@@ -97,15 +99,72 @@ static func window_breathing_is_sparse_and_bounded_test() -> void:
 
 
 static func building_shapes_are_varied_and_deterministic_test() -> void:
-	var building := PixelBuilding.new()
 	var shapes: Dictionary[int, bool] = {}
 	for index in range(80):
-		building.world_index = index
-		var first := building.building_shape()
-		assert(building.building_shape() == first)
-		shapes[first] = true
-	assert(shapes.size() == PixelBuilding.Shape.size())
+		var first := BuildingProfile.new(index, false)
+		var second := BuildingProfile.new(index, false)
+		assert(first.signature == second.signature)
+		assert(first.shape == second.shape)
+		shapes[first.shape] = true
+	assert(shapes.size() == BuildingProfile.Shape.size())
+	pass
+
+
+static func building_profiles_do_not_repeat_within_cycle_test() -> void:
+	var signatures: Dictionary[int, bool] = {}
+	for index in range(BuildingProfile.PROFILE_CYCLE):
+		var profile := BuildingProfile.new(index, false)
+		assert(not signatures.has(profile.signature))
+		signatures[profile.signature] = true
+	assert(signatures.size() == BuildingProfile.PROFILE_CYCLE)
+	pass
+
+
+static func adjacent_buildings_use_different_shapes_test() -> void:
+	for index in range(-100, 100):
+		var current := BuildingProfile.new(index, false)
+		var next := BuildingProfile.new(index + 1, false)
+		assert(current.shape != next.shape)
+	pass
+
+
+func light_theme_facade_edge_never_becomes_a_dark_shadow_test() -> void:
+	var original := ThemeColor.current_theme
+	var building := PixelBuilding.new()
+	var body_color := Color("304c63", 0.22)
+	ThemeColor.current_theme = ThemeColor.ThemeEnum.LIGHT
+	var edge_color := building.facade_edge_color(body_color)
+	assert(edge_color.get_luminance() > body_color.get_luminance())
+	assert(edge_color.a < body_color.a * 0.2)
+	ThemeColor.current_theme = original
 	building.free()
+	pass
+
+
+func city_layers_cut_distant_bodies_behind_foreground_test() -> void:
+	var effect := VisualControl.create_effect(VisualControl.Type.PIXEL_CITY) as PixelCity
+	effect.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	effect.size = Vector2(1280.0, 720.0)
+	effect.update_child_nodes()
+	var foreground_rectangles := effect.near_city_layer.body_occlusion_rectangles()
+	assert(not foreground_rectangles.is_empty())
+	for building: PixelBuilding in effect.far_city_layer.buildings:
+		for visible_rect: Rect2 in building.visible_body_rects():
+			var layer_rect := Rect2(building.position + visible_rect.position, visible_rect.size)
+			for foreground_rect: Rect2 in foreground_rectangles:
+				assert(not layer_rect.intersects(foreground_rect))
+	effect.free()
+	pass
+
+
+func neighboring_buildings_leave_a_transparent_gap_test() -> void:
+	var layer := PixelCityLayer.new()
+	layer.update_visual(Vector2(1280.0, 720.0), 4.0, 0.0, 0.0, 1.0, 0.3, 0.0)
+	for index in range(layer.buildings.size() - 1):
+		var current := layer.buildings[index]
+		var next := layer.buildings[index + 1]
+		assert(current.position.x + current.building_width <= next.position.x)
+	layer.free()
 	pass
 
 
