@@ -6,7 +6,9 @@ extends VisualEffect
 ## scan lines, trails, or generated decoration over it.
 
 const PRISM_SHADER: Shader = preload("res://agent/ui/visuals/temporal_prism/TemporalPrism.gdshader")
-const SLICE_COUNT := 48.0
+const TARGET_SLICE_WIDTH_PX := 38.0
+const MIN_SLICE_COUNT := 28.0
+const MAX_SLICE_COUNT := 96.0
 const MAX_OFFSET_PX := 38.0
 const ENERGY_DECAY_PER_SECOND := 0.48
 const IDLE_EPSILON := 0.001
@@ -16,6 +18,7 @@ var prism_material: ShaderMaterial
 var temporal_energy: float = 0.0
 var temporal_phase: float = 0.0
 var temporal_direction: float = 1.0
+var active_slice_count: float = MIN_SLICE_COUNT
 
 
 func _ready() -> void:
@@ -27,12 +30,13 @@ func _ready() -> void:
 	prism_material = ShaderMaterial.new()
 	prism_material.shader = PRISM_SHADER
 	prism_material.set_shader_parameter("toolbar_height_px", float(AgentLayout.TOOLBAR_HEIGHT))
-	prism_material.set_shader_parameter("slice_count", SLICE_COUNT)
 	prism_material.set_shader_parameter("max_offset_px", MAX_OFFSET_PX)
 	prism_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
 	screen_rect.material = prism_material
 	add_child(screen_rect)
+	resized.connect(update_slice_layout)
 	gdf.events.theme_color_changed.connect(update_accent_color)
+	update_slice_layout()
 	apply_shader_state()
 	pass
 
@@ -125,6 +129,14 @@ func update_accent_color() -> void:
 	pass
 
 
+func update_slice_layout() -> void:
+	if prism_material == null or size.x <= 0.0:
+		return
+	active_slice_count = slice_count_for_width(size.x)
+	prism_material.set_shader_parameter("slice_count", active_slice_count)
+	pass
+
+
 func reset_temporal_field() -> void:
 	temporal_energy = 0.0
 	temporal_phase = 0.0
@@ -141,3 +153,9 @@ static func combine_energy(current: float, incoming: float) -> float:
 
 static func stream_energy_for_length(length: int) -> float:
 	return clampf(float(length) * 0.0018, 0.004, 0.045)
+
+
+static func slice_count_for_width(viewport_width: float) -> float:
+	if viewport_width <= 0.0:
+		return MIN_SLICE_COUNT
+	return clampf(roundf(viewport_width / TARGET_SLICE_WIDTH_PX), MIN_SLICE_COUNT, MAX_SLICE_COUNT)

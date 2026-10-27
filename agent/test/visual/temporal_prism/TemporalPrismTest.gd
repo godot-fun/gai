@@ -25,6 +25,15 @@ static func streamed_chunks_have_restrained_energy_test() -> void:
 	pass
 
 
+static func slice_count_adapts_to_viewport_width_test() -> void:
+	assert(TEMPORAL_PRISM_SCRIPT.slice_count_for_width(0.0) == 28.0)
+	assert(TEMPORAL_PRISM_SCRIPT.slice_count_for_width(800.0) == 28.0)
+	assert(TEMPORAL_PRISM_SCRIPT.slice_count_for_width(1920.0) == 51.0)
+	assert(TEMPORAL_PRISM_SCRIPT.slice_count_for_width(2560.0) == 67.0)
+	assert(TEMPORAL_PRISM_SCRIPT.slice_count_for_width(3840.0) == 96.0)
+	pass
+
+
 func active_events_add_energy_without_replacing_phase_test() -> void:
 	var effect: Variant = TEMPORAL_PRISM_SCRIPT.new()
 	effect.temporal_energy = 0.5
