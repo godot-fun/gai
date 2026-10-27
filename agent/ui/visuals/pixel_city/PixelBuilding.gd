@@ -1,7 +1,7 @@
 class_name PixelBuilding
 extends Node2D
 
-const BuildingProfile = preload("res://agent/ui/visuals/cyberpunk_skyline/PixelBuildingProfile.gd")
+const BuildingProfile = preload("res://agent/ui/visuals/pixel_city/PixelBuildingProfile.gd")
 
 var world_index: int = -2147483648
 var pixel: float = 4.0

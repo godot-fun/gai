@@ -1,6 +1,6 @@
 extends RefCounted
 
-const BuildingProfile = preload("res://agent/ui/visuals/cyberpunk_skyline/PixelBuildingProfile.gd")
+const BuildingProfile = preload("res://agent/ui/visuals/pixel_city/PixelBuildingProfile.gd")
 
 
 static func visual_type_test() -> void:

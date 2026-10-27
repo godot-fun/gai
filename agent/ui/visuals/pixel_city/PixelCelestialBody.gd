@@ -3,6 +3,9 @@ extends Node2D
 
 @export var is_moon: bool = false
 
+const MOON_X_RATIO := 0.84
+const MOON_Y_RATIO := 0.12
+
 var pixel: float = 4.0
 var radius: float = 20.0
 var body_color := Color.WHITE
@@ -15,13 +18,16 @@ func update_visual(viewport_size: Vector2, new_pixel: float, time_of_day: float,
 		return
 	pixel = new_pixel
 	radius = pixel * (4.0 if is_moon else 5.0)
-	var body_time := fposmod(time_of_day + (0.5 if is_moon else 0.0), 1.0)
-	var progress := clampf((body_time - 0.23) / 0.54, 0.0, 1.0)
-	var x := lerpf(viewport_size.x * 0.14, viewport_size.x * 0.86, progress)
-	var arc := sin(progress * PI)
-	# The body shape stays pixel-authored, while its node transform remains
-	# continuous. Snapping this slow orbit to an 8-pixel grid caused visible jumps.
-	position = Vector2(x, viewport_size.y * (0.29 - arc * 0.18))
+	if is_moon:
+		position = Vector2(viewport_size.x * MOON_X_RATIO, viewport_size.y * MOON_Y_RATIO)
+	else:
+		var body_time := fposmod(time_of_day, 1.0)
+		var progress := clampf((body_time - 0.23) / 0.54, 0.0, 1.0)
+		var x := lerpf(viewport_size.x * 0.14, viewport_size.x * 0.86, progress)
+		var arc := sin(progress * PI)
+		# The body shape stays pixel-authored, while its node transform remains
+		# continuous. Snapping this slow orbit to an 8-pixel grid caused visible jumps.
+		position = Vector2(x, viewport_size.y * (0.29 - arc * 0.18))
 	var alpha := 1.0
 	alpha *= 1.0 - rain_intensity * (0.55 if is_moon else 0.75)
 	body_color = Color(0.77, 0.88, 1.0, alpha * 0.70) if is_moon else Color(1.0, 0.75, 0.28, alpha * 0.75)

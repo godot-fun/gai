@@ -1,7 +1,7 @@
 class_name VisualControl
 extends Control
 
-const PIXEL_CITY_SCENE: PackedScene = preload("res://agent/ui/visuals/cyberpunk_skyline/PixelCity.tscn")
+const PIXEL_CITY_SCENE: PackedScene = preload("res://agent/ui/visuals/pixel_city/PixelCity.tscn")
 
 ## Single global event bridge for the visual overlay. All active sessions feed one shared
 ## effect, so their animation events may interleave. The overlay begins with the first

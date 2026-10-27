@@ -1,7 +1,7 @@
 class_name PixelCityLayer
 extends Node2D
 
-const BuildingProfile = preload("res://agent/ui/visuals/cyberpunk_skyline/PixelBuildingProfile.gd")
+const BuildingProfile = preload("res://agent/ui/visuals/pixel_city/PixelBuildingProfile.gd")
 const CLUSTER_SIZE := 6
 
 @export var parallax_factor: float = 0.24
