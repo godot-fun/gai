@@ -16,9 +16,6 @@ uniform vec4 inertia_rect_1_uv = vec4(0.0);
 uniform vec4 inertia_rect_2_uv = vec4(0.0);
 uniform vec3 inertia_enabled = vec3(0.0);
 uniform vec3 inertia_displacement_px = vec3(0.0);
-uniform vec4 occluder_rect_uv = vec4(0.0);
-uniform vec2 occluder_offset_px = vec2(0.0);
-uniform float occluder_enabled : hint_range(0.0, 1.0) = 0.0;
 
 float luminance(vec3 color) {
 	return dot(color, vec3(0.299, 0.587, 0.114));
@@ -78,17 +75,6 @@ void fragment() {
 	vec3 source = texture(screen_texture, SCREEN_UV).rgb;
 	float displaced_edge = clamp(abs(luminance(source) - luminance(room)) * 2.2, 0.0, 1.0);
 	room = mix(room, accent_color.rgb, displaced_edge * motion_energy * impact * 0.12);
-
-	// A real second control temporarily violates the established depth order. Its translated copy
-	// is composited after the pinned performer, so it crosses in front for a few unmistakable frames.
-	vec2 occluder_offset_uv = occluder_offset_px / max(viewport_px, vec2(1.0));
-	vec4 moved_occluder_rect = vec4(occluder_rect_uv.xy + occluder_offset_uv, occluder_rect_uv.zw);
-	float occluder_mask = rounded_control_mask(SCREEN_UV, moved_occluder_rect, occluder_enabled, SCREEN_PIXEL_SIZE, 10.0) * body_mask;
-	vec2 occluder_source_uv = clamp(SCREEN_UV - occluder_offset_uv, vec2(0.0), vec2(1.0));
-	vec3 occluder = texture(screen_texture, occluder_source_uv).rgb;
-	float crossing_shadow = rounded_control_mask(SCREEN_UV - vec2(0.0, SCREEN_PIXEL_SIZE.y * 7.0), moved_occluder_rect, occluder_enabled, SCREEN_PIXEL_SIZE, 10.0) * (1.0 - occluder_mask);
-	room *= 1.0 - crossing_shadow * 0.22;
-	room = mix(room, occluder, occluder_mask);
 
 	// Suppress all residual decoration at rest: the application must look completely normal until
 	// an event physically kicks the room.

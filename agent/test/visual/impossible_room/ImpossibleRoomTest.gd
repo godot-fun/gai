@@ -25,45 +25,6 @@ static func anchor_rect_normalizes_to_viewport_test() -> void:
 	pass
 
 
-static func impossible_occlusion_crosses_anchor_test() -> void:
-	var source := Rect2(80.0, 200.0, 120.0, 48.0)
-	var anchor := Rect2(420.0, 180.0, 300.0, 120.0)
-	var middle_offset: Vector2 = IMPOSSIBLE_ROOM_SCRIPT.occlusion_offset_px(source, anchor, 0.5, 1.0)
-	var moved_center := source.get_center() + middle_offset
-	assert(is_equal_approx(moved_center.x, anchor.get_center().x))
-	assert(moved_center.y < anchor.get_center().y)
-	assert(IMPOSSIBLE_ROOM_SCRIPT.occlusion_opacity(0.0) == 0.0)
-	assert(IMPOSSIBLE_ROOM_SCRIPT.occlusion_opacity(0.5) > 0.99)
-	assert(IMPOSSIBLE_ROOM_SCRIPT.occlusion_opacity(1.0) == 0.0)
-	pass
-
-
-func active_occlusion_cannot_be_restarted_test() -> void:
-	var effect: Variant = IMPOSSIBLE_ROOM_SCRIPT.new()
-	effect.size = Vector2(1000.0, 700.0)
-	var anchor := Control.new()
-	anchor.position = Vector2(420.0, 180.0)
-	anchor.size = Vector2(300.0, 120.0)
-	var occluder := Control.new()
-	occluder.position = Vector2(80.0, 200.0)
-	occluder.size = Vector2(120.0, 48.0)
-	effect.add_child(anchor)
-	effect.add_child(occluder)
-	effect.anchor_control = anchor
-	effect.occluder_control = occluder
-	effect.kick(860.0, 1.0)
-	assert(effect.occlusion_is_active())
-	effect.occlusion_clock = 0.6
-	var locked_source: Rect2 = effect.occlusion_source_rect
-	var locked_target: Rect2 = effect.occlusion_anchor_rect
-	effect.kick(1040.0, -1.0)
-	assert(is_equal_approx(effect.occlusion_clock, 0.6))
-	assert(effect.occlusion_source_rect == locked_source)
-	assert(effect.occlusion_anchor_rect == locked_target)
-	effect.free()
-	pass
-
-
 func inertia_controls_follow_at_different_rates_test() -> void:
 	var effect: Variant = IMPOSSIBLE_ROOM_SCRIPT.new()
 	effect.displacement_px = 100.0
