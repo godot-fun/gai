@@ -1,6 +1,8 @@
 class_name VisualControl
 extends Control
 
+const PIXEL_CITY_SCENE: PackedScene = preload("res://agent/ui/visuals/cyberpunk_skyline/PixelCity.tscn")
+
 ## Single global event bridge for the visual overlay. All active sessions feed one shared
 ## effect, so their animation events may interleave. The overlay begins with the first
 ## active run and finishes only after the last run stops; it is not a per-session view.
@@ -80,7 +82,7 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 		Type.PIANO_RHYTHM:
 			return PianoRhythm.new()
 		Type.PIXEL_CITY:
-			return PixelCity.new()
+			return PIXEL_CITY_SCENE.instantiate() as PixelCity
 	return null
 
 func on_agent_start(session_id: int) -> void:

@@ -1,0 +1,57 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://agent/ui/visuals/cyberpunk_skyline/PixelCity.gd" id="1_root"]
+[ext_resource type="Script" path="res://agent/ui/visuals/cyberpunk_skyline/PixelSkyBackground.gd" id="2_sky"]
+[ext_resource type="Script" path="res://agent/ui/visuals/cyberpunk_skyline/PixelStarField.gd" id="3_stars"]
+[ext_resource type="Script" path="res://agent/ui/visuals/cyberpunk_skyline/PixelCelestialBody.gd" id="4_body"]
+[ext_resource type="Script" path="res://agent/ui/visuals/cyberpunk_skyline/PixelCloudLayer.gd" id="5_clouds"]
+[ext_resource type="Script" path="res://agent/ui/visuals/cyberpunk_skyline/PixelCityLayer.gd" id="6_city"]
+[ext_resource type="Script" path="res://agent/ui/visuals/cyberpunk_skyline/PixelRiver.gd" id="7_river"]
+[ext_resource type="Script" path="res://agent/ui/visuals/cyberpunk_skyline/PixelBridgeLayer.gd" id="8_bridge"]
+[ext_resource type="Script" path="res://agent/ui/visuals/cyberpunk_skyline/PixelWeather.gd" id="9_weather"]
+
+[node name="PixelCity" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_root")
+
+[node name="SkyBackground" type="Node2D" parent="."]
+script = ExtResource("2_sky")
+
+[node name="StarField" type="Node2D" parent="."]
+script = ExtResource("3_stars")
+
+[node name="Sun" type="Node2D" parent="."]
+script = ExtResource("4_body")
+
+[node name="Moon" type="Node2D" parent="."]
+script = ExtResource("4_body")
+is_moon = true
+
+[node name="CloudLayer" type="Node2D" parent="."]
+script = ExtResource("5_clouds")
+
+[node name="FarCityLayer" type="Node2D" parent="."]
+script = ExtResource("6_city")
+parallax_factor = 0.12
+horizon_ratio = 0.52
+distant = true
+
+[node name="NearCityLayer" type="Node2D" parent="."]
+script = ExtResource("6_city")
+
+[node name="River" type="Node2D" parent="."]
+script = ExtResource("7_river")
+
+[node name="BridgeLayer" type="Node2D" parent="."]
+script = ExtResource("8_bridge")
+
+[node name="VehicleLayer" type="Node2D" parent="."]
+
+[node name="Weather" type="Node2D" parent="."]
+script = ExtResource("9_weather")
