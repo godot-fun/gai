@@ -52,7 +52,9 @@ func set_occlusion_rectangles(new_rectangles: Array[Rect2]) -> void:
 ## Buildings cover a broad portion of the chat overlay, so their authored color
 ## remains genuinely translucent instead of baking in a specific app background.
 func building_body_color() -> Color:
-	var night_tint := Color("1b2b3d") if distant else Color("101b2d")
+	# Distant silhouettes must recede in dark mode. A brighter distant tint leaks
+	# through foreground gaps as pale vertical bands against the near skyline.
+	var night_tint := Color("0b1422") if distant else Color("101b2d")
 	var daylight_tint := Color("38556a") if distant else Color("304c63")
 	var day_tint := night_tint.lerp(daylight_tint, daylight * 0.58)
 	if profile != null:
@@ -155,15 +157,16 @@ func draw_facade_depth(body_rectangles: Array[Rect2], body_color: Color) -> void
 	# A dark translucent side laid over a translucent building compounds its alpha
 	# wherever two buildings overlap. Use a highlight edge instead, so light mode
 	# never produces an opaque-looking black stripe while silhouettes still separate.
-	var dark_theme := ThemeColor.is_dark_theme()
 	var edge_color := facade_edge_color(body_color)
+	if edge_color.a <= 0.0:
+		return
 	var top_color := Color(edge_color, edge_color.a * 0.72)
 	for body_rect: Rect2 in body_rectangles:
 		var edge_x := body_rect.position.x if profile != null and profile.shadow_side == BuildingProfile.ShadowSide.LEFT else body_rect.end.x - pixel
 		draw_rect(Rect2(edge_x, body_rect.position.y, pixel, body_rect.size.y), edge_color)
 		draw_rect(Rect2(body_rect.position, Vector2(body_rect.size.x, pixel)), top_color)
 	if profile != null and profile.facade == BuildingProfile.Facade.NARROW_COLUMNS:
-		var divider_color := Color(edge_color, edge_color.a * (0.55 if dark_theme else 0.28))
+		var divider_color := Color(edge_color, edge_color.a * 0.28)
 		for column in range(1, 3):
 			var x := snappedf(building_width * float(column) / 3.0, pixel)
 			draw_rect(Rect2(x, -building_height * 0.68, pixel, building_height * 0.68), divider_color)
@@ -172,7 +175,7 @@ func draw_facade_depth(body_rectangles: Array[Rect2], body_color: Color) -> void
 
 func facade_edge_color(body_color: Color) -> Color:
 	if ThemeColor.is_dark_theme():
-		return Color(body_color.lightened(0.18), body_color.a * 0.28)
+		return Color(body_color, 0.0)
 	return Color(body_color.lightened(0.72), body_color.a * 0.10)
 
 

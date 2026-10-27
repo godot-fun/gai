@@ -141,6 +141,25 @@ func light_theme_facade_edge_never_becomes_a_dark_shadow_test() -> void:
 	pass
 
 
+func dark_theme_has_no_facade_highlight_and_distant_city_recedes_test() -> void:
+	var original := ThemeColor.current_theme
+	ThemeColor.current_theme = ThemeColor.ThemeEnum.DARK
+	var near_building := PixelBuilding.new()
+	near_building.profile = BuildingProfile.new(1, false)
+	near_building.distant = false
+	near_building.daylight = 0.0
+	var far_building := PixelBuilding.new()
+	far_building.profile = BuildingProfile.new(1, true)
+	far_building.distant = true
+	far_building.daylight = 0.0
+	assert(near_building.facade_edge_color(near_building.building_body_color()).a == 0.0)
+	assert(far_building.building_body_color().get_luminance() < near_building.building_body_color().get_luminance())
+	ThemeColor.current_theme = original
+	near_building.free()
+	far_building.free()
+	pass
+
+
 func city_layers_cut_distant_bodies_behind_foreground_test() -> void:
 	var effect := VisualControl.create_effect(VisualControl.Type.PIXEL_CITY) as PixelCity
 	effect.set_anchors_preset(Control.PRESET_TOP_LEFT)
