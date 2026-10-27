@@ -56,11 +56,11 @@ func ensure_deck_nodes() -> void:
 	deck_top = ColorRect.new()
 	deck_top.name = "DeckTop"
 	deck_top.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	deck_top.z_index = 2
+	deck_top.z_index = 1
 	deck_rim = ColorRect.new()
 	deck_rim.name = "DeckRim"
 	deck_rim.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	deck_rim.z_index = 2
+	deck_rim.z_index = 1
 	add_child(deck_top)
 	add_child(deck_rim)
 	pass
@@ -92,6 +92,7 @@ func ensure_bays(count: int) -> void:
 	while bays.size() < count:
 		var bay := PixelBridgeBay.new()
 		bay.name = "Bay_%02d" % bays.size()
+		bay.z_index = 2
 		add_child(bay)
 		bays.append(bay)
 	while bays.size() > count:

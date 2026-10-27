@@ -1,6 +1,8 @@
 class_name PixelBridgeBay
 extends Node2D
 
+const PIER_LIGHTS_SCRIPT: Script = preload("res://agent/ui/visuals/pixel_city/PixelBridgePierLights.gd")
+
 var bay_index: int = 0
 var pixel: float = 4.0
 var bay_width: float = 80.0
@@ -10,9 +12,11 @@ var elapsed: float = 0.0
 
 var truss_frame: Line2D
 var pillar: ColorRect
-var light_glow: ColorRect
-var light_lamp: ColorRect
-var light_post: ColorRect
+var pier_lights: Node2D
+
+var show_pier_lights := false
+var lamp_center := Vector2.ZERO
+var light_post_rect := Rect2()
 
 var built_pixel := -1.0
 var built_width := -1.0
@@ -55,17 +59,12 @@ func ensure_nodes() -> void:
 	truss_frame.z_index = 1
 	pillar = make_rect("Pillar")
 	pillar.z_index = 0
-	light_glow = make_rect("LightGlow")
-	light_lamp = make_rect("LightLamp")
-	light_post = make_rect("LightPost")
-	light_glow.z_index = 3
-	light_post.z_index = 3
-	light_lamp.z_index = 4
+	pier_lights = PIER_LIGHTS_SCRIPT.new()
+	pier_lights.name = "PierLights"
+	pier_lights.z_index = 5
 	add_child(pillar)
 	add_child(truss_frame)
-	add_child(light_glow)
-	add_child(light_post)
-	add_child(light_lamp)
+	add_child(pier_lights)
 	pass
 
 
@@ -89,26 +88,23 @@ func rebuild_geometry(dark_theme: bool) -> void:
 	var apex := Vector2(bay_width * 0.5, deck_h + truss_drop)
 	truss_frame.width = maxf(1.0, pixel * 0.5)
 	truss_frame.points = PackedVector2Array([
-		Vector2(0.0, deck_h),
-		apex,
-		Vector2(bay_width, deck_h),
+	 Vector2(0.0, deck_h),
+	 apex,
+	 Vector2(bay_width, deck_h),
 	])
 	var show_pier := has_pier()
 	pillar.visible = show_pier
-	light_glow.visible = show_pier
-	light_lamp.visible = show_pier
-	light_post.visible = show_pier
+	show_pier_lights = show_pier
 	if show_pier:
 		var pier_x := snappedf(bay_width * 0.5, pixel) - pixel
 		var pier_center := pier_x + pixel
 		pillar.position = Vector2(pier_x, deck_h)
 		pillar.size = Vector2(pixel * 2.0, truss_drop + pixel * 10.0)
-		light_lamp.position = Vector2(pier_x - pixel * 0.5, -pixel * 5.0)
-		light_lamp.size = Vector2(pixel * 3.0, pixel)
-		light_glow.position = Vector2(pier_x - pixel * 2.0, -pixel * 6.0)
-		light_glow.size = Vector2(pixel * 4.0, pixel * 3.0)
-		light_post.position = Vector2(pier_center - pixel * 0.5, -pixel * 4.0)
-		light_post.size = Vector2(pixel, pixel * 4.0)
+		lamp_center = Vector2(pier_x + pixel * 1.0, -pixel * 4.5)
+		light_post_rect = Rect2(pier_center - pixel * 0.5, -pixel * 4.0, pixel, pixel * 4.0)
+	else:
+		lamp_center = Vector2.ZERO
+		light_post_rect = Rect2()
 	pass
 
 
@@ -117,14 +113,16 @@ func apply_colors(dark_theme: bool) -> void:
 	truss_frame.default_color = Color(bridge_color, alpha * 0.72)
 	if pillar.visible:
 		pillar.color = Color(bridge_color, alpha * 0.62)
-		light_post.color = Color(bridge_color, 0.28)
 	pass
 
 
 func update_light_pulse() -> void:
-	if not light_lamp.visible:
+	if pier_lights == null or not pier_lights.has_method("sync_visual"):
 		return
-	var pulse := 0.94 + 0.06 * sin(elapsed * 1.35 + float(bay_index) * 0.7)
-	light_glow.color = Color(bridge_color, 0.035 * pulse)
-	light_lamp.color = Color(1.0, 0.76, 0.34, 0.48 * pulse)
+	var phase := elapsed * 0.88 + float(bay_index) * 0.73
+	var breath := 0.5 + 0.5 * sin(phase)
+	var lamp_pulse := lerpf(0.72, 1.0, breath)
+	var glow_scale := lerpf(0.84, 1.08, breath)
+	var lamp := Color(1.0, 0.76, 0.34, 1.0)
+	pier_lights.call("sync_visual", pixel, bridge_color, lamp_center, light_post_rect, lamp_pulse, lamp, show_pier_lights, glow_scale)
 	pass
