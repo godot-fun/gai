@@ -26,5 +26,6 @@ static func appearance_color_respects_theme_test() -> void:
 	assert(dark.v >= VisualColor.NEON_VALUE_FLOOR)
 	assert(light.v >= VisualColor.LIGHT_INK_VALUE_MIN)
 	assert(light.v <= VisualColor.LIGHT_INK_VALUE_MAX)
+	assert(light.v > 0.52)
 	assert(stroked.a == 1.0)
 	pass

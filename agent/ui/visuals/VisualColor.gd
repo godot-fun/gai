@@ -25,9 +25,10 @@ extends Object
 ## Light-theme stroke alpha scale. Dark visuals use ~0.05–0.2 glow alphas; on white they need ~2×
 ## apparent opacity without changing the authored numbers in each effect file.
 const LIGHT_INK_ALPHA := 2.2
-## HSV value clamp for [method ink_color] so lines read as print ink, not LED on paper.
-const LIGHT_INK_VALUE_MIN := 0.38
-const LIGHT_INK_VALUE_MAX := 0.52
+## HSV value clamp for [method ink_color]. Keep enough headroom for event weight to remain
+## visible after an effect applies its own value scale, while avoiding white-on-white strokes.
+const LIGHT_INK_VALUE_MIN := 0.42
+const LIGHT_INK_VALUE_MAX := 0.70
 ## Dark-theme minimum HSV value before [method neon_color] applies hue/sat offsets.
 const NEON_VALUE_FLOOR := 0.72
 
@@ -59,7 +60,7 @@ static func neon_color(base: Color, hue_offset: float = 0.0, sat_mul: float = 1.
 ## Light-theme stroke hue: same [param hue_offset] as [method neon_color], but value is scaled
 ## and clamped into [[member LIGHT_INK_VALUE_MIN], [member LIGHT_INK_VALUE_MAX]]. Slightly
 ## raises saturation so distinct hues stay separable when value is compressed.
-static func ink_color(base: Color, hue_offset: float = 0.0, sat_mul: float = 1.0, value_scale: float = 0.48) -> Color:
+static func ink_color(base: Color, hue_offset: float = 0.0, sat_mul: float = 1.0, value_scale: float = 0.68) -> Color:
 	var hue := fposmod(base.h + hue_offset, 1.0)
 	var sat := clampf(maxf(base.s, 0.35) * sat_mul, 0.0, 1.0)
 	var value := clampf(base.v * value_scale, LIGHT_INK_VALUE_MIN, LIGHT_INK_VALUE_MAX)
