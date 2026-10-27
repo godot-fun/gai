@@ -5,7 +5,8 @@ extends VisualEffect
 ## child node; this root only maps agent events into camera, weather, and city state.
 
 const HORIZON_RATIO := 0.56
-const RIVER_TOP_RATIO := 0.58
+## Near skyline and water share one shoreline so no empty band shows between them.
+const RIVER_TOP_RATIO := HORIZON_RATIO
 const BRIDGE_TOP_RATIO := 0.70
 const MAX_VEHICLES := 10
 const MIN_PIXEL_SIZE := 3.0

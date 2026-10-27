@@ -49,9 +49,11 @@ func sync_shader_uniforms() -> void:
 
 
 func _draw() -> void:
-	var river_top := viewport_size.y * PixelCity.RIVER_TOP_RATIO
+	var river_top := snappedf(viewport_size.y * PixelCity.RIVER_TOP_RATIO, pixel)
 	var water_color := Color("12344d").lerp(Color("287895"), daylight * 0.55)
-	draw_rect(Rect2(0.0, river_top, viewport_size.x, viewport_size.y - river_top), Color(water_color, 0.12 + rain_intensity * 0.035))
+	var water_alpha := 0.12 + rain_intensity * 0.035
+	draw_rect(Rect2(0.0, river_top, viewport_size.x, viewport_size.y - river_top), Color(water_color, water_alpha))
+	draw_rect(Rect2(0.0, river_top, viewport_size.x, pixel), Color(water_color, minf(water_alpha * 1.35, 0.2)))
 	var flow_top := river_top + pixel * FLOW_LINE_TOP_INSET
 	var row_stride := pixel * 3.0
 	var line_count := maxi(0, floori((viewport_size.y - flow_top) / row_stride))
