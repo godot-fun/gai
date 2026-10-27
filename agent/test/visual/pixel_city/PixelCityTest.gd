@@ -13,6 +13,25 @@ static func visual_type_test() -> void:
 	pass
 
 
+func weather_uses_gpu_rain_particles_test() -> void:
+	var effect := VisualControl.create_effect(VisualControl.Type.PIXEL_CITY) as PixelCity
+	Engine.get_main_loop().root.add_child.call_deferred(effect)
+	await Engine.get_main_loop().process_frame
+	var weather := effect.get_node("Weather") as PixelWeather
+	weather.update_visual(Vector2(1280.0, 720.0), 4.0, 12.0, 0.55)
+	var rain := weather.get_node("Rain") as GPUParticles2D
+	assert(rain != null)
+	assert(rain.process_material is ParticleProcessMaterial)
+	assert(rain.texture != null)
+	assert(rain.emitting)
+	assert(rain.amount >= PixelWeather.MAX_RAIN_AMOUNT)
+	weather.update_visual(Vector2(1280.0, 720.0), 4.0, 12.0, 0.0)
+	assert(not rain.emitting)
+	effect.get_parent().remove_child(effect)
+	effect.free()
+	pass
+
+
 static func daylight_cycle_distinguishes_day_and_night_test() -> void:
 	assert(PixelCity.daylight_at(0.5) > 0.95)
 	assert(PixelCity.daylight_at(0.0) < 0.05)
