@@ -1,7 +1,7 @@
 class_name PixelBridgePierLights
 extends Node2D
 
-## Steady pier glow: particles recycle, but flat ramps and long staggered lifetimes avoid visible blink.
+## Steady pier glow: flat lifetime ramps plus instant emission avoid warm-up flashes.
 const GLOW_PARTICLE_COUNT := 5
 const GLOW_LIFETIME := 512.0
 const GLOW_SCALE_BASE := 1.55
@@ -53,16 +53,17 @@ func sync_visual(new_pixel: float, new_bridge_color: Color, new_lamp_center: Vec
 
 
 func ensure_glow_particles() -> void:
-	if glow_particles != null:
+	if glow_particles != null or not is_inside_tree():
 		return
 	glow_particles = GPUParticles2D.new()
 	glow_particles.name = "GlowParticles"
 	glow_particles.z_index = 0
 	glow_particles.amount = GLOW_PARTICLE_COUNT
 	glow_particles.lifetime = GLOW_LIFETIME
-	glow_particles.preprocess = GLOW_LIFETIME
+	glow_particles.preprocess = 0.0
+	glow_particles.explosiveness = 1.0
 	glow_particles.interpolate = true
-	glow_particles.randomness = 0.35
+	glow_particles.randomness = 0.0
 	glow_particles.local_coords = true
 	glow_particles.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	if shared_glow_texture == null:
@@ -74,12 +75,15 @@ func ensure_glow_particles() -> void:
 	glow_material.initial_velocity_min = 0.0
 	glow_material.initial_velocity_max = 0.0
 	glow_material.gravity = Vector3.ZERO
-	glow_material.lifetime_randomness = 0.92
+	glow_material.lifetime_randomness = 0.0
+	glow_material.color = Color.WHITE
 	glow_material.color_ramp = steady_color_ramp()
 	glow_material.scale_curve = steady_scale_curve()
+	apply_particle_scale()
 	glow_particles.process_material = glow_material
 	glow_particles.emitting = true
 	add_child(glow_particles)
+	glow_particles.restart()
 	pass
 
 
@@ -91,12 +95,19 @@ func sync_glow_particles() -> void:
 	glow_particles.emitting = true
 	var bloom_alpha := (0.095 if dark_theme else 0.068) * light_pulse
 	glow_particles.modulate = VisualColor.stroke(lamp_tint, bloom_alpha * 0.92)
-	var particle_scale := pixel * GLOW_SCALE_BASE * glow_scale
-	glow_material.scale_min = particle_scale * 0.98
-	glow_material.scale_max = particle_scale * 1.02
+	apply_particle_scale()
 	if not is_equal_approx(pixel, built_glow_pixel):
 		var half := pixel * 5.5
 		glow_particles.visibility_rect = Rect2(lamp_center.x - half, lamp_center.y - half, half * 2.0, half * 2.0)
+	pass
+
+
+func apply_particle_scale() -> void:
+	if glow_material == null:
+		return
+	var particle_scale := pixel * GLOW_SCALE_BASE * glow_scale
+	glow_material.scale_min = particle_scale * 0.98
+	glow_material.scale_max = particle_scale * 1.02
 	pass
 
 
