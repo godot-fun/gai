@@ -11,9 +11,26 @@ uniform float toolbar_height_px = 48.0;
 uniform vec4 accent_color : source_color = vec4(0.3, 0.7, 1.0, 1.0);
 uniform vec4 anchor_rect_uv = vec4(0.32, 0.28, 0.36, 0.28);
 uniform float anchor_enabled : hint_range(0.0, 1.0) = 0.0;
+uniform vec4 inertia_rect_0_uv = vec4(0.0);
+uniform vec4 inertia_rect_1_uv = vec4(0.0);
+uniform vec4 inertia_rect_2_uv = vec4(0.0);
+uniform vec3 inertia_enabled = vec3(0.0);
+uniform vec3 inertia_displacement_px = vec3(0.0);
+uniform vec4 occluder_rect_uv = vec4(0.0);
+uniform vec2 occluder_offset_px = vec2(0.0);
+uniform float occluder_enabled : hint_range(0.0, 1.0) = 0.0;
 
 float luminance(vec3 color) {
 	return dot(color, vec3(0.299, 0.587, 0.114));
+}
+
+float rounded_control_mask(vec2 uv, vec4 rect, float enabled, vec2 pixel_size, float radius_px) {
+	vec2 rect_size = rect.zw;
+	vec2 center = rect.xy + rect_size * 0.5;
+	float radius = min(radius_px * pixel_size.x, min(rect_size.x, rect_size.y) * 0.22);
+	vec2 q = abs(uv - center) - rect_size * 0.5 + radius;
+	float distance = length(max(q, vec2(0.0))) + min(max(q.x, q.y), 0.0) - radius;
+	return (1.0 - smoothstep(-pixel_size.x * 2.0, pixel_size.x * 5.0, distance)) * enabled;
 }
 
 void fragment() {
@@ -26,23 +43,24 @@ void fragment() {
 
 	// The selected real Control becomes the camera-locked performer. A rounded mask follows its
 	// live screen rectangle, including layout changes while streamed text grows the bubble.
-	vec2 anchor_min = anchor_rect_uv.xy;
-	vec2 anchor_size = anchor_rect_uv.zw;
-	vec2 anchor_center = anchor_min + anchor_size * 0.5;
-	float anchor_radius = min(14.0 * SCREEN_PIXEL_SIZE.x, min(anchor_size.x, anchor_size.y) * 0.22);
-	vec2 anchor_q = abs(SCREEN_UV - anchor_center) - anchor_size * 0.5 + anchor_radius;
-	float anchor_distance = length(max(anchor_q, vec2(0.0))) + min(max(anchor_q.x, anchor_q.y), 0.0) - anchor_radius;
-	float anchor_mask = (1.0 - smoothstep(-SCREEN_PIXEL_SIZE.x * 2.0, SCREEN_PIXEL_SIZE.x * 5.0, anchor_distance)) * anchor_enabled * body_mask;
+	float anchor_mask = rounded_control_mask(SCREEN_UV, anchor_rect_uv, anchor_enabled, SCREEN_PIXEL_SIZE, 14.0) * body_mask;
+	float inertia_mask_0 = rounded_control_mask(SCREEN_UV, inertia_rect_0_uv, inertia_enabled.x, SCREEN_PIXEL_SIZE, 8.0) * body_mask * (1.0 - anchor_mask);
+	float inertia_mask_1 = rounded_control_mask(SCREEN_UV, inertia_rect_1_uv, inertia_enabled.y, SCREEN_PIXEL_SIZE, 8.0) * body_mask * (1.0 - anchor_mask);
+	float inertia_mask_2 = rounded_control_mask(SCREEN_UV, inertia_rect_2_uv, inertia_enabled.z, SCREEN_PIXEL_SIZE, 8.0) * body_mask * (1.0 - anchor_mask);
 
 	// The lower part travels slightly farther, as if it were a floor sliding beneath a fixed camera.
 	// Edge locking bends the displacement into the frame instead of exposing unrendered pixels.
 	float floor_mask = smoothstep(0.63, 0.94, body_y);
 	float depth = mix(0.86, 1.24, floor_mask);
-	float travel_factor = mix(depth, 0.0, anchor_mask);
+	float local_displacement_px = displacement_px;
+	local_displacement_px = mix(local_displacement_px, inertia_displacement_px.x, inertia_mask_0);
+	local_displacement_px = mix(local_displacement_px, inertia_displacement_px.y, inertia_mask_1);
+	local_displacement_px = mix(local_displacement_px, inertia_displacement_px.z, inertia_mask_2);
+	local_displacement_px = mix(local_displacement_px, 0.0, anchor_mask);
 	float edge_lock = smoothstep(0.0, 0.095, SCREEN_UV.x) * (1.0 - smoothstep(0.905, 1.0, SCREEN_UV.x));
-	float shift_uv = displacement_px / max(viewport_px.x, 1.0);
+	float shift_uv = local_displacement_px / max(viewport_px.x, 1.0);
 	float inertia_bend = velocity * sin(body_y * 3.14159265) * 0.0065;
-	vec2 travel = vec2(shift_uv * travel_factor * edge_lock * body_mask, inertia_bend * (1.0 - anchor_mask) * body_mask);
+	vec2 travel = vec2(shift_uv * depth * edge_lock * body_mask, inertia_bend * (1.0 - anchor_mask) * body_mask);
 	vec2 moving_uv = SCREEN_UV - travel;
 	moving_uv = clamp(moving_uv, vec2(0.0), vec2(1.0));
 
@@ -60,6 +78,17 @@ void fragment() {
 	vec3 source = texture(screen_texture, SCREEN_UV).rgb;
 	float displaced_edge = clamp(abs(luminance(source) - luminance(room)) * 2.2, 0.0, 1.0);
 	room = mix(room, accent_color.rgb, displaced_edge * motion_energy * impact * 0.12);
+
+	// A real second control temporarily violates the established depth order. Its translated copy
+	// is composited after the pinned performer, so it crosses in front for a few unmistakable frames.
+	vec2 occluder_offset_uv = occluder_offset_px / max(viewport_px, vec2(1.0));
+	vec4 moved_occluder_rect = vec4(occluder_rect_uv.xy + occluder_offset_uv, occluder_rect_uv.zw);
+	float occluder_mask = rounded_control_mask(SCREEN_UV, moved_occluder_rect, occluder_enabled, SCREEN_PIXEL_SIZE, 10.0) * body_mask;
+	vec2 occluder_source_uv = clamp(SCREEN_UV - occluder_offset_uv, vec2(0.0), vec2(1.0));
+	vec3 occluder = texture(screen_texture, occluder_source_uv).rgb;
+	float crossing_shadow = rounded_control_mask(SCREEN_UV - vec2(0.0, SCREEN_PIXEL_SIZE.y * 7.0), moved_occluder_rect, occluder_enabled, SCREEN_PIXEL_SIZE, 10.0) * (1.0 - occluder_mask);
+	room *= 1.0 - crossing_shadow * 0.22;
+	room = mix(room, occluder, occluder_mask);
 
 	// Suppress all residual decoration at rest: the application must look completely normal until
 	// an event physically kicks the room.
