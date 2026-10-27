@@ -1,6 +1,8 @@
 class_name PixelRiver
 extends Node2D
 
+const FLOW_LINE_TOP_INSET := 2.0
+
 var viewport_size := Vector2.ZERO
 var pixel: float = 4.0
 var camera_x: float = 0.0
@@ -50,10 +52,12 @@ func _draw() -> void:
 	var river_top := viewport_size.y * PixelCity.RIVER_TOP_RATIO
 	var water_color := Color("12344d").lerp(Color("287895"), daylight * 0.55)
 	draw_rect(Rect2(0.0, river_top, viewport_size.x, viewport_size.y - river_top), Color(water_color, 0.12 + rain_intensity * 0.035))
-	var line_count := floori((viewport_size.y - river_top) / (pixel * 3.0))
+	var flow_top := river_top + pixel * FLOW_LINE_TOP_INSET
+	var row_stride := pixel * 3.0
+	var line_count := maxi(0, floori((viewport_size.y - flow_top) / row_stride))
 	var period := pixel * 18.0
 	for row in range(line_count):
-		var y := river_top + float(row) * pixel * 3.0
+		var y := flow_top + float(row) * row_stride
 		var perspective := float(row) / float(maxi(line_count - 1, 1))
 		var flow := elapsed * (9.0 + perspective * 28.0)
 		var scroll := flow - camera_x * 0.35 + float(row * 31)
@@ -65,7 +69,8 @@ func _draw() -> void:
 			var length := pixel * (5.0 + float(posmod(segment + row, 6)))
 			if x + length < 0.0 or x > viewport_size.x:
 				continue
-			draw_rect(Rect2(x, snappedf(y, pixel), length, pixel), Color(0.42, 0.76, 0.89, alpha))
+			var line_y := maxf(snappedf(y, pixel), flow_top)
+			draw_rect(Rect2(x, line_y, length, pixel), Color(0.42, 0.76, 0.89, alpha))
 	draw_city_reflections(river_top)
 	draw_bridge_reflections()
 	pass
