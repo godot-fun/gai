@@ -28,7 +28,8 @@ func _draw() -> void:
 	draw_line(Vector2(segment_width * 0.5, segment_height), Vector2(segment_width, 0.0), Color(bridge_color, alpha * 0.72), pixel, false)
 	if segment_index % 3 == 0:
 		draw_rect(Rect2(0.0, 0.0, pixel * 2.0, segment_height + pixel * 12.0), Color(bridge_color, alpha * 0.62))
-	var pulse := 0.74 + 0.26 * sin(elapsed * 2.0 + float(segment_index) * 0.7)
+	var pulse := 0.94 + 0.06 * sin(elapsed * 1.35 + float(segment_index) * 0.7)
 	draw_rect(Rect2(0.0, -pixel * 3.0, pixel, pixel * 3.0), Color(bridge_color, 0.28))
+	draw_rect(Rect2(-pixel * 1.5, -pixel * 5.0, pixel * 4.0, pixel * 3.0), Color(bridge_color, 0.035 * pulse))
 	draw_rect(Rect2(-pixel, -pixel * 4.0, pixel * 3.0, pixel), Color(1.0, 0.76, 0.34, 0.48 * pulse))
 	pass

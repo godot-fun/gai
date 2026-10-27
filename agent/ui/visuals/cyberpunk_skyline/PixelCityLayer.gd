@@ -8,7 +8,7 @@ extends Node2D
 var buildings: Array[PixelBuilding] = []
 
 
-func update_visual(viewport_size: Vector2, pixel: float, camera_x: float, daylight: float, city_energy: float, rain_intensity: float) -> void:
+func update_visual(viewport_size: Vector2, pixel: float, camera_x: float, elapsed: float, daylight: float, city_energy: float, rain_intensity: float) -> void:
 	var spacing := pixel * (10.0 if distant else 8.0)
 	var desired_count := ceili(viewport_size.x / spacing) + 3
 	ensure_buildings(desired_count)
@@ -35,7 +35,7 @@ func update_visual(viewport_size: Vector2, pixel: float, camera_x: float, daylig
 		# continuously. Quantizing this x position made slow parallax jump a full pixel
 		# block at a time (up to eight screen pixels on large windows).
 		building.position = Vector2(x, snappedf(viewport_size.y * horizon_ratio, pixel))
-		building.configure(world_index, pixel, width, height, daylight, city_energy, alpha, 1000 if distant else 0, distant)
+		building.configure(world_index, pixel, width, height, elapsed, daylight, city_energy, alpha, 1000 if distant else 0, distant)
 	pass
 
 

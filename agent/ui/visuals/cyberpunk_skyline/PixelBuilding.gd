@@ -5,6 +5,7 @@ var world_index: int = -2147483648
 var pixel: float = 4.0
 var building_width: float = 48.0
 var building_height: float = 180.0
+var elapsed: float = 0.0
 var daylight: float = 0.0
 var city_energy: float = 0.0
 var body_alpha: float = 0.2
@@ -12,11 +13,12 @@ var seed_offset: int = 0
 var distant: bool = false
 
 
-func configure(index: int, new_pixel: float, width: float, height: float, new_daylight: float, new_energy: float, alpha: float, offset: int, is_distant: bool) -> void:
+func configure(index: int, new_pixel: float, width: float, height: float, new_elapsed: float, new_daylight: float, new_energy: float, alpha: float, offset: int, is_distant: bool) -> void:
 	world_index = index
 	pixel = new_pixel
 	building_width = width
 	building_height = height
+	elapsed = new_elapsed
 	daylight = new_daylight
 	city_energy = new_energy
 	body_alpha = alpha
@@ -62,6 +64,7 @@ func draw_windows() -> void:
 			alpha *= clampf(body_alpha / alpha_reference, 0.45, 1.0)
 			var window_position := Vector2(phase.x + float(column) * column_step, -building_height + phase.y + float(row) * row_step)
 			var window_size := Vector2(pixel, pixel) if distant else Vector2(pixel, pixel * 1.5)
+			alpha *= window_light_pulse(seed)
 			var window_color := Color(0.45, 0.68, 0.82, minf(alpha, 0.24)) if distant else Color(1.0, 0.73, 0.30, minf(alpha, 0.82))
 			draw_rect(Rect2(window_position, window_size), window_color)
 	pass
@@ -69,3 +72,13 @@ func draw_windows() -> void:
 
 func window_lit_threshold() -> float:
 	return 0.18 if distant else 0.42 + city_energy * 0.18
+
+
+## Only a small deterministic subset breathes, so the skyline feels inhabited
+## without turning every window into a synchronized signboard.
+func window_light_pulse(seed: int) -> float:
+	if PixelCity.stable_random(seed, 97) > 0.07:
+		return 1.0
+	var duration := lerpf(3.8, 6.4, PixelCity.stable_random(seed, 101))
+	var phase := elapsed * TAU / duration + PixelCity.stable_random(seed, 103) * TAU
+	return 0.78 + (0.5 + 0.5 * sin(phase)) * 0.22

@@ -197,9 +197,9 @@ func update_child_nodes() -> void:
 	if cloud_layer != null:
 		cloud_layer.update_visual(size, pixel, camera_x, elapsed, daylight, rain_intensity, reasoning_energy)
 	if far_city_layer != null:
-		far_city_layer.update_visual(size, pixel, camera_x, daylight, city_energy, rain_intensity)
+		far_city_layer.update_visual(size, pixel, camera_x, elapsed, daylight, city_energy, rain_intensity)
 	if near_city_layer != null:
-		near_city_layer.update_visual(size, pixel, camera_x, daylight, city_energy, rain_intensity)
+		near_city_layer.update_visual(size, pixel, camera_x, elapsed, daylight, city_energy, rain_intensity)
 	if river != null:
 		river.update_visual(size, pixel, camera_x, elapsed, daylight, rain_intensity, reasoning_energy)
 	if bridge_layer != null:

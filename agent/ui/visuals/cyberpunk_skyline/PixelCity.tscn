@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://agent/ui/visuals/cyberpunk_skyline/PixelCity.gd" id="1_root"]
 [ext_resource type="Script" path="res://agent/ui/visuals/cyberpunk_skyline/PixelSkyBackground.gd" id="2_sky"]
@@ -9,6 +9,11 @@
 [ext_resource type="Script" path="res://agent/ui/visuals/cyberpunk_skyline/PixelRiver.gd" id="7_river"]
 [ext_resource type="Script" path="res://agent/ui/visuals/cyberpunk_skyline/PixelBridgeLayer.gd" id="8_bridge"]
 [ext_resource type="Script" path="res://agent/ui/visuals/cyberpunk_skyline/PixelWeather.gd" id="9_weather"]
+[ext_resource type="Shader" path="res://agent/ui/visuals/cyberpunk_skyline/PixelRiverSurface.gdshader" id="10_river_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_river"]
+resource_local_to_scene = true
+shader = ExtResource("10_river_shader")
 
 [node name="PixelCity" type="Control"]
 layout_mode = 3
@@ -46,6 +51,7 @@ distant = true
 script = ExtResource("6_city")
 
 [node name="River" type="Node2D" parent="."]
+material = SubResource("ShaderMaterial_river")
 script = ExtResource("7_river")
 
 [node name="BridgeLayer" type="Node2D" parent="."]

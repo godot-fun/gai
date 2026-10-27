@@ -71,6 +71,31 @@ func river_reflections_only_show_in_dark_theme_test() -> void:
 	pass
 
 
+func river_uses_local_surface_shader_test() -> void:
+	var effect := VisualControl.create_effect(VisualControl.Type.PIXEL_CITY) as PixelCity
+	var river_node := effect.get_node("River") as PixelRiver
+	var river_material := river_node.material as ShaderMaterial
+	assert(river_material != null)
+	assert(river_material.resource_local_to_scene)
+	assert(river_material.shader != null)
+	effect.free()
+	pass
+
+
+static func window_breathing_is_sparse_and_bounded_test() -> void:
+	var building := PixelBuilding.new()
+	building.elapsed = 1.7
+	var breathing_count := 0
+	for seed in range(1000):
+		var pulse := building.window_light_pulse(seed)
+		assert(pulse >= 0.78 and pulse <= 1.0)
+		if pulse < 0.999:
+			breathing_count += 1
+	assert(breathing_count >= 40 and breathing_count <= 100)
+	building.free()
+	pass
+
+
 static func stars_stay_above_city_roofs_test() -> void:
 	for index in range(38):
 		var y_ratio := PixelStarField.star_y_ratio(index)
