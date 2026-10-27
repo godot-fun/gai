@@ -12,7 +12,7 @@ var elapsed: float = 0.0
 
 var truss_frame: Line2D
 var pillar: ColorRect
-var pier_lights: Node2D
+var pier_lights
 
 var show_pier_lights := false
 var lamp_center := Vector2.ZERO
@@ -117,12 +117,12 @@ func apply_colors(dark_theme: bool) -> void:
 
 
 func update_light_pulse() -> void:
-	if pier_lights == null or not pier_lights.has_method("sync_visual"):
+	if pier_lights == null:
 		return
 	var phase := elapsed * 0.88 + float(bay_index) * 0.73
 	var breath := 0.5 + 0.5 * sin(phase)
 	var lamp_pulse := lerpf(0.72, 1.0, breath)
 	var glow_scale := lerpf(0.84, 1.08, breath)
 	var lamp := Color(1.0, 0.76, 0.34, 1.0)
-	pier_lights.call("sync_visual", pixel, bridge_color, lamp_center, light_post_rect, lamp_pulse, lamp, show_pier_lights, glow_scale)
+	pier_lights.sync_visual(pixel, bridge_color, lamp_center, light_post_rect, lamp_pulse, lamp, show_pier_lights, glow_scale, ThemeColor.is_dark_theme())
 	pass
