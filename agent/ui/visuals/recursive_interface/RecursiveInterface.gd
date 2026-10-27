@@ -10,8 +10,8 @@ const ENERGY_DECAY_PER_SECOND := 0.38
 const ANCHOR_REFRESH_SECONDS := 0.18
 const PORTAL_MARGIN_PX := 5.0
 const PORTAL_COUNT := 8
-const PORTAL_STRENGTHS_NEAR := Vector4(1.0, 0.86, 0.73, 0.61)
-const PORTAL_STRENGTHS_FAR := Vector4(0.50, 0.40, 0.31, 0.23)
+const PORTAL_STRENGTHS_NEAR := Vector4(1.0, 0.72, 0.51, 0.36)
+const PORTAL_STRENGTHS_FAR := Vector4(0.25, 0.17, 0.11, 0.07)
 const IDLE_EPSILON := 0.001
 
 var screen_rect: ColorRect

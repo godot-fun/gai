@@ -42,8 +42,8 @@ static func portal_uses_eight_bubbles_before_latest_test() -> void:
 
 
 static func portal_strengths_decay_smoothly_across_eight_bubbles_test() -> void:
-	assert(RECURSIVE_INTERFACE_SCRIPT.PORTAL_STRENGTHS_NEAR == Vector4(1.0, 0.86, 0.73, 0.61))
-	assert(RECURSIVE_INTERFACE_SCRIPT.PORTAL_STRENGTHS_FAR == Vector4(0.50, 0.40, 0.31, 0.23))
+	assert(RECURSIVE_INTERFACE_SCRIPT.PORTAL_STRENGTHS_NEAR == Vector4(1.0, 0.72, 0.51, 0.36))
+	assert(RECURSIVE_INTERFACE_SCRIPT.PORTAL_STRENGTHS_FAR == Vector4(0.25, 0.17, 0.11, 0.07))
 	pass
 
 
