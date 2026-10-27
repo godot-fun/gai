@@ -37,13 +37,23 @@ vec2 rotate_around_center(vec2 uv, float angle) {
 	return rotation * (uv - 0.5) + 0.5;
 }
 
+vec2 barrel_warp(vec2 local_uv, float level, float energy) {
+	vec2 centered = local_uv - 0.5;
+	float radial = dot(centered, centered);
+	float warp = radial * (0.11 + level * 0.05) * energy;
+	return local_uv + centered * warp;
+}
+
 vec2 enter_portal(vec2 uv, vec4 portal_rect, float level, float portal_index) {
 	vec2 local_uv = (uv - portal_rect.xy) / max(portal_rect.zw, vec2(0.0001));
 	float staggered_phase = recursion_phase - portal_index * 0.42 * recursion_direction;
-	float breathing = sin(staggered_phase * 1.7 + level * 1.31) * 0.012 * recursion_energy;
-	float angle = recursion_direction * (0.008 + level * 0.004) * recursion_energy + breathing;
+	float breathing = sin(staggered_phase * 1.7 + level * 1.31) * 0.018 * recursion_energy;
+	float angle = recursion_direction * (0.011 + level * 0.005) * recursion_energy + breathing;
 	local_uv = rotate_around_center(local_uv, angle);
-	float depth_scale = 1.0 + sin(staggered_phase + level * 0.9) * 0.018 * recursion_energy;
+	local_uv = barrel_warp(local_uv, level, recursion_energy);
+	float depth_scale = 1.0 + sin(staggered_phase + level * 0.9) * 0.028 * recursion_energy;
+	float tunnel_pull = 0.018 + level * 0.012;
+	local_uv = mix(local_uv, vec2(0.5), tunnel_pull * recursion_energy);
 	return (local_uv - 0.5) * depth_scale + 0.5;
 }
 
@@ -64,7 +74,16 @@ vec3 recursive_portal_color(vec2 screen_uv, vec4 portal_rect, float portal_index
 		accumulated_depth += nested_mask;
 	}
 	float depth_tone = clamp(accumulated_depth / 4.0, 0.0, 1.0);
-	recursive_color *= 1.0 - depth_tone * recursion_energy * 0.10;
+	recursive_color *= 1.0 - depth_tone * recursion_energy * 0.14;
+	vec2 local_uv = (screen_uv - portal_rect.xy) / max(portal_rect.zw, vec2(0.0001));
+	vec2 edge_distance = abs(local_uv - 0.5) * 2.0;
+	float portal_vignette = 1.0 - dot(edge_distance, edge_distance) * 0.28 * recursion_energy;
+	recursive_color *= portal_vignette;
+	float chroma_spread = depth_tone * recursion_energy * pixel_size.x * 3.2;
+	vec3 chromatic = recursive_color;
+	chromatic.r = texture(screen_texture, clamp(ray_uv + vec2(chroma_spread, chroma_spread * 0.35), vec2(0.0), vec2(1.0))).r;
+	chromatic.b = texture(screen_texture, clamp(ray_uv - vec2(chroma_spread, chroma_spread * 0.35), vec2(0.0), vec2(1.0))).b;
+	recursive_color = mix(recursive_color, chromatic, depth_tone * recursion_energy * 0.72);
 	return recursive_color;
 }
 
@@ -106,6 +125,8 @@ void fragment() {
 
 	float weighted_mask = dot(masks_near, portal_strengths_near) + dot(masks_far, portal_strengths_far);
 	float combined_edge = clamp(length(vec2(dFdx(weighted_mask), dFdy(weighted_mask))) * 7.0, 0.0, 1.0);
-	result = mix(result, accent_color.rgb, combined_edge * recursion_energy * 0.075);
+	float rim_pulse = 0.78 + 0.22 * sin(recursion_phase * 2.35);
+	result *= 1.0 - combined_edge * recursion_energy * 0.09;
+	result = mix(result, accent_color.rgb, combined_edge * recursion_energy * rim_pulse * 0.13);
 	COLOR = vec4(result, 1.0);
 }
