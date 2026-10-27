@@ -9,7 +9,7 @@ uniform float rain_intensity : hint_range(0.0, 1.0) = 0.0;
 void vertex() {
 	float row = floor(VERTEX.y / max(pixel_size, 1.0));
 	float wave = sin(row * 0.73 + TIME * (0.58 + rain_intensity * 0.52));
-	VERTEX.x += round(wave * wave_strength);
+	VERTEX.x += wave * wave_strength;
 }
 
 void fragment() {

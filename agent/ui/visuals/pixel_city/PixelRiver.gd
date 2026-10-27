@@ -33,15 +33,20 @@ func _draw() -> void:
 	var water_color := Color("12344d").lerp(Color("287895"), daylight * 0.55)
 	draw_rect(Rect2(0.0, river_top, viewport_size.x, viewport_size.y - river_top), Color(water_color, 0.12 + rain_intensity * 0.035))
 	var line_count := floori((viewport_size.y - river_top) / (pixel * 3.0))
+	var period := pixel * 18.0
 	for row in range(line_count):
 		var y := river_top + float(row) * pixel * 3.0
 		var perspective := float(row) / float(maxi(line_count - 1, 1))
 		var flow := elapsed * (9.0 + perspective * 28.0)
-		var offset := fposmod(flow - camera_x * 0.35 + float(row * 31), pixel * 18.0)
+		var scroll := flow - camera_x * 0.35 + float(row * 31)
 		var alpha := 0.07 + perspective * 0.09 + rain_intensity * 0.06
-		for segment in range(ceili(viewport_size.x / (pixel * 18.0)) + 1):
-			var x := float(segment) * pixel * 18.0 + offset - pixel * 18.0
-			var length := pixel * (5.0 + float((row + segment) % 6))
+		var first_segment := int(floor((0.0 - scroll) / period)) - 1
+		var last_segment := int(floor((viewport_size.x - scroll) / period)) + 1
+		for segment in range(first_segment, last_segment + 1):
+			var x := scroll + float(segment) * period
+			var length := pixel * (5.0 + float(posmod(segment + row, 6)))
+			if x + length < 0.0 or x > viewport_size.x:
+				continue
 			draw_rect(Rect2(x, snappedf(y, pixel), length, pixel), Color(0.42, 0.76, 0.89, alpha))
 	draw_city_reflections(river_top)
 	draw_bridge_reflections()
