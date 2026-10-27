@@ -44,6 +44,8 @@ func _draw() -> void:
 
 
 func set_occlusion_rectangles(new_rectangles: Array[Rect2]) -> void:
+	if occlusion_rectangles.is_empty() and new_rectangles.is_empty():
+		return
 	occlusion_rectangles = new_rectangles
 	queue_redraw()
 	pass

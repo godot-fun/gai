@@ -323,8 +323,10 @@ func render_smoke_test() -> void:
 	assert(effect.vehicles[0] is PixelVehicle)
 	assert(not effect.near_city_layer.buildings.is_empty())
 	assert(effect.near_city_layer.buildings[0] is PixelBuilding)
-	assert(not effect.bridge_layer.segments.is_empty())
-	assert(effect.bridge_layer.segments[0] is PixelBridgeSegment)
+	assert(effect.bridge_layer is PixelBridgeLayer)
+	assert(effect.bridge_layer.deck_height() == effect.pixel_size() * 4.0)
+	assert(not effect.bridge_layer.bays.is_empty())
+	assert(effect.bridge_layer.bays[0] is PixelBridgeBay)
 	effect.get_parent().remove_child(effect)
 	effect.free()
 	pass
@@ -340,11 +342,11 @@ func parallax_layers_move_at_different_rates_test() -> void:
 	effect.camera_x = 0.0
 	effect.update_child_nodes()
 	var city_start := effect.near_city_layer.buildings[1].position.x
-	var bridge_start := effect.bridge_layer.segments[1].position.x
+	var bridge_start := effect.bridge_layer.bays[1].position.x
 	effect.camera_x = 160.0
 	effect.update_child_nodes()
 	var city_delta := absf(effect.near_city_layer.buildings[1].position.x - city_start)
-	var bridge_delta := absf(effect.bridge_layer.segments[1].position.x - bridge_start)
+	var bridge_delta := absf(effect.bridge_layer.bays[1].position.x - bridge_start)
 	assert(city_delta > 0.0)
 	assert(bridge_delta > city_delta)
 	effect.get_parent().remove_child(effect)

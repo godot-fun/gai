@@ -197,7 +197,6 @@ func update_child_nodes() -> void:
 	if cloud_layer != null:
 		cloud_layer.update_visual(size, pixel, camera_x, elapsed, daylight, rain_intensity, reasoning_energy)
 	if near_city_layer != null:
-		near_city_layer.set_occlusion_rectangles([])
 		near_city_layer.update_visual(size, pixel, camera_x, elapsed, daylight, city_energy, rain_intensity)
 	if far_city_layer != null:
 		var foreground_rectangles: Array[Rect2] = near_city_layer.body_occlusion_rectangles() if near_city_layer != null else []

@@ -9,6 +9,11 @@ var daylight: float = 0.0
 var rain_intensity: float = 0.0
 var reasoning_energy: float = 0.0
 
+var synced_shader_pixel := 0.0
+var synced_shader_wave := 0.0
+var synced_shader_daylight := 0.0
+var synced_shader_rain := 0.0
+
 
 func update_visual(new_size: Vector2, new_pixel: float, new_camera_x: float, new_elapsed: float, new_daylight: float, new_rain: float, new_reasoning: float) -> void:
 	viewport_size = new_size
@@ -18,13 +23,26 @@ func update_visual(new_size: Vector2, new_pixel: float, new_camera_x: float, new
 	daylight = new_daylight
 	rain_intensity = new_rain
 	reasoning_energy = new_reasoning
-	var river_material := material as ShaderMaterial
-	if river_material != null:
-		river_material.set_shader_parameter("pixel_size", pixel)
-		river_material.set_shader_parameter("wave_strength", pixel * (0.18 + rain_intensity * 0.12 + reasoning_energy * 0.06))
-		river_material.set_shader_parameter("daylight", daylight)
-		river_material.set_shader_parameter("rain_intensity", rain_intensity)
+	sync_shader_uniforms()
 	queue_redraw()
+	pass
+
+
+func sync_shader_uniforms() -> void:
+	var river_material := material as ShaderMaterial
+	if river_material == null:
+		return
+	var wave_strength := pixel * (0.18 + rain_intensity * 0.12 + reasoning_energy * 0.06)
+	if is_equal_approx(pixel, synced_shader_pixel) and is_equal_approx(wave_strength, synced_shader_wave) and is_equal_approx(daylight, synced_shader_daylight) and is_equal_approx(rain_intensity, synced_shader_rain):
+		return
+	synced_shader_pixel = pixel
+	synced_shader_wave = wave_strength
+	synced_shader_daylight = daylight
+	synced_shader_rain = rain_intensity
+	river_material.set_shader_parameter("pixel_size", pixel)
+	river_material.set_shader_parameter("wave_strength", wave_strength)
+	river_material.set_shader_parameter("daylight", daylight)
+	river_material.set_shader_parameter("rain_intensity", rain_intensity)
 	pass
 
 
@@ -65,7 +83,7 @@ func draw_city_reflections(river_top: float) -> void:
 				continue
 			var depth := float(segment) / float(maxi(segment_count - 1, 1))
 			var wave := sin(elapsed * 0.72 + float(segment) * 1.17 + float(index) * 0.61)
-			var segment_x := x + roundf(wave * pixel * (0.18 + depth * 0.34))
+			var segment_x := x + wave * pixel * (0.18 + depth * 0.34)
 			var width := pixel * (1.0 + float((index + segment) % 3))
 			var alpha := (1.0 - daylight * 0.62) * lerpf(0.15, 0.035, depth)
 			draw_rect(Rect2(segment_x, river_top + pixel * (2.0 + float(segment) * 2.0), width, pixel), Color(1.0, 0.66, 0.26, alpha))
@@ -76,13 +94,14 @@ func draw_bridge_reflections() -> void:
 	if not should_draw_reflections():
 		return
 	var spacing := pixel * 20.0
-	var offset := fposmod(camera_x * PixelBridgeLayer.PARALLAX_FACTOR, spacing)
+	var layer_camera := camera_x * PixelBridgeLayer.PARALLAX_FACTOR
 	var road_y := snappedf(viewport_size.y * PixelCity.BRIDGE_TOP_RATIO + pixel * 7.0, pixel)
 	var reflection_rows := maxi(1, floori((viewport_size.y - road_y) / (pixel * 4.0)))
-	var light_count := ceili(viewport_size.x / spacing) + 2
+	var first_light := int(floor((0.0 - layer_camera) / spacing)) - 1
+	var last_light := int(floor((viewport_size.x - layer_camera) / spacing)) + 1
 	var reflection_color := VisualColor.appearance_color(ThemeColor.accent_theme_color(), 0.03, 0.82, 0.92)
-	for index in range(light_count):
-		var x := float(index - 1) * spacing - offset
+	for index in range(first_light, last_light + 1):
+		var x := layer_camera + float(index) * spacing
 		for row in range(reflection_rows):
 			if (row + index) % 3 == 2:
 				continue
@@ -90,7 +109,7 @@ func draw_bridge_reflections() -> void:
 			var wave := sin(elapsed * 0.66 + float(row) * 0.91 + float(index) * 0.47)
 			var width := pixel * (1.0 + depth * 1.4)
 			var alpha := lerpf(0.13, 0.025, depth)
-			var position := Vector2(x + roundf(wave * pixel * (0.2 + depth * 0.45)), road_y + pixel * (2.0 + float(row) * 4.0))
+			var position := Vector2(x + wave * pixel * (0.2 + depth * 0.45), road_y + pixel * (2.0 + float(row) * 4.0))
 			draw_rect(Rect2(position, Vector2(width, pixel)), Color(reflection_color, alpha))
 	pass
 
