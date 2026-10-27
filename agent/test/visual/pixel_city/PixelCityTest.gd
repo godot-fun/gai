@@ -96,6 +96,31 @@ static func window_breathing_is_sparse_and_bounded_test() -> void:
 	pass
 
 
+static func building_shapes_are_varied_and_deterministic_test() -> void:
+	var building := PixelBuilding.new()
+	var shapes: Dictionary[int, bool] = {}
+	for index in range(80):
+		building.world_index = index
+		var first := building.building_shape()
+		assert(building.building_shape() == first)
+		shapes[first] = true
+	assert(shapes.size() == PixelBuilding.Shape.size())
+	building.free()
+	pass
+
+
+static func skyline_uses_clustered_height_rhythm_test() -> void:
+	var cluster_average_a := 0.0
+	var cluster_average_b := 0.0
+	for index in range(PixelCityLayer.CLUSTER_SIZE):
+		cluster_average_a += PixelCityLayer.cluster_height_mix(index, false)
+		cluster_average_b += PixelCityLayer.cluster_height_mix(index + PixelCityLayer.CLUSTER_SIZE, false)
+	cluster_average_a /= float(PixelCityLayer.CLUSTER_SIZE)
+	cluster_average_b /= float(PixelCityLayer.CLUSTER_SIZE)
+	assert(not is_equal_approx(cluster_average_a, cluster_average_b))
+	pass
+
+
 static func stars_stay_above_city_roofs_test() -> void:
 	for index in range(38):
 		var y_ratio := PixelStarField.star_y_ratio(index)
@@ -246,7 +271,7 @@ func slow_parallax_keeps_fractional_node_motion_test() -> void:
 	pass
 
 
-func foreground_buildings_occlude_distinct_distant_windows_test() -> void:
+func only_foreground_buildings_emit_window_light_test() -> void:
 	var effect := VisualControl.create_effect(VisualControl.Type.PIXEL_CITY) as PixelCity
 	effect.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	effect.size = Vector2(1280.0, 720.0)
@@ -257,8 +282,27 @@ func foreground_buildings_occlude_distinct_distant_windows_test() -> void:
 	var near_building := effect.near_city_layer.buildings[2]
 	assert(far_building.distant)
 	assert(not near_building.distant)
-	assert(near_building.body_alpha > far_building.body_alpha * 2.0)
-	assert(far_building.window_lit_threshold() < near_building.window_lit_threshold())
+	assert(not far_building.emits_window_light())
+	assert(near_building.emits_window_light())
+	assert(near_building.body_opacity > far_building.body_opacity * 2.0)
+	assert(far_building.body_rects().size() <= 2)
 	effect.get_parent().remove_child(effect)
 	effect.free()
+	pass
+
+
+func building_silhouettes_stay_translucent_in_both_themes_test() -> void:
+	var original := ThemeColor.current_theme
+	var building := PixelBuilding.new()
+	building.daylight = 1.0
+	building.body_opacity = 0.22
+	ThemeColor.current_theme = ThemeColor.ThemeEnum.LIGHT
+	var light_color := building.building_body_color()
+	assert(is_equal_approx(light_color.a, building.body_opacity))
+	assert(light_color.a < 0.3)
+	ThemeColor.current_theme = ThemeColor.ThemeEnum.DARK
+	var dark_color := building.building_body_color()
+	assert(is_equal_approx(dark_color.a, building.body_opacity))
+	ThemeColor.current_theme = original
+	building.free()
 	pass
