@@ -51,6 +51,7 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 			{"type": VisualControl.Type.INK_LANDSCAPE, "label": "Ink Landscape"},
 			{"type": VisualControl.Type.TAI_CHI, "label": "Tai Chi"},
 			{"type": VisualControl.Type.PIANO_RHYTHM, "label": "Piano Rhythm"},
+			{"type": VisualControl.Type.PIXEL_CITY, "label": "Pixel City"},
 		],
 	},
 ]
