@@ -87,7 +87,7 @@ func has_pier() -> bool:
 func rebuild_geometry(dark_theme: bool) -> void:
 	var deck_h := deck_height()
 	var apex := Vector2(bay_width * 0.5, deck_h + truss_drop)
-	truss_frame.width = pixel
+	truss_frame.width = maxf(1.0, pixel * 0.5)
 	truss_frame.points = PackedVector2Array([
 		Vector2(0.0, deck_h),
 		apex,
