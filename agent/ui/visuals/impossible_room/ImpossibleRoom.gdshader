@@ -9,6 +9,8 @@ uniform float velocity = 0.0;
 uniform float impact : hint_range(0.0, 1.0) = 0.0;
 uniform float toolbar_height_px = 48.0;
 uniform vec4 accent_color : source_color = vec4(0.3, 0.7, 1.0, 1.0);
+uniform vec4 anchor_rect_uv = vec4(0.32, 0.28, 0.36, 0.28);
+uniform float anchor_enabled : hint_range(0.0, 1.0) = 0.0;
 
 float luminance(vec3 color) {
 	return dot(color, vec3(0.299, 0.587, 0.114));
@@ -22,17 +24,21 @@ void fragment() {
 
 	float motion_energy = clamp(abs(displacement_px) / 148.0 + abs(velocity) * 0.42, 0.0, 1.0);
 
-	// The center acts as the camera-locked performer. Its broad rectangular mask follows the usual
-	// chat reading column, while the surrounding chrome behaves like the moving room around it.
-	float anchor_x = smoothstep(0.16, 0.24, SCREEN_UV.x) * (1.0 - smoothstep(0.76, 0.84, SCREEN_UV.x));
-	float anchor_y = smoothstep(toolbar_uv + 0.035, toolbar_uv + 0.10, SCREEN_UV.y) * (1.0 - smoothstep(0.82, 0.94, SCREEN_UV.y));
-	float anchor_mask = anchor_x * anchor_y * body_mask;
+	// The selected real Control becomes the camera-locked performer. A rounded mask follows its
+	// live screen rectangle, including layout changes while streamed text grows the bubble.
+	vec2 anchor_min = anchor_rect_uv.xy;
+	vec2 anchor_size = anchor_rect_uv.zw;
+	vec2 anchor_center = anchor_min + anchor_size * 0.5;
+	float anchor_radius = min(14.0 * SCREEN_PIXEL_SIZE.x, min(anchor_size.x, anchor_size.y) * 0.22);
+	vec2 anchor_q = abs(SCREEN_UV - anchor_center) - anchor_size * 0.5 + anchor_radius;
+	float anchor_distance = length(max(anchor_q, vec2(0.0))) + min(max(anchor_q.x, anchor_q.y), 0.0) - anchor_radius;
+	float anchor_mask = (1.0 - smoothstep(-SCREEN_PIXEL_SIZE.x * 2.0, SCREEN_PIXEL_SIZE.x * 5.0, anchor_distance)) * anchor_enabled * body_mask;
 
 	// The lower part travels slightly farther, as if it were a floor sliding beneath a fixed camera.
 	// Edge locking bends the displacement into the frame instead of exposing unrendered pixels.
 	float floor_mask = smoothstep(0.63, 0.94, body_y);
 	float depth = mix(0.86, 1.24, floor_mask);
-	float travel_factor = mix(depth, 0.10, anchor_mask);
+	float travel_factor = mix(depth, 0.0, anchor_mask);
 	float edge_lock = smoothstep(0.0, 0.095, SCREEN_UV.x) * (1.0 - smoothstep(0.905, 1.0, SCREEN_UV.x));
 	float shift_uv = displacement_px / max(viewport_px.x, 1.0);
 	float inertia_bend = velocity * sin(body_y * 3.14159265) * 0.0065;

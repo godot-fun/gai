@@ -11,6 +11,8 @@ const SPRING_DAMPING := 13.5
 const MAX_DISPLACEMENT_PX := 148.0
 const MAX_VELOCITY_PX := 1180.0
 const IDLE_EPSILON := 0.025
+const ANCHOR_REFRESH_SECONDS := 0.18
+const ANCHOR_MARGIN_PX := 8.0
 
 var screen_rect: ColorRect
 var room_material: ShaderMaterial
@@ -18,6 +20,8 @@ var displacement_px: float = 0.0
 var velocity_px: float = 0.0
 var impact: float = 0.0
 var event_direction: float = 1.0
+var anchor_refresh_clock: float = 0.0
+var anchor_control: Control
 
 
 func _ready() -> void:
@@ -30,6 +34,7 @@ func _ready() -> void:
 	room_material.shader = ROOM_SHADER
 	room_material.set_shader_parameter("toolbar_height_px", float(AgentLayout.TOOLBAR_HEIGHT))
 	room_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
+	room_material.set_shader_parameter("anchor_enabled", 0.0)
 	screen_rect.material = room_material
 	add_child(screen_rect)
 	gdf.events.theme_color_changed.connect(update_accent_color)
@@ -46,6 +51,7 @@ func fade_out_seconds() -> float:
 
 func on_agent_start(_session_id: int) -> void:
 	reset_motion()
+	refresh_anchor_control()
 	kick(510.0)
 	pass
 
@@ -72,6 +78,7 @@ func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> 
 
 
 func on_tool_execution_start(_session_id: int, _tool_call_id: String, _tool_name: String, _args: Dictionary[String, Variant]) -> void:
+	refresh_anchor_control()
 	kick(860.0)
 	pass
 
@@ -85,6 +92,10 @@ func on_tool_execution_end(_session_id: int, _tool_call_id: String, _tool_name: 
 func _process(delta: float) -> void:
 	if not visible:
 		return
+	anchor_refresh_clock += delta
+	if anchor_refresh_clock >= ANCHOR_REFRESH_SECONDS and (not is_instance_valid(anchor_control) or absf(displacement_px) < 3.0):
+		refresh_anchor_control()
+	update_anchor_shader()
 	if not RuntimeManager.runtimes.is_empty():
 		var sentence := ChatEntryCursor.take_next_sentence()
 		if not sentence.is_empty():
@@ -131,14 +142,76 @@ func update_accent_color() -> void:
 	pass
 
 
+## Selects the latest visible chat bubble. The preview scene has no transcript, so its closest
+## body button becomes a fallback that still demonstrates one real control staying in the air.
+func refresh_anchor_control() -> void:
+	anchor_refresh_clock = 0.0
+	anchor_control = find_anchor_candidate(get_tree().root) if is_inside_tree() else null
+	pass
+
+
+func find_anchor_candidate(root: Node) -> Control:
+	var bubble_candidates: Array[Control] = []
+	var button_candidates: Array[Control] = []
+	collect_anchor_candidates(root, bubble_candidates, button_candidates)
+	var viewport_rect := Rect2(Vector2.ZERO, size)
+	var candidates := bubble_candidates if not bubble_candidates.is_empty() else button_candidates
+	var best: Control
+	var best_score := -INF
+	for candidate: Control in candidates:
+		if not candidate.is_visible_in_tree():
+			continue
+		var visible_rect := candidate.get_global_rect().intersection(viewport_rect)
+		if visible_rect.size.x < 12.0 or visible_rect.size.y < 12.0:
+			continue
+		var center_distance := visible_rect.get_center().distance_to(viewport_rect.get_center())
+		var score := visible_rect.end.y * 4.0 + visible_rect.get_area() * 0.002 - center_distance
+		if score > best_score:
+			best = candidate
+			best_score = score
+	return best
+
+
+func collect_anchor_candidates(node: Node, bubbles: Array[Control], buttons: Array[Control]) -> void:
+	for child: Node in node.get_children():
+		if child is BubbleContainer:
+			bubbles.append(child as Control)
+		elif child is Button and (child as Button).global_position.y > float(AgentLayout.TOOLBAR_HEIGHT):
+			buttons.append(child as Control)
+		collect_anchor_candidates(child, bubbles, buttons)
+	pass
+
+
+func update_anchor_shader() -> void:
+	if room_material == null or not is_instance_valid(anchor_control) or size.x <= 0.0 or size.y <= 0.0:
+		if room_material != null:
+			room_material.set_shader_parameter("anchor_enabled", 0.0)
+		return
+	var visible_rect := anchor_control.get_global_rect().intersection(Rect2(Vector2.ZERO, size)).grow(ANCHOR_MARGIN_PX)
+	visible_rect = visible_rect.intersection(Rect2(Vector2.ZERO, size))
+	if visible_rect.size.x < 12.0 or visible_rect.size.y < 12.0:
+		room_material.set_shader_parameter("anchor_enabled", 0.0)
+		return
+	room_material.set_shader_parameter("anchor_rect_uv", normalized_anchor_rect(visible_rect, size))
+	room_material.set_shader_parameter("anchor_enabled", 1.0)
+	pass
+
+
 func reset_motion() -> void:
 	displacement_px = 0.0
 	velocity_px = 0.0
 	impact = 0.0
 	event_direction = 1.0
+	anchor_refresh_clock = ANCHOR_REFRESH_SECONDS
 	apply_shader_state()
 	pass
 
 
 static func impulse_for_sentence(text: String) -> float:
 	return clampf(300.0 + sqrt(float(text.strip_edges().length())) * 54.0, 360.0, 780.0)
+
+
+static func normalized_anchor_rect(rect: Rect2, viewport_size: Vector2) -> Vector4:
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		return Vector4.ZERO
+	return Vector4(rect.position.x / viewport_size.x, rect.position.y / viewport_size.y, rect.size.x / viewport_size.x, rect.size.y / viewport_size.y)

@@ -18,6 +18,13 @@ static func sentence_impulse_scales_and_clamps_test() -> void:
 	pass
 
 
+static func anchor_rect_normalizes_to_viewport_test() -> void:
+	var normalized: Vector4 = IMPOSSIBLE_ROOM_SCRIPT.normalized_anchor_rect(Rect2(200.0, 100.0, 400.0, 300.0), Vector2(1000.0, 500.0))
+	assert(normalized.is_equal_approx(Vector4(0.2, 0.2, 0.4, 0.6)))
+	assert(IMPOSSIBLE_ROOM_SCRIPT.normalized_anchor_rect(Rect2(), Vector2.ZERO) == Vector4.ZERO)
+	pass
+
+
 func spring_returns_toward_origin_test() -> void:
 	var effect: Variant = IMPOSSIBLE_ROOM_SCRIPT.new()
 	effect.displacement_px = 80.0
