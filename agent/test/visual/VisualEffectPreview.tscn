@@ -36,7 +36,7 @@ mouse_filter = 2
 script = ExtResource("2_visual")
 
 [node name="UiLayer" type="CanvasLayer" parent="."]
-layer = 20
+layer = 0
 
 [node name="Scroll" type="ScrollContainer" parent="UiLayer"]
 layout_mode = 1

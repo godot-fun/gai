@@ -25,6 +25,7 @@ enum Type {
 	TAI_CHI,
 	PIANO_RHYTHM,
 	PIXEL_CITY,
+	IMPOSSIBLE_ROOM,
 }
 
 
@@ -81,6 +82,8 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return PianoRhythm.new()
 		Type.PIXEL_CITY:
 			return PixelCity.new()
+		Type.IMPOSSIBLE_ROOM:
+			return ImpossibleRoom.new()
 	return null
 
 func on_agent_start(session_id: int) -> void:
