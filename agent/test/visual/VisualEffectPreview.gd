@@ -57,6 +57,7 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 			{"type": VisualControl.Type.TOPOLOGICAL_FOLD, "label": "Topological Fold"},
 			{"type": VisualControl.Type.INTERFACE_DELAMINATION, "label": "Interface Delamination"},
 			{"type": VisualControl.Type.ZERO_GRAVITY, "label": "Zero Gravity"},
+			{"type": VisualControl.Type.MIGRATING_VOID, "label": "Migrating Void"},
 		],
 	},
 ]

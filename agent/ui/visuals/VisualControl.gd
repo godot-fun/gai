@@ -30,6 +30,7 @@ enum Type {
 	TOPOLOGICAL_FOLD,
 	INTERFACE_DELAMINATION,
 	ZERO_GRAVITY,
+	MIGRATING_VOID,
 }
 
 
@@ -96,6 +97,8 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return InterfaceDelamination.new()
 		Type.ZERO_GRAVITY:
 			return ZeroGravity.new()
+		Type.MIGRATING_VOID:
+			return MigratingVoid.new()
 	return null
 
 func on_agent_start(session_id: int) -> void:
