@@ -191,7 +191,8 @@
       "visual_temporal_prism": "Temporal Prism",
       "visual_topological_fold": "Topological Fold",
       "visual_interface_delamination": "Interface Delamination",
-      "visual_zero_gravity": "Zero Gravity"
+      "visual_zero_gravity": "Zero Gravity",
+      "visual_electronic_contours": "Electronic Contours"
     },
     "sidebar": {
       "new_session": "+ New Agent",
