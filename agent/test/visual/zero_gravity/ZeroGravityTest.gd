@@ -55,6 +55,24 @@ static func sidebar_uses_a_broad_vertical_field_test() -> void:
 	assert(ZERO_GRAVITY_SCRIPT.axis_contact(900.0, 500.0, 200.0) < 0.01)
 	assert(ZERO_GRAVITY_SCRIPT.SIDEBAR_MOTION_SCALE < 1.0)
 	assert(ZERO_GRAVITY_SCRIPT.SIDEBAR_MASS_SCALE < 1.0)
+	assert(ZERO_GRAVITY_SCRIPT.MAX_BODY_COUNT == 22)
+	pass
+
+
+func retiring_sidebar_body_waits_until_it_has_settled_test() -> void:
+	var effect: Variant = ZERO_GRAVITY_SCRIPT.new()
+	var control := Control.new()
+	var body: Variant = ZERO_GRAVITY_SCRIPT.FloatingBodyState.new(control, 1.0, 0.5, true, ZERO_GRAVITY_SCRIPT.SIDEBAR_MOTION_SCALE)
+	body.target_participation = 0.0
+	body.participation = 0.5
+	effect.bodies.append(body)
+	effect.retire_settled_sidebar_bodies()
+	assert(effect.bodies.size() == 1)
+	body.participation = 0.0
+	effect.retire_settled_sidebar_bodies()
+	assert(effect.bodies.is_empty())
+	control.free()
+	effect.free()
 	pass
 
 

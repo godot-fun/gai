@@ -8,9 +8,13 @@ extends VisualEffect
 const ZERO_GRAVITY_SHADER: Shader = preload("res://agent/ui/visuals/zero_gravity/ZeroGravity.gdshader")
 const MAX_CHAT_BODY_COUNT := 10
 const MAX_SIDEBAR_BODY_COUNT := 8
-const MAX_BODY_COUNT := MAX_CHAT_BODY_COUNT + MAX_SIDEBAR_BODY_COUNT
+const MAX_SIDEBAR_TRANSITION_COUNT := 4
+const MAX_BODY_COUNT := MAX_CHAT_BODY_COUNT + MAX_SIDEBAR_BODY_COUNT + MAX_SIDEBAR_TRANSITION_COUNT
 const SIDEBAR_MOTION_SCALE := 0.58
 const SIDEBAR_MASS_SCALE := 0.78
+const SIDEBAR_ENTER_SPEED := 4.2
+const SIDEBAR_EXIT_SPEED := 2.4
+const SIDEBAR_STICKY_DISTANCE_PX := 110.0
 const ENERGY_DECAY_PER_SECOND := 0.34
 const MOMENTUM_DECAY_PER_SECOND := 0.17
 const FIELD_SPRING := 54.0
@@ -35,6 +39,8 @@ class FloatingBodyState extends RefCounted:
 	var seed: float = 0.5
 	var is_sidebar: bool = false
 	var motion_scale: float = 1.0
+	var participation: float = 1.0
+	var target_participation: float = 1.0
 
 	func _init(p_control: Control, p_mass: float, p_seed: float, p_is_sidebar: bool = false, p_motion_scale: float = 1.0) -> void:
 		control = p_control
@@ -164,7 +170,8 @@ func pulse(strength: float, requested_direction: float = 0.0) -> void:
 	var lateral_impulse := sin(motion_phase * 1.37 + strength * 2.1) * 18.0
 	reaction_impulse += Vector2(lateral_impulse, gravity_direction * strength * 72.0)
 	for body: FloatingBodyState in bodies:
-		var impulse_scale := (0.82 + body.seed * 0.36) * body.motion_scale / body.mass
+		var membership := body.participation if body.is_sidebar else 1.0
+		var impulse_scale := (0.82 + body.seed * 0.36) * body.motion_scale * membership / body.mass
 		body.velocity += reaction_impulse * impulse_scale * 0.22
 		body.angular_velocity += (body.seed - 0.5) * strength * 0.032 / body.mass
 	pass
@@ -203,7 +210,9 @@ func step_bodies(delta: float) -> void:
 	for body: FloatingBodyState in bodies:
 		if not is_instance_valid(body.control):
 			continue
-		var contact := field_contact_for_body(body)
+		var participation_speed := SIDEBAR_ENTER_SPEED if body.target_participation > body.participation else SIDEBAR_EXIT_SPEED
+		body.participation = move_toward(body.participation, body.target_participation, participation_speed * safe_delta)
+		var contact := field_contact_for_body(body) * body.participation
 		var released := clampf(release_strength * contact, 0.0, 1.0)
 		var attachment := lerpf(20.0, 1.45, released)
 		var damping := lerpf(8.2, 0.72, released)
@@ -227,6 +236,7 @@ func step_bodies(delta: float) -> void:
 		if released < 0.01 and absf(body.rotation) < 0.0005 and absf(body.angular_velocity) < 0.0005:
 			body.rotation = 0.0
 			body.angular_velocity = 0.0
+	retire_settled_sidebar_bodies()
 	pass
 
 
@@ -275,11 +285,23 @@ func refresh_bodies() -> void:
 		sidebar_rows = visible_controls(sidebar_rows, session_scroll.get_global_rect())
 		sidebar_rows = nearest_controls_to_y(sidebar_rows, anchor_center.y * size.y, MAX_SIDEBAR_BODY_COUNT)
 	var retained: Array[FloatingBodyState] = []
+	var outgoing_sidebar: Array[FloatingBodyState] = []
+	for existing: FloatingBodyState in bodies:
+		if existing.is_sidebar and is_instance_valid(existing.control) and not sidebar_rows.has(existing.control):
+			existing.target_participation = 0.0
+			outgoing_sidebar.append(existing)
+	outgoing_sidebar.sort_custom(func(first: FloatingBodyState, second: FloatingBodyState) -> bool:
+		return first.participation > second.participation
+	)
+	for index in range(mini(outgoing_sidebar.size(), MAX_SIDEBAR_TRANSITION_COUNT)):
+		retained.append(outgoing_sidebar[index])
 	for control: Control in sidebar_rows:
 		var body := find_body_for_control(control)
 		if body == null:
 			var seed := instance_seed(control.get_instance_id())
 			body = FloatingBodyState.new(control, semantic_mass(control, control.get_global_rect()) * SIDEBAR_MASS_SCALE, seed, true, SIDEBAR_MOTION_SCALE)
+			body.participation = 0.0
+		body.target_participation = 1.0
 		retained.append(body)
 	for control: Control in visible_bubbles:
 		var body := find_body_for_control(control)
@@ -346,6 +368,14 @@ func has_moving_bodies() -> bool:
 	return false
 
 
+func retire_settled_sidebar_bodies() -> void:
+	for index in range(bodies.size() - 1, -1, -1):
+		var body := bodies[index]
+		if body.is_sidebar and body.target_participation <= 0.0 and body.participation <= 0.001 and body.offset.length() < 0.08 and body.velocity.length() < 0.08 and absf(body.rotation) < 0.0005:
+			bodies.remove_at(index)
+	pass
+
+
 func update_effect_area() -> void:
 	if zero_gravity_material != null:
 		zero_gravity_material.set_shader_parameter("effect_area_rect", body_effect_rect(size, float(AgentLayout.TOOLBAR_HEIGHT)))
@@ -405,7 +435,7 @@ func nearest_controls_to_y(candidates: Array[Control], target_y: float, limit: i
 		return candidates
 	var ranked := candidates.duplicate()
 	ranked.sort_custom(func(first: Control, second: Control) -> bool:
-		return absf(first.get_global_rect().get_center().y - target_y) < absf(second.get_global_rect().get_center().y - target_y)
+		return sidebar_selection_distance(first, target_y) < sidebar_selection_distance(second, target_y)
 	)
 	var selected: Array[Control] = []
 	for index in range(limit):
@@ -414,6 +444,14 @@ func nearest_controls_to_y(candidates: Array[Control], target_y: float, limit: i
 		return first.global_position.y < second.global_position.y
 	)
 	return selected
+
+
+func sidebar_selection_distance(control: Control, target_y: float) -> float:
+	var distance := absf(control.get_global_rect().get_center().y - target_y)
+	var existing := find_body_for_control(control)
+	if existing != null and existing.is_sidebar and existing.participation > 0.05:
+		distance = maxf(0.0, distance - SIDEBAR_STICKY_DISTANCE_PX)
+	return distance
 
 
 func reset_zero_gravity() -> void:
