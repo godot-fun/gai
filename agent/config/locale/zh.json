@@ -190,7 +190,8 @@
       "visual_impossible_room": "不可能房间",
       "visual_temporal_prism": "时间棱镜",
       "visual_topological_fold": "界面拓扑折叠",
-      "visual_interface_delamination": "界面剥层"
+      "visual_interface_delamination": "界面剥层",
+      "visual_ghost": "幽灵"
     },
     "sidebar": {
       "new_session": "+ 新建智能体",

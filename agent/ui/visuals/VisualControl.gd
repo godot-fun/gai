@@ -29,6 +29,7 @@ enum Type {
 	TEMPORAL_PRISM,
 	TOPOLOGICAL_FOLD,
 	INTERFACE_DELAMINATION,
+	GHOST,
 }
 
 
@@ -93,6 +94,8 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return TopologicalFold.new()
 		Type.INTERFACE_DELAMINATION:
 			return InterfaceDelamination.new()
+		Type.GHOST:
+			return Ghost.new()
 	return null
 
 func on_agent_start(session_id: int) -> void:
