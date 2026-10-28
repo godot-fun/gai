@@ -27,7 +27,6 @@ enum Type {
 	PIXEL_CITY,
 	IMPOSSIBLE_ROOM,
 	TEMPORAL_PRISM,
-	RECURSIVE_INTERFACE,
 }
 
 
@@ -88,8 +87,6 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return ImpossibleRoom.new()
 		Type.TEMPORAL_PRISM:
 			return TemporalPrism.new()
-		Type.RECURSIVE_INTERFACE:
-			return RecursiveInterface.new()
 	return null
 
 func on_agent_start(session_id: int) -> void:
