@@ -1,10 +1,10 @@
-class_name UiDelamination
+class_name InterfaceDelamination
 extends VisualEffect
 
 ## Separates the rendered interface into material-like depth sheets. Panel surfaces stay near the
 ## screen while text edges, accent controls, and bright details drift at different parallax rates.
 
-const DELAMINATION_SHADER: Shader = preload("res://agent/ui/visuals/ui_delamination/UiDelamination.gdshader")
+const DELAMINATION_SHADER: Shader = preload("res://agent/ui/visuals/interface_delamination/InterfaceDelamination.gdshader")
 const ENERGY_DECAY_PER_SECOND := 0.39
 const SPRING_STRENGTH := 58.0
 const SPRING_DAMPING := 13.2
@@ -27,7 +27,7 @@ var anchor_refresh_clock: float = ANCHOR_REFRESH_SECONDS
 func _ready() -> void:
 	super._ready()
 	screen_rect = ColorRect.new()
-	screen_rect.name = "UiDelaminationSurface"
+	screen_rect.name = "InterfaceDelaminationSurface"
 	screen_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	screen_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	delamination_material = ShaderMaterial.new()
@@ -36,6 +36,7 @@ func _ready() -> void:
 	delamination_material.set_shader_parameter("max_separation_px", MAX_SEPARATION_PX)
 	delamination_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
 	delamination_material.set_shader_parameter("focus_enabled", 0.0)
+	delamination_material.set_shader_parameter("chat_area_enabled", 0.0)
 	screen_rect.material = delamination_material
 	add_child(screen_rect)
 	gdf.events.theme_color_changed.connect(update_accent_color)
@@ -224,6 +225,15 @@ func update_focus_geometry() -> void:
 		return
 	var viewport_rect := Rect2(Vector2.ZERO, size)
 	delamination_material.set_shader_parameter("effect_area_rect", body_effect_rect(size, float(AgentLayout.TOOLBAR_HEIGHT)))
+	if is_instance_valid(chat_area_control):
+		var chat_rect := chat_area_control.get_global_rect().intersection(viewport_rect)
+		if chat_rect.size.x >= 48.0 and chat_rect.size.y >= 20.0:
+			delamination_material.set_shader_parameter("chat_area_rect", normalized_rect(chat_rect, size))
+			delamination_material.set_shader_parameter("chat_area_enabled", 1.0)
+		else:
+			delamination_material.set_shader_parameter("chat_area_enabled", 0.0)
+	else:
+		delamination_material.set_shader_parameter("chat_area_enabled", 0.0)
 	if not is_instance_valid(focus_control):
 		delamination_material.set_shader_parameter("focus_enabled", 0.0)
 		return

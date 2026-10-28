@@ -190,7 +190,7 @@
       "visual_impossible_room": "Impossible Room",
       "visual_temporal_prism": "Temporal Prism",
       "visual_topological_fold": "Topological Fold",
-      "visual_ui_delamination": "UI Delamination"
+      "visual_interface_delamination": "Interface Delamination"
     },
     "sidebar": {
       "new_session": "+ New Agent",

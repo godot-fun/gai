@@ -55,7 +55,7 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 			{"type": VisualControl.Type.IMPOSSIBLE_ROOM, "label": "Impossible Room"},
 			{"type": VisualControl.Type.TEMPORAL_PRISM, "label": "Temporal Prism"},
 			{"type": VisualControl.Type.TOPOLOGICAL_FOLD, "label": "Topological Fold"},
-			{"type": VisualControl.Type.UI_DELAMINATION, "label": "UI Delamination"},
+			{"type": VisualControl.Type.INTERFACE_DELAMINATION, "label": "Interface Delamination"},
 		],
 	},
 ]
