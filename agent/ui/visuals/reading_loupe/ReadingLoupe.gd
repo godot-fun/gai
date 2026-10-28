@@ -1,11 +1,12 @@
-class_name Wavelength
+class_name ReadingLoupe
 extends VisualEffect
 
-## One irreversible zoom onto the latest chat bubble. After the shot is close enough to
-## read, the lens scans left to right and back again so every glyph passes through the
-## frame. A new chat entry retargets the scan; the run's end is the only pullback.
+## One irreversible loupe zoom onto the latest chat bubble. After the shot is close
+## enough to read, the loupe scans left to right and back again so every glyph passes
+## through the frame. A new chat entry retargets the scan; the run's end is the only
+## pullback.
 
-const WAVELENGTH_SHADER: Shader = preload("res://agent/ui/visuals/wavelength/Wavelength.gdshader")
+const READING_LOUPE_SHADER: Shader = preload("res://agent/ui/visuals/reading_loupe/ReadingLoupe.gdshader")
 const MAX_ZOOM := 2.4
 const MIN_FRAME_ZOOM := 1.55
 const FRAME_PADDING := 0.04
@@ -24,7 +25,7 @@ const PULLBACK_WAIT_MSEC := 1800
 
 
 var screen_rect: ColorRect
-var wavelength_material: ShaderMaterial
+var loupe_material: ShaderMaterial
 var approach: float = 0.0
 var target_approach: float = 0.0
 var approach_velocity: float = 0.0
@@ -45,12 +46,12 @@ var anchor_refresh_clock: float = ANCHOR_REFRESH_SECONDS
 func _ready() -> void:
 	super._ready()
 	screen_rect = ColorRect.new()
-	screen_rect.name = "WavelengthSurface"
+	screen_rect.name = "ReadingLoupeSurface"
 	screen_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	screen_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	wavelength_material = ShaderMaterial.new()
-	wavelength_material.shader = WAVELENGTH_SHADER
-	screen_rect.material = wavelength_material
+	loupe_material = ShaderMaterial.new()
+	loupe_material.shader = READING_LOUPE_SHADER
+	screen_rect.material = loupe_material
 	add_child(screen_rect)
 	apply_shader_state()
 	pass
@@ -199,12 +200,12 @@ func step_scan(delta: float) -> void:
 
 
 func apply_shader_state() -> void:
-	if wavelength_material == null:
+	if loupe_material == null:
 		return
-	wavelength_material.set_shader_parameter("zoom_scale", zoom_for_approach(approach, frame_zoom))
-	wavelength_material.set_shader_parameter("focus_uv", focus_uv)
-	wavelength_material.set_shader_parameter("lateral_uv", Vector2.ZERO)
-	wavelength_material.set_shader_parameter("defocus", 0.0)
+	loupe_material.set_shader_parameter("zoom_scale", zoom_for_approach(approach, frame_zoom))
+	loupe_material.set_shader_parameter("focus_uv", focus_uv)
+	loupe_material.set_shader_parameter("lateral_uv", Vector2.ZERO)
+	loupe_material.set_shader_parameter("defocus", 0.0)
 	pass
 
 

@@ -31,7 +31,7 @@ enum Type {
 	INTERFACE_DELAMINATION,
 	ZERO_GRAVITY,
 	ELECTRONIC_CONTOURS,
-	WAVELENGTH,
+	READING_LOUPE,
 }
 
 
@@ -100,8 +100,8 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return ZeroGravity.new()
 		Type.ELECTRONIC_CONTOURS:
 			return ElectronicContours.new()
-		Type.WAVELENGTH:
-			return Wavelength.new()
+		Type.READING_LOUPE:
+			return ReadingLoupe.new()
 	return null
 
 func on_agent_start(session_id: int) -> void:
