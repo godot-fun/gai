@@ -58,6 +58,7 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 			{"type": VisualControl.Type.INTERFACE_DELAMINATION, "label": "Interface Delamination"},
 			{"type": VisualControl.Type.ZERO_GRAVITY, "label": "Zero Gravity"},
 			{"type": VisualControl.Type.ELECTRONIC_CONTOURS, "label": "Electronic Contours"},
+			{"type": VisualControl.Type.WAVELENGTH, "label": "Wavelength"},
 		],
 	},
 ]

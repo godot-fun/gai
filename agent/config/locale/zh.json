@@ -192,7 +192,8 @@
       "visual_topological_fold": "界面拓扑折叠",
       "visual_interface_delamination": "界面剥层",
       "visual_zero_gravity": "失重",
-      "visual_electronic_contours": "电子轮廓"
+      "visual_electronic_contours": "电子轮廓",
+      "visual_wavelength": "一次变焦"
     },
     "sidebar": {
       "new_session": "+ 新建智能体",
