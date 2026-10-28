@@ -27,6 +27,7 @@ enum Type {
 	PIXEL_CITY,
 	IMPOSSIBLE_ROOM,
 	TEMPORAL_PRISM,
+	TOPOLOGICAL_FOLD,
 }
 
 
@@ -87,6 +88,8 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return ImpossibleRoom.new()
 		Type.TEMPORAL_PRISM:
 			return TemporalPrism.new()
+		Type.TOPOLOGICAL_FOLD:
+			return TopologicalFold.new()
 	return null
 
 func on_agent_start(session_id: int) -> void:
