@@ -59,6 +59,15 @@ static func sidebar_uses_a_broad_vertical_field_test() -> void:
 	pass
 
 
+static func sidebar_reevaluation_runs_only_during_active_motion_test() -> void:
+	var interval: float = ZERO_GRAVITY_SCRIPT.SIDEBAR_REEVALUATE_SECONDS
+	assert(not ZERO_GRAVITY_SCRIPT.should_reevaluate_sidebar(0.0, 0.0, interval * 2.0))
+	assert(not ZERO_GRAVITY_SCRIPT.should_reevaluate_sidebar(1.0, 1.0, interval * 0.5))
+	assert(ZERO_GRAVITY_SCRIPT.should_reevaluate_sidebar(0.2, 0.0, interval))
+	assert(ZERO_GRAVITY_SCRIPT.should_reevaluate_sidebar(0.0, 0.2, interval))
+	pass
+
+
 func retiring_sidebar_body_waits_until_it_has_settled_test() -> void:
 	var effect: Variant = ZERO_GRAVITY_SCRIPT.new()
 	var control := Control.new()

@@ -14,7 +14,7 @@ const SIDEBAR_MOTION_SCALE := 0.58
 const SIDEBAR_MASS_SCALE := 0.78
 const SIDEBAR_ENTER_SPEED := 4.2
 const SIDEBAR_EXIT_SPEED := 2.4
-const SIDEBAR_STICKY_DISTANCE_PX := 110.0
+const SIDEBAR_STICKY_DISTANCE_PX := 56.0
 const ENERGY_DECAY_PER_SECOND := 0.34
 const MOMENTUM_DECAY_PER_SECOND := 0.17
 const FIELD_SPRING := 54.0
@@ -24,6 +24,8 @@ const CENTER_DAMPING := 5.8
 const MIN_RADIUS_PX := 260.0
 const MAX_RADIUS_PX := 460.0
 const BODY_REFRESH_SECONDS := 0.14
+const SIDEBAR_REEVALUATE_SECONDS := 0.32
+const SIDEBAR_ACTIVE_THRESHOLD := 0.03
 const MAX_BODY_OFFSET_PX := 132.0
 const IDLE_EPSILON := 0.001
 
@@ -67,6 +69,7 @@ var reaction_impulse := Vector2.ZERO
 var bodies: Array[FloatingBodyState] = []
 var body_refresh_clock: float = BODY_REFRESH_SECONDS
 var body_refresh_requested: bool = true
+var sidebar_reevaluation_clock: float = 0.0
 var chat_anchor_control: Control
 
 
@@ -150,7 +153,10 @@ func _process(delta: float) -> void:
 	if not visible:
 		return
 	body_refresh_clock += delta
-	if body_refresh_clock >= BODY_REFRESH_SECONDS:
+	sidebar_reevaluation_clock += delta
+	if should_reevaluate_sidebar(field_strength, drift_momentum, sidebar_reevaluation_clock):
+		refresh_bodies()
+	elif body_refresh_clock >= BODY_REFRESH_SECONDS:
 		if body_refresh_requested:
 			refresh_bodies()
 		else:
@@ -262,6 +268,7 @@ func apply_shader_state() -> void:
 
 func refresh_bodies() -> void:
 	body_refresh_clock = 0.0
+	sidebar_reevaluation_clock = 0.0
 	body_refresh_requested = false
 	if not is_inside_tree() or size.x <= 0.0 or size.y <= 0.0:
 		return
@@ -283,7 +290,7 @@ func refresh_bodies() -> void:
 	if sidebar != null and session_scroll != null:
 		collect_session_rows(sidebar, sidebar_rows)
 		sidebar_rows = visible_controls(sidebar_rows, session_scroll.get_global_rect())
-		sidebar_rows = nearest_controls_to_y(sidebar_rows, anchor_center.y * size.y, MAX_SIDEBAR_BODY_COUNT)
+		sidebar_rows = nearest_controls_to_y(sidebar_rows, field_center.y * size.y, MAX_SIDEBAR_BODY_COUNT)
 	var retained: Array[FloatingBodyState] = []
 	var outgoing_sidebar: Array[FloatingBodyState] = []
 	for existing: FloatingBodyState in bodies:
@@ -385,6 +392,7 @@ func update_effect_area() -> void:
 
 func request_body_refresh() -> void:
 	body_refresh_clock = BODY_REFRESH_SECONDS
+	sidebar_reevaluation_clock = 0.0
 	body_refresh_requested = true
 	pass
 
@@ -482,6 +490,10 @@ static func combine_energy(current: float, incoming: float) -> float:
 
 static func stream_energy_for_length(length: int) -> float:
 	return clampf(float(length) * 0.0016, 0.003, 0.042)
+
+
+static func should_reevaluate_sidebar(strength: float, momentum: float, elapsed: float) -> bool:
+	return elapsed >= SIDEBAR_REEVALUATE_SECONDS and maxf(strength, momentum) >= SIDEBAR_ACTIVE_THRESHOLD
 
 
 static func semantic_mass_for_path(script_path: String, height: float) -> float:
