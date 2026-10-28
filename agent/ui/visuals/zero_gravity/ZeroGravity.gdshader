@@ -4,8 +4,8 @@ shader_type canvas_item;
 // rigid-body transforms; the shader clears each live source and redraws it at its physical pose.
 uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear;
 uniform int body_count = 0;
-uniform vec4 body_rects[10];
-uniform vec4 body_motions[10]; // xy: normalized offset, z: rotation, w: activity
+uniform vec4 body_rects[18];
+uniform vec4 body_motions[18]; // xy: normalized offset, z: rotation, w: activity
 uniform vec4 effect_area_rect = vec4(0.0, 0.04, 1.0, 0.96);
 
 vec2 rotate_vector(vec2 value, float angle) {
@@ -43,7 +43,7 @@ void fragment() {
 	float output_area = area_mask(uv, effect_area_rect, SCREEN_PIXEL_SIZE);
 
 	// Clear live component locations first so the transformed copies do not become echoes.
-	for (int index = 0; index < 10; index++) {
+	for (int index = 0; index < 18; index++) {
 		if (index < body_count) {
 			vec4 rect = body_rects[index];
 			float activity = body_motions[index].w;
@@ -55,7 +55,7 @@ void fragment() {
 	}
 
 	// Draw complete components in transcript order using inverse rigid transforms.
-	for (int index = 0; index < 10; index++) {
+	for (int index = 0; index < 18; index++) {
 		if (index < body_count) {
 			vec4 rect = body_rects[index];
 			vec4 motion = body_motions[index];

@@ -50,6 +50,14 @@ static func field_contact_is_strongest_near_center_test() -> void:
 	pass
 
 
+static func sidebar_uses_a_broad_vertical_field_test() -> void:
+	assert(ZERO_GRAVITY_SCRIPT.axis_contact(500.0, 500.0, 200.0) > 0.99)
+	assert(ZERO_GRAVITY_SCRIPT.axis_contact(900.0, 500.0, 200.0) < 0.01)
+	assert(ZERO_GRAVITY_SCRIPT.SIDEBAR_MOTION_SCALE < 1.0)
+	assert(ZERO_GRAVITY_SCRIPT.SIDEBAR_MASS_SCALE < 1.0)
+	pass
+
+
 func field_spring_arrives_and_heals_test() -> void:
 	var effect: Variant = ZERO_GRAVITY_SCRIPT.new()
 	effect.field_energy = 1.0
