@@ -7,8 +7,8 @@ extends VisualEffect
 ## pullback.
 
 const READING_LOUPE_SHADER: Shader = preload("res://agent/ui/visuals/reading_loupe/ReadingLoupe.gdshader")
-const MAX_ZOOM := 2.4
-const MIN_FRAME_ZOOM := 1.55
+const MAX_ZOOM := 2.16
+const MIN_FRAME_ZOOM := 1.395
 const FRAME_PADDING := 0.04
 const APPROACH_POWER := 1.0
 const AMBIENT_APPROACH_PER_SECOND := 0.04
