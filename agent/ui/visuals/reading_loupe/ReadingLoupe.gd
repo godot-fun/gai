@@ -1,14 +1,13 @@
 class_name ReadingLoupe
 extends VisualEffect
 
-## One irreversible loupe zoom onto the latest chat bubble. After the shot is close
-## enough to read, the loupe scans left to right and back again so every glyph passes
-## through the frame. A new chat entry retargets the scan; the run's end is the only
-## pullback.
+## One irreversible loupe zoom anchored at LENS_CENTER_UV on the viewport. Zoom
+## strength still follows the latest chat bubble; the run's end is the only pullback.
 
 const READING_LOUPE_SHADER: Shader = preload("res://agent/ui/visuals/reading_loupe/ReadingLoupe.gdshader")
-const MAX_ZOOM := 2.16
-const MIN_FRAME_ZOOM := 1.395
+const MAX_ZOOM := 1.75
+const MIN_FRAME_ZOOM := 1.13
+const LENS_CENTER_UV := Vector2(0.4, 0.6)
 const FRAME_PADDING := 0.04
 const APPROACH_POWER := 1.0
 const AMBIENT_APPROACH_PER_SECOND := 0.04
@@ -18,7 +17,6 @@ const APPROACH_DAMPING := 9.6
 const RELEASE_SPRING := 24.0
 const RELEASE_DAMPING := 12.0
 const FOCUS_SPEED := 0.12
-const SCAN_ONE_WAY_SECONDS := 3.2
 const ANCHOR_REFRESH_SECONDS := 0.16
 const IDLE_EPSILON := 0.0008
 const PULLBACK_WAIT_MSEC := 1800
@@ -30,16 +28,13 @@ var approach: float = 0.0
 var target_approach: float = 0.0
 var approach_velocity: float = 0.0
 var reasoning_rate: float = 0.0
-var focus_uv := Vector2(0.5, 0.58)
-var target_focus_uv := Vector2(0.5, 0.58)
-var scan_t: float = 0.0
-var scan_direction: float = 1.0
+var focus_uv := LENS_CENTER_UV
+var target_focus_uv := LENS_CENTER_UV
 var frame_zoom: float = 1.0
 var frame_control: Control
 var frame_id: int = 0
 var chat_area_control: Control
 var releasing: bool = false
-var retargeting: bool = false
 var anchor_refresh_clock: float = ANCHOR_REFRESH_SECONDS
 
 
@@ -155,12 +150,6 @@ func step_shot(delta: float) -> void:
 		step_release(safe_delta)
 	else:
 		step_approach(safe_delta)
-		if retargeting:
-			if not focus_is_traveling(focus_uv, target_focus_uv):
-				retargeting = false
-				step_scan(safe_delta)
-		else:
-			step_scan(safe_delta)
 	focus_uv = step_focus(focus_uv, target_focus_uv, safe_delta)
 	pass
 
@@ -192,13 +181,6 @@ func step_release(delta: float) -> void:
 	pass
 
 
-func step_scan(delta: float) -> void:
-	var next := scan_step(scan_t, scan_direction, delta, SCAN_ONE_WAY_SECONDS)
-	scan_t = next.x
-	scan_direction = next.y
-	pass
-
-
 func apply_shader_state() -> void:
 	if loupe_material == null:
 		return
@@ -216,7 +198,6 @@ func request_anchor_refresh() -> void:
 
 func refresh_frame_control() -> void:
 	anchor_refresh_clock = 0.0
-	var previous_id := frame_id
 	frame_control = null
 	chat_area_control = null
 	if not is_inside_tree():
@@ -237,10 +218,6 @@ func refresh_frame_control() -> void:
 		if not visible_buttons.is_empty():
 			frame_control = visible_buttons[visible_buttons.size() - 1]
 	frame_id = frame_control.get_instance_id() if is_instance_valid(frame_control) else 0
-	if scan_should_reset(previous_id, frame_id):
-		scan_t = 0.0
-		scan_direction = 1.0
-		retargeting = true
 	pass
 
 
@@ -254,8 +231,7 @@ func update_focus_targets() -> void:
 	if frame_rect.size.x < 8.0 or frame_rect.size.y < 8.0:
 		return
 	frame_zoom = fit_zoom_for_rect(frame_rect, size)
-	var live_zoom := zoom_for_approach(approach, frame_zoom)
-	target_focus_uv = scan_focus_uv(frame_rect, size, live_zoom, scan_t)
+	target_focus_uv = LENS_CENTER_UV
 	pass
 
 
@@ -305,14 +281,11 @@ func reset_shot() -> void:
 	target_approach = 0.0
 	approach_velocity = 0.0
 	reasoning_rate = 0.0
-	focus_uv = Vector2(0.5, 0.58)
-	target_focus_uv = focus_uv
-	scan_t = 0.0
-	scan_direction = 1.0
+	focus_uv = LENS_CENTER_UV
+	target_focus_uv = LENS_CENTER_UV
 	frame_zoom = 1.0
 	frame_id = 0
 	releasing = false
-	retargeting = false
 	anchor_refresh_clock = ANCHOR_REFRESH_SECONDS
 	apply_shader_state()
 	pass
@@ -369,6 +342,10 @@ static func scan_step(current_t: float, direction: float, delta: float, one_way_
 
 static func scan_should_reset(previous_id: int, next_id: int) -> bool:
 	return next_id != 0 and next_id != previous_id
+
+
+static func bubble_focus_uv(rect: Rect2, viewport: Vector2, zoom: float) -> Vector2:
+	return scan_focus_uv(rect, viewport, zoom, 0.5)
 
 
 static func scan_focus_uv(rect: Rect2, viewport: Vector2, zoom: float, amount: float) -> Vector2:

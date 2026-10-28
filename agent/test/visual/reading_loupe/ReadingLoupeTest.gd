@@ -91,15 +91,19 @@ static func scan_resets_only_for_a_new_entry_test() -> void:
 	pass
 
 
-static func scan_focus_travels_across_the_bubble_test() -> void:
+static func lens_center_is_the_fixed_viewport_point_test() -> void:
+	assert(READING_LOUPE_SCRIPT.LENS_CENTER_UV.is_equal_approx(Vector2(0.4, 0.6)))
+	pass
+
+
+static func bubble_focus_stays_at_horizontal_center_test() -> void:
 	var bubble := Rect2(200.0, 400.0, 800.0, 200.0)
 	var viewport := Vector2(1600.0, 900.0)
+	var center: Vector2 = READING_LOUPE_SCRIPT.bubble_focus_uv(bubble, viewport, 3.0)
 	var left: Vector2 = READING_LOUPE_SCRIPT.scan_focus_uv(bubble, viewport, 3.0, 0.0)
 	var right: Vector2 = READING_LOUPE_SCRIPT.scan_focus_uv(bubble, viewport, 3.0, 1.0)
-	assert(left.x < right.x)
-	assert(is_equal_approx(left.y, right.y))
-	assert(left.x > bubble.position.x / viewport.x)
-	assert(right.x < bubble.end.x / viewport.x)
+	assert(is_equal_approx(center.x, lerpf(left.x, right.x, 0.5)))
+	assert(is_equal_approx(center.y, left.y))
 	pass
 
 
@@ -131,18 +135,13 @@ static func focus_holds_scan_until_the_lens_arrives_test() -> void:
 	pass
 
 
-func retarget_holds_scan_until_the_lens_arrives_test() -> void:
+func focus_advances_each_frame_without_horizontal_scan_test() -> void:
 	var effect: Variant = READING_LOUPE_SCRIPT.new()
-	effect.retargeting = true
-	effect.scan_t = 0.0
-	effect.scan_direction = 1.0
 	effect.focus_uv = Vector2(0.10, 0.20)
 	effect.target_focus_uv = Vector2(0.80, 0.70)
 	var start := effect.focus_uv as Vector2
 	for _index in range(12):
 		effect.step_shot(1.0 / 60.0)
-	assert(effect.retargeting)
-	assert(is_equal_approx(effect.scan_t, 0.0))
 	assert(is_equal_approx(start.distance_to(effect.focus_uv), READING_LOUPE_SCRIPT.FOCUS_SPEED * 12.0 / 60.0))
 	effect.free()
 	pass
@@ -176,14 +175,10 @@ func reasoning_advances_faster_than_silence_test() -> void:
 	pass
 
 
-func scan_reverses_after_reaching_the_right_edge_test() -> void:
-	var effect: Variant = READING_LOUPE_SCRIPT.new()
-	effect.scan_t = 0.98
-	effect.scan_direction = 1.0
-	effect.step_scan(0.2)
-	assert(is_equal_approx(effect.scan_t, 1.0))
-	assert(is_equal_approx(effect.scan_direction, -1.0))
-	effect.free()
+static func scan_step_still_ping_pongs_for_legacy_helpers_test() -> void:
+	var hit_right: Vector2 = READING_LOUPE_SCRIPT.scan_step(0.98, 1.0, 0.2, 1.0)
+	assert(is_equal_approx(hit_right.x, 1.0))
+	assert(is_equal_approx(hit_right.y, -1.0))
 	pass
 
 
