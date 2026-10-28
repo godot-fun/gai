@@ -14,6 +14,8 @@ uniform vec4 chat_area_rect = vec4(0.14, 0.04, 0.86, 0.96);
 uniform float chat_area_enabled = 0.0;
 uniform vec4 effect_area_rect = vec4(0.0, 0.04, 1.0, 0.96);
 uniform vec4 accent_color : source_color = vec4(0.1, 0.8, 0.7, 1.0);
+uniform float top_separation_boost : hint_range(1.0, 2.0) = 1.5;
+uniform float vertical_falloff_power : hint_range(0.25, 2.0) = 0.9;
 
 float luminance(vec3 color) {
 	return dot(color, vec3(0.299, 0.587, 0.114));
@@ -62,18 +64,19 @@ void fragment() {
 	vec3 source = texture(screen_texture, SCREEN_UV).rgb;
 	float effect_area = area_mask(SCREEN_UV, effect_area_rect, SCREEN_PIXEL_SIZE);
 	float chat_area = area_mask(SCREEN_UV, chat_area_rect, SCREEN_PIXEL_SIZE) * chat_area_enabled;
-	float regional_strength = mix(0.13, 0.25, chat_area);
-	vec2 focus_min = focus_rect.xy;
-	vec2 focus_max = focus_rect.xy + focus_rect.zw;
-	vec2 focus_outside = max(max(focus_min - SCREEN_UV, SCREEN_UV - focus_max), vec2(0.0));
-	vec2 focus_distance = focus_outside / max(SCREEN_PIXEL_SIZE * vec2(360.0, 180.0), vec2(0.0001));
-	float focus_falloff = exp(-dot(focus_distance, focus_distance) * 1.7) * focus_enabled;
-	float spatial_strength = mix(regional_strength, 1.0, focus_falloff);
-	float active = layer_separation * effect_area * spatial_strength;
+	float effect_top = effect_area_rect.y;
+	float fallback_stable_start = effect_area_rect.y + effect_area_rect.w * 0.88;
+	float stable_start = mix(fallback_stable_start, focus_rect.y, focus_enabled);
+	stable_start = max(stable_start, effect_top + SCREEN_PIXEL_SIZE.y);
+	float vertical_progress = clamp((SCREEN_UV.y - effect_top) / (stable_start - effect_top), 0.0, 1.0);
+	float vertical_gradient = pow(1.0 - vertical_progress, vertical_falloff_power);
+	float region_scale = mix(0.55, 1.0, chat_area);
+	float motion_strength = vertical_gradient * region_scale * top_separation_boost;
+	float active = clamp(layer_separation * effect_area * motion_strength, 0.0, 1.0);
 	float breathing = sin(parallax_phase * 0.86) * 0.10;
 	vec2 direction = normalize(vec2(0.86 + breathing, -0.52 + breathing * 0.35)) * parallax_direction;
 	vec2 perpendicular = vec2(-direction.y, direction.x);
-	vec2 max_offset = max_separation_px * SCREEN_PIXEL_SIZE * active;
+	vec2 max_offset = max_separation_px * SCREEN_PIXEL_SIZE * layer_separation * effect_area * motion_strength;
 
 	vec2 panel_uv = clamp(SCREEN_UV + direction * max_offset * 0.10, vec2(0.0), vec2(1.0));
 	vec3 result = mix(source, texture(screen_texture, panel_uv).rgb, active * 0.16);
