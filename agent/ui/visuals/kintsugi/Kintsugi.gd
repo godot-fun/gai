@@ -4,9 +4,9 @@ extends VisualEffect
 ## Kintsugi (金缮): a failed tool call strikes the live interface with a flash, a shockwave and a
 ## short shake, shattering it at one point into 6–9 porcelain shards that spring outward over dark
 ## seams. The next successful tool call, or the end of the turn, snaps them home and flows molten
-## gold outward along the seams, where it keeps glinting. A turn without a repair still
-## leaves one hairline of gold, so every run leaves a mark. Seams stay until the run ends; a run
-## that ends in error seals its last repair with vermilion lacquer instead of gold.
+## lacquer outward along the seams in the active theme accent, where it keeps glinting. A turn
+## without a repair still leaves one hairline, so every run leaves a mark. Seams stay until the
+## run ends; a run that ends in error seals its last repair with vermilion lacquer instead.
 
 const KINTSUGI_SHADER: Shader = preload("res://agent/ui/visuals/kintsugi/Kintsugi.gdshader")
 const MAX_CRACKS := 8
@@ -310,21 +310,27 @@ func apply_shader_state() -> void:
 func update_theme_presentation() -> void:
 	if kintsugi_material == null:
 		return
+	var accent := VisualColor.appearance_color(ThemeColor.accent_theme_color())
+	var shadow := VisualColor.ink_color(ThemeColor.accent_theme_color(), 0.0, 0.92, 0.54)
+	var highlight_mix := 0.52 if ThemeColor.is_dark_theme() else 0.20
+	var highlight := accent.lerp(Color.WHITE, highlight_mix)
+	var gap := shadow.darkened(0.62)
+	var crackle := VisualColor.appearance_color(ThemeColor.accent_theme_color(), -0.035, 0.82, 0.92)
 	if ThemeColor.is_dark_theme():
-		kintsugi_material.set_shader_parameter("gap_color", Color(0.02, 0.016, 0.012))
-		kintsugi_material.set_shader_parameter("gold_shadow", Color(0.45, 0.28, 0.06))
-		kintsugi_material.set_shader_parameter("gold_color", Color(0.93, 0.71, 0.27))
-		kintsugi_material.set_shader_parameter("gold_highlight", Color(1.0, 0.95, 0.74))
+		kintsugi_material.set_shader_parameter("gap_color", gap)
+		kintsugi_material.set_shader_parameter("gold_shadow", shadow)
+		kintsugi_material.set_shader_parameter("gold_color", accent)
+		kintsugi_material.set_shader_parameter("gold_highlight", highlight)
 		kintsugi_material.set_shader_parameter("vermilion_color", Color(0.89, 0.24, 0.14))
-		kintsugi_material.set_shader_parameter("crackle_color", Color(0.86, 0.93, 1.0))
+		kintsugi_material.set_shader_parameter("crackle_color", crackle)
 		kintsugi_material.set_shader_parameter("bloom_gain", 1.0)
 	else:
-		kintsugi_material.set_shader_parameter("gap_color", Color(0.10, 0.08, 0.07))
-		kintsugi_material.set_shader_parameter("gold_shadow", Color(0.42, 0.26, 0.04))
-		kintsugi_material.set_shader_parameter("gold_color", Color(0.78, 0.56, 0.14))
-		kintsugi_material.set_shader_parameter("gold_highlight", Color(0.98, 0.84, 0.46))
+		kintsugi_material.set_shader_parameter("gap_color", gap)
+		kintsugi_material.set_shader_parameter("gold_shadow", shadow)
+		kintsugi_material.set_shader_parameter("gold_color", accent)
+		kintsugi_material.set_shader_parameter("gold_highlight", highlight)
 		kintsugi_material.set_shader_parameter("vermilion_color", Color(0.78, 0.18, 0.10))
-		kintsugi_material.set_shader_parameter("crackle_color", Color(0.32, 0.37, 0.45))
+		kintsugi_material.set_shader_parameter("crackle_color", crackle)
 		kintsugi_material.set_shader_parameter("bloom_gain", 0.35)
 	pass
 

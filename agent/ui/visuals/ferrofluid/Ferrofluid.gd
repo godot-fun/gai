@@ -1,11 +1,11 @@
 class_name Ferrofluid
 extends VisualEffect
 
-## Ferrofluid (磁流体): a pool of black magnetic fluid lines the bottom of the interface, its mirror
-## surface reflecting the chat above. Streamed text magnetizes it into Rosensweig spikes that lean
-## toward a magnet sweeping along with the stream. A running tool lifts a tendril that reaches for
-## the tool's spot and drops back when the tool succeeds; a failed tool reverses the field, snaps
-## the tendril and flings droplets that rain back into the pool.
+## Ferrofluid (磁流体): a pool of magnetic fluid in the active theme accent lines the bottom of the
+## interface, its mirror surface reflecting the chat above. Streamed text magnetizes it into
+## Rosensweig spikes that lean toward a magnet sweeping along with the stream. A running tool lifts
+## a tendril that reaches for the tool's spot and drops back when the tool succeeds; a failed tool
+## reverses the field, snaps the tendril and flings droplets that rain back into the pool.
 
 const FERROFLUID_SHADER: Shader = preload("res://agent/ui/visuals/ferrofluid/Ferrofluid.gdshader")
 const MAX_DROPLETS := 8
@@ -259,7 +259,14 @@ func update_theme_presentation() -> void:
 	if fluid_material == null:
 		return
 	var dark := ThemeColor.is_dark_theme()
-	fluid_material.set_shader_parameter("rim_color", VisualColor.appearance_color(ThemeColor.accent_theme_color()))
+	var accent := VisualColor.appearance_color(ThemeColor.accent_theme_color())
+	var fluid := accent.darkened(0.82 if dark else 0.72)
+	var ambient := fluid.lerp(accent, 0.34)
+	var highlight := accent.lerp(Color.WHITE, 0.62 if dark else 0.28)
+	fluid_material.set_shader_parameter("fluid_color", fluid)
+	fluid_material.set_shader_parameter("ambient_color", ambient)
+	fluid_material.set_shader_parameter("rim_color", accent)
+	fluid_material.set_shader_parameter("highlight_color", highlight)
 	fluid_material.set_shader_parameter("reflection_gain", 0.45 if dark else 0.3)
 	fluid_material.set_shader_parameter("shadow_gain", 0.35 if dark else 0.22)
 	fluid_material.set_shader_parameter("backlight_gain", 0.32 if dark else 0.0)

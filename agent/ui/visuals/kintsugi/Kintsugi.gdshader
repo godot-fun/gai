@@ -111,7 +111,7 @@ void fragment() {
 				float wave_r = (1.0 - impact) * radius * 2.2;
 				float wave = exp(-pow((r - wave_r) / (px * 11.0), 2.0)) * impact * impact;
 				offset += radial * wave * shockwave_px * px;
-				bloom += vec3(1.0, 0.92, 0.78) * (exp(-r / (radius * 0.07)) * impact * impact * impact * 1.3 + wave * 0.05);
+				bloom += gold_highlight.rgb * (exp(-r / (radius * 0.07)) * impact * impact * impact * 1.3 + wave * 0.05);
 			}
 			if (r > radius * 1.3 + shard_shift_px * px) {
 				continue;

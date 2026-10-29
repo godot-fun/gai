@@ -24,6 +24,7 @@ uniform int droplet_count = 0;
 // xy = UV, z = radius px.
 uniform vec4 droplets[8];
 uniform vec4 fluid_color : source_color = vec4(0.015, 0.016, 0.02, 1.0);
+uniform vec4 ambient_color : source_color = vec4(0.08, 0.1, 0.16, 1.0);
 uniform vec4 rim_color : source_color = vec4(0.35, 0.55, 1.0, 1.0);
 uniform vec4 highlight_color : source_color = vec4(1.0, 1.0, 1.0, 1.0);
 uniform float reflection_gain : hint_range(0.0, 1.0) = 0.45;
@@ -122,7 +123,7 @@ void fragment() {
 				vec2 reflect_uv = clamp(SCREEN_UV + vec2(normal.x * 0.06, -0.05 - abs(normal.y) * 0.16), vec2(0.0), vec2(1.0));
 				vec3 mirror = texture(screen_texture, reflect_uv).rgb;
 				vec3 fluid = fluid_color.rgb + mirror * reflection_gain * (0.2 + 0.8 * fresnel) * (0.4 + 0.6 * sky);
-				fluid += mix(vec3(0.16, 0.17, 0.2), rim_color.rgb * 0.55, 0.5) * sky * fresnel * 0.9;
+				fluid += mix(ambient_color.rgb, rim_color.rgb * 0.55, 0.5) * sky * fresnel * 0.9;
 				fluid += rim_color.rgb * fill * 0.55;
 				fluid += rim_color.rgb * exp(d / 1.6) * (0.25 + backlight_gain);
 				fluid += highlight_color.rgb * key;
