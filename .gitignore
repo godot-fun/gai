@@ -51,7 +51,13 @@ cpp/bin/**/~*
 .import/
 export.cfg
 export_credentials.cfg
+
+# Temporary files and directories
 *.tmp
+.tmp*/
+tmp*/
+.temp*/
+temp*/
 
 # Imported translations (automatically generated from CSV files)
 *.translation

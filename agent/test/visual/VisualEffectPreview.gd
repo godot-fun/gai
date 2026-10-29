@@ -67,6 +67,14 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 		],
 	},
 	{
+		"title": "Instruments",
+		"effects": [
+			{"type": VisualControl.Type.GO_BOARD, "label": "Go Board"},
+			{"type": VisualControl.Type.CLOCKWORK, "label": "Watch Movement"},
+			{"type": VisualControl.Type.ABACUS, "label": "Abacus"},
+		],
+	},
+	{
 		"title": "Screen transformations",
 		"effects": [
 			{"type": VisualControl.Type.FILTER_CAROUSEL, "label": "Filter Carousel"},

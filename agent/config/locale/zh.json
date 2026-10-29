@@ -149,7 +149,13 @@
       "reasoning_bus": "|psi>  幺正推理总线",
       "quantum_executing": "● 执行中 / 量子通道已锁定",
       "state_error": "状态错误  |X>",
-      "determinate_state": "确定态  |1>"
+      "determinate_state": "确定态  |1>",
+      "go_move": "第 {} 手",
+      "go_captures": "提子 {} / {}",
+      "go_black": "黑 {} 目",
+      "go_white": "白 {} 目",
+      "go_komi": "贴目 +{}",
+      "abacus_preview": "+{} 待拨"
     },
     "toolbar": {
       "title": "代码智能体工作区",
@@ -224,7 +230,10 @@
       "visual_stained_glass": "彩绘玻璃",
       "visual_embroidery": "刺绣",
       "visual_firefly_sync": "萤火虫同步",
-      "visual_falling_sand": "沙漏沉积"
+      "visual_falling_sand": "沙漏沉积",
+      "visual_go_board": "围棋",
+      "visual_clockwork": "机械表机芯",
+      "visual_abacus": "算盘"
     },
     "sidebar": {
       "new_session": "+ 新建智能体",

@@ -15,7 +15,7 @@ extends RefCounted
 
 # ------------------------------------------------ Visual presentation ------------------------------------------------
 
-## [VisualsButton] — visual presentation id persisted as int (default matches Jarvis).
+## [VisualsButton] — visual presentation id persisted as int (default matches random).
 const VISUAL_TYPE_KEY := "agent_visual_type"
 static func get_visual_type() -> int:
 	return Setting.get_int(VISUAL_TYPE_KEY, 1)

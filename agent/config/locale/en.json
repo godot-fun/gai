@@ -149,7 +149,13 @@
       "reasoning_bus": "|psi>  UNITARY REASONING BUS",
       "quantum_executing": "● EXECUTING  /  QUANTUM CHANNEL LOCKED",
       "state_error": "STATE ERROR  |X>",
-      "determinate_state": "DETERMINATE STATE  |1>"
+      "determinate_state": "DETERMINATE STATE  |1>",
+      "go_move": "MOVE {}",
+      "go_captures": "CAPTURES {} / {}",
+      "go_black": "BLACK {}",
+      "go_white": "WHITE {}",
+      "go_komi": "KOMI +{}",
+      "abacus_preview": "+{} QUEUED"
     },
     "toolbar": {
       "title": "Code Agent Workspace",
@@ -224,7 +230,10 @@
       "visual_stained_glass": "Stained Glass",
       "visual_embroidery": "Embroidery",
       "visual_firefly_sync": "Firefly Sync",
-      "visual_falling_sand": "Falling Sand"
+      "visual_falling_sand": "Falling Sand",
+      "visual_go_board": "Go Board",
+      "visual_clockwork": "Watch Movement",
+      "visual_abacus": "Abacus"
     },
     "sidebar": {
       "new_session": "+ New Agent",

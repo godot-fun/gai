@@ -63,6 +63,9 @@ enum Type {
 	EMBROIDERY,
 	FIREFLY_SYNC,
 	FALLING_SAND,
+	GO_BOARD,
+	CLOCKWORK,
+	ABACUS,
 }
 
 
@@ -195,6 +198,12 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return FireflySync.new()
 		Type.FALLING_SAND:
 			return FallingSand.new()
+		Type.GO_BOARD:
+			return GoBoard.new()
+		Type.CLOCKWORK:
+			return Clockwork.new()
+		Type.ABACUS:
+			return Abacus.new()
 	return null
 
 func on_agent_start(session_id: int) -> void:
@@ -215,7 +224,10 @@ func prepare_effect() -> VisualEffect:
 			return current_effect
 		current_effect.queue_free()
 		current_effect = null
-	var effect := create_effect(AgentSetting.get_visual_type() as Type)
+	var visual_type := AgentSetting.get_visual_type() as Type
+	var effect := create_effect(visual_type)
+	if effect == null and visual_type != Type.NONE:
+		effect = create_effect(Type.RANDOM)
 	if effect == null:
 		return null
 	current_effect = effect
