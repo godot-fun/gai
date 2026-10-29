@@ -81,7 +81,7 @@ func _ready() -> void:
 	screen_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	zero_gravity_material = ShaderMaterial.new()
 	zero_gravity_material.shader = ZERO_GRAVITY_SHADER
-	zero_gravity_material.set_shader_parameter("effect_area_rect", body_effect_rect(size, float(AgentLayout.TOOLBAR_HEIGHT)))
+	zero_gravity_material.set_shader_parameter("effect_area_rect", body_effect_rect(size, 0.0))
 	screen_rect.material = zero_gravity_material
 	add_child(screen_rect)
 	resized.connect(update_effect_area)
@@ -385,7 +385,7 @@ func retire_settled_sidebar_bodies() -> void:
 
 func update_effect_area() -> void:
 	if zero_gravity_material != null:
-		zero_gravity_material.set_shader_parameter("effect_area_rect", body_effect_rect(size, float(AgentLayout.TOOLBAR_HEIGHT)))
+		zero_gravity_material.set_shader_parameter("effect_area_rect", body_effect_rect(size, 0.0))
 	request_body_refresh()
 	pass
 

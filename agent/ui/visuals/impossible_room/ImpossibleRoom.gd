@@ -1,8 +1,8 @@
 class_name ImpossibleRoom
 extends VisualEffect
 
-## Makes the application surface behave like an impossible moving room. The toolbar remains
-## visually anchored while the content below it slides as a perspective plane, then settles with
+## Makes the complete application surface behave like an impossible moving room. The UI slides as
+## a perspective plane, then settles with
 ## spring inertia. Transcript sentences and tool lifecycle events provide the physical impulses.
 
 const ROOM_SHADER: Shader = preload("res://agent/ui/visuals/impossible_room/ImpossibleRoom.gdshader")
@@ -38,7 +38,7 @@ func _ready() -> void:
 	screen_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	room_material = ShaderMaterial.new()
 	room_material.shader = ROOM_SHADER
-	room_material.set_shader_parameter("toolbar_height_px", float(AgentLayout.TOOLBAR_HEIGHT))
+	room_material.set_shader_parameter("toolbar_height_px", 0.0)
 	room_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
 	room_material.set_shader_parameter("anchor_enabled", 0.0)
 	room_material.set_shader_parameter("inertia_enabled", Vector3.ZERO)
@@ -199,7 +199,7 @@ func collect_anchor_candidates(node: Node, bubbles: Array[Control], buttons: Arr
 	for child: Node in node.get_children():
 		if child is BubbleContainer:
 			bubbles.append(child as Control)
-		elif child is BaseButton and (child as BaseButton).global_position.y > float(AgentLayout.TOOLBAR_HEIGHT):
+		elif child is BaseButton:
 			buttons.append(child as Control)
 		collect_anchor_candidates(child, bubbles, buttons)
 	pass

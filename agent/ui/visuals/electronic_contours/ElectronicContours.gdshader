@@ -10,7 +10,7 @@ uniform float quake_energy : hint_range(0.0, 1.0) = 0.0;
 uniform float quake_progress : hint_range(-0.1, 1.25) = 1.2;
 uniform float line_count : hint_range(72.0, 260.0) = 127.0;
 uniform float max_deflection_px : hint_range(0.0, 80.0) = 54.0;
-uniform float toolbar_height_px = 48.0;
+uniform float toolbar_height_px = 0.0;
 uniform vec4 accent_color : source_color = vec4(0.0, 0.85, 0.70, 1.0);
 uniform vec4 background_color : source_color = vec4(0.04, 0.05, 0.07, 1.0);
 

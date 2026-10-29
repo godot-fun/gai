@@ -40,7 +40,7 @@ func _ready() -> void:
 	screen_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mirage_material = ShaderMaterial.new()
 	mirage_material.shader = MIRAGE_SHADER
-	mirage_material.set_shader_parameter("toolbar_height_px", float(AgentLayout.TOOLBAR_HEIGHT))
+	mirage_material.set_shader_parameter("toolbar_height_px", 0.0)
 	mirage_material.set_shader_parameter("max_deflection_px", MAX_DEFLECTION_PX)
 	screen_rect.material = mirage_material
 	add_child(screen_rect)

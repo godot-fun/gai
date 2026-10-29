@@ -255,7 +255,7 @@ func collect_bubbles(node: Node, bubbles: Array[Control]) -> void:
 
 func collect_preview_buttons(node: Node, buttons: Array[Control]) -> void:
 	for child: Node in node.get_children():
-		if child is BaseButton and (child as BaseButton).global_position.y > float(AgentLayout.TOOLBAR_HEIGHT):
+		if child is BaseButton:
 			buttons.append(child as Control)
 		collect_preview_buttons(child, buttons)
 	pass

@@ -32,7 +32,7 @@ func _ready() -> void:
 	screen_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	delamination_material = ShaderMaterial.new()
 	delamination_material.shader = DELAMINATION_SHADER
-	delamination_material.set_shader_parameter("toolbar_height_px", float(AgentLayout.TOOLBAR_HEIGHT))
+	delamination_material.set_shader_parameter("toolbar_height_px", 0.0)
 	delamination_material.set_shader_parameter("max_separation_px", MAX_SEPARATION_PX)
 	delamination_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
 	delamination_material.set_shader_parameter("focus_enabled", 0.0)
@@ -199,7 +199,7 @@ func collect_bubbles(node: Node, bubbles: Array[Control]) -> void:
 
 func collect_preview_buttons(node: Node, buttons: Array[Control]) -> void:
 	for child: Node in node.get_children():
-		if child is BaseButton and (child as BaseButton).global_position.y > float(AgentLayout.TOOLBAR_HEIGHT):
+		if child is BaseButton:
 			buttons.append(child as Control)
 		collect_preview_buttons(child, buttons)
 	pass
@@ -224,7 +224,7 @@ func update_focus_geometry() -> void:
 	if delamination_material == null or size.x <= 0.0 or size.y <= 0.0:
 		return
 	var viewport_rect := Rect2(Vector2.ZERO, size)
-	delamination_material.set_shader_parameter("effect_area_rect", body_effect_rect(size, float(AgentLayout.TOOLBAR_HEIGHT)))
+	delamination_material.set_shader_parameter("effect_area_rect", body_effect_rect(size, 0.0))
 	if is_instance_valid(chat_area_control):
 		var chat_rect := chat_area_control.get_global_rect().intersection(viewport_rect)
 		if chat_rect.size.x >= 48.0 and chat_rect.size.y >= 20.0:

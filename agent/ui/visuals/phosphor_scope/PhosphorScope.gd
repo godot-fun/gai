@@ -39,7 +39,7 @@ func _ready() -> void:
 	screen_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	scope_material = ShaderMaterial.new()
 	scope_material.shader = SCOPE_SHADER
-	scope_material.set_shader_parameter("toolbar_height_px", float(AgentLayout.TOOLBAR_HEIGHT))
+	scope_material.set_shader_parameter("toolbar_height_px", 0.0)
 	scope_material.set_shader_parameter("max_offset_px", MAX_OFFSET_PX)
 	screen_rect.material = scope_material
 	update_theme_colors()

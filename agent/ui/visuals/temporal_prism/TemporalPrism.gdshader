@@ -8,7 +8,7 @@ uniform float temporal_phase = 0.0;
 uniform float temporal_direction = 1.0;
 uniform float slice_count : hint_range(28.0, 96.0) = 48.0;
 uniform float max_offset_px : hint_range(0.0, 64.0) = 38.0;
-uniform float toolbar_height_px = 48.0;
+uniform float toolbar_height_px = 0.0;
 uniform vec4 accent_color : source_color = vec4(0.3, 0.7, 1.0, 1.0);
 
 float hash(float value) {

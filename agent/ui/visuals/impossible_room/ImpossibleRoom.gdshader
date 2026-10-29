@@ -1,13 +1,13 @@
 shader_type canvas_item;
 
-// Re-sample the rendered application as an impossible moving set. The toolbar and central
-// "performer" area remain visually anchored while the surrounding interface slides past them.
+// Re-sample the rendered application as an impossible moving set. The central
+// "performer" area remains visually anchored while the surrounding interface slides past it.
 // At rest this pass is pixel-identical to the source; the set is only revealed through movement.
 uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear;
 uniform float displacement_px = 0.0;
 uniform float velocity = 0.0;
 uniform float impact : hint_range(0.0, 1.0) = 0.0;
-uniform float toolbar_height_px = 48.0;
+uniform float toolbar_height_px = 0.0;
 uniform vec4 accent_color : source_color = vec4(0.3, 0.7, 1.0, 1.0);
 uniform vec4 anchor_rect_uv = vec4(0.32, 0.28, 0.36, 0.28);
 uniform float anchor_enabled : hint_range(0.0, 1.0) = 0.0;

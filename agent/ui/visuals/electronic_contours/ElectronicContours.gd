@@ -35,7 +35,7 @@ func _ready() -> void:
 	screen_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	relief_material = ShaderMaterial.new()
 	relief_material.shader = CONTOURS_SHADER
-	relief_material.set_shader_parameter("toolbar_height_px", float(AgentLayout.TOOLBAR_HEIGHT))
+	relief_material.set_shader_parameter("toolbar_height_px", 0.0)
 	relief_material.set_shader_parameter("max_deflection_px", MAX_DEFLECTION_PX)
 	screen_rect.material = relief_material
 	add_child(screen_rect)

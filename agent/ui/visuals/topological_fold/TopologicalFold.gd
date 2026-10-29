@@ -36,7 +36,7 @@ func _ready() -> void:
 	screen_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	fold_material = ShaderMaterial.new()
 	fold_material.shader = FOLD_SHADER
-	fold_material.set_shader_parameter("toolbar_height_px", float(AgentLayout.TOOLBAR_HEIGHT))
+	fold_material.set_shader_parameter("toolbar_height_px", 0.0)
 	fold_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
 	fold_material.set_shader_parameter("anchors_enabled", 0.0)
 	fold_material.set_shader_parameter("sidebar_enabled", 0.0)
@@ -238,7 +238,7 @@ func collect_session_rows(node: Node, rows: Array[Control]) -> void:
 
 func collect_preview_buttons(node: Node, buttons: Array[Control]) -> void:
 	for child: Node in node.get_children():
-		if child is BaseButton and (child as BaseButton).global_position.y > float(AgentLayout.TOOLBAR_HEIGHT):
+		if child is BaseButton:
 			buttons.append(child as Control)
 		collect_preview_buttons(child, buttons)
 	pass

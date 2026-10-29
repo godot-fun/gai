@@ -6,7 +6,7 @@ uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_l
 uniform int body_count = 0;
 uniform vec4 body_rects[22];
 uniform vec4 body_motions[22]; // xy: normalized offset, z: rotation, w: activity
-uniform vec4 effect_area_rect = vec4(0.0, 0.04, 1.0, 0.96);
+uniform vec4 effect_area_rect = vec4(0.0, 0.0, 1.0, 1.0);
 
 vec2 rotate_vector(vec2 value, float angle) {
 	float sine = sin(angle);

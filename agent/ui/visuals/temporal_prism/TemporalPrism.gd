@@ -29,7 +29,7 @@ func _ready() -> void:
 	screen_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	prism_material = ShaderMaterial.new()
 	prism_material.shader = PRISM_SHADER
-	prism_material.set_shader_parameter("toolbar_height_px", float(AgentLayout.TOOLBAR_HEIGHT))
+	prism_material.set_shader_parameter("toolbar_height_px", 0.0)
 	prism_material.set_shader_parameter("max_offset_px", MAX_OFFSET_PX)
 	prism_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
 	screen_rect.material = prism_material
