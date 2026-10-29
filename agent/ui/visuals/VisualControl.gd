@@ -57,6 +57,11 @@ enum Type {
 	HOLO_FOIL,
 	SOAP_BUBBLES,
 	PHYSARUM_NETWORK,
+	EINK_REFRESH,
+	STAINED_GLASS,
+	EMBROIDERY,
+	FIREFLY_SYNC,
+	FALLING_SAND,
 }
 
 
@@ -177,6 +182,16 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return SoapBubbles.new()
 		Type.PHYSARUM_NETWORK:
 			return PhysarumNetwork.new()
+		Type.EINK_REFRESH:
+			return EInkRefresh.new()
+		Type.STAINED_GLASS:
+			return StainedGlass.new()
+		Type.EMBROIDERY:
+			return Embroidery.new()
+		Type.FIREFLY_SYNC:
+			return FireflySync.new()
+		Type.FALLING_SAND:
+			return FallingSand.new()
 	return null
 
 func on_agent_start(session_id: int) -> void:

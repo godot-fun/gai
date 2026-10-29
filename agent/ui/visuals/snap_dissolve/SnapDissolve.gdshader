@@ -6,7 +6,6 @@ shader_type canvas_item;
 // back upwind, find where the travel distance matches the walked distance, and draw the source
 // grain found there. Reversing a zone's progress plays the flight backwards, so grains fly home.
 uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear;
-uniform float toolbar_height_px = 48.0;
 uniform int zone_count = 0;
 // (uv.x, uv.y, radius in viewport-height units, progress)
 uniform vec4 zones[8];
@@ -50,14 +49,14 @@ float zone_age(vec2 px, vec2 viewport_px, out float red) {
 	float aspect = viewport_px.x / viewport_px.y;
 	float best = -1.0;
 	red = 0.0;
+	float grain_noise = hash12(floor(px / GRAIN_PX) + 91.0);
 	for (int index = 0; index < zone_count; index++) {
 		vec4 zone = zones[index];
 		float dist = length((uv - zone.xy) * vec2(aspect, 1.0)) / max(zone.z, 0.0001);
 		if (dist > 1.4) {
 			continue;
 		}
-		vec2 q = uv * vec2(aspect, 1.0) + zone_fx[index].y * 37.0;
-		float noise = value_noise(q * 22.0) * 0.6 + value_noise(q * 70.0) * 0.4;
+		float noise = value_noise(uv * vec2(aspect, 1.0) * 22.0 + zone_fx[index].y * 37.0) * 0.88 + grain_noise * 0.12;
 		float age = zone.w - (dist * 0.8 + noise * 0.2);
 		if (age > best) {
 			best = age;
@@ -73,8 +72,7 @@ float end_age(vec2 px, vec2 viewport_px) {
 	}
 	vec2 uv = px / viewport_px;
 	float aspect = viewport_px.x / viewport_px.y;
-	vec2 q = uv * vec2(aspect, 1.0);
-	float noise = value_noise(q * 9.0) * 0.6 + value_noise(q * 38.0) * 0.4;
+	float noise = value_noise(uv * vec2(aspect, 1.0) * 9.0) * 0.88 + hash12(floor(px / GRAIN_PX) + 91.0) * 0.12;
 	return end_progress - (0.72 * (1.0 - uv.x) + 0.28 * noise);
 }
 
@@ -187,37 +185,32 @@ void fragment() {
 	vec3 source = texture(screen_texture, SCREEN_UV).rgb;
 	vec2 viewport_px = vec2(1.0) / SCREEN_PIXEL_SIZE;
 	vec2 p = SCREEN_UV * viewport_px;
-	float toolbar_uv = toolbar_height_px / max(viewport_px.y, 1.0);
-	float body_mask = smoothstep(toolbar_uv, toolbar_uv + SCREEN_PIXEL_SIZE.y * 4.0, SCREEN_UV.y);
 	vec3 result = source;
-	if (body_mask > 0.001) {
-		float zone_red;
-		float own_zone = zone_age(p, viewport_px, zone_red);
-		float own_end = end_age(p, viewport_px);
-		float own = max(own_zone, own_end);
-		float own_red = own_end >= own_zone ? end_red : zone_red;
-		vec3 ember = mix(ember_color.rgb, error_color.rgb, own_red);
-		if (own > 0.0) {
-			result = bg_color.rgb;
-		} else if (own > -0.02) {
-			float edge = 1.0 - smoothstep(0.0, 0.02, -own);
-			float flicker = 0.75 + 0.25 * hash12(floor(p / GRAIN_PX) + floor(time * 18.0));
-			result = mix(result, light_mode > 0.5 ? result * ember : ember, edge * 0.6 * flicker);
-		}
-		if (zone_count > 0) {
-			vec3 dust;
-			vec2 hit = gather_dust(p, viewport_px.y * 0.2, viewport_px, SCREEN_PIXEL_SIZE, false, dust);
-			result = mix(result, dust, hit.x);
-		}
-		if (end_progress > 0.0) {
-			vec3 dust;
-			vec2 hit = gather_dust(p, viewport_px.x * 0.55, viewport_px, SCREEN_PIXEL_SIZE, true, dust);
-			result = mix(result, dust, hit.x);
-		}
-		vec3 flake;
-		float flake_alpha = gather_flake(p, SCREEN_PIXEL_SIZE, flake);
-		result = mix(result, flake, flake_alpha);
-		result = mix(source, result, body_mask);
+	float zone_red;
+	float own_zone = zone_age(p, viewport_px, zone_red);
+	float own_end = end_age(p, viewport_px);
+	float own = max(own_zone, own_end);
+	float own_red = own_end >= own_zone ? end_red : zone_red;
+	vec3 ember = mix(ember_color.rgb, error_color.rgb, own_red);
+	if (own > 0.0) {
+		result = bg_color.rgb;
+	} else if (own > -0.02) {
+		float edge = 1.0 - smoothstep(0.0, 0.02, -own);
+		float flicker = 0.75 + 0.25 * hash12(floor(p / GRAIN_PX) + floor(time * 18.0));
+		result = mix(result, light_mode > 0.5 ? result * ember : ember, edge * 0.6 * flicker);
 	}
+	if (zone_count > 0) {
+		vec3 dust;
+		vec2 hit = gather_dust(p, viewport_px.y * 0.2, viewport_px, SCREEN_PIXEL_SIZE, false, dust);
+		result = mix(result, dust, hit.x);
+	}
+	if (end_progress > 0.0) {
+		vec3 dust;
+		vec2 hit = gather_dust(p, viewport_px.x * 0.55, viewport_px, SCREEN_PIXEL_SIZE, true, dust);
+		result = mix(result, dust, hit.x);
+	}
+	vec3 flake;
+	float flake_alpha = gather_flake(p, SCREEN_PIXEL_SIZE, flake);
+	result = mix(result, flake, flake_alpha);
 	COLOR = vec4(result, 1.0);
 }

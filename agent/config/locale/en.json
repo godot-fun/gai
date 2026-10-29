@@ -218,7 +218,12 @@
       "visual_murmuration": "Murmuration",
       "visual_holo_foil": "Holo Foil",
       "visual_soap_bubbles": "Soap Bubbles",
-      "visual_physarum_network": "Physarum Network"
+      "visual_physarum_network": "Physarum Network",
+      "visual_eink_refresh": "E-ink Refresh",
+      "visual_stained_glass": "Stained Glass",
+      "visual_embroidery": "Embroidery",
+      "visual_firefly_sync": "Firefly Sync",
+      "visual_falling_sand": "Falling Sand"
     },
     "sidebar": {
       "new_session": "+ New Agent",

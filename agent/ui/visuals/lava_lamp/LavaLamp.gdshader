@@ -4,7 +4,6 @@ shader_type canvas_item;
 // surface; its gradient gives a fake normal used to refract the screen like a liquid lens, add a
 // specular glint, and brighten the fresnel rim. Colors blend between nearby blobs by influence.
 uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear;
-uniform float toolbar_height_px = 48.0;
 uniform float presence : hint_range(0.0, 1.0) = 0.0;
 uniform int blob_count = 0;
 // (uv.x, uv.y, radius in viewport-height units, hue tag)
@@ -35,10 +34,8 @@ void fragment() {
 	vec3 source = texture(screen_texture, SCREEN_UV).rgb;
 	vec2 viewport_px = vec2(1.0) / SCREEN_PIXEL_SIZE;
 	vec2 p = SCREEN_UV * viewport_px;
-	float toolbar_uv = toolbar_height_px / max(viewport_px.y, 1.0);
-	float body_mask = smoothstep(toolbar_uv, toolbar_uv + SCREEN_PIXEL_SIZE.y * 4.0, SCREEN_UV.y);
 	vec3 result = source;
-	if (presence > 0.001 && blob_count > 0 && body_mask > 0.001) {
+	if (presence > 0.001 && blob_count > 0) {
 		float field = 0.0;
 		vec2 grad = vec2(0.0);
 		float weight_sum = 0.0;
@@ -89,7 +86,7 @@ void fragment() {
 			float halo = smoothstep(0.35, 1.0, field) * (1.0 - inside);
 			result += wax * halo * (0.16 + glow * 0.3);
 		}
-		result = mix(source, result, presence * body_mask);
+		result = mix(source, result, presence);
 	}
 	COLOR = vec4(result, 1.0);
 }

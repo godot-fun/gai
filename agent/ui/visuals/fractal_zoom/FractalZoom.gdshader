@@ -4,7 +4,6 @@ shader_type canvas_item;
 // (distance estimate) and carry smooth iteration bands around the accent hue; far-away points
 // stay clear so the interface shows through. The set's interior is a faint tinted silhouette.
 uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear;
-uniform float toolbar_height_px = 48.0;
 uniform float presence : hint_range(0.0, 1.0) = 0.0;
 uniform vec2 center = vec2(-0.6, 0.0);
 // Half of the viewport height in the complex plane.
@@ -34,10 +33,8 @@ vec3 hsv_to_rgb(vec3 c) {
 void fragment() {
 	vec3 source = texture(screen_texture, SCREEN_UV).rgb;
 	vec2 viewport_px = vec2(1.0) / SCREEN_PIXEL_SIZE;
-	float toolbar_uv = toolbar_height_px / max(viewport_px.y, 1.0);
-	float body_mask = smoothstep(toolbar_uv, toolbar_uv + SCREEN_PIXEL_SIZE.y * 4.0, SCREEN_UV.y);
 	vec3 result = source;
-	if (presence > 0.001 && body_mask > 0.001) {
+	if (presence > 0.001) {
 		float aspect = viewport_px.x / viewport_px.y;
 		vec2 q = (SCREEN_UV - 0.5) * vec2(aspect, 1.0) * 2.0 * scale;
 		float cs = cos(rotation);
@@ -80,7 +77,7 @@ void fragment() {
 			}
 		}
 		color = mix(color, error_color.rgb, failure_tint * 0.6);
-		result = mix(source, color, alpha * presence * body_mask);
+		result = mix(source, color, alpha * presence);
 	}
 	COLOR = vec4(result, 1.0);
 }

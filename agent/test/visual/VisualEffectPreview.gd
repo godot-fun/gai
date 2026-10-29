@@ -66,6 +66,10 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 			{"type": VisualControl.Type.DISINTEGRATE, "label": "Disintegrate"},
 			{"type": VisualControl.Type.HOLO_FOIL, "label": "Holo Foil"},
 			{"type": VisualControl.Type.SOAP_BUBBLES, "label": "Soap Bubbles"},
+			{"type": VisualControl.Type.EINK_REFRESH, "label": "E-ink Refresh"},
+			{"type": VisualControl.Type.STAINED_GLASS, "label": "Stained Glass"},
+			{"type": VisualControl.Type.EMBROIDERY, "label": "Embroidery"},
+			{"type": VisualControl.Type.FIREFLY_SYNC, "label": "Firefly Sync"},
 		],
 	},
 	{
@@ -80,6 +84,7 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 			{"type": VisualControl.Type.DATAMOSH, "label": "Datamosh"},
 			{"type": VisualControl.Type.DARKROOM, "label": "Darkroom"},
 			{"type": VisualControl.Type.PHYSARUM_NETWORK, "label": "Physarum Network"},
+			{"type": VisualControl.Type.FALLING_SAND, "label": "Falling Sand"},
 		],
 	},
 	{
@@ -100,7 +105,7 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 
 @onready var background: ColorRect = $Background
 @onready var visual_control: VisualControl = $VisualOverlay/VisualControl
-@onready var title_label: Label = $UiLayer/Scroll/Ui/Intro/Title
+@onready var title_label: Label = $UiLayer/Toolbar/Title
 @onready var hint_label: Label = $UiLayer/Scroll/Ui/Intro/Hint
 @onready var status_label: Label = $UiLayer/Scroll/Ui/Run/Status
 @onready var stop_button: Button = $UiLayer/Scroll/Ui/Run/Controls/Stop

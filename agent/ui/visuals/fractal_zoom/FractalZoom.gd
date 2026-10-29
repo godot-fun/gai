@@ -61,7 +61,6 @@ func _ready() -> void:
 	screen_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	fractal_material = ShaderMaterial.new()
 	fractal_material.shader = FRACTAL_SHADER
-	fractal_material.set_shader_parameter("toolbar_height_px", float(AgentLayout.TOOLBAR_HEIGHT))
 	screen_rect.material = fractal_material
 	add_child(screen_rect)
 	gdf.events.theme_changed.connect(update_theme_presentation)

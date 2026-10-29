@@ -28,8 +28,8 @@ static func field_center_stays_inside_effective_viewport_test() -> void:
 	pass
 
 
-static func body_effect_keeps_toolbar_stable_test() -> void:
-	assert(ZERO_GRAVITY_SCRIPT.body_effect_rect(Vector2(1920.0, 1080.0), 48.0).is_equal_approx(Vector4(0.0, 48.0 / 1080.0, 1.0, 1.0 - 48.0 / 1080.0)))
+static func body_effect_covers_full_viewport_test() -> void:
+	assert(ZERO_GRAVITY_SCRIPT.body_effect_rect(Vector2(1920.0, 1080.0), 0.0).is_equal_approx(Vector4(0.0, 0.0, 1.0, 1.0)))
 	assert(ZERO_GRAVITY_SCRIPT.body_effect_rect(Vector2.ZERO, 48.0) == Vector4.ZERO)
 	pass
 

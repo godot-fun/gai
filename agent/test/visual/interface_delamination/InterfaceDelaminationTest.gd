@@ -36,8 +36,8 @@ static func focus_rect_normalizes_to_viewport_test() -> void:
 	pass
 
 
-static func body_effect_keeps_toolbar_stable_test() -> void:
-	assert(INTERFACE_DELAMINATION_SCRIPT.body_effect_rect(Vector2(1920.0, 1080.0), 48.0).is_equal_approx(Vector4(0.0, 48.0 / 1080.0, 1.0, 1.0 - 48.0 / 1080.0)))
+static func body_effect_covers_full_viewport_test() -> void:
+	assert(INTERFACE_DELAMINATION_SCRIPT.body_effect_rect(Vector2(1920.0, 1080.0), 0.0).is_equal_approx(Vector4(0.0, 0.0, 1.0, 1.0)))
 	assert(INTERFACE_DELAMINATION_SCRIPT.body_effect_rect(Vector2.ZERO, 48.0) == Vector4.ZERO)
 	pass
 

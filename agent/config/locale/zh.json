@@ -218,7 +218,12 @@
       "visual_murmuration": "鸟群",
       "visual_holo_foil": "全息镭射膜",
       "visual_soap_bubbles": "肥皂泡",
-      "visual_physarum_network": "黏菌网络"
+      "visual_physarum_network": "黏菌网络",
+      "visual_eink_refresh": "墨水屏刷新",
+      "visual_stained_glass": "彩绘玻璃",
+      "visual_embroidery": "刺绣",
+      "visual_firefly_sync": "萤火虫同步",
+      "visual_falling_sand": "沙漏沉积"
     },
     "sidebar": {
       "new_session": "+ 新建智能体",
