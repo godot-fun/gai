@@ -118,7 +118,8 @@ func apply_theme() -> void:
 	pinned_header.add_theme_color_override("font_color", Colors.secondary_text)
 	unpinned_header.add_theme_color_override("font_color", Colors.secondary_text)
 	pinned_separator.add_theme_stylebox_override("separator", SessionSidebarTheme.pinned_separator())
-	ScrollBarStyle.apply(session_list_scroll.get_v_scroll_bar())
+	# Keep the dense session list quieter than the main chat transcript.
+	ScrollBarStyle.apply(session_list_scroll.get_v_scroll_bar(), ScrollBarStyle.Thickness.LG)
 	SessionSidebarTheme.apply_new_session_button(new_session_button)
 	for row: SessionRow in session_rows.values():
 		row.apply_style()

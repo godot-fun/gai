@@ -18,8 +18,8 @@ enum Thickness {
 }
 
 ## Shared default used by popup, transcript and sidebar surfaces.
-static func apply(bar: ScrollBar) -> void:
-	apply_custom(bar, Thickness.XXL, ThemeColor.body_color, ThemeColor.promote(ThemeColor.theme_color, Weights.w_7), ThemeColor.promote(ThemeColor.theme_color, Weights.w_4), false)
+static func apply(bar: ScrollBar, thickness: Thickness = Thickness.XXL) -> void:
+	apply_custom(bar, thickness, ThemeColor.body_color, ThemeColor.promote(ThemeColor.theme_color, Weights.w_7), ThemeColor.promote(ThemeColor.theme_color, Weights.w_4), false)
 	pass
 
 
