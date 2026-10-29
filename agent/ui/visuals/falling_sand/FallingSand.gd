@@ -45,8 +45,8 @@ const DRAIN_RATE := 0.03
 const FLIP_MSEC := 1300
 const FALLBACK_FIELD := Vector2i(427, 240)
 ## Keep the interface, including chat text, readable through the sand layer.
-const DARK_SAND_OPACITY := 0.52
-const LIGHT_SAND_OPACITY := 0.48
+const DARK_SAND_OPACITY := 0.38
+const LIGHT_SAND_OPACITY := 0.34
 
 var faucets: Dictionary[String, Vector2] = {}
 var content_flow: float = 0.0

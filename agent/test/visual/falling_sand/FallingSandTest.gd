@@ -54,8 +54,8 @@ func falling_sand_covers_the_toolbar_test() -> void:
 
 
 static func falling_sand_keeps_the_interface_readable_test() -> void:
-	assert(is_equal_approx(FallingSand.DARK_SAND_OPACITY, 0.52))
-	assert(is_equal_approx(FallingSand.LIGHT_SAND_OPACITY, 0.48))
+	assert(is_equal_approx(FallingSand.DARK_SAND_OPACITY, 0.38))
+	assert(is_equal_approx(FallingSand.LIGHT_SAND_OPACITY, 0.34))
 	pass
 
 
