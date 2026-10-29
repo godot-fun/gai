@@ -10,7 +10,6 @@ uniform float failure_tint : hint_range(0.0, 1.0) = 0.0;
 uniform float coverage_gain : hint_range(0.0, 1.0) = 0.5;
 uniform float glow_gain : hint_range(0.0, 1.0) = 1.0;
 uniform float light_mode : hint_range(0.0, 1.0) = 0.0;
-uniform float toolbar_height_px = 48.0;
 uniform vec4 tissue_color : source_color = vec4(0.3, 0.7, 1.0, 1.0);
 uniform vec4 membrane_color : source_color = vec4(0.7, 0.9, 1.0, 1.0);
 uniform vec4 error_color : source_color = vec4(1.0, 0.35, 0.35, 1.0);
@@ -22,9 +21,7 @@ float catalyst(vec2 uv) {
 void fragment() {
 	vec3 source = texture(screen_texture, SCREEN_UV).rgb;
 	vec2 viewport_px = vec2(1.0) / SCREEN_PIXEL_SIZE;
-	float toolbar_uv = toolbar_height_px / max(viewport_px.y, 1.0);
-	float body_mask = smoothstep(toolbar_uv, toolbar_uv + SCREEN_PIXEL_SIZE.y * 8.0, SCREEN_UV.y);
-	float live = smoothstep(0.0, 0.02, activity) * body_mask;
+	float live = smoothstep(0.0, 0.02, activity);
 	vec3 result = source;
 	if (live > 0.001) {
 		vec2 cell = vec2(1.0) / vec2(textureSize(field_tex, 0));

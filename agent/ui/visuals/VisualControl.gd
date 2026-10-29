@@ -41,6 +41,22 @@ enum Type {
 	GLASS_RAIN,
 	KINTSUGI,
 	CHLADNI_PLATE,
+	DATAMOSH,
+	DARKROOM,
+	FERROFLUID,
+	DISINTEGRATE,
+	WARP_SPEED,
+	SNAP_DISSOLVE,
+	GAME_OF_LIFE,
+	PIPES_3D,
+	LAVA_LAMP,
+	DOOM_FIRE,
+	FRACTAL_ZOOM,
+	TESLA_LIGHTNING,
+	MURMURATION,
+	HOLO_FOIL,
+	SOAP_BUBBLES,
+	PHYSARUM_NETWORK,
 }
 
 
@@ -129,6 +145,38 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return Kintsugi.new()
 		Type.CHLADNI_PLATE:
 			return ChladniPlate.new()
+		Type.DATAMOSH:
+			return Datamosh.new()
+		Type.DARKROOM:
+			return Darkroom.new()
+		Type.FERROFLUID:
+			return Ferrofluid.new()
+		Type.DISINTEGRATE:
+			return Disintegrate.new()
+		Type.WARP_SPEED:
+			return WarpSpeed.new()
+		Type.SNAP_DISSOLVE:
+			return SnapDissolve.new()
+		Type.GAME_OF_LIFE:
+			return GameOfLife.new()
+		Type.PIPES_3D:
+			return Pipes3D.new()
+		Type.LAVA_LAMP:
+			return LavaLamp.new()
+		Type.DOOM_FIRE:
+			return DoomFire.new()
+		Type.FRACTAL_ZOOM:
+			return FractalZoom.new()
+		Type.TESLA_LIGHTNING:
+			return TeslaLightning.new()
+		Type.MURMURATION:
+			return Murmuration.new()
+		Type.HOLO_FOIL:
+			return HoloFoil.new()
+		Type.SOAP_BUBBLES:
+			return SoapBubbles.new()
+		Type.PHYSARUM_NETWORK:
+			return PhysarumNetwork.new()
 	return null
 
 func on_agent_start(session_id: int) -> void:

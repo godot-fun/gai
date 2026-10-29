@@ -11,7 +11,6 @@ uniform float failure_tint : hint_range(0.0, 1.0) = 0.0;
 uniform float ink_gain : hint_range(0.0, 1.0) = 0.7;
 uniform float glow_blend : hint_range(0.0, 1.0) = 1.0;
 uniform float refraction_px = 5.0;
-uniform float toolbar_height_px = 48.0;
 uniform vec4 warm_color : source_color = vec4(0.3, 0.7, 1.0, 1.0);
 uniform vec4 cool_color : source_color = vec4(0.6, 0.4, 1.0, 1.0);
 uniform vec4 error_color : source_color = vec4(1.0, 0.35, 0.35, 1.0);
@@ -19,9 +18,7 @@ uniform vec4 error_color : source_color = vec4(1.0, 0.35, 0.35, 1.0);
 void fragment() {
 	vec3 source = texture(screen_texture, SCREEN_UV).rgb;
 	vec2 viewport_px = vec2(1.0) / SCREEN_PIXEL_SIZE;
-	float toolbar_uv = toolbar_height_px / max(viewport_px.y, 1.0);
-	float body_mask = smoothstep(toolbar_uv, toolbar_uv + SCREEN_PIXEL_SIZE.y * 8.0, SCREEN_UV.y);
-	float live = smoothstep(0.0, 0.02, activity) * body_mask;
+	float live = smoothstep(0.0, 0.02, activity);
 	vec3 result = source;
 	if (live > 0.001) {
 		vec4 field = texture(field_tex, SCREEN_UV);

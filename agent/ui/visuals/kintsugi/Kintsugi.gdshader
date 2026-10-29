@@ -20,7 +20,6 @@ uniform float gap_px = 7.0;
 uniform float seam_px = 4.4;
 uniform float aberration_px = 2.5;
 uniform float shockwave_px = 14.0;
-uniform float toolbar_height_px = 48.0;
 uniform vec4 gap_color : source_color = vec4(0.02, 0.016, 0.012, 1.0);
 uniform vec4 gold_shadow : source_color = vec4(0.45, 0.28, 0.06, 1.0);
 uniform vec4 gold_color : source_color = vec4(0.93, 0.71, 0.27, 1.0);
@@ -229,9 +228,7 @@ void fragment() {
 			float edge = 1.0 - smoothstep(0.0, 0.04, voronoi_edge(p * 7.0));
 			cracked = mix(cracked, crackle_color.rgb, edge * crackle * crackle_gain);
 		}
-		float toolbar_uv = toolbar_height_px * SCREEN_PIXEL_SIZE.y;
-		float body_mask = smoothstep(toolbar_uv, toolbar_uv + SCREEN_PIXEL_SIZE.y * 8.0, SCREEN_UV.y);
-		result = mix(source, clamp(cracked, 0.0, 1.0), body_mask);
+		result = clamp(cracked, 0.0, 1.0);
 	}
 	COLOR = vec4(result, fade);
 }

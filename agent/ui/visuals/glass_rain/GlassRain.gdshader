@@ -17,7 +17,6 @@ uniform float glint_gain : hint_range(0.0, 1.0) = 1.0;
 uniform float rim_shade : hint_range(0.0, 1.0) = 0.12;
 uniform float light_mode : hint_range(0.0, 1.0) = 0.0;
 uniform float shadow_px = 7.0;
-uniform float toolbar_height_px = 48.0;
 uniform vec4 fog_color : source_color = vec4(0.6, 0.65, 0.72, 1.0);
 uniform vec4 accent_color : source_color = vec4(0.3, 0.7, 1.0, 1.0);
 uniform vec4 error_color : source_color = vec4(1.0, 0.35, 0.35, 1.0);
@@ -33,9 +32,7 @@ float drop_height(vec2 uv, vec2 cell) {
 void fragment() {
 	vec3 source = textureLod(screen_texture, SCREEN_UV, 0.0).rgb;
 	vec2 viewport_px = vec2(1.0) / SCREEN_PIXEL_SIZE;
-	float toolbar_uv = toolbar_height_px / max(viewport_px.y, 1.0);
-	float body_mask = smoothstep(toolbar_uv, toolbar_uv + SCREEN_PIXEL_SIZE.y * 8.0, SCREEN_UV.y);
-	float live = smoothstep(0.0, 0.02, activity) * body_mask;
+	float live = smoothstep(0.0, 0.02, activity);
 	vec3 result = source;
 	if (live > 0.001) {
 		vec2 cell = vec2(1.0) / vec2(textureSize(field_tex, 0));

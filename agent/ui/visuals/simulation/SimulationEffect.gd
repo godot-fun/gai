@@ -75,7 +75,6 @@ func _ready() -> void:
 	display_material = ShaderMaterial.new()
 	display_material.shader = display_shader()
 	display_material.set_shader_parameter("field_tex", chain.get_texture())
-	display_material.set_shader_parameter("toolbar_height_px", float(AgentLayout.TOOLBAR_HEIGHT))
 	display_rect = ColorRect.new()
 	display_rect.name = "SimulationDisplay"
 	display_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE

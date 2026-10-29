@@ -206,3 +206,126 @@ func glass_tool_error_strikes_lightning_test() -> void:
 	assert(effect.faucets.size() == 3)
 	effect.free()
 	pass
+
+
+func datamosh_stream_drags_and_keyframe_cleans_test() -> void:
+	var effect := Datamosh.new()
+	assert(effect.reads_previous_frame())
+	effect.on_agent_start(1)
+	for _index in range(20):
+		effect.on_message_update(1, "streamed answer chunk", OpenAiClient.STREAM_KIND_CONTENT)
+	assert(effect.drift > 0.0)
+	assert(effect.mosh > Datamosh.RUN_MOSH)
+	effect.on_turn_end(1)
+	assert(effect.keyframe == 0.0)
+	assert(effect.mosh <= Datamosh.RUN_MOSH)
+	for _index in range(30):
+		effect.step_field(1.0 / 60.0)
+	assert(effect.keyframe == Datamosh.KEYFRAME_IDLE)
+	effect.free()
+	pass
+
+
+func datamosh_tool_swirl_holds_then_error_bursts_test() -> void:
+	var effect := Datamosh.new()
+	effect.on_tool_execution_start(1, "t1", "grep", {} as Dictionary[String, Variant])
+	assert(effect.sources.size() == 1)
+	assert(effect.sources[0].holding)
+	for _index in range(120):
+		effect.step_field(1.0 / 60.0)
+	assert(absf(effect.sources[0].swirl) == Datamosh.SWIRL_PX)
+	effect.on_tool_execution_end(1, "t1", "grep", AgentToolResult.error("boom"))
+	assert(effect.sources[0].burst == Datamosh.BURST_PX)
+	assert(effect.corruption == 1.0)
+	assert(effect.failure_tint == 1.0)
+	for _index in range(600):
+		effect.step_field(1.0 / 60.0)
+	assert(effect.sources.is_empty())
+	effect.free()
+	pass
+
+
+func darkroom_lights_dim_for_the_run_and_return_at_end_test() -> void:
+	var effect := Darkroom.new()
+	effect.on_agent_start(1)
+	for _index in range(60):
+		effect.step_field(1.0 / 60.0)
+	assert(effect.lights == 0.0)
+	await effect.on_agent_end(1, "")
+	for _index in range(60):
+		effect.step_field(1.0 / 60.0)
+	assert(effect.lights == 1.0)
+	effect.free()
+	pass
+
+
+func darkroom_tools_rock_alternate_sides_and_errors_leak_test() -> void:
+	var effect := Darkroom.new()
+	effect.on_tool_execution_start(1, "t1", "grep", {} as Dictionary[String, Variant])
+	effect.on_tool_execution_start(1, "t2", "grep", {} as Dictionary[String, Variant])
+	assert(effect.impulse_shapes[0].x != effect.impulse_shapes[1].x)
+	effect.on_tool_execution_end(1, "t1", "grep", AgentToolResult.error("boom"))
+	assert(effect.leak == 1.0)
+	assert(effect.leak_position.is_equal_approx(SimulationEffect.tool_anchor("grep")))
+	effect.free()
+	pass
+
+
+func darkroom_turn_bleaches_and_stream_laps_test() -> void:
+	var effect := Darkroom.new()
+	effect.on_agent_start(1)
+	effect.on_turn_start(1)
+	assert(effect.bleach_seconds > 0.0)
+	effect.impulse_shapes.clear()
+	for _index in range(20):
+		effect.on_message_update(1, "streamed answer chunk", OpenAiClient.STREAM_KIND_CONTENT)
+	effect.step_field(1.0 / 60.0)
+	assert(effect.impulse_shapes.size() > 0)
+	assert(effect.impulse_shapes.size() <= Darkroom.MAX_LAPS_PER_FRAME)
+	assert(effect.develop_boost > 0.0)
+	effect.free()
+	pass
+
+func physarum_tool_drops_food_that_feeds_while_running_test() -> void:
+	var effect := PhysarumNetwork.new()
+	effect.on_agent_start(1)
+	effect.on_tool_execution_start(1, "t1", "grep", {} as Dictionary[String, Variant])
+	effect.on_tool_execution_start(1, "t2", "grep", {} as Dictionary[String, Variant])
+	assert(effect.food_sources.size() == 1)
+	effect.impulse_shapes.clear()
+	effect.step_field(1.0 / 60.0)
+	assert(effect.impulse_shapes.size() == 1)
+	assert(Vector2(effect.impulse_shapes[0].x, effect.impulse_shapes[0].y).is_equal_approx(SimulationEffect.tool_anchor("grep")))
+	assert(effect.impulse_shapes[0].w > 0.0)
+	effect.free()
+	pass
+
+
+func physarum_success_boosts_and_error_spoils_food_test() -> void:
+	var effect := PhysarumNetwork.new()
+	effect.on_agent_start(1)
+	effect.on_tool_execution_start(1, "t1", "grep", {} as Dictionary[String, Variant])
+	effect.on_tool_execution_end(1, "t1", "grep", AgentToolResult.ok("fine"))
+	assert(effect.food_sources[0].strength == PhysarumNetwork.FOOD_SUCCESS_BOOST)
+	effect.on_tool_execution_end(1, "t2", "read_file", AgentToolResult.error("boom"))
+	var spoiled := effect.find_food("t2")
+	assert(spoiled != null and spoiled.spoiled)
+	effect.impulse_shapes.clear()
+	effect.step_field(1.0 / 60.0)
+	assert(effect.impulse_shapes[1].w < 0.0)
+	effect.free()
+	pass
+
+
+func physarum_stream_speeds_mold_and_end_freezes_it_test() -> void:
+	var effect := PhysarumNetwork.new()
+	effect.on_agent_start(1)
+	for _index in range(10):
+		effect.on_message_update(1, "streamed answer chunk", OpenAiClient.STREAM_KIND_CONTENT)
+	assert(effect.speed > PhysarumNetwork.RUN_SPEED)
+	assert(effect.speed <= PhysarumNetwork.STREAM_SPEED)
+	await effect.on_agent_end(1, "")
+	assert(effect.speed == 0.0)
+	assert(effect.decay == PhysarumNetwork.SETTLE_DECAY)
+	effect.free()
+	pass

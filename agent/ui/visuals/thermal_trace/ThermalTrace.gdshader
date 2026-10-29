@@ -10,7 +10,6 @@ uniform float activity : hint_range(0.0, 1.0) = 0.0;
 uniform float failure_tint : hint_range(0.0, 1.0) = 0.0;
 uniform float heat_gain : hint_range(0.0, 2.0) = 1.0;
 uniform float cold_gain : hint_range(0.0, 1.0) = 0.6;
-uniform float toolbar_height_px = 48.0;
 
 #include "res://agent/ui/visuals/thermal_trace/ThermalShade.gdshaderinc"
 
@@ -49,9 +48,7 @@ float gamut_limit(vec3 source, vec3 chroma) {
 void fragment() {
 	vec3 source = texture(screen_texture, SCREEN_UV).rgb;
 	vec2 viewport_px = vec2(1.0) / SCREEN_PIXEL_SIZE;
-	float toolbar_uv = toolbar_height_px / max(viewport_px.y, 1.0);
-	float body_mask = smoothstep(toolbar_uv, toolbar_uv + SCREEN_PIXEL_SIZE.y * 8.0, SCREEN_UV.y);
-	float live = smoothstep(0.0, 0.02, activity) * body_mask;
+	float live = smoothstep(0.0, 0.02, activity);
 	vec3 result = source;
 	if (live > 0.001) {
 		float raw_heat = texture(field_tex, SCREEN_UV).r;

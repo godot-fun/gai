@@ -72,7 +72,6 @@ func _ready() -> void:
 	screen_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	kintsugi_material = ShaderMaterial.new()
 	kintsugi_material.shader = KINTSUGI_SHADER
-	kintsugi_material.set_shader_parameter("toolbar_height_px", float(AgentLayout.TOOLBAR_HEIGHT))
 	screen_rect.material = kintsugi_material
 	add_child(screen_rect)
 	gdf.events.theme_changed.connect(update_theme_presentation)
