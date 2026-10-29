@@ -60,12 +60,12 @@ enum Type {
 	PHYSARUM_NETWORK,
 	EINK_REFRESH,
 	STAINED_GLASS,
-	EMBROIDERY,
-	FIREFLY_SYNC,
+	FIREFLY_SYNC = 54,
 	FALLING_SAND,
 	GO_BOARD,
 	CLOCKWORK,
 	ABACUS,
+	KALEIDOSCOPE_PORTAL,
 }
 
 
@@ -88,7 +88,12 @@ func _ready() -> void:
 
 static func create_effect(visual_type: Type) -> VisualEffect:
 	if visual_type == Type.RANDOM:
-		visual_type = randi_range(Type.RANDOM + 1, Type.size() - 1) as Type
+		var visual_types: Array[int] = []
+		for visual_name: String in Type:
+			var candidate: int = Type[visual_name]
+			if candidate != Type.NONE and candidate != Type.RANDOM:
+				visual_types.append(candidate)
+		visual_type = visual_types.pick_random() as Type
 	match visual_type:
 		Type.JARVIS:
 			return JarvisControl.new()
@@ -192,8 +197,6 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return EInkRefresh.new()
 		Type.STAINED_GLASS:
 			return StainedGlass.new()
-		Type.EMBROIDERY:
-			return Embroidery.new()
 		Type.FIREFLY_SYNC:
 			return FireflySync.new()
 		Type.FALLING_SAND:
@@ -204,6 +207,8 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return Clockwork.new()
 		Type.ABACUS:
 			return Abacus.new()
+		Type.KALEIDOSCOPE_PORTAL:
+			return KaleidoscopePortal.new()
 	return null
 
 func on_agent_start(session_id: int) -> void:

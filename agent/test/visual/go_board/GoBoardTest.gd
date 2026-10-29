@@ -25,8 +25,8 @@ func visual_type_is_registered_test() -> void:
 	assert(source.contains("\tGO_BOARD,"))
 	assert(source.contains("Type.GO_BOARD:"))
 	assert(source.contains("return GoBoard.new()"))
-	# Random picks the whole enum range, so a new trailing member is included automatically.
-	assert(source.contains("randi_range(Type.RANDOM + 1, Type.size() - 1)"))
+	# Random picks actual enum values, so removed numeric ids and future explicit ids are safe.
+	assert(source.contains("visual_type = visual_types.pick_random() as Type"))
 	pass
 
 

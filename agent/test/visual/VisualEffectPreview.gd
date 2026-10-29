@@ -48,7 +48,6 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 		"title": "Geometry",
 		"effects": [
 			{"type": VisualControl.Type.GEOMETRIC_GENESIS, "label": "Geometric Genesis"},
-			{"type": VisualControl.Type.EMBROIDERY, "label": "Embroidery"},
 		],
 	},
 	{
@@ -63,6 +62,7 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 			{"type": VisualControl.Type.HOLO_FOIL, "label": "Holo Foil"},
 			{"type": VisualControl.Type.SOAP_BUBBLES, "label": "Soap Bubbles"},
 			{"type": VisualControl.Type.STAINED_GLASS, "label": "Stained Glass"},
+			{"type": VisualControl.Type.KALEIDOSCOPE_PORTAL, "label": "Kaleidoscope Portal"},
 			{"type": VisualControl.Type.FIREFLY_SYNC, "label": "Firefly Sync"},
 		],
 	},

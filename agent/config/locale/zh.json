@@ -228,12 +228,12 @@
       "visual_physarum_network": "黏菌网络",
       "visual_eink_refresh": "墨水屏刷新",
       "visual_stained_glass": "彩绘玻璃",
-      "visual_embroidery": "刺绣",
       "visual_firefly_sync": "萤火虫同步",
       "visual_falling_sand": "沙漏沉积",
       "visual_go_board": "围棋",
       "visual_clockwork": "机械表机芯",
-      "visual_abacus": "算盘"
+      "visual_abacus": "算盘",
+      "visual_kaleidoscope_portal": "万花筒星门"
     },
     "sidebar": {
       "new_session": "+ 新建智能体",
