@@ -1,7 +1,3 @@
-# AI
-.gai/
-.dependency/
-
 # Node.js web project
 web/node_modules/
 web/dist/
@@ -20,9 +16,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-
-# Skills
-.cursor/
 
 # Python bytecode (written next to skill and build scripts that import their siblings)
 __pycache__/
@@ -54,10 +47,57 @@ export_credentials.cfg
 
 # Temporary files and directories
 *.tmp
+*.tmp.*
+*.temp
+*.temp.*
 .tmp*/
 tmp*/
 .temp*/
 temp*/
+*~
+~$*
+*.crdownload
+*.part
+*.partial
+*.download
+*.incomplete
+*.retry
+*.pid
+*.pid.lock
+*.stackdump
+*.dmp
+*.crash
+*.log
+*.cache
+*.cache.*
+._*
+
+# Local Python, notebook, and test caches
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyright/
+.pytype/
+.hypothesis/
+.tox/
+.nox/
+.ipynb_checkpoints/
+htmlcov/
+.coverage
+.coverage.*
+
+# Local editor, JavaScript, and build-tool caches
+.history/
+.eslintcache
+.stylelintcache
+.parcel-cache/
+.turbo/
+.nx/
+.vite/
+.rollup.cache/
+.webpack/
+.swc/
 
 # Imported translations (automatically generated from CSV files)
 *.translation
@@ -87,3 +127,46 @@ desktop.ini
 *.orig
 *.rej
 *.sw?
+
+# =============================================================================
+# AI tool state, local dependencies, and vector-store caches
+# =============================================================================
+.gai/
+.dependency/
+.cursor/
+.codex/
+.claude/
+.claude-code/
+.claude-flow/
+.continue/
+.aider/
+.aider.input.history
+.aider.chat.history.md
+.aider.tags.cache*
+.gemini/
+.gemini-cli/
+.copilot/
+.github/copilot/
+.cody/
+.codeium/
+.tabnine/
+.windsurf/
+.augment/
+.avante/
+.cline/
+.roo/
+.roo-code/
+.kilocode/
+.qodo/
+.qoder/
+.opencode/
+.goose/
+.droid/
+.amazonq/
+.autogen/
+.crewai/
+.dspy_cache/
+.llm_cache/
+.langchain_cache/
+.chroma/
+.lancedb/
