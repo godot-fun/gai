@@ -200,7 +200,8 @@
       "visual_turing_bloom": "Turing Bloom",
       "visual_thermal_trace": "Thermal Trace",
       "visual_ink_fluid": "Ink Fluid",
-      "visual_glass_rain": "Glass Rain"
+      "visual_glass_rain": "Glass Rain",
+      "visual_kintsugi": "Kintsugi"
     },
     "sidebar": {
       "new_session": "+ New Agent",

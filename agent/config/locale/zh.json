@@ -200,7 +200,8 @@
       "visual_turing_bloom": "图灵生长",
       "visual_thermal_trace": "热成像",
       "visual_ink_fluid": "流体墨染",
-      "visual_glass_rain": "雨窗"
+      "visual_glass_rain": "雨窗",
+      "visual_kintsugi": "金缮"
     },
     "sidebar": {
       "new_session": "+ 新建智能体",
