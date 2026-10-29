@@ -2,12 +2,14 @@ shader_type canvas_item;
 
 // Living tissue grown from the catalyst field. The membrane is embossed from the catalyst
 // gradient and laid over the live interface with capped coverage so text stays legible.
+// Light themes multiply the tissue in like a pigment and draw the membrane as a darker outline.
 uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear;
 uniform sampler2D field_tex : repeat_disable, filter_linear;
 uniform float activity : hint_range(0.0, 1.0) = 0.0;
 uniform float failure_tint : hint_range(0.0, 1.0) = 0.0;
 uniform float coverage_gain : hint_range(0.0, 1.0) = 0.5;
 uniform float glow_gain : hint_range(0.0, 1.0) = 1.0;
+uniform float light_mode : hint_range(0.0, 1.0) = 0.0;
 uniform float toolbar_height_px = 48.0;
 uniform vec4 tissue_color : source_color = vec4(0.3, 0.7, 1.0, 1.0);
 uniform vec4 membrane_color : source_color = vec4(0.7, 0.9, 1.0, 1.0);
@@ -35,8 +37,16 @@ void fragment() {
 
 		vec3 body = mix(tissue_color.rgb, error_color.rgb * 0.6 + vec3(0.25), failure_tint);
 		vec3 rim = mix(membrane_color.rgb, vec3(0.92), failure_tint);
-		vec3 tinted = mix(source, body * (0.78 + relief * 0.28), tissue * coverage_gain);
-		tinted += rim * membrane * 0.36 * glow_gain;
+		vec3 tinted;
+		if (light_mode > 0.5) {
+			vec3 pigment = mix(vec3(1.0), body, tissue * coverage_gain);
+			tinted = source * pigment * (1.0 - max(-relief, 0.0) * tissue * 0.22);
+			tinted = mix(tinted, vec3(1.0), max(relief, 0.0) * tissue * 0.3);
+			tinted *= mix(vec3(1.0), body * 0.62, membrane * glow_gain);
+		} else {
+			tinted = mix(source, body * (0.78 + relief * 0.28), tissue * coverage_gain);
+			tinted += rim * membrane * 0.36 * glow_gain;
+		}
 		result = mix(source, tinted, live);
 	}
 	COLOR = vec4(result, 1.0);

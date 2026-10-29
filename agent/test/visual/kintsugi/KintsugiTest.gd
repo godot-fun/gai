@@ -23,6 +23,22 @@ func failed_tool_shatters_into_shards_test() -> void:
 	pass
 
 
+func break_impact_and_shake_fade_out_test() -> void:
+	var effect := Kintsugi.new()
+	effect.on_tool_execution_end(1, "t1", "read_file", AgentToolResult.error("boom"))
+	assert(effect.cracks[0].impact == 1.0)
+	assert(effect.shake == 1.0)
+	effect.step_cracks(1.0 / 60.0)
+	assert(effect.shake_offset.length() > 0.0)
+	for _index in range(60):
+		effect.step_cracks(1.0 / 60.0)
+	assert(effect.cracks[0].impact == 0.0)
+	assert(effect.shake == 0.0)
+	assert(effect.shake_offset == Vector2.ZERO)
+	effect.free()
+	pass
+
+
 func success_snaps_shards_home_and_keeps_gold_test() -> void:
 	var effect := Kintsugi.new()
 	effect.on_tool_execution_end(1, "t1", "read_file", AgentToolResult.error("boom"))

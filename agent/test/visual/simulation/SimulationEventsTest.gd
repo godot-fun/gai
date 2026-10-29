@@ -139,6 +139,66 @@ func glass_tool_faucet_runs_then_closes_test() -> void:
 	pass
 
 
+static func chladni_modes_are_stable_and_tools_skip_turn_modes_test() -> void:
+	assert(ChladniPlate.mode_for("grep") == ChladniPlate.mode_for("grep"))
+	for tool_name: String in ["grep", "read_file", "shell", "web_search"]:
+		assert(ChladniPlate.MODES.find(ChladniPlate.mode_for(tool_name)) >= ChladniPlate.TURN_MODE_COUNT)
+	assert(ChladniPlate.turn_mode(ChladniPlate.TURN_MODE_COUNT) == ChladniPlate.turn_mode(0))
+	for mode: Vector3 in ChladniPlate.MODES:
+		assert(mode.x != mode.y)
+	pass
+
+
+func chladni_tool_rings_its_mode_and_pours_sand_test() -> void:
+	var effect := ChladniPlate.new()
+	effect.on_agent_start(1)
+	effect.impulse_shapes.clear()
+	effect.impulse_vectors.clear()
+	effect.on_tool_execution_start(1, "t1", "grep", {} as Dictionary[String, Variant])
+	assert(effect.mode_b == ChladniPlate.mode_for("grep"))
+	assert(effect.mode_a == ChladniPlate.MODES[0])
+	assert(effect.mode_mix == 0.0)
+	assert(effect.impulse_vectors[0].x > 0.0)
+	effect.free()
+	pass
+
+
+func chladni_mid_sweep_keeps_dominant_mode_test() -> void:
+	var effect := ChladniPlate.new()
+	effect.on_agent_start(1)
+	effect.ring_mode(ChladniPlate.MODES[3])
+	effect.ring_mode(ChladniPlate.MODES[4])
+	assert(effect.mode_a == ChladniPlate.MODES[0])
+	assert(effect.mode_b == ChladniPlate.MODES[4])
+	effect.free()
+	pass
+
+
+func chladni_stream_drives_and_end_stops_the_plate_test() -> void:
+	var effect := ChladniPlate.new()
+	effect.on_agent_start(1)
+	var idle_target := effect.current_drive_target()
+	effect.on_message_update(1, "streamed answer chunk", OpenAiClient.STREAM_KIND_CONTENT)
+	assert(effect.current_drive_target() > idle_target)
+	for _index in range(60):
+		effect.step_field(1.0 / 60.0)
+	assert(effect.drive > 0.0)
+	await effect.on_agent_end(1, "")
+	assert(effect.current_drive_target() == 0.0)
+	effect.free()
+	pass
+
+
+func chladni_tool_error_scatters_sand_test() -> void:
+	var effect := ChladniPlate.new()
+	effect.on_tool_execution_end(1, "t1", "grep", AgentToolResult.error("boom"))
+	assert(effect.scatter == 1.0)
+	assert(effect.failure_tint == 1.0)
+	assert(effect.impulse_shapes[0].w > 0.0)
+	effect.free()
+	pass
+
+
 func glass_tool_error_strikes_lightning_test() -> void:
 	var effect := GlassRain.new()
 	effect.on_tool_execution_end(1, "t1", "grep", AgentToolResult.error("boom"))

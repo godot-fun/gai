@@ -1,9 +1,10 @@
 class_name Kintsugi
 extends VisualEffect
 
-## Kintsugi (金缮): a failed tool call shatters the live interface at one point into 6–9 shards
-## that spring outward over dark seams. The next successful tool call, or the end of the turn,
-## snaps them home and flows gold lacquer outward along the seams. A turn without a repair still
+## Kintsugi (金缮): a failed tool call strikes the live interface with a flash, a shockwave and a
+## short shake, shattering it at one point into 6–9 porcelain shards that spring outward over dark
+## seams. The next successful tool call, or the end of the turn, snaps them home and flows molten
+## gold outward along the seams, where it keeps glinting. A turn without a repair still
 ## leaves one hairline of gold, so every run leaves a mark. Seams stay until the run ends; a run
 ## that ends in error seals its last repair with vermilion lacquer instead of gold.
 
@@ -22,6 +23,9 @@ const SPRING_SUBSTEPS := 4
 const LACQUER_FLOW_PER_SECOND := 0.85
 const CRACKLE_PULSE := 0.55
 const CRACKLE_DECAY_PER_SECOND := 0.9
+const IMPACT_DECAY_PER_SECOND := 1.6
+const SHAKE_DECAY_PER_SECOND := 3.2
+const SHAKE_PX := 7.0
 const IDLE_EPSILON := 0.001
 const PLACEMENT_CANDIDATES := 7
 const ERROR_SHATTER_MSEC := 350
@@ -44,6 +48,8 @@ class Crack extends RefCounted:
 	var flow: float = 0.0
 	var flowing: bool = false
 	var vermilion: float = 0.0
+	## Flash and shockwave drive: 1 at the break, decaying to 0.
+	var impact: float = 0.0
 
 
 var screen_rect: ColorRect
@@ -51,6 +57,8 @@ var kintsugi_material: ShaderMaterial
 var cracks: Array[Crack] = []
 var crackle: float = 0.0
 var crackle_seed: float = 0.0
+var shake: float = 0.0
+var shake_offset: Vector2 = Vector2.ZERO
 var crack_serial: int = 0
 var turn_repaired: bool = false
 var idle_shader_applied: bool = false
@@ -158,6 +166,8 @@ func add_fracture(key: String) -> Crack:
 	crack.noise_seed = rng.randf()
 	crack.shard_count = rng.randi_range(SHARD_COUNT_MIN, SHARD_COUNT_MAX)
 	crack.open_target = 1.0
+	crack.impact = 1.0
+	shake = 1.0
 	cracks.append(crack)
 	idle_shader_applied = false
 	return crack
@@ -258,15 +268,18 @@ func step_cracks(delta: float) -> void:
 		if crack.flowing:
 			crack.flow = minf(crack.flow + LACQUER_FLOW_PER_SECOND * safe_delta, 1.0)
 			crack.flowing = crack.flow < 1.0
+		crack.impact = move_toward(crack.impact, 0.0, IMPACT_DECAY_PER_SECOND * safe_delta)
 	crackle = move_toward(crackle, 0.0, CRACKLE_DECAY_PER_SECOND * safe_delta)
+	shake = move_toward(shake, 0.0, SHAKE_DECAY_PER_SECOND * safe_delta)
+	shake_offset = Vector2.from_angle(randf() * TAU) * shake * shake * SHAKE_PX if shake > 0.0 else Vector2.ZERO
 	pass
 
 
 func cracks_are_idle() -> bool:
-	if crackle > 0.0:
+	if crackle > 0.0 or shake > 0.0:
 		return false
 	for crack: Crack in cracks:
-		if crack.flowing or crack.open != crack.open_target or crack.velocity != 0.0:
+		if crack.impact > 0.0 or crack.flowing or crack.open != crack.open_target or crack.velocity != 0.0:
 			return false
 	return true
 
@@ -276,15 +289,20 @@ func apply_shader_state() -> void:
 		return
 	var shapes := PackedVector4Array()
 	var states := PackedVector4Array()
+	var effects := PackedVector4Array()
 	shapes.resize(MAX_CRACKS)
 	states.resize(MAX_CRACKS)
+	effects.resize(MAX_CRACKS)
 	for index in range(mini(cracks.size(), MAX_CRACKS)):
 		var crack := cracks[index]
 		shapes[index] = Vector4(crack.center.x, crack.center.y, crack.radius, crack.noise_seed)
 		states[index] = Vector4(crack.open, crack.flow, crack.vermilion, float(crack.shard_count))
+		effects[index] = Vector4(crack.impact, 0.0, 0.0, 0.0)
 	kintsugi_material.set_shader_parameter("crack_count", mini(cracks.size(), MAX_CRACKS))
 	kintsugi_material.set_shader_parameter("crack_shape", shapes)
 	kintsugi_material.set_shader_parameter("crack_state", states)
+	kintsugi_material.set_shader_parameter("crack_fx", effects)
+	kintsugi_material.set_shader_parameter("shake_px", shake_offset)
 	kintsugi_material.set_shader_parameter("crackle", crackle)
 	kintsugi_material.set_shader_parameter("crackle_seed", crackle_seed)
 	pass
@@ -294,23 +312,29 @@ func update_theme_presentation() -> void:
 	if kintsugi_material == null:
 		return
 	if ThemeColor.is_dark_theme():
-		kintsugi_material.set_shader_parameter("gap_color", Color(0.03, 0.025, 0.02))
-		kintsugi_material.set_shader_parameter("gold_color", Color(0.92, 0.72, 0.30))
-		kintsugi_material.set_shader_parameter("gold_highlight", Color(1.0, 0.93, 0.64))
-		kintsugi_material.set_shader_parameter("vermilion_color", Color(0.89, 0.26, 0.17))
+		kintsugi_material.set_shader_parameter("gap_color", Color(0.02, 0.016, 0.012))
+		kintsugi_material.set_shader_parameter("gold_shadow", Color(0.45, 0.28, 0.06))
+		kintsugi_material.set_shader_parameter("gold_color", Color(0.93, 0.71, 0.27))
+		kintsugi_material.set_shader_parameter("gold_highlight", Color(1.0, 0.95, 0.74))
+		kintsugi_material.set_shader_parameter("vermilion_color", Color(0.89, 0.24, 0.14))
 		kintsugi_material.set_shader_parameter("crackle_color", Color(0.86, 0.93, 1.0))
+		kintsugi_material.set_shader_parameter("bloom_gain", 1.0)
 	else:
-		kintsugi_material.set_shader_parameter("gap_color", Color(0.18, 0.15, 0.13))
-		kintsugi_material.set_shader_parameter("gold_color", Color(0.74, 0.53, 0.13))
-		kintsugi_material.set_shader_parameter("gold_highlight", Color(0.90, 0.70, 0.25))
-		kintsugi_material.set_shader_parameter("vermilion_color", Color(0.76, 0.18, 0.12))
+		kintsugi_material.set_shader_parameter("gap_color", Color(0.10, 0.08, 0.07))
+		kintsugi_material.set_shader_parameter("gold_shadow", Color(0.42, 0.26, 0.04))
+		kintsugi_material.set_shader_parameter("gold_color", Color(0.78, 0.56, 0.14))
+		kintsugi_material.set_shader_parameter("gold_highlight", Color(0.98, 0.84, 0.46))
+		kintsugi_material.set_shader_parameter("vermilion_color", Color(0.78, 0.18, 0.10))
 		kintsugi_material.set_shader_parameter("crackle_color", Color(0.32, 0.37, 0.45))
+		kintsugi_material.set_shader_parameter("bloom_gain", 0.35)
 	pass
 
 
 func reset_cracks() -> void:
 	cracks.clear()
 	crackle = 0.0
+	shake = 0.0
+	shake_offset = Vector2.ZERO
 	turn_repaired = false
 	idle_shader_applied = false
 	apply_shader_state()

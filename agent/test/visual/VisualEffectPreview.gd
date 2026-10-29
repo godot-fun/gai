@@ -72,6 +72,7 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 			{"type": VisualControl.Type.THERMAL_TRACE, "label": "Thermal Trace"},
 			{"type": VisualControl.Type.INK_FLUID, "label": "Ink Fluid"},
 			{"type": VisualControl.Type.GLASS_RAIN, "label": "Glass Rain"},
+			{"type": VisualControl.Type.CHLADNI_PLATE, "label": "Chladni Plate"},
 		],
 	},
 ]

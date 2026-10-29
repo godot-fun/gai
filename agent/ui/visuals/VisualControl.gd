@@ -40,6 +40,7 @@ enum Type {
 	INK_FLUID,
 	GLASS_RAIN,
 	KINTSUGI,
+	CHLADNI_PLATE,
 }
 
 
@@ -126,6 +127,8 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return GlassRain.new()
 		Type.KINTSUGI:
 			return Kintsugi.new()
+		Type.CHLADNI_PLATE:
+			return ChladniPlate.new()
 	return null
 
 func on_agent_start(session_id: int) -> void:

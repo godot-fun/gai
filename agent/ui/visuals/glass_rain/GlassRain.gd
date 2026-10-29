@@ -18,9 +18,9 @@ const MAX_BEADS_PER_FRAME := 4
 const MAX_FAUCETS := 6
 const FAUCET_RATE := 0.45
 const LIGHTNING_DECAY_PER_SECOND := 3.2
-const LIGHT_FOG_VEIL := 0.18
+const LIGHT_FOG_VEIL := 0.42
 const DARK_FOG_VEIL := 0.28
-const LIGHT_RIM_SHADE := 0.45
+const LIGHT_RIM_SHADE := 0.75
 const DARK_RIM_SHADE := 0.12
 
 var fog_target: float = BASE_FOG
@@ -151,8 +151,9 @@ func update_theme_presentation() -> void:
 	var dark := ThemeColor.is_dark_theme()
 	display_material.set_shader_parameter("accent_color", VisualColor.appearance_color(ThemeColor.accent_theme_color()))
 	display_material.set_shader_parameter("error_color", Colors.error)
-	display_material.set_shader_parameter("fog_color", Color(0.58, 0.63, 0.7) if dark else Color(0.93, 0.95, 0.97))
+	display_material.set_shader_parameter("fog_color", Color(0.58, 0.63, 0.7) if dark else Color(0.74, 0.79, 0.85))
 	display_material.set_shader_parameter("fog_veil", DARK_FOG_VEIL if dark else LIGHT_FOG_VEIL)
-	display_material.set_shader_parameter("glint_gain", 1.0 if dark else 0.55)
+	display_material.set_shader_parameter("glint_gain", 1.0 if dark else 0.9)
 	display_material.set_shader_parameter("rim_shade", DARK_RIM_SHADE if dark else LIGHT_RIM_SHADE)
+	display_material.set_shader_parameter("light_mode", 0.0 if dark else 1.0)
 	pass

@@ -201,7 +201,8 @@
       "visual_thermal_trace": "Thermal Trace",
       "visual_ink_fluid": "Ink Fluid",
       "visual_glass_rain": "Glass Rain",
-      "visual_kintsugi": "Kintsugi"
+      "visual_kintsugi": "Kintsugi",
+      "visual_chladni_plate": "Chladni Plate"
     },
     "sidebar": {
       "new_session": "+ New Agent",

@@ -2,7 +2,9 @@ shader_type canvas_item;
 
 // The live interface behind a rainy window. Fog frosts (blurs and veils) the screen, wet trails
 // and drops stay clear, and each drop is a small lens with a dark rim and a glint.
-// Lightning flashes the pane. Zero activity or an empty field is an identity pass.
+// Lightning flashes the pane. Light themes read as daylight glass: the fog is a cool grey veil
+// darker than paper, beads are shaded from the light and cast a soft shadow onto the pane, and
+// lightning bleaches the fog. Zero activity or an empty field is an identity pass.
 uniform sampler2D screen_texture : hint_screen_texture, repeat_disable, filter_linear_mipmap;
 uniform sampler2D field_tex : repeat_disable, filter_linear;
 uniform float activity : hint_range(0.0, 1.0) = 0.0;
@@ -13,6 +15,8 @@ uniform float fog_blur = 2.6;
 uniform float fog_veil : hint_range(0.0, 1.0) = 0.28;
 uniform float glint_gain : hint_range(0.0, 1.0) = 1.0;
 uniform float rim_shade : hint_range(0.0, 1.0) = 0.12;
+uniform float light_mode : hint_range(0.0, 1.0) = 0.0;
+uniform float shadow_px = 7.0;
 uniform float toolbar_height_px = 48.0;
 uniform vec4 fog_color : source_color = vec4(0.6, 0.65, 0.72, 1.0);
 uniform vec4 accent_color : source_color = vec4(0.3, 0.7, 1.0, 1.0);
@@ -45,14 +49,25 @@ void fragment() {
 		seen = mix(seen, fog_color.rgb, fog * fog_veil);
 
 		float rim = clamp(length(slope) * 1.2, 0.0, 1.0) * drop;
-		seen *= 1.0 - rim * rim_shade;
-		seen += (fog_color.rgb * 0.5 + 0.08) * drop * (1.0 - rim) * 0.18;
 		vec3 normal = normalize(vec3(-slope * 2.6, 1.0));
 		vec3 light_dir = normalize(vec3(-0.5, -0.65, 0.58));
 		float glint = pow(max(dot(normal, light_dir), 0.0), 14.0) - pow(light_dir.z, 14.0);
 		vec3 tint = mix(accent_color.rgb, error_color.rgb, failure_tint);
-		seen += mix(vec3(1.0), tint, 0.4) * clamp(glint, 0.0, 1.0) * drop * 0.8 * glint_gain;
-		seen += vec3(0.82, 0.88, 1.0) * lightning * 0.42;
+		if (light_mode > 0.5) {
+			vec2 shadow_uv = SCREEN_UV - vec2(0.6, 1.0) * shadow_px * SCREEN_PIXEL_SIZE;
+			float shadow = smoothstep(0.15, 0.6, drop_height(shadow_uv, cell * 1.8)) * (1.0 - drop);
+			seen *= 1.0 - shadow * 0.16;
+			float lambert = dot(normal, light_dir) - light_dir.z;
+			float body_shade = smoothstep(0.0, 0.45, -lambert) * drop;
+			seen = mix(seen, seen * mix(vec3(0.62, 0.68, 0.76), tint, 0.25), body_shade * rim_shade);
+			seen = mix(seen, vec3(1.0), clamp(glint, 0.0, 1.0) * drop * glint_gain);
+			seen = mix(seen, vec3(1.0), lightning * fog * 0.85);
+		} else {
+			seen *= 1.0 - rim * rim_shade;
+			seen += (fog_color.rgb * 0.5 + 0.08) * drop * (1.0 - rim) * 0.18;
+			seen += mix(vec3(1.0), tint, 0.4) * clamp(glint, 0.0, 1.0) * drop * 0.8 * glint_gain;
+			seen += vec3(0.82, 0.88, 1.0) * lightning * 0.42;
+		}
 		result = mix(source, seen, live);
 	}
 	COLOR = vec4(result, 1.0);

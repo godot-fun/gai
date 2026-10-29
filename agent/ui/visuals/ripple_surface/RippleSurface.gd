@@ -14,7 +14,7 @@ const MAX_DROPS_PER_FRAME := 2
 const CARET_STEP := 0.034
 const RUN_DAMPING := 0.995
 const SETTLE_DAMPING := 0.976
-const LIGHT_HIGHLIGHT_GAIN := 0.45
+const LIGHT_HIGHLIGHT_GAIN := 1.0
 
 var content_rain: float = 0.0
 var reasoning_rain: float = 0.0
@@ -134,4 +134,5 @@ func update_theme_presentation() -> void:
 	display_material.set_shader_parameter("accent_color", VisualColor.appearance_color(ThemeColor.accent_theme_color()))
 	display_material.set_shader_parameter("error_color", Colors.error)
 	display_material.set_shader_parameter("highlight_gain", 1.0 if dark else LIGHT_HIGHLIGHT_GAIN)
+	display_material.set_shader_parameter("light_mode", 0.0 if dark else 1.0)
 	pass

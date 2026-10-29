@@ -1,5 +1,5 @@
 static func create_simulation_effects() -> Array[SimulationEffect]:
-	return [RippleSurface.new(), TuringBloom.new(), ThermalTrace.new(), InkFluid.new(), GlassRain.new()]
+	return [RippleSurface.new(), TuringBloom.new(), ThermalTrace.new(), InkFluid.new(), GlassRain.new(), ChladniPlate.new()]
 
 
 static func every_effect_chains_at_least_two_passes_test() -> void:

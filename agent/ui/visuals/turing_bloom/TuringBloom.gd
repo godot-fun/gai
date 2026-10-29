@@ -15,7 +15,8 @@ const MIX_FOLLOW_RATE := 1.4
 const DRIVE_DECAY_PER_SECOND := 0.5
 const SEED_COST := 0.2
 const IDLE_GROWTH := 0.55
-const LIGHT_COVERAGE_GAIN := 0.34
+const LIGHT_COVERAGE_GAIN := 0.5
+const LIGHT_OUTLINE_GAIN := 0.7
 const DARK_COVERAGE_GAIN := 0.5
 
 var pattern_mix: float = 0.0
@@ -140,7 +141,8 @@ func update_theme_presentation() -> void:
 	display_material.set_shader_parameter("membrane_color", VisualColor.appearance_color(accent, 0.08, 0.6, 0.8).lightened(0.35))
 	display_material.set_shader_parameter("error_color", Colors.error)
 	display_material.set_shader_parameter("coverage_gain", DARK_COVERAGE_GAIN if dark else LIGHT_COVERAGE_GAIN)
-	display_material.set_shader_parameter("glow_gain", 1.0 if dark else 0.4)
+	display_material.set_shader_parameter("glow_gain", 1.0 if dark else LIGHT_OUTLINE_GAIN)
+	display_material.set_shader_parameter("light_mode", 0.0 if dark else 1.0)
 	pass
 
 

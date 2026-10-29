@@ -13,8 +13,10 @@ const SETTLE_COOLING := 0.94
 const BASE_SENSITIVITY := 3.5
 const STREAM_SENSITIVITY := 6.5
 const DRIVE_DECAY_PER_SECOND := 0.6
-const LIGHT_COLD_GAIN := 0.16
+const LIGHT_COLD_GAIN := 0.3
 const DARK_COLD_GAIN := 0.3
+## Luminance removed from fully hot pixels on light themes to make room for chroma on white.
+const LIGHT_HEAT_SHADE := 0.45
 
 var stream_drive: float = 0.0
 var cooling: float = RUN_COOLING
@@ -99,5 +101,9 @@ func apply_field_state() -> void:
 func update_theme_presentation() -> void:
 	if display_material == null:
 		return
-	display_material.set_shader_parameter("cold_gain", DARK_COLD_GAIN if ThemeColor.is_dark_theme() else LIGHT_COLD_GAIN)
+	var dark := ThemeColor.is_dark_theme()
+	var shade := 0.0 if dark else LIGHT_HEAT_SHADE
+	display_material.set_shader_parameter("cold_gain", DARK_COLD_GAIN if dark else LIGHT_COLD_GAIN)
+	display_material.set_shader_parameter("light_shade", shade)
+	chain.set_param("light_shade", shade)
 	pass
