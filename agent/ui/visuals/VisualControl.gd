@@ -65,7 +65,6 @@ enum Type {
 	GO_BOARD,
 	CLOCKWORK,
 	ABACUS,
-	KALEIDOSCOPE_PORTAL,
 }
 
 
@@ -207,8 +206,6 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return Clockwork.new()
 		Type.ABACUS:
 			return Abacus.new()
-		Type.KALEIDOSCOPE_PORTAL:
-			return KaleidoscopePortal.new()
 	return null
 
 func on_agent_start(session_id: int) -> void:

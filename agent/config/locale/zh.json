@@ -232,8 +232,7 @@
       "visual_falling_sand": "沙漏沉积",
       "visual_go_board": "围棋",
       "visual_clockwork": "机械表机芯",
-      "visual_abacus": "算盘",
-      "visual_kaleidoscope_portal": "万花筒星门"
+      "visual_abacus": "算盘"
     },
     "sidebar": {
       "new_session": "+ 新建智能体",

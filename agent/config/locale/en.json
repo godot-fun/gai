@@ -232,8 +232,7 @@
       "visual_falling_sand": "Falling Sand",
       "visual_go_board": "Go Board",
       "visual_clockwork": "Watch Movement",
-      "visual_abacus": "Abacus",
-      "visual_kaleidoscope_portal": "Kaleidoscope Portal"
+      "visual_abacus": "Abacus"
     },
     "sidebar": {
       "new_session": "+ New Agent",
