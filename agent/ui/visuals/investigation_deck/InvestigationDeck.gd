@@ -2,9 +2,8 @@ class_name InvestigationDeck
 extends VisualEffect
 
 ## Investigation deck: a monochrome research console that reads the run like a lab dashboard.
-## A header strip counts tokens, turns, and tools; the stage is a three-layer orrery around a hub left
-## of the view; a 4×2 panel grid at the bottom logs the stream, lists tool calls, and keeps heat /
-## histogram / waveform histories.
+## The whole view is a three-layer orrery around a hub left of the view; the ring carries every
+## readout (run stats, feed, tool calls, heat / histogram / waveform histories).
 ##
 ## Stage layers (drawn by [InvestigationStage], all radii scale with `zoom` about the hub)
 ## - Disc: a woven web of rim-to-rim quadratic curves (one base layer plus three `layer_env` pulse
@@ -20,19 +19,15 @@ extends VisualEffect
 ## https://github.com/Ryder191/haloflux, licensed PolyForm Noncommercial 1.0.0 — noncommercial use only.
 ##
 ## Layout (maintainers)
-## - `header_rect` → `stage_rect` → `panel_rect(index)` split the view top to bottom.
-## - This is a deliberate full-frame dashboard, so it paints its own translucent backdrop
-##   (`BACKDROP_ALPHA`) instead of sparse strokes over the chat.
+## - `stage_rect` is the full view; [InvestigationScreen] lays the panels out down one ring tile.
+## - A faint backdrop and `OVERLAY_STRENGTH` keep the chat readable underneath.
 ##
 ## Data: hooks only mutate counters, ring buffers, and the feed; `step_deck` advances time. Drawing
 ## reads that state, so tests can drive hooks and steps without a renderer.
 
 enum Tag { RUN, TURN, THINK, WRITE, TOOL, OK, FAIL }
 
-const HEADER_RATIO := 0.052
-const PANELS_RATIO := 0.3
-const PANEL_COLUMNS := 4
-const PANEL_ROWS := 2
+## Section titles of the ring tile's eight run panels, in tile order.
 const PANEL_TITLES: Array[String] = [
 	"agent.visuals.deck_feed", "agent.visuals.deck_solver", "agent.visuals.deck_workspace", "agent.visuals.deck_field",
 	"agent.visuals.deck_matrix", "agent.visuals.deck_buffer", "agent.visuals.deck_dispatch_panel", "agent.visuals.deck_index",
@@ -40,9 +35,9 @@ const PANEL_TITLES: Array[String] = [
 const TAG_TEXTS: Array[String] = ["RUN", "TURN", "THINK", "WRITE", "TOOL", "OK", "FAIL"]
 const MONO_FONT_NAMES: Array[String] = ["JetBrains Mono", "Cascadia Mono", "Consolas", "SF Mono", "Menlo", "DejaVu Sans Mono", "monospace"]
 ## Hub x, disc radius, and ring thickness as fractions of stage height at zoom 1.
-const HUB_X_RATIO := 0.42
-const DISC_RADIUS_RATIO := 0.62
-const RING_THICKNESS_RATIO := 0.36
+const HUB_X_RATIO := 0.3
+const DISC_RADIUS_RATIO := 0.42
+const RING_THICKNESS_RATIO := 0.28
 ## Arc length of one screen tile over ring thickness; the ring repeats `ring_tiles()` tiles.
 const TILE_ASPECT := 3.2
 ## Zoom the screen tile is rasterized for; the ring scales that texture between ZOOM_MIN and ZOOM_MAX.
@@ -79,11 +74,10 @@ const DOT_LIMIT := 150
 const ENERGY_DECAY := 1.3
 const STREAM_GAIN := 9.0
 const HEAT_DECAY := 0.05
-const HEAT_FLOOR := 0.03
 const END_SECONDS := 1.1
-const BACKDROP_ALPHA := 0.72
-const PANEL_ALPHA := 0.82
-
+## Master opacity for strokes, panels, and the ring tile (fade-out still scales this down).
+const OVERLAY_STRENGTH := 0.42
+const BACKDROP_ALPHA := 0.03
 
 class FeedLine extends RefCounted:
 	var serial: int = 0
@@ -160,8 +154,6 @@ var content_energy: float = 0.0
 var tool_energy: float = 0.0
 var error_flash: float = 0.0
 var turn_pulse: float = 0.0
-var scratch_travel: float = 0.0
-var wave_phase: float = 0.0
 var beam_travel: float = 0.0
 var zoom: float = ZOOM_MIN
 var inner_angle: float = 0.0
@@ -181,7 +173,6 @@ var reasoning_history := PackedFloat32Array()
 var content_history := PackedFloat32Array()
 var tool_history := PackedFloat32Array()
 var heat := PackedFloat32Array()
-var heat_rest := PackedFloat32Array()
 var histogram := PackedFloat32Array()
 ## Solver particles: (x, y, life, 1 = reasoning / 0 = content).
 var dots: Array[Vector4] = []
@@ -645,12 +636,6 @@ func reset_buffers() -> void:
 	histogram.resize(HISTOGRAM_BINS)
 	heat = PackedFloat32Array()
 	heat.resize(HEAT_COLUMNS * HEAT_ROWS)
-	heat_rest = PackedFloat32Array()
-	heat_rest.resize(heat.size())
-	# Each cell rests at its own faint level, so the index reads as a textured grid between bursts.
-	for index in range(heat.size()):
-		heat_rest[index] = HEAT_FLOOR + pow(rng.randf(), 2.0) * 0.3
-		heat[index] = heat_rest[index]
 	pass
 
 
@@ -741,8 +726,6 @@ func step_deck(delta: float) -> void:
 	tool_energy = maxf(tool_energy * decay, 0.3 if running_tools() > 0 else 0.0)
 	error_flash = maxf(error_flash - delta * 1.5, 0.0)
 	turn_pulse = maxf(turn_pulse - delta * 1.2, 0.0)
-	scratch_travel += delta * (0.25 + reasoning_energy + content_energy)
-	wave_phase += delta * (0.5 + content_energy * 2.5)
 	beam_travel += delta * (0.5 + content_energy * 2.0 + tool_energy)
 	# The disc spins on its own, faster while thinking; ring and beams counter-rotate together.
 	inner_angle = fposmod(inner_angle + delta * (0.06 + 0.5 * reasoning_energy), TAU)
@@ -757,7 +740,7 @@ func step_deck(delta: float) -> void:
 		else:
 			pulses[index] = pulse
 	for index in range(heat.size()):
-		heat[index] = maxf(heat[index] - HEAT_DECAY * delta, heat_rest[index])
+		heat[index] = maxf(heat[index] - HEAT_DECAY * delta, 0.0)
 	for index in range(dots.size() - 1, -1, -1):
 		var dot := dots[index]
 		dot.z -= delta * 0.45
@@ -955,12 +938,8 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var view := view_size()
-	draw_alpha = 1.0 - 0.45 * end_progress
+	draw_alpha = OVERLAY_STRENGTH * (1.0 - 0.45 * end_progress)
 	draw_rect(Rect2(Vector2.ZERO, view), Color(palette_back, BACKDROP_ALPHA))
-	draw_header(header_rect())
-	for index in range(PANEL_COLUMNS * PANEL_ROWS):
-		draw_panel(index)
-	draw_end_scan(view)
 	pass
 
 
@@ -972,287 +951,7 @@ func text_size() -> int:
 	return clampi(int(view_size().y * 0.0125), 9, 15)
 
 
-func frame_margin() -> float:
-	return maxf(4.0, view_size().y * 0.006)
-
-
-func header_rect() -> Rect2:
-	var view := view_size()
-	var margin := frame_margin()
-	return Rect2(Vector2(margin, margin), Vector2(view.x - margin * 2.0, maxf(view.y * HEADER_RATIO, text_size() * 3.6)))
-
-
-func panels_rect() -> Rect2:
-	var view := view_size()
-	var margin := frame_margin()
-	var height := view.y * PANELS_RATIO
-	return Rect2(Vector2(margin, view.y - margin - height), Vector2(view.x - margin * 2.0, height))
-
-
+## The stage fills the whole effect: the ring carries every readout, so no header or panel grid.
 func stage_rect() -> Rect2:
-	var header := header_rect()
-	var panels := panels_rect()
-	var gap := frame_margin()
-	return Rect2(Vector2(header.position.x, header.end.y + gap), Vector2(header.size.x, panels.position.y - header.end.y - gap * 2.0))
+	return Rect2(Vector2.ZERO, view_size())
 
-
-func panel_rect(index: int) -> Rect2:
-	var area := panels_rect()
-	var gap := frame_margin()
-	var cell := Vector2((area.size.x - gap * float(PANEL_COLUMNS - 1)) / float(PANEL_COLUMNS),
-		(area.size.y - gap * float(PANEL_ROWS - 1)) / float(PANEL_ROWS))
-	var column := index % PANEL_COLUMNS
-	var row := int(index / float(PANEL_COLUMNS))
-	return Rect2(area.position + Vector2(float(column) * (cell.x + gap), float(row) * (cell.y + gap)), cell)
-
-
-func draw_header(rect: Rect2) -> void:
-	var ts := text_size()
-	var pad := ts * 0.9
-	draw_rect(rect, Color(palette_panel, PANEL_ALPHA * draw_alpha))
-	draw_line(Vector2(rect.position.x, rect.end.y), rect.end, ink(0.22), 1.0)
-	var title := I18n.t("agent.visuals.deck_title") + " / " + StringUtils.format(I18n.t("agent.visuals.deck_session"), session_id)
-	mono(self, Vector2(rect.position.x + pad, rect.position.y + rect.size.y * 0.46), title, ts + 1, ink(0.95))
-	var subtitle := I18n.t(phase_key()) + "  —  " + format_clock(clock)
-	mono(self, Vector2(rect.position.x + pad, rect.position.y + rect.size.y * 0.82), subtitle, ts - 1, ink(0.45))
-	var running := running_tools()
-	var labels: Array[String] = ["deck_tokens", "deck_turns", "deck_tools", "deck_active", "deck_errors"]
-	var values: Array[String] = [compact_count(token_count()), str(turn_count), str(tool_total), str(running), str(tool_failed)]
-	var ratios: Array[float] = [
-		clampf(log(1.0 + token_count()) / log(20001.0), 0.0, 1.0), clampf(turn_count / 12.0, 0.0, 1.0),
-		clampf(tool_total / 24.0, 0.0, 1.0), running / maxf(tool_total, 1.0), tool_failed / maxf(tool_total, 1.0)]
-	var stats_left := rect.position.x + rect.size.x * 0.26
-	var column := (rect.end.x - stats_left) / float(labels.size())
-	var value_size := clampi(int(rect.size.y * 0.42), ts + 2, 26)
-	for index in range(labels.size()):
-		var x := stats_left + column * index
-		draw_line(Vector2(x, rect.position.y + pad * 0.5), Vector2(x, rect.end.y - pad * 0.5), ink(0.12), 1.0)
-		mono(self, Vector2(x + pad, rect.position.y + ts + pad * 0.3), I18n.t("agent.visuals." + labels[index]), ts - 1, ink(0.5))
-		var color := palette_ink
-		if index == 3 and running > 0:
-			color = palette_hot
-		elif index == 4 and tool_failed > 0:
-			color = palette_error
-		mono(self, Vector2(x + pad, rect.end.y - pad * 0.55), values[index], value_size, tint(color, 0.95))
-		var line_y := rect.position.y + ts + pad * 0.75
-		var line_end := x + column - pad
-		draw_line(Vector2(x + pad + ts * 6.0, line_y), Vector2(line_end, line_y), ink(0.14), 1.0)
-		draw_line(Vector2(x + pad + ts * 6.0, line_y), Vector2(lerpf(x + pad + ts * 6.0, line_end, ratios[index]), line_y), tint(color, 0.7), 1.0)
-	pass
-
-
-func draw_panel(index: int) -> void:
-	var rect := panel_rect(index)
-	var ts := text_size()
-	var pad := ts * 0.8
-	draw_rect(rect, Color(palette_panel, PANEL_ALPHA * draw_alpha))
-	draw_rect(rect, ink(0.14), false, 1.0)
-	mono(self, rect.position + Vector2(pad, pad + ts * 0.8), I18n.t(PANEL_TITLES[index]), ts - 1, ink(0.82))
-	var area := rect.grow_individual(-pad, -(pad * 1.6 + ts), -pad, -pad)
-	match index:
-		0:
-			draw_feed(area)
-		1:
-			draw_solver(area)
-		2:
-			draw_workspace(area)
-		3:
-			draw_reference_field(area)
-		4:
-			draw_matrix(area)
-		5:
-			draw_sample_buffer(area)
-		6:
-			draw_dispatch(area)
-		7:
-			draw_heat_index(area)
-	pass
-
-
-func row_height() -> float:
-	return text_size() * 1.45
-
-
-func draw_feed(area: Rect2) -> void:
-	var ts := text_size()
-	var rows := maxi(int(area.size.y / row_height()), 1)
-	var start := maxi(feed.size() - rows, 0)
-	var max_chars := int((area.size.x - ts * 7.0) / (ts * 0.6))
-	for index in range(start, feed.size()):
-		var entry := feed[index]
-		var y := area.position.y + ts + row_height() * (index - start)
-		var newest := index == feed.size() - 1
-		mono(self, Vector2(area.position.x, y), "%02d" % (entry.serial % 100), ts - 1, ink(0.3))
-		mono(self, Vector2(area.position.x + ts * 1.8, y), TAG_TEXTS[entry.tag], ts - 1, tint(tag_color(entry.tag), 0.92))
-		mono(self, Vector2(area.position.x + ts * 6.0, y), clip_text(entry.text, max_chars), ts - 1, ink(0.85 if newest else 0.5))
-	pass
-
-
-func draw_solver(area: Rect2) -> void:
-	var ts := text_size()
-	var field := Rect2(area.position, Vector2(area.size.x, area.size.y - ts * 1.8))
-	for index in range(1, 6):
-		var x := field.position.x + field.size.x * index / 6.0
-		draw_line(Vector2(x, field.position.y), Vector2(x, field.end.y), ink(0.05), 1.0)
-	for dot: Vector4 in dots:
-		var at := field.position + Vector2(dot.x, clampf(dot.y, 0.0, 1.0)) * field.size
-		var color := palette_violet if dot.w > 0.5 else palette_ink
-		draw_rect(Rect2(at, Vector2(2.0, 2.0)), tint(color, 0.2 + 0.7 * dot.z))
-	var bar := Rect2(Vector2(area.position.x, area.end.y - ts * 1.2), Vector2(area.size.x * 0.48, ts * 1.1))
-	var total := maxf(float(reasoning_chars + content_chars), 1.0)
-	draw_rect(bar, ink(0.12))
-	draw_rect(Rect2(bar.position, Vector2(bar.size.x * reasoning_chars / total, bar.size.y)), tint(palette_violet, 0.55))
-	mono(self, bar.position + Vector2(ts * 0.4, ts * 0.85), "THINK / WRITE", ts - 2, ink(0.85))
-	mono_right(self, Vector2(area.end.x, area.end.y - ts * 0.3), "N=%d" % dots.size(), ts - 1, ink(0.55))
-	pass
-
-
-func draw_workspace(area: Rect2) -> void:
-	var ts := text_size()
-	var rows := maxi(int(area.size.y / row_height()), 1)
-	if tracks.is_empty():
-		for row in range(mini(rows, 5)):
-			mono(self, Vector2(area.position.x, area.position.y + ts + row_height() * row), "-- %s" % "·".repeat(14 - row * 2), ts - 1, ink(0.18))
-		return
-	var max_chars := int((area.size.x - ts * 1.6) / (ts * 0.6))
-	var row := 0
-	for index in range(tracks.size() - 1, -1, -1):
-		if row >= rows:
-			break
-		var track := tracks[index]
-		var y := area.position.y + ts + row_height() * row
-		var marker := ">"
-		var color := palette_hot
-		if not track.is_running():
-			marker = "x" if track.failed else "+"
-			color = palette_error if track.failed else palette_lime
-		var marker_alpha := 0.5 + 0.5 * sin(clock * 7.0) if track.is_running() else 0.85
-		mono(self, Vector2(area.position.x, y), marker, ts - 1, tint(color, marker_alpha))
-		var line := clip_text(track.name + "  " + track.detail, max_chars)
-		mono(self, Vector2(area.position.x + ts * 1.4, y), line, ts - 1, ink(0.85 if track.is_running() else 0.5))
-		row += 1
-	pass
-
-
-func draw_reference_field(area: Rect2) -> void:
-	var ts := text_size()
-	var gap := ts * 0.6
-	var box_size := Vector2((area.size.x - gap) * 0.5, area.size.y * 0.48)
-	var energies: Array[float] = [reasoning_energy, content_energy]
-	var labels: Array[String] = ["THINK", "WRITE"]
-	for box_index in range(2):
-		var box := Rect2(area.position + Vector2((box_size.x + gap) * box_index, ts * 0.4), box_size)
-		var bars := 28
-		var bar_width := box.size.x / float(bars)
-		for bar in range(bars):
-			var wave := 0.5 + 0.5 * sin(float(bar) * 0.45 + wave_phase * (1.0 + box_index) + box_index * 1.7)
-			var alpha := 0.08 + 0.55 * wave * (0.35 + 0.65 * energies[box_index])
-			draw_rect(Rect2(box.position + Vector2(bar * bar_width, 0.0), Vector2(bar_width - 1.0, box.size.y)), ink(alpha))
-		draw_rect(box, ink(0.3), false, 1.0)
-		mono(self, box.position + Vector2(0.0, -ts * 0.15), labels[box_index], ts - 2, ink(0.5))
-	var chart := Rect2(Vector2(area.position.x, area.position.y + box_size.y + ts * 1.2), Vector2(area.size.x, area.end.y - (area.position.y + box_size.y + ts * 1.2)))
-	var peak := 1.0
-	for value: float in histogram:
-		peak = maxf(peak, value)
-	var bin_width := chart.size.x / float(HISTOGRAM_BINS)
-	for bin in range(HISTOGRAM_BINS):
-		var height := chart.size.y * histogram[bin] / peak
-		draw_rect(Rect2(Vector2(chart.position.x + bin * bin_width, chart.end.y - height), Vector2(bin_width - 1.0, height)), ink(0.55))
-	draw_line(Vector2(chart.position.x, chart.end.y), chart.end, ink(0.25), 1.0)
-	pass
-
-
-func draw_matrix(area: Rect2) -> void:
-	var ts := text_size()
-	var columns: Array[float] = [0.0, 0.46, 0.62, 0.78]
-	var headers: Array[String] = ["SOURCE", "CALLS", "FAILS", "LOAD"]
-	for index in range(headers.size()):
-		mono(self, Vector2(area.position.x + area.size.x * columns[index], area.position.y + ts), headers[index], ts - 2, ink(0.4))
-	var names := ranked_tools()
-	var rows := maxi(int(area.size.y / row_height()) - 1, 1)
-	var busiest := 1.0
-	if not names.is_empty():
-		busiest = float(tool_stats[names[0]].x)
-	var max_chars := int(area.size.x * 0.44 / (ts * 0.6))
-	for row in range(mini(rows, names.size())):
-		var stat := tool_stats[names[row]]
-		var y := area.position.y + ts + row_height() * (row + 1)
-		mono(self, Vector2(area.position.x, y), clip_text(names[row], max_chars), ts - 1, ink(0.8))
-		mono(self, Vector2(area.position.x + area.size.x * columns[1], y), "%02d" % stat.x, ts - 1, ink(0.7))
-		mono(self, Vector2(area.position.x + area.size.x * columns[2], y), "%02d" % stat.y, ts - 1, tint(palette_error if stat.y > 0 else palette_ink, 0.7))
-		var chip := Rect2(Vector2(area.position.x + area.size.x * columns[3], y - ts * 0.8), Vector2(area.size.x * 0.2 * stat.x / busiest, ts * 0.95))
-		draw_rect(chip, tint(palette_hot if stat.y > 0 else palette_ink, 0.6))
-	pass
-
-
-func draw_sample_buffer(area: Rect2) -> void:
-	var ts := text_size()
-	var buffers: Array[PackedFloat32Array] = [reasoning_history, content_history, tool_history]
-	var labels: Array[String] = ["THINK", "WRITE", "TOOL"]
-	var colors: Array[Color] = [palette_violet, palette_ink, palette_hot]
-	var lane := area.size.y / 3.0
-	var left := area.position.x + ts * 3.6
-	var width := area.end.x - left
-	for lane_index in range(3):
-		var middle := area.position.y + lane * (lane_index + 0.5)
-		mono(self, Vector2(area.position.x, middle + ts * 0.35), labels[lane_index], ts - 2, ink(0.45))
-		draw_line(Vector2(left, middle), Vector2(area.end.x, middle), ink(0.1), 1.0)
-		var buffer := buffers[lane_index]
-		if buffer.size() < 2:
-			continue
-		var points := PackedVector2Array()
-		for index in range(buffer.size()):
-			var envelope := minf(buffer[index] * 2.2, 1.0) * lane * 0.45
-			var swing := sin(float(index) * 1.7 + clock * 5.0 + lane_index)
-			points.append(Vector2(left + width * index / float(buffer.size() - 1), middle - envelope * swing))
-		draw_polyline(points, tint(colors[lane_index], 0.8), 1.0, true)
-	pass
-
-
-func draw_dispatch(area: Rect2) -> void:
-	var ts := text_size()
-	var rows := maxi(int(area.size.y / row_height()), 1)
-	var bar_left := area.position.x + area.size.x * 0.34
-	var bar_width := area.size.x * 0.44
-	for row in range(rows):
-		var y := area.position.y + ts + row_height() * row
-		var track_index := tracks.size() - 1 - row
-		var bar := Rect2(Vector2(bar_left, y - ts * 0.7), Vector2(bar_width, ts * 0.7))
-		draw_rect(bar, ink(0.08))
-		if track_index < 0:
-			mono(self, Vector2(area.position.x, y), "agent-%02d" % (row + 1), ts - 1, ink(0.2))
-			continue
-		var track := tracks[track_index]
-		mono(self, Vector2(area.position.x, y), clip_text(track.name, int(area.size.x * 0.32 / (ts * 0.6))), ts - 1, ink(0.8))
-		var fill := 1.0
-		var color := palette_lime
-		var status := "%.1fs" % track.seconds(clock)
-		if track.is_running():
-			fill = 0.15 + 0.85 * fposmod(track.seconds(clock) * 0.5, 1.0)
-			color = palette_hot
-			status = "run " + status
-		elif track.failed:
-			color = palette_error
-		draw_rect(Rect2(bar.position, Vector2(bar.size.x * fill, bar.size.y)), tint(color, 0.7))
-		mono_right(self, Vector2(area.end.x, y), status, ts - 2, ink(0.6))
-	pass
-
-
-func draw_heat_index(area: Rect2) -> void:
-	var cell := Vector2(area.size.x / float(HEAT_COLUMNS), area.size.y / float(HEAT_ROWS))
-	for row in range(HEAT_ROWS):
-		for column in range(HEAT_COLUMNS):
-			var value := heat[row * HEAT_COLUMNS + column]
-			var color := palette_ink if value > 0.85 else palette_hot
-			draw_rect(Rect2(area.position + Vector2(column * cell.x, row * cell.y), cell - Vector2(1.0, 1.0)), tint(color, 0.05 + 0.8 * value))
-	pass
-
-
-## Ending: a scan line sweeps down and dims the deck behind it, like a console powering off.
-func draw_end_scan(view: Vector2) -> void:
-	if not ending:
-		return
-	var y := view.y * end_progress
-	draw_rect(Rect2(Vector2.ZERO, Vector2(view.x, y)), Color(palette_back, 0.55 * end_progress))
-	draw_line(Vector2(0.0, y), Vector2(view.x, y), VisualColor.stroke(palette_ink, 0.8 * (1.0 - end_progress)), 2.0)
-	pass
