@@ -14,14 +14,17 @@ uniform float failure_tint : hint_range(0.0, 1.0) = 0.0;
 uniform float toolbar_height_px = 48.0;
 uniform vec4 accent_color : source_color = vec4(0.3, 0.7, 1.0, 1.0);
 uniform vec4 error_color : source_color = vec4(1.0, 0.35, 0.35, 1.0);
+uniform float phosphor_gain : hint_range(0.0, 1.0) = 1.0;
+uniform float overlay_gain : hint_range(0.0, 1.0) = 1.0;
 
 float luminance(vec3 color) {
 	return dot(color, vec3(0.299, 0.587, 0.114));
 }
 
-vec3 phosphor_tint(vec3 accent, float failure) {
+vec3 phosphor_tint(vec3 accent, float failure, float gain) {
 	vec3 crt = mix(vec3(accent.g * 0.55 + 0.12, accent.g * 0.95 + 0.55, accent.b * 0.35 + 0.08), accent, 0.42);
-	return mix(crt, error_color.rgb, failure);
+	vec3 tinted = mix(accent, crt, gain);
+	return mix(tinted, error_color.rgb, failure);
 }
 
 vec2 beam_channels(float phase, float ratio, float reasoning, float content, float beam) {
@@ -60,14 +63,14 @@ void fragment() {
 
 	vec3 result = source;
 	if (effect_live) {
-		vec3 glow_color = phosphor_tint(accent_color.rgb, failure_tint);
+		vec3 glow_color = phosphor_tint(accent_color.rgb, failure_tint, phosphor_gain);
 		vec2 disp = beam_displacement(beam_phase, frequency_ratio, reasoning_drive, content_drive, beam_energy, SCREEN_PIXEL_SIZE);
 		disp *= 1.0 + phosphor_burst * 0.55;
 
 		vec2 scope_uv = clamp(SCREEN_UV - disp, vec2(0.0), vec2(1.0));
 		vec3 scope = texture(screen_texture, scope_uv).rgb;
 
-		float persistence = active * (0.34 + phosphor_burst * 0.38);
+		float persistence = active * overlay_gain * (0.34 + phosphor_burst * 0.38);
 		int trail_taps = phosphor_burst > 0.12 ? 4 : 3;
 		vec3 phosphor_accum = vec3(0.0);
 		for (int tap = 1; tap <= 4; tap++) {
@@ -82,15 +85,15 @@ void fragment() {
 			phosphor_accum += abs(trail_sample - scope) * weight;
 		}
 
-		result = mix(result, scope, active);
+		result = mix(result, scope, active * overlay_gain);
 
 		float edge = clamp(abs(luminance(source) - luminance(scope)) * 3.2, 0.0, 1.0);
 		float streak = clamp(length(disp) * viewport_px.x * 0.08, 0.0, 1.0);
 		float glow = edge * (0.14 + phosphor_burst * 0.22) + streak * active * (0.08 + phosphor_burst * 0.12);
 		glow += clamp(length(phosphor_accum) * 2.4, 0.0, 1.0) * (0.10 + phosphor_burst * 0.14);
-		result += glow_color * glow;
+		result += glow_color * glow * phosphor_gain;
 
-		float grid = graticule_mask(SCREEN_UV, SCREEN_PIXEL_SIZE) * active * (0.20 + phosphor_burst * 0.16);
+		float grid = graticule_mask(SCREEN_UV, SCREEN_PIXEL_SIZE) * active * overlay_gain * (0.20 + phosphor_burst * 0.16);
 		result = mix(result, glow_color, grid);
 	}
 

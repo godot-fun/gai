@@ -45,6 +45,12 @@ static func phase_speed_rest_when_motion_is_idle_test() -> void:
 	pass
 
 
+static func light_theme_presentation_is_dimmer_test() -> void:
+	assert(PHOSPHOR_SCOPE_SCRIPT.LIGHT_PHOSPHOR_GAIN < PHOSPHOR_SCOPE_SCRIPT.LIGHT_OVERLAY_GAIN)
+	assert(PHOSPHOR_SCOPE_SCRIPT.LIGHT_PHOSPHOR_GAIN < 0.5)
+	pass
+
+
 static func tool_phase_kick_is_stable_for_name_test() -> void:
 	var first: float = PHOSPHOR_SCOPE_SCRIPT.phase_kick_for_tool("grep")
 	var second: float = PHOSPHOR_SCOPE_SCRIPT.phase_kick_for_tool("grep")

@@ -13,6 +13,8 @@ const PHOSPHOR_BURST_DECAY_PER_SECOND := 2.6
 const FAILURE_DECAY_PER_SECOND := 3.4
 const IDLE_EPSILON := 0.001
 const FREQUENCY_RATIOS: Array[float] = [1.5, 1.25]
+const LIGHT_PHOSPHOR_GAIN := 0.34
+const LIGHT_OVERLAY_GAIN := 0.46
 
 var screen_rect: ColorRect
 var scope_material: ShaderMaterial
@@ -39,9 +41,8 @@ func _ready() -> void:
 	scope_material.shader = SCOPE_SHADER
 	scope_material.set_shader_parameter("toolbar_height_px", float(AgentLayout.TOOLBAR_HEIGHT))
 	scope_material.set_shader_parameter("max_offset_px", MAX_OFFSET_PX)
-	scope_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
-	scope_material.set_shader_parameter("error_color", Colors.error)
 	screen_rect.material = scope_material
+	update_theme_colors()
 	add_child(screen_rect)
 	gdf.events.theme_changed.connect(update_theme_colors)
 	gdf.events.theme_color_changed.connect(update_theme_colors)
@@ -198,8 +199,18 @@ func apply_shader_state() -> void:
 func update_theme_colors() -> void:
 	if scope_material == null:
 		return
-	scope_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
-	scope_material.set_shader_parameter("error_color", Colors.error)
+	var accent := ThemeColor.accent_theme_color()
+	var error := Colors.error
+	if ThemeColor.is_dark_theme():
+		scope_material.set_shader_parameter("accent_color", accent)
+		scope_material.set_shader_parameter("error_color", error)
+		scope_material.set_shader_parameter("phosphor_gain", 1.0)
+		scope_material.set_shader_parameter("overlay_gain", 1.0)
+	else:
+		scope_material.set_shader_parameter("accent_color", VisualColor.appearance_color(accent, 0.02, 0.88, 0.92))
+		scope_material.set_shader_parameter("error_color", VisualColor.appearance_color(error, 0.0, 1.0, 1.0))
+		scope_material.set_shader_parameter("phosphor_gain", LIGHT_PHOSPHOR_GAIN)
+		scope_material.set_shader_parameter("overlay_gain", LIGHT_OVERLAY_GAIN)
 	pass
 
 
