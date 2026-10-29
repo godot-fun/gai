@@ -3,7 +3,7 @@ render_mode blend_disabled;
 
 // Damped wave equation on a height field. R = height, G = vertical velocity.
 // Clamped neighbor reads give reflecting window edges.
-#include "res://agent/ui/visuals/SimulationField.gdshaderinc"
+#include "res://agent/ui/visuals/simulation/SimulationField.gdshaderinc"
 
 uniform float wave_speed : hint_range(0.0, 0.5) = 0.45;
 uniform float damping : hint_range(0.9, 1.0) = 0.995;

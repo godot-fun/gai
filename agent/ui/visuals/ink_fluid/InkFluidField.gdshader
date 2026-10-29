@@ -4,7 +4,7 @@ render_mode blend_disabled;
 // Stable-fluids solver in one RGBA field: RG = velocity in cells per step, B = pressure,
 // A = signed ink (positive warm, negative cool). Pass kinds: advect + impulses, Jacobi pressure
 // iterations with divergence computed from the untouched velocity, then projection.
-#include "res://agent/ui/visuals/SimulationField.gdshaderinc"
+#include "res://agent/ui/visuals/simulation/SimulationField.gdshaderinc"
 
 const int PASS_ADVECT = 0;
 const int PASS_PRESSURE = 1;

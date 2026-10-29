@@ -3,7 +3,7 @@ render_mode blend_disabled;
 
 // Gray-Scott reaction-diffusion. R = substrate A, G = catalyst B. Impulses seed catalyst;
 // feed/kill pick the regime (maze vs coral vs dissolve) and growth scales the time step.
-#include "res://agent/ui/visuals/SimulationField.gdshaderinc"
+#include "res://agent/ui/visuals/simulation/SimulationField.gdshaderinc"
 
 uniform float feed : hint_range(0.0, 0.1) = 0.037;
 uniform float kill : hint_range(0.0, 0.1) = 0.06;

@@ -5,7 +5,7 @@ render_mode blend_disabled;
 // cling; heavier cells pour all but a thin film into one cell below, chosen by a banded hash so
 // rivulets wander. The move is decided by the giving cell, so mass is conserved.
 // Wet trails wipe the fog, and fog creeps back as they evaporate.
-#include "res://agent/ui/visuals/SimulationField.gdshaderinc"
+#include "res://agent/ui/visuals/simulation/SimulationField.gdshaderinc"
 
 uniform float stick_mass = 0.4;
 uniform float film_mass = 0.015;

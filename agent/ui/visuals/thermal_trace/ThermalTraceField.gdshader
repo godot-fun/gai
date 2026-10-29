@@ -4,7 +4,7 @@ render_mode blend_disabled;
 // Heat from real interface activity. R = heat, G = last sensed luminance. Pass 0 compares the
 // previous root frame with the stored luminance and adds the difference as heat; later passes
 // diffuse it. The display only shifts chroma, so frame luminance stays free of feedback.
-#include "res://agent/ui/visuals/SimulationField.gdshaderinc"
+#include "res://agent/ui/visuals/simulation/SimulationField.gdshaderinc"
 
 const int PASS_SENSE = 0;
 
