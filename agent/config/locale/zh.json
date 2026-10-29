@@ -155,7 +155,28 @@
       "go_black": "黑 {} 目",
       "go_white": "白 {} 目",
       "go_komi": "贴目 +{}",
-      "abacus_preview": "+{} 待拨"
+      "abacus_preview": "+{} 待拨",
+      "deck_title": "调查控制台",
+      "deck_session": "会话 {}",
+      "deck_reasoning": "推理路径",
+      "deck_writing": "组织回答",
+      "deck_dispatch": "工具调度",
+      "deck_idle": "待命",
+      "deck_closing": "收尾中",
+      "deck_tokens": "词元",
+      "deck_turns": "轮次",
+      "deck_tools": "工具",
+      "deck_active": "进行中",
+      "deck_errors": "错误",
+      "deck_feed": "调查日志",
+      "deck_solver": "检测 / 粒子求解",
+      "deck_workspace": "工具工作区",
+      "deck_field": "流式 / 参考场",
+      "deck_matrix": "来源 / 提取矩阵",
+      "deck_buffer": "校验 / 采样缓冲",
+      "deck_dispatch_panel": "代理 / 调度",
+      "deck_index": "词元 / 参考索引",
+      "deck_summary": "{} / {} 工具 · {} 进行中"
     },
     "toolbar": {
       "title": "代码智能体工作区",
@@ -232,7 +253,8 @@
       "visual_falling_sand": "沙漏沉积",
       "visual_go_board": "围棋",
       "visual_clockwork": "机械表机芯",
-      "visual_abacus": "算盘"
+      "visual_abacus": "算盘",
+      "visual_investigation_deck": "调查控制台"
     },
     "sidebar": {
       "new_session": "+ 新建智能体",

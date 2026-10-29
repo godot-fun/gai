@@ -155,7 +155,28 @@
       "go_black": "BLACK {}",
       "go_white": "WHITE {}",
       "go_komi": "KOMI +{}",
-      "abacus_preview": "+{} QUEUED"
+      "abacus_preview": "+{} QUEUED",
+      "deck_title": "INVESTIGATION DECK",
+      "deck_session": "SESSION {}",
+      "deck_reasoning": "REASONING PATHS",
+      "deck_writing": "COMPOSING ANSWER",
+      "deck_dispatch": "TOOL DISPATCH",
+      "deck_idle": "STANDBY",
+      "deck_closing": "CLOSING RUN",
+      "deck_tokens": "TOKENS",
+      "deck_turns": "TURNS",
+      "deck_tools": "TOOLS",
+      "deck_active": "ACTIVE",
+      "deck_errors": "ERRORS",
+      "deck_feed": "INVESTIGATION FEED",
+      "deck_solver": "DETECTION / PARTICLE SOLVER",
+      "deck_workspace": "TOOL WORKSPACE",
+      "deck_field": "STREAM / REFERENCE FIELD",
+      "deck_matrix": "SOURCE / EXTRACTION MATRIX",
+      "deck_buffer": "VALIDATION / SAMPLE BUFFER",
+      "deck_dispatch_panel": "AGENTS / DISPATCH",
+      "deck_index": "TOKEN / REFERENCE INDEX",
+      "deck_summary": "{} / {} TOOLS · {} RUNNING"
     },
     "toolbar": {
       "title": "Code Agent Workspace",
@@ -232,7 +253,8 @@
       "visual_falling_sand": "Falling Sand",
       "visual_go_board": "Go Board",
       "visual_clockwork": "Watch Movement",
-      "visual_abacus": "Abacus"
+      "visual_abacus": "Abacus",
+      "visual_investigation_deck": "Investigation Deck"
     },
     "sidebar": {
       "new_session": "+ New Agent",
