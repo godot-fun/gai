@@ -12,16 +12,28 @@ static func flash_peaks_at_zero_phase_test() -> void:
 	assert(is_equal_approx(FireflySync.flash_amount(TAU), 1.0))
 	assert(FireflySync.flash_amount(PI) < 0.001)
 	assert(FireflySync.flash_amount(0.2) > FireflySync.flash_amount(0.6))
+	assert(FireflySync.flash_amount(TAU - 0.5) > 0.0)
+	assert(FireflySync.flash_amount(0.5) < 1.0)
+	assert(FireflySync.flash_amount(1.5) > FireflySync.flash_amount(TAU - 1.5))
 	pass
 
 
 func start_hatches_scattered_swarm_below_toolbar_test() -> void:
 	var effect := FireflySync.new()
 	effect.size = Vector2(1280.0, 720.0)
+	effect.rng.seed = 7
 	effect.on_agent_start(1)
 	assert(effect.positions.size() == FireflySync.START_FLIES)
 	assert(effect.phases.size() == effect.positions.size() and effect.frequencies.size() == effect.positions.size())
+	assert(effect.size_scales.size() == effect.positions.size())
 	assert(effect.coupling == FireflySync.START_COUPLING)
+	var has_small := false
+	var has_large := false
+	for size_scale: float in effect.size_scales:
+		assert(size_scale >= FireflySync.MIN_SIZE_SCALE and size_scale <= FireflySync.MAX_SIZE_SCALE)
+		has_small = has_small or size_scale < 0.85
+		has_large = has_large or size_scale > 1.15
+	assert(has_small and has_large)
 	for position: Vector2 in effect.positions:
 		assert(position.y > float(AgentLayout.TOOLBAR_HEIGHT))
 	assert(effect.coherence() < 0.5)

@@ -10,7 +10,7 @@ extends VisualEffect
 
 const MAX_FLIES := 160
 const START_FLIES := 90
-const BASE_FREQUENCY_HZ := 0.85
+const BASE_FREQUENCY_HZ := 0.42
 const FREQUENCY_SPREAD_HZ := 0.1
 ## Side of a neighbor cell; each firefly couples to the 3x3 cells around its own.
 const COUPLING_RADIUS := 150.0
@@ -31,9 +31,12 @@ const FINALE_COHERENCE := 0.93
 const FINALE_LIMIT_MSEC := 2600
 const FINALE_HOLD_MSEC := 320
 const ERROR_END_MSEC := 600
-## Gaussian half-width of a flash in radians of phase around zero.
-const FLASH_WIDTH := 0.32
+## A firefly brightens before phase zero, then fades more slowly after the peak.
+const FLASH_RISE_WIDTH := 1.35
+const FLASH_FADE_WIDTH := 2.25
 const REST_GLOW := 0.1
+const MIN_SIZE_SCALE := 0.65
+const MAX_SIZE_SCALE := 1.35
 const WANDER_ACCEL := 60.0
 const CRUISE_SPEED := 34.0
 const REASONING_SPEED_SCALE := 0.55
@@ -59,6 +62,7 @@ var velocities: PackedVector2Array = PackedVector2Array()
 var phases: PackedFloat32Array = PackedFloat32Array()
 var frequencies: PackedFloat32Array = PackedFloat32Array()
 var hues: PackedFloat32Array = PackedFloat32Array()
+var size_scales: PackedFloat32Array = PackedFloat32Array()
 var reds: PackedFloat32Array = PackedFloat32Array()
 var lanterns: Array[Lantern] = []
 ## (x, y, progress, failed)
@@ -102,6 +106,7 @@ func on_agent_start(_session_id: int) -> void:
 	phases.clear()
 	frequencies.clear()
 	hues.clear()
+	size_scales.clear()
 	reds.clear()
 	lanterns.clear()
 	bursts.clear()
@@ -215,6 +220,7 @@ func hatch(position: Vector2, phase: float) -> bool:
 	phases.append(phase)
 	frequencies.append(TAU * (BASE_FREQUENCY_HZ + rng.randf_range(-FREQUENCY_SPREAD_HZ, FREQUENCY_SPREAD_HZ)))
 	hues.append(rng.randf_range(-0.04, 0.04))
+	size_scales.append(rng.randf_range(MIN_SIZE_SCALE, MAX_SIZE_SCALE))
 	reds.append(0.0)
 	return true
 
@@ -398,7 +404,9 @@ func coherence() -> float:
 
 static func flash_amount(phase: float) -> float:
 	var offset := wrapf(phase + PI, 0.0, TAU) - PI
-	return exp(-offset * offset / (2.0 * FLASH_WIDTH * FLASH_WIDTH))
+	if offset < 0.0:
+		return smoothstep(-FLASH_RISE_WIDTH, 0.0, offset)
+	return 1.0 - smoothstep(0.0, FLASH_FADE_WIDTH, offset)
 
 
 func _draw() -> void:
@@ -408,9 +416,10 @@ func _draw() -> void:
 		var glow := REST_GLOW + (1.0 - REST_GLOW) * flash
 		var color := VisualColor.shift_hsv(fly_color, hues[index]).lerp(Colors.error, maxf(reds[index], failure_tint * 0.5))
 		var position := positions[index]
-		draw_circle(position, (5.0 + 22.0 * flash) * bloom, VisualColor.stroke(color, 0.16 * glow), true, -1.0, true)
-		draw_circle(position, 2.4 + 4.0 * flash, VisualColor.stroke(color, 0.5 * glow), true, -1.0, true)
-		draw_circle(position, 1.6, VisualColor.stroke(color.lerp(Color.WHITE, 0.5 * flash), 0.3 + 0.6 * glow), true, -1.0, true)
+		var size_scale := size_scales[index]
+		draw_circle(position, (5.0 + 22.0 * flash) * bloom * size_scale, VisualColor.stroke(color, 0.16 * glow), true, -1.0, true)
+		draw_circle(position, (2.4 + 4.0 * flash) * size_scale, VisualColor.stroke(color, 0.5 * glow), true, -1.0, true)
+		draw_circle(position, 1.6 * size_scale, VisualColor.stroke(color.lerp(Color.WHITE, 0.5 * flash), 0.3 + 0.6 * glow), true, -1.0, true)
 	for lantern: Lantern in lanterns:
 		var pulse := flash_amount(lantern.phase)
 		draw_circle(lantern.center, 16.0 + 30.0 * pulse, VisualColor.stroke(lantern_color, 0.06 + 0.14 * pulse), true, -1.0, true)
