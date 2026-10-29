@@ -44,6 +44,9 @@ const FILL_LIMIT := 0.22
 const DRAIN_RATE := 0.03
 const FLIP_MSEC := 1300
 const FALLBACK_FIELD := Vector2i(427, 240)
+## Keep the interface, including chat text, readable through the sand layer.
+const DARK_SAND_OPACITY := 0.52
+const LIGHT_SAND_OPACITY := 0.48
 
 var faucets: Dictionary[String, Vector2] = {}
 var content_flow: float = 0.0
@@ -234,7 +237,7 @@ func update_theme_presentation() -> void:
 	display_material.set_shader_parameter("error_color", Colors.error)
 	display_material.set_shader_parameter("pale_color", Color(0.86, 0.82, 0.72) if dark else Color(0.62, 0.57, 0.48))
 	display_material.set_shader_parameter("divider_color", Color(0.32, 0.29, 0.26) if dark else Color(0.25, 0.22, 0.2))
-	display_material.set_shader_parameter("sand_opacity", 0.82 if dark else 0.76)
+	display_material.set_shader_parameter("sand_opacity", DARK_SAND_OPACITY if dark else LIGHT_SAND_OPACITY)
 	pass
 
 

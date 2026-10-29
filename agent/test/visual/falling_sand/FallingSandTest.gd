@@ -53,6 +53,12 @@ func falling_sand_covers_the_toolbar_test() -> void:
 	pass
 
 
+static func falling_sand_keeps_the_interface_readable_test() -> void:
+	assert(is_equal_approx(FallingSand.DARK_SAND_OPACITY, 0.52))
+	assert(is_equal_approx(FallingSand.LIGHT_SAND_OPACITY, 0.48))
+	pass
+
+
 func reasoning_sifts_a_pale_row_test() -> void:
 	var effect := new_sand()
 	effect.on_message_update(1, "thinking about the plan", OpenAiClient.STREAM_KIND_REASONING)
