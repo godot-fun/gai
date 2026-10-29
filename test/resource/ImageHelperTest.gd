@@ -1,5 +1,5 @@
 func external_image_test() -> void:
-	var path := ProjectSettings.globalize_path("res://icon.svg")
+	var path: String = ProjectSettings.globalize_path("res://icon.svg")
 	var texture := ResourceHelper.load_external_file(path) as ImageTexture
 	assert(texture != null)
 	assert(texture.get_width() > 0)
@@ -96,7 +96,7 @@ func save_image_test() -> void:
 	image.fill(Color.RED)
 	var base_path := "user://image_helper_save_image_test"
 	for extension in [ImageHelper.jpg, ImageHelper.png, ImageHelper.webp]:
-		var path := base_path + "." + extension
+		var path: String = base_path + "." + extension
 		var source_bytes := image.save_jpg_to_buffer() if extension == ImageHelper.jpg else image.save_png_to_buffer() if extension == ImageHelper.png else image.save_webp_to_buffer()
 		assert(ImageHelper.save_image(source_bytes, ProjectSettings.globalize_path(path)) == OK)
 		assert(ImageHelper.decode_image(FileAccess.get_file_as_bytes(path)).format == extension)

@@ -62,7 +62,7 @@ func palette_follows_accent_theme_color_test() -> void:
 	assert(CyberCommandDeck.neon_magenta() != CyberCommandDeck.neon_cyan())
 	assert(CyberCommandDeck.pod_color(CyberCommandDeck.PodState.EXECUTING) == ThemeColor.accent_theme_color())
 	assert(CyberCommandDeck.pod_color(CyberCommandDeck.PodState.CONNECTING) == CyberCommandDeck.neon_magenta())
-	assert(is_equal_approx(CyberCommandDeck.hud(Color.WHITE, 0.1).a, 0.1))
+	assert(is_equal_approx(VisualColor.stroke(Color.WHITE, 0.1).a, 0.1))
 	ThemeColor.theme_color = Color(1.0, 0.35, 0.05)
 	ThemeColor.refresh_derived_colors()
 	assert(CyberCommandDeck.neon_cyan() == ThemeColor.accent_theme_color())
@@ -75,7 +75,7 @@ func palette_follows_accent_theme_color_test() -> void:
 	assert(CyberCommandDeck.neon_blue() != light_cyan)
 	assert(CyberCommandDeck.neon_magenta() != light_cyan)
 	assert(CyberCommandDeck.pod_color(CyberCommandDeck.PodState.EXECUTING) == light_cyan)
-	assert(CyberCommandDeck.hud(Color.WHITE, 0.1).a > 0.1)
+	assert(VisualColor.stroke(Color.WHITE, 0.1).a > 0.1)
 	ThemeColor.current_theme = original_theme
 	ThemeColor.theme_color = original
 	ThemeColor.refresh_derived_colors()
