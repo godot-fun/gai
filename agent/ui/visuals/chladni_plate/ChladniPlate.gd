@@ -142,18 +142,14 @@ func current_drive_target() -> float:
 
 
 func apply_field_state() -> void:
-	var viewport_height := get_viewport().get_visible_rect().size.y
-	var plate_top := clampf(float(AgentLayout.TOOLBAR_HEIGHT) / viewport_height, 0.0, 0.3) if viewport_height > 0.0 else 0.0
 	chain.set_param("mode_a", mode_a)
 	chain.set_param("mode_b", mode_b)
 	chain.set_param("mode_mix", mode_mix)
-	chain.set_param("plate_top", plate_top)
 	chain.set_param("drive", drive)
 	chain.set_param("scatter", scatter)
 	display_material.set_shader_parameter("mode_a", mode_a)
 	display_material.set_shader_parameter("mode_b", mode_b)
 	display_material.set_shader_parameter("mode_mix", mode_mix)
-	display_material.set_shader_parameter("plate_top", plate_top)
 	display_material.set_shader_parameter("drive", drive)
 	pass
 

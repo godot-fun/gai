@@ -1,15 +1,12 @@
-// Standing wave shared by the sand field and the display. The plate is the window body below the
-// toolbar, kept square around the center so nodal figures stay symmetric on wide windows.
+// Standing wave shared by the sand field and the display. The plate is the whole window, kept
+// square around the center so nodal figures stay symmetric on wide windows.
 // mode = (n, m, sign) for u = cos(n*pi*x)cos(m*pi*y) + sign*cos(m*pi*x)cos(n*pi*y).
 uniform vec3 mode_a = vec3(1.0, 2.0, -1.0);
 uniform vec3 mode_b = vec3(1.0, 2.0, -1.0);
 uniform float mode_mix = 1.0;
-uniform float plate_top = 0.05;
 
 vec2 plate_point(vec2 uv, float view_aspect) {
-	float body_height = max(1.0 - plate_top, 0.001);
-	float body_aspect = view_aspect / body_height;
-	return vec2(0.5 + (uv.x - 0.5) * body_aspect, (uv.y - plate_top) / body_height);
+	return vec2(0.5 + (uv.x - 0.5) * view_aspect, uv.y);
 }
 
 float chladni_mode(vec2 p, vec3 mode) {

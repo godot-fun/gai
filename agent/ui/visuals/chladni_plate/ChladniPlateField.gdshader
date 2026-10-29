@@ -4,7 +4,7 @@ render_mode blend_disabled;
 // Sand on a vibrating plate. R = sand density, G = local agitation.
 // Sand slides down the gradient of the squared amplitude toward the nodal lines and is kicked
 // around where the plate shakes. Every face carries one upwind flux shared by both cells, so the
-// flow moves sand without creating or losing it. The toolbar strip is a wall with no sand.
+// flow moves sand without creating or losing it. The window edges are walls.
 #include "res://agent/ui/visuals/simulation/SimulationField.gdshaderinc"
 #include "res://agent/ui/visuals/chladni_plate/ChladniMode.gdshaderinc"
 
@@ -23,7 +23,7 @@ const float MAX_SAND = 14.0;
 const float REFERENCE_FREQUENCY = 6.0;
 
 bool is_wall(vec2 uv) {
-	return uv.y < plate_top || uv.x < 0.0 || uv.x > 1.0 || uv.y > 1.0;
+	return uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0;
 }
 
 float face_noise(vec2 face) {
@@ -51,9 +51,7 @@ float face_outflow(vec2 uv, vec4 here, vec2 cells, float here_amplitude, vec2 fa
 
 void fragment() {
 	vec2 cell = floor(UV / texel);
-	if (is_wall(UV)) {
-		COLOR = vec4(0.0, 0.0, 0.0, 1.0);
-	} else if (reset) {
+	if (reset) {
 		COLOR = vec4(0.8 + field_hash(cell) * 0.3, 0.0, 0.0, 1.0);
 	} else {
 		vec4 here = state_at(UV);
