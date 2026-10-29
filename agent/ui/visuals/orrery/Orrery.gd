@@ -1,30 +1,6 @@
 class_name Orrery
 extends VisualEffect
 
-## Orrery: a monochrome HALOFLUX-style run visual; the ring carries live stats and task readouts.
-## The whole view is a three-layer orrery around a hub left of the view; the ring carries every
-## readout (run stats, feed, tool calls, heat / histogram / waveform histories).
-##
-## Stage layers (drawn by [OrreryStage], all radii scale with `zoom` about the hub)
-## - Disc: a woven web of rim-to-rim quadratic curves (one base layer plus three `layer_env` pulse
-##   layers), `runners` gliding along those curves, and node markers; it spins on `inner_angle`.
-##   `comets` are bundles of parallel strokes that sweep out to the ring; their impact flashes the
-##   ring (`ring_flashes`) and launches an outward pulse, so light visibly travels disc → ring → beams.
-## - Ring: the dashboard annulus; [OrreryScreen] tiles painted in a [SubViewport] wrap it.
-## - Beams: radial light shafts and emitted `pulses` beyond the ring.
-## Ring and beams turn together on `outer_angle`. Reasoning zooms into the disc so the ring slides
-## right; tool dispatch zooms back out to show the beams.
-##
-## Design adapted from HALOFLUX by Ryder191 (RYDER CODE / Ms MAIKEBAIs CAT),
-## https://github.com/Ryder191/haloflux, licensed PolyForm Noncommercial 1.0.0 — noncommercial use only.
-##
-## Layout (maintainers)
-## - `stage_rect` is the full view; [OrreryScreen] lays the panels out down one ring tile.
-## - A faint backdrop and `OVERLAY_STRENGTH` keep the chat readable underneath.
-##
-## Data: hooks only mutate counters, ring buffers, and the feed; `step_orrery` advances time. Drawing
-## reads that state, so tests can drive hooks and steps without a renderer.
-
 enum Tag { RUN, TURN, THINK, WRITE, TOOL, OK, FAIL }
 
 ## Section titles of the ring tile's eight run panels, in tile order.
