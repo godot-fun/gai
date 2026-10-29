@@ -23,6 +23,8 @@ const KEEP_DIRECTION_CHANCE := 0.72
 const CLEAR_SECONDS := 0.7
 const BURST_SECONDS := 0.6
 const END_HOLD_MSEC := 450
+## Let the interface remain readable beneath the pipes.
+const PIPES_OPACITY := 0.38
 const LIGHT_DIR := Vector2(-0.6, -0.8)
 const DIRECTIONS: Array[Vector3i] = [Vector3i(1, 0, 0), Vector3i(-1, 0, 0), Vector3i(0, 1, 0), Vector3i(0, -1, 0), Vector3i(0, 0, 1), Vector3i(0, 0, -1)]
 
@@ -317,7 +319,7 @@ func radius_at(point: Vector3, scale: float) -> float:
 func _draw() -> void:
 	if size.x < 64.0 or size.y < 64.0:
 		return
-	var alpha := clear_fade if clear_fade > 0.0 else 1.0
+	var alpha := (clear_fade if clear_fade > 0.0 else 1.0) * PIPES_OPACITY
 	for index in range(item_kinds.size()):
 		var color := Color(item_colors[index], alpha)
 		if item_kinds[index] == Item.BALL:
@@ -327,7 +329,7 @@ func _draw() -> void:
 	for burst: Vector4 in bursts:
 		var t := burst.z / BURST_SECONDS
 		var burst_color := Colors.error if burst.w > 0.5 else Color.WHITE
-		draw_arc(Vector2(burst.x, burst.y), 8.0 + t * 46.0, 0.0, TAU, 40, VisualColor.stroke(burst_color, 0.55 * (1.0 - t)), 2.0 + 3.0 * (1.0 - t), true)
+		draw_arc(Vector2(burst.x, burst.y), 8.0 + t * 46.0, 0.0, TAU, 40, VisualColor.stroke(burst_color, 0.55 * (1.0 - t) * PIPES_OPACITY), 2.0 + 3.0 * (1.0 - t), true)
 	pass
 
 

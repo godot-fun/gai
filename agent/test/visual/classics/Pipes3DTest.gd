@@ -1,6 +1,11 @@
 extends RefCounted
 
 
+static func pipes_keep_the_interface_readable_test() -> void:
+	assert(is_equal_approx(Pipes3D.PIPES_OPACITY, 0.38))
+	pass
+
+
 func pipes_grow_without_crossing_test() -> void:
 	var effect := Pipes3D.new()
 	effect.size = Vector2(1280.0, 720.0)

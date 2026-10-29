@@ -1,6 +1,11 @@
 extends RefCounted
 
 
+static func doom_fire_keeps_the_interface_readable_test() -> void:
+	assert(is_equal_approx(DoomFire.FIRE_OPACITY, 0.38))
+	pass
+
+
 func fire_stream_stokes_taller_flames_test() -> void:
 	var effect := DoomFire.new()
 	effect.on_agent_start(1)

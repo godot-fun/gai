@@ -31,6 +31,8 @@ const ERROR_DECAY_PER_SECOND := 0.25
 const END_SHRINK_PER_SECOND := 0.55
 const END_SETTLE_MSEC := 1600
 const PRESENCE_PER_SECOND := 3.0
+## Preserve readability of the interface beneath the refractive wax.
+const LAMP_OPACITY := 0.38
 
 
 class Blob extends RefCounted:
@@ -282,6 +284,7 @@ func update_theme_presentation() -> void:
 	lava_material.set_shader_parameter("error_color", Colors.error)
 	lava_material.set_shader_parameter("light_mode", 0.0 if dark else 1.0)
 	lava_material.set_shader_parameter("wax_opacity", 0.62 if dark else 0.55)
+	lava_material.set_shader_parameter("lamp_opacity", LAMP_OPACITY)
 	pass
 
 

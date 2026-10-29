@@ -23,6 +23,8 @@ const FLARE_WIDTH := 0.035
 const FLARE_RAMP_PER_SECOND := 2.5
 const FIREBALL_RADIUS := 0.028
 const ERROR_FIREBALL_RADIUS := 0.045
+## Keep interface text legible beneath the fire, even at its hottest.
+const FIRE_OPACITY := 0.38
 
 
 var flares: Dictionary[String, Vector2] = {}
@@ -151,4 +153,5 @@ func update_theme_presentation() -> void:
 		return
 	display_material.set_shader_parameter("error_color", Colors.error)
 	display_material.set_shader_parameter("light_mode", 0.0 if ThemeColor.is_dark_theme() else 1.0)
+	display_material.set_shader_parameter("fire_opacity", FIRE_OPACITY)
 	pass

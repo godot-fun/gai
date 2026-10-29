@@ -14,6 +14,7 @@ uniform float light_mode : hint_range(0.0, 1.0) = 0.0;
 uniform float hue_spread = 0.5;
 uniform float refraction_px = 26.0;
 uniform float wax_opacity : hint_range(0.0, 1.0) = 0.62;
+uniform float lamp_opacity : hint_range(0.0, 1.0) = 0.38;
 uniform vec4 accent_color : source_color = vec4(1.0, 0.45, 0.25, 1.0);
 uniform vec4 error_color : source_color = vec4(1.0, 0.3, 0.3, 1.0);
 
@@ -81,10 +82,10 @@ void fragment() {
 			blob_color = mix(refracted, core, wax_opacity + thickness * 0.2);
 			blob_color += wax * fresnel * 0.55 + vec3(spec * 0.9) + wax * glow * 0.5;
 		}
-		result = mix(source, blob_color, inside);
+		result = mix(source, blob_color, inside * lamp_opacity);
 		if (light_mode < 0.5) {
 			float halo = smoothstep(0.35, 1.0, field) * (1.0 - inside);
-			result += wax * halo * (0.16 + glow * 0.3);
+			result += wax * halo * (0.16 + glow * 0.3) * lamp_opacity;
 		}
 		result = mix(source, result, presence);
 	}

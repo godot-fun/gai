@@ -1,6 +1,11 @@
 extends RefCounted
 
 
+static func lava_lamp_keeps_the_interface_readable_test() -> void:
+	assert(is_equal_approx(LavaLamp.LAMP_OPACITY, 0.38))
+	pass
+
+
 func lava_start_fills_the_lamp_test() -> void:
 	var effect := LavaLamp.new()
 	effect.size = Vector2(1280.0, 720.0)
