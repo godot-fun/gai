@@ -303,9 +303,9 @@ func ensure_layout() -> void:
 	pass
 
 
-## The keyboard hangs below the app toolbar, so its keys never cover the toolbar buttons.
+## The keyboard starts at the top edge so the rhythm overlay covers the complete window.
 func keyboard_rect() -> Rect2:
-	return Rect2(0.0, float(AgentLayout.TOOLBAR_HEIGHT), size.x, clampf(size.y * 0.18, MIN_KEYBOARD_HEIGHT, MAX_KEYBOARD_HEIGHT))
+	return Rect2(0.0, 0.0, size.x, clampf(size.y * 0.18, MIN_KEYBOARD_HEIGHT, MAX_KEYBOARD_HEIGHT))
 
 
 func hit_y() -> float:
@@ -358,7 +358,7 @@ func draw_keyboard() -> void:
 	# A pressed key has to read brighter than its neighbours in both themes, so the dark palette
 	# lifts the accent instead of tinting the key with a darker color.
 	var press_fill := Color(accent.lightened(0.42), 0.38) if light_theme else Color(accent.lightened(0.70), 0.90)
-	# Chassis lip: 5px on the sides and below, so it never tints the toolbar above the keys.
+	# Chassis lip: 5px on the sides and below, leaving the top edge flush with the window.
 	draw_rect(Rect2(keyboard.position - Vector2(5.0, 0.0), keyboard.size + Vector2(10.0, 5.0)), chassis_color, true)
 	var label_font := Fonts.medium()
 	for key_index in range(WHITE_KEY_COUNT):

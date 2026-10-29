@@ -62,6 +62,14 @@ func white_key_lanes_are_one_to_one_test() -> void:
 	pass
 
 
+func keyboard_covers_toolbar_test() -> void:
+	var effect := PIANO_RHYTHM_SCRIPT.new()
+	effect.size = Vector2(1280.0, 720.0)
+	assert(is_zero_approx(effect.keyboard_rect().position.y))
+	effect.free()
+	pass
+
+
 func rising_note_hits_top_keyboard_test() -> void:
 	var effect := PIANO_RHYTHM_SCRIPT.new()
 	effect.size = Vector2(1280.0, 720.0)
