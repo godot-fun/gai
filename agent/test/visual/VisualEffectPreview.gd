@@ -60,6 +60,7 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 			{"type": VisualControl.Type.ELECTRONIC_CONTOURS, "label": "Electronic Contours"},
 			{"type": VisualControl.Type.READING_LOUPE, "label": "Reading Loupe"},
 			{"type": VisualControl.Type.PHOSPHOR_SCOPE, "label": "Phosphor Scope"},
+			{"type": VisualControl.Type.HEAT_MIRAGE, "label": "Heat Mirage"},
 		],
 	},
 ]

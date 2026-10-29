@@ -194,7 +194,8 @@
       "visual_zero_gravity": "失重",
       "visual_electronic_contours": "电子轮廓",
       "visual_reading_loupe": "阅读放大镜",
-      "visual_phosphor_scope": "磷光示波"
+      "visual_phosphor_scope": "磷光示波",
+      "visual_heat_mirage": "热力蜃景"
     },
     "sidebar": {
       "new_session": "+ 新建智能体",

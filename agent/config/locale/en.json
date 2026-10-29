@@ -194,7 +194,8 @@
       "visual_zero_gravity": "Zero Gravity",
       "visual_electronic_contours": "Electronic Contours",
       "visual_reading_loupe": "Reading Loupe",
-      "visual_phosphor_scope": "Phosphor Scope"
+      "visual_phosphor_scope": "Phosphor Scope",
+      "visual_heat_mirage": "Heat Mirage"
     },
     "sidebar": {
       "new_session": "+ New Agent",
