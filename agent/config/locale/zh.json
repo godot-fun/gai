@@ -195,7 +195,12 @@
       "visual_electronic_contours": "电子轮廓",
       "visual_reading_loupe": "阅读放大镜",
       "visual_phosphor_scope": "磷光示波",
-      "visual_heat_mirage": "热力蜃景"
+      "visual_heat_mirage": "热力蜃景",
+      "visual_ripple_surface": "界面涟漪",
+      "visual_turing_bloom": "图灵生长",
+      "visual_thermal_trace": "热成像",
+      "visual_ink_fluid": "流体墨染",
+      "visual_glass_rain": "雨窗"
     },
     "sidebar": {
       "new_session": "+ 新建智能体",

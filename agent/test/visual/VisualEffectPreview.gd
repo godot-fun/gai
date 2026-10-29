@@ -63,6 +63,16 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 			{"type": VisualControl.Type.HEAT_MIRAGE, "label": "Heat Mirage"},
 		],
 	},
+	{
+		"title": "GPU simulations",
+		"effects": [
+			{"type": VisualControl.Type.RIPPLE_SURFACE, "label": "Ripple Surface"},
+			{"type": VisualControl.Type.TURING_BLOOM, "label": "Turing Bloom"},
+			{"type": VisualControl.Type.THERMAL_TRACE, "label": "Thermal Trace"},
+			{"type": VisualControl.Type.INK_FLUID, "label": "Ink Fluid"},
+			{"type": VisualControl.Type.GLASS_RAIN, "label": "Glass Rain"},
+		],
+	},
 ]
 
 @onready var background: ColorRect = $Background

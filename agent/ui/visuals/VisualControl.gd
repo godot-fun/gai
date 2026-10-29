@@ -34,6 +34,11 @@ enum Type {
 	READING_LOUPE,
 	PHOSPHOR_SCOPE,
 	HEAT_MIRAGE,
+	RIPPLE_SURFACE,
+	TURING_BLOOM,
+	THERMAL_TRACE,
+	INK_FLUID,
+	GLASS_RAIN,
 }
 
 
@@ -108,6 +113,16 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return PhosphorScope.new()
 		Type.HEAT_MIRAGE:
 			return HeatMirage.new()
+		Type.RIPPLE_SURFACE:
+			return RippleSurface.new()
+		Type.TURING_BLOOM:
+			return TuringBloom.new()
+		Type.THERMAL_TRACE:
+			return ThermalTrace.new()
+		Type.INK_FLUID:
+			return InkFluid.new()
+		Type.GLASS_RAIN:
+			return GlassRain.new()
 	return null
 
 func on_agent_start(session_id: int) -> void:

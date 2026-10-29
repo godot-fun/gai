@@ -195,7 +195,12 @@
       "visual_electronic_contours": "Electronic Contours",
       "visual_reading_loupe": "Reading Loupe",
       "visual_phosphor_scope": "Phosphor Scope",
-      "visual_heat_mirage": "Heat Mirage"
+      "visual_heat_mirage": "Heat Mirage",
+      "visual_ripple_surface": "Ripple Surface",
+      "visual_turing_bloom": "Turing Bloom",
+      "visual_thermal_trace": "Thermal Trace",
+      "visual_ink_fluid": "Ink Fluid",
+      "visual_glass_rain": "Glass Rain"
     },
     "sidebar": {
       "new_session": "+ New Agent",
