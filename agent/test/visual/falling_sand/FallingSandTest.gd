@@ -43,6 +43,16 @@ func answers_pour_from_a_sweeping_spout_test() -> void:
 	pass
 
 
+func falling_sand_covers_the_toolbar_test() -> void:
+	var effect := new_sand()
+	assert(is_zero_approx(effect.ceiling_uv()))
+	effect.on_message_update(1, "streamed answer chunk", OpenAiClient.STREAM_KIND_CONTENT)
+	effect.step_field(1.0 / 60.0)
+	assert(is_equal_approx(effect.impulse_shapes[0].y, FallingSand.POUR_Y_OFFSET))
+	effect.free()
+	pass
+
+
 func reasoning_sifts_a_pale_row_test() -> void:
 	var effect := new_sand()
 	effect.on_message_update(1, "thinking about the plan", OpenAiClient.STREAM_KIND_REASONING)

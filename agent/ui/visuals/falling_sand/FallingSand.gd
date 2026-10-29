@@ -2,7 +2,7 @@ class_name FallingSand
 extends SimulationEffect
 
 ## Falling sand hourglass (沙漏沉积): the run settles over the interface as sand strata. Streamed
-## answers pour from a spout that sweeps along the top like a typing caret and builds dunes,
+## answers pour from a spout that sweeps along the window top like a typing caret and builds dunes,
 ## reasoning sifts a fine pale layer across the whole width, and each new turn lays a dark divider
 ## line. Every running tool pours its own colored stream from its column; a failed tool soaks the
 ## sand under that column so it clumps into steep towers that slump once they dry. Once the pile
@@ -212,10 +212,9 @@ func estimated_fill() -> float:
 	return estimated_grains / float(maxi(field_cells.x * field_cells.y, 1))
 
 
-## Toolbar height as a fraction of the window; the field treats rows above it as a wall.
+## The simulation covers the entire visual overlay, including the application toolbar.
 func ceiling_uv() -> float:
-	var height := size.y if size.y > 1.0 else 720.0
-	return float(AgentLayout.TOOLBAR_HEIGHT) / height
+	return 0.0
 
 
 func apply_field_state() -> void:

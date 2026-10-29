@@ -4,14 +4,15 @@ render_mode blend_disabled;
 // Falling sand on a Margolus neighborhood: each pass splits the field into 2x2 blocks, offset by
 // one cell on odd passes, and only moves grains inside a block, so sand is conserved without write
 // conflicts. R = grain, G = color tag, B = wetness (wet grains fall but never slide), A = grain shade.
-// Rows above ceiling_uv (the toolbar) act as a wall. Pass 0 also dries grains, drains the floor
+// ceiling_uv allows a future lower simulation boundary; Falling Sand sets it to zero so the field
+// includes the toolbar. Pass 0 also dries grains, drains the floor
 // row with probability `drain`, and stamps impulses: payload = (stamp, tag, wetness, 0) where
 // stamp 0 pours a vertically stretched disk of radius shape.z, 1 sprinkles a full-width band of half-height shape.z, and 2 wets existing
 // grains in a column of half-width shape.z below shape.y.
 #include "res://agent/ui/visuals/simulation/SimulationField.gdshaderinc"
 
 uniform bool gravity_up = false;
-uniform float ceiling_uv = 0.05;
+uniform float ceiling_uv = 0.0;
 uniform float dry_step = 0.0;
 uniform float drain = 0.0;
 uniform float slide_chance : hint_range(0.0, 1.0) = 0.85;
