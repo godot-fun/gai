@@ -20,6 +20,7 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 			{"type": VisualControl.Type.REASONING_TREE, "label": "Reasoning Tree"},
 			{"type": VisualControl.Type.TOOL_CONSTELLATION, "label": "Tool Constellation"},
 			{"type": VisualControl.Type.CYBER_COMMAND_DECK, "label": "Cyber Command Deck"},
+			{"type": VisualControl.Type.QUANTUM_CIRCUIT, "label": "Quantum Circuit"},
 		],
 	},
 	{
@@ -27,40 +28,35 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 		"effects": [
 			{"type": VisualControl.Type.CONTEXT_MEMORY_RIVER, "label": "Context Memory River"},
 			{"type": VisualControl.Type.MATRIX_RAIN, "label": "Matrix Rain"},
+			{"type": VisualControl.Type.PIANO_RHYTHM, "label": "Piano Rhythm"},
 		],
 	},
 	{
-		"title": "Memory & semantics",
+		"title": "Holes",
 		"effects": [
 			{"type": VisualControl.Type.NEURAL_AURORA, "label": "Neural Aurora"},
 			{"type": VisualControl.Type.SEMANTIC_BLACK_HOLE, "label": "Semantic Black Hole"},
 		],
 	},
 	{
-		"title": "Systems & circuits",
+		"title": "Companions",
 		"effects": [
-			{"type": VisualControl.Type.QUANTUM_CIRCUIT, "label": "Quantum Circuit"},
+			{"type": VisualControl.Type.DESKTOP_CAT, "label": "Desktop Cat"},
+		],
+	},
+	{
+		"title": "Geometry",
+		"effects": [
+			{"type": VisualControl.Type.GEOMETRIC_GENESIS, "label": "Geometric Genesis"},
+			{"type": VisualControl.Type.EMBROIDERY, "label": "Embroidery"},
 		],
 	},
 	{
 		"title": "Motion & style",
 		"effects": [
-			{"type": VisualControl.Type.DESKTOP_CAT, "label": "Desktop Cat"},
-			{"type": VisualControl.Type.GEOMETRIC_GENESIS, "label": "Geometric Genesis"},
-			{"type": VisualControl.Type.FILTER_CAROUSEL, "label": "Filter Carousel"},
 			{"type": VisualControl.Type.INK_LANDSCAPE, "label": "Ink Landscape"},
 			{"type": VisualControl.Type.TAI_CHI, "label": "Tai Chi"},
-			{"type": VisualControl.Type.PIANO_RHYTHM, "label": "Piano Rhythm"},
 			{"type": VisualControl.Type.PIXEL_CITY, "label": "Pixel City"},
-			{"type": VisualControl.Type.IMPOSSIBLE_ROOM, "label": "Impossible Room"},
-			{"type": VisualControl.Type.TEMPORAL_PRISM, "label": "Temporal Prism"},
-			{"type": VisualControl.Type.TOPOLOGICAL_FOLD, "label": "Topological Fold"},
-			{"type": VisualControl.Type.INTERFACE_DELAMINATION, "label": "Interface Delamination"},
-			{"type": VisualControl.Type.ZERO_GRAVITY, "label": "Zero Gravity"},
-			{"type": VisualControl.Type.ELECTRONIC_CONTOURS, "label": "Electronic Contours"},
-			{"type": VisualControl.Type.READING_LOUPE, "label": "Reading Loupe"},
-			{"type": VisualControl.Type.PHOSPHOR_SCOPE, "label": "Phosphor Scope"},
-			{"type": VisualControl.Type.HEAT_MIRAGE, "label": "Heat Mirage"},
 			{"type": VisualControl.Type.KINTSUGI, "label": "Kintsugi"},
 			{"type": VisualControl.Type.FERROFLUID, "label": "Ferrofluid"},
 			{"type": VisualControl.Type.DISINTEGRATE, "label": "Disintegrate"},
@@ -68,12 +64,26 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 			{"type": VisualControl.Type.SOAP_BUBBLES, "label": "Soap Bubbles"},
 			{"type": VisualControl.Type.EINK_REFRESH, "label": "E-ink Refresh"},
 			{"type": VisualControl.Type.STAINED_GLASS, "label": "Stained Glass"},
-			{"type": VisualControl.Type.EMBROIDERY, "label": "Embroidery"},
 			{"type": VisualControl.Type.FIREFLY_SYNC, "label": "Firefly Sync"},
 		],
 	},
 	{
-		"title": "GPU simulations",
+		"title": "Screen transformations",
+		"effects": [
+			{"type": VisualControl.Type.FILTER_CAROUSEL, "label": "Filter Carousel"},
+			{"type": VisualControl.Type.ELECTRONIC_CONTOURS, "label": "Electronic Contours"},
+			{"type": VisualControl.Type.READING_LOUPE, "label": "Reading Loupe"},
+			{"type": VisualControl.Type.PHOSPHOR_SCOPE, "label": "Phosphor Scope"},
+			{"type": VisualControl.Type.HEAT_MIRAGE, "label": "Heat Mirage"},
+			{"type": VisualControl.Type.IMPOSSIBLE_ROOM, "label": "Impossible Room"},
+			{"type": VisualControl.Type.TEMPORAL_PRISM, "label": "Temporal Prism"},
+			{"type": VisualControl.Type.TOPOLOGICAL_FOLD, "label": "Topological Fold"},
+			{"type": VisualControl.Type.INTERFACE_DELAMINATION, "label": "Interface Delamination"},
+			{"type": VisualControl.Type.ZERO_GRAVITY, "label": "Zero Gravity"},
+		],
+	},
+	{
+		"title": "Simulation framework",
 		"effects": [
 			{"type": VisualControl.Type.RIPPLE_SURFACE, "label": "Ripple Surface"},
 			{"type": VisualControl.Type.TURING_BLOOM, "label": "Turing Bloom"},
@@ -85,6 +95,8 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 			{"type": VisualControl.Type.DARKROOM, "label": "Darkroom"},
 			{"type": VisualControl.Type.PHYSARUM_NETWORK, "label": "Physarum Network"},
 			{"type": VisualControl.Type.FALLING_SAND, "label": "Falling Sand"},
+			{"type": VisualControl.Type.GAME_OF_LIFE, "label": "Game of Life"},
+			{"type": VisualControl.Type.DOOM_FIRE, "label": "Doom Fire"},
 		],
 	},
 	{
@@ -92,10 +104,8 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 		"effects": [
 			{"type": VisualControl.Type.WARP_SPEED, "label": "Warp Speed"},
 			{"type": VisualControl.Type.SNAP_DISSOLVE, "label": "Snap Dissolve"},
-			{"type": VisualControl.Type.GAME_OF_LIFE, "label": "Game of Life"},
 			{"type": VisualControl.Type.PIPES_3D, "label": "3D Pipes"},
 			{"type": VisualControl.Type.LAVA_LAMP, "label": "Lava Lamp"},
-			{"type": VisualControl.Type.DOOM_FIRE, "label": "Doom Fire"},
 			{"type": VisualControl.Type.FRACTAL_ZOOM, "label": "Fractal Zoom"},
 			{"type": VisualControl.Type.TESLA_LIGHTNING, "label": "Tesla Lightning"},
 			{"type": VisualControl.Type.MURMURATION, "label": "Murmuration"},

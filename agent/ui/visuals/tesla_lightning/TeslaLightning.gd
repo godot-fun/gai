@@ -255,7 +255,7 @@ func view_size() -> Vector2:
 
 
 func body_top() -> float:
-	return float(AgentLayout.TOOLBAR_HEIGHT)
+	return 0.0
 
 
 ## The window edge point closest to [param target], jittered along the edge.

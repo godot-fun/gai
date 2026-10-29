@@ -77,6 +77,6 @@ func lightning_edge_point_is_on_nearest_edge_test() -> void:
 	assert(effect.edge_point_toward(Vector2(30.0, 400.0)).x == 0.0)
 	assert(effect.edge_point_toward(Vector2(1250.0, 400.0)).x == 1280.0)
 	assert(effect.edge_point_toward(Vector2(640.0, 700.0)).y == 720.0)
-	assert(effect.edge_point_toward(Vector2(640.0, float(AgentLayout.TOOLBAR_HEIGHT) + 10.0)).y == float(AgentLayout.TOOLBAR_HEIGHT))
+	assert(effect.edge_point_toward(Vector2(640.0, 10.0)).y == 0.0)
 	effect.free()
 	pass
