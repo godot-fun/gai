@@ -1,16 +1,16 @@
-class_name InvestigationDeck
+class_name Orrery
 extends VisualEffect
 
-## Investigation deck: a monochrome research console that reads the run like a lab dashboard.
+## Orrery: a monochrome HALOFLUX-style run visual; the ring carries live stats and task readouts.
 ## The whole view is a three-layer orrery around a hub left of the view; the ring carries every
 ## readout (run stats, feed, tool calls, heat / histogram / waveform histories).
 ##
-## Stage layers (drawn by [InvestigationStage], all radii scale with `zoom` about the hub)
+## Stage layers (drawn by [OrreryStage], all radii scale with `zoom` about the hub)
 ## - Disc: a woven web of rim-to-rim quadratic curves (one base layer plus three `layer_env` pulse
 ##   layers), `runners` gliding along those curves, and node markers; it spins on `inner_angle`.
 ##   `comets` are bundles of parallel strokes that sweep out to the ring; their impact flashes the
 ##   ring (`ring_flashes`) and launches an outward pulse, so light visibly travels disc → ring → beams.
-## - Ring: the dashboard annulus; [InvestigationScreen] tiles painted in a [SubViewport] wrap it.
+## - Ring: the dashboard annulus; [OrreryScreen] tiles painted in a [SubViewport] wrap it.
 ## - Beams: radial light shafts and emitted `pulses` beyond the ring.
 ## Ring and beams turn together on `outer_angle`. Reasoning zooms into the disc so the ring slides
 ## right; tool dispatch zooms back out to show the beams.
@@ -19,18 +19,18 @@ extends VisualEffect
 ## https://github.com/Ryder191/haloflux, licensed PolyForm Noncommercial 1.0.0 — noncommercial use only.
 ##
 ## Layout (maintainers)
-## - `stage_rect` is the full view; [InvestigationScreen] lays the panels out down one ring tile.
+## - `stage_rect` is the full view; [OrreryScreen] lays the panels out down one ring tile.
 ## - A faint backdrop and `OVERLAY_STRENGTH` keep the chat readable underneath.
 ##
-## Data: hooks only mutate counters, ring buffers, and the feed; `step_deck` advances time. Drawing
+## Data: hooks only mutate counters, ring buffers, and the feed; `step_orrery` advances time. Drawing
 ## reads that state, so tests can drive hooks and steps without a renderer.
 
 enum Tag { RUN, TURN, THINK, WRITE, TOOL, OK, FAIL }
 
 ## Section titles of the ring tile's eight run panels, in tile order.
 const PANEL_TITLES: Array[String] = [
-	"agent.visuals.deck_feed", "agent.visuals.deck_solver", "agent.visuals.deck_workspace", "agent.visuals.deck_field",
-	"agent.visuals.deck_matrix", "agent.visuals.deck_buffer", "agent.visuals.deck_dispatch_panel", "agent.visuals.deck_index",
+	"agent.visuals.orrery_feed", "agent.visuals.orrery_solver", "agent.visuals.orrery_workspace", "agent.visuals.orrery_field",
+	"agent.visuals.orrery_matrix", "agent.visuals.orrery_buffer", "agent.visuals.orrery_dispatch_panel", "agent.visuals.orrery_index",
 ]
 const TAG_TEXTS: Array[String] = ["RUN", "TURN", "THINK", "WRITE", "TOOL", "OK", "FAIL"]
 const MONO_FONT_NAMES: Array[String] = ["JetBrains Mono", "Cascadia Mono", "Consolas", "SF Mono", "Menlo", "DejaVu Sans Mono", "monospace"]
@@ -131,10 +131,10 @@ class Comet extends RefCounted:
 
 	## Eased head / tail positions along every line, plus the fade-out after the sweep lands.
 	func progress() -> Vector3:
-		var p := InvestigationDeck.ease_in_out(minf(life / duration, 1.0))
+		var p := Orrery.ease_in_out(minf(life / duration, 1.0))
 		var head := minf(p * (1.0 + window), 1.0)
 		var tail := maxf(p * (1.0 + window) - window, 0.0)
-		var fade := 1.0 if life <= duration else maxf(1.0 - (life - duration) / InvestigationDeck.COMET_FADE_SECONDS, 0.0)
+		var fade := 1.0 if life <= duration else maxf(1.0 - (life - duration) / Orrery.COMET_FADE_SECONDS, 0.0)
 		return Vector3(tail, head, fade)
 
 
@@ -201,8 +201,8 @@ var beams: Array[Vector4] = []
 var pulses: Array[Vector4] = []
 var rng := RandomNumberGenerator.new()
 var screen_viewport: SubViewport
-var screen: InvestigationScreen
-var stage: InvestigationStage
+var screen: OrreryScreen
+var stage: OrreryStage
 var draw_alpha: float = 1.0
 var palette_ink: Color = Color(0.92, 0.93, 0.95)
 var palette_back: Color = Color(0.02, 0.022, 0.028)
@@ -271,7 +271,7 @@ func on_agent_start(p_session_id: int) -> void:
 	zoom = ZOOM_MIN
 	reset_buffers()
 	sync_palette()
-	push_feed(Tag.RUN, StringUtils.format(I18n.t("agent.visuals.deck_session"), session_id))
+	push_feed(Tag.RUN, StringUtils.format(I18n.t("agent.visuals.orrery_session"), session_id))
 	pass
 
 
@@ -615,14 +615,14 @@ func ranked_tools() -> Array[String]:
 
 func phase_key() -> String:
 	if ending:
-		return "agent.visuals.deck_closing"
+		return "agent.visuals.orrery_closing"
 	if running_tools() > 0:
-		return "agent.visuals.deck_dispatch"
+		return "agent.visuals.orrery_dispatch"
 	if reasoning_energy + content_energy < 0.02:
-		return "agent.visuals.deck_idle"
+		return "agent.visuals.orrery_idle"
 	if last_stream_kind == OpenAiClient.STREAM_KIND_REASONING:
-		return "agent.visuals.deck_reasoning"
-	return "agent.visuals.deck_writing"
+		return "agent.visuals.orrery_reasoning"
+	return "agent.visuals.orrery_writing"
 
 
 func reset_buffers() -> void:
@@ -718,7 +718,7 @@ func step_web(delta: float) -> void:
 	pass
 
 
-func step_deck(delta: float) -> void:
+func step_orrery(delta: float) -> void:
 	clock += delta
 	var decay := exp(-ENERGY_DECAY * delta)
 	reasoning_energy *= decay
@@ -881,13 +881,13 @@ func ensure_children() -> void:
 	screen_viewport.transparent_bg = true
 	screen_viewport.disable_3d = true
 	screen_viewport.gui_disable_input = true
-	screen = InvestigationScreen.new()
-	screen.deck = self
+	screen = OrreryScreen.new()
+	screen.orrery = self
 	screen.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	screen_viewport.add_child(screen)
 	add_child(screen_viewport)
-	stage = InvestigationStage.new()
-	stage.deck = self
+	stage = OrreryStage.new()
+	stage.orrery = self
 	stage.clip_contents = true
 	stage.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(stage)
@@ -925,7 +925,7 @@ func sync_children() -> void:
 func _process(delta: float) -> void:
 	if not visible:
 		return
-	step_deck(minf(delta, 0.05))
+	step_orrery(minf(delta, 0.05))
 	sync_children()
 	if screen != null:
 		screen.queue_redraw()

@@ -65,7 +65,7 @@ enum Type {
 	GO_BOARD,
 	CLOCKWORK,
 	ABACUS,
-	INVESTIGATION_DECK,
+	ORRERY,
 }
 
 
@@ -207,8 +207,8 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return Clockwork.new()
 		Type.ABACUS:
 			return Abacus.new()
-		Type.INVESTIGATION_DECK:
-			return InvestigationDeck.new()
+		Type.ORRERY:
+			return Orrery.new()
 	return null
 
 func on_agent_start(session_id: int) -> void:
