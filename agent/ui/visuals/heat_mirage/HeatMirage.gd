@@ -121,6 +121,11 @@ func on_tool_execution_end(_session_id: int, _tool_call_id: String, tool_name: S
 	pass
 
 
+func on_chat_entry_add(_session_id: int, _entry: ChatEntry) -> void:
+	pulse_field(0.36)
+	pass
+
+
 func _process(delta: float) -> void:
 	if not visible:
 		idle_shader_applied = false
@@ -173,7 +178,9 @@ func step_mirage_field(delta: float) -> void:
 
 
 func mirage_is_idle() -> bool:
-	return mirage_strength <= IDLE_EPSILON and flow_strength <= IDLE_EPSILON and target_mirage <= IDLE_EPSILON and target_flow <= IDLE_EPSILON and field_energy <= IDLE_EPSILON and shock_energy <= IDLE_EPSILON
+	if shock_energy > IDLE_EPSILON or shock_progress < 1.1:
+		return false
+	return mirage_strength <= IDLE_EPSILON and flow_strength <= IDLE_EPSILON and target_mirage <= IDLE_EPSILON and target_flow <= IDLE_EPSILON and field_energy <= IDLE_EPSILON
 
 
 func snap_idle_scalars() -> void:

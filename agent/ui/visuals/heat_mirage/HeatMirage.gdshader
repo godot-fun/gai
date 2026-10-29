@@ -31,15 +31,19 @@ vec4 mirage_field(vec2 uv, vec2 pixel_size, float center_luma) {
 	float up = sample_luma(uv - vec2(0.0, step.y));
 	float down = sample_luma(uv + vec2(0.0, step.y));
 	float lap = left + right + up + down - 4.0 * center_luma;
+	lap = clamp(lap, -0.075, 0.075);
 	vec2 grad = vec2(right - left, down - up);
 	float grad_len = length(grad);
 	float edge_mask = smoothstep(0.0015, 0.028, grad_len);
 	vec2 dir = grad / max(grad_len, 0.0008);
 	vec2 offset = dir * lap * mirage_strength * max_deflection_px * pixel_size * 8.8 * edge_mask;
-	offset += vec2(
+	vec2 flow_vec = vec2(
 		sin(flow_phase + uv.y * 20.0 + uv.x * 3.0),
 		cos(flow_phase * 0.86 + uv.x * 18.0 + uv.y * 2.0)
-	) * flow_strength * max_deflection_px * 0.22 * pixel_size;
+	);
+	flow_vec.y -= abs(flow_vec.x) * 0.32;
+	float flow_mask = mix(0.40, 1.0, edge_mask);
+	offset += flow_vec * flow_strength * max_deflection_px * 0.22 * pixel_size * flow_mask;
 	if (shock_energy > 0.01 && shock_progress < 1.12) {
 		vec2 shock_dir = vec2(cos(shock_angle), sin(shock_angle));
 		float plane = dot(uv - vec2(0.5), shock_dir);
@@ -66,11 +70,13 @@ void fragment() {
 		vec3 refracted = texture(screen_texture, refract_uv).rgb;
 		float blend = active * presentation_gain;
 		result = mix(source, refracted, blend);
-		vec2 streak_uv = clamp(SCREEN_UV - field.xy * 0.55, vec2(0.0), vec2(1.0));
-		vec3 streak = texture(screen_texture, streak_uv).rgb;
-		result = mix(result, streak, blend * 0.22);
+		if (blend > 0.02) {
+			vec2 streak_uv = clamp(SCREEN_UV - field.xy * 0.55, vec2(0.0), vec2(1.0));
+			vec3 streak = texture(screen_texture, streak_uv).rgb;
+			result = mix(result, streak, blend * 0.20);
+		}
 		float rim = clamp(abs(field.z) * 16.0, 0.0, 1.0) * active * false_color_gain;
-		result = mix(result, accent_color.rgb, rim * 0.10);
+		result = mix(result, accent_color.rgb, rim * 0.09);
 	}
 
 	COLOR = vec4(result, 1.0);

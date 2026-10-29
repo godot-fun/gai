@@ -26,6 +26,28 @@ func reasoning_stream_targets_mirage_strength_test() -> void:
 	pass
 
 
+func shock_front_restarts_on_tool_event_test() -> void:
+	var effect: Variant = HEAT_MIRAGE_SCRIPT.new()
+	effect.shock_progress = 1.2
+	effect.on_tool_execution_start(1, "t1", "read_file", {})
+	assert(effect.shock_progress < 0.1)
+	assert(effect.shock_energy > 0.0)
+	effect.free()
+	pass
+
+
+func field_decays_to_idle_test() -> void:
+	var effect: Variant = HEAT_MIRAGE_SCRIPT.new()
+	effect.target_mirage = 0.8
+	effect.target_flow = 0.6
+	effect.field_energy = 0.7
+	for _index in range(100):
+		effect.step_mirage_field(1.0 / 60.0)
+	assert(effect.mirage_is_idle())
+	effect.free()
+	pass
+
+
 func flow_phase_rest_when_flow_is_idle_test() -> void:
 	var effect: Variant = HEAT_MIRAGE_SCRIPT.new()
 	effect.flow_phase = 1.1
