@@ -32,6 +32,7 @@ enum Type {
 	ZERO_GRAVITY,
 	ELECTRONIC_CONTOURS,
 	READING_LOUPE,
+	PHOSPHOR_SCOPE,
 }
 
 
@@ -102,6 +103,8 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return ElectronicContours.new()
 		Type.READING_LOUPE:
 			return ReadingLoupe.new()
+		Type.PHOSPHOR_SCOPE:
+			return PhosphorScope.new()
 	return null
 
 func on_agent_start(session_id: int) -> void:

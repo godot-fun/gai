@@ -193,7 +193,8 @@
       "visual_interface_delamination": "Interface Delamination",
       "visual_zero_gravity": "Zero Gravity",
       "visual_electronic_contours": "Electronic Contours",
-      "visual_reading_loupe": "Reading Loupe"
+      "visual_reading_loupe": "Reading Loupe",
+      "visual_phosphor_scope": "Phosphor Scope"
     },
     "sidebar": {
       "new_session": "+ New Agent",
