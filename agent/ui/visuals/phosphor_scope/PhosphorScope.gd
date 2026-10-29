@@ -5,13 +5,12 @@ extends VisualEffect
 ## horizontally, streamed answers pull it vertically, and tool calls flash brighter afterglow.
 
 const SCOPE_SHADER: Shader = preload("res://agent/ui/visuals/phosphor_scope/PhosphorScope.gdshader")
-const MAX_OFFSET_PX := 34.0
+const MAX_OFFSET_PX := 50.0
 const TARGET_DECAY_PER_SECOND := 0.38
 const BEAM_DECAY_PER_SECOND := 0.44
 const DRIVE_FOLLOW_RATE := 3.4
 const PHOSPHOR_BURST_DECAY_PER_SECOND := 2.6
 const FAILURE_DECAY_PER_SECOND := 3.4
-const CONTENT_DRIVE_INTERVAL := 0.30
 const IDLE_EPSILON := 0.001
 const FREQUENCY_RATIOS: Array[float] = [1.5, 1.25]
 
@@ -25,7 +24,6 @@ var beam_energy: float = 0.0
 var beam_phase: float = 0.0
 var phosphor_burst: float = 0.0
 var failure_tint: float = 0.0
-var content_drive_cooldown: float = 0.0
 var frequency_ratio_index: int = 0
 var phase_direction: float = 1.0
 var idle_shader_applied: bool = false
@@ -96,10 +94,10 @@ func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> 
 	var stream_energy := stream_energy_for_length(chunk.length())
 	if stream_kind == OpenAiClient.STREAM_KIND_REASONING:
 		target_reasoning_drive = combine_energy(target_reasoning_drive, stream_energy * 1.15)
+		target_content_drive = combine_energy(target_content_drive, stream_energy * 0.18)
 	else:
-		if content_drive_cooldown <= 0.0:
-			target_content_drive = combine_energy(target_content_drive, stream_energy)
-			content_drive_cooldown = CONTENT_DRIVE_INTERVAL
+		target_content_drive = combine_energy(target_content_drive, stream_energy * 1.08)
+		target_reasoning_drive = combine_energy(target_reasoning_drive, stream_energy * 0.14)
 	beam_energy = combine_energy(beam_energy, stream_energy)
 	idle_shader_applied = false
 	pass
@@ -162,7 +160,6 @@ func step_scope_field(delta: float) -> void:
 	beam_energy = move_toward(beam_energy, 0.0, BEAM_DECAY_PER_SECOND * safe_delta)
 	phosphor_burst = move_toward(phosphor_burst, 0.0, PHOSPHOR_BURST_DECAY_PER_SECOND * safe_delta)
 	failure_tint = move_toward(failure_tint, 0.0, FAILURE_DECAY_PER_SECOND * safe_delta)
-	content_drive_cooldown = maxf(0.0, content_drive_cooldown - safe_delta)
 	snap_idle_scalars()
 	pass
 
@@ -215,7 +212,6 @@ func reset_scope_field() -> void:
 	beam_phase = 0.0
 	phosphor_burst = 0.0
 	failure_tint = 0.0
-	content_drive_cooldown = 0.0
 	frequency_ratio_index = 0
 	phase_direction = 1.0
 	idle_shader_applied = false
@@ -241,8 +237,12 @@ static func phase_kick_for_tool(tool_name: String) -> float:
 	return fmod(float(tool_name.hash()) * 0.0011, TAU)
 
 
-static func beam_offset(phase: float, frequency_ratio: float, reasoning: float, content: float, max_offset_px: float) -> Vector2:
-	return Vector2(
-		sin(phase) * reasoning * max_offset_px,
-		sin(phase * frequency_ratio + 0.72) * content * max_offset_px
-	)
+static func beam_channels(phase: float, frequency_ratio: float, reasoning: float, content: float, beam: float) -> Vector2:
+	var bundle := maxf(maxi(reasoning, content), beam * 0.58)
+	var x_ch := sin(phase) * reasoning + sin(phase * 2.0 + 0.4) * content * 0.62 + cos(phase) * bundle * 0.32
+	var y_ch := sin(phase * frequency_ratio + 0.72) * content + cos(phase * frequency_ratio * 0.5) * reasoning * 0.62 + sin(phase * 0.5) * bundle * 0.30
+	return Vector2(x_ch, y_ch)
+
+
+static func beam_offset(phase: float, frequency_ratio: float, reasoning: float, content: float, max_offset_px: float, beam: float = 0.0) -> Vector2:
+	return beam_channels(phase, frequency_ratio, reasoning, content, beam) * max_offset_px

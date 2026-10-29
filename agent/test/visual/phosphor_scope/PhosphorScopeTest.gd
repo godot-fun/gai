@@ -53,13 +53,13 @@ static func tool_phase_kick_is_stable_for_name_test() -> void:
 	pass
 
 
-static func reasoning_and_content_split_horizontal_and_vertical_test() -> void:
-	var reasoning_only: Vector2 = PHOSPHOR_SCOPE_SCRIPT.beam_offset(PI * 0.5, 1.5, 1.0, 0.0, 10.0)
-	assert(is_equal_approx(reasoning_only.x, 10.0))
-	assert(is_equal_approx(reasoning_only.y, 0.0))
-	var content_only: Vector2 = PHOSPHOR_SCOPE_SCRIPT.beam_offset(0.0, 1.5, 0.0, 1.0, 10.0)
-	assert(absf(content_only.y) > 0.5)
-	assert(absf(content_only.x) < 0.01)
+static func coupled_beam_keeps_both_axes_during_reasoning_test() -> void:
+	var reasoning_only: Vector2 = PHOSPHOR_SCOPE_SCRIPT.beam_offset(PI * 0.5, 1.5, 1.0, 0.0, 10.0, 0.0)
+	assert(absf(reasoning_only.x) > 0.5)
+	assert(absf(reasoning_only.y) > 0.05)
+	var content_only: Vector2 = PHOSPHOR_SCOPE_SCRIPT.beam_offset(0.0, 1.5, 0.0, 1.0, 10.0, 0.0)
+	assert(absf(content_only.y) > 0.4)
+	assert(absf(content_only.x) > 0.05)
 	pass
 
 
@@ -69,7 +69,7 @@ func reasoning_stream_raises_reasoning_drive_test() -> void:
 	assert(effect.target_reasoning_drive > 0.0)
 	effect.step_scope_field(1.0 / 60.0)
 	assert(effect.reasoning_drive > 0.0)
-	assert(effect.content_drive == 0.0)
+	assert(effect.reasoning_drive > effect.content_drive)
 	effect.free()
 	pass
 
@@ -103,19 +103,6 @@ func scope_field_decays_to_rest_test() -> void:
 	for _index in range(90):
 		effect.step_scope_field(1.0 / 60.0)
 	assert(effect.scope_is_idle())
-	effect.free()
-	pass
-
-
-func content_drive_respects_cooldown_test() -> void:
-	var effect: Variant = PHOSPHOR_SCOPE_SCRIPT.new()
-	effect.on_message_update(1, "first chunk of content", OpenAiClient.STREAM_KIND_CONTENT)
-	var after_first: float = effect.target_content_drive
-	effect.on_message_update(1, "second chunk arrives immediately", OpenAiClient.STREAM_KIND_CONTENT)
-	assert(is_equal_approx(effect.target_content_drive, after_first))
-	effect.content_drive_cooldown = 0.0
-	effect.on_message_update(1, "third chunk after cooldown", OpenAiClient.STREAM_KIND_CONTENT)
-	assert(effect.target_content_drive > after_first)
 	effect.free()
 	pass
 
