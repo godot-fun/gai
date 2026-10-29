@@ -55,6 +55,19 @@ func update_popup_items() -> void:
 
 func style_popup() -> void:
 	PopupMenuStyle.apply(popup)
+	style_popup_scrollbar()
+	pass
+
+
+func style_popup_scrollbar() -> void:
+	var panel := popup.get_child(0, true) as PanelContainer
+	if panel == null:
+		return
+	var scroll_container := panel.get_child(0, true) as ScrollContainer
+	if scroll_container == null:
+		return
+	ScrollBarStyle.apply_custom(scroll_container.get_v_scroll_bar(), ScrollBarStyle.Thickness.MD,
+		ThemeColor.body_color, ThemeColor.promote(ThemeColor.theme_color, Weights.w_7), ThemeColor.promote(ThemeColor.theme_color, Weights.w_4), true)
 	pass
 
 
