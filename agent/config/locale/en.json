@@ -170,6 +170,7 @@
       "show_animation": "Show run animation while agent works",
       "visuals": "Choose run visual",
       "visual_none": "No visual",
+      "visual_random": "Random visual",
       "visual_jarvis": "Jarvis",
       "visual_transformer": "Transformer",
       "visual_reasoning_tree": "Reasoning Tree",

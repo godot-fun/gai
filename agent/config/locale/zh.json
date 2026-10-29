@@ -170,6 +170,7 @@
       "show_animation": "智能体工作时显示运行动画",
       "visuals": "选择运行视觉效果",
       "visual_none": "无特效",
+      "visual_random": "随机特效",
       "visual_jarvis": "贾维斯大脑",
       "visual_transformer": "变换器",
       "visual_reasoning_tree": "推理树",

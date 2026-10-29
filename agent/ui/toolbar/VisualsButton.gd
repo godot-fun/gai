@@ -45,11 +45,20 @@ func apply_theme() -> void:
 func update_popup_items() -> void:
 	var selected_type := AgentSetting.get_visual_type()
 	popup.clear()
+	add_visual_item("NONE", selected_type)
+	add_visual_item("RANDOM", selected_type)
 	for visual_name: String in VisualControl.Type:
-		var visual_type: VisualControl.Type = VisualControl.Type[visual_name]
-		var translation_key := "agent.toolbar.visual_" + visual_name.to_lower()
-		popup.add_radio_check_item(I18n.t(translation_key), visual_type)
-		popup.set_item_checked(popup.item_count - 1, selected_type == visual_type)
+		if visual_name == "NONE" or visual_name == "RANDOM":
+			continue
+		add_visual_item(visual_name, selected_type)
+	pass
+
+
+func add_visual_item(visual_name: String, selected_type: int) -> void:
+	var visual_type: VisualControl.Type = VisualControl.Type[visual_name]
+	var translation_key := "agent.toolbar.visual_" + visual_name.to_lower()
+	popup.add_radio_check_item(I18n.t(translation_key), visual_type)
+	popup.set_item_checked(popup.item_count - 1, selected_type == visual_type)
 	pass
 
 

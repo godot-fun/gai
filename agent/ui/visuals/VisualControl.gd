@@ -8,7 +8,9 @@ extends Control
 ## Visual presentation selected for an agent run.
 enum Type {
 	NONE,
-	JARVIS,
+	# Keep a dedicated persisted value so inserting this option does not renumber existing effects.
+	RANDOM = 1000,
+	JARVIS = 1,
 	TRANSFORMER,
 	REASONING_TREE,
 	TOOL_CONSTELLATION,
@@ -83,6 +85,8 @@ func _ready() -> void:
 
 
 static func create_effect(visual_type: Type) -> VisualEffect:
+	if visual_type == Type.RANDOM:
+		visual_type = randi_range(Type.JARVIS, Type.FALLING_SAND) as Type
 	match visual_type:
 		Type.JARVIS:
 			return JarvisControl.new()
