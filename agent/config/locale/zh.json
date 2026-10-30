@@ -255,7 +255,8 @@
       "visual_go_board": "围棋",
       "visual_clockwork": "机械表机芯",
       "visual_abacus": "算盘",
-      "visual_orrery": "天象仪"
+      "visual_orrery": "天象仪",
+      "visual_solar_system": "太阳系"
     },
     "sidebar": {
       "new_session": "+ 新建智能体",

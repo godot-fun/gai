@@ -255,7 +255,8 @@
       "visual_go_board": "Go Board",
       "visual_clockwork": "Watch Movement",
       "visual_abacus": "Abacus",
-      "visual_orrery": "Orrery"
+      "visual_orrery": "Orrery",
+      "visual_solar_system": "Solar System"
     },
     "sidebar": {
       "new_session": "+ New Agent",

@@ -118,6 +118,7 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 			{"type": VisualControl.Type.FRACTAL_ZOOM, "label": "Fractal Zoom"},
 			{"type": VisualControl.Type.TESLA_LIGHTNING, "label": "Tesla Lightning"},
 			{"type": VisualControl.Type.MURMURATION, "label": "Murmuration"},
+			{"type": VisualControl.Type.SOLAR_SYSTEM, "label": "Solar System"},
 		],
 	},
 ]

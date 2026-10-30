@@ -69,6 +69,7 @@ enum Type {
 	FRACTAL_ZOOM,
 	TESLA_LIGHTNING,
 	MURMURATION,
+	SOLAR_SYSTEM,
 }
 
 
@@ -214,6 +215,8 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return Abacus.new()
 		Type.ORRERY:
 			return Orrery.new()
+		Type.SOLAR_SYSTEM:
+			return SolarSystem.new()
 	return null
 
 func on_agent_start(session_id: int) -> void:

@@ -1,0 +1,16 @@
+[gd_resource type="NoiseTexture2D" format=3 uid="uid://dxjapfacsp3fk"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_gi827"]
+noise_type = 0
+frequency = 0.03
+fractal_type = 3
+fractal_octaves = 10
+fractal_lacunarity = 1.8
+fractal_gain = 1.0
+fractal_weighted_strength = 0.15
+
+[resource]
+height = 128
+seamless = true
+seamless_blend_skirt = 0.5
+noise = SubResource("FastNoiseLite_gi827")
