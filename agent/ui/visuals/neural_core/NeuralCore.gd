@@ -12,6 +12,7 @@ const RED := Color8(255, 52, 52)
 const GREEN := Color8(74, 240, 122)
 const CYAN := Color8(56, 200, 255)
 const SPLAT_GAIN := 1.32
+const HALO_RADIUS_SCALE := 0.52
 const PROFILE := {
 	"idle": Vector2(1.4, 0.48),
 	"listening": Vector2(2.6, 0.58),
@@ -67,14 +68,14 @@ var content_drive: float = 0.0
 var listen_gate: float = 0.0
 var chrome_redraw_clock: float = 0.0
 var history_cursor: int = 0
-var state_history: Array[NeuralCoreStateEntry] = []
+var state_history: Array[StateEntry] = []
 var last_logged_state: String = ""
 ## HUD + STATE LOG label; driven by [method on_chat_entry_add] and tool hooks, not stream drives.
 var activity_label: String = "IDLE"
 var alert_mode: bool = false
 var alert_timer: float = 0.0
 var breath_scale: float = 1.0
-var travelers: Array[NeuralCoreTraveler] = []
+var travelers: Array[Traveler] = []
 var out_history: PackedFloat32Array = PackedFloat32Array()
 var label_positions: PackedVector2Array = PackedVector2Array()
 var field_size := Vector2i.ZERO
@@ -264,6 +265,7 @@ func _process(delta: float) -> void:
 	advance_state_blends(delta)
 	advance_heat(delta)
 	advance_travelers(delta)
+	sync_bloom_uniforms()
 	splat_field()
 	field_lines.queue_redraw()
 	bloom_material.set_shader_parameter("field_tex", field_viewport.get_texture())
@@ -328,7 +330,7 @@ func advance_travelers(delta: float) -> void:
 	var rate := profile.x * (1.0 + 1.5 * envelope)
 	if randf() < rate * delta:
 		var tendril_index := randi() % anatomy.tendrils.size()
-		travelers.append(NeuralCoreTraveler.new(tendril_index, 0.35 + randf() * 0.35))
+		travelers.append(Traveler.new(tendril_index, 0.35 + randf() * 0.35))
 	var speed_scale := 1.0 + 1.6 * think_blend + 0.6 * speak_blend
 	var write_index := 0
 	while write_index < travelers.size():
@@ -394,7 +396,7 @@ func push_state_history(label: String) -> void:
 	last_logged_state = label
 	var now := Time.get_datetime_dict_from_system()
 	var clock := "%02d:%02d:%02d" % [int(now.hour), int(now.minute), int(now.second)]
-	state_history.insert(0, NeuralCoreStateEntry.new(label, clock))
+	state_history.insert(0, StateEntry.new(label, clock))
 	while state_history.size() > STATE_HISTORY_LIMIT:
 		state_history.pop_back()
 	pass
@@ -581,6 +583,22 @@ func splat_pixel(x: int, y: int, color: Color, factor: float) -> void:
 	field_bytes[offset + 2] = mini(255, field_bytes[offset + 2] + int(color.b * 255.0 * factor))
 
 
+func sync_bloom_uniforms() -> void:
+	scratch_live = Vector3(NeuralCoreAnatomy.CRESCENT_CENTER.x, NeuralCoreAnatomy.CRESCENT_CENTER.y, 0.0)
+	scratch_project = project_brain(scratch_live, warp_clock)
+	bloom_material.set_shader_parameter("crescent_px", Vector2(scratch_project.x, scratch_project.y))
+	bloom_material.set_shader_parameter("halo_radius_px", layout_scale * HALO_RADIUS_SCALE)
+	bloom_material.set_shader_parameter("halo_strength", 0.28 + 0.25 * envelope)
+	bloom_material.set_shader_parameter("alert_mix", 1.0 if alert_mode else 0.0)
+	pass
+
+
+func field_point_to_screen(field_point: Vector2) -> Vector2:
+	if field_size.x < 1 or field_size.y < 1:
+		return field_point
+	return Vector2(field_point.x * size.x / float(field_size.x), field_point.y * size.y / float(field_size.y))
+
+
 func on_draw_chrome() -> void:
 	var canvas := chrome_layer
 	var size_px := canvas.size
@@ -609,7 +627,7 @@ func draw_region_labels(canvas: Control, font: Font, font_size: int) -> void:
 			continue
 		var alpha := 0.55 + 0.45 * minf(1.0, anatomy.heat[region_index])
 		var color := RED if alert_mode else cluster.hue
-		var pos := label_positions[region_index] + Vector2(10.0, -18.0)
+		var pos := field_point_to_screen(label_positions[region_index] + Vector2(10.0, -18.0))
 		var width := font.get_string_size(cluster.label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 		canvas.draw_rect(Rect2(pos.x - 3.0, pos.y - 2.0, width + 6.0, 15.0), VisualColor.stroke(color, alpha * 0.55), false, 1.0)
 		canvas.draw_string(font, pos, cluster.label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, VisualColor.stroke(color, alpha))
@@ -661,3 +679,33 @@ func meter_sample_at(history: PackedFloat32Array, display_index: int) -> float:
 		return history[display_index]
 	var ring_start := history_cursor % HISTORY_LEN
 	return history[(ring_start + display_index) % HISTORY_LEN]
+
+
+class StateEntry:
+	extends RefCounted
+
+	## One line in the top-right STATE LOG (label + wall-clock time).
+
+	var label: String
+	var clock: String
+
+	func _init(p_label: String, p_clock: String) -> void:
+		label = p_label
+		clock = p_clock
+		pass
+
+
+class Traveler:
+	extends RefCounted
+
+	## A dot gliding along a tendril curve (0..1 along the bezier).
+
+	var tendril_index: int
+	var progress: float
+	var speed: float
+
+	func _init(p_tendril_index: int, p_speed: float) -> void:
+		tendril_index = p_tendril_index
+		progress = 0.0
+		speed = p_speed
+		pass

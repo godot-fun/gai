@@ -49,7 +49,7 @@ func _draw() -> void:
 			if dot_index < projected.size():
 				draw_circle(projected[dot_index], 2.0, dot_fill)
 		tendril.projected = projected
-	for traveler: NeuralCoreTraveler in host.travelers:
+	for traveler: NeuralCore.Traveler in host.travelers:
 		if traveler.tendril_index < 0 or traveler.tendril_index >= anatomy.tendrils.size():
 			continue
 		var proj := anatomy.tendrils[traveler.tendril_index].projected
