@@ -33,7 +33,6 @@ func system_builds_upstream_planets_test() -> void:
 	assert(earth.body_material.get_shader_parameter("noise") != null)
 	assert(earth.cloud_material != null)
 	assert(earth.body_material.next_pass == earth.cloud_material)
-	assert(effect.planets[5].atmosphere_material.shader == SolarSystem.ATMOSPHERE_SHADER)
 	var ring_count := 0
 	for child: Node in effect.planets[5].anchor.get_children():
 		if child is MeshInstance3D and child.mesh is QuadMesh:
@@ -42,10 +41,10 @@ func system_builds_upstream_planets_test() -> void:
 	assert(effect.sun_body_material.get_shader_parameter("noise") != null)
 	assert(effect.sun_body_material.get_shader_parameter("noise") == SolarSystem.NOISE_STAR)
 	assert(effect.sun_body_material.get_shader_parameter("noise_gaseous") == true)
-	assert(effect.sun_corona.get_parent() == effect.system_root)
-	assert(effect.sun_corona_material.shader == SolarSystem.ATMOSPHERE_SHADER)
-	assert(effect.sun_corona_material.get_shader_parameter("emit") == true)
-	assert(effect.sun_corona_material.get_shader_parameter("intensity") == 10.0)
+	assert(effect.planets[2].atmosphere_material.shader == SolarSystem.ATMOSPHERE_SHADER)
+	assert(effect.planets[2].anchor.get_node_or_null("Atmosphere") != null)
+	# Only the star drops its shell: it rendered as a grey ring instead of a corona.
+	assert(effect.sun_body.get_child_count() == 0)
 	effect.free()
 	pass
 
