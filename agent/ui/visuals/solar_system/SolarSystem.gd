@@ -45,8 +45,13 @@ const ORBIT_BOUNDS_MARGIN_PX := 4.0
 ## Stroke width in screen pixels. Below one pixel the stroke keeps its center but dims, so it can
 ## go finer than a rasterized line without turning dotted.
 const ORBIT_LINE_WIDTH := 0.35
-const ORBIT_COLOR := Color(0.45, 0.62, 1.0)
-const ORBIT_ALPHA := 0.45
+## Orbit strokes follow the accent hue and stay translucent; they cross the chat for most of the
+## window, so they must read as a tint rather than as a drawn line.
+const ORBIT_ALPHA := 0.30
+## Accent saturation scale for the rings. A fully saturated accent would fight the warm star and
+## ringed planets, and an amber accent would merge with them; muting keeps the theme hue while the
+## rings still read as an instrument layer.
+const ORBIT_SATURATION := 0.8
 ## Our unit sphere has twice the upstream mesh radius, so triplanar noise would repeat twice as
 ## often; halving the preset scale keeps the upstream plasma and continent sizes.
 const UPSTREAM_NOISE_SCALE := 0.5
@@ -362,9 +367,12 @@ func orbit_screen_bounds() -> PackedVector4Array:
 	return bounds
 
 
+## Orbit strokes take a muted version of the accent hue from the active theme instead of an
+## authored blue: the rings belong to the interface palette, but stay an instrument layer.
 func orbit_line_color() -> Color:
 	var overlay_alpha := OVERLAY_ALPHA_DARK if ThemeColor.is_dark_theme() else OVERLAY_ALPHA_LIGHT
-	return VisualColor.stroke(VisualColor.appearance_color(ORBIT_COLOR), ORBIT_ALPHA * overlay_alpha)
+	var accent := VisualColor.appearance_color(ThemeColor.accent_theme_color(), 0.0, ORBIT_SATURATION, ORBIT_SATURATION)
+	return VisualColor.stroke(accent, ORBIT_ALPHA * overlay_alpha)
 
 
 # ---------------------------------------------------------------------------------------------

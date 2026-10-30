@@ -101,6 +101,17 @@ func orbit_layer_draws_the_rings_with_the_screen_space_shader_test() -> void:
 	pass
 
 
+func orbit_strokes_follow_the_theme_accent_and_stay_translucent_test() -> void:
+	var effect := new_effect()
+	var accent := VisualColor.appearance_color(ThemeColor.accent_theme_color())
+	var color := effect.orbit_line_color()
+	assert(is_equal_approx(color.h, accent.h))
+	assert(color.s < accent.s - 0.001, "ring stroke must stay muted against the warm planets")
+	assert(color.a > 0.0 and color.a < 1.0)
+	effect.free()
+	pass
+
+
 func orbit_angles_follow_the_pivots_test() -> void:
 	var effect := new_effect()
 	var before := effect.planets[0].orbit_angle
