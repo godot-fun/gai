@@ -12,9 +12,8 @@ extends Control
 ## - Beams: fine hairlines, travelling shafts, and emitted pulses beyond the outer rail.
 ## Ring and beams both turn on `orrery.outer_angle`; every radius scales with `orrery.zoom`.
 
-const SEGMENTS_PER_TILE := 20
-const RIB_COUNT := 720
-const CIRCLE_POINTS := 256
+## Cached mesh geometry: keep UI bars and table rules visually straight around the annulus.
+const SEGMENTS_PER_TILE := 32
 const WEB_SEGMENTS := 8
 const RUNNER_TAIL := 4
 const COMET_STEPS := 12
@@ -24,17 +23,25 @@ const SHADOW_INNER := 0.8
 const SHADOW_SEGMENTS := 96
 ## Thousands of overlapping hairlines add up; this keeps the woven field a backdrop to the runners.
 const WEB_ALPHA_SCALE := 0.5
+const PROCEDURAL_SHADER: Shader = preload("res://agent/ui/visuals/orrery/OrreryProcedural.gdshader")
 
 var orrery: Orrery
 ## Base web layer then three pulse layers; all share the disc pose.
 var web_layers: Array[Control] = []
 var runner_layer: Control
 var comet_layer: Control
+var ring_mesh: MeshInstance2D
+var procedural_layer: ColorRect
+var procedural_material: ShaderMaterial
 ## Disc radius (px) when the web layers were last painted; their labels are sized against it.
 var web_radius: float = 0.0
+var ring_mesh_tiles: int = 0
 
 
 func _ready() -> void:
+	clip_contents = true
+	create_ring_mesh()
+	create_procedural_layer()
 	for index in range(4):
 		var layer := add_disc_layer()
 		layer.draw.connect(draw_web_layer.bind(layer, index - 1))
@@ -45,6 +52,29 @@ func _ready() -> void:
 	comet_layer.draw.connect(draw_comets)
 	gdf.events.theme_changed.connect(repaint_web)
 	gdf.events.theme_color_changed.connect(repaint_web)
+	pass
+
+
+## The screen texture is wrapped by one cached mesh instead of issuing a draw call per ring segment.
+func create_ring_mesh() -> void:
+	ring_mesh = MeshInstance2D.new()
+	ring_mesh.name = "RingMesh"
+	ring_mesh.z_index = -2
+	add_child(ring_mesh)
+	pass
+
+
+## Rails, dense beam field, and shutdown scan are analytic and update through uniforms only.
+func create_procedural_layer() -> void:
+	procedural_layer = ColorRect.new()
+	procedural_layer.name = "ProceduralLayer"
+	procedural_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	procedural_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	procedural_layer.z_index = -1
+	procedural_material = ShaderMaterial.new()
+	procedural_material.shader = PROCEDURAL_SHADER
+	procedural_layer.material = procedural_material
+	add_child(procedural_layer)
 	pass
 
 
@@ -65,6 +95,8 @@ func repaint_web() -> void:
 func sync_layers() -> void:
 	if orrery == null or web_layers.is_empty():
 		return
+	sync_ring_mesh()
+	sync_procedural_layer()
 	var radius := disc_radius()
 	var base_radius := size.y * Orrery.DISC_RADIUS_RATIO
 	if absf(base_radius - web_radius) > 1.0:
@@ -85,6 +117,83 @@ func sync_layers() -> void:
 	comet_layer.position = hub()
 	comet_layer.scale = Vector2(radius, radius)
 	comet_layer.queue_redraw()
+	pass
+
+
+func sync_ring_mesh() -> void:
+	if ring_mesh == null:
+		return
+	var tiles := Orrery.ring_tiles()
+	if ring_mesh_tiles != tiles:
+		build_ring_mesh(tiles)
+	var texture: Texture2D = orrery.screen_viewport.get_texture() if orrery.screen_viewport != null else null
+	ring_mesh.texture = texture
+	ring_mesh.position = hub()
+	ring_mesh.rotation = orrery.outer_angle
+	ring_mesh.scale = Vector2.ONE * size.y * orrery.zoom
+	ring_mesh.modulate = Color(1.0, 1.0, 1.0, orrery.draw_alpha)
+	pass
+
+
+func build_ring_mesh(tiles: int) -> void:
+	var segments := tiles * SEGMENTS_PER_TILE
+	var vertices := PackedVector2Array()
+	var uvs := PackedVector2Array()
+	var indices := PackedInt32Array()
+	vertices.resize(segments * 4)
+	uvs.resize(segments * 4)
+	indices.resize(segments * 6)
+	var inner := Orrery.DISC_RADIUS_RATIO
+	var outer := Orrery.DISC_RADIUS_RATIO + Orrery.RING_THICKNESS_RATIO
+	for segment in range(segments):
+		var a0 := TAU * float(segment) / float(segments)
+		var a1 := TAU * float(segment + 1) / float(segments)
+		var vertex := segment * 4
+		vertices[vertex] = Vector2.from_angle(a0) * inner
+		vertices[vertex + 1] = Vector2.from_angle(a0) * outer
+		vertices[vertex + 2] = Vector2.from_angle(a1) * outer
+		vertices[vertex + 3] = Vector2.from_angle(a1) * inner
+		var v0 := float(segment % SEGMENTS_PER_TILE) / float(SEGMENTS_PER_TILE)
+		var v1 := v0 + 1.0 / float(SEGMENTS_PER_TILE)
+		uvs[vertex] = Vector2(0.0, v0)
+		uvs[vertex + 1] = Vector2(1.0, v0)
+		uvs[vertex + 2] = Vector2(1.0, v1)
+		uvs[vertex + 3] = Vector2(0.0, v1)
+		var index := segment * 6
+		indices[index] = vertex
+		indices[index + 1] = vertex + 1
+		indices[index + 2] = vertex + 2
+		indices[index + 3] = vertex
+		indices[index + 4] = vertex + 2
+		indices[index + 5] = vertex + 3
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	arrays[Mesh.ARRAY_INDEX] = indices
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	ring_mesh.mesh = mesh
+	ring_mesh_tiles = tiles
+	pass
+
+
+func sync_procedural_layer() -> void:
+	if procedural_material == null:
+		return
+	procedural_material.set_shader_parameter("stage_size", size)
+	procedural_material.set_shader_parameter("hub", hub())
+	procedural_material.set_shader_parameter("inner_radius", inner_radius())
+	procedural_material.set_shader_parameter("outer_radius", outer_radius())
+	procedural_material.set_shader_parameter("rail_width", rail_width())
+	procedural_material.set_shader_parameter("outer_angle", orrery.outer_angle)
+	procedural_material.set_shader_parameter("draw_alpha", orrery.draw_alpha)
+	procedural_material.set_shader_parameter("error_flash", orrery.error_flash)
+	procedural_material.set_shader_parameter("turn_pulse", orrery.turn_pulse)
+	procedural_material.set_shader_parameter("end_progress", orrery.end_progress if orrery.ending else 0.0)
+	procedural_material.set_shader_parameter("ink_color", orrery.palette_ink)
+	procedural_material.set_shader_parameter("error_color", orrery.palette_error)
+	procedural_material.set_shader_parameter("back_color", orrery.palette_back)
 	pass
 
 
@@ -114,7 +223,6 @@ func _draw() -> void:
 	draw_beams()
 	draw_ring()
 	draw_labels()
-	draw_end_scan()
 	pass
 
 
@@ -257,20 +365,6 @@ func draw_beams() -> void:
 	var start := outer_radius() + rail_width() * 1.6
 	var far := start + size.x + size.y
 	var fade := 1.0 - orrery.end_progress
-	var faint := PackedVector2Array()
-	var bright := PackedVector2Array()
-	for beam: Vector2 in orrery.fine_beams:
-		var direction := Vector2.from_angle(beam.x + orrery.outer_angle)
-		if direction.x < -0.2:
-			continue
-		if beam.y > 0.5:
-			bright.append_array(PackedVector2Array([center + direction * start, center + direction * far]))
-		else:
-			faint.append_array(PackedVector2Array([center + direction * start, center + direction * far]))
-	if not faint.is_empty():
-		draw_multiline(faint, orrery.ink(0.1 * fade))
-	if not bright.is_empty():
-		draw_multiline(bright, orrery.ink(0.22 * fade))
 	var span := far - start
 	var energy := 0.5 + 0.5 * clampf(orrery.content_energy + orrery.reasoning_energy * 0.5 + orrery.tool_energy * 0.5, 0.0, 1.0)
 	for beam: Vector4 in orrery.beams:
@@ -307,36 +401,15 @@ func draw_shaft(center: Vector2, angle: float, half_width: float, tail: float, h
 	pass
 
 
-## Middle layer: screen tiles wrapped around the annulus, then ribbed rails on both edges.
+## Dynamic ring overlays stay on the canvas. The tiled screen and static rails live in child GPU layers.
 func draw_ring() -> void:
 	var center := hub()
 	var r1 := inner_radius()
 	var r2 := outer_radius()
-	var bounds := Rect2(Vector2.ZERO, size).grow(r2 - r1)
 	var tiles := Orrery.ring_tiles()
 	var segments := tiles * SEGMENTS_PER_TILE
 	var step := TAU / float(segments)
-	var texture: Texture2D = orrery.screen_viewport.get_texture() if orrery.screen_viewport != null else null
-	var white := Color(1.0, 1.0, 1.0, orrery.draw_alpha)
-	var colors := PackedColorArray([white, white, white, white])
-	for segment in range(segments):
-		var a0 := orrery.outer_angle + float(segment) * step
-		var a1 := a0 + step
-		var d0 := Vector2.from_angle(a0)
-		var d1 := Vector2.from_angle(a1)
-		if not bounds.has_point(center + Vector2.from_angle(a0 + step * 0.5) * (r1 + r2) * 0.5):
-			continue
-		var v0 := float(segment % SEGMENTS_PER_TILE) / float(SEGMENTS_PER_TILE)
-		var v1 := v0 + 1.0 / float(SEGMENTS_PER_TILE)
-		var quad := PackedVector2Array([center + d0 * r1, center + d0 * r2, center + d1 * r2, center + d1 * r1])
-		if texture == null:
-			draw_colored_polygon(quad, Color(orrery.palette_screen, 0.96))
-		else:
-			draw_primitive(quad, colors, PackedVector2Array([Vector2(0.0, v0), Vector2(1.0, v0), Vector2(1.0, v1), Vector2(0.0, v1)]), texture)
-		if segment % SEGMENTS_PER_TILE == 0:
-			draw_line(center + d0 * r1, center + d0 * r2, orrery.ink(0.55), 1.0)
 	draw_ring_flashes(center, r1, r2, step)
-	draw_rails(center, r1, r2)
 	pass
 
 
@@ -351,28 +424,6 @@ func draw_ring_flashes(center: Vector2, r1: float, r2: float, step: float) -> vo
 		draw_primitive(PackedVector2Array([center + d0 * r1, center + d0 * r2, center + d1 * r2, center + d1 * r1]),
 			PackedColorArray([lit, dim, dim, lit]), PackedVector2Array())
 		draw_line(center + d0 * r1, center + d1 * r1, orrery.ink(minf(flash.y * 1.2, 1.0)), 2.0)
-	pass
-
-
-func draw_rails(center: Vector2, r1: float, r2: float) -> void:
-	var rail := rail_width()
-	var edge := orrery.tint(orrery.palette_error, orrery.error_flash) if orrery.error_flash > 0.05 else orrery.ink(0.55 + 0.4 * orrery.turn_pulse)
-	draw_arc(center, r1, 0.0, TAU, CIRCLE_POINTS, edge, 1.0, true)
-	draw_arc(center, r2, 0.0, TAU, CIRCLE_POINTS, edge, 1.0, true)
-	draw_arc(center, r1 - rail, 0.0, TAU, CIRCLE_POINTS, orrery.ink(0.2), 1.0, true)
-	draw_arc(center, r2 + rail * 1.4, 0.0, TAU, CIRCLE_POINTS, orrery.ink(0.25), 1.0, true)
-	var ribs := PackedVector2Array()
-	for index in range(RIB_COUNT):
-		var direction := Vector2.from_angle(orrery.outer_angle + TAU * float(index) / float(RIB_COUNT))
-		if direction.x < -0.3:
-			continue
-		var major := index % 5 == 0
-		ribs.append(center + direction * r1)
-		ribs.append(center + direction * (r1 - rail * (1.0 if major else 0.55)))
-		ribs.append(center + direction * r2)
-		ribs.append(center + direction * (r2 + rail * (1.3 if major else 0.7)))
-	if not ribs.is_empty():
-		draw_multiline(ribs, orrery.ink(0.4))
 	pass
 
 
@@ -391,17 +442,4 @@ func draw_labels() -> void:
 	Orrery.mono(self, slider_end + Vector2(ts * 0.8, ts * 0.35), I18n.t("agent.visuals.live"), ts - 1, orrery.ink(0.7))
 	var zoom_text := "x%.2f" % orrery.zoom
 	Orrery.mono(self, Vector2(ts, size.y - ts * 0.6), zoom_text, ts - 1, orrery.ink(0.5))
-	pass
-
-
-## The deck's power-off scan continues across the stage, which draws above the deck itself.
-func draw_end_scan() -> void:
-	if not orrery.ending:
-		return
-	var y := orrery.view_size().y * orrery.end_progress - position.y
-	if y <= 0.0:
-		return
-	draw_rect(Rect2(Vector2.ZERO, Vector2(size.x, minf(y, size.y))), Color(orrery.palette_back, 0.55 * orrery.end_progress))
-	if y < size.y:
-		draw_line(Vector2(0.0, y), Vector2(size.x, y), VisualColor.stroke(orrery.palette_ink, 0.8 * (1.0 - orrery.end_progress)), 2.0)
 	pass

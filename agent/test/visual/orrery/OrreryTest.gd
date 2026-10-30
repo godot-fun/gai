@@ -259,6 +259,8 @@ func deck_survives_a_full_event_sequence_in_tree_test() -> void:
 	assert(effect.screen_viewport.size.x > 16)
 	assert(effect.stage != null and effect.stage.clip_contents)
 	assert(effect.stage.size.y > 16.0)
+	assert(effect.stage.ring_mesh != null and effect.stage.ring_mesh.mesh != null)
+	assert(effect.stage.procedural_layer != null and effect.stage.procedural_material != null)
 	effect.on_tool_execution_end(1, "t1", "grep", AgentToolResult.ok("done"))
 	effect.on_tool_execution_end(1, "t2", "read_file", AgentToolResult.error("boom"))
 	effect.on_message_complete(1, null)
