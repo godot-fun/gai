@@ -23,6 +23,10 @@ const ALERT_HOLD_SECONDS := 2.4
 const FIELD_DOWNSCALE := 1
 const HISTORY_LEN := 46
 const STATE_HISTORY_LIMIT := 10
+const STATE_LOG_ROW_STEP := 22.0
+const METER_BAR_MAX_H := 28.0
+## [SimulationEffect.stream_energy_for_length] tops out here; meters need 0..1 drive.
+const METER_ENERGY_NORM := 0.045
 const CHROME_REDRAW_INTERVAL := 0.066
 const HUD_PANEL_X := 172.0
 const HUD_PANEL_W := 148.0
@@ -61,13 +65,14 @@ var content_drive: float = 0.0
 var listen_gate: float = 0.0
 var chrome_redraw_clock: float = 0.0
 var history_cursor: int = 0
-var state_history: Array[Dictionary] = []
+var state_history: Array[NeuralCoreStateEntry] = []
 var last_logged_state: String = ""
+## HUD + STATE LOG label; driven by [method on_chat_entry_add] and tool hooks, not stream drives.
+var activity_label: String = "IDLE"
 var alert_mode: bool = false
 var alert_timer: float = 0.0
 var breath_scale: float = 1.0
-var travelers: Array[Dictionary] = []
-var mic_history: PackedFloat32Array = PackedFloat32Array()
+var travelers: Array[NeuralCoreTraveler] = []
 var out_history: PackedFloat32Array = PackedFloat32Array()
 var label_positions: PackedVector2Array = PackedVector2Array()
 var field_size := Vector2i.ZERO
@@ -151,11 +156,10 @@ func on_agent_start(_session_id: int) -> void:
 	anatomy.cascade_index = 0
 	anatomy.cascade_timer = 0.0
 	travelers.clear()
-	mic_history = PackedFloat32Array()
 	out_history = PackedFloat32Array()
 	state_history.clear()
 	last_logged_state = ""
-	push_state_history("LISTENING")
+	set_activity("RUN")
 	pass
 
 
@@ -181,7 +185,7 @@ func on_turn_start(_session_id: int) -> void:
 
 func on_turn_end(_session_id: int) -> void:
 	if running:
-		face_state = FaceState.IDLE
+		set_activity("IDLE")
 	pass
 
 
@@ -199,10 +203,49 @@ func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> 
 	pass
 
 
+func on_tool_execution_start(_session_id: int, _tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
+	set_activity(ToolVisualDisplay.upper_name(tool_name))
+	pass
+
+
 func on_tool_execution_end(_session_id: int, _tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
 	if result.is_error:
+		set_activity("ERROR")
 		trigger_alert()
 	pass
+
+
+func on_chat_entry_add(_session_id: int, entry: ChatEntry) -> void:
+	if not running:
+		return
+	var label := label_for_chat_entry(entry)
+	if label.is_empty():
+		return
+	set_activity(label)
+	pass
+
+
+static func label_for_chat_entry(entry: ChatEntry) -> String:
+	if ChatEntry.is_context_kind(entry.kind):
+		return ""
+	match entry.kind:
+		ChatEntry.KIND_USER:
+			return "USER"
+		ChatEntry.KIND_THINKING:
+			return "THINKING"
+		ChatEntry.KIND_AGENT:
+			return "RESPONDING"
+		ChatEntry.KIND_ERROR:
+			return "ERROR"
+		ChatEntry.KIND_TOOL, ChatEntry.KIND_WEB_TOOL, ChatEntry.KIND_FILE_TOOL, ChatEntry.KIND_EXPLORER_TOOL:
+			return ToolVisualDisplay.upper_name(entry.title)
+		ChatEntry.KIND_RESULT:
+			return "RESULT"
+		ChatEntry.KIND_WEB:
+			return "WEB"
+		ChatEntry.KIND_GIT_DIFF:
+			return "GIT DIFF"
+	return ""
 
 
 func trigger_alert() -> void:
@@ -248,7 +291,6 @@ func advance_state_blends(delta: float) -> void:
 		alert_timer = maxf(0.0, alert_timer - delta)
 		if alert_timer <= 0.0:
 			alert_mode = false
-			push_state_history(current_state_label())
 	pass
 
 
@@ -283,27 +325,24 @@ func advance_travelers(delta: float) -> void:
 	var profile: Vector2 = PROFILE[state_key]
 	var rate := profile.x * (1.0 + 1.5 * envelope)
 	if randf() < rate * delta:
-		travelers.append({"ti": randi() % anatomy.tendrils.size(), "t": 0.0, "s": 0.35 + randf() * 0.35})
+		var tendril_index := randi() % anatomy.tendrils.size()
+		travelers.append(NeuralCoreTraveler.new(tendril_index, 0.35 + randf() * 0.35))
 	var speed_scale := 1.0 + 1.6 * think_blend + 0.6 * speak_blend
 	var write_index := 0
 	while write_index < travelers.size():
-		var traveler: Dictionary = travelers[write_index]
-		traveler["t"] = float(traveler["t"]) + delta * float(traveler["s"]) * speed_scale
-		if float(traveler["t"]) >= 1.0:
+		var traveler := travelers[write_index]
+		traveler.progress += delta * traveler.speed * speed_scale
+		if traveler.progress >= 1.0:
 			travelers.remove_at(write_index)
 			continue
 		write_index += 1
 	while travelers.size() > 60:
 		travelers.pop_back()
-	if mic_history.size() != HISTORY_LEN:
-		mic_history.resize(HISTORY_LEN)
-		mic_history.fill(0.0)
 	if out_history.size() != HISTORY_LEN:
 		out_history.resize(HISTORY_LEN)
 		out_history.fill(0.0)
 	var slot := history_cursor % HISTORY_LEN
-	mic_history[slot] = listen_amount if listen_blend > 0.45 else listen_amount * 0.25
-	out_history[slot] = envelope
+	out_history[slot] = meter_level_for_display()
 	history_cursor += 1
 	pass
 
@@ -320,14 +359,31 @@ func sync_face_state_from_drives() -> void:
 		face_state = FaceState.LISTENING
 	else:
 		face_state = FaceState.IDLE
-	push_state_history(current_state_label())
+	pass
+
+
+func set_activity(label: String) -> void:
+	activity_label = label
+	match label:
+		"THINKING":
+			face_state = FaceState.THINKING
+		"RESPONDING", "SPEAKING":
+			face_state = FaceState.SPEAKING
+		"USER", "LISTENING", "RUN":
+			face_state = FaceState.LISTENING
+		"IDLE":
+			face_state = FaceState.IDLE
+		_:
+			if label != "ERROR" and label != "ALERT":
+				face_state = FaceState.THINKING
+	push_state_history(label)
 	pass
 
 
 func current_state_label() -> String:
 	if alert_mode:
 		return "ALERT"
-	return profile_key().to_upper()
+	return activity_label
 
 
 func push_state_history(label: String) -> void:
@@ -336,7 +392,7 @@ func push_state_history(label: String) -> void:
 	last_logged_state = label
 	var now := Time.get_datetime_dict_from_system()
 	var clock := "%02d:%02d:%02d" % [int(now.hour), int(now.minute), int(now.second)]
-	state_history.insert(0, {"label": label, "time": clock})
+	state_history.insert(0, NeuralCoreStateEntry.new(label, clock))
 	while state_history.size() > STATE_HISTORY_LIMIT:
 		state_history.pop_back()
 	pass
@@ -344,16 +400,39 @@ func push_state_history(label: String) -> void:
 
 func state_color(label: String) -> Color:
 	match label:
-		"ALERT":
+		"ALERT", "ERROR":
 			return RED
 		"THINKING":
 			return CYAN
-		"SPEAKING":
+		"SPEAKING", "RESPONDING":
 			return GREEN
-		"LISTENING":
+		"LISTENING", "USER", "RUN":
 			return AMBER
+		"IDLE":
+			return INK
 		_:
-			return INK_BRIGHT
+			return CYAN
+
+
+func meter_level_for_display() -> float:
+	var level := clampf(maxf(envelope, maxf(content_drive, reasoning_drive)) / METER_ENERGY_NORM, 0.0, 1.0)
+	level = maxf(level, speak_blend, think_blend * 0.88)
+	if not running:
+		return level
+	if listen_blend > 0.38:
+		var mic := 0.22 + 0.58 * absf(sin(clock_seconds * 2.7)) * absf(sin(clock_seconds * 0.61))
+		level = maxf(level, mic * listen_blend)
+	match activity_label:
+		"THINKING":
+			level = maxf(level, (0.28 + 0.52 * absf(sin(clock_seconds * 4.6 + history_cursor * 0.05))) * maxf(think_blend, 0.42))
+		"RESPONDING", "SPEAKING":
+			level = maxf(level, (0.32 + 0.62 * absf(sin(clock_seconds * 7.4 + history_cursor * 0.08))) * maxf(speak_blend, 0.45))
+		"IDLE", "RUN", "USER", "LISTENING":
+			pass
+		_:
+			if activity_label != "ERROR" and activity_label != "ALERT":
+				level = maxf(level, 0.26 + 0.44 * absf(sin(clock_seconds * 5.8 + float(activity_label.hash() % 97) * 0.02)))
+	return clampf(level, 0.0, 1.0)
 
 
 func profile_key() -> String:
@@ -508,14 +587,10 @@ func on_draw_chrome() -> void:
 	var ink := RED if alert_mode else INK
 	var ink_bright := RED if alert_mode else INK_BRIGHT
 	var font_sm := Fonts.regular()
-	var font_md := Fonts.medium()
 	var font_size_sm := Typography.label_small_size
-	var font_size_md := Typography.label_medium_size
 	draw_region_labels(canvas, font_sm, font_size_sm)
-	var cortex_y := draw_state_history_panel(canvas, font_sm, font_size_sm, ink, ink_bright, size_px)
-	draw_cortex_panel(canvas, font_md, font_sm, font_size_md, font_size_sm, ink, ink_bright, size_px, cortex_y)
+	draw_state_history_panel(canvas, font_sm, font_size_sm, ink, ink_bright)
 	draw_meters(canvas, font_sm, font_size_sm, ink, ink_bright, size_px)
-	draw_current_state_panel(canvas, font_md, font_sm, font_size_md, font_size_sm, size_px)
 	if alert_mode:
 		var pulse := 0.45 + 0.55 * absf(sin(clock_seconds * 4.0))
 		canvas.draw_rect(Rect2(0, 0, size_px.x, 6), Color(RED.r, RED.g, RED.b, 0.6 * pulse))
@@ -539,8 +614,8 @@ func draw_region_labels(canvas: Control, font: Font, font_size: int) -> void:
 	pass
 
 
-func draw_state_history_panel(canvas: Control, font_sm: Font, font_size: int, ink: Color, ink_bright: Color, size_px: Vector2) -> float:
-	var panel_x := size_px.x - HUD_PANEL_X
+func draw_state_history_panel(canvas: Control, font_sm: Font, font_size: int, ink: Color, ink_bright: Color) -> void:
+	var panel_x := canvas.size.x - HUD_PANEL_X
 	var panel_w := HUD_PANEL_W
 	var panel_y := 16.0
 	canvas.draw_string(font_sm, Vector2(panel_x, panel_y), "STATE LOG", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, VisualColor.stroke(ink_bright, 1.0))
@@ -549,97 +624,29 @@ func draw_state_history_panel(canvas: Control, font_sm: Font, font_size: int, in
 	panel_y += 10.0
 	var shown := mini(state_history.size(), STATE_HISTORY_LIMIT)
 	for index in range(shown):
-		var entry: Dictionary = state_history[index]
-		var label: String = String(entry["label"])
-		var clock: String = String(entry["time"])
-		var row_color := state_color(label)
-		canvas.draw_string(font_sm, Vector2(panel_x, panel_y), clock, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, VisualColor.stroke(ink, 0.65))
-		var label_width := font_sm.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-		canvas.draw_string(font_sm, Vector2(panel_x + panel_w - label_width, panel_y), label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, VisualColor.stroke(row_color, 0.95 if index == 0 else 0.72))
-		panel_y += 17.0
+		var entry := state_history[index]
+		var row_color := state_color(entry.label)
+		canvas.draw_string(font_sm, Vector2(panel_x, panel_y), entry.clock, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, VisualColor.stroke(ink, 0.65))
+		var label_width := font_sm.get_string_size(entry.label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+		canvas.draw_string(font_sm, Vector2(panel_x + panel_w - label_width, panel_y), entry.label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, VisualColor.stroke(row_color, 0.95 if index == 0 else 0.72))
+		panel_y += STATE_LOG_ROW_STEP
 	if shown == 0:
-		panel_y += 4.0
-	return panel_y + 10.0
+		panel_y += 6.0
 	pass
 
 
-func draw_current_state_panel(canvas: Control, font_md: Font, font_sm: Font, size_md: int, size_sm: int, size_px: Vector2) -> void:
-	var label := current_state_label()
-	var color := state_color(label)
-	var right_x := size_px.x - 28.0
-	var caption := "CURRENT"
-	var caption_width := font_sm.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, size_sm).x
-	canvas.draw_string(font_sm, Vector2(right_x - caption_width, size_px.y - 52.0), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, size_sm, VisualColor.stroke(INK, 0.72))
-	var label_width := font_md.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, size_md).x
-	canvas.draw_string(font_md, Vector2(right_x - label_width, size_px.y - 34.0), label, HORIZONTAL_ALIGNMENT_LEFT, -1, size_md, VisualColor.stroke(color, 1.0))
-	pass
-
-
-func draw_cortex_panel(canvas: Control, font_md: Font, font_sm: Font, size_md: int, size_sm: int, ink: Color, ink_bright: Color, size_px: Vector2, start_y: float) -> void:
-	var panel_x := size_px.x - HUD_PANEL_X
-	var panel_w := HUD_PANEL_W
-	var panel_y := maxf(start_y, 84.0)
-	canvas.draw_string(font_md, Vector2(panel_x, panel_y), "CORTEX STATUS", HORIZONTAL_ALIGNMENT_LEFT, -1, size_md, VisualColor.stroke(ink_bright, 1.0))
-	canvas.draw_line(Vector2(panel_x, panel_y + 18.0), Vector2(panel_x + panel_w, panel_y + 18.0), VisualColor.stroke(ink, 0.6), 1.0, true)
-	panel_y += 26.0
-	var rows: Array[Array] = []
-	for region_index in range(NeuralCoreAnatomy.N_REGIONS):
-		rows.append([NeuralCoreAnatomy.cluster_defs[region_index].label, region_index])
-	rows.append(["STT", null])
-	rows.append(["TTS", null])
-	rows.append(["MEMORY", null])
-	rows.append(["BUS", null])
-	for row: Array in rows:
-		var name: String = row[0]
-		var region_index = row[1]
-		var chip := chip_for(name, region_index)
-		canvas.draw_string(font_sm, Vector2(panel_x, panel_y), name, HORIZONTAL_ALIGNMENT_LEFT, -1, size_sm, VisualColor.stroke(ink, 0.85))
-		var chip_width := font_sm.get_string_size(chip[0], HORIZONTAL_ALIGNMENT_LEFT, -1, size_sm).x
-		canvas.draw_rect(Rect2(panel_x + panel_w - chip_width - 8.0, panel_y - 1.0, chip_width + 6.0, 14.0), Color(chip[1].r, chip[1].g, chip[1].b, 0.25))
-		canvas.draw_string(font_sm, Vector2(panel_x + panel_w - chip_width - 5.0, panel_y), chip[0], HORIZONTAL_ALIGNMENT_LEFT, -1, size_sm, VisualColor.stroke(chip[1], 1.0))
-		panel_y += 19.0
-	pass
-
-
-func chip_for(name: String, region_index: Variant) -> Array:
-	if alert_mode:
-		return ["FAULT", RED]
-	var flick_hash: int = absi(name.hash()) % 997
-	var flick := int(clock_seconds * 3.0 + float(flick_hash)) % 240 == 0
-	if region_index != null:
-		var heat := anatomy.heat[int(region_index)]
-		if heat > 0.55:
-			return ["LIVE", GREEN]
-		if heat > 0.2 or flick:
-			return ["ACT", CYAN]
-		return ["IDLE", dim_color(INK, 0.8)]
-	if name == "STT":
-		return ["LIVE", GREEN] if face_state == FaceState.LISTENING else ["RDY", dim_color(INK, 0.8)]
-	if name == "TTS":
-		return ["LIVE", GREEN] if face_state == FaceState.SPEAKING else ["RDY", dim_color(INK, 0.8)]
-	if name == "MEMORY":
-		return ["READ", CYAN] if face_state == FaceState.THINKING or flick else ["OK", dim_color(INK, 0.8)]
-	return ["OK", GREEN if int(clock_seconds) % 4 == 0 else dim_color(GREEN, 0.7)]
-
-
-static func dim_color(color: Color, factor: float) -> Color:
-	return Color(color.r * factor, color.g * factor, color.b * factor)
-
-
-func draw_meters(canvas: Control, font_sm: Font, font_size: int, ink: Color, ink_bright: Color, size_px: Vector2) -> void:
+func draw_meters(canvas: Control, font_sm: Font, font_size: int, ink: Color, _ink_bright: Color, size_px: Vector2) -> void:
 	var base_y := size_px.y - 46.0
-	var mic_x := 28.0
-	var listening := listen_blend > 0.45
 	var speaking := speak_blend > 0.25 or content_drive > 0.1
-	canvas.draw_string(font_sm, Vector2(mic_x, base_y - 16.0), "MIC IN", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, VisualColor.stroke(AMBER if listening else ink, 1.0 if listening else 0.7))
+	var meter_span := float(HISTORY_LEN) * 4.0
+	var out_x := size_px.x - 28.0 - meter_span
+	var state_label := current_state_label()
+	var state_col := state_color(state_label)
+	var label_width := font_sm.get_string_size(state_label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	canvas.draw_string(font_sm, Vector2(out_x + meter_span - label_width, base_y - 16.0), state_label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, VisualColor.stroke(state_col, 1.0))
 	for index in range(HISTORY_LEN):
-		var height := maxi(1, int(meter_sample_at(mic_history, index) * 22.0))
-		canvas.draw_rect(Rect2(mic_x + index * 4.0, base_y + 22.0 - height, 3.0, height), VisualColor.stroke(AMBER if listening else ink, 1.0 if listening else 0.55))
-	var out_x := size_px.x - 28.0 - 46.0 * 4.0
-	canvas.draw_string(font_sm, Vector2(out_x, base_y - 16.0), "AUDIO OUT", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, VisualColor.stroke(ink_bright if speaking else ink, 1.0 if speaking else 0.7))
-	for index in range(HISTORY_LEN):
-		var height := maxi(1, int(meter_sample_at(out_history, index) * 22.0))
-		canvas.draw_rect(Rect2(out_x + index * 4.0, base_y + 22.0 - height, 3.0, height), VisualColor.stroke(CYAN if speaking else ink, 1.0 if speaking else 0.55))
+		var height := maxi(1, int(meter_sample_at(out_history, index) * METER_BAR_MAX_H))
+		canvas.draw_rect(Rect2(out_x + index * 4.0, base_y + METER_BAR_MAX_H - height, 3.0, height), VisualColor.stroke(state_col if speaking else ink, 1.0 if speaking else 0.55))
 	pass
 
 

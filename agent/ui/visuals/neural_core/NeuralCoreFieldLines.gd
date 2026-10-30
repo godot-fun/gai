@@ -49,14 +49,13 @@ func _draw() -> void:
 			if dot_index < projected.size():
 				draw_circle(projected[dot_index], 2.0, dot_fill)
 		tendril.projected = projected
-	for traveler: Dictionary in host.travelers:
-		var tendril_index: int = traveler["ti"]
-		if tendril_index < 0 or tendril_index >= anatomy.tendrils.size():
+	for traveler: NeuralCoreTraveler in host.travelers:
+		if traveler.tendril_index < 0 or traveler.tendril_index >= anatomy.tendrils.size():
 			continue
-		var proj := anatomy.tendrils[tendril_index].projected
+		var proj := anatomy.tendrils[traveler.tendril_index].projected
 		if proj.is_empty():
 			continue
-		var seg := float(traveler["t"]) * 8.0
+		var seg := traveler.progress * 8.0
 		var kk := mini(7, int(seg))
 		var frac := seg - float(kk)
 		var pos := proj[kk].lerp(proj[kk + 1], frac)

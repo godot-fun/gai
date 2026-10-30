@@ -25,16 +25,27 @@ static func anatomy_builds_mesh_and_tendrils_test() -> void:
 	pass
 
 
-static func reasoning_switches_thinking_state_test() -> void:
+static func meter_level_scales_stream_energy_test() -> void:
+	var effect := NeuralCore.new()
+	effect.running = true
+	effect.envelope = 0.045
+	assert(effect.meter_level_for_display() >= 0.85)
+	effect.envelope = 0.0
+	effect.think_blend = 0.0
+	effect.activity_label = "THINKING"
+	assert(effect.meter_level_for_display() >= 0.25)
+	effect.free()
+	pass
+
+
+static func activity_follows_chat_entry_test() -> void:
 	var effect := NeuralCore.new()
 	effect.on_agent_start(1)
-	effect.on_message_update(1, "plan", OpenAiClient.STREAM_KIND_REASONING)
-	effect.advance_state_blends(0.05)
-	effect.sync_face_state_from_drives()
-	assert(effect.face_state == NeuralCore.FaceState.THINKING)
-	effect.on_message_update(1, "answer", OpenAiClient.STREAM_KIND_CONTENT)
-	effect.advance_state_blends(0.05)
-	effect.sync_face_state_from_drives()
-	assert(effect.face_state == NeuralCore.FaceState.SPEAKING)
+	effect.on_chat_entry_add(1, ChatEntry.new(ChatEntry.KIND_THINKING, ChatEntry.TITLE_THINKING, ""))
+	assert(effect.activity_label == "THINKING")
+	effect.on_chat_entry_add(1, ChatEntry.new(ChatEntry.KIND_TOOL, "read", ""))
+	assert(effect.activity_label == "READ")
+	effect.on_chat_entry_add(1, ChatEntry.new(ChatEntry.KIND_AGENT, ChatEntry.TITLE_AGENT, "done"))
+	assert(effect.activity_label == "RESPONDING")
 	effect.free()
 	pass

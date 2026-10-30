@@ -170,10 +170,11 @@ static func build(seed: int = 7) -> NeuralCoreAnatomy:
 		tendril.sway = 0.006 + rng.randf() * 0.012
 		tendril.sway_freq = 0.15 + rng.randf() * 0.25
 		tendril.sway_phase = rng.randf() * TAU
-		var dot_set: Dictionary[int, bool] = {}
-		while dot_set.size() < 2:
-			dot_set[3 + int(rng.randf() * 6)] = true
-		var dot_list: Array[int] = dot_set.keys()
+		var dot_list: Array[int] = []
+		while dot_list.size() < 2:
+			var pick := 3 + int(rng.randf() * 6)
+			if pick not in dot_list:
+				dot_list.append(pick)
 		dot_list.sort()
 		dot_list.append(8)
 		for dot_index: int in dot_list:
