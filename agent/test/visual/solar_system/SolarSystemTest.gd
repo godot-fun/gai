@@ -40,6 +40,12 @@ func system_builds_upstream_planets_test() -> void:
 			ring_count += 1
 	assert(ring_count == 1)
 	assert(effect.sun_body_material.get_shader_parameter("noise") != null)
+	assert(effect.sun_body_material.get_shader_parameter("noise") == SolarSystem.NOISE_STAR)
+	assert(effect.sun_body_material.get_shader_parameter("noise_gaseous") == true)
+	assert(effect.sun_corona.get_parent() == effect.system_root)
+	assert(effect.sun_corona_material.shader == SolarSystem.ATMOSPHERE_SHADER)
+	assert(effect.sun_corona_material.get_shader_parameter("emit") == true)
+	assert(effect.sun_corona_material.get_shader_parameter("intensity") == 10.0)
 	effect.free()
 	pass
 

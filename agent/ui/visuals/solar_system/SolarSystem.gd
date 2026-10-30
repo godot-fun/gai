@@ -14,11 +14,11 @@ const BODY_SHADER := preload("res://agent/ui/visuals/solar_system/shaders/body.g
 const CLOUDS_SHADER := preload("res://agent/ui/visuals/solar_system/shaders/clouds.gdshader")
 const ATMOSPHERE_SHADER := preload("res://agent/ui/visuals/solar_system/shaders/atmosphere.gdshader")
 const NOISE_NO_ATMOSPHERE := preload("res://agent/ui/visuals/solar_system/noises/planet_no_atmosphere.tres")
+const NOISE_STAR := preload("res://agent/ui/visuals/solar_system/noises/star.tres")
 const NOISE_TERRESTRIAL := preload("res://agent/ui/visuals/solar_system/noises/planet_terrestrial.tres")
 const NOISE_ICE := preload("res://agent/ui/visuals/solar_system/noises/planet_ice.tres")
 const NOISE_SAND := preload("res://agent/ui/visuals/solar_system/noises/planet_sand.tres")
 const NOISE_GASEOUS := preload("res://agent/ui/visuals/solar_system/noises/planet_gaseous.tres")
-const NOISE_STAR := preload("res://agent/ui/visuals/solar_system/noises/star.tres")
 const RING_SHADER := preload("res://agent/ui/visuals/solar_system/SolarRing.gdshader")
 const STARFIELD_SHADER := preload("res://agent/ui/visuals/solar_system/SolarStarfield.gdshader")
 const ORBITS_SHADER := preload("res://agent/ui/visuals/solar_system/SolarOrbits.gdshader")
@@ -31,10 +31,8 @@ const CAMERA_FOV := 46.0
 const RENDER_SHRINK := 2
 const STARFIELD_RADIUS := 90.0
 const SUN_RADIUS := 1.05
-const SUN_GLOW_SIZE := 13.0
-## Halo sprites sit behind the star so they never wash out its surface.
-const SUN_GLOW_DEPTH := 2.2
-const SUN_CORONA_SCALE := 1.08
+## Upstream Atmosphere shell scale around the star.
+const SUN_CORONA_SCALE := 1.04
 const BELT_INNER := 5.15
 const BELT_OUTER := 5.95
 const BELT_COUNT := 280
@@ -51,10 +49,16 @@ const ORBIT_BOUNDS_MARGIN_PX := 4.0
 const ORBIT_LINE_WIDTH := 0.35
 const ORBIT_COLOR := Color(0.45, 0.62, 1.0)
 const ORBIT_ALPHA := 0.45
+## Our unit sphere has twice the upstream mesh radius, so triplanar noise would repeat twice as
+## often; halving the preset scale keeps the upstream plasma and continent sizes.
+const UPSTREAM_NOISE_SCALE := 0.5
 const ORBIT_MAX := 8
 
 # --- Event energy -------------------------------------------------------------------------
-const SUN_EMIT_BASE := 1.0
+## The upstream star scene emits at 3.0, which its Forward+ glow turns into a hot bloom. This
+## project renders with GL Compatibility (no glow), where 3.0 clips the disc to flat yellow;
+## 1.15 keeps the orange plasma and lets streaming energy push it brighter.
+const SUN_EMIT_BASE := 1.15
 const SUN_EMIT_STREAM := 0.95
 const STREAM_ENERGY_GAIN := 6.0
 const REASONING_ENERGY_SCALE := 0.3
@@ -139,8 +143,8 @@ const BODY_PRESETS := {
 		"emit": 0.0,
 	},
 	"star": {
-		"colors": [Color(0.52, 0.180, 0.030), Color(1.0, 0.420, 0.050), Color(1.0, 0.660, 0.240), Color(1.0, 0.300, 0.020), Color(1.0, 0.840, 0.520)],
-		"thresholds": [0.42, 0.52, 0.62, 0.72, 1.0],
+		"colors": [Color(0.435, 0.129, 0.0), Color(1.0, 0.404, 0.0), Color(1.0, 0.639, 0.251), Color(1.0, 0.404, 0.0), Color(1.0, 0.639, 0.251)],
+		"thresholds": [0.40, 0.50, 0.60, 0.70, 1.0],
 		"roughness": 0.0,
 		"noise": NOISE_STAR,
 		"noise_scale": 3.0,
@@ -155,7 +159,7 @@ const ATMOSPHERE_PRESETS := {
 	"ice": {"color_1": Color(0.114, 0.290, 0.388), "color_2": Color(0.631, 0.824, 0.941), "alpha": 0.60, "amount": 4.5, "intensity": 4.0, "emit": false},
 	"sand": {"color_1": Color(0.573, 0.380, 0.224), "color_2": Color(0.882, 0.671, 0.506), "alpha": 0.51, "amount": 4.5, "intensity": 4.0, "emit": false},
 	"gaseous": {"color_1": Color(0.400, 0.259, 0.200), "color_2": Color(0.765, 0.561, 0.471), "alpha": 0.80, "amount": 4.5, "intensity": 4.0, "emit": false},
-	"star": {"color_1": Color(0.435, 0.129, 0.0), "color_2": Color(1.0, 0.639, 0.251), "alpha": 0.16, "amount": 5.0, "intensity": 4.0, "emit": true},
+	"star": {"color_1": Color(0.435, 0.129, 0.0), "color_2": Color(1.0, 0.639, 0.251), "alpha": 0.55, "amount": 4.5, "intensity": 10.0, "emit": true},
 }
 
 const CLOUD_PRESETS := {
@@ -225,7 +229,6 @@ var sun_body: MeshInstance3D
 var sun_body_material: ShaderMaterial
 var sun_corona: MeshInstance3D
 var sun_corona_material: ShaderMaterial
-var sun_glow: Sprite3D
 var starfield_material: ShaderMaterial
 var fill_light: DirectionalLight3D
 var belt_material: StandardMaterial3D
@@ -662,12 +665,7 @@ func apply_visuals() -> void:
 	if sun_body_material != null:
 		sun_body_material.set_shader_parameter("emit", SUN_EMIT_BASE + energy * SUN_EMIT_STREAM + flare * 0.9)
 	if sun_corona_material != null:
-		sun_corona_material.set_shader_parameter("intensity", 4.0 + energy * 4.0 + flare * 9.0)
-		sun_corona_material.set_shader_parameter("alpha", 0.16 + energy * 0.1)
-	var glow_scale := 1.0 + energy * 0.16 + flare * 0.3 + sin(clock * 1.6) * 0.02
-	if sun_glow != null:
-		sun_glow.scale = Vector3.ONE * glow_scale
-		sun_glow.modulate = Color(1.0, 0.68, 0.32, (0.85 + flare * 0.15) if dark else 0.3)
+		sun_corona_material.set_shader_parameter("intensity", 10.0 + energy * 5.0 + flare * 8.0)
 	for planet: Planet in planets:
 		apply_planet_visuals(planet)
 	if starfield_material != null:
@@ -811,6 +809,8 @@ func build_starfield() -> void:
 	pass
 
 
+## Built from the upstream star scene material values: the plasma body plus its fresnel corona
+## shell. Everything is created in code; the overlay ships no scene files.
 func build_sun() -> void:
 	sun_body_material = make_body_material(BODY_PRESETS["star"])
 	sun_body = MeshInstance3D.new()
@@ -829,12 +829,6 @@ func build_sun() -> void:
 	sun_corona.scale = Vector3.ONE * SUN_RADIUS * SUN_CORONA_SCALE
 	sun_corona.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	system_root.add_child(sun_corona)
-
-	var to_camera := (CAMERA_POSITION - CAMERA_TARGET).normalized()
-	sun_glow = make_glow_sprite(Color(1.0, 0.68, 0.32, 0.85), SUN_GLOW_SIZE)
-	sun_glow.name = "SunGlow"
-	sun_glow.position = -to_camera * SUN_GLOW_DEPTH
-	system_root.add_child(sun_glow)
 	pass
 
 
@@ -950,7 +944,7 @@ func make_body_material(preset: Dictionary) -> ShaderMaterial:
 	material.set_shader_parameter("color_1_roughness", float(preset["roughness"]))
 	material.set_shader_parameter("color_1_emit", false)
 	material.set_shader_parameter("noise", preset["noise"])
-	material.set_shader_parameter("noise_scale", float(preset["noise_scale"]))
+	material.set_shader_parameter("noise_scale", float(preset["noise_scale"]) * UPSTREAM_NOISE_SCALE)
 	material.set_shader_parameter("noise_gaseous", bool(preset["gaseous"]))
 	material.set_shader_parameter("noise_gaseous_speed", float(preset["gaseous_speed"]))
 	material.set_shader_parameter("emit", float(preset["emit"]))
