@@ -34,9 +34,10 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 		],
 	},
 	{
-		"title": "Holes",
+		"title": "Neural",
 		"effects": [
 			{"type": VisualControl.Type.NEURAL_AURORA, "label": "Neural Aurora"},
+			{"type": VisualControl.Type.NEURAL_CORE, "label": "Neural Core"},
 			{"type": VisualControl.Type.SEMANTIC_BLACK_HOLE, "label": "Semantic Black Hole"},
 		],
 	},
