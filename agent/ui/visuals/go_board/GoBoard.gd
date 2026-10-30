@@ -112,8 +112,6 @@ var rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	super._ready()
-	gdf.events.theme_changed.connect(sync_palette)
-	gdf.events.theme_color_changed.connect(sync_palette)
 	sync_palette()
 	pass
 

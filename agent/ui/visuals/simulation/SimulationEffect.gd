@@ -82,8 +82,6 @@ func _ready() -> void:
 	display_rect.material = display_material
 	add_child(display_rect)
 	get_viewport().size_changed.connect(on_viewport_size_changed)
-	gdf.events.theme_changed.connect(update_theme_presentation)
-	gdf.events.theme_color_changed.connect(update_theme_presentation)
 	update_theme_presentation()
 	reset_field()
 	pass

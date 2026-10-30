@@ -50,8 +50,6 @@ func _ready() -> void:
 	runner_layer.draw.connect(draw_runners)
 	comet_layer = add_disc_layer()
 	comet_layer.draw.connect(draw_comets)
-	gdf.events.theme_changed.connect(repaint_web)
-	gdf.events.theme_color_changed.connect(repaint_web)
 	pass
 
 
@@ -84,11 +82,6 @@ func add_disc_layer() -> Control:
 	layer.show_behind_parent = true
 	add_child(layer)
 	return layer
-
-
-func repaint_web() -> void:
-	web_radius = 0.0
-	pass
 
 
 ## Re-poses the disc layers for this frame; repaints the static web only when the stage resizes.

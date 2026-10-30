@@ -53,8 +53,6 @@ func _ready() -> void:
 	burn_material.shader = DISINTEGRATE_SHADER
 	surface_rect.material = burn_material
 	add_child(surface_rect)
-	gdf.events.theme_changed.connect(update_theme_presentation)
-	gdf.events.theme_color_changed.connect(update_theme_presentation)
 	update_theme_presentation()
 	apply_shader_state()
 	pass

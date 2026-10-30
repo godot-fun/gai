@@ -69,8 +69,6 @@ func _ready() -> void:
 	fluid_material.set_shader_parameter("spike_spacing_px", SPIKE_SPACING_PX)
 	surface_rect.material = fluid_material
 	add_child(surface_rect)
-	gdf.events.theme_changed.connect(update_theme_presentation)
-	gdf.events.theme_color_changed.connect(update_theme_presentation)
 	update_theme_presentation()
 	apply_shader_state()
 	pass

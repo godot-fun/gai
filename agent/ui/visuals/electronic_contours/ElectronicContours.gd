@@ -37,12 +37,11 @@ func _ready() -> void:
 	relief_material.shader = CONTOURS_SHADER
 	relief_material.set_shader_parameter("toolbar_height_px", 0.0)
 	relief_material.set_shader_parameter("max_deflection_px", MAX_DEFLECTION_PX)
+	relief_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
+	relief_material.set_shader_parameter("background_color", Colors.app_background)
 	screen_rect.material = relief_material
 	add_child(screen_rect)
 	resized.connect(update_raster_layout)
-	gdf.events.theme_color_changed.connect(update_palette)
-	gdf.events.theme_changed.connect(update_palette)
-	update_palette()
 	update_raster_layout()
 	apply_shader_state()
 	pass
@@ -151,14 +150,6 @@ func apply_shader_state() -> void:
 	relief_material.set_shader_parameter("raster_phase", raster_phase)
 	relief_material.set_shader_parameter("quake_energy", quake_energy)
 	relief_material.set_shader_parameter("quake_progress", quake_progress)
-	pass
-
-
-func update_palette() -> void:
-	if relief_material == null:
-		return
-	relief_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
-	relief_material.set_shader_parameter("background_color", Colors.app_background)
 	pass
 
 

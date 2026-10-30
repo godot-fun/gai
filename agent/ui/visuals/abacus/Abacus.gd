@@ -81,8 +81,6 @@ var paper_color: Color = Color(1.0, 0.96, 0.92)
 
 func _ready() -> void:
 	super._ready()
-	gdf.events.theme_changed.connect(sync_palette)
-	gdf.events.theme_color_changed.connect(sync_palette)
 	sync_palette()
 	ensure_rods()
 	pass

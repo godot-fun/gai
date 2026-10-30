@@ -70,8 +70,6 @@ func _ready() -> void:
 	eink_material.shader = EINK_SHADER
 	screen_rect.material = eink_material
 	add_child(screen_rect)
-	gdf.events.theme_changed.connect(update_theme_presentation)
-	gdf.events.theme_color_changed.connect(update_theme_presentation)
 	update_theme_presentation()
 	apply_shader_state()
 	pass

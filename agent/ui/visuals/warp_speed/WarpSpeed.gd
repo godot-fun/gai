@@ -46,8 +46,6 @@ var accent_color: Color = Color(0.4, 0.7, 1.0)
 
 func _ready() -> void:
 	super._ready()
-	gdf.events.theme_changed.connect(sync_palette)
-	gdf.events.theme_color_changed.connect(sync_palette)
 	sync_palette()
 	pass
 

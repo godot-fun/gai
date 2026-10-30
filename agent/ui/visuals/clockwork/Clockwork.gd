@@ -95,8 +95,6 @@ var error_color: Color = Color(1.0, 0.35, 0.35)
 
 func _ready() -> void:
 	super._ready()
-	gdf.events.theme_changed.connect(sync_palette)
-	gdf.events.theme_color_changed.connect(sync_palette)
 	sync_palette()
 	rebuild_movement()
 	pass

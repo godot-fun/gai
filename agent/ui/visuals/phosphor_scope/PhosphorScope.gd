@@ -44,8 +44,6 @@ func _ready() -> void:
 	screen_rect.material = scope_material
 	update_theme_colors()
 	add_child(screen_rect)
-	gdf.events.theme_changed.connect(update_theme_colors)
-	gdf.events.theme_color_changed.connect(update_theme_colors)
 	apply_shader_state()
 	pass
 

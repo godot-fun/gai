@@ -44,7 +44,6 @@ func _ready() -> void:
 	room_material.set_shader_parameter("inertia_enabled", Vector3.ZERO)
 	screen_rect.material = room_material
 	add_child(screen_rect)
-	gdf.events.theme_color_changed.connect(update_accent_color)
 	pass
 
 
@@ -150,12 +149,6 @@ func apply_shader_state() -> void:
 	room_material.set_shader_parameter("velocity", velocity_px / MAX_VELOCITY_PX)
 	room_material.set_shader_parameter("impact", impact)
 	room_material.set_shader_parameter("inertia_displacement_px", Vector3(inertia_displacements[0], inertia_displacements[1], inertia_displacements[2]))
-	pass
-
-
-func update_accent_color() -> void:
-	if room_material != null:
-		room_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
 	pass
 
 

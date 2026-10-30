@@ -39,7 +39,6 @@ func _ready() -> void:
 	delamination_material.set_shader_parameter("chat_area_enabled", 0.0)
 	screen_rect.material = delamination_material
 	add_child(screen_rect)
-	gdf.events.theme_color_changed.connect(update_accent_color)
 	apply_shader_state()
 	pass
 
@@ -141,12 +140,6 @@ func apply_shader_state() -> void:
 	delamination_material.set_shader_parameter("layer_separation", layer_separation)
 	delamination_material.set_shader_parameter("parallax_phase", parallax_phase)
 	delamination_material.set_shader_parameter("parallax_direction", parallax_direction)
-	pass
-
-
-func update_accent_color() -> void:
-	if delamination_material != null:
-		delamination_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
 	pass
 
 

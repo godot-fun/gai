@@ -44,8 +44,6 @@ func _ready() -> void:
 	mirage_material.set_shader_parameter("max_deflection_px", MAX_DEFLECTION_PX)
 	screen_rect.material = mirage_material
 	add_child(screen_rect)
-	gdf.events.theme_changed.connect(update_theme_presentation)
-	gdf.events.theme_color_changed.connect(update_theme_presentation)
 	update_theme_presentation()
 	apply_shader_state()
 	pass

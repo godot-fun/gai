@@ -27,13 +27,7 @@ func _ready() -> void:
 	char_overlay.neuron_net = neuron_net
 	add_child(char_overlay)
 	orb_color_controller.snap_to(OrbPhase.color_for(OrbPhase.Phase.AWAKE))
-	gdf.events.theme_color_changed.connect(on_theme_color_changed)
 	push_display_color()
-	pass
-
-
-func on_theme_color_changed() -> void:
-	orb_color_controller.set_target(OrbPhase.color_for(phase))
 	pass
 
 

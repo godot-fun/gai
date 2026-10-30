@@ -199,8 +199,6 @@ func _init() -> void:
 
 func _ready() -> void:
 	super._ready()
-	gdf.events.theme_changed.connect(sync_palette)
-	gdf.events.theme_color_changed.connect(sync_palette)
 	sync_palette()
 	ensure_children()
 	pass

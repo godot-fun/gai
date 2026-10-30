@@ -43,7 +43,6 @@ func _ready() -> void:
 	fold_material.set_shader_parameter("sidebar_fold_strength", SIDEBAR_FOLD_STRENGTH)
 	screen_rect.material = fold_material
 	add_child(screen_rect)
-	gdf.events.theme_color_changed.connect(update_accent_color)
 	apply_shader_state()
 	pass
 
@@ -142,12 +141,6 @@ func apply_shader_state() -> void:
 		return
 	fold_material.set_shader_parameter("fold_amount", fold_amount)
 	fold_material.set_shader_parameter("fold_phase", fold_phase)
-	pass
-
-
-func update_accent_color() -> void:
-	if fold_material != null:
-		fold_material.set_shader_parameter("accent_color", ThemeColor.accent_theme_color())
 	pass
 
 
