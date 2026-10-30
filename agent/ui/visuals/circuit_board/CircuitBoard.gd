@@ -10,7 +10,9 @@ const GREEN_HOT := Color("a6ffd0")
 const AMBER := Color("e7c368")
 const AMBER_HOT := Color("ffe9ae")
 const MAX_PULSES := 96
-const EFFECT_OPACITY := 0.90
+## Tune separately: dark app surfaces need more see-through board art than light ones.
+const LIGHT_THEME_EFFECT_OPACITY := 0.90
+const DARK_THEME_EFFECT_OPACITY := 0.65
 const BOARD_OPACITY := 0.92
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1), Vector2i(-1, 1), Vector2i(-1, 0), Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1)]
 
@@ -38,8 +40,13 @@ var chip_text_elapsed := 0.0
 
 func _ready() -> void:
 	super._ready()
-	self_modulate.a = EFFECT_OPACITY
+	apply_theme_opacity()
 	rng.seed = 7
+	pass
+
+
+func apply_theme_opacity() -> void:
+	self_modulate.a = DARK_THEME_EFFECT_OPACITY if ThemeColor.is_dark_theme() else LIGHT_THEME_EFFECT_OPACITY
 	pass
 
 
