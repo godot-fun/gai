@@ -35,3 +35,28 @@ static func agent_session_deep_clone_is_independent_test() -> void:
 	assert(cloned.pending_messages[0] == "pending")
 	assert(cloned.usage.prompt_tokens == 100)
 	pass
+
+
+static func agent_session_indexes_deep_clone_is_independent_test() -> void:
+	var pinned := AgentSessionIndexes.SessionIndex.new()
+	pinned.id = 1
+	pinned.title = "Pinned"
+	var normal := AgentSessionIndexes.SessionIndex.new()
+	normal.id = 2
+	normal.title = "Normal"
+	var session_indexes := AgentSessionIndexes.new()
+	session_indexes.pinned_indexes.append(pinned)
+	session_indexes.indexes.append(normal)
+
+	var cloned := session_indexes.deep_clone()
+	assert(JsonUtils.object_to_json(cloned) == JsonUtils.object_to_json(session_indexes))
+	pinned.title = "Changed"
+	normal.id = 3
+	session_indexes.indexes.clear()
+
+	assert(cloned.pinned_indexes[0] != pinned)
+	assert(cloned.pinned_indexes[0].title == "Pinned")
+	assert(cloned.indexes.size() == 1)
+	assert(cloned.indexes[0] != normal)
+	assert(cloned.indexes[0].id == 2)
+	pass
