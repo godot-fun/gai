@@ -23,6 +23,10 @@ func _init(_role: String = "", _content: String = "") -> void:
 	pass
 
 
+# ---------------------------------------------------------------------------
+# Factories
+# ---------------------------------------------------------------------------
+
 static func system(text: String) -> ChatMessage:
 	return ChatMessage.new(ROLE_SYSTEM, text)
 
@@ -107,3 +111,20 @@ func to_api_dict() -> Dictionary:
 	if role == ROLE_ASSISTANT and StringUtils.is_not_blank(reasoning_content):
 		wire["reasoning_content"] = StringUtils.trim(reasoning_content)
 	return wire
+
+
+# ---------------------------------------------------------------------------
+# Deep clone
+# ---------------------------------------------------------------------------
+
+func deep_clone() -> ChatMessage:
+	var cloned := ChatMessage.new(role, content)
+	cloned.tool_call_id = tool_call_id
+	cloned.reasoning_content = reasoning_content
+	cloned.image_data_url = image_data_url
+	cloned.tool_calls.resize(tool_calls.size())
+	for index in tool_calls.size():
+		if tool_calls[index] == null:
+			continue
+		cloned.tool_calls[index] = tool_calls[index].deep_clone()
+	return cloned

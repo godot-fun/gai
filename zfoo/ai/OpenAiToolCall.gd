@@ -24,6 +24,10 @@ var type: String = "function"
 var function: Function = Function.new()
 
 
+# ---------------------------------------------------------------------------
+# Parsing
+# ---------------------------------------------------------------------------
+
 static func parse_json(json: String) -> OpenAiToolCall:
 	return JsonUtils.json_to_object(json, OpenAiToolCall)
 
@@ -74,3 +78,16 @@ static func merge_stream_delta(acc: Array[OpenAiToolCall], delta: StreamDelta) -
 		entry.function.name = delta.function.name
 	if StringUtils.is_not_empty(delta.function.arguments):
 		entry.function.arguments += delta.function.arguments
+
+
+# ---------------------------------------------------------------------------
+# Deep clone
+# ---------------------------------------------------------------------------
+
+func deep_clone() -> OpenAiToolCall:
+	var cloned := OpenAiToolCall.new()
+	cloned.id = id
+	cloned.type = type
+	cloned.function.name = function.name
+	cloned.function.arguments = function.arguments
+	return cloned

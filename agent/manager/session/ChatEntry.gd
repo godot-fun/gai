@@ -61,3 +61,11 @@ func open_full_view() -> void:
 	var popup_title := title if not StringUtils.is_blank(title) else I18n.t("common.full_view")
 	PopupWindow.show_window(popup_title, body)
 	pass
+
+
+# ---------------------------------------------------------------------------
+# Deep clone
+# ---------------------------------------------------------------------------
+
+func deep_clone() -> ChatEntry:
+	return ChatEntry.new(kind, title, body, details.duplicate())

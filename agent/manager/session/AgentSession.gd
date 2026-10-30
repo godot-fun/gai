@@ -17,3 +17,27 @@ var usage: OpenAiUsage = OpenAiUsage.new()
 func _init(_id: int = -1) -> void:
 	id = _id
 	pass
+
+
+# ---------------------------------------------------------------------------
+# Deep clone
+# ---------------------------------------------------------------------------
+
+## Creates a structurally independent snapshot without JSON/reflection overhead.
+## Strings are immutable copy-on-write values, so assigning them is both safe and cheap.
+func deep_clone() -> AgentSession:
+	var cloned := AgentSession.new(id)
+	cloned.messages.resize(messages.size())
+	for index in messages.size():
+		if messages[index] == null:
+			continue
+		cloned.messages[index] = messages[index].deep_clone()
+	cloned.chat_entries.resize(chat_entries.size())
+	for index in chat_entries.size():
+		if chat_entries[index] == null:
+			continue
+		cloned.chat_entries[index] = chat_entries[index].deep_clone()
+	cloned.draft_text = draft_text
+	cloned.pending_messages.assign(pending_messages)
+	cloned.usage.copy_from(usage)
+	return cloned
