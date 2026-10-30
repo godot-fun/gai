@@ -23,14 +23,14 @@ func _draw() -> void:
 		var hue := NeuralCoreAnatomy.cluster_defs[cluster_index].hue
 		var heat := anatomy.heat[cluster_index] if cluster_index < anatomy.heat.size() else 0.0
 		var flicker := pow(sin(t * 0.6 + float(cluster_index)), 2.0)
-		var strength := minf(0.48, 0.16 + 0.08 * flicker + 0.24 * heat + 0.10 * env)
+		var strength := minf(0.62, 0.22 + 0.08 * flicker + 0.28 * heat + 0.12 * env)
 		var stroke := dim_color(red_alert if alert else hue, strength)
 		var a3: Vector3 = host.project_brain(host.live_point(edge.x, breath), warp)
 		var b3: Vector3 = host.project_brain(host.live_point(edge.y, breath), warp)
 		draw_line(Vector2(a3.x, a3.y), Vector2(b3.x, b3.y), stroke, 1.0, true)
 	for tendril in anatomy.tendrils:
 		var off := tendril.sway * sin(t * tendril.sway_freq + tendril.sway_phase)
-		var stroke := dim_color(red_alert if alert else ink_pale, 0.42 + 0.15 * env)
+		var stroke := dim_color(red_alert if alert else ink_pale, 0.52 + 0.18 * env)
 		var projected: PackedVector2Array = PackedVector2Array()
 		projected.resize(tendril.points.size())
 		for step in range(tendril.points.size()):

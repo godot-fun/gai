@@ -1,8 +1,8 @@
 shader_type canvas_item;
+render_mode blend_add;
 
-// Multi-scale additive bloom for the neural field (matches ai-visualizer field + 1/4 + 1/8 taps).
+// Sparse splats: additive glow over chat; empty pixels discard (no wash).
 uniform sampler2D field_tex : filter_linear, repeat_disable;
-uniform vec4 background_color : source_color = vec4(0.007843, 0.011765, 0.039216, 1.0);
 
 vec3 sample_wide(sampler2D tex, vec2 uv, vec2 texel, float scale) {
 	vec3 accum = vec3(0.0);
@@ -23,6 +23,12 @@ void fragment() {
 	vec3 wide4 = sample_wide(field_tex, UV, texel, 4.0);
 	vec3 wide8 = sample_wide(field_tex, UV, texel, 8.0);
 	// Keep the sharp pass dominant so cluster dots and labels stay readable.
-	vec3 glow = sharp + wide4 * 0.82 + wide8 * 0.58;
-	COLOR = vec4(background_color.rgb + glow, 1.0);
+	vec3 raw = sharp + wide4 * 0.90 + wide8 * 0.68;
+	float energy = length(raw);
+	if (energy < 0.014) {
+		discard;
+	}
+	vec3 glow = raw * 2.05;
+	float alpha = clamp(sqrt(energy) * 1.55, 0.12, 1.0);
+	COLOR = vec4(glow, alpha);
 }

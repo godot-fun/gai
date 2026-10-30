@@ -5,16 +5,16 @@ extends VisualEffect
 ## Visual state follows agent streaming (reasoning / content) like ai-visualizer faces/neural.
 
 const BLOOM_SHADER := preload("res://agent/ui/visuals/neural_core/NeuralCoreBloom.gdshader")
-const BG_COLOR := Color8(2, 3, 10)
 const INK := Color8(96, 140, 220)
 const INK_BRIGHT := Color8(170, 210, 255)
 const AMBER := Color8(255, 176, 64)
 const RED := Color8(255, 52, 52)
 const GREEN := Color8(74, 240, 122)
 const CYAN := Color8(56, 200, 255)
+const SPLAT_GAIN := 1.32
 const PROFILE := {
-	"idle": Vector2(1.4, 0.38),
-	"listening": Vector2(2.6, 0.50),
+	"idle": Vector2(1.4, 0.48),
+	"listening": Vector2(2.6, 0.58),
 	"thinking": Vector2(13.0, 0.95),
 	"speaking": Vector2(9.0, 0.78),
 }
@@ -115,9 +115,9 @@ func _ready() -> void:
 	splat_texture = ImageTexture.create_from_image(splat_image)
 	bloom_material = ShaderMaterial.new()
 	bloom_material.shader = BLOOM_SHADER
-	bloom_material.set_shader_parameter("background_color", BG_COLOR)
 	bloom_rect = ColorRect.new()
 	bloom_rect.name = "BloomDisplay"
+	bloom_rect.color = Color(0.0, 0.0, 0.0, 0.0)
 	bloom_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bloom_rect.material = bloom_material
 	bloom_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -506,7 +506,7 @@ func splat_field() -> void:
 				color.r = lerpf(color.r, 70.0 / 255.0, k)
 				color.g = lerpf(color.g, 185.0 / 255.0, k)
 				color.b = lerpf(color.b, 1.0, k)
-			color = Color(color.r * bright, color.g * bright, color.b * bright)
+			color = Color(color.r * bright * SPLAT_GAIN, color.g * bright * SPLAT_GAIN, color.b * bright * SPLAT_GAIN)
 		splat_pixel(int(scratch_project.x), int(scratch_project.y), color, 1.0)
 		splat_pixel(int(scratch_project.x) + 1, int(scratch_project.y), color, 0.45)
 		splat_pixel(int(scratch_project.x), int(scratch_project.y) + 1, color, 0.45)
