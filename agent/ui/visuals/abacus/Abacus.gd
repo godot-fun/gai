@@ -81,7 +81,6 @@ var paper_color: Color = Color(1.0, 0.96, 0.92)
 
 func _ready() -> void:
 	super._ready()
-	sync_palette()
 	ensure_rods()
 	pass
 

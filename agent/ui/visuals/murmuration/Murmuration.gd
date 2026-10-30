@@ -79,7 +79,6 @@ func on_agent_start(_session_id: int) -> void:
 	reasoning = false
 	stream_heat = 0.0
 	hatch_charge = 0.0
-	sync_palette()
 	var viewport := view_size()
 	var center := Vector2(viewport.x * 0.3, viewport.y * 0.5)
 	for _index in range(START_BIRDS):

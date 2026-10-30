@@ -67,7 +67,6 @@ func on_agent_start(_session_id: int) -> void:
 	shake = 0.0
 	failure_tint = 0.0
 	speed = IDLE_SPEED
-	sync_palette()
 	update_target_speed()
 	pass
 

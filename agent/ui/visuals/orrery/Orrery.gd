@@ -244,7 +244,6 @@ func on_agent_start(p_session_id: int) -> void:
 	beat_env = 0.0
 	zoom = ZOOM_MIN
 	reset_buffers()
-	sync_palette()
 	push_feed(Tag.RUN, StringUtils.format(I18n.t("agent.visuals.orrery_session"), session_id))
 	pass
 

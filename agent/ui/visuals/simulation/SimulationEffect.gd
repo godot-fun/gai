@@ -59,10 +59,6 @@ func apply_field_state() -> void:
 	pass
 
 
-func update_theme_presentation() -> void:
-	pass
-
-
 func _ready() -> void:
 	super._ready()
 	var field_size := compute_field_size()
@@ -82,7 +78,6 @@ func _ready() -> void:
 	display_rect.material = display_material
 	add_child(display_rect)
 	get_viewport().size_changed.connect(on_viewport_size_changed)
-	update_theme_presentation()
 	reset_field()
 	pass
 

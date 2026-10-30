@@ -112,7 +112,6 @@ var rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	super._ready()
-	sync_palette()
 	pass
 
 
