@@ -10,6 +10,8 @@ const GREEN_HOT := Color("a6ffd0")
 const AMBER := Color("e7c368")
 const AMBER_HOT := Color("ffe9ae")
 const MAX_PULSES := 96
+const EFFECT_OPACITY := 0.90
+const BOARD_OPACITY := 0.92
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1), Vector2i(-1, 1), Vector2i(-1, 0), Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1)]
 
 var cell := 24.0
@@ -36,6 +38,7 @@ var chip_text_elapsed := 0.0
 
 func _ready() -> void:
 	super._ready()
+	self_modulate.a = EFFECT_OPACITY
 	rng.seed = 7
 	pass
 
@@ -402,7 +405,7 @@ func _draw() -> void:
 
 
 func draw_background(view: Vector2) -> void:
-	draw_rect(Rect2(Vector2.ZERO, view), Color("020705", 0.92))
+	draw_rect(Rect2(Vector2.ZERO, view), Color("020705", BOARD_OPACITY))
 	var grid_step := maxi(5, roundi(cell * 0.3))
 	for x in range(0, int(view.x), grid_step):
 		draw_line(Vector2(x, 0.0), Vector2(x, view.y), Color("beffdc", 0.012), 1.0)
