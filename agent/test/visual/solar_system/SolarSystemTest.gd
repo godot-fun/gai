@@ -192,6 +192,9 @@ func system_renders_inside_the_tree_test() -> void:
 	effect.on_tool_execution_start(1, "t1", "grep", {} as Dictionary[String, Variant])
 	for _frame in range(3):
 		await scene_tree.process_frame
+	# The running tool locks its planet with a screen-space reticle rather than a ring sprite.
+	assert(effect.orbit_material.get_shader_parameter("reticle_count") >= 1)
+	assert(effect.planets[effect.tool_planets["t1"]].halo.texture == effect.glow_texture)
 	effect.on_tool_execution_end(1, "t1", "grep", AgentToolResult.ok("done"))
 	effect.on_tool_execution_end(1, "t2", "read_file", AgentToolResult.error("boom"))
 	effect.on_message_complete(1, null)

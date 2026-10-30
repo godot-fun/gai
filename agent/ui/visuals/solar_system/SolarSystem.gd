@@ -52,6 +52,15 @@ const ORBIT_ALPHA := 0.30
 ## ringed planets, and an amber accent would merge with them; muting keeps the theme hue while the
 ## rings still read as an instrument layer.
 const ORBIT_SATURATION := 0.8
+## Running tools lock a planet with a screen-space reticle drawn by [constant ORBITS_SHADER]: four
+## bracket arcs plus radial ticks. A blurred ring sprite around the planet read as a smudge, so the
+## lock-on borrows the same subpixel hairline as the orbits.
+const RETICLE_MAX := 4
+## Reticle radius as a multiple of the planet's projected radius.
+const RETICLE_RADIUS_SCALE := 2.2
+const RETICLE_ALPHA := 0.65
+## Bracket spin in radians per second; slow enough to read as breathing, not spinning.
+const RETICLE_SPIN := 0.5
 ## Our unit sphere has twice the upstream mesh radius, so triplanar noise would repeat twice as
 ## often; halving the preset scale keeps the upstream plasma and continent sizes.
 const UPSTREAM_NOISE_SCALE := 0.5
@@ -236,7 +245,6 @@ var fill_light: DirectionalLight3D
 var belt_material: StandardMaterial3D
 var unit_sphere: SphereMesh
 var glow_texture: ImageTexture
-var halo_texture: ImageTexture
 
 var planets: Array[Planet] = []
 ## Orbit planes and radii feed [constant ORBITS_SHADER]; the sampled paths only size its per-ring
@@ -314,6 +322,7 @@ func apply_orbit_uniforms() -> void:
 	if not orbit_camera_synced:
 		sync_orbit_camera()
 	orbit_material.set_shader_parameter("line_color", orbit_line_color())
+	update_reticles()
 	pass
 
 
@@ -373,6 +382,40 @@ func orbit_line_color() -> Color:
 	var overlay_alpha := OVERLAY_ALPHA_DARK if ThemeColor.is_dark_theme() else OVERLAY_ALPHA_LIGHT
 	var accent := VisualColor.appearance_color(ThemeColor.accent_theme_color(), 0.0, ORBIT_SATURATION, ORBIT_SATURATION)
 	return VisualColor.stroke(accent, ORBIT_ALPHA * overlay_alpha)
+
+
+## Screen-space lock-on for every planet whose tool is still running. Centres and radii come from
+## the camera each frame; the stroke, brackets and ticks live in [constant ORBITS_SHADER].
+func update_reticles() -> void:
+	if orbit_material == null or camera == null or viewport == null or orbit_layer == null:
+		return
+	if not camera.is_inside_tree() or viewport.size.x < 1 or viewport.size.y < 1:
+		return
+	var screen := Vector2(viewport.size)
+	var canvas_scale := orbit_layer.size.y / screen.y
+	var centers := PackedVector4Array()
+	var colors := PackedVector3Array()
+	for planet: Planet in planets:
+		if planet.halo_energy <= 0.02 or centers.size() >= RETICLE_MAX:
+			continue
+		var world := planet_position(planet)
+		var projected := camera.unproject_position(world)
+		var edge := camera.unproject_position(world + camera.global_transform.basis.x * planet.radius)
+		var radius := projected.distance_to(edge) * canvas_scale * RETICLE_RADIUS_SCALE
+		var center := projected / screen
+		var tint := VisualColor.appearance_color(planet.flash_color)
+		var alpha := clampf(planet.halo_energy * RETICLE_ALPHA * VisualColor.ink_alpha(), 0.0, 1.0)
+		centers.append(Vector4(center.x, center.y, radius, alpha))
+		colors.append(Vector3(tint.r, tint.g, tint.b))
+	var count := centers.size()
+	while centers.size() < RETICLE_MAX:
+		centers.append(Vector4.ZERO)
+		colors.append(Vector3.ZERO)
+	orbit_material.set_shader_parameter("reticle_count", count)
+	orbit_material.set_shader_parameter("reticles", centers)
+	orbit_material.set_shader_parameter("reticle_colors", colors)
+	orbit_material.set_shader_parameter("reticle_rotation", clock * RETICLE_SPIN)
+	pass
 
 
 # ---------------------------------------------------------------------------------------------
@@ -687,9 +730,10 @@ func apply_planet_visuals(planet: Planet) -> void:
 	if planet.cloud_material != null:
 		planet.cloud_material.set_shader_parameter("speed", 0.005 + energy * 0.012)
 	if planet.halo != null:
-		var pulse := 0.72 + 0.28 * sin(clock * 4.0)
-		planet.halo.modulate = Color(planet.flash_color.r, planet.flash_color.g, planet.flash_color.b, clampf(halo * 0.8 * pulse + flash * 0.6, 0.0, 1.0))
-		planet.halo.scale = Vector3.ONE * (1.0 + halo * 0.12 + flash * 0.35)
+		var pulse := 0.7 + 0.3 * sin(clock * 4.0)
+		var tint := VisualColor.appearance_color(planet.flash_color)
+		planet.halo.modulate = Color(tint.r, tint.g, tint.b, clampf(halo * 0.3 * pulse + flash * 0.5, 0.0, 1.0))
+		planet.halo.scale = Vector3.ONE * (1.0 + halo * 0.1 + flash * 0.25)
 		planet.halo.visible = planet.halo.modulate.a > 0.01
 	pass
 
@@ -731,7 +775,6 @@ func build_system() -> void:
 	viewport.size_changed.connect(on_viewport_size_changed)
 
 	glow_texture = make_radial_texture()
-	halo_texture = make_ring_texture()
 	unit_sphere = make_unit_sphere()
 	build_environment()
 	build_camera()
@@ -1009,17 +1052,11 @@ func make_orbit_path(orbit_transform: Transform3D, radius: float) -> PackedVecto
 	return path
 
 
+## Soft accent bloom around a planet, used while a tool runs and for success / failure flashes.
+## The lock-on ring itself is a hairline reticle in [constant ORBITS_SHADER], not a sprite.
 func make_halo_sprite(planet_radius: float) -> Sprite3D:
-	var sprite := Sprite3D.new()
-	sprite.texture = halo_texture
-	sprite.pixel_size = planet_radius * 5.0 / float(halo_texture.get_height())
-	sprite.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	sprite.shaded = false
-	sprite.transparent = true
-	sprite.no_depth_test = false
+	var sprite := make_glow_sprite(Color(1.0, 1.0, 1.0, 0.0), planet_radius * 3.6)
 	sprite.render_priority = 3
-	sprite.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	sprite.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	return sprite
 
 
@@ -1048,19 +1085,4 @@ func make_radial_texture() -> ImageTexture:
 			var alpha := clampf(1.0 - radius, 0.0, 1.0)
 			alpha = alpha * alpha * (0.25 + 0.75 * alpha)
 			image.set_pixel(x, y, Color(1.0, 1.0, 1.0, alpha))
-	return ImageTexture.create_from_image(image)
-
-
-## Thin camera-facing ring used as a target lock around a planet while its tool runs.
-func make_ring_texture() -> ImageTexture:
-	var size := 128
-	var image := Image.create(size, size, false, Image.FORMAT_RGBA8)
-	var center := float(size) * 0.5
-	for y in range(size):
-		for x in range(size):
-			var radius := Vector2(float(x) + 0.5 - center, float(y) + 0.5 - center).length() / center
-			var inner := smoothstep(0.80, 0.845, radius)
-			var outer := 1.0 - smoothstep(0.925, 0.975, radius)
-			var ticks := 0.72 + 0.28 * cos(atan2(float(y) + 0.5 - center, float(x) + 0.5 - center) * 32.0)
-			image.set_pixel(x, y, Color(1.0, 1.0, 1.0, clampf(inner * outer * ticks, 0.0, 1.0)))
 	return ImageTexture.create_from_image(image)
