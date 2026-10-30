@@ -13,6 +13,8 @@ func _init() -> void:
 	var error := worker_thread.start(worker_loop)
 	if error != OK:
 		Log.error("SingleThreadExecutor start failed error:[{}]", error)
+	else:
+		Log.info("SingleThreadExecutor started threadId:[{}]", worker_thread.get_id())
 	pass
 
 
