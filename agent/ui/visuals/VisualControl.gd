@@ -23,7 +23,6 @@ enum Type {
 	MATRIX_RAIN,
 	PIANO_RHYTHM,
 	NEURAL_AURORA,
-	NEURAL_CORE,
 	SEMANTIC_BLACK_HOLE,
 	DESKTOP_CAT,
 	GEOMETRIC_GENESIS,
@@ -111,8 +110,6 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return ContextMemoryRiver.new()
 		Type.NEURAL_AURORA:
 			return NeuralAurora.new()
-		Type.NEURAL_CORE:
-			return NeuralCore.new()
 		Type.SEMANTIC_BLACK_HOLE:
 			return SemanticBlackHole.new()
 		Type.CYBER_COMMAND_DECK:
