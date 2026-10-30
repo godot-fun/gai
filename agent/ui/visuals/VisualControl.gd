@@ -1,6 +1,8 @@
 class_name VisualControl
 extends Control
 
+const CIRCUIT_BOARD_SCRIPT := preload("res://agent/ui/visuals/circuit_board/CircuitBoard.gd")
+
 ## Single global event bridge for the visual overlay. All active sessions feed one shared
 ## effect, so their animation events may interleave. The overlay begins with the first
 ## active run and finishes only after the last run stops; it is not a per-session view.
@@ -15,6 +17,7 @@ enum Type {
 	TOOL_CONSTELLATION,
 	CYBER_COMMAND_DECK,
 	QUANTUM_CIRCUIT,
+	CIRCUIT_BOARD,
 	ORRERY,
 	CONTEXT_MEMORY_RIVER,
 	MATRIX_RAIN,
@@ -113,6 +116,8 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return CyberCommandDeck.new()
 		Type.QUANTUM_CIRCUIT:
 			return QuantumCircuit.new()
+		Type.CIRCUIT_BOARD:
+			return CIRCUIT_BOARD_SCRIPT.new() as VisualEffect
 		Type.DESKTOP_CAT:
 			return DesktopCat.new()
 		Type.GEOMETRIC_GENESIS:

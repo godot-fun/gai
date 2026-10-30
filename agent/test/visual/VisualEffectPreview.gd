@@ -21,6 +21,7 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 			{"type": VisualControl.Type.TOOL_CONSTELLATION, "label": "Tool Constellation"},
 			{"type": VisualControl.Type.CYBER_COMMAND_DECK, "label": "Cyber Command Deck"},
 			{"type": VisualControl.Type.QUANTUM_CIRCUIT, "label": "Quantum Circuit"},
+			{"type": VisualControl.Type.CIRCUIT_BOARD, "label": "Circuit Board"},
 			{"type": VisualControl.Type.ORRERY, "label": "Orrery"},
 		],
 	},
