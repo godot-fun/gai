@@ -14,6 +14,7 @@ func _ready() -> void:
 		Audios.init()
 		AudioRecorder.init()
 		LoggerHelper.init()
+		ExecutorHelper.init()
 		events.application_start.emit()
 	pass
 
@@ -24,7 +25,7 @@ func _process(_delta: float) -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
-		events.application_end.emit()
+		shutdown()
 	pass
 
 
@@ -59,6 +60,7 @@ func async_timer_one_second() -> void:
 	TimeUtils.current_time_millis()
 	pass
 
+
 ####################################################################################################
 # Callable
 static func callable_deferred(callable: Callable) -> void:
@@ -69,13 +71,21 @@ func call_deferred_callable(callable: Callable) -> void:
 	callable.call()
 	pass
 
+
 ####################################################################################################
 static func shutdown(exit_code: int = 0) -> void:
 	## Wait a few frames so loggers can flush to disk before the process exits.
 	for i in range(10):
 		await gdf_node.get_tree().process_frame
+	shutdown_now(exit_code)
+	pass
+
+static func shutdown_now(exit_code: int = 0) -> void:
+	events.application_end.emit()
+	ExecutorHelper.shutdown()
 	gdf_node.get_tree().quit(exit_code)
 	pass
+
 
 ####################################################################################################
 # internal event bus
