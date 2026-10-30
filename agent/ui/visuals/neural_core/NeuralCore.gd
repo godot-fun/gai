@@ -24,6 +24,8 @@ const FIELD_DOWNSCALE := 1
 const HISTORY_LEN := 46
 const STATE_HISTORY_LIMIT := 10
 const STATE_LOG_ROW_STEP := 22.0
+const STATE_LOG_TITLE_GAP := 20.0
+const STATE_LOG_LINE_GAP := 16.0
 const METER_BAR_MAX_H := 28.0
 ## [SimulationEffect.stream_energy_for_length] tops out here; meters need 0..1 drive.
 const METER_ENERGY_NORM := 0.045
@@ -416,7 +418,7 @@ func state_color(label: String) -> Color:
 
 func meter_level_for_display() -> float:
 	var level := clampf(maxf(envelope, maxf(content_drive, reasoning_drive)) / METER_ENERGY_NORM, 0.0, 1.0)
-	level = maxf(level, speak_blend, think_blend * 0.88)
+	level = maxf(level, maxf(speak_blend, think_blend * 0.88))
 	if not running:
 		return level
 	if listen_blend > 0.38:
@@ -619,9 +621,9 @@ func draw_state_history_panel(canvas: Control, font_sm: Font, font_size: int, in
 	var panel_w := HUD_PANEL_W
 	var panel_y := 16.0
 	canvas.draw_string(font_sm, Vector2(panel_x, panel_y), "STATE LOG", HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, VisualColor.stroke(ink_bright, 1.0))
-	panel_y += 18.0
+	panel_y += STATE_LOG_TITLE_GAP
 	canvas.draw_line(Vector2(panel_x, panel_y), Vector2(panel_x + panel_w, panel_y), VisualColor.stroke(ink, 0.55), 1.0, true)
-	panel_y += 10.0
+	panel_y += STATE_LOG_LINE_GAP
 	var shown := mini(state_history.size(), STATE_HISTORY_LIMIT)
 	for index in range(shown):
 		var entry := state_history[index]
