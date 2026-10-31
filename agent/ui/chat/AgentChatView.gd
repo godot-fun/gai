@@ -51,7 +51,7 @@ func setup(
 
 func on_session_selected(session_id: int, previous_session_id: int) -> void:
 	chat_scroll.cache_session_scroll(previous_session_id)
-	show_session(session_id)
+	show_selected_session(session_id)
 	refresh_error_resume_buttons()
 	pass
 
@@ -189,6 +189,47 @@ func show_session(session_id: int) -> void:
 			chat_list_cache.append_entry(session.id, entry)
 
 	chat_scroll.queue_restore_session_scroll_after_layout(session_id, has_cached_scroll)
+	pass
+
+
+## Session selection favors the latest message and fills older bubbles one per frame.
+func show_selected_session(session_id: int) -> void:
+	var session: AgentSession = AgentSessionStore.load_session(session_id)
+	if session == null:
+		return
+	var has_cached_scroll: bool = chat_scroll.has_cached_session_scroll(session_id)
+	var chat_list := chat_list_cache.show(session_id, chat_lists_container)
+	chat_scroll.set_active_chat_list(chat_list)
+	if chat_list.get_child_count() > 0:
+		chat_scroll.queue_restore_session_scroll_after_layout(session_id, has_cached_scroll)
+		return
+
+	var bubbles_per_frame := 32
+	var vbar: VScrollBar = chat_scroll_node.get_v_scroll_bar()
+	var batch_created_count := 0
+	var keep_scroll_at_bottom := func() -> void:
+		if AgentSessionManager.is_active(session.id):
+			vbar.value = vbar.max_value - vbar.page
+	vbar.changed.connect(keep_scroll_at_bottom)
+	for index: int in range(session.chat_entries.size() - 1, -1, -1):
+		if chat_list_cache.get_list(session.id) != chat_list:
+			vbar.changed.disconnect(keep_scroll_at_bottom)
+			return
+		var bubble := ChatBubbleFactory.append(chat_list, session.id, session.chat_entries[index])
+		chat_list.move_child(bubble, 0)
+		batch_created_count += 1
+		if batch_created_count < bubbles_per_frame:
+			continue
+		await RenderingServer.frame_post_draw
+		keep_scroll_at_bottom.call()
+		batch_created_count = 0
+		bubbles_per_frame = 128
+	if batch_created_count > 0:
+		await RenderingServer.frame_post_draw
+		keep_scroll_at_bottom.call()
+	vbar.changed.disconnect(keep_scroll_at_bottom)
+	if has_cached_scroll and AgentSessionManager.is_active(session_id):
+		chat_scroll.queue_restore_session_scroll_after_layout(session_id, true)
 	pass
 
 
