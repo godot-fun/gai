@@ -25,18 +25,20 @@ enum Type {
 	PIANO_RHYTHM,
 	NEURAL_AURORA,
 	SEMANTIC_BLACK_HOLE,
+	SOLAR_SYSTEM,
 	DESKTOP_CAT,
 	GEOMETRIC_GENESIS,
 	INK_LANDSCAPE,
-	TAI_CHI,
 	PIXEL_CITY,
 	KINTSUGI,
-	FERROFLUID,
-	DISINTEGRATE,
 	HOLO_FOIL,
-	SOAP_BUBBLES,
 	STAINED_GLASS,
+	TAI_CHI,
+	FERROFLUID,
+	SOAP_BUBBLES,
 	FIREFLY_SYNC,
+	LAVA_LAMP,
+	MURMURATION,
 	GO_BOARD,
 	CLOCKWORK,
 	ABACUS,
@@ -64,13 +66,11 @@ enum Type {
 	GAME_OF_LIFE,
 	DOOM_FIRE,
 	WARP_SPEED,
-	SNAP_DISSOLVE,
 	PIPES_3D,
-	LAVA_LAMP,
 	FRACTAL_ZOOM,
 	TESLA_LIGHTNING,
-	MURMURATION,
-	SOLAR_SYSTEM,
+	DISINTEGRATE,
+	SNAP_DISSOLVE,
 }
 
 
@@ -126,30 +126,34 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return NeuralAurora.new()
 		Type.SEMANTIC_BLACK_HOLE:
 			return SemanticBlackHole.new()
+		Type.SOLAR_SYSTEM:
+			return SolarSystem.new()
 		Type.DESKTOP_CAT:
 			return DesktopCat.new()
 		Type.GEOMETRIC_GENESIS:
 			return GeometricGenesis.new()
 		Type.INK_LANDSCAPE:
 			return InkLandscape.new()
-		Type.TAI_CHI:
-			return TaiChi.new()
 		Type.PIXEL_CITY:
 			return PixelCity.new()
 		Type.KINTSUGI:
 			return Kintsugi.new()
-		Type.FERROFLUID:
-			return Ferrofluid.new()
-		Type.DISINTEGRATE:
-			return Disintegrate.new()
 		Type.HOLO_FOIL:
 			return HoloFoil.new()
-		Type.SOAP_BUBBLES:
-			return SoapBubbles.new()
 		Type.STAINED_GLASS:
 			return StainedGlass.new()
+		Type.TAI_CHI:
+			return TaiChi.new()
+		Type.FERROFLUID:
+			return Ferrofluid.new()
+		Type.SOAP_BUBBLES:
+			return SoapBubbles.new()
 		Type.FIREFLY_SYNC:
 			return FireflySync.new()
+		Type.LAVA_LAMP:
+			return LavaLamp.new()
+		Type.MURMURATION:
+			return Murmuration.new()
 		Type.GO_BOARD:
 			return GoBoard.new()
 		Type.CLOCKWORK:
@@ -204,20 +208,16 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return DoomFire.new()
 		Type.WARP_SPEED:
 			return WarpSpeed.new()
-		Type.SNAP_DISSOLVE:
-			return SnapDissolve.new()
 		Type.PIPES_3D:
 			return Pipes3D.new()
-		Type.LAVA_LAMP:
-			return LavaLamp.new()
 		Type.FRACTAL_ZOOM:
 			return FractalZoom.new()
 		Type.TESLA_LIGHTNING:
 			return TeslaLightning.new()
-		Type.MURMURATION:
-			return Murmuration.new()
-		Type.SOLAR_SYSTEM:
-			return SolarSystem.new()
+		Type.DISINTEGRATE:
+			return Disintegrate.new()
+		Type.SNAP_DISSOLVE:
+			return SnapDissolve.new()
 	return null
 
 func on_agent_start(session_id: int) -> void:

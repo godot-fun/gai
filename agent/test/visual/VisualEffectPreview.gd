@@ -54,18 +54,24 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 		],
 	},
 	{
-		"title": "Motion & style",
+		"title": "Styles",
 		"effects": [
 			{"type": VisualControl.Type.INK_LANDSCAPE, "label": "Ink Landscape"},
-			{"type": VisualControl.Type.TAI_CHI, "label": "Tai Chi"},
 			{"type": VisualControl.Type.PIXEL_CITY, "label": "Pixel City"},
 			{"type": VisualControl.Type.KINTSUGI, "label": "Kintsugi"},
-			{"type": VisualControl.Type.FERROFLUID, "label": "Ferrofluid"},
-			{"type": VisualControl.Type.DISINTEGRATE, "label": "Disintegrate"},
 			{"type": VisualControl.Type.HOLO_FOIL, "label": "Holo Foil"},
-			{"type": VisualControl.Type.SOAP_BUBBLES, "label": "Soap Bubbles"},
 			{"type": VisualControl.Type.STAINED_GLASS, "label": "Stained Glass"},
+		],
+	},
+	{
+		"title": "Nature",
+		"effects": [
+			{"type": VisualControl.Type.TAI_CHI, "label": "Tai Chi"},
+			{"type": VisualControl.Type.FERROFLUID, "label": "Ferrofluid"},
+			{"type": VisualControl.Type.SOAP_BUBBLES, "label": "Soap Bubbles"},
 			{"type": VisualControl.Type.FIREFLY_SYNC, "label": "Firefly Sync"},
+			{"type": VisualControl.Type.LAVA_LAMP, "label": "Lava Lamp"},
+			{"type": VisualControl.Type.MURMURATION, "label": "Murmuration"},
 		],
 	},
 	{
@@ -77,7 +83,7 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 		],
 	},
 	{
-		"title": "Screen transformations",
+		"title": "Screen Effects",
 		"effects": [
 			{"type": VisualControl.Type.FILTER_CAROUSEL, "label": "Filter Carousel"},
 			{"type": VisualControl.Type.ELECTRONIC_CONTOURS, "label": "Electronic Contours"},
@@ -110,15 +116,19 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 		],
 	},
 	{
-		"title": "Classics",
+		"title": "Energy",
 		"effects": [
 			{"type": VisualControl.Type.WARP_SPEED, "label": "Warp Speed"},
-			{"type": VisualControl.Type.SNAP_DISSOLVE, "label": "Snap Dissolve"},
 			{"type": VisualControl.Type.PIPES_3D, "label": "3D Pipes"},
-			{"type": VisualControl.Type.LAVA_LAMP, "label": "Lava Lamp"},
 			{"type": VisualControl.Type.FRACTAL_ZOOM, "label": "Fractal Zoom"},
 			{"type": VisualControl.Type.TESLA_LIGHTNING, "label": "Tesla Lightning"},
-			{"type": VisualControl.Type.MURMURATION, "label": "Murmuration"},
+		],
+	},
+	{
+		"title": "Transitions",
+		"effects": [
+			{"type": VisualControl.Type.DISINTEGRATE, "label": "Disintegrate"},
+			{"type": VisualControl.Type.SNAP_DISSOLVE, "label": "Snap Dissolve"},
 		],
 	},
 ]
