@@ -34,10 +34,11 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 		],
 	},
 	{
-		"title": "Neural",
+		"title": "SpaceX",
 		"effects": [
 			{"type": VisualControl.Type.NEURAL_AURORA, "label": "Neural Aurora"},
 			{"type": VisualControl.Type.SEMANTIC_BLACK_HOLE, "label": "Semantic Black Hole"},
+			{"type": VisualControl.Type.SOLAR_SYSTEM, "label": "Solar System"},
 		],
 	},
 	{
@@ -118,7 +119,6 @@ const EFFECT_GROUPS: Array[Dictionary] = [
 			{"type": VisualControl.Type.FRACTAL_ZOOM, "label": "Fractal Zoom"},
 			{"type": VisualControl.Type.TESLA_LIGHTNING, "label": "Tesla Lightning"},
 			{"type": VisualControl.Type.MURMURATION, "label": "Murmuration"},
-			{"type": VisualControl.Type.SOLAR_SYSTEM, "label": "Solar System"},
 		],
 	},
 ]
