@@ -146,7 +146,7 @@ func open_ai_request_to_json_async_test() -> void:
 	var messages: Array[ChatMessage] = []
 	messages.append(ChatMessage.user("hello"))
 	var request := OpenAiRequest.new("test-model", messages, false)
-	var json: String = await ExecutorHelper.async_execute(request.to_json)
+	var json: String = await ExecutorHelper.async_execute_pooled(request.to_json)
 	assert(json.contains("\"model\": \"test-model\""))
 	assert(json.contains("\"content\": \"hello\""))
 	pass

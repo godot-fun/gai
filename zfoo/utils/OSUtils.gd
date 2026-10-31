@@ -2,8 +2,8 @@ class_name OSUtils
 extends Object
 
 ## Subprocess execution. Sync `execute` uses OS.execute; async `async_execute`
-## uses OS.execute_with_pipe on the shared async single-thread executor and expects UTF-8 output.
-## Concurrent async submissions execute in FIFO order.
+## uses OS.execute_with_pipe on the shared worker thread pool and expects UTF-8 output.
+## Concurrent async submissions may run in parallel; their start and completion order are not guaranteed.
 ## Output chunks append to ExecResult.output. Pass `log=false` to silence logs.
 ## `async_execute` accepts `timeout_millis`, defaulting to one hour; a process that exceeds it is
 ## killed, appends a `[timeout]` line to ExecResult.output and returns EXIT_CODE_TIMEOUT.
@@ -49,7 +49,7 @@ static func async_execute(argv: PackedStringArray, log: bool = true, timeout_mil
 	if log:
 		Log.info("async_execute command:{}", JSON.stringify(argv))
 
-	await ExecutorHelper.async_execute(run_process.bind(argv, result, timeout_millis, cancel_scope))
+	await ExecutorHelper.async_execute_pooled(run_process.bind(argv, result, timeout_millis, cancel_scope))
 	log_result(argv, result, log)
 	return result
 

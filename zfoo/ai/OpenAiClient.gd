@@ -56,7 +56,7 @@ func async_chat_messages(messages: Array[ChatMessage], proxy: String = "", respo
 	request.thinking = OpenAiRequest.THINKING_DISABLED
 	if StringUtils.is_not_blank(response_format):
 		request.response_format = response_format
-	var request_body: String = await ExecutorHelper.async_execute(request.to_json)
+	var request_body: String = await ExecutorHelper.async_execute_pooled(request.to_json)
 	var response := await HttpHelper.async_post(base_url, request_body, build_headers(), REQUEST_TIMEOUT_MILLIS, proxy, Callable(), cancel_scope)
 	var body := response.get_body_string()
 	Log.info("OpenAI response body:[{}]", StringUtils.truncate(body, 512))
@@ -96,7 +96,7 @@ func async_chat_messages_stream(messages: Array[ChatMessage], tools: Array[OpenA
 		return result
 	var request := OpenAiRequest.new(model, messages, true)
 	request.tools = tools
-	var request_body: String = await ExecutorHelper.async_execute(request.to_json)
+	var request_body: String = await ExecutorHelper.async_execute_pooled(request.to_json)
 	var pending_build := StringBuilder.new()
 	var utf8_decoder := Utf8StreamDecoder.new()
 	var on_chunk := func(chunk: PackedByteArray) -> void:
