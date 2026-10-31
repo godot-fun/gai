@@ -11,6 +11,7 @@ const CIRCUIT_BOARD_SCRIPT := preload("res://agent/ui/visuals/circuit_board/Circ
 enum Type {
 	NONE,
 	RANDOM,
+	# Same order as the groups in VisualEffectPreview.gd.
 	JARVIS,
 	TRANSFORMER,
 	REASONING_TREE,
@@ -107,34 +108,66 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return ReasoningTree.new()
 		Type.TOOL_CONSTELLATION:
 			return ToolConstellation.new()
-		Type.CONTEXT_MEMORY_RIVER:
-			return ContextMemoryRiver.new()
-		Type.NEURAL_AURORA:
-			return NeuralAurora.new()
-		Type.SEMANTIC_BLACK_HOLE:
-			return SemanticBlackHole.new()
 		Type.CYBER_COMMAND_DECK:
 			return CyberCommandDeck.new()
 		Type.QUANTUM_CIRCUIT:
 			return QuantumCircuit.new()
 		Type.CIRCUIT_BOARD:
 			return CIRCUIT_BOARD_SCRIPT.new() as VisualEffect
+		Type.ORRERY:
+			return Orrery.new()
+		Type.CONTEXT_MEMORY_RIVER:
+			return ContextMemoryRiver.new()
+		Type.MATRIX_RAIN:
+			return MatrixRain.new()
+		Type.PIANO_RHYTHM:
+			return PianoRhythm.new()
+		Type.NEURAL_AURORA:
+			return NeuralAurora.new()
+		Type.SEMANTIC_BLACK_HOLE:
+			return SemanticBlackHole.new()
 		Type.DESKTOP_CAT:
 			return DesktopCat.new()
 		Type.GEOMETRIC_GENESIS:
 			return GeometricGenesis.new()
-		Type.MATRIX_RAIN:
-			return MatrixRain.new()
-		Type.FILTER_CAROUSEL:
-			return FilterCarousel.new()
 		Type.INK_LANDSCAPE:
 			return InkLandscape.new()
 		Type.TAI_CHI:
 			return TaiChi.new()
-		Type.PIANO_RHYTHM:
-			return PianoRhythm.new()
 		Type.PIXEL_CITY:
 			return PixelCity.new()
+		Type.KINTSUGI:
+			return Kintsugi.new()
+		Type.FERROFLUID:
+			return Ferrofluid.new()
+		Type.DISINTEGRATE:
+			return Disintegrate.new()
+		Type.HOLO_FOIL:
+			return HoloFoil.new()
+		Type.SOAP_BUBBLES:
+			return SoapBubbles.new()
+		Type.STAINED_GLASS:
+			return StainedGlass.new()
+		Type.FIREFLY_SYNC:
+			return FireflySync.new()
+		Type.GO_BOARD:
+			return GoBoard.new()
+		Type.CLOCKWORK:
+			return Clockwork.new()
+		Type.ABACUS:
+			return Abacus.new()
+		Type.FILTER_CAROUSEL:
+			return FilterCarousel.new()
+		Type.ELECTRONIC_CONTOURS:
+			return ElectronicContours.new()
+		Type.READING_LOUPE:
+			return ReadingLoupe.new()
+		Type.PHOSPHOR_SCOPE:
+			return PhosphorScope.new()
+		Type.HEAT_MIRAGE:
+			return HeatMirage.new()
+		Type.EINK_REFRESH:
+			return EInkRefresh.new()
 		Type.IMPOSSIBLE_ROOM:
 			return ImpossibleRoom.new()
 		Type.TEMPORAL_PRISM:
@@ -145,14 +178,6 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return InterfaceDelamination.new()
 		Type.ZERO_GRAVITY:
 			return ZeroGravity.new()
-		Type.ELECTRONIC_CONTOURS:
-			return ElectronicContours.new()
-		Type.READING_LOUPE:
-			return ReadingLoupe.new()
-		Type.PHOSPHOR_SCOPE:
-			return PhosphorScope.new()
-		Type.HEAT_MIRAGE:
-			return HeatMirage.new()
 		Type.RIPPLE_SURFACE:
 			return RippleSurface.new()
 		Type.TURING_BLOOM:
@@ -163,58 +188,34 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			return InkFluid.new()
 		Type.GLASS_RAIN:
 			return GlassRain.new()
-		Type.KINTSUGI:
-			return Kintsugi.new()
 		Type.CHLADNI_PLATE:
 			return ChladniPlate.new()
 		Type.DATAMOSH:
 			return Datamosh.new()
 		Type.DARKROOM:
 			return Darkroom.new()
-		Type.FERROFLUID:
-			return Ferrofluid.new()
-		Type.DISINTEGRATE:
-			return Disintegrate.new()
+		Type.PHYSARUM_NETWORK:
+			return PhysarumNetwork.new()
+		Type.FALLING_SAND:
+			return FallingSand.new()
+		Type.GAME_OF_LIFE:
+			return GameOfLife.new()
+		Type.DOOM_FIRE:
+			return DoomFire.new()
 		Type.WARP_SPEED:
 			return WarpSpeed.new()
 		Type.SNAP_DISSOLVE:
 			return SnapDissolve.new()
-		Type.GAME_OF_LIFE:
-			return GameOfLife.new()
 		Type.PIPES_3D:
 			return Pipes3D.new()
 		Type.LAVA_LAMP:
 			return LavaLamp.new()
-		Type.DOOM_FIRE:
-			return DoomFire.new()
 		Type.FRACTAL_ZOOM:
 			return FractalZoom.new()
 		Type.TESLA_LIGHTNING:
 			return TeslaLightning.new()
 		Type.MURMURATION:
 			return Murmuration.new()
-		Type.HOLO_FOIL:
-			return HoloFoil.new()
-		Type.SOAP_BUBBLES:
-			return SoapBubbles.new()
-		Type.PHYSARUM_NETWORK:
-			return PhysarumNetwork.new()
-		Type.EINK_REFRESH:
-			return EInkRefresh.new()
-		Type.STAINED_GLASS:
-			return StainedGlass.new()
-		Type.FIREFLY_SYNC:
-			return FireflySync.new()
-		Type.FALLING_SAND:
-			return FallingSand.new()
-		Type.GO_BOARD:
-			return GoBoard.new()
-		Type.CLOCKWORK:
-			return Clockwork.new()
-		Type.ABACUS:
-			return Abacus.new()
-		Type.ORRERY:
-			return Orrery.new()
 		Type.SOLAR_SYSTEM:
 			return SolarSystem.new()
 	return null
