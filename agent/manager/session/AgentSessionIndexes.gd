@@ -85,7 +85,7 @@ static func load_index() -> AgentSessionIndexes:
 static func save_index(session_indexes: AgentSessionIndexes) -> void:
 	var snapshot := session_indexes.deep_clone()
 	var index_path := get_index_path()
-	WorkerThreadPool.add_task(func() -> void:
+	ExecutorHelper.execute(func() -> void:
 		var json := JsonUtils.object_to_json(snapshot)
 		var write_error := FileUtils.write_string_to_file(index_path, json)
 		if write_error != OK:

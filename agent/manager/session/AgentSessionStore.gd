@@ -42,7 +42,7 @@ static func save_session(session_id: int) -> void:
 		return
 	var snapshot := session.deep_clone()
 	var session_path := get_session_path(session_id)
-	WorkerThreadPool.add_task(func() -> void:
+	ExecutorHelper.execute(func() -> void:
 		var json := JsonUtils.object_to_json(snapshot)
 		var write_error := FileUtils.write_string_to_file(session_path, json)
 		if write_error != OK:
