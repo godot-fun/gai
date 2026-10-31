@@ -223,7 +223,7 @@ func show_selected_session(session_id: int) -> void:
 		await RenderingServer.frame_post_draw
 		keep_scroll_at_bottom.call()
 		batch_created_count = 0
-		bubbles_per_frame = 512
+		bubbles_per_frame = 256
 	if batch_created_count > 0:
 		await RenderingServer.frame_post_draw
 		keep_scroll_at_bottom.call()
