@@ -35,6 +35,12 @@ func async_single_thread_executor_fifo_test() -> void:
 	pass
 
 
+func executor_helper_async_execute_test() -> void:
+	var result: Variant = await ExecutorHelper.async_execute(func() -> String: return "completed")
+	assert(result == "completed")
+	pass
+
+
 func record_and_double(value: int) -> int:
 	execution_order.push_back(value)
 	execution_thread_ids.push_back(OS.get_thread_caller_id())
