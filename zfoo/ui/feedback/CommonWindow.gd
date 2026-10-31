@@ -1,6 +1,7 @@
 ## Shared behavior and chrome for transient application windows.
 ##
 ## Subclasses own their content and may override the color methods or [method on_close_requested].
+## Close overrides must call [code]super()[/code] so focused edits are committed and the window is freed.
 class_name CommonWindow
 extends Window
 
@@ -81,6 +82,16 @@ func dismiss_on_focus_out() -> bool:
 
 
 func on_close_requested() -> void:
+	var focus_owner := gui_get_focus_owner()
+	if focus_owner is Control and is_ancestor_of(focus_owner):
+		# A SpinBox keeps typed text in its inner LineEdit until it is submitted or loses focus.
+		var focused_node: Node = focus_owner
+		while focused_node != self:
+			if focused_node is SpinBox:
+				(focused_node as SpinBox).apply()
+				break
+			focused_node = focused_node.get_parent()
+		(focus_owner as Control).release_focus()
 	queue_free()
 	pass
 

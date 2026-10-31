@@ -313,10 +313,10 @@ func present_centered(width_percent: int = 70, height_percent: int = 80) -> void
 
 
 func on_close_requested() -> void:
+	super()
 	var content := text_edit.text
 	if NoteSetting.set_note(content) != OK:
 		Alert.alert(I18n.t("note.save_failed"), Colors.error)
-	queue_free()
 	pass
 
 

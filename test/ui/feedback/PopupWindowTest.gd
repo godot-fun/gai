@@ -1,5 +1,16 @@
 ## Unit tests for [PopupWindow]. Loaded with the other scripts in this folder by [code]test/feedback/FeedbackTest.tscn[/code] ([UnitTest]).
 
+class SaveTrackingSettingSection extends SettingSection:
+	var saved: bool = false
+	var spin: SpinBox
+	var saved_spin_value: float = -1.0
+
+	func save() -> void:
+		saved = true
+		if spin != null:
+			saved_spin_value = spin.value
+		pass
+
 ## [method PopupWindow.show_window] opens a centered, read-only window sized as a percent of the screen.
 func PopupWindow_show_window_test() -> void:
 	close_open_windows()
@@ -92,6 +103,35 @@ func PopupWindow_cancel_input_test() -> void:
 		window.on_window_input(event)
 	await gdf.gdf_node.get_tree().process_frame
 	assert(close_signal_count[0] == 1)
+	assert(!is_instance_valid(window))
+	pass
+
+
+## Esc uses [AgentSettingWindow]'s close handler, including section persistence.
+func AgentSettingWindow_cancel_input_saves_test() -> void:
+	var window := AgentSettingWindow.new()
+	var section := SaveTrackingSettingSection.new()
+	section.spin = SpinBox.new()
+	section.spin.min_value = 0.0
+	section.spin.max_value = 100.0
+	section.spin.value = 1.0
+	window.add_child(section.spin)
+	var tracked_sections: Array[SettingSection] = [section]
+	window.sections = tracked_sections
+	gdf.gdf_node.add_child(window)
+	window.popup_centered()
+	section.spin.get_line_edit().text = "42"
+	section.spin.get_line_edit().grab_focus()
+	await gdf.gdf_node.get_tree().process_frame
+	assert(window.gui_get_focus_owner() == section.spin.get_line_edit())
+	assert(section.spin.value == 1.0)
+	var event := InputEventAction.new()
+	event.action = "ui_cancel"
+	event.pressed = true
+	window.on_window_input(event)
+	await gdf.gdf_node.get_tree().process_frame
+	assert(section.saved)
+	assert(section.saved_spin_value == 42.0)
 	assert(!is_instance_valid(window))
 	pass
 

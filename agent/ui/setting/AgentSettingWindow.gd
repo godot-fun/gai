@@ -181,13 +181,9 @@ func open() -> void:
 
 
 func on_close_requested() -> void:
-	# SpinBox keeps typed text in its inner LineEdit until focus leaves; LineEdit.text is always current.
-	var focus_owner := get_viewport().gui_get_focus_owner()
-	if focus_owner is Control and is_ancestor_of(focus_owner):
-		(focus_owner as Control).release_focus()
+	super()
 	for section in sections:
 		section.save()
-	queue_free()
 	pass
 
 

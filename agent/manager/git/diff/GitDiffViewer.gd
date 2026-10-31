@@ -537,7 +537,7 @@ func map_diff_line(source_line: float, old_to_new: bool) -> float:
 func request_close() -> void:
 	if save_current() != OK:
 		return
-	queue_free()
+	super.on_close_requested()
 	pass
 
 
