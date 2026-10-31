@@ -41,6 +41,16 @@ func executor_helper_async_execute_test() -> void:
 	pass
 
 
+func executor_helper_async_execute_pooled_test() -> void:
+	var caller_thread_id := OS.get_thread_caller_id()
+	var result: Dictionary = await ExecutorHelper.async_execute_pooled(func() -> Dictionary:
+		return {"value": "completed", "thread_id": OS.get_thread_caller_id()}
+	)
+	assert(result["value"] == "completed")
+	assert(result["thread_id"] != caller_thread_id)
+	pass
+
+
 func record_and_double(value: int) -> int:
 	execution_order.push_back(value)
 	execution_thread_ids.push_back(OS.get_thread_caller_id())
