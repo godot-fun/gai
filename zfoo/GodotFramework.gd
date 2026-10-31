@@ -81,7 +81,7 @@ static func shutdown(exit_code: int = 0) -> void:
 static func shutdown_now(exit_code: int = 0) -> void:
 	events.application_end.emit()
 	ExecutorHelper.shutdown()
-	LoggerHelper.flush()
+	events.application_exit.emit()
 	gdf_node.get_tree().quit(exit_code)
 	pass
 
@@ -94,8 +94,10 @@ static var events := Events.new()
 class Events:
 	## Emitted after the framework finishes application initialization.
 	signal application_start
-	## Emitted once before the application exits, including window-close requests.
+	## Emitted first when application shutdown begins, including window-close requests.
 	signal application_end
+	## Emitted after [signal application_end] and shutdown work complete, immediately before the application exits.
+	signal application_exit
 
 	## Emitted when a framework/engine error is logged; tests use it to fail fast.
 	signal log_error

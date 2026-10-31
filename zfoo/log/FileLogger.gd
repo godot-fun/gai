@@ -4,9 +4,10 @@ extends Logger
 var mutex: Mutex = Mutex.new()
 var log_file: FileAccess = FileAccess.open(LoggerHelper.LOG_FILE_PATH, FileAccess.WRITE_READ)
 
-func _init():
+func _init() -> void:
 	log_file.seek_end()
-	pass	
+	gdf.events.application_exit.connect(flush)
+	pass
 
 func append_line(line: String, flush_immediately: bool = false) -> void:
 	mutex.lock()
@@ -15,6 +16,12 @@ func append_line(line: String, flush_immediately: bool = false) -> void:
 	if flush_immediately:
 		log_file.flush()
 
+	mutex.unlock()
+	pass
+
+func flush() -> void:
+	mutex.lock()
+	log_file.flush()
 	mutex.unlock()
 	pass
 
