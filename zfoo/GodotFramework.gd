@@ -80,6 +80,9 @@ static func shutdown(exit_code: int = 0) -> void:
 
 static func shutdown_now(exit_code: int = 0) -> void:
 	events.application_end.emit()
+	AudioRecorder.stop()
+	OSUtils.stop_all()
+	HttpHelper.stop_all()
 	ExecutorHelper.shutdown()
 	events.application_exit.emit()
 	gdf_node.get_tree().quit(exit_code)
