@@ -142,6 +142,16 @@ func open_ai_request_to_json_test() -> void:
 	pass
 
 
+func open_ai_request_to_json_async_test() -> void:
+	var messages: Array[ChatMessage] = []
+	messages.append(ChatMessage.user("hello"))
+	var request := OpenAiRequest.new("test-model", messages, false)
+	var json: String = await ExecutorHelper.async_execute(request.to_json)
+	assert(json.contains("\"model\": \"test-model\""))
+	assert(json.contains("\"content\": \"hello\""))
+	pass
+
+
 func open_ai_request_to_json_thinking_disabled_test() -> void:
 	var messages: Array[ChatMessage] = []
 	messages.append(ChatMessage.user("hello"))
