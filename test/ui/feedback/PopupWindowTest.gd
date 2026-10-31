@@ -81,6 +81,8 @@ func PopupWindow_cancel_input_test() -> void:
 	var windows := open_windows()
 	assert(windows.size() == 1)
 	var window := windows[0]
+	var close_signal_count: Array[int] = [0]
+	window.close_requested.connect(func() -> void: close_signal_count[0] += 1)
 	# Hold the window open so a run with a display shows the popup before Esc.
 	await ThreadUtils.async_sleep(1500)
 	var event := InputEventAction.new()
@@ -89,6 +91,7 @@ func PopupWindow_cancel_input_test() -> void:
 	if is_instance_valid(window):
 		window.on_window_input(event)
 	await gdf.gdf_node.get_tree().process_frame
+	assert(close_signal_count[0] == 1)
 	assert(!is_instance_valid(window))
 	pass
 

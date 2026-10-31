@@ -87,7 +87,9 @@ func on_close_requested() -> void:
 
 func on_window_input(event: InputEvent) -> void:
 	if visible and event.is_action_pressed("ui_cancel"):
-		on_close_requested()
+		# Keep keyboard dismissal on the same path as the title-bar close button so
+		# subclass close handlers (for example, settings persistence) always run.
+		close_requested.emit()
 		set_input_as_handled()
 	pass
 
