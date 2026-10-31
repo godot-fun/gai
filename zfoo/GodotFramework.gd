@@ -8,6 +8,7 @@ static var gdf_layer: CanvasLayer
 func _ready() -> void:
 	if gdf_node == null:
 		gdf_node = self
+		gdf_node.get_tree().auto_accept_quit = false
 		init_layer()
 		init_async_timer()
 		Audio.init()
@@ -74,15 +75,13 @@ func call_deferred_callable(callable: Callable) -> void:
 
 ####################################################################################################
 static func shutdown(exit_code: int = 0) -> void:
-	## Wait a few frames so loggers can flush to disk before the process exits.
-	for i in range(10):
-		await gdf_node.get_tree().process_frame
 	shutdown_now(exit_code)
 	pass
 
 static func shutdown_now(exit_code: int = 0) -> void:
 	events.application_end.emit()
 	ExecutorHelper.shutdown()
+	LoggerHelper.flush()
 	gdf_node.get_tree().quit(exit_code)
 	pass
 
