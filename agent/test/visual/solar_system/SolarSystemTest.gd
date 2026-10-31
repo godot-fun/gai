@@ -124,6 +124,17 @@ func orbit_angles_follow_the_pivots_test() -> void:
 	pass
 
 
+func planet_effect_position_includes_orbit_inclination_test() -> void:
+	var effect := new_effect()
+	var planet := effect.planets[6]
+	assert(not is_zero_approx(planet.inclination.rotation.x))
+	var expected := planet.anchor.position.rotated(Vector3.UP, planet.pivot.rotation.y)
+	expected = expected.rotated(Vector3.RIGHT, planet.inclination.rotation.x)
+	assert(effect.planet_position(planet).is_equal_approx(expected))
+	effect.free()
+	pass
+
+
 func tool_claims_a_planet_and_sends_a_probe_test() -> void:
 	var effect := new_effect()
 	effect.on_tool_execution_start(1, "t1", "grep", {} as Dictionary[String, Variant])

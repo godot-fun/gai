@@ -193,6 +193,7 @@ const PLANET_SPECS: Array[Dictionary] = [
 
 
 class Planet extends RefCounted:
+	var inclination: Node3D
 	var pivot: Node3D
 	var anchor: Node3D
 	var body: MeshInstance3D
@@ -652,10 +653,10 @@ func step_system(delta: float) -> void:
 	pass
 
 
-## Planet position in system space. Reads transforms directly so unit tests work before the
-## scene enters the tree, where [member Node3D.global_position] would log an error.
+## Planet position in system space. Reads the complete local transform chain directly so effects
+## stay centred on planets with inclined orbits, even before the scene enters the tree.
 func planet_position(planet: Planet) -> Vector3:
-	return planet.pivot.transform * planet.anchor.position
+	return planet.inclination.transform * planet.pivot.transform * planet.anchor.position
 
 
 func step_probes(delta: float) -> void:
@@ -883,6 +884,7 @@ func build_planets() -> void:
 		var inclination := Node3D.new()
 		inclination.rotation.x = float(spec["inclination"])
 		system_root.add_child(inclination)
+		planet.inclination = inclination
 		orbit_paths.append(make_orbit_path(inclination.transform, float(spec["orbit"])))
 		orbit_normals.append((inclination.transform.basis * Vector3.UP).normalized())
 		orbit_radii.append(float(spec["orbit"]))
