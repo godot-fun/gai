@@ -2,7 +2,8 @@ class_name OSUtils
 extends Object
 
 ## Subprocess execution. Sync `execute` uses OS.execute; async `async_execute`
-## uses OS.execute_with_pipe on a worker thread and expects UTF-8 output.
+## uses OS.execute_with_pipe on the shared async single-thread executor and expects UTF-8 output.
+## Concurrent async submissions execute in FIFO order.
 ## Output chunks append to ExecResult.output. Pass `log=false` to silence logs.
 ## `async_execute` accepts `timeout_millis`, defaulting to one hour; a process that exceeds it is
 ## killed, appends a `[timeout]` line to ExecResult.output and returns EXIT_CODE_TIMEOUT.
@@ -48,11 +49,7 @@ static func async_execute(argv: PackedStringArray, log: bool = true, timeout_mil
 	if log:
 		Log.info("async_execute command:{}", JSON.stringify(argv))
 
-	var thread := Thread.new()
-	thread.start(_run_process_async.bind(argv, result, timeout_millis, cancel_scope))
-	while thread.is_alive():
-		await Engine.get_main_loop().process_frame
-	thread.wait_to_finish()
+	await ExecutorHelper.async_execute(run_process.bind(argv, result, timeout_millis, cancel_scope))
 	log_result(argv, result, log)
 	return result
 
@@ -92,7 +89,7 @@ static func kill_process(pid: int, wait_millis: int = 1000) -> int:
 	return OK
 
 
-static func _run_process_async(argv: PackedStringArray, result: ExecResult, timeout_millis: int = TimeUtils.MILLIS_PER_HOUR, cancel_scope: CancelScope = null) -> void:
+static func run_process(argv: PackedStringArray, result: ExecResult, timeout_millis: int = TimeUtils.MILLIS_PER_HOUR, cancel_scope: CancelScope = null) -> void:
 	var proc := OS.execute_with_pipe(argv[0], argv.slice(1), false)
 	if proc.is_empty():
 		result.exit_code = EXIT_CODE_NOT_STARTED
