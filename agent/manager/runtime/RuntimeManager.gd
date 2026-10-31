@@ -238,6 +238,6 @@ static func on_session_removed(session_id: int) -> void:
 	pass
 
 
-static func on_chat_entry_delete(session_id: int) -> void:
+static func on_chat_entry_delete(session_id: int, _entry_idx: int, _delete_from_here: bool) -> void:
 	request_stop(session_id)
 	pass

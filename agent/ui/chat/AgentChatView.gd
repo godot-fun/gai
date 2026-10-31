@@ -41,7 +41,7 @@ func setup(
 	AgentEvents.events.compaction_end.connect(on_compaction_end)
 	AgentEvents.events.chat_entry_add.connect(on_chat_entry_add)
 	AgentEvents.events.chat_entry_update.connect(on_chat_entry_update)
-	AgentEvents.events.chat_entry_delete.connect(on_chat_truncated)
+	AgentEvents.events.chat_entry_delete.connect(on_chat_entry_delete)
 	pass
 
 
@@ -116,8 +116,8 @@ func on_chat_entry_update(session_id: int, entry: ChatEntry, _channel: String) -
 	pass
 
 
-func on_chat_truncated(session_id: int) -> void:
-	invalidate_session(session_id)
+func on_chat_entry_delete(session_id: int, entry_idx: int, delete_from_here: bool) -> void:
+	chat_list_cache.remove_entries(session_id, entry_idx, delete_from_here)
 	pass
 
 

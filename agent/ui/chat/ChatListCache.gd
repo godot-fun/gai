@@ -73,6 +73,19 @@ func append_entry(session_id: int, entry: ChatEntry) -> BubbleContainer:
 	return ChatBubbleFactory.append(chat_list, session_id, entry)
 
 
+## Removes only the affected bubbles so long transcripts do not need to be rebuilt.
+func remove_entries(session_id: int, entry_idx: int, delete_from_here: bool) -> void:
+	var chat_list := get_list(session_id)
+	if chat_list == null or entry_idx < 0 or entry_idx >= chat_list.get_child_count():
+		return
+	var last_idx := chat_list.get_child_count() - 1 if delete_from_here else entry_idx
+	for index in range(last_idx, entry_idx - 1, -1):
+		var bubble := chat_list.get_child(index)
+		chat_list.remove_child(bubble)
+		bubble.queue_free()
+	pass
+
+
 ## chat_entries index matches VBoxContainer child order.
 func get_bubble(session_id: int, entry: ChatEntry) -> BubbleContainer:
 	var session: AgentSession = AgentSessionStore.load_session(session_id)

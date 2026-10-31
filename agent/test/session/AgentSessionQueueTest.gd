@@ -34,6 +34,38 @@ static func duplicate_message_delete_removes_first_match_test() -> void:
 	pass
 
 
+static func chat_list_cache_removes_one_entry_test() -> void:
+	var cache := ChatListCache.new()
+	var container := MarginContainer.new()
+	var chat_list := cache.show(42, container)
+	for index in range(4):
+		var bubble := Control.new()
+		bubble.name = "Bubble%d" % index
+		chat_list.add_child(bubble)
+	cache.remove_entries(42, 1, false)
+	assert(chat_list.get_child_count() == 3)
+	assert(chat_list.get_child(0).name == "Bubble0")
+	assert(chat_list.get_child(1).name == "Bubble2")
+	assert(chat_list.get_child(2).name == "Bubble3")
+	container.free()
+	pass
+
+
+static func chat_list_cache_removes_entries_from_index_test() -> void:
+	var cache := ChatListCache.new()
+	var container := MarginContainer.new()
+	var chat_list := cache.show(42, container)
+	for index in range(4):
+		var bubble := Control.new()
+		bubble.name = "Bubble%d" % index
+		chat_list.add_child(bubble)
+	cache.remove_entries(42, 1, true)
+	assert(chat_list.get_child_count() == 1)
+	assert(chat_list.get_child(0).name == "Bubble0")
+	container.free()
+	pass
+
+
 static func memory_prompt_reads_workspace_memory_test() -> void:
 	assert(MemoryPrompt.MEMORY_README_PATH == ".memory/README.md")
 	assert(MemoryPrompt.has_memory_context())

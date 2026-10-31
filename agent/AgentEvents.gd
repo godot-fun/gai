@@ -66,7 +66,9 @@ class Events:
 	# Chat entries
 	signal chat_entry_add(session_id: int, entry: ChatEntry)
 	signal chat_entry_update(session_id: int, entry: ChatEntry, stream_kind: String)
-	signal chat_entry_delete(session_id: int)
+	## A chat entry was deleted. When delete_from_here is true, the selected entry and every
+	## entry after it were removed; otherwise only the selected entry was removed.
+	signal chat_entry_delete(session_id: int, entry_idx: int, delete_from_here: bool)
 	# Appearance
 	## Markdown bubble rendering switched (see [method AgentSetting.set_markdown_enabled]).
 	signal markdown_changed(enabled: bool)
