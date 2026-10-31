@@ -1,14 +1,26 @@
 ## Unit tests for [PopupWindow]. Loaded with the other scripts in this folder by [code]test/feedback/FeedbackTest.tscn[/code] ([UnitTest]).
 
-class SaveTrackingSettingSection extends SettingSection:
+class CloseTracker extends RefCounted:
 	var saved: bool = false
-	var spin: SpinBox
 	var saved_spin_value: float = -1.0
 
-	func save() -> void:
-		saved = true
-		if spin != null:
-			saved_spin_value = spin.value
+
+class SaveTrackingWindow extends CommonWindow:
+	var tracker := CloseTracker.new()
+	var spin := SpinBox.new()
+
+	func _init() -> void:
+		super()
+		spin.min_value = 0.0
+		spin.max_value = 100.0
+		spin.value = 1.0
+		container.add_child(spin)
+		pass
+
+	func on_close_requested() -> void:
+		super()
+		tracker.saved = true
+		tracker.saved_spin_value = spin.value
 		pass
 
 ## [method PopupWindow.show_window] opens a centered, read-only window sized as a percent of the screen.
@@ -107,31 +119,25 @@ func PopupWindow_cancel_input_test() -> void:
 	pass
 
 
-## Esc uses [AgentSettingWindow]'s close handler, including section persistence.
-func AgentSettingWindow_cancel_input_saves_test() -> void:
-	var window := AgentSettingWindow.new()
-	var section := SaveTrackingSettingSection.new()
-	section.spin = SpinBox.new()
-	section.spin.min_value = 0.0
-	section.spin.max_value = 100.0
-	section.spin.value = 1.0
-	window.add_child(section.spin)
-	var tracked_sections: Array[SettingSection] = [section]
-	window.sections = tracked_sections
+## Esc commits a focused SpinBox before a subclass persists its current value.
+func CommonWindow_cancel_input_commits_spin_box_test() -> void:
+	var window := SaveTrackingWindow.new()
+	var tracker := window.tracker
 	gdf.gdf_node.add_child(window)
 	window.popup_centered()
-	section.spin.get_line_edit().text = "42"
-	section.spin.get_line_edit().grab_focus()
+	window.spin.get_line_edit().grab_focus()
 	await gdf.gdf_node.get_tree().process_frame
-	assert(window.gui_get_focus_owner() == section.spin.get_line_edit())
-	assert(section.spin.value == 1.0)
+	assert(window.gui_get_focus_owner() == window.spin.get_line_edit())
+	window.spin.get_line_edit().text = "42"
+	assert(window.spin.get_line_edit().text == "42")
+	assert(window.spin.value == 1.0)
 	var event := InputEventAction.new()
 	event.action = "ui_cancel"
 	event.pressed = true
 	window.on_window_input(event)
 	await gdf.gdf_node.get_tree().process_frame
-	assert(section.saved)
-	assert(section.saved_spin_value == 42.0)
+	assert(tracker.saved)
+	assert(tracker.saved_spin_value == 42.0)
 	assert(!is_instance_valid(window))
 	pass
 
