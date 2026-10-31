@@ -171,16 +171,27 @@ static func OSUtils_stop_current_test() -> void:
 	pass
 
 
-static func OSUtils_concurrent_pid_tracking_test() -> void:
+static func OSUtils_serialized_execution_test() -> void:
 	OSUtils.stop_all()
 	gdf.callable_deferred(func() -> void: await OSUtils.async_execute(sleep_argv(15), false))
 	await ThreadUtils.async_sleep(800)
 	assert(OSUtils.process_pids.size() == 1)
-	var result := await OSUtils.async_execute(echo_argv("OSUtilsConcurrentEcho"), false)
-	assert(result.exit_code == 0)
-	assert(result.output.build_string().contains("OSUtilsConcurrentEcho"))
+	var state := {"finished": false, "result": null}
+	gdf.callable_deferred(func() -> void:
+		state.result = await OSUtils.async_execute(echo_argv("OSUtilsSerializedEcho"), false)
+		state.finished = true
+	)
+	await ThreadUtils.async_sleep(500)
+	assert(not state.finished)
 	assert(OSUtils.process_pids.size() == 1)
 	OSUtils.stop_all()
+	var deadline := Time.get_ticks_msec() + 5000
+	while not state.finished and Time.get_ticks_msec() < deadline:
+		await ThreadUtils.async_sleep(50)
+	var result: OSUtils.ExecResult = state.result
+	assert(state.finished)
+	assert(result.exit_code == 0)
+	assert(result.output.build_string().contains("OSUtilsSerializedEcho"))
 	assert(OSUtils.process_pids.is_empty())
 	pass
 
