@@ -24,6 +24,15 @@ func native_os_foreground_remember_restore_smoke_test() -> void:
 	pass
 
 
+func native_os_apply_title_bar_dark_mode_smoke_test() -> void:
+	var ok: bool = NativeOS.apply_title_bar_dark_mode(0, true)
+	if OS.get_name() != "Windows":
+		assert(not ok)
+		return
+	assert(typeof(ok) == TYPE_BOOL)
+	pass
+
+
 func native_os_capture_screen_test() -> void:
 	var path := OS.get_user_data_dir().path_join("native_os_capture_smoke.png")
 	var ok := NativeOS.capture_screen(path)

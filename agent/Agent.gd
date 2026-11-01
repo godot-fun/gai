@@ -93,6 +93,7 @@ func _ready() -> void:
 	sense_input.setup()
 	apply_locale()
 	get_window().window_input.connect(on_window_input)
+	gdf.callable_deferred(apply_theme)
 
 	# session
 	agent_session_sidebar.reload_sessions()
@@ -141,7 +142,6 @@ func apply_locale() -> void:
 	pass
 
 
-
 func apply_theme() -> void:
 	var app_theme := Theme.new()
 	app_theme.default_font = Fonts.regular()
@@ -150,4 +150,6 @@ func apply_theme() -> void:
 	chat_area_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
 	chat_area_panel.queue_redraw()
 	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
+	if OSUtils.is_windows():
+		NativeOS.apply_title_bar_dark_mode(DisplayServer.MAIN_WINDOW_ID, ThemeColor.is_dark_theme())
 	pass

@@ -9,8 +9,15 @@
 
 #ifdef _WIN32
 #include <UIAutomation.h>
+#include <dwmapi.h>
 #include <objbase.h>
 #include <windows.h>
+#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE
+#define DWMWA_USE_IMMERSIVE_DARK_MODE 20
+#endif
+#ifndef DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1
+#define DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 19
+#endif
 #endif
 
 using namespace godot;
@@ -19,6 +26,57 @@ NativeOS *NativeOS::singleton = nullptr;
 
 namespace {
 #ifdef _WIN32
+HWND window_handle_from_id(int window_id) {
+	DisplayServer *display = DisplayServer::get_singleton();
+	if (display == nullptr) {
+		return nullptr;
+	}
+	const int64_t handle = display->window_get_native_handle(DisplayServer::WINDOW_HANDLE, window_id);
+	HWND hwnd = reinterpret_cast<HWND>(static_cast<uintptr_t>(handle));
+	if (hwnd == nullptr || !IsWindow(hwnd)) {
+		return nullptr;
+	}
+	return hwnd;
+}
+
+struct TitleBarThemeApi {
+	static constexpr int k_app_mode_allow_dark = 1;
+	static constexpr int k_app_mode_force_light = 3;
+
+	DWORD build = 0;
+	int(WINAPI * set_app_mode)(int) = nullptr;
+	void(WINAPI * refresh_policy)() = nullptr;
+	void(WINAPI * flush_menu)() = nullptr;
+	bool(WINAPI * allow_dark_window)(HWND, bool) = nullptr;
+
+	static TitleBarThemeApi &get() {
+		static TitleBarThemeApi api;
+		static bool ready = false;
+		if (ready) {
+			return api;
+		}
+		ready = true;
+		HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
+		if (ntdll != nullptr) {
+			using RtlGetVersionFn = LONG(WINAPI *)(OSVERSIONINFOEXW *);
+			const RtlGetVersionFn rtl_get_version = reinterpret_cast<RtlGetVersionFn>(GetProcAddress(ntdll, "RtlGetVersion"));
+			OSVERSIONINFOEXW version = {};
+			version.dwOSVersionInfoSize = sizeof(version);
+			if (rtl_get_version != nullptr && rtl_get_version(&version) == 0) {
+				api.build = version.dwBuildNumber;
+			}
+		}
+		HMODULE ux_theme = LoadLibraryW(L"uxtheme.dll");
+		if (ux_theme != nullptr) {
+			api.set_app_mode = reinterpret_cast<int(WINAPI *)(int)>(GetProcAddress(ux_theme, MAKEINTRESOURCEA(135)));
+			api.refresh_policy = reinterpret_cast<void(WINAPI *)()>(GetProcAddress(ux_theme, MAKEINTRESOURCEA(104)));
+			api.flush_menu = reinterpret_cast<void(WINAPI *)()>(GetProcAddress(ux_theme, MAKEINTRESOURCEA(136)));
+			api.allow_dark_window = reinterpret_cast<bool(WINAPI *)(HWND, bool)>(GetProcAddress(ux_theme, MAKEINTRESOURCEA(133)));
+		}
+		return api;
+	}
+};
+
 Vector2i win32_point_to_godot_screen(POINT pt) {
 	POINT mouse_pt = {};
 	GetCursorPos(&mouse_pt);
@@ -182,6 +240,44 @@ void NativeOS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("restore_foreground_window"), &NativeOS::restore_foreground_window);
 	ClassDB::bind_method(D_METHOD("get_caret_screen_position"), &NativeOS::get_caret_screen_position);
 	ClassDB::bind_method(D_METHOD("capture_screen", "path"), &NativeOS::capture_screen);
+	ClassDB::bind_method(D_METHOD("apply_title_bar_dark_mode", "window_id", "dark_mode"), &NativeOS::apply_title_bar_dark_mode);
+}
+
+bool NativeOS::apply_title_bar_dark_mode(int window_id, bool dark_mode) {
+#ifdef _WIN32
+	HWND hwnd = window_handle_from_id(window_id);
+	if (hwnd == nullptr) {
+		return false;
+	}
+	TitleBarThemeApi &api = TitleBarThemeApi::get();
+	if (api.build < 18363) {
+		return false;
+	}
+	if (api.set_app_mode != nullptr) {
+		api.set_app_mode(dark_mode ? TitleBarThemeApi::k_app_mode_allow_dark : TitleBarThemeApi::k_app_mode_force_light);
+	}
+	if (api.refresh_policy != nullptr) {
+		api.refresh_policy();
+	}
+	if (api.flush_menu != nullptr) {
+		api.flush_menu();
+	}
+	if (api.allow_dark_window != nullptr) {
+		api.allow_dark_window(hwnd, dark_mode);
+	}
+	const BOOL dark = dark_mode ? TRUE : FALSE;
+	const DWORD immersive_attr = api.build < 19041 ? DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 : DWMWA_USE_IMMERSIVE_DARK_MODE;
+	const bool applied = SUCCEEDED(DwmSetWindowAttribute(hwnd, immersive_attr, &dark, sizeof(dark)));
+	SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+	SendMessageW(hwnd, WM_NCACTIVATE, FALSE, 0);
+	SendMessageW(hwnd, WM_NCACTIVATE, TRUE, 0);
+	DwmFlush();
+	return applied;
+#else
+	(void)window_id;
+	(void)dark_mode;
+	return false;
+#endif
 }
 
 void NativeOS::paste_clipboard() {

@@ -56,6 +56,8 @@ public:
 	/// Does not hide Godot overlays. Returns [code]true[/code] on success.
 	/// Windows only; other platforms return [code]false[/code].
 	bool capture_screen(const String &path) const;
+	/// Windows DWM immersive dark title bar ([param dark_mode]). Returns [code]false[/code] off Windows or when HWND is missing.
+	bool apply_title_bar_dark_mode(int window_id, bool dark_mode);
 
 protected:
 	static void _bind_methods();

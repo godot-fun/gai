@@ -166,6 +166,7 @@ Native OS helpers for the foreground app while Godot is unfocused:
 | `restore_foreground_window()` | Activate the remembered HWND and clear it; returns `bool` |
 | `get_caret_screen_position()` | Foreground text caret in DisplayServer space, or `null` if unavailable |
 | `capture_screen(path)` | Capture the full physical monitor under the mouse to a PNG file; returns `bool` |
+| `apply_title_bar_dark_mode(window_id, dark_mode)` | Windows DWM immersive dark title bar; returns `bool` |
 
 ```gdscript
 NativeOS.remember_foreground_window()
