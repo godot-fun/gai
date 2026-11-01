@@ -35,7 +35,7 @@ def resolve_tool_entry(repo_root: Path, tool_name: str) -> dict[str, Any]:
     if not entry:
         print(
             f"Tool '{tool_name}' not found in .dependency/manifest.json. "
-            "See skill-dependency-manager and the skill's SKILL.md.",
+            "See dependency-manager and the skill's SKILL.md.",
             file=sys.stderr,
         )
         sys.exit(1)

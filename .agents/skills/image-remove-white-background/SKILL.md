@@ -17,7 +17,7 @@ Unlike [image-remove-background](../image-remove-background/SKILL.md) (rembg AI 
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 - Run `remove_white_bg.py` through the **`image-remove-white-background` manifest entry** (`.dependency/image-remove-white-background/.venv/`). Never use host `python`, `py`, `python3`, or any interpreter outside `.dependency/`.
 - Do not hand-write FFmpeg `colorkey` / ImageMagick commands — use the bundled script.

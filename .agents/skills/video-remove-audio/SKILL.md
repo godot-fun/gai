@@ -9,7 +9,7 @@ Strip **all audio tracks** (music, voice, SFX) from a supported video file via F
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 - Run `remove_audio.py` through **`.dependency/python/python.exe`**. Never use host `python` / `ffmpeg`.
 - **Never overwrite sources.** Outputs go under `video-remove-audio/`.
@@ -56,7 +56,7 @@ Same video codec/container, no audio.
 1. Use the bundled script, not hand-written `ffmpeg -i … -an` commands.
 2. Always uses **stream copy** for video (`-c:v copy -an`).
 3. This removes **all** audio; it does **not** isolate or mute music while keeping dialogue (no stem separation).
-4. Missing Python/FFmpeg → populate `.dependency/` per skill-dependency-manager, retry same command.
+4. Missing Python/FFmpeg → populate `.dependency/` per dependency-manager, retry same command.
 5. **Do not copy, move, or replace the source with muted output** — tell the user where `video-remove-audio/` files are; they swap assets manually when ready.
 6. Need audio extracted instead of removed → use **video-to-wav**.
 7. FFmpeg details: [reference.md](reference.md)

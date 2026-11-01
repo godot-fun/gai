@@ -346,7 +346,7 @@ def main() -> int:
     if repo_root is None:
         print(
             "Could not find .dependency/manifest.json. "
-            "Run from a repo that follows skill-dependency-manager.",
+            "Run from a repo that follows dependency-manager.",
             file=sys.stderr,
         )
         return 1

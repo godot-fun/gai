@@ -10,7 +10,7 @@ class DependencyManifestEntry:
 ## Static manifest loaded from `.dependency/manifest.json`. Do not instantiate.
 
 const MANIFEST_REL_PATH := ".dependency/manifest.json"
-const SKILL_DEPENDENCY_MANAGER_PATH := ".agents/skills/skill-dependency-manager.md"
+const SKILL_DEPENDENCY_MANAGER_PATH := ".agents/skills/dependency-manager.md"
 const PYTHON_PATH := ".dependency/python/python"
 const PYTHON_INSTALL_PROMPT := (
 	"The required Python runtime is not installed. Read and follow the dependency setup "

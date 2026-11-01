@@ -16,7 +16,7 @@ Only Theora encoding is lossy; the intermediate decode is bit-perfect.
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 ## Quick Start
 
@@ -70,7 +70,7 @@ Custom output path:
 4. **Do not resample audio or change channel layout** unless the user explicitly asks — omit `--standardize`.
 5. **Already Theora+Vorbis OGV?** Stream-copied by default (no generation loss).
 6. Tell the user where `video-to-ogv/` outputs are; they swap assets manually when ready.
-7. Missing Python/FFmpeg → populate `.dependency/` per skill-dependency-manager, retry same command.
+7. Missing Python/FFmpeg → populate `.dependency/` per dependency-manager, retry same command.
 8. Need **48 kHz audio** → pass `--standardize`.
 9. FFmpeg pipeline details: [reference.md](reference.md)
 

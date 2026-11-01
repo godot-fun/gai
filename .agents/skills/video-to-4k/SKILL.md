@@ -31,7 +31,7 @@ Convert a supported video to a **unified 4K master**:
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 - Run `convert.py` through **`.dependency/python/python`**. Never use host `python` / `ffmpeg` / `video2x`.
 - **Never overwrite sources.** Outputs go under `video-to-4k/` (final) and `video-to-4k/upscaled/` (Video2X intermediate).
@@ -42,7 +42,7 @@ When this skill applies, read and follow [skill-dependency-manager](../skill-dep
 
 ### FFmpeg + Python
 
-Populate `ffmpeg` and `python` under `.dependency/` per skill-dependency-manager.
+Populate `ffmpeg` and `python` under `.dependency/` per dependency-manager.
 
 ### Video2X (CLI)
 

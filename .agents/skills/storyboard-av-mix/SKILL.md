@@ -25,7 +25,7 @@ Take a work directory with **per-shot** video and bilingual VO. For each shot, *
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 1. **VO timing is immutable.** Never stretch, shrink, pad, trim, or `atempo` the voice-over. Duration of the VO file is the master clock.
 2. **Video serves audio.** Only change video duration (FFmpeg `setpts`) so it equals that shot’s VO length, then mux.
@@ -95,7 +95,7 @@ Existing outputs are overwritten. Missing VO for a language → skip that job wi
 3. Re-encode must preserve source quality tags (Main10 / HDR / bitrate) — never force 8-bit H.264.
 4. Chat summary: `<root>`, jobs done / skipped, paths to `Video-Chinese/` and `Video-English/`.
 5. Upstream VO usually from [storyboard-tts](../storyboard-tts/SKILL.md); this skill does not synthesize speech.
-6. Missing Python/FFmpeg → populate `.dependency/` per skill-dependency-manager, retry same command.
+6. Missing Python/FFmpeg → populate `.dependency/` per dependency-manager, retry same command.
 
 ## Tests
 

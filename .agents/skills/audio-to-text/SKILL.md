@@ -9,7 +9,7 @@ Run the bundled standard-library Python wrapper, which validates input, invokes 
 
 ## Rules
 
-Read and follow [skill-dependency-manager](../skill-dependency-manager.md) before running commands.
+Read and follow [dependency-manager](../dependency-manager.md) before running commands.
 
 - Run `.ai/audio-to-text/transcribe.py` through the default `python` manifest entry. Do not invoke the native binary by hand.
 - Let the wrapper try `funasr-llamacpp-gpu` first with the Vulkan backend and fall back to `funasr-llamacpp-cpu`. Do not use CUDA, FunASR Python, PyTorch, ONNX, or host tools.

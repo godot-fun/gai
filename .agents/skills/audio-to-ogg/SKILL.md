@@ -9,7 +9,7 @@ Convert a supported audio file to **OGG Vorbis** via FFmpeg. **Defaults preserve
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 ## Quick Start
 
@@ -63,7 +63,7 @@ Custom output path:
 1. Use the bundled script, not hand-written `ffmpeg -i …` commands.
 2. **Sample rate is always preserved** — use the `audio-sample-rate-standardize` skill if resampling is needed.
 3. **Already Vorbis OGG?** Stream-copied by default (no generation loss).
-4. Missing Python/FFmpeg → populate `.dependency/` per skill-dependency-manager, retry same command.
+4. Missing Python/FFmpeg → populate `.dependency/` per dependency-manager, retry same command.
 5. **Do not copy, move, or replace the source with converted output** — tell the user where output files are; they swap assets manually when ready.
 6. FFmpeg codec and quality details: [reference.md](reference.md)
 

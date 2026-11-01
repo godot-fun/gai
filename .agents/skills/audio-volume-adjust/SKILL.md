@@ -9,7 +9,7 @@ Apply a uniform **gain change** across the full clip — no fade, no loudness ta
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 ## Quick Start
 
@@ -52,7 +52,7 @@ Originals are never modified. Input must be a single audio file (`--audio`), not
 
 1. Use the bundled script, not hand-written `volume` filters.
 2. Always pass `--volume` in dB (negative = reduce, positive = boost).
-3. Missing Python/FFmpeg → populate `.dependency/` per skill-dependency-manager, retry same command.
+3. Missing Python/FFmpeg → populate `.dependency/` per dependency-manager, retry same command.
 4. **Do not copy, move, or replace the source with the adjusted output** — tell the user where `audio-volume-adjust/` files are; they swap assets manually when ready.
 5. Do not use `--output` pointing at the source file; the script refuses output paths that would overwrite inputs.
 6. **Boosting** (positive dB) can clip peaks — warn the user; prefer small boosts (+3 dB or less).

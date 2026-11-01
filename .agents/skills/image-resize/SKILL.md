@@ -9,7 +9,7 @@ Resize **one image file** to a **user-specified width and height** via **ImageMa
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 - **Require target size first.** If width/height are missing, ask the user before running.
 - **Single file only.** Pass one image with `--image`; directories are not supported.
@@ -92,7 +92,7 @@ Supported inputs: `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.bmp`, `.tif`, `.ti
 ## Agent Notes
 
 1. Use the bundled script, not hand-written ImageMagick commands.
-2. Missing Python/ImageMagick → populate `.dependency/` per skill-dependency-manager, retry same command.
+2. Missing Python/ImageMagick → populate `.dependency/` per dependency-manager, retry same command.
 3. **Do not copy, move, or replace the source with resized output** — tell the user where the output file is.
 4. Need **format conversion only** (no resize) → [image-to-png](../image-to-png/SKILL.md).
 5. Need **trim borders** after resize → [image-trim](../image-trim/SKILL.md).

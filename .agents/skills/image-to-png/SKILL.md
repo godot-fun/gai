@@ -9,7 +9,7 @@ Convert a **single image file** to **lossless PNG** via FFmpeg. **Defaults prese
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 - Run `convert.py` through the bundled script — do not hand-write `ffmpeg -i …` commands.
 - **Single file only.** Pass one image with `--image`; directories are not supported.
@@ -19,7 +19,7 @@ When this skill applies, read and follow [skill-dependency-manager](../skill-dep
 
 ## Setup (first run)
 
-1. Download FFmpeg and extract to `.dependency/ffmpeg/` (see skill-dependency-manager).
+1. Download FFmpeg and extract to `.dependency/ffmpeg/` (see dependency-manager).
 
    Windows result example: `.dependency/ffmpeg/bin/ffmpeg.exe`
 
@@ -84,7 +84,7 @@ Supported inputs: `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.bmp`, `.tif`, `.ti
 ## Agent Notes
 
 1. Use the bundled script, not hand-written FFmpeg commands.
-2. Missing Python/FFmpeg → populate `.dependency/` per skill-dependency-manager, retry same command.
+2. Missing Python/FFmpeg → populate `.dependency/` per dependency-manager, retry same command.
 3. **Do not copy, move, or replace the source with converted output** — tell the user where the output file is.
 4. Need **transparent cutouts** → use [image-remove-background](../image-remove-background/SKILL.md), not this skill.
 5. Need **resize** after conversion → [image-resize](../image-resize/SKILL.md).

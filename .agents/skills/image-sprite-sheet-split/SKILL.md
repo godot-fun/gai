@@ -9,7 +9,7 @@ Split **uniform grid sprite sheets** into individual **PNG frames** via FFmpeg c
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 - Run `split_frames.py` through the **`python` manifest entry** (`.dependency/python/`). Never use host `python`, `py`, or `python3`.
 - Do not hand-write FFmpeg crop commands — use the bundled script.
@@ -21,7 +21,7 @@ When this skill applies, read and follow [skill-dependency-manager](../skill-dep
 
 ## Setup (first run)
 
-1. Ensure `python` and `ffmpeg` are populated in `.dependency/manifest.json` (see skill-dependency-manager).
+1. Ensure `python` and `ffmpeg` are populated in `.dependency/manifest.json` (see dependency-manager).
 
 2. FFmpeg must include `ffprobe` beside `ffmpeg` in the same `bin/` folder.
 
@@ -89,7 +89,7 @@ Supported inputs: `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`, `.bmp`, `.tif`, `.ti
 ## Agent Notes
 
 1. Use the bundled script, not hand-written FFmpeg crop commands.
-2. Missing Python/FFmpeg → populate `.dependency/` per skill-dependency-manager, retry same command.
+2. Missing Python/FFmpeg → populate `.dependency/` per dependency-manager, retry same command.
 3. **Do not copy, move, or replace the source with frame outputs** — tell the user where the output folder is.
 4. Need **transparent frames** → split first, then [image-remove-background](../image-remove-background/SKILL.md) on each frame.
 

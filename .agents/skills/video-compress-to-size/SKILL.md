@@ -11,7 +11,7 @@ Re-encode a supported video so the output is **at or under** a given max file si
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 - Run `compress.py` through **`.dependency/python/python.exe`**. Never use host `python` / `ffmpeg`.
 - **Never overwrite sources.** Outputs go under `video-compress-to-size/`.
@@ -86,7 +86,7 @@ Custom output path:
 4. Do **not** downscale or change fps unless the user asks.
 5. Sources already ≤ max size are skipped.
 6. Tell the user where `video-compress-to-size/` files are; they swap assets manually when ready.
-7. Missing Python/FFmpeg → populate `.dependency/` per skill-dependency-manager, retry same command.
+7. Missing Python/FFmpeg → populate `.dependency/` per dependency-manager, retry same command.
 8. Pipeline details: [reference.md](reference.md)
 
 ## Tests

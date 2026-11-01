@@ -14,7 +14,7 @@ Run the official `openbmb/MiniCPM-V-4.6-gguf` Q4_K_M model locally with llama.cp
 
 ## Rules
 
-Read and follow [skill-dependency-manager](../skill-dependency-manager.md) before running commands.
+Read and follow [dependency-manager](../dependency-manager.md) before running commands.
 
 - Run `.ai/image-to-text/image_to_text.py` through the default `python` manifest entry only.
 - Load the language model and multimodal projector only from `.dependency/minicpm-v-4.6/model`.

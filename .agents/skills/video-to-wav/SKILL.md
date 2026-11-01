@@ -9,7 +9,7 @@ Extract the first audio track from a supported video file to **PCM WAV** via FFm
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 ## Quick Start
 
@@ -55,7 +55,7 @@ Custom output path:
 2. **Sample rate is always preserved** — chain `audio-sample-rate-standardize` if resampling is needed.
 3. **Do not reduce bit depth** unless the user explicitly asks — omit `-b`.
 4. **No audio track** — script reports failure; confirm the file has an audio stream.
-5. Missing Python/FFmpeg → populate `.dependency/` per skill-dependency-manager, retry same command.
+5. Missing Python/FFmpeg → populate `.dependency/` per dependency-manager, retry same command.
 6. **Do not copy, move, or replace the source with extracted output** — tell the user where output files are; they swap assets manually when ready.
 7. This skill is for video containers only; standalone audio files are out of scope.
 8. FFmpeg codec and probing details: [reference.md](reference.md)

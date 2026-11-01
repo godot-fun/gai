@@ -14,7 +14,7 @@ description: >-
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 - Run `inpaint.py` through the **`iopaint` manifest entry** (`.dependency/iopaint/.venv/`). Never use host `python`, `py`, `python3`, or any interpreter outside `.dependency/`.
 - Do not hand-write equivalent inpaint commands — use the bundled script.
@@ -115,7 +115,7 @@ Supported inputs: `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`, `.bmp`, `.tif`, `.ti
 ## Agent Notes
 
 1. Use the bundled script, not hand-written IOPaint CLI with separate mask files unless the user already has a mask image.
-2. Missing iopaint venv → populate `.dependency/` per skill-dependency-manager, retry same command.
+2. Missing iopaint venv → populate `.dependency/` per dependency-manager, retry same command.
 3. **Do not copy, move, or replace the source with inpainted output** — tell the user where the output file is.
 4. For full IOPaint UI / brush mask editing, use the upstream `iopaint start` workflow instead.
 

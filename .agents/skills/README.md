@@ -1,6 +1,6 @@
 # Skills
 
-Batch asset tools — run from repo root; use each skill's script; never overwrite sources. Dependencies: [skill-dependency-manager](../skills/skill-dependency-manager.md). Commands and flags: see each skill's `SKILL.md`.
+Batch asset tools — run from repo root; use each skill's script; never overwrite sources. Dependencies: [dependency-manager](../skills/dependency-manager.md). Commands and flags: see each skill's `SKILL.md`.
 
 ## Categories
 

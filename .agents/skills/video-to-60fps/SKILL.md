@@ -33,7 +33,7 @@ Convert a supported video to **60fps at the source resolution** via [Video2X](ht
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 - Run `convert.py` through **`.dependency/python/python`**. Never use host `python` / `ffmpeg` / `video2x`.
 - **Never overwrite sources.** Outputs go under `video-to-60fps/`.

@@ -15,7 +15,7 @@ Unlike `--crop` on [image-remove-white-background](../image-remove-white-backgro
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 - Run `trim.py` through the **`image-trim` manifest entry** (`.dependency/image-trim/.venv/`). Never use host `python`, `py`, `python3`, or any interpreter outside `.dependency/`.
 - Do not hand-write ImageMagick / FFmpeg crop commands — use the bundled script.
@@ -116,7 +116,7 @@ Supported inputs: `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`, `.bmp`, `.tif`, `.ti
 ## Agent Notes
 
 1. Use the bundled script, not hand-written ImageMagick / FFmpeg crop commands.
-2. Missing image-trim venv → populate `.dependency/` per skill-dependency-manager, retry same command.
+2. Missing image-trim venv → populate `.dependency/` per dependency-manager, retry same command.
 3. **Do not copy, move, or replace the source with trimmed output** — tell the user where the output file is.
 4. Need **background removal** first → [image-remove-white-background](../image-remove-white-background/SKILL.md) or [image-remove-background](../image-remove-background/SKILL.md).
 

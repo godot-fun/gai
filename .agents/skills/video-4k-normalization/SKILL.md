@@ -37,7 +37,7 @@ oversaturated cuts. Normalization unifies pixels **and** color tags first.
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 - Run `normalize.py` through **`.dependency/python/python`**. Never use host `python` / `ffmpeg`.
 - **Never overwrite sources.** Outputs go under `video-4k-normalization/`.

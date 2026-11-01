@@ -9,7 +9,7 @@ Convert a supported audio file to **PCM WAV** via FFmpeg. **Defaults preserve so
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 ## Quick Start
 
@@ -54,7 +54,7 @@ Custom output path:
 2. **Sample rate is always preserved** — use the `audio-sample-rate-standardize` skill if resampling is needed.
 3. **Do not reduce bit depth** unless the user explicitly asks — omit `-b`.
 4. **Already PCM WAV?** Stream-copied by default (no generation loss).
-5. Missing Python/FFmpeg → populate `.dependency/` per skill-dependency-manager, retry same command.
+5. Missing Python/FFmpeg → populate `.dependency/` per dependency-manager, retry same command.
 6. **Do not copy, move, or replace the source with converted output** — tell the user where output files are; they swap assets manually when ready.
 7. FFmpeg codec and probing details: [reference.md](reference.md)
 

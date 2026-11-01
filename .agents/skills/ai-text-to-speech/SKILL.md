@@ -13,7 +13,7 @@ Clone a speaker from a **reference audio**, then synthesize speech from **text**
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 - Run `tts.py` at `.ai/ai-text-to-speech/tts.py` through the **`index-tts` manifest entry** (`.dependency/index-tts/.venv/`). Never use host `python`, `py`, `python3`, or any interpreter outside `.dependency/`.
 - Do not hand-write IndexTTS Python snippets or `uv run webui.py` for synthesis — use the bundled script.
@@ -27,7 +27,7 @@ From project root.
 
 ### 1. Python 3.11 + uv
 
-Ensure `python-3.11` and `uv` are populated under `.dependency/` (see skill-dependency-manager). Register:
+Ensure `python-3.11` and `uv` are populated under `.dependency/` (see dependency-manager). Register:
 
 ```json
 "python-3.11": {

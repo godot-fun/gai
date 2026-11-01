@@ -15,7 +15,7 @@ Use after [image-remove-white-background](../image-remove-white-background/SKILL
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 - Run `app.py` through the **`image-region-remove-key-color-app` manifest entry** (`.dependency/image-region-remove-key-color-app/.venv/`). Never use host `python`, `py`, `python3`, or any interpreter outside `.dependency/`.
 - Do not hand-write a one-off Gradio app — use the bundled script at `.ai/image-region-remove-key-color-app/app.py`.

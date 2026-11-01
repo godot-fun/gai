@@ -20,7 +20,7 @@ xfade / scale / pad still run on CPU; only the H.265 encode is hardware.
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 - Run `merge.py` through **`.dependency/python/python.exe`**. Never use host `python` / `ffmpeg`.
 - **Never overwrite sources.** Outputs go under `video-merge-gpu/`.
@@ -79,7 +79,7 @@ Each cut independently samples one transition. Printed in the run log.
 4. Single file in the folder → re-encode to the output spec with no transition.
 5. Many clips (4K10) auto-chunk (max 8 inputs per filtergraph) to avoid OOM; transitions stay correct across chunk boundaries.
 6. **No CPU fallback.** Missing GPU HEVC Main10 → report the probe failure; suggest `video-merge` only if the user accepts CPU.
-7. Missing Python/FFmpeg → populate `.dependency/` per skill-dependency-manager, retry.
+7. Missing Python/FFmpeg → populate `.dependency/` per dependency-manager, retry.
 8. FFmpeg filter / encoder details: [reference.md](reference.md)
 
 ## Tests

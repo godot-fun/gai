@@ -9,7 +9,7 @@ Loudness-normalize one audio file to a target LUFS with true-peak limiting. **Pr
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 ## Quick Start
 
@@ -47,7 +47,7 @@ One category per folder. Mixed folders: split first, then normalize each file wi
 
 1. Use the bundled script (two-pass `loudnorm`), not hand-written FFmpeg.
 2. **Preserves input format** — same extension and sample rate (`-ar` forced to source); does not resample.
-3. Missing Python/FFmpeg → populate `.dependency/` per skill-dependency-manager, retry same command.
+3. Missing Python/FFmpeg → populate `.dependency/` per dependency-manager, retry same command.
 4. **Do not copy, move, or replace the source with the normalized output** — tell the user where `audio-loudness-normalization/` files are; they swap assets manually when ready.
 5. Do not use `-output` pointing at the source file; the script refuses paths that would overwrite the input.
 6. Do not fix uneven levels with per-asset volume in game code — re-normalize sources.

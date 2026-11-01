@@ -9,7 +9,7 @@ Export **16-bit PCM WAV** at **44100 or 48000 Hz** only. No loudness processing.
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 ## Quick Start
 
@@ -47,7 +47,7 @@ Example: `audio/sfx/tank/tank_move.mp3` → `audio/sfx/tank/audio-sample-rate-st
 
 1. Use the bundled script, not hand-written `-ar` / `-c:a` commands.
 2. **No loudness normalization** — LUFS targeting is a separate step in the audio pipeline.
-3. Missing Python/FFmpeg → populate `.dependency/` per skill-dependency-manager, retry same command.
+3. Missing Python/FFmpeg → populate `.dependency/` per dependency-manager, retry same command.
 4. **Do not copy, move, or replace the source with the output** — tell the user where `audio-sample-rate-standardize/` files are; they swap assets manually when ready.
 5. Do not use `--output` pointing at the source file; the script refuses paths that would overwrite the input.
 6. FFmpeg details: [reference.md](reference.md)

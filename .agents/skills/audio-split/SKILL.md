@@ -9,7 +9,7 @@ Split one audio file into **part 1** (start → split point) and **part 2** (spl
 
 ## Rules
 
-When this skill applies, read and follow [skill-dependency-manager](../skill-dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
+When this skill applies, read and follow [dependency-manager](../dependency-manager.md) — run scripts as documented, install missing tools into `.dependency/`.
 
 ## Quick Start
 
@@ -55,7 +55,7 @@ Originals are never modified. Supported: `.wav`, `.mp3`, `.ogg`, `.flac`, `.aac`
 1. Use the bundled script, not hand-written `-ss`/`-to` commands.
 2. **Looping BGM** — splitting breaks the loop; prefer two source assets or manual crossfade planning.
 3. Split point at `0` or at/after duration → script errors with a clear message.
-4. Missing Python/FFmpeg → populate `.dependency/` per skill-dependency-manager, retry same command.
+4. Missing Python/FFmpeg → populate `.dependency/` per dependency-manager, retry same command.
 5. FFmpeg details and manual fallback: [reference.md](reference.md)
 
 ## Tests
