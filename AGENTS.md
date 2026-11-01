@@ -65,20 +65,34 @@ The Autoload node runs `GodotFramework.gd`, whose global class name is `gdf`.
 # Defer a callable to the main thread (useful from network / worker callbacks)
 gdf.callable_deferred(func() -> void: refresh_ui())
 
-# Graceful exit (waits a few frames before quit)
-await gdf.quit()
+if gdf.is_ready():
+	pass
+
+# Graceful exit — drains HTTP, subprocesses, and executors, then quits
+gdf.shutdown()
+# gdf.shutdown_now(exit_code) when you need an immediate exit code
 ```
+
+**`gdf.events` — lifecycle**
+
+- `application_start` — Framework init finished.
+- `application_end` — Shutdown started.
+- `application_exit` — Cleanup done; about to quit.
 
 
 ## AI — OpenAI-compatible chat
 
 ```gdscript
 var client := OpenAiClient.new(OS.get_environment("OPENAI_API_KEY"), "https://api.deepseek.com/chat/completions", "deepseek-v4-flash")
-var reply := await client.async_chat("hello", "you are a helpful assistant")
+var reply: String = await client.async_chat("hello", "you are a helpful assistant", proxy_address)
 
-# Streaming — on_delta called for each token fragment; read full text from completion.content
-var stream_completion := await client.async_chat_messages_stream(client.build_messages("hello", "you are a helpful assistant"), tools,
-	proxy, func(delta: String, stream_kind: String): print(delta))
+# Optional: one CancelScope per run aborts in-flight HTTP for that client
+client.cancel_scope = CancelScope.new()
+
+# Streaming — on_delta(delta, stream_kind); read content, tool_calls, and usage from OpenAiCompletion
+var messages := client.build_messages("hello", "you are a helpful assistant")
+var stream_completion := await client.async_chat_messages_stream(messages, tool_defs, proxy_address,
+	func(delta: String, stream_kind: String) -> void: print(delta))
 var streamed := stream_completion.content
 ```
 
@@ -137,6 +151,21 @@ Log.error("load failed path:[{}] err:[{}]", path, err)
 ```
 
 
+## Concurrent — executors and thread-safe collections
+
+```gdscript
+# FIFO single-thread queues (separate from each other)
+ExecutorHelper.execute(func() -> void: pass)
+var value: Variant = await ExecutorHelper.async_execute(func() -> String: return "ok")
+
+# Godot worker pool — tasks may run in parallel
+ExecutorHelper.execute_pooled(func() -> void: pass)
+var pooled: Variant = await ExecutorHelper.async_execute_pooled(func() -> int: return 1)
+```
+
+- `ConcurrentArrayList`, `ConcurrentMapInt` — mutex-backed thread-safe list and int-key map.
+
+
 ## Network
 
 - Supports `TcpClient`, `TcpClientThread`, `WebsocketClient`, and `WebsocketClientThread`.
@@ -160,11 +189,15 @@ var reply: LoginResponse = await Router.async_ask(session, LoginRequest.new())
 ## ResourceHelper — async loading
 
 - Avoid blocking the main thread when loading large assets.
+- `res://` paths use `AsyncResourceLoader`; plain files outside the project use extension-based loaders (audio, images via `ImageHelper`, fonts).
 
 ```gdscript
-var texture: Texture2D = await ResourceHelper.async_load("res://assets/icon.svg")
-var scene: PackedScene = await ResourceHelper.async_load("res://scene/Level.tscn")
+var texture: Texture2D = await ResourceHelper.async_load("res://assets/icon.svg") as Texture2D
+var scene: PackedScene = await ResourceHelper.async_load("res://scene/Level.tscn") as PackedScene
+var external: ImageTexture = await ResourceHelper.async_load("C:/tmp/sprite.png") as ImageTexture
 ```
+
+`ImageHelper` — decode/save external images by extension. `VideoHelper` — video path checks (see **UI** for placeholder textures).
 
 
 ## SceneHelper — scenes & nodes
@@ -220,26 +253,43 @@ label.text = I18n.t("settings.title")
 
 ## Collection — collection utilities
 
-`ConcurrentArrayList`, `ConcurrentMapInt`, `LazyCache`, `LruCacheString`, `ReadyQueue`, `RingListInt`, `RingListString`
+`ArrayMapString`, `LazyCache`, `LruCacheInt`, `LruCacheString`, `ReadyQueue`, `RingListInt`, `RingListString`, `PairInt`, `PairString`
 
 
 ## Common — common utilities
 
-`StringBuilder`, `Utf8StreamDecoder`
+`CancelScope` (shared cancellation for HTTP, subprocesses, and AI clients), `StringBuilder`, `Utf8StreamDecoder`, `Weights`
+
+
+## Core — tick components
+
+Implement `IComponent` and call `start()` to receive `update()` every frame from `gdf._process`.
 
 
 ## Utils — common helpers
 
-- `ArrayUtils`, `CollectionUtils`, `FileUtils`, `GitUtils`, `GlobUtils`
+- `ArrayUtils`, `CollectionUtils`, `FileUtils`, `GlobUtils`
 - `HttpUtils`, `IdUtils`, `JsonUtils`, `NetUtils`
 - `NodeUtils`, `NumberUtils`, `OSUtils`, `ProxyUtils`, `RandomUtils`
 - `RateLimitUtils`, `ReflectionUtils`, `StringUtils`, `ThreadUtils`, `TimeUtils`
+
+`OSUtils.execute` / `OSUtils.async_execute` run subprocesses (UTF-8 output, timeout, optional `CancelScope`); `OSUtils.stop_all()` runs on shutdown.
 
 
 ---
 
 
-# UI Style Guide
+# UI
+
+Shared typography, layout tokens, theming, feedback, and window chrome under `zfoo/ui/`. Listen on `gdf.events` when panels must refresh after global UI state changes.
+
+## gdf.events — theme, locale, and scale
+
+- `theme_changed` — Dark/light theme switched.
+- `theme_color_changed` — Accent color changed.
+- `locale_changed` — Locale switched.
+- `ui_scale_changed` — UI scale preset changed.
+
 
 ## Typography
 
@@ -251,18 +301,19 @@ label.text = I18n.t("settings.title")
 
 - `Margin`: Provides spacing tokens in 4-pixel increments.
 - `ControlSize`: Provides standard control heights, corner radii, border widths, and square sizes.
-- `DisplayScale`: App UI scale (`compute_ui_scale`) and 2K screen design scale (`compute_screen_scale`).
+- `DisplayScale`: User UI scale presets (`get_ui_scale`, `set_ui_scale`, `apply_ui_scale`) plus layout helpers (`compute_ui_scale`, `compute_screen_scale`).
 - `StyleBoxHelper`: Creates `StyleBoxFlat` instances and applies their content margins.
-- `ButtonStyle`: Builds and applies theme-aware button state boxes and font colors.
-- `ScrollBarStyle`: Applies standard or custom scrollbar thickness, colors, and rounding.
+- `ButtonStyle`, `LineEditStyle`, `RangeStyle`, `PopupMenuStyle`, `FileDialogStyle`, `ScrollBarStyle`: Theme-aware control styling.
+- `PrefixLineEdit`: Line edit with a leading prefix label.
+- `MovingAccentBorder`: Shader-driven accent border for highlighted panels.
 
 
 ## Theme and colors
 
 - `ThemeColor`: Manages dark/light mode, the user accent color, and colors derived from the active theme.
-- `ColorBase`: Provides theme-aware semantic colors for surfaces, text, borders, and status feedback.
-- `ColorFile`: Provides theme-aware colors for audio, image, video, text, and folder types.
-- `Colors`: Provides theme-aware semantic and surface colors used by Markdown rendering.
+- `Colors`: Semantic and surface colors (including status feedback such as `Colors.success` / `Colors.error`) and Markdown rendering palettes.
+- `FileColors`: Theme-aware colors for audio, image, video, text, and folder types.
+- `VideoHelper.create_placeholder_texture`: Theme-aware video card placeholder when no frame is available.
 
 Avoid hard-coded fonts, sizes, spacing, radii, and colors when a matching shared token exists.
 
@@ -271,14 +322,18 @@ Avoid hard-coded fonts, sizes, spacing, radii, and colors when a matching shared
 
 ```gdscript
 # Brief in-app feedback: show a non-blocking top-center message with a semantic result color.
-Alert.alert("Saved successfully", ColorBase.success)
-Alert.alert("Network error", ColorBase.error)
+Alert.alert("Saved successfully", Colors.success)
+Alert.alert("Network error", Colors.error)
 
 # Background-task feedback: show an OS-level notification when the app may be unfocused.
-DesktopToast.show_toast("Run finished", "All tasks completed", ColorBase.success)
+DesktopToast.show_toast("Run finished", "All tasks completed", Colors.success)
 
 # Detailed feedback: show important or long content in a popup sized by viewport percentages.
 PopupWindow.show_window("Details", "Full feedback message", 70, 80)
+
+# Shared window chrome; subclass CommonWindow or call apply_window_theme for one-off windows
+CommonWindow.apply_window_theme(window, background, title_color, border_color)
+ImagePreviewWindow.show_image(texture)
 ```
 
 

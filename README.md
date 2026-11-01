@@ -54,7 +54,7 @@ Input folder
 | Image | PNG conversion, local inpainting, sprite-sheet splitting, background removal, trimming, and resizing |
 | Video | Audio-track processing, 60 FPS interpolation, 4K upscaling and normalization, merging, compression, and OGV export |
 | Storyboard | Bilingual storyboards, HTML animation previews, narration, audio/video mixing, and multi-platform publishing copy |
-| Godot Framework | AI, networking, resource loading, audio, scenes, logging, settings, localization, testing, and shared utilities |
+| Godot Framework | AI chat (streaming, tools, cancellation), HTTP, subprocesses, concurrent executors, networking, async resources, audio, scenes, logging, settings, localization, UI tokens, testing, and shared utilities |
 | C++ (godot-cpp) | GDExtension support via godot-cpp for native classes usable from GDScript |
 
 See [`.agents/skills/README.md`](.agents/skills/README.md) for the complete skill catalog and usage details.
@@ -118,7 +118,19 @@ The root [`AGENTS.md`](AGENTS.md) defines shared project conventions. Skills can
 
 ## Godot Framework
 
-[`zfoo/`](zfoo/) is the reusable Godot framework that powers GAI. It provides OpenAI-compatible chat, HTTP, TCP and WebSocket networking, asynchronous resource loading, audio playback, scene transitions, logging, persistent settings, localization, collection utilities, and a testing framework.
+[`zfoo/`](zfoo/) is the reusable Godot framework that powers GAI. Highlights:
+
+- **AI** — `OpenAiClient` with non-stream and SSE streaming chat, tool calls, and `CancelScope`
+- **HTTP & processes** — `HttpHelper` / `AsyncHttp` (redirects, proxy, cancellation); `OSUtils` for sync/async subprocesses
+- **Concurrency** — `ExecutorHelper` (single-thread and worker-pool queues), `ConcurrentArrayList`, `ConcurrentMapInt`
+- **Assets** — `ResourceHelper` / `AsyncResourceLoader`, plus `ImageHelper` and `VideoHelper` for external files
+- **Runtime** — TCP/WebSocket sessions and `Router`, audio (`Audio`, `Audios`, `AudioRecorder`), scene transitions, hot-update PCK flow
+- **App plumbing** — `Log` / `LoggerHelper`, `Setting`, `SchedulerBus`
+- **I18n** — locale in `Setting`, `I18n.t()`, `locale_changed` for UI refresh
+- **UI** — theme tokens (`ThemeColor`, `Colors`, `FileColors`), control styles, `DisplayScale`, feedback (`Alert`, `DesktopToast`, `PopupWindow`, `CommonWindow`, `ImagePreviewWindow`); see **UI** in [`AGENTS.md`](AGENTS.md)
+- **Tests** — `UnitTest` and `IntegrationTest` under `zfoo/gdtest/`
+
+Agent-facing API notes and GDScript conventions live in [`AGENTS.md`](AGENTS.md).
 
 To reuse it in another Godot project:
 
@@ -129,7 +141,7 @@ To reuse it in another Godot project:
 | --- | --- |
 | `GodotFramework` | `res://zfoo/GodotFramework.tscn` |
 
-The Autoload exposes the global class name `gdf`.
+The Autoload exposes the global class name `gdf`. Call `gdf.shutdown()` for a clean exit (HTTP, subprocesses, and executors are stopped automatically).
 
 ## Repository Structure
 
