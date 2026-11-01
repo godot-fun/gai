@@ -8,6 +8,7 @@ uniform float ring_radius_close = 30.0;
 uniform float lens_close = 0.0;
 uniform float context_usage = 0.0;
 uniform float flow_activity = 0.0;
+uniform float light_theme = 0.0;
 uniform vec4 border_color : source_color = vec4(0.72, 0.74, 0.78, 0.34);
 uniform vec4 pulse_color : source_color = vec4(0.15, 0.8, 1.0, 1.0);
 
@@ -29,7 +30,8 @@ void fragment() {
 	float angle = atan(p.y, p.x);
 	float activity = clamp(flow_activity, 0.0, 1.0);
 	float usage = clamp(context_usage, 0.0, 1.0);
-	float speed = mix(0.075, 0.19, max(activity, usage));
+	float light_contrast = mix(1.0, 1.32, light_theme);
+	float speed = 0.11;
 	float breath = 0.5 + 0.5 * sin(TIME * mix(1.35, 2.35, usage));
 
 	// A broad, quiet aura keeps the lens present even before the first packet arrives.
@@ -41,7 +43,7 @@ void fragment() {
 	float clockwise = angular_arc(angle, TIME * speed, 3.0, 0.58, 0.055);
 	float counter = angular_arc(-angle, TIME * speed * 0.72 + 0.31, 5.0, 0.18, 0.035);
 	float energy_arcs = track * max(clockwise * 0.92, counter * (0.68 + activity * 0.28));
-	float rim = soft_ring(dist, gauge_r, 0.72) * max(border_color.a, 0.52);
+	float rim = soft_ring(dist, gauge_r, 0.72) * max(border_color.a, mix(0.52, 0.68, light_theme));
 	float outer_track = soft_ring(dist, gauge_r + 5.0, 0.72) * angular_arc(-angle, TIME * speed * 0.45, 4.0, 0.11, 0.04);
 	float inner_track = soft_ring(dist, gauge_r - 5.0, 0.62) * angular_arc(angle, TIME * speed * 0.62 + 0.5, 3.0, 0.16, 0.045);
 
@@ -55,7 +57,7 @@ void fragment() {
 	float scan_radius = gauge_r + 2.0 + scan_phase * 9.0;
 	float scan = soft_ring(dist, scan_radius, 1.8) * (1.0 - scan_phase) * 0.16;
 
-	float base_alpha = outer_halo + inner_halo + rim + energy_arcs * (0.46 + usage * 0.22) + (outer_track + inner_track) * 0.46 + orbit_nodes + scan;
+	float base_alpha = (outer_halo + inner_halo + rim + energy_arcs * (0.46 + usage * 0.22) + (outer_track + inner_track) * 0.46 + orbit_nodes + scan) * light_contrast;
 	float accent_mix = energy_arcs * 0.82 + (outer_track + inner_track) * 0.75 + orbit_nodes + scan * 3.5 + usage * 0.18;
 	vec3 base_color = mix(border_color.rgb, pulse_color.rgb, clamp(accent_mix, 0.08, 0.88));
 	float alpha = base_alpha * lens_alpha;

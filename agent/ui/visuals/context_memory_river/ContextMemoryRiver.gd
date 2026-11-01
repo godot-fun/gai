@@ -656,11 +656,14 @@ func sync_lens_shader(center: Vector2) -> void:
 	var accent := ThemeColor.accent_theme_color()
 	var ratio := context_ratio()
 	var pulse_color := Colors.error if ratio >= 0.9 else (Colors.warning if ratio >= 0.72 else accent)
+	if not ThemeColor.is_dark_theme():
+		pulse_color = pulse_color.darkened(0.22)
 	lens_material.set_shader_parameter("lens_center_px", center)
 	lens_material.set_shader_parameter("viewport_size", size)
 	lens_material.set_shader_parameter("lens_close", lens_close_progress)
 	lens_material.set_shader_parameter("context_usage", ratio)
 	lens_material.set_shader_parameter("flow_activity", maxf(output_activity, minf(float(items.size()) / 6.0, 1.0)))
+	lens_material.set_shader_parameter("light_theme", 0.0 if ThemeColor.is_dark_theme() else 1.0)
 	lens_material.set_shader_parameter("border_color", lens_ring_border_color())
 	lens_material.set_shader_parameter("pulse_color", pulse_color)
 	pass
@@ -669,7 +672,7 @@ func sync_lens_shader(center: Vector2) -> void:
 static func lens_ring_border_color() -> Color:
 	if ThemeColor.is_dark_theme():
 		return Color(Colors.secondary_text, 0.48)
-	return Color(Colors.subtle_border, 0.36)
+	return Color(Colors.primary_text, 0.58)
 
 
 static func absorption_ripple_spread(source_width: float) -> float:
