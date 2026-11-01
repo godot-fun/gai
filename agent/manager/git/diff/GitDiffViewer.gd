@@ -46,7 +46,6 @@ var selected_hunk := -1
 func _init() -> void:
 	super()
 	title = I18n.t("git.title")
-	min_size = Vector2i(800, 520)
 	gdf.events.locale_changed.connect(apply_locale)
 	build_ui()
 	pass

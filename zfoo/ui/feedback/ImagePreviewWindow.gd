@@ -7,7 +7,6 @@ const MAX_ZOOM: float = 8.0
 const ZOOM_STEP: float = 1.15
 const MAX_WIDTH_PERCENT: float = 80.0
 const MAX_HEIGHT_PERCENT: float = 85.0
-const MIN_WINDOW_SIZE: Vector2i = Vector2i(ControlSize.image_xl, ControlSize.image_lg)
 const GROUP_NAME: StringName = &"image_preview_window"
 
 var scroll: ScrollContainer
@@ -21,7 +20,6 @@ var dragging: bool = false
 func _init() -> void:
 	super()
 	add_to_group(GROUP_NAME)
-	min_size = MIN_WINDOW_SIZE
 	scroll = ScrollContainer.new()
 	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -63,8 +61,7 @@ func present_image() -> void:
 	var image_size := image_view.texture.get_size()
 	var image_scale := minf(1.0, minf(max_window_size.x / image_size.x, max_window_size.y / image_size.y))
 	var content_size := image_size * image_scale
-	var window_size := Vector2(maxf(content_size.x, MIN_WINDOW_SIZE.x), maxf(content_size.y, MIN_WINDOW_SIZE.y))
-	size = Vector2i(roundi(window_size.x), roundi(window_size.y))
+	size = Vector2i(roundi(content_size.x), roundi(content_size.y))
 	popup_centered()
 	oversampling_override = DisplayScale.compute_ui_scale()
 	pass

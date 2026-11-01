@@ -25,7 +25,6 @@ var recording_hotkey: bool = false
 func _init(p_sense_input: SenseInput) -> void:
 	super()
 	sense_input = p_sense_input
-	min_size = Vector2i(640, 680)
 	add_to_group(GROUP_NAME)
 	gdf.events.locale_changed.connect(apply_locale)
 	build_window()
