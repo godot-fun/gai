@@ -142,12 +142,9 @@ const LARGE_FILE_EXCLUDE_RULES := """
 *.sqlite3
 """
 
-const MANDATORY_EXCLUDE_RULES := """
-.git/
-.gai/
-.godot/
-.dependency/
-"""
+## Directories a snapshot repository must always ignore. `.git` is the user's real repository;
+## the agent data folder is appended from [constant AgentWorkspace.DATA_DIR_NAME].
+const MANDATORY_EXCLUDE_DIRS: Array[String] = [".git", ".godot", ".dependency"]
 
 
 static func ensure_exclude_rules(git_dir: String) -> void:
@@ -164,7 +161,9 @@ static func ensure_exclude_rules(git_dir: String) -> void:
 	build.append(LARGE_FILE_EXCLUDE_RULES)
 	## `.git` is the user's real repository — snapshots must never swallow it.
 	## Mandatory rules come last so project negation rules cannot re-include these directories.
-	build.append(MANDATORY_EXCLUDE_RULES)
+	for name: String in MANDATORY_EXCLUDE_DIRS:
+		build.append(name + "/")
+	build.append(AgentWorkspace.DATA_DIR_NAME + "/")
 	var exclude_rules := build.build_joined(FileUtils.NEWLINE_LF)
 	var write_error := FileUtils.write_string_to_file(git_exclude_path, exclude_rules)
 	if write_error != OK:

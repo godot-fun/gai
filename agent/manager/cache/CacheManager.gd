@@ -1,13 +1,13 @@
 ﻿class_name CacheManager
 extends Object
 
-const DIFF_CACHE_SUBDIR := ".gai/cache/diff"
+const DIFF_CACHE_SUBDIR := "cache/diff"
 const MAX_DIFF_CACHE_BYTES := 128 * FileUtils.BYTES_PER_MB
-const WEB_SCREENSHOT_SUBDIR := ".gai/cache/screenshot"
+const WEB_SCREENSHOT_SUBDIR := "cache/screenshot"
 const MAX_WEB_SCREENSHOT_CACHE_BYTES := 512 * FileUtils.BYTES_PER_MB
-const CLIPBOARD_SUBDIR := ".gai/cache/clipboard"
+const CLIPBOARD_SUBDIR := "cache/clipboard"
 const MAX_CLIPBOARD_CACHE_BYTES := 512 * FileUtils.BYTES_PER_MB
-const MARKDOWN_IMAGE_SUBDIR := ".gai/cache/markdown"
+const MARKDOWN_IMAGE_SUBDIR := "cache/markdown"
 const MAX_MARKDOWN_IMAGE_CACHE_BYTES := 512 * FileUtils.BYTES_PER_MB
 
 
@@ -17,19 +17,19 @@ static func _static_init() -> void:
 
 
 static func get_diff_cache_dir() -> String:
-	return AgentWorkspace.get_root().path_join(DIFF_CACHE_SUBDIR)
+	return AgentWorkspace.get_data_path(DIFF_CACHE_SUBDIR)
 
 
 static func get_web_screenshot_cache_dir() -> String:
-	return AgentWorkspace.get_root().path_join(WEB_SCREENSHOT_SUBDIR)
+	return AgentWorkspace.get_data_path(WEB_SCREENSHOT_SUBDIR)
 
 
 static func get_clipboard_cache_dir() -> String:
-	return AgentWorkspace.get_root().path_join(CLIPBOARD_SUBDIR)
+	return AgentWorkspace.get_data_path(CLIPBOARD_SUBDIR)
 
 
 static func get_markdown_image_cache_dir() -> String:
-	return AgentWorkspace.get_root().path_join(MARKDOWN_IMAGE_SUBDIR)
+	return AgentWorkspace.get_data_path(MARKDOWN_IMAGE_SUBDIR)
 
 
 static func get_markdown_remote_image_cache_path(image_url: String) -> String:

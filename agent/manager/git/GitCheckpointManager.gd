@@ -1,11 +1,12 @@
 class_name GitCheckpointManager
 extends Object
 
-## Workspace snapshots for chat revert — four shadow Git repositories under `.gai/checkpoints/`.
+## Workspace snapshots for chat revert — four shadow Git repositories under the workspace data
+## folder (`AgentWorkspace.get_data_path(CHECKPOINTS_SUBDIR)`).
 ##
 ## Every command uses an isolated [GitUtils.Git] context, so the user's own repository is never
 ## read or written. A snapshot is taken before each user turn and reverting restores that state.
-const CHECKPOINTS_SUBDIR := ".gai/checkpoints"
+const CHECKPOINTS_SUBDIR := "checkpoints"
 const CHECKPOINT_REPO_SHARD_COUNT := 4
 const SHALLOW_FILE := "shallow"
 const COMMIT_MESSAGE := "gai checkpoint message"
@@ -24,7 +25,7 @@ static func _static_init() -> void:
 static func create_git_context(session_id: int) -> GitHelper.Git:
 	var workspace_root := AgentWorkspace.get_root()
 	var repo_shard_index := posmod(session_id, CHECKPOINT_REPO_SHARD_COUNT)
-	var git_dir := workspace_root.path_join(CHECKPOINTS_SUBDIR).path_join(str(repo_shard_index))
+	var git_dir := AgentWorkspace.get_data_path(CHECKPOINTS_SUBDIR).path_join(str(repo_shard_index))
 	return GitHelper.Git.new(git_dir, workspace_root)
 
 
@@ -57,7 +58,7 @@ static func ensure_repo(git: GitHelper.Git) -> Error:
 
 ## Deletes only the exact shadow repository path after validation has declared it invalid.
 static func remove_checkpoint_repo(git_dir: String) -> Error:
-	var checkpoints_dir := AgentWorkspace.get_root().path_join(CHECKPOINTS_SUBDIR).simplify_path()
+	var checkpoints_dir := AgentWorkspace.get_data_path(CHECKPOINTS_SUBDIR).simplify_path()
 	var relative_path := git_dir.simplify_path().trim_prefix(checkpoints_dir + "/")
 	if not relative_path.is_valid_int() or int(relative_path) < 0 or int(relative_path) >= CHECKPOINT_REPO_SHARD_COUNT:
 		Log.error("agent checkpoint refused unexpected delete path:[{}]", git_dir)
@@ -113,7 +114,7 @@ static func async_snapshot(session_id: int) -> String:
 static func async_cleanup() -> void:
 	var workspace_root := AgentWorkspace.get_root()
 	for repo_shard_index in range(CHECKPOINT_REPO_SHARD_COUNT):
-		var git_dir := workspace_root.path_join(CHECKPOINTS_SUBDIR).path_join(str(repo_shard_index))
+		var git_dir := AgentWorkspace.get_data_path(CHECKPOINTS_SUBDIR).path_join(str(repo_shard_index))
 		var git := GitHelper.Git.new(git_dir, workspace_root)
 		var repo_error := await ensure_repo(git)
 		if repo_error != OK:
