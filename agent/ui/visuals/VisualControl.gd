@@ -99,6 +99,7 @@ static func create_effect(visual_type: Type) -> VisualEffect:
 			if candidate != Type.NONE and candidate != Type.RANDOM:
 				visual_types.append(candidate)
 		visual_type = visual_types.pick_random() as Type
+		Log.info("VisualControl: random effect:[{}]", Type.keys()[visual_type])
 	match visual_type:
 		Type.JARVIS:
 			return JarvisControl.new()
