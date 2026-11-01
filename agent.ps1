@@ -7,14 +7,14 @@ param(
 $ErrorActionPreference = "Stop"
 
 # ---------------------------------------------------------------------------
-# Portable user:// under .gai
+# Portable user:// under .godot
 # ---------------------------------------------------------------------------
 # Godot has no CLI flag for user://. Set APPDATA before start so user data stays
-# in the repo: .gai\Godot\app_userdata\<config/name>\ (see project.godot).
+# in the repo: .godot\Godot\app_userdata\<config/name>\ (see project.godot).
 # Opening Godot without this script uses the real OS %APPDATA% instead.
 
 $Root = $PSScriptRoot
-$env:APPDATA = Join-Path $Root ".gai"
+$env:APPDATA = Join-Path $Root ".godot"
 
 # ---------------------------------------------------------------------------
 # Resolve Godot editor from dependency manifest
