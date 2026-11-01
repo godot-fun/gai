@@ -41,7 +41,8 @@ const ABSORPTION_RIPPLE_WIDTH_REF := 200.0
 const OUTPUT_SPIRAL_TURNS := 3.25
 const OUTPUT_SPIRAL_RADIUS := 11.0
 const OUTPUT_TRAIL_SAMPLES := 8
-const OUTPUT_TRAIL_MIN_LENGTH := 28.0
+## Short source labels still need enough visual history to read as flowing output.
+const OUTPUT_TRAIL_MIN_LENGTH := 120.0
 const END_INPUT_SECONDS := 0.55
 const END_OUTPUT_SECONDS := 0.65
 const END_LENS_SECONDS := 0.32
@@ -124,6 +125,7 @@ func _ready() -> void:
 	lens_material.shader = loaded_shader
 	lens_material.set_shader_parameter("ring_radius", CONTEXT_RING_RADIUS)
 	lens_material.set_shader_parameter("ring_radius_close", RING_RADIUS_CLOSE)
+	sync_lens_shader(size * 0.5)
 	pass
 
 
@@ -657,6 +659,8 @@ func sync_lens_shader(center: Vector2) -> void:
 	lens_material.set_shader_parameter("lens_center_px", center)
 	lens_material.set_shader_parameter("viewport_size", size)
 	lens_material.set_shader_parameter("lens_close", lens_close_progress)
+	lens_material.set_shader_parameter("context_usage", ratio)
+	lens_material.set_shader_parameter("flow_activity", maxf(output_activity, minf(float(items.size()) / 6.0, 1.0)))
 	lens_material.set_shader_parameter("border_color", lens_ring_border_color())
 	lens_material.set_shader_parameter("pulse_color", pulse_color)
 	pass
@@ -694,7 +698,11 @@ func draw_output(center: Vector2) -> void:
 	# history, leaving negative space between responses.
 	for mote: OutputMote in output_motes:
 		var progress := mote.progress
-		var particle_fade := smoothstep(0.0, 0.06, progress) * (1.0 - smoothstep(0.72, 1.0, progress))
+		var travelled_distance := progress * output_channel_length(center)
+		# Do not expose a newly spawned mote while its trail is still only a tiny
+		# dash. It fades in once enough output history exists to read as a flow.
+		var trail_reveal := smoothstep(OUTPUT_TRAIL_MIN_LENGTH * 0.82, OUTPUT_TRAIL_MIN_LENGTH, travelled_distance)
+		var particle_fade := trail_reveal * (1.0 - smoothstep(0.72, 1.0, progress))
 		var phase := output_spiral_phase(progress, mote.phase_offset)
 		var depth := cos(phase) * 0.5 + 0.5
 		var trail_progress := mote.trail_length / output_channel_length(center)

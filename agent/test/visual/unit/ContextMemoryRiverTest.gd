@@ -96,7 +96,7 @@ static func output_trail_length_follows_input_width_test() -> void:
 	effect.size = Vector2(1000.0, 600.0)
 	effect.spawn_output_mote(40.0, 0.84)
 	effect.spawn_output_mote(180.0, 1.16)
-	assert(is_equal_approx(effect.output_motes[0].trail_length, 40.0))
+	assert(is_equal_approx(effect.output_motes[0].trail_length, ContextMemoryRiver.OUTPUT_TRAIL_MIN_LENGTH))
 	assert(is_equal_approx(effect.output_motes[1].trail_length, 180.0))
 	assert(is_equal_approx(effect.output_motes[0].speed, 0.84))
 	assert(is_equal_approx(effect.output_motes[1].speed, 1.16))
