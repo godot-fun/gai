@@ -12,6 +12,25 @@ static func context_usage_test() -> void:
 	pass
 
 
+static func message_complete_drains_burst_agent_sentences_test() -> void:
+	var session := AgentSessionStore.create_session()
+	session.chat_entries.append(ChatEntry.new(ChatEntry.KIND_USER, ChatEntry.TITLE_USER, "Prompt."))
+	session.chat_entries.append(ChatEntry.new(ChatEntry.KIND_AGENT, ChatEntry.TITLE_AGENT, "First answer. Second answer. Third answer."))
+	ChatEntryCursor.remove_session(session.id)
+	var effect := ContextMemoryRiver.new()
+	for index in range(ContextMemoryRiver.MAX_ITEMS):
+		effect.add_item(ContextMemoryRiver.StreamType.THINKING, "Busy")
+	var usage := OpenAiUsage.new()
+	effect.on_message_complete(session.id, usage)
+	var cursor := ChatEntryCursor.get_or_create_cursor(session.id)
+	assert(cursor.chat_entry_index == session.chat_entries.size() - 1)
+	assert(cursor.entry_char_index == session.chat_entries[-1].body.length())
+	AgentSessionStore.sessions.remove(session.id)
+	ChatEntryCursor.remove_session(session.id)
+	effect.free()
+	pass
+
+
 static func delivered_item_expires_test() -> void:
 	var effect := ContextMemoryRiver.new()
 	effect.size = Vector2(1000.0, 600.0)
@@ -42,16 +61,13 @@ static func absorption_ripple_spread_follows_label_width_test() -> void:
 	pass
 
 
-static func absorption_spawns_one_output_mote_test() -> void:
+static func arrival_immediately_spawns_one_output_mote_test() -> void:
 	var effect := ContextMemoryRiver.new()
 	effect.add_item(ContextMemoryRiver.StreamType.TOOL, "READ")
 	var item: ContextMemoryRiver.StreamItem = effect.items.pop_front()
-	effect.pending_outputs.append(ContextMemoryRiver.PendingOutput.new(40.0, Color.WHITE))
 	effect.add_absorption_effect(item)
-	effect.visible = true
-	effect._process(ContextMemoryRiver.ABSORPTION_DURATION * 0.51)
 	assert(effect.output_motes.size() == 1)
-	assert(effect.absorption_effects[0].output_released)
+	assert(is_equal_approx(effect.output_motes[0].trail_length, ContextMemoryRiver.OUTPUT_TRAIL_MIN_LENGTH))
 	effect.free()
 	pass
 

@@ -80,8 +80,6 @@ class AbsorptionEffect extends RefCounted:
 	var age: float = 0.0
 	var color: Color
 	var source_width: float
-	var releases_output: bool = true
-	var output_released: bool = false
 
 
 class OutputMote extends RefCounted:
@@ -92,23 +90,10 @@ class OutputMote extends RefCounted:
 	var color: Color = Color.WHITE
 
 
-class PendingOutput extends RefCounted:
-	var width: float = 0.0
-	var color: Color = Color.WHITE
-
-
-	func _init(p_width: float, p_color: Color) -> void:
-		width = p_width
-		color = p_color
-		pass
-
-
 var items: Array[StreamItem] = []
 var absorption_effects: Array[AbsorptionEffect] = []
 var decorative_motes: Array[StreamItem] = []
 var output_motes: Array[OutputMote] = []
-var pending_outputs: Array[PendingOutput] = []
-var ready_output_slots: int = 0
 var elapsed: float = 0.0
 var spawn_index: int = 0
 var decorative_spawn_index: int = 0
@@ -154,8 +139,6 @@ func on_agent_start(_session_id: int) -> void:
 	is_ending = false
 	lens_closing = false
 	lens_close_progress = 0.0
-	pending_outputs.clear()
-	ready_output_slots = 0
 	queue_redraw()
 	pass
 
@@ -203,11 +186,15 @@ func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> 
 	pass
 
 
-func on_message_complete(_session_id: int, usage: OpenAiUsage) -> void:
+func on_message_complete(session_id: int, usage: OpenAiUsage) -> void:
 	prompt_tokens = maxi(usage.prompt_tokens, 0)
 	# Keep the gauge meaningful for providers whose actual context limit is unknown.
 	while prompt_tokens > context_limit:
 		context_limit *= 2
+	# Production streams can deliver several complete sentences between rendered
+	# frames, then end immediately. Drain this session before session_stop removes
+	# its cursor; the preview's artificial chunk delays otherwise hide the backlog.
+	consume_session_transcript_sentences(session_id)
 	queue_redraw()
 	pass
 
@@ -242,10 +229,6 @@ func _process(delta: float) -> void:
 	for index in range(absorption_effects.size() - 1, -1, -1):
 		var effect := absorption_effects[index]
 		effect.age += delta
-		if effect.releases_output and not effect.output_released and effect.age >= ABSORPTION_DURATION * 0.5:
-			effect.output_released = true
-			ready_output_slots += 1
-			release_pending_output()
 		if effect.age >= ABSORPTION_DURATION:
 			absorption_effects.remove_at(index)
 	update_decorative_motes(delta, center)
@@ -341,8 +324,10 @@ func add_absorption_effect(item: StreamItem, releases_output: bool = true) -> vo
 	var effect := AbsorptionEffect.new()
 	effect.color = item.stroke_color
 	effect.source_width = item.label_width
-	effect.releases_output = releases_output
 	absorption_effects.append(effect)
+	if releases_output:
+		var output_color := ChatEntryCursor.color_for_entry_kind(ChatEntry.KIND_AGENT)
+		spawn_output_mote(item.label_width, item.speed, output_color)
 	pass
 
 
@@ -372,36 +357,39 @@ func add_item(stream_type: StreamType, label: String, entry: ChatEntry = null) -
 
 
 func visual_flow_is_empty() -> bool:
-	return items.is_empty() and decorative_motes.is_empty() and absorption_effects.is_empty() and output_motes.is_empty() and pending_outputs.is_empty()
+	return items.is_empty() and decorative_motes.is_empty() and absorption_effects.is_empty() and output_motes.is_empty()
 
 
 ## Uses the shared transcript cursor so sentence boundaries match MatrixRain and
 ## Jarvis. Incomplete reasoning stays in its ChatEntry until it becomes complete.
 func consume_transcript_sentences() -> void:
-	if is_ending or items.size() >= MAX_ITEMS:
+	if is_ending:
 		return
-	var sentence := ChatEntryCursor.take_next_sentence()
-	if sentence.is_empty() or sentence.entry == null:
+	while true:
+		var sentence := ChatEntryCursor.take_next_sentence()
+		if sentence.is_empty():
+			return
+		consume_transcript_sentence(sentence)
+	pass
+
+
+func consume_session_transcript_sentences(session_id: int) -> void:
+	if is_ending:
+		return
+	while true:
+		var sentence := ChatEntryCursor.take_next_sentence_from_session(session_id)
+		if sentence.is_empty():
+			return
+		consume_transcript_sentence(sentence)
+	pass
+
+
+func consume_transcript_sentence(sentence: ChatEntryCursor.ChatEntrySentence) -> void:
+	if sentence.entry == null:
 		return
 	if sentence.entry.kind == ChatEntry.KIND_THINKING:
 		add_item(StreamType.THINKING, sentence.text, sentence.entry)
-	elif sentence.entry.kind == ChatEntry.KIND_AGENT:
-		pending_outputs.append(PendingOutput.new(output_width_for_text(sentence.text), ChatEntryCursor.color_for_entry_kind(sentence.entry.kind)))
-		release_pending_output()
 	pass
-
-
-## A generated sentence can leave only after a real source packet reached the lens.
-func release_pending_output() -> void:
-	while ready_output_slots > 0 and not pending_outputs.is_empty():
-		var pending: PendingOutput = pending_outputs.pop_front()
-		spawn_output_mote(pending.width, 1.0, pending.color)
-		ready_output_slots -= 1
-	pass
-
-
-func output_width_for_text(text: String) -> float:
-	return maxf(Fonts.medium().get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.label_small_size).x, OUTPUT_TRAIL_MIN_LENGTH)
 
 
 func _draw() -> void:
