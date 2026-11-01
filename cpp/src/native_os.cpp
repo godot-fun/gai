@@ -43,37 +43,50 @@ struct TitleBarThemeApi {
 	static constexpr int k_app_mode_allow_dark = 1;
 	static constexpr int k_app_mode_force_light = 3;
 
-	DWORD build = 0;
 	int(WINAPI * set_app_mode)(int) = nullptr;
 	void(WINAPI * refresh_policy)() = nullptr;
 	void(WINAPI * flush_menu)() = nullptr;
 	bool(WINAPI * allow_dark_window)(HWND, bool) = nullptr;
 
-	static TitleBarThemeApi &get() {
-		static TitleBarThemeApi api;
-		static bool ready = false;
-		if (ready) {
-			return api;
-		}
-		ready = true;
-		HMODULE ntdll = GetModuleHandleW(L"ntdll.dll");
-		if (ntdll != nullptr) {
-			using RtlGetVersionFn = LONG(WINAPI *)(OSVERSIONINFOEXW *);
-			const RtlGetVersionFn rtl_get_version = reinterpret_cast<RtlGetVersionFn>(GetProcAddress(ntdll, "RtlGetVersion"));
-			OSVERSIONINFOEXW version = {};
-			version.dwOSVersionInfoSize = sizeof(version);
-			if (rtl_get_version != nullptr && rtl_get_version(&version) == 0) {
-				api.build = version.dwBuildNumber;
+	static const TitleBarThemeApi &get() {
+		static const TitleBarThemeApi api = []() {
+			TitleBarThemeApi resolved;
+			HMODULE ux_theme = LoadLibraryW(L"uxtheme.dll");
+			if (ux_theme == nullptr) {
+				return resolved;
 			}
-		}
-		HMODULE ux_theme = LoadLibraryW(L"uxtheme.dll");
-		if (ux_theme != nullptr) {
-			api.set_app_mode = reinterpret_cast<int(WINAPI *)(int)>(GetProcAddress(ux_theme, MAKEINTRESOURCEA(135)));
-			api.refresh_policy = reinterpret_cast<void(WINAPI *)()>(GetProcAddress(ux_theme, MAKEINTRESOURCEA(104)));
-			api.flush_menu = reinterpret_cast<void(WINAPI *)()>(GetProcAddress(ux_theme, MAKEINTRESOURCEA(136)));
-			api.allow_dark_window = reinterpret_cast<bool(WINAPI *)(HWND, bool)>(GetProcAddress(ux_theme, MAKEINTRESOURCEA(133)));
-		}
+			resolved.set_app_mode = reinterpret_cast<int(WINAPI *)(int)>(GetProcAddress(ux_theme, MAKEINTRESOURCEA(135)));
+			resolved.refresh_policy = reinterpret_cast<void(WINAPI *)()>(GetProcAddress(ux_theme, MAKEINTRESOURCEA(104)));
+			resolved.flush_menu = reinterpret_cast<void(WINAPI *)()>(GetProcAddress(ux_theme, MAKEINTRESOURCEA(136)));
+			resolved.allow_dark_window = reinterpret_cast<bool(WINAPI *)(HWND, bool)>(GetProcAddress(ux_theme, MAKEINTRESOURCEA(133)));
+			return resolved;
+		}();
 		return api;
+	}
+
+	bool apply(HWND hwnd, bool dark_mode) const {
+		if (set_app_mode != nullptr) {
+			set_app_mode(dark_mode ? k_app_mode_allow_dark : k_app_mode_force_light);
+		}
+		if (refresh_policy != nullptr) {
+			refresh_policy();
+		}
+		if (flush_menu != nullptr) {
+			flush_menu();
+		}
+		if (allow_dark_window != nullptr) {
+			allow_dark_window(hwnd, dark_mode);
+		}
+		const BOOL dark = dark_mode ? TRUE : FALSE;
+		bool applied = SUCCEEDED(DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &dark, sizeof(dark)));
+		if (!applied) {
+			applied = SUCCEEDED(DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1, &dark, sizeof(dark)));
+		}
+		SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+		SendMessageW(hwnd, WM_NCACTIVATE, FALSE, 0);
+		SendMessageW(hwnd, WM_NCACTIVATE, TRUE, 0);
+		DwmFlush();
+		return applied;
 	}
 };
 
@@ -249,30 +262,7 @@ bool NativeOS::apply_title_bar_dark_mode(int window_id, bool dark_mode) {
 	if (hwnd == nullptr) {
 		return false;
 	}
-	TitleBarThemeApi &api = TitleBarThemeApi::get();
-	if (api.build < 18363) {
-		return false;
-	}
-	if (api.set_app_mode != nullptr) {
-		api.set_app_mode(dark_mode ? TitleBarThemeApi::k_app_mode_allow_dark : TitleBarThemeApi::k_app_mode_force_light);
-	}
-	if (api.refresh_policy != nullptr) {
-		api.refresh_policy();
-	}
-	if (api.flush_menu != nullptr) {
-		api.flush_menu();
-	}
-	if (api.allow_dark_window != nullptr) {
-		api.allow_dark_window(hwnd, dark_mode);
-	}
-	const BOOL dark = dark_mode ? TRUE : FALSE;
-	const DWORD immersive_attr = api.build < 19041 ? DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 : DWMWA_USE_IMMERSIVE_DARK_MODE;
-	const bool applied = SUCCEEDED(DwmSetWindowAttribute(hwnd, immersive_attr, &dark, sizeof(dark)));
-	SetWindowPos(hwnd, nullptr, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
-	SendMessageW(hwnd, WM_NCACTIVATE, FALSE, 0);
-	SendMessageW(hwnd, WM_NCACTIVATE, TRUE, 0);
-	DwmFlush();
-	return applied;
+	return TitleBarThemeApi::get().apply(hwnd, dark_mode);
 #else
 	(void)window_id;
 	(void)dark_mode;
