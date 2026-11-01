@@ -65,7 +65,6 @@ var sense_input: SenseInput = SenseInput.new()
 
 
 func _ready() -> void:
-	apply_main_window_chrome()
 	I18nHelper.init_i18n()
 	DisplayScale.apply_ui_scale()
 	apply_layout()
@@ -99,18 +98,8 @@ func _ready() -> void:
 	apply_locale()
 	get_window().window_input.connect(on_window_input)
 	gdf.callable_deferred(apply_theme)
-
 	# session
 	agent_session_sidebar.reload_sessions()
-	pass
-
-
-## Boot starts borderless (see project.godot) so the splash phase has no title bar.
-func apply_main_window_chrome() -> void:
-	await get_tree().process_frame
-	get_window().borderless = false
-	var app_title := str(ProjectSettings.get_setting("application/config/name", TITLE))
-	DisplayServer.window_set_title(app_title, DisplayServer.MAIN_WINDOW_ID)
 	pass
 
 
@@ -151,6 +140,13 @@ func apply_layout() -> void:
 	pass
 
 
+## Boot starts borderless (see project.godot) so the splash phase has no title bar.
+func apply_main_window_chrome() -> void:
+	var app_title := str(ProjectSettings.get_setting("application/config/name", TITLE))
+	DisplayServer.window_set_title(app_title, DisplayServer.MAIN_WINDOW_ID)
+	get_window().borderless = false
+	pass
+
 func apply_locale() -> void:
 	input_field.placeholder_text = I18n.t("agent.input.placeholder")
 	pass
@@ -166,4 +162,5 @@ func apply_theme() -> void:
 	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
 	if OSUtils.is_windows():
 		NativeOS.apply_title_bar_dark_mode(DisplayServer.MAIN_WINDOW_ID, ThemeColor.is_dark_theme())
+		gdf.callable_deferred(apply_main_window_chrome)
 	pass
