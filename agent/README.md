@@ -13,26 +13,26 @@ Instructions for agents setting up this repository. Use the same `.dependency/` 
 
 1. Create `.dependency/godot/`.
 2. Download the official Godot Engine **stable** portable archive for the current OS from the engine’s GitHub releases (extract only — no OS installer).
-3. Extract all needed binaries into `.dependency/godot/`. On Windows, keep both the **editor** executable and the **`_console`** executable when the archive provides them. On Linux, use the extracted `linux.x86_64` binary. On macOS, extract `Godot.app` and use `Godot.app/Contents/MacOS/Godot` for CLI and headless runs.
+3. Extract the engine into `.dependency/godot/`. On Windows, the manifest `bin` is the main **`Godot_v*_win64.exe`** (the one you double-click to run the editor); you may keep the **`_console`** sibling in the same folder for manual terminal use, but do not point `bin` at it. On Linux, use the extracted `linux.x86_64` binary. On macOS, extract `Godot.app` and set `bin` to `Godot.app/Contents/MacOS/Godot`.
 
 ## Register `manifest.json`
 
 Add or update the `godot` entry in `.dependency/manifest.json`:
 
 - Set `populated` to `true` only after the `bin` file exists on disk; use `false` while installing.
-- Set `bin` to the **console/headless** executable path, relative to the repo root, using the **actual filename** from the release you extracted (version string must match the build you downloaded, not a hard-coded example).
+- Set `bin` to the **main editor** executable path, relative to the repo root, using the **actual filename** from the release you extracted (version string must match the build you downloaded, not a hard-coded example). The same binary supports `--headless` for tests and automation.
 
-Example shape — set `bin` to the real console binary name from the release you installed:
+Example shape — set `bin` to the real editor binary name from the release you installed:
 
 ```json
 "godot": {
   "populated": true,
-  "bin": ".dependency/godot/<extracted-console-binary>"
+  "bin": ".dependency/godot/<extracted-editor-binary>"
 }
 ```
 
 ## Verify
 
-From the repository root, run the manifest `bin` with `--headless --path . --quit`. Open the project in the editor with the non-console binary on Windows, or import the root `project.godot` in the editor.
+From the repository root, run the manifest `bin` with `--headless --path . --quit` (or open the root `project.godot` in the editor by launching the same `bin` without headless flags).
 
-For headless tests, CI, and automation, always invoke Godot through the manifest `bin` — not a copy on `PATH` or outside `.dependency/`.
+For tests, CI, automation, and the editor, always invoke Godot through the manifest `bin` — not a copy on `PATH` or outside `.dependency/`.
