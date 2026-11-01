@@ -100,6 +100,8 @@ func apply_layout_tokens() -> void:
 
 
 func apply_text_tokens() -> void:
+	logo_label.text = Agent.TITLE
+	logo_label.tooltip_text = Agent.SUBTITLE
 	var logo_font := FontVariation.new()
 	logo_font.base_font = Fonts.bold()
 	logo_font.spacing_glyph = Typography.letter_spacing_md

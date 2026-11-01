@@ -1,6 +1,10 @@
+class_name Agent
 extends Control
 
 ## Agent main app — multi-session chat UI.
+
+const TITLE: String = "GAI"
+const SUBTITLE: String = "GAI Code Agent"
 
 @onready var toolbar_panel: PanelContainer = $Root/Toolbar
 @onready var toolbar_row: HBoxContainer = $Root/Toolbar/ToolbarRow
@@ -61,6 +65,7 @@ var sense_input: SenseInput = SenseInput.new()
 
 
 func _ready() -> void:
+	apply_main_window_chrome()
 	I18nHelper.init_i18n()
 	DisplayScale.apply_ui_scale()
 	apply_layout()
@@ -97,6 +102,15 @@ func _ready() -> void:
 
 	# session
 	agent_session_sidebar.reload_sessions()
+	pass
+
+
+## Boot starts borderless (see project.godot) so the splash phase has no title bar.
+func apply_main_window_chrome() -> void:
+	await get_tree().process_frame
+	get_window().borderless = false
+	var app_title := str(ProjectSettings.get_setting("application/config/name", TITLE))
+	DisplayServer.window_set_title(app_title, DisplayServer.MAIN_WINDOW_ID)
 	pass
 
 

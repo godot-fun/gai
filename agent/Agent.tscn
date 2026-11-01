@@ -30,7 +30,7 @@ layout_mode = 2
 [node name="Logo" type="Label" parent="Root/Toolbar/ToolbarRow" unique_id=1903907347]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "GAI"
+text = ""
 vertical_alignment = 1
 
 [node name="WorkspaceButton" type="Button" parent="Root/Toolbar/ToolbarRow" unique_id=1917564757]

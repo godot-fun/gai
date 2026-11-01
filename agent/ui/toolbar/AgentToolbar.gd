@@ -37,8 +37,8 @@ func apply_logo_theme() -> void:
 	var logo_font: FontVariation = FontVariation.new()
 	logo_font.base_font = Fonts.bold()
 	logo_font.spacing_glyph = Typography.letter_spacing_lg
-	logo_label.text = "GAI"
-	logo_label.tooltip_text = "GAI Code Agent"
+	logo_label.text = Agent.TITLE
+	logo_label.tooltip_text = Agent.SUBTITLE
 	logo_label.add_theme_font_override("font", logo_font)
 	logo_label.add_theme_font_size_override("font_size", Typography.title_medium_size)
 	logo_label.add_theme_color_override("font_color", theme_color if ThemeColor.is_dark_theme() else theme_color.darkened(0.08))
