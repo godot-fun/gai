@@ -1,70 +1,38 @@
-# gai Code Agent
+# Install Godot
 
-A minimal coding agent for Godot projects, inspired by [Pi](https://github.com/earendil-works/pi) — simple layers, four core tools, clear boundaries.
+Instructions for agents setting up this repository. Use the same `.dependency/` layout and `manifest.json` rules as in `.agents/skills/dependency-manager.md`. Do not add an install script — read the project config, download the matching engine, register the manifest, and verify.
 
-## Architecture
+## Resolve the engine version
 
-```
-agent/
-├── AgentEvents.gd      # Global event bus (like gui/WorkflowEvents)
-├── Agent.tscn          # Runnable Godot scene (F6)
-├── Agent.gd            # Main app — wiring + toolbar / workspace
-├── loop/               # Agent loop, tool registry
-├── tools/              # read, write, edit, bash, web_search
-├── session/            # AgentSession, AgentSessionManager, transcript
-└── ui/                 # Chat view, sidebar, input, theme
-```
+1. Read the repository root `project.godot` as text.
+2. Under `[application]`, parse `config/features` (a `PackedStringArray`).
+3. The **engine feature version** is the first array element that looks like `MAJOR.MINOR` (digits and one dot, e.g. `4.6`). Ignore entries such as `GL Compatibility`.
+4. Download **Godot stable** for that line: choose the **latest stable patch release** whose version starts with that `MAJOR.MINOR` (same minor as the feature tag, not a newer minor).
 
-LLM calls go through **`zfoo/ai`** (`ChatMessage`, `OpenAiClient`, `OpenAiCompletion`).
+## Install under `.dependency/`
 
-Dependency flow (top → bottom):
+1. Create `.dependency/godot/`.
+2. Download the official Godot Engine **stable** portable archive for the current OS from the engine’s GitHub releases (extract only — no OS installer).
+3. Extract all needed binaries into `.dependency/godot/`. On Windows, keep both the **editor** executable and the **`_console`** executable when the archive provides them. On Linux, use the extracted `linux.x86_64` binary. On macOS, extract `Godot.app` and use `Godot.app/Contents/MacOS/Godot` for CLI and headless runs.
 
-```
-Agent  →  session/AgentSession  →  loop/AgentLoop  →  zfoo/ai/OpenAiClient
-                                              ↓
-                                         tools/*
-```
+## Register `manifest.json`
 
-| Layer | Responsibility |
-|-------|----------------|
-| **zfoo/ai** | HTTP chat completions, SSE streaming, tool-call parsing |
-| **agent** | Turn loop: model → tools → model until done |
-| **tools** | Pi-style tools against the project workspace |
-| **session** | Message history, system prompt, persistence |
-| **ui** | File sidebar + chat panel + streaming bubbles |
+Add or update the `godot` entry in `.dependency/manifest.json`:
 
-## Run
+- Set `populated` to `true` only after the `bin` file exists on disk; use `false` while installing.
+- Set `bin` to the **console/headless** executable path, relative to the repo root, using the **actual filename** from the release you extracted (version string must match the build you downloaded, not a hard-coded example).
 
-1. Set `OPENAI_API_KEY`, or configure the API connection from the Agent toolbar.
-2. Open `agent/Agent.tscn` in Godot and press **F6** (Run Current Scene).
+Example shape — set `bin` to the real console binary name from the release you installed:
 
-Or set main scene temporarily:
-
-```
-run/main_scene="res://agent/Agent.tscn"
+```json
+"godot": {
+  "populated": true,
+  "bin": ".dependency/godot/<extracted-console-binary>"
+}
 ```
 
-## Tools
+## Verify
 
-| Tool | Description |
-|------|-------------|
-| `read` | Read a text file |
-| `write` | Create or overwrite a file |
-| `edit` | Replace an exact unique string |
-| `bash` | Run a shell command from project root |
-| `web_search` | Search the web (DuckDuckGo, no API key) |
+From the repository root, run the manifest `bin` with `--headless --path . --quit`. Open the project in the editor with the non-console binary on Windows, or import the root `project.godot` in the editor.
 
-## UI
-
-- **Left sidebar** — session list; click to switch; **New Agent** or toolbar **New Chat**
-- **Concurrent chats** — each session runs independently; switch sessions while others are thinking
-- **Chat area** — user / assistant / tool messages with streaming
-- **Input bar** — type a task; **Ctrl+Enter** or **Send** to run
-- **Revert / Delete** — a user bubble's **Revert** drops that turn and everything after it, and restores the workspace files to the snapshot taken before that turn (see `session/AgentCheckpoint.gd`). **Delete** drops the same turns but leaves the workspace alone.
-
-## Extend
-
-- Add tools: subclass `AgentTool`, register in `AgentToolRegistry._static_init()`.
-- Change the default model or endpoint in `api/ApiSetting.gd`.
-- Customize prompt: edit `session/SystemPrompt.gd`.
-- Resolve workspace paths: `AgentWorkspace.resolve_path()`.
+For headless tests, CI, and automation, always invoke Godot through the manifest `bin` — not a copy on `PATH` or outside `.dependency/`.
