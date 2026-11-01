@@ -1,16 +1,17 @@
 class_name JsonUtils
 extends Object
 
+## Converts a JSON object into [param type]. Returns [code]null[/code] when parsing or construction fails.
 static func json_to_object(json: String, type: Variant) -> Variant:
 	if StringUtils.is_blank(json):
-		return
+		return null
 	var parser := JSON.new()
 	if parser.parse(json) != OK:
 		Log.error("JSON object parse failed line:[{}] message:[{}] length:[{}]", parser.get_error_line(), parser.get_error_message(), json.length())
-		return
+		return null
 	if typeof(parser.data) != TYPE_DICTIONARY:
 		Log.error("JSON object root type invalid actual_type:[{}] length:[{}]", type_string(typeof(parser.data)), json.length())
-		return
+		return null
 	return dict_to_object(parser.data, type)
 
 
@@ -33,13 +34,14 @@ static func json_to_object_array(json: String, element_type: Variant) -> Array:
 			result.append(element)
 	return result
 
+## Converts [param data] into [param type]. Returns [code]null[/code] when the type has no empty constructor.
 static func dict_to_object(data: Dictionary, type: Variant) -> Variant:
 	if !ReflectionUtils.has_empty_constructor(type):
-		return
-	var obj = type.new()
+		return null
+	var obj: Variant = type.new()
 	var property_map := ReflectionUtils.get_script_property_map(obj)
 	for key in data.keys():
-		var value = data[key]
+		var value: Variant = data[key]
 		if property_map.has(key):
 			value = convert_json_value(property_map[key], value, obj)
 		obj.set(key, value)
@@ -68,7 +70,7 @@ static func object_to_json(obj: Variant) -> String:
 		TYPE_DICTIONARY:
 			var builder := StringBuilder.new()
 			for key in obj:
-				var value = obj.get(key)
+				var value: Variant = obj.get(key)
 				# JSON object keys must be strings (e.g. int key 1 -> "1")
 				builder.append(object_to_json(str(key)) + ": " + object_to_json(value))
 			return "{" + builder.build_joined(", ") + "}"
@@ -76,7 +78,7 @@ static func object_to_json(obj: Variant) -> String:
 			var builder := StringBuilder.new()
 			for property in ReflectionUtils.get_script_property_map(obj).values():
 				var property_name := property.name as String
-				var value = obj.get(property_name)
+				var value: Variant = obj.get(property_name)
 				builder.append("\"" + property_name + "\": " + object_to_json(value))
 			return "{" + builder.build_joined(", ") + "}"
 		_:
@@ -141,7 +143,7 @@ static func convert_json_value(property: Dictionary, value: Variant, obj: Object
 		TYPE_OBJECT:
 			if typeof(value) != TYPE_DICTIONARY:
 				return value
-			var current = obj.get(property_name)
+			var current: Variant = obj.get(property_name)
 			if current is Object and current.get_script() != null:
 				return dict_to_object(value, current.get_script())
 			return value
@@ -184,10 +186,10 @@ static func convert_dictionary_key(key: Variant, typed_dict: Dictionary) -> Vari
 
 
 static func convert_dictionary_value(item: Variant, typed_dict: Dictionary) -> Variant:
-	var value_script = typed_dict.get_typed_value_script()
+	var value_script: Variant = typed_dict.get_typed_value_script()
 	if value_script is Script:
 		if typeof(item) == TYPE_DICTIONARY:
-			var element = dict_to_object(item, value_script)
+			var element: Variant = dict_to_object(item, value_script)
 			if element != null:
 				return element
 		return item
@@ -237,7 +239,7 @@ static func convert_json_object_array(value: Variant, element_script: Script) ->
 	var result: Array = []
 	for item in value:
 		if typeof(item) == TYPE_DICTIONARY:
-			var element = dict_to_object(item, element_script)
+			var element: Variant = dict_to_object(item, element_script)
 			if element != null:
 				result.append(element)
 		else:

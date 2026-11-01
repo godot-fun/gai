@@ -4,6 +4,13 @@ class Teacher:
 	var age: int
 	pass
 
+class RequiredConstructor:
+	var value: String
+
+	func _init(initial_value: String) -> void:
+		value = initial_value
+		pass
+
 static var teacher1 := Teacher.new()
 static var teacher2 := Teacher.new()
 
@@ -19,6 +26,13 @@ func simple_json_test() -> void:
 	var obj = JsonUtils.json_to_object(json, Teacher)
 	var json_text := JsonUtils.object_to_json(obj)
 	assert(json == json_text)
+	pass
+
+
+func json_to_object_failure_returns_null_test() -> void:
+	assert(JsonUtils.json_to_object("", Teacher) == null)
+	assert(JsonUtils.json_to_object("   ", Teacher) == null)
+	assert(JsonUtils.dict_to_object({"value": "test"}, RequiredConstructor) == null)
 	pass
 
 
