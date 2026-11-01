@@ -102,9 +102,6 @@ static func async_ensure_server_running() -> int:
 	process_id = 0
 	var node := FileUtils.globalize_writable_path(DependencyManifest.get_runtime_bin("node"))
 	var web_path := FileUtils.globalize_writable_path(WEB_ENV_PATH.get_base_dir())
-	if not FileAccess.file_exists(node):
-		Log.error("web server node dependency is missing:[{}]", node)
-		return ERR_FILE_NOT_FOUND
 	var npm_cli := node.get_base_dir().path_join(NPM_CLI_REL_PATH)
 	if not FileAccess.file_exists(npm_cli):
 		Log.error("web server npm CLI dependency is missing:[{}]", npm_cli)

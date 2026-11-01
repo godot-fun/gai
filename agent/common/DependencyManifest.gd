@@ -65,4 +65,13 @@ static func has_populated_runtime(runtime_path: String) -> bool:
 static func get_runtime_bin(runtime: String) -> String:
 	reload_manifest()
 	var entry: DependencyManifestEntry = entries.get(runtime, null)
-	return entry.bin if entry != null and entry.populated else StringUtils.EMPTY
+	if entry == null:
+		Log.error("manifest entry missing for runtime:[{}] path:[{}]", runtime, MANIFEST_REL_PATH)
+		return StringUtils.EMPTY
+	if not entry.populated:
+		Log.error("runtime not populated:[{}] see agent/Dependency.md path:[{}]", runtime, MANIFEST_REL_PATH)
+		return StringUtils.EMPTY
+	if entry.bin.is_empty():
+		Log.error("runtime bin is empty:[{}] path:[{}]", runtime, MANIFEST_REL_PATH)
+		return StringUtils.EMPTY
+	return entry.bin
