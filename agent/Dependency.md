@@ -2,7 +2,15 @@
 
 Instructions for agents setting up this repository. Runtimes and tools live under `.dependency/` and are registered in `.dependency/manifest.json` — follow the same rules as in `.agents/skills/dependency-manager.md`. Do not add an install script: read project config or the relevant skill doc, download the matching toolchain, register the manifest, and verify.
 
-Install additional tools when a skill needs them; each skill's `SKILL.md` describes its own entries. **Godot is required** for the editor, tests, and the desktop agent.
+Install additional tools when a skill needs them; each skill's `SKILL.md` describes its own entries. **Godot, Python, and Node.js** are required for the desktop agent.
+
+## Python
+
+Install and register per [`.agents/skills/dependency-manager.md`](../.agents/skills/dependency-manager.md).
+
+## Node.js
+
+Install and register per [`.agents/skills/dependency-manager.md`](../.agents/skills/dependency-manager.md).
 
 ## Godot
 
