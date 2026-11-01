@@ -61,12 +61,6 @@ See [`.agents/skills/README.md`](.agents/skills/README.md) for the complete skil
 
 ## Quick Start
 
-### Requirements
-
-- Godot 4.6 or a compatible version
-- An OpenAI-compatible API key for the coding agent
-- The runtimes and tools required by the skills you want to use; all dependencies are isolated under `.dependency/` and documented in each skill's `SKILL.md`
-
 ### Run the Coding Agent
 
 1. Open the root `project.godot` file in Godot.

@@ -346,7 +346,7 @@ Run the unit test scene relevant to the changed code before reporting the task c
 
 ## Run tests from the command line
 
-Run commands from the repository root. Replace `godot` with the path to the Godot 4 executable when it is not available on `PATH`.
+Run commands from the repository root. Use the `godot` entry's `bin` from `.dependency/manifest.json` (install per [Dependency.md](Dependency.md)) — substitute it for `godot` below; do not use a binary on `PATH`.
 
 ```powershell
 # Example: run one unit test scene.
