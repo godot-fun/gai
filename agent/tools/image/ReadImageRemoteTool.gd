@@ -20,7 +20,8 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 	var path := path_result.content
 
 	var image_message := ChatMessage.user_image(StringUtils.EMPTY, path)
-	if not image_message is UserChatMessage or StringUtils.is_blank((image_message as UserChatMessage).first_image_data_url()):
+	var user_image := image_message as UserChatMessage
+	if user_image == null or StringUtils.is_blank(user_image.first_image_data_url()):
 		return AgentToolResult.error("error: image could not be encoded for the API", AgentToolResult.ui_file_details(path, "image encoding failed"))
 	var result := AgentToolResult.ok(StringUtils.format("Image read successfully: {}", path), AgentToolResult.ui_file_details(path))
 	result.deferred_messages.append(image_message)

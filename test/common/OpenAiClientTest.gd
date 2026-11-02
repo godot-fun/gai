@@ -319,24 +319,24 @@ func chat_message_user_image_roundtrip_test() -> void:
 	assert(parser.parse(json) == OK)
 	var user := UserChatMessage.from_dict(parser.data)
 	assert(user != null)
-	assert(UserChatMessage.joined_text(user) == UserChatMessage.joined_text(message))
+	assert((user.parts[0] as UserTextPart).text == (message.parts[0] as UserTextPart).text)
 	assert(user.first_image_data_url() == message.first_image_data_url())
 	pass
 
 
 func chat_message_user_image_default_caption_test() -> void:
 	var path := ProjectSettings.globalize_path("res://test/asset/explosion_animation.png")
-	var message := ChatMessage.user_image(StringUtils.EMPTY, path) as UserChatMessage
+	var message := ChatMessage.user_image(StringUtils.EMPTY, path)
 	assert(StringUtils.is_not_blank(message.first_image_data_url()))
-	assert(UserChatMessage.joined_text(message) == StringUtils.format("Image read: {}", path))
+	assert((message.parts[0] as UserTextPart).text == StringUtils.format("Image read: {}", path))
 	pass
 
 
 func chat_message_user_image_missing_file_has_no_data_url_test() -> void:
 	var path := ProjectSettings.globalize_path("res://test/asset/does_not_exist.png")
-	var message := ChatMessage.user_image("caption", path) as UserChatMessage
+	var message := ChatMessage.user_image("caption", path)
 	assert(StringUtils.is_blank(message.first_image_data_url()))
-	assert(UserChatMessage.joined_text(message) == "caption")
+	assert((message.parts[0] as UserTextPart).text == "caption")
 	pass
 
 

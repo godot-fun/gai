@@ -7,10 +7,6 @@ const TYPE_IMAGE_URL := "image_url"
 var part_type: String = ""
 
 
-func get_part_type() -> String:
-	return part_type
-
-
 func validate() -> String:
 	return "ChatUserPart base is invalid"
 
@@ -32,7 +28,7 @@ static func image_url_part(url: String) -> ChatUserPart:
 
 
 static func from_dict(data: Dictionary) -> ChatUserPart:
-	var type_id := str(data.get("part_type", data.get("type", "")))
+	var type_id := str(data.get("part_type", ""))
 	match type_id:
 		TYPE_TEXT:
 			return UserTextPart.from_dict(data)

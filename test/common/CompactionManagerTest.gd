@@ -7,6 +7,14 @@ static func update_estimated_usage_includes_image_data_url_test() -> void:
 	pass
 
 
+static func update_estimated_usage_includes_assistant_text_test() -> void:
+	var session := AgentSession.new(1)
+	session.messages.append(ChatMessage.assistant("hello"))
+	CompactionManager.update_estimated_usage(session)
+	assert(session.usage.prompt_tokens == maxi(1, int(ceil(5.0 / 4.0))))
+	pass
+
+
 static func update_estimated_usage_includes_tool_call_json_test() -> void:
 	var tool_call := OpenAiToolCall.new()
 	tool_call.id = "call-1"

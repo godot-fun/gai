@@ -6,12 +6,8 @@ const ROLE_USER := "user"
 const ROLE_ASSISTANT := "assistant"
 const ROLE_TOOL := "tool"
 
-## Set by subclasses in _init; shared with get_role() and session JSON.
+## Set by subclasses in _init; persisted in session JSON.
 var role: String = ""
-
-
-func get_role() -> String:
-	return role
 
 
 func validate() -> String:

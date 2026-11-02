@@ -161,8 +161,8 @@ static func memory_messages_drop_thinking_and_tool_protocol_test() -> void:
 	var memory_messages := MemoryManager.collect_memory_messages(messages)
 	assert(memory_messages.size() == 3)
 	assert(memory_messages[0].role == ChatMessage.ROLE_USER)
-	assert(UserChatMessage.joined_text(memory_messages[0] as UserChatMessage) == CompactionPrompt.build_memory_context("previous work"))
-	assert(memory_messages[1].role == ChatMessage.ROLE_USER and UserChatMessage.joined_text(memory_messages[1] as UserChatMessage) == "question")
+	assert(((memory_messages[0] as UserChatMessage).parts[0] as UserTextPart).text == CompactionPrompt.build_memory_context("previous work"))
+	assert(memory_messages[1].role == ChatMessage.ROLE_USER and ((memory_messages[1] as UserChatMessage).parts[0] as UserTextPart).text == "question")
 	assert(memory_messages[2] is AssistantChatMessage)
 	var answer := memory_messages[2] as AssistantChatMessage
 	assert(answer.text == "answer")

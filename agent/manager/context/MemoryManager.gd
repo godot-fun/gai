@@ -30,7 +30,13 @@ static func collect_memory_messages(messages: Array[ChatMessage]) -> Array[ChatM
 			var summary := CompactionPrompt.extract_summary((message as SystemChatMessage).text)
 			transcript.append(ChatMessage.user(CompactionPrompt.build_memory_context(summary)))
 		elif message is UserChatMessage:
-			var user_text := UserChatMessage.joined_text(message as UserChatMessage)
+			var user := message as UserChatMessage
+			var user_text := StringUtils.EMPTY
+			for part: ChatUserPart in user.parts:
+				if part is UserTextPart:
+					var slice := (part as UserTextPart).text
+					if StringUtils.is_not_blank(slice):
+						user_text += slice
 			if StringUtils.is_not_blank(user_text):
 				transcript.append(ChatMessage.user(user_text.strip_edges()))
 		elif message is AssistantChatMessage:

@@ -50,16 +50,6 @@ func deep_clone() -> ChatMessage:
 	return cloned
 
 
-static func joined_text(user: UserChatMessage) -> String:
-	var builder := StringBuilder.new()
-	for part: ChatUserPart in user.parts:
-		if part is UserTextPart:
-			var text_part := part as UserTextPart
-			if StringUtils.is_not_blank(text_part.text):
-				builder.append(text_part.text)
-	return builder.build_string()
-
-
 static func with_text(body: String) -> UserChatMessage:
 	return UserChatMessage.new([ChatUserPart.text_part(body)])
 
