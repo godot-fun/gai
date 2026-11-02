@@ -286,7 +286,7 @@ func open_ai_check_request_rejects_invalid_message_test() -> void:
 	var invalid := ChatMessage.user("bad")
 	invalid.tool_calls.append(OpenAiToolCall.new())
 	messages.append(invalid)
-	assert(client.check_request(messages) == "user message must not set tool_calls")
+	assert(client.check_request(messages) == "OpenAI message at index 1 invalid: user message must not set tool_calls")
 	pass
 
 

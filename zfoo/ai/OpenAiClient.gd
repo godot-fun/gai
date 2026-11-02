@@ -41,7 +41,7 @@ func check_request(messages: Array[ChatMessage]) -> String:
 		var message_error := message.validate()
 		if StringUtils.is_not_blank(message_error):
 			Log.error("OpenAI message at index:[{}] invalid:[{}]", index, message_error)
-			return message_error
+			return StringUtils.format("OpenAI message at index {} invalid: {}", index, message_error)
 	return StringUtils.EMPTY
 
 
