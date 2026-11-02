@@ -129,7 +129,6 @@ static func compaction_message_identification_test() -> void:
 static func compaction_extract_summary_body_test() -> void:
 	var summary := "previous work"
 	assert(CompactionPrompt.extract_summary_body(CompactionPrompt.build_summary_context(summary)) == summary)
-	assert(CompactionPrompt.extract_summary_body("plain text") == "plain text")
 	pass
 
 

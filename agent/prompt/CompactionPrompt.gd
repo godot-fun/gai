@@ -31,12 +31,9 @@ static func is_compaction_message(message: ChatMessage) -> bool:
 
 
 ## Strips [method build_summary_context] wrapping so memory maintenance receives plain summary text.
+## Call only for content that already passed [method is_compaction_message].
 static func extract_summary_body(compaction_content: String) -> String:
-	if StringUtils.is_blank(compaction_content):
-		return StringUtils.EMPTY
-	if not compaction_content.begins_with(SUMMARY_PREFIX):
-		return compaction_content.strip_edges()
-	return compaction_content.substr(SUMMARY_PREFIX.length()).strip_edges()
+	return StringUtils.substring_after(compaction_content, SUMMARY_PREFIX).strip_edges()
 
 
 # ---------------------------------------------------------------------------
