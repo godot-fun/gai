@@ -109,9 +109,9 @@ func validate() -> String:
 				return "tool message must not set tool_calls"
 			if StringUtils.is_blank(tool_call_id):
 				return "tool message requires tool_call_id"
+			return StringUtils.EMPTY
 		_:
 			return StringUtils.format("ChatMessage has unknown role:[{}]", role)
-	return StringUtils.EMPTY
 
 
 func validate_no_tool_protocol(role_label: String, allow_image: bool = false) -> String:
