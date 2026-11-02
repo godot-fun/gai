@@ -59,8 +59,8 @@ static func apply_completion(input_field: CodeEdit) -> void:
 	panel.shadow_offset = Vector2(0, 3)
 	input_field.add_theme_stylebox_override("completion", panel)
 	input_field.add_theme_color_override("completion_background_color", Color.TRANSPARENT)
-	input_field.add_theme_color_override("completion_selected_color", ThemeColor.alpha_theme_color(0.22))
-	input_field.add_theme_color_override("completion_existing_color", ThemeColor.alpha_theme_color(0.12))
+	input_field.add_theme_color_override("completion_selected_color", ThemeColor.selected_surface)
+	input_field.add_theme_color_override("completion_existing_color", ThemeColor.selection_color)
 	# [CodeEdit] paints the list scrollbar itself — there is no [ScrollBar] node for [method
 	# ScrollBarStyle.apply] to reach — so reuse its thickness preset and grabber colors instead.
 	input_field.add_theme_color_override("completion_scroll_color", ScrollBarStyle.grabber_color())
