@@ -46,6 +46,8 @@ func check_request(messages: Array[ChatMessage]) -> String:
 
 
 # ----------------------------------------------------------------------------------------------------------------------
+# Non-stream chat — plain assistant text only (no tool_calls, reasoning, or usage). Agent loops and tool
+# rounds should use [method async_chat_messages_stream] and [OpenAiCompletion] instead.
 ## Non-stream single-turn assistant text (builds system + user messages). Same as [method async_chat_messages_text].
 func async_chat_text(prompt: String, system_prompt: String = "", proxy: String = "", response_format: String = "") -> String:
 	var messages: Array[ChatMessage] = []
@@ -55,7 +57,9 @@ func async_chat_text(prompt: String, system_prompt: String = "", proxy: String =
 	return await async_chat_messages_text(messages, proxy, response_format)
 
 
-## Non-stream assistant text from [param messages]. Errors and empty replies return [member StringUtils.EMPTY].
+## Non-stream assistant **text** from [param messages] — reads only [code]choices[0].message.content[/code].
+## Tool-call replies, reasoning-only payloads, and blank [code]content[/code] count as failure ([member StringUtils.EMPTY]).
+## For tools, streaming, [member OpenAiCompletion.reasoning_content], or [member OpenAiCompletion.usage], use [method async_chat_messages_stream].
 func async_chat_messages_text(messages: Array[ChatMessage], proxy: String = "", response_format: String = "") -> String:
 	if StringUtils.is_not_blank(check_request(messages)):
 		return StringUtils.EMPTY
@@ -106,7 +110,7 @@ func async_chat_messages_text(messages: Array[ChatMessage], proxy: String = "", 
 # data: {"content":"！"}
 # data: [DONE]
 
-## Streaming chat completion with optional tools.
+## Full chat completion (content, reasoning, tool_calls, usage, finish_reason). Prefer this for agent loops.
 ## on_delta(delta, stream_kind) — stream_kind is STREAM_KIND_CONTENT or STREAM_KIND_REASONING.
 func async_chat_messages_stream(messages: Array[ChatMessage], tools: Array[OpenAiToolDef] = [], proxy: String = "", on_delta: Callable = Callable()) -> OpenAiCompletion:
 	var result := OpenAiCompletion.new()

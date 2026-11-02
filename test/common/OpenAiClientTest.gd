@@ -216,6 +216,15 @@ func open_ai_request_to_json_escapes_control_characters_test() -> void:
 	pass
 
 
+func chat_message_from_dict_dispatches_by_role_test() -> void:
+	var system := ChatMessage.from_dict({"role": ChatMessage.ROLE_SYSTEM, "text": "sys"}) as SystemChatMessage
+	assert(system != null and system.text == "sys")
+	var user := ChatMessage.from_dict({"role": ChatMessage.ROLE_USER, "parts": [{"part_type": "text", "text": "hi"}]}) as UserChatMessage
+	assert(user != null and (user.parts[0] as UserTextPart).text == "hi")
+	assert(ChatMessage.from_dict({"role": "unknown"}) == null)
+	pass
+
+
 func chat_message_validate_accepts_factories_test() -> void:
 	assert(ChatMessage.system("sys").validate() == StringUtils.EMPTY)
 	assert(ChatMessage.user("hi").validate() == StringUtils.EMPTY)

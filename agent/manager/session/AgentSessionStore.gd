@@ -121,17 +121,7 @@ static func load_session_file(file_path: String) -> AgentSession:
 		for item: Variant in messages_raw:
 			if typeof(item) != TYPE_DICTIONARY:
 				continue
-			var message: ChatMessage = null
-			var role_id := str(item.get("role", ""))
-			match role_id:
-				ChatMessage.ROLE_SYSTEM:
-					message = SystemChatMessage.from_dict(item)
-				ChatMessage.ROLE_USER:
-					message = UserChatMessage.from_dict(item)
-				ChatMessage.ROLE_ASSISTANT:
-					message = AssistantChatMessage.from_dict(item)
-				ChatMessage.ROLE_TOOL:
-					message = ToolResultChatMessage.from_dict(item)
+			var message := ChatMessage.from_dict(item)
 			if message != null:
 				messages.append(message)
 	session.messages = messages

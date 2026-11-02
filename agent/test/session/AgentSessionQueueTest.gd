@@ -17,16 +17,7 @@ static func session_messages_save_shape_roundtrip_test() -> void:
 	assert(messages_raw.size() == session.messages.size())
 	var restored: Array[ChatMessage] = []
 	for item: Variant in messages_raw:
-		var role_id := str(item.get("role", ""))
-		match role_id:
-			ChatMessage.ROLE_SYSTEM:
-				restored.append(SystemChatMessage.from_dict(item))
-			ChatMessage.ROLE_USER:
-				restored.append(UserChatMessage.from_dict(item))
-			ChatMessage.ROLE_ASSISTANT:
-				restored.append(AssistantChatMessage.from_dict(item))
-			ChatMessage.ROLE_TOOL:
-				restored.append(ToolResultChatMessage.from_dict(item))
+		restored.append(ChatMessage.from_dict(item))
 	assert((restored[0] as SystemChatMessage).text == "system")
 	assert((restored[1] as UserChatMessage).first_image_data_url().begins_with("data:image/png;base64,"))
 	assert((restored[2] as AssistantChatMessage).tool_calls.size() == 1)

@@ -89,13 +89,14 @@ var client := OpenAiClient.new(OS.get_environment("OPENAI_API_KEY"), "https://ap
 # Optional: one CancelScope per run aborts in-flight HTTP for that client
 client.cancel_scope = CancelScope.new()
 
+# Non-stream — plain assistant text only (choices[0].message.content). No tool_calls, reasoning, or usage.
+# Use for short one-shot replies (e.g. Sense). Agent / tool loops use async_chat_messages_stream instead.
 var reply: String = await client.async_chat_text("hello", "you are a helpful assistant", proxy_address)
 
-# Non-stream with full message list — returns assistant text; failures return empty string
 var messages: Array[ChatMessage] = [ChatMessage.system("you are a helpful assistant"), ChatMessage.user("hello")]
 var text: String = await client.async_chat_messages_text(messages, proxy_address)
 
-# Streaming — on_delta(delta, stream_kind); read content, tool_calls, and usage from OpenAiCompletion
+# Streaming — full OpenAiCompletion; on_delta(delta, stream_kind) for UI
 var stream_completion := await client.async_chat_messages_stream(messages, tool_defs, proxy_address,
 	func(delta: String, stream_kind: String) -> void: print(delta))
 var streamed := stream_completion.content

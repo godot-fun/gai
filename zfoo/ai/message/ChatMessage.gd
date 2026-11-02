@@ -53,3 +53,22 @@ static func assistant_tool_calls(calls: Array[OpenAiToolCall], text: String = ""
 static func tool_result(call_id: String, text: String) -> ToolResultChatMessage:
 	return ToolResultChatMessage.new(call_id, text)
 
+
+# ---------------------------------------------------------------------------
+# Persistence (JsonUtils.object_to_json shape — not Chat Completions wire)
+# ---------------------------------------------------------------------------
+
+## Dispatches on [member role] to the matching subclass [code]from_dict[/code].
+static func from_dict(data: Dictionary) -> ChatMessage:
+	match str(data.get("role", "")):
+		ROLE_SYSTEM:
+			return SystemChatMessage.from_dict(data)
+		ROLE_USER:
+			return UserChatMessage.from_dict(data)
+		ROLE_ASSISTANT:
+			return AssistantChatMessage.from_dict(data)
+		ROLE_TOOL:
+			return ToolResultChatMessage.from_dict(data)
+		_:
+			return null
+
