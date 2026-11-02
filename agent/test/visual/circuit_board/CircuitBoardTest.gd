@@ -11,6 +11,12 @@ func visual_type_is_registered_test() -> void:
 	pass
 
 
+func display_text_for_chip_test() -> void:
+	assert(CircuitBoard.display_text_for_chip("Alpha.") == "Alpha.")
+	assert(CircuitBoard.display_text_for_chip("A".repeat(40)) == "A".repeat(40).right(34))
+	pass
+
+
 func stream_and_tool_events_create_pulses_test() -> void:
 	var effect := CIRCUIT_BOARD_SCRIPT.new()
 	effect.on_agent_start(1)

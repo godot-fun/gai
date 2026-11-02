@@ -30,12 +30,7 @@ var thinking := false
 var failed := false
 var built_size := Vector2.ZERO
 var rng := RandomNumberGenerator.new()
-## Transcript cursor boundary for the active run. The chip polls the latest live entry
-## instead of consuming the shared sentence cursor used by other visual effects.
-var active_session_id := 0
-var run_entry_start := 0
 var chip_text := ""
-var chip_text_elapsed := 0.0
 
 
 func _ready() -> void:
@@ -50,15 +45,11 @@ func apply_theme_opacity() -> void:
 	pass
 
 
-func on_agent_start(session_id: int) -> void:
+func on_agent_start(_session_id: int) -> void:
 	activity = 0.32
 	thinking = false
 	failed = false
-	active_session_id = session_id
-	var session := AgentSessionStore.load_session(session_id)
-	run_entry_start = session.chat_entries.size() if session != null else 0
 	chip_text = ""
-	chip_text_elapsed = 0.5
 	ensure_board()
 	pulses.clear()
 	for index in range(7):
@@ -114,10 +105,9 @@ func _process(delta: float) -> void:
 		return
 	ensure_board()
 	elapsed += delta
-	chip_text_elapsed += delta
-	if chip_text_elapsed >= 0.5:
-		chip_text_elapsed = 0.0
-		refresh_chip_text()
+	var sentence := ChatEntryCursor.take_next_sentence()
+	if not sentence.is_empty():
+		chip_text = display_text_for_chip(sentence.text)
 	activity = move_toward(activity, 0.2, delta * 0.38)
 	var spawn_chance := (0.05 + activity * 0.85) * delta * 3.0
 	if rng.randf() < spawn_chance:
@@ -127,20 +117,6 @@ func _process(delta: float) -> void:
 		component["glow"] = move_toward(float(component["glow"]), 0.0, delta * 1.9)
 	chip["glow"] = move_toward(float(chip.get("glow", 0.0)), 0.0, delta * 1.4)
 	queue_redraw()
-	pass
-
-
-## Samples the latest streamed response at a fixed cadence so the central IC reads like
-## a terminal display, without redrawing for every incoming token fragment.
-func refresh_chip_text() -> void:
-	if active_session_id == 0:
-		return
-	var latest := ChatEntryCursor.latest_entry_text(active_session_id, run_entry_start, ChatEntry.KIND_AGENT)
-	if latest.is_empty():
-		latest = ChatEntryCursor.latest_entry_text(active_session_id, run_entry_start, ChatEntry.KIND_THINKING)
-	if latest.is_empty():
-		return
-	chip_text = display_text_for_chip(latest)
 	pass
 
 
