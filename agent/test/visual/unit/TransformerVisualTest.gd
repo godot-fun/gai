@@ -95,6 +95,50 @@ func token_color_fills_rgb_cube_not_hue_ring_test() -> void:
 	pass
 
 
+func LocalTokenizer_splits_cjk_latin_and_punctuation_test() -> void:
+	var tokens := LocalTokenizer.tokenize("你好 transformer，ok!")
+	var pieces: Array[String] = []
+	for token in tokens:
+		pieces.append(token.piece)
+	# CJK per character, latin runs keep their word marker, long runs fragment into 4-char chunks.
+	assert(pieces == ["你", "好", "▁tran", "sfor", "mer", "，", "ok", "!"])
+	pass
+
+
+func LocalTokenizer_round_trips_text_test() -> void:
+	var text := "Hello 世界! 我们来切分 tokens。"
+	assert(LocalTokenizer.restore_text(LocalTokenizer.tokenize(text)) == text)
+	pass
+
+
+func LocalTokenizer_ids_are_stable_per_piece_test() -> void:
+	var tokens := LocalTokenizer.tokenize("ok,ok")
+	assert(tokens.size() == 3)
+	assert(tokens[0].piece == tokens[2].piece)
+	assert(tokens[0].id == tokens[2].id)
+	assert(tokens[0].id != LocalTokenizer.stable_token_id("other"))
+	assert(tokens[0].id >= 0 and tokens[0].id < LocalTokenizer.VOCAB_SIZE)
+	pass
+
+
+func LocalTokenizer_caps_long_input_test() -> void:
+	var text := ""
+	for index in LocalTokenizer.MAX_TOKENS * 4:
+		text += "字"
+	assert(LocalTokenizer.tokenize(text).size() == LocalTokenizer.MAX_TOKENS)
+	assert(LocalTokenizer.tokenize("   \n\t ").size() == 1)
+	assert(LocalTokenizer.tokenize("").is_empty())
+	pass
+
+
+func LocalTokenizer_chunks_long_words_test() -> void:
+	assert(LocalTokenizer.split_run("abcdefghij") == PackedStringArray(["abcd", "efgh", "ij"]))
+	# A one-character tail merges into the previous piece instead of standing alone.
+	assert(LocalTokenizer.split_run("abcdefghi") == PackedStringArray(["abcd", "efghi"]))
+	assert(LocalTokenizer.split_run("short") == PackedStringArray(["short"]))
+	pass
+
+
 func low_probability_label_is_stable_and_visible_test() -> void:
 	var token := LlamaHelper.Token.new(97571, "token")
 	var first := LogitsBurstEffect.low_probability_label(token, 3)

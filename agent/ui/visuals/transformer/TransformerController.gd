@@ -87,13 +87,11 @@ func on_agent_end(session_id: int, error_message: String) -> void:
 
 func run_transformer(prompt: String, generation: int, session_id: int) -> void:
 	pipeline_running = true
-	var result := LlamaHelper.TokenizeResult.new()
-	if await VLMServer.async_ensure_server_running() == OK:
-		result = await LlamaHelper.async_tokenize(VLMServer.server_url(), prompt)
+	var tokens := await tokenize_text(prompt)
 	if generation != request_generation or not is_inside_tree():
 		pipeline_running = false
 		return
-	var selected := TokenizerEffect.select_complete_sentence(result.tokens)
+	var selected := TokenizerEffect.select_complete_sentence(tokens)
 	if selected.is_empty():
 		pipeline_running = false
 		return
@@ -101,15 +99,15 @@ func run_transformer(prompt: String, generation: int, session_id: int) -> void:
 	if generation != request_generation or not is_inside_tree():
 		pipeline_running = false
 		return
-	await embedding.play(result.tokens)
+	await embedding.play(tokens)
 	if generation != request_generation or not is_inside_tree():
 		pipeline_running = false
 		return
-	await attention.play(result.tokens)
+	await attention.play(tokens)
 	if generation != request_generation or not is_inside_tree():
 		pipeline_running = false
 		return
-	await transformer_block.play(result.tokens)
+	await transformer_block.play(tokens)
 	if generation != request_generation or not is_inside_tree():
 		pipeline_running = false
 		return
@@ -152,11 +150,16 @@ func latest_run_text(session_id: int, kind: String) -> String:
 	return ChatEntryCursor.latest_entry_text(session_id, run_entry_start, kind)
 
 
+## Tokenizes through the llama server only when it is already warm; otherwise splits offline so the
+## transformer stages never block on a multi-minute model cold start (or on missing gguf files).
 func tokenize_text(text: String) -> Array[LlamaHelper.Token]:
-	if StringUtils.is_blank(text) or await VLMServer.async_ensure_server_running() != OK:
+	if StringUtils.is_blank(text):
 		return []
-	var result := await LlamaHelper.async_tokenize(VLMServer.server_url(), text)
-	return result.tokens
+	if await LlamaHelper.async_health(VLMServer.server_url()):
+		var result := await LlamaHelper.async_tokenize(VLMServer.server_url(), text)
+		if not result.tokens.is_empty():
+			return result.tokens
+	return LocalTokenizer.tokenize(text)
 
 
 func latest_user_prompt(value: int) -> String:
