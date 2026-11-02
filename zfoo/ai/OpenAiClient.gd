@@ -104,11 +104,9 @@ func async_chat_messages_text(messages: Array[ChatMessage], proxy: String = "", 
 ## Full chat completion (content, reasoning, tool_calls, usage, finish_reason). Prefer this for agent loops.
 ## on_delta(delta, stream_kind) — stream_kind is STREAM_KIND_CONTENT or STREAM_KIND_REASONING.
 func async_chat_messages_stream(messages: Array[ChatMessage], tools: Array[OpenAiToolDef] = [], proxy: String = "", on_delta: Callable = Callable()) -> OpenAiCompletion:
-	var result := OpenAiCompletion.new()
 	var request_error := check_request(messages)
 	if StringUtils.is_not_blank(request_error):
-		result.error = request_error
-		return result
+		return OpenAiCompletion.failure(request_error)
 	var request := OpenAiRequest.new(model, messages, true)
 	request.tools = tools
 	var request_body: String = await ExecutorHelper.async_execute_pooled(request.to_json)
@@ -126,19 +124,13 @@ func async_chat_messages_stream(messages: Array[ChatMessage], tools: Array[OpenA
 	## all come from that one string instead of being accumulated during streaming.
 	var body := response.get_body_string()
 	if not response.success or response.code != 200:
-		result.error = StringUtils.format("request failed, http code:[{}], {}", response.code, response.get_error_string())
+		var result := OpenAiCompletion.failure(StringUtils.format("request failed, http code:[{}], {}", response.code, response.get_error_string()))
 		Log.error("OpenAI stream failed:[{}]", StringUtils.truncate(result.error, 512))
 		return result
 	var tail := pending_build.build_string() + utf8_decoder.flush()
 	if StringUtils.is_not_empty(tail):
 		consume_sse_buffer(tail + FileUtils.NEWLINE_LF, on_delta)
-	var chunks := parse_stream_chunks(body)
-	result.content = extract_stream_content(chunks)
-	result.reasoning_content = extract_stream_reasoning_content(chunks)
-	result.tool_calls = extract_stream_tool_calls(chunks)
-	result.finish_reason = extract_finish_reason(chunks)
-	result.usage = extract_stream_usage(chunks)
-	result.error = extract_finish_error(result.finish_reason)
+	var result: OpenAiCompletion = await ExecutorHelper.async_execute_pooled(parse_stream_completion.bind(body))
 	if StringUtils.is_not_blank(result.error):
 		Log.error("OpenAI stream failed:[{}]", result.error)
 	return result
@@ -175,6 +167,19 @@ func consume_sse_buffer(buffer: String, on_delta: Callable = Callable()) -> Stri
 	return remaining
 
 # ----------------------------------------------------------------------------------------------------------------------
+## [OpenAiCompletion] parsed from a finished SSE body (content, reasoning, tool_calls, usage, finish_reason).
+func parse_stream_completion(body: String) -> OpenAiCompletion:
+	var result := OpenAiCompletion.new()
+	var chunks := parse_stream_chunks(body)
+	result.content = extract_stream_content(chunks)
+	result.reasoning_content = extract_stream_reasoning_content(chunks)
+	result.tool_calls = extract_stream_tool_calls(chunks)
+	result.finish_reason = extract_finish_reason(chunks)
+	result.usage = extract_stream_usage(chunks)
+	result.error = extract_finish_error(result.finish_reason)
+	return result
+
+
 ## Parses a raw SSE body, skipping blank lines, non-`data:` lines and `[DONE]`.
 func parse_stream_chunks(body: String) -> Array[OpenAiStreamChunk]:
 	var chunks: Array[OpenAiStreamChunk] = []

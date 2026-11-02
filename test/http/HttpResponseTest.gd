@@ -37,7 +37,6 @@ static func error_string_never_blank_test() -> void:
 static func completion_is_error_when_request_failed_test() -> void:
 	# The invariant behind fail-fast: a failed request can never look like an empty answer.
 	var response := HttpResponse.failure("Http request cancelled url:[x]")
-	var completion := OpenAiCompletion.new()
-	completion.error = StringUtils.format("request failed, http code:[{}], {}", response.code, response.get_error_string())
+	var completion := OpenAiCompletion.failure(StringUtils.format("request failed, http code:[{}], {}", response.code, response.get_error_string()))
 	assert(completion.has_error())
 	pass

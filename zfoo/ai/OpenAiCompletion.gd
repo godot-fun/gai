@@ -14,5 +14,12 @@ var error: String = ""
 var usage: OpenAiUsage = OpenAiUsage.new()
 
 
+## Failed completion; [member error] is set so [method has_error] is true.
+static func failure(message: String) -> OpenAiCompletion:
+	var completion := OpenAiCompletion.new()
+	completion.error = message
+	return completion
+
+
 func has_error() -> bool:
 	return StringUtils.is_not_blank(error)

@@ -31,6 +31,4 @@ static func run(ai_client: OpenAiClient, messages: Array[ChatMessage]) -> OpenAi
 					result = await tool.async_execute(args, ai_client.cancel_scope)
 			messages.append(ChatMessage.tool_result(tool_call.id, result.content))
 
-	var exhausted := OpenAiCompletion.new()
-	exhausted.error = "compaction agent max turns exceeded"
-	return exhausted
+	return OpenAiCompletion.failure("compaction agent max turns exceeded")
