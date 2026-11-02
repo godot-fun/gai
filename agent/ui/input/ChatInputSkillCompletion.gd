@@ -7,7 +7,11 @@ extends RefCounted
 
 const DISPLAY_SEPARATOR := "  ·  "
 ## Rows the list tries to show at once; the composer is grown to match while it is open.
-const POPUP_ROWS: int = 8
+const POPUP_ROWS: int = 10
+## Widest the list may get, in font-size units ([CodeEdit]'s own `completion_max_width` unit). The
+## popup ellipsizes rows that overflow it, so rows are handed over untruncated and this is the only
+## width budget: 64 * a 16 px font ≈ 1024 px, which stays inside the composer at UI scales up to 1.5.
+const POPUP_MAX_WIDTH: int = 64
 
 var input_field: CodeEdit
 

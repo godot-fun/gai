@@ -9,8 +9,6 @@ const SKILL_FILE := "SKILL.md"
 const FRONT_MATTER_DELIMITER := "---"
 ## YAML marks that make `description` continue on the following indented lines.
 const BLOCK_SCALAR_MARKS: Array[String] = [">", ">-", ">+", "|", "|-", "|+"]
-## Skill rows and prompts are single-line, so descriptions are cut to this many characters.
-const MAX_DESCRIPTION_LENGTH: int = 56
 
 ## Cached summaries sorted by name, plus the disk state they were read from.
 static var summaries: Array[SkillSummary] = []
@@ -72,7 +70,7 @@ static func load_summary(path: String, fallback_name: String) -> SkillSummary:
 		name = fallback_name
 	if name.is_empty():
 		return null
-	return SkillSummary.new(name, summarize(String(front_matter.get("description", ""))))
+	return SkillSummary.new(name, first_sentence(String(front_matter.get("description", ""))))
 
 
 ## Reads the `key: value` pairs between the first two `---` lines of a `SKILL.md`. Folded (`>-`)
@@ -106,14 +104,8 @@ static func is_block_scalar_line(line: String) -> bool:
 	return line.is_empty() or line.begins_with(" ") or line.begins_with("\t")
 
 
-## First sentence only, cut at a word boundary: one line of room in skill rows and prompts.
-static func summarize(description: String) -> String:
+## First sentence only: that is the one-line summary of a skill. Widths belong to the popup, which
+## ellipsizes rows that do not fit, so nothing is cut by character count here.
+static func first_sentence(description: String) -> String:
 	var sentence_end := description.find(". ")
-	var summary := description.substr(0, sentence_end) if sentence_end > 0 else description
-	if summary.length() > MAX_DESCRIPTION_LENGTH:
-		summary = summary.left(MAX_DESCRIPTION_LENGTH - 1)
-		var last_space := summary.rfind(" ")
-		if last_space > 0:
-			summary = summary.left(last_space)
-		summary += "…"
-	return summary
+	return description.substr(0, sentence_end) if sentence_end > 0 else description

@@ -26,14 +26,15 @@ static func parse_front_matter_without_header_test() -> void:
 	pass
 
 
-static func summarize_test() -> void:
-	assert(SkillManager.summarize("Trims silence.") == "Trims silence.")
-	assert(SkillManager.summarize("Short. Second sentence.") == "Short")
-	var long_text := "Trims leading and trailing silence from audio files using FFmpeg and more words here"
-	var summary := SkillManager.summarize(long_text)
-	assert(summary.length() <= SkillManager.MAX_DESCRIPTION_LENGTH)
-	assert(summary.ends_with("…"))
-	assert(not summary.left(summary.length() - 1).ends_with(" "))
+## Rows own the width: the popup ellipsizes what does not fit, so only the first sentence is taken here
+## and a long sentence is handed over whole.
+static func first_sentence_test() -> void:
+	assert(SkillManager.first_sentence("Trims silence.") == "Trims silence.")
+	assert(SkillManager.first_sentence("Short. Second sentence.") == "Short")
+	assert(SkillManager.first_sentence("") == "")
+	var long_sentence := "Trims leading and trailing silence from audio files using FFmpeg and keeps going far past any row width"
+	assert(SkillManager.first_sentence(long_sentence) == long_sentence)
+	assert(not SkillManager.first_sentence(long_sentence).ends_with("…"))
 	pass
 
 

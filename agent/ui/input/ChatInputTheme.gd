@@ -64,7 +64,7 @@ static func apply_completion(input_field: CodeEdit) -> void:
 	input_field.add_theme_color_override("completion_scroll_color", ThemeColor.alpha_theme_color(0.35))
 	input_field.add_theme_color_override("completion_scroll_hovered_color", ThemeColor.accent_theme_color())
 	input_field.add_theme_constant_override("completion_lines", ChatInputSkillCompletion.POPUP_ROWS)
-	input_field.add_theme_constant_override("completion_max_width", 72)
+	input_field.add_theme_constant_override("completion_max_width", ChatInputSkillCompletion.POPUP_MAX_WIDTH)
 	input_field.add_theme_constant_override("completion_scroll_width", 4)
 	pass
 
