@@ -245,3 +245,25 @@ static func split_command_line(command: String) -> PackedStringArray:
 	if not current.is_empty():
 		argv.append(current)
 	return argv
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+## Returns the value of [param flag] on the current command line, or empty when it is absent.
+## Both `--flag value` and `--flag=value` work; args after `--` (OS.get_cmdline_user_args) win over
+## engine args. Example: `godot --path . -- --data-dir C:/gai` -> get_cmdline_arg_value("--data-dir")
+static func get_cmdline_arg_value(flag: String) -> String:
+	var user_value := parse_cmdline_arg_value(OS.get_cmdline_user_args(), flag)
+	return user_value if not user_value.is_empty() else parse_cmdline_arg_value(OS.get_cmdline_args(), flag)
+
+
+## Extracts the value of [param flag] from [param args]; see [method get_cmdline_arg_value].
+static func parse_cmdline_arg_value(args: PackedStringArray, flag: String) -> String:
+	if StringUtils.is_blank(flag):
+		return StringUtils.EMPTY
+	for i in args.size():
+		var arg := args[i]
+		if arg == flag:
+			return args[i + 1].strip_edges() if i + 1 < args.size() else StringUtils.EMPTY
+		if arg.begins_with(flag + "="):
+			return arg.substr(flag.length() + 1).strip_edges()
+	return StringUtils.EMPTY

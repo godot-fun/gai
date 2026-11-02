@@ -1,7 +1,7 @@
 class_name AgentSessionIndexes
 extends RefCounted
 
-## Persists the session list as `index.gai` in the sessions folder of [member AgentWorkspace.data_dir].
+## Persists the session list as `index.gai` in the agent data folder (see [method AgentWorkspace.get_data_path]).
 
 const INDEX_FILE := "index.gai"
 

@@ -164,7 +164,7 @@ static func ensure_exclude_rules(git_dir: String) -> void:
 	build.append(COMMON_EXCLUDE_RULES)
 	build.append(LARGE_FILE_EXCLUDE_RULES)
 	build.append(MANDATORY_EXCLUDE_RULES)
-	build.append(AgentWorkspace.DATA_DIR_NAME + "/")
+	build.append(AgentWorkspace.data_dir + "/")
 	var exclude_rules := build.build_joined(FileUtils.NEWLINE_LF)
 	var write_error := FileUtils.write_string_to_file(git_exclude_path, exclude_rules)
 	if write_error != OK:

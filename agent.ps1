@@ -1,7 +1,12 @@
-﻿# Launch the agent desktop app. Usage: .\agent.ps1  |  .\agent.ps1 -Wait
+# Launch the agent desktop app. Usage: .\agent.ps1  |  .\agent.ps1 -Wait  |  .\agent.ps1 --data-dir .gai3
+# The data folder defaults to <workspace>\.gai2; pass --data-dir <workspace-relative path> to change it.
 
 param(
-	[switch]$Wait
+	[switch]$Wait,
+
+	# Extra arguments are forwarded to Godot as user args (after `--`), e.g. --data-dir <path>.
+	[Parameter(ValueFromRemainingArguments = $true)]
+	[string[]]$Rest
 )
 
 $ErrorActionPreference = "Stop"
@@ -45,8 +50,15 @@ if (-not (Test-Path -LiteralPath $Editor)) {
 # Start agent main scene
 # ---------------------------------------------------------------------------
 # Default: new process (same as agent.bat). -Wait: run in this console + exit code.
+# Everything after `--` reaches the app through OS.get_cmdline_user_args():
+#   --data-dir <path>   agent data folder, workspace-relative (default here: .gai2)
 
-$ArgumentList = @("--path", $Root, "res://agent/Agent.tscn")
+$UserArgs = @($Rest | Where-Object { $null -ne $_ })
+if (-not ($UserArgs -match '^--data-dir(=.*)?$')) {
+	$UserArgs = @("--data-dir", ".gai2") + $UserArgs
+}
+
+$ArgumentList = @("--path", $Root, "res://agent/Agent.tscn", "--") + $UserArgs
 
 if ($Wait) {
 	Push-Location $Root

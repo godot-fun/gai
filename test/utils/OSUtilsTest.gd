@@ -47,6 +47,23 @@ static func OSUtils_split_command_line_quotes_test() -> void:
 	pass
 
 
+static func OSUtils_parse_cmdline_arg_value_test() -> void:
+	assert(OSUtils.parse_cmdline_arg_value(PackedStringArray(), "--data-dir") == "")
+	assert(OSUtils.parse_cmdline_arg_value(PackedStringArray(["--path", "."]), "--data-dir") == "")
+	assert(OSUtils.parse_cmdline_arg_value(PackedStringArray(["--data-dir", "D:/gai"]), "--data-dir") == "D:/gai")
+	assert(OSUtils.parse_cmdline_arg_value(PackedStringArray(["--data-dir=D:/gai"]), "--data-dir") == "D:/gai")
+	assert(OSUtils.parse_cmdline_arg_value(PackedStringArray(["--data-dir", " D:/gai "]), "--data-dir") == "D:/gai")
+	assert(OSUtils.parse_cmdline_arg_value(PackedStringArray(["--data-dir"]), "--data-dir") == "")
+	assert(OSUtils.parse_cmdline_arg_value(PackedStringArray(["--data-dir", "D:/gai"]), "") == "")
+	pass
+
+
+static func OSUtils_get_cmdline_arg_value_test() -> void:
+	# The runner passes no --gai-unused-flag, so an unused flag resolves to empty.
+	assert(OSUtils.get_cmdline_arg_value("--gai-unused-flag") == "")
+	pass
+
+
 static func OSUtils_split_command_line_execute_test() -> void:
 	OSUtils.stop_all()
 	var command := "cmd.exe /c echo OSUtilsSplitHello" if OSUtils.is_windows() else "/bin/sh -c 'echo OSUtilsSplitHello'"
