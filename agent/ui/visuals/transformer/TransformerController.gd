@@ -150,12 +150,13 @@ func latest_run_text(session_id: int, kind: String) -> String:
 	return ChatEntryCursor.latest_entry_text(session_id, run_entry_start, kind)
 
 
-## Tokenizes through the llama server only when it is already warm; otherwise splits offline so the
-## transformer stages never block on a multi-minute model cold start (or on missing gguf files).
+## Tokenizes through the llama server only when this session already has it running; otherwise splits
+## offline so the stages never block on a model cold start (or on missing gguf files). Probing an
+## absent server would also log a transport error per animation, so the process check comes first.
 func tokenize_text(text: String) -> Array[LlamaHelper.Token]:
 	if StringUtils.is_blank(text):
 		return []
-	if await LlamaHelper.async_health(VLMServer.server_url()):
+	if VLMServer.is_running() and await LlamaHelper.async_health(VLMServer.server_url()):
 		var result := await LlamaHelper.async_tokenize(VLMServer.server_url(), text)
 		if not result.tokens.is_empty():
 			return result.tokens

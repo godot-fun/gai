@@ -139,6 +139,19 @@ func LocalTokenizer_chunks_long_words_test() -> void:
 	pass
 
 
+func tokenize_text_never_returns_empty_for_visible_prompt_test() -> void:
+	var controller := TransformerController.new()
+	var text := "你好 ok，先把这句话切分出来。"
+	var tokens := await controller.tokenize_text(text)
+	controller.free()
+	assert(not tokens.is_empty())
+	assert(TokenizerEffect.select_complete_sentence(tokens).size() >= LocalTokenizer.WORD_MAX)
+	# Without a running llama server the offline splitter reproduces the prompt piece by piece.
+	if not VLMServer.is_running():
+		assert(LocalTokenizer.restore_text(tokens) == text)
+	pass
+
+
 func low_probability_label_is_stable_and_visible_test() -> void:
 	var token := LlamaHelper.Token.new(97571, "token")
 	var first := LogitsBurstEffect.low_probability_label(token, 3)
