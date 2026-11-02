@@ -1,6 +1,6 @@
 # Repository Map
 
-- `zfoo/`: Reusable Godot framework.
+- `zfoo/`: Reusable Godot framework (`zfoo/ai/message/` — OpenAI-style `ChatMessage` hierarchy and user multimodal parts).
 - `agent/`: Desktop agent application.
 - `cli/`: Command-line application.
 - `cpp/`: godot-cpp GDExtension (C++ bindings for the Godot script API).
@@ -81,6 +81,8 @@ gdf.shutdown()
 
 
 ## AI — OpenAI-compatible chat
+
+Chat roles and factories live on `ChatMessage` under `zfoo/ai/message/` (`SystemChatMessage`, `UserChatMessage`, `AssistantChatMessage`, `ToolResultChatMessage`).
 
 ```gdscript
 var client := OpenAiClient.new(OS.get_environment("OPENAI_API_KEY"), "https://api.deepseek.com/chat/completions", "deepseek-v4-flash")
