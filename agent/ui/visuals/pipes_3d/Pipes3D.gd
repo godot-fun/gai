@@ -25,6 +25,7 @@ const BURST_SECONDS := 0.6
 const END_HOLD_MSEC := 450
 ## Let the interface remain readable beneath the pipes.
 const PIPES_OPACITY := 0.38
+const LIGHT_PIPES_OPACITY := 0.5
 const LIGHT_DIR := Vector2(-0.6, -0.8)
 const DIRECTIONS: Array[Vector3i] = [Vector3i(1, 0, 0), Vector3i(-1, 0, 0), Vector3i(0, 1, 0), Vector3i(0, -1, 0), Vector3i(0, 0, 1), Vector3i(0, 0, -1)]
 
@@ -319,7 +320,8 @@ func radius_at(point: Vector3, scale: float) -> float:
 func _draw() -> void:
 	if size.x < 64.0 or size.y < 64.0:
 		return
-	var alpha := (clear_fade if clear_fade > 0.0 else 1.0) * PIPES_OPACITY
+	var opacity := PIPES_OPACITY if ThemeColor.is_dark_theme() else LIGHT_PIPES_OPACITY
+	var alpha := (clear_fade if clear_fade > 0.0 else 1.0) * opacity
 	for index in range(item_kinds.size()):
 		var color := Color(item_colors[index], alpha)
 		if item_kinds[index] == Item.BALL:
@@ -333,7 +335,7 @@ func _draw() -> void:
 	pass
 
 
-## A cylinder as three stacked strips: shadowed rim, lit body, and a specular streak.
+## A cylinder as stacked strips: dark theme uses a shaded rim; light theme skips the dark underlay.
 func draw_tube(from: Vector3, to: Vector3, color: Color) -> void:
 	var a := project(from)
 	var b := project(to)
@@ -345,9 +347,15 @@ func draw_tube(from: Vector3, to: Vector3, color: Color) -> void:
 		normal = -normal
 	var ra := radius_at(from, 1.0)
 	var rb := radius_at(to, 1.0)
-	draw_strip(a, b, normal, ra, rb, 0.0, 1.0, shade(color, 0.42))
-	draw_strip(a, b, normal, ra, rb, 0.2, 0.62, color)
-	draw_strip(a, b, normal, ra, rb, 0.5, 0.16, shade(color, 1.0).lerp(Color(1.0, 1.0, 1.0, color.a), 0.6))
+	if ThemeColor.is_dark_theme():
+		draw_strip(a, b, normal, ra, rb, 0.0, 1.0, rim_shadow_color(color))
+		draw_strip(a, b, normal, ra, rb, 0.2, 0.62, color)
+		draw_strip(a, b, normal, ra, rb, 0.5, 0.16, specular_color(color))
+	else:
+		var shell := color.lerp(Color(1.0, 1.0, 1.0, color.a), 0.22)
+		draw_strip(a, b, normal, ra, rb, 0.0, 1.0, shell)
+		draw_strip(a, b, normal, ra, rb, 0.12, 0.82, color)
+		draw_strip(a, b, normal, ra, rb, 0.46, 0.15, specular_color(color))
 	pass
 
 
@@ -362,9 +370,14 @@ func draw_strip(a: Vector2, b: Vector2, normal: Vector2, ra: float, rb: float, o
 
 func draw_ball(center: Vector2, radius: float, color: Color) -> void:
 	var light := LIGHT_DIR.normalized()
-	draw_circle(center, radius, shade(color, 0.42), true, -1.0, true)
-	draw_circle(center + light * radius * 0.2, radius * 0.72, color, true, -1.0, true)
-	draw_circle(center + light * radius * 0.45, radius * 0.24, shade(color, 1.0).lerp(Color(1.0, 1.0, 1.0, color.a), 0.6), true, -1.0, true)
+	if ThemeColor.is_dark_theme():
+		draw_circle(center, radius, rim_shadow_color(color), true, -1.0, true)
+		draw_circle(center + light * radius * 0.2, radius * 0.72, color, true, -1.0, true)
+		draw_circle(center + light * radius * 0.45, radius * 0.24, specular_color(color), true, -1.0, true)
+	else:
+		draw_circle(center, radius, color.lerp(Color(1.0, 1.0, 1.0, color.a), 0.18), true, -1.0, true)
+		draw_circle(center + light * radius * 0.22, radius * 0.78, color, true, -1.0, true)
+		draw_circle(center + light * radius * 0.46, radius * 0.26, specular_color(color), true, -1.0, true)
 	pass
 
 
@@ -372,11 +385,26 @@ static func shade(color: Color, amount: float) -> Color:
 	return Color(color.r * amount, color.g * amount, color.b * amount, color.a)
 
 
+func rim_shadow_color(color: Color) -> Color:
+	return shade(color, 0.42)
+
+
+func specular_color(color: Color) -> Color:
+	var mix := 0.6 if ThemeColor.is_dark_theme() else 0.84
+	return shade(color, 1.0).lerp(Color(1.0, 1.0, 1.0, color.a), mix)
+
+
 func main_color(turn: int) -> Color:
 	var accent := ThemeColor.accent_theme_color()
-	return Color.from_hsv(fposmod(accent.h + float(turn) * 0.13, 1.0), clampf(maxf(accent.s, 0.55), 0.0, 0.9), clampf(maxf(accent.v, 0.75), 0.0, 0.95))
+	var hue := fposmod(accent.h + float(turn) * 0.13, 1.0)
+	if ThemeColor.is_dark_theme():
+		return Color.from_hsv(hue, clampf(maxf(accent.s, 0.55), 0.0, 0.9), clampf(maxf(accent.v, 0.75), 0.0, 0.95))
+	return VisualColor.appearance_color(Color.from_hsv(hue, clampf(maxf(accent.s, 0.5), 0.0, 0.82), accent.v), 0.0, 0.88, 0.95)
 
 
 ## Stable saturated color per tool, in the spirit of the original screensaver palette.
 static func tool_color(tool_name: String) -> Color:
-	return Color.from_hsv(float(absi(tool_name.hash()) % 360) / 360.0, 0.72, 0.9)
+	var hue := float(absi(tool_name.hash()) % 360) / 360.0
+	if ThemeColor.is_dark_theme():
+		return Color.from_hsv(hue, 0.72, 0.9)
+	return VisualColor.appearance_color(Color.from_hsv(hue, 0.66, 0.86), 0.0, 0.85, 0.92)
