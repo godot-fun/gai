@@ -319,6 +319,14 @@ func chat_message_user_image_default_caption_test() -> void:
 	pass
 
 
+func chat_message_user_image_missing_file_has_no_data_url_test() -> void:
+	var path := ProjectSettings.globalize_path("res://test/asset/does_not_exist.png")
+	var message := ChatMessage.user_image("caption", path)
+	assert(StringUtils.is_blank(message.image_data_url))
+	assert(message.content == "caption")
+	pass
+
+
 func open_ai_request_to_json_tool_calls_reasoning_test() -> void:
 	var tool_call := OpenAiToolCall.new()
 	tool_call.id = "call_1"

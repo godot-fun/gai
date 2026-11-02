@@ -38,8 +38,12 @@ static func user(text: String) -> ChatMessage:
 static func user_image(text: String, image_path: String) -> ChatMessage:
 	var msg := ChatMessage.new(ROLE_USER, text)
 	var image_bytes := FileUtils.read_file_to_byte_array(image_path)
+	if image_bytes.is_empty():
+		Log.info("ChatMessage user_image read failed or file is empty path:[{}]", image_path)
+		return msg
 	var decoded_image := ImageHelper.decode_image(image_bytes)
 	if decoded_image == null:
+		Log.info("ChatMessage user_image decode failed path:[{}]", image_path)
 		return msg
 	var image_format := decoded_image.format
 	var encoded_bytes: PackedByteArray
@@ -54,6 +58,7 @@ static func user_image(text: String, image_path: String) -> ChatMessage:
 		encoded_bytes = ImageHelper.convert_to_jpg_with_max_size(image_bytes, REMOTE_IMAGE_MAX_SIZE)
 		mime_subtype = "jpeg"
 	if encoded_bytes.is_empty():
+		Log.info("ChatMessage user_image encode failed path:[{}] format:[{}]", image_path, image_format)
 		return msg
 	if StringUtils.is_blank(text):
 		msg.content = StringUtils.format("Image read: {}", image_path)
