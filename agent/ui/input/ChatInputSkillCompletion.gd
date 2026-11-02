@@ -8,10 +8,11 @@ extends RefCounted
 const DISPLAY_SEPARATOR := "  ·  "
 ## Rows the list tries to show at once; the composer is grown to match while it is open.
 const POPUP_ROWS: int = 10
-## Widest the list may get, in font-size units ([CodeEdit]'s own `completion_max_width` unit). The
-## popup ellipsizes rows that overflow it, so rows are handed over untruncated and this is the only
-## width budget: 64 * a 16 px font ≈ 1024 px, which stays inside the composer at UI scales up to 1.5.
+## Widest the list may get, in [CodeEdit]'s own `completion_max_width` unit (font sizes). The popup
+## ellipsizes rows that overflow it, so rows are handed over untruncated and this is the width budget.
 const POPUP_MAX_WIDTH: int = 64
+## Padding around the visible rows, in line heights: one row above and one below the selection.
+const POPUP_PADDING_ROWS := 2
 
 var input_field: CodeEdit
 
@@ -142,8 +143,8 @@ func is_popup_open() -> bool:
 	return input_field.get_code_completion_selected_index() >= 0
 
 
-## Height the composer needs while the list is open. CodeEdit draws its list inside its own rect,
-## so a short composer would only fit one or two rows; the extra rows keep the list readable.
+## Height the composer needs while the list is open. [CodeEdit] draws the list inside the field rect, so
+## a short composer would only fit one or two rows; the padding rows keep the list readable.
 func get_popup_height() -> float:
 	var rows: int = clampi(input_field.get_code_completion_options().size(), 1, POPUP_ROWS)
-	return input_field.get_line_height() * (rows + 2) + Margin.ma_6
+	return input_field.get_line_height() * (rows + POPUP_PADDING_ROWS) + Margin.ma_6

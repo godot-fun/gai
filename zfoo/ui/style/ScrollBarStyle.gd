@@ -19,8 +19,23 @@ enum Thickness {
 
 ## Shared default used by popup, transcript and sidebar surfaces.
 static func apply(bar: ScrollBar, thickness: Thickness = Thickness.XXL) -> void:
-	apply_custom(bar, thickness, ThemeColor.body_color, ThemeColor.promote(ThemeColor.theme_color, Weights.w_7), ThemeColor.promote(ThemeColor.theme_color, Weights.w_4), false)
+	apply_custom(bar, thickness, grabber_color(), grabber_hover_color(), grabber_pressed_color(), false)
 	pass
+
+
+## Resting grabber color: the shared neutral used by every scrollbar in the app.
+static func grabber_color() -> Color:
+	return ThemeColor.body_color
+
+
+## Grabber color while the pointer is over the bar.
+static func grabber_hover_color() -> Color:
+	return ThemeColor.promote(ThemeColor.theme_color, Weights.w_7)
+
+
+## Grabber color while the bar is dragged.
+static func grabber_pressed_color() -> Color:
+	return ThemeColor.promote(ThemeColor.theme_color, Weights.w_4)
 
 
 ## Configurable variant for controls whose scrollbar intentionally differs from the shared default.

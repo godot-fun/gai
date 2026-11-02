@@ -61,11 +61,13 @@ static func apply_completion(input_field: CodeEdit) -> void:
 	input_field.add_theme_color_override("completion_background_color", Color.TRANSPARENT)
 	input_field.add_theme_color_override("completion_selected_color", ThemeColor.alpha_theme_color(0.22))
 	input_field.add_theme_color_override("completion_existing_color", ThemeColor.alpha_theme_color(0.12))
-	input_field.add_theme_color_override("completion_scroll_color", ThemeColor.alpha_theme_color(0.35))
-	input_field.add_theme_color_override("completion_scroll_hovered_color", ThemeColor.accent_theme_color())
+	# [CodeEdit] paints the list scrollbar itself — there is no [ScrollBar] node for [method
+	# ScrollBarStyle.apply] to reach — so reuse its thickness preset and grabber colors instead.
+	input_field.add_theme_color_override("completion_scroll_color", ScrollBarStyle.grabber_color())
+	input_field.add_theme_color_override("completion_scroll_hovered_color", ScrollBarStyle.grabber_hover_color())
+	input_field.add_theme_constant_override("completion_scroll_width", ScrollBarStyle.Thickness.MD)
 	input_field.add_theme_constant_override("completion_lines", ChatInputSkillCompletion.POPUP_ROWS)
 	input_field.add_theme_constant_override("completion_max_width", ChatInputSkillCompletion.POPUP_MAX_WIDTH)
-	input_field.add_theme_constant_override("completion_scroll_width", 4)
 	pass
 
 
