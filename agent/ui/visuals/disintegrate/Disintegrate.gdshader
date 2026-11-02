@@ -27,6 +27,7 @@ uniform vec4 ember_color : source_color = vec4(1.0, 0.45, 0.12, 1.0);
 uniform vec4 ember_core : source_color = vec4(1.0, 0.86, 0.55, 1.0);
 uniform vec4 ash_color : source_color = vec4(0.42, 0.40, 0.38, 1.0);
 uniform float glow_gain : hint_range(0.0, 1.0) = 1.0;
+uniform float light_mode : hint_range(0.0, 1.0) = 0.0;
 
 float hash12(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -86,11 +87,16 @@ void fragment() {
 				float soot = value_noise(p * 40.0 + seed) * 0.5 + 0.5;
 				burned = char_color.rgb * soot;
 				float rim = exp(-inside / 0.035);
-				glow += mix(ember_core.rgb, ember_color.rgb, clamp(inside / 0.05, 0.0, 1.0)) * rim * 1.4;
+				glow += mix(ember_core.rgb, ember_color.rgb, clamp(inside / 0.05, 0.0, 1.0)) * rim * mix(1.4, 1.75, light_mode);
 			} else {
 				float scorch = exp(inside / 0.05);
-				burned *= 1.0 - scorch * 0.65;
-				glow += ember_color.rgb * exp(inside / 0.018) * 0.6;
+				float scorch_amt = scorch * mix(0.65, 0.92, light_mode);
+				if (light_mode > 0.5) {
+					burned = mix(burned, char_color.rgb, scorch_amt);
+				} else {
+					burned *= 1.0 - scorch_amt;
+				}
+				glow += ember_color.rgb * exp(inside / 0.018) * mix(0.6, 1.05, light_mode);
 			}
 
 			// Skip the ash search when this pixel is beyond any grain's reach.
@@ -115,13 +121,18 @@ void fragment() {
 				float life = exp(-tau / 0.38) * (1.0 - tau / max_tau);
 				vec3 content = texture(screen_texture, clamp(origin * to_uv, vec2(0.0), vec2(1.0))).rgb;
 				float heat = exp(-tau / 0.18);
-				vec3 grain_color = mix(mix(content, ash_color.rgb, 0.45), ember_core.rgb, heat * 0.8);
-				float alpha = life * (0.6 + 0.4 * hash12(grain_cell + vec2(3.0, 9.0)));
+				float ash_mix = mix(0.45, 0.88, light_mode);
+				vec3 grain_base = light_mode > 0.5 ? ash_color.rgb : content;
+				vec3 grain_color = mix(mix(grain_base, ash_color.rgb, ash_mix), ember_core.rgb, heat * mix(0.8, 0.55, light_mode));
+				if (light_mode > 0.5) {
+					grain_color = mix(grain_color, char_color.rgb, step(0.68, hash12(grain_cell + vec2(11.0, 5.0))) * 0.42);
+				}
+				float alpha = life * (0.6 + 0.4 * hash12(grain_cell + vec2(3.0, 9.0))) * mix(1.0, 1.25, light_mode);
 				if (alpha > ash_alpha) {
 					ash_alpha = alpha;
 					ash = grain_color;
 				}
-				glow += ember_color.rgb * heat * 0.25;
+				glow += ember_color.rgb * heat * mix(0.25, 0.45, light_mode);
 			}
 		}
 
@@ -135,8 +146,16 @@ void fragment() {
 				spot.x += sin(field_time * 1.7 + cell.y) * 8.0;
 				float flicker = 0.5 + 0.5 * sin(field_time * 9.0 + hash12(cell) * 40.0);
 				float height_fade = smoothstep(0.3, 1.0, SCREEN_UV.y);
-				float spark = exp(-length(world - spot) / 1.6) * flicker * height_fade;
-				glow += ember_color.rgb * spark * ember_level * step(0.45, hash12(cell + 2.0));
+				float falloff = light_mode > 0.5 ? 1.35 : 1.6;
+				float spark = exp(-length(world - spot) / falloff) * flicker * height_fade;
+				float ember_strength = spark * ember_level * step(0.45, hash12(cell + 2.0));
+				if (light_mode > 0.5) {
+					vec3 spark_color = mix(char_color.rgb, mix(ember_color.rgb, ember_core.rgb, flicker), 0.72);
+					burned = mix(burned, spark_color, ember_strength * 0.82);
+					glow += ember_color.rgb * ember_strength * 0.35;
+				} else {
+					glow += ember_color.rgb * ember_strength;
+				}
 			}
 		}
 

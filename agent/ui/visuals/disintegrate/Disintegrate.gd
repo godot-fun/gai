@@ -53,6 +53,8 @@ func _ready() -> void:
 	burn_material.shader = DISINTEGRATE_SHADER
 	surface_rect.material = burn_material
 	add_child(surface_rect)
+	gdf.events.theme_changed.connect(update_theme_presentation)
+	gdf.events.theme_color_changed.connect(update_theme_presentation)
 	update_theme_presentation()
 	apply_shader_state()
 	pass
@@ -190,7 +192,19 @@ func update_theme_presentation() -> void:
 	if burn_material == null:
 		return
 	var dark := ThemeColor.is_dark_theme()
-	burn_material.set_shader_parameter("char_color", Color(0.05, 0.04, 0.04) if dark else Color(0.16, 0.13, 0.11))
-	burn_material.set_shader_parameter("ash_color", Color(0.45, 0.43, 0.41) if dark else Color(0.35, 0.33, 0.31))
-	burn_material.set_shader_parameter("glow_gain", 1.0 if dark else 0.55)
+	var accent := ThemeColor.accent_theme_color()
+	var ember := VisualColor.appearance_color(accent, 0.02, 1.0, 1.05)
+	var ember_core := ember.lerp(Color.WHITE, 0.58 if dark else 0.32)
+	var soot := VisualColor.ink_color(accent, -0.03, 1.05, 0.38 if dark else 0.52)
+	var char := soot.darkened(0.82 if dark else 0.28)
+	var ash := VisualColor.ink_color(accent, 0.0, 0.88, 0.62 if dark else 0.68)
+	if dark:
+		ash = ash.lightened(0.22)
+	burn_material.set_shader_parameter("light_mode", 0.0 if dark else 1.0)
+	burn_material.set_shader_parameter("char_color", char)
+	burn_material.set_shader_parameter("ash_color", ash)
+	burn_material.set_shader_parameter("ash_density", 0.55 if dark else 0.68)
+	burn_material.set_shader_parameter("ember_color", ember)
+	burn_material.set_shader_parameter("ember_core", ember_core)
+	burn_material.set_shader_parameter("glow_gain", 1.0 if dark else 0.92)
 	pass
