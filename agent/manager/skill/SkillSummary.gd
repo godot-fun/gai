@@ -1,4 +1,4 @@
-﻿class_name SkillSummary
+class_name SkillSummary
 extends RefCounted
 
 ## One skill of `.agents/skills` as the index exposes it: the front-matter `name` and a trimmed

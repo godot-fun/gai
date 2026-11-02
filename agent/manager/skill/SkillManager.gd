@@ -1,4 +1,4 @@
-﻿class_name SkillManager
+class_name SkillManager
 extends Object
 
 ## Skill index for `.agents/skills`: one [SkillSummary] per skill folder, parsed from its `SKILL.md`

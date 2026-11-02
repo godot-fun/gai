@@ -1,4 +1,4 @@
-﻿extends RefCounted
+extends RefCounted
 
 ## Skill index only — front matter parsing, description trimming, and the shipped catalog.
 
