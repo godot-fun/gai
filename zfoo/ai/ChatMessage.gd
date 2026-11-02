@@ -91,9 +91,23 @@ func validate() -> String:
 		return "ChatMessage role is empty"
 	match role:
 		ROLE_SYSTEM:
-			return validate_no_tool_protocol("system")
+			if StringUtils.is_not_blank(tool_call_id):
+				return "system message must not set tool_call_id"
+			if not tool_calls.is_empty():
+				return "system message must not set tool_calls"
+			if StringUtils.is_not_blank(reasoning_content):
+				return "system message must not set reasoning_content"
+			if StringUtils.is_not_blank(image_data_url):
+				return "system message must not set image_data_url"
+			return StringUtils.EMPTY
 		ROLE_USER:
-			return validate_no_tool_protocol("user", true)
+			if StringUtils.is_not_blank(tool_call_id):
+				return "user message must not set tool_call_id"
+			if not tool_calls.is_empty():
+				return "user message must not set tool_calls"
+			if StringUtils.is_not_blank(reasoning_content):
+				return "user message must not set reasoning_content"
+			return StringUtils.EMPTY
 		ROLE_ASSISTANT:
 			if StringUtils.is_not_blank(tool_call_id):
 				return "assistant message must not set tool_call_id"
@@ -112,18 +126,6 @@ func validate() -> String:
 			return StringUtils.EMPTY
 		_:
 			return StringUtils.format("ChatMessage has unknown role:[{}]", role)
-
-
-func validate_no_tool_protocol(role_label: String, allow_image: bool = false) -> String:
-	if StringUtils.is_not_blank(tool_call_id):
-		return StringUtils.format("{} message must not set tool_call_id", role_label)
-	if not tool_calls.is_empty():
-		return StringUtils.format("{} message must not set tool_calls", role_label)
-	if StringUtils.is_not_blank(reasoning_content):
-		return StringUtils.format("{} message must not set reasoning_content", role_label)
-	if not allow_image and StringUtils.is_not_blank(image_data_url):
-		return StringUtils.format("{} message must not set image_data_url", role_label)
-	return StringUtils.EMPTY
 
 
 ## OpenAI wire shape
