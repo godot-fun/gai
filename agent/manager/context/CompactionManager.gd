@@ -104,7 +104,7 @@ static func async_generate_summary(client: OpenAiClient, messages: Array[ChatMes
 static func collect_context_messages(messages: Array[ChatMessage]) -> Array[ChatMessage]:
 	var context: Array[ChatMessage] = []
 	for message: ChatMessage in messages:
-		if message.role != ChatMessage.ROLE_SYSTEM:
+		if not message is SystemChatMessage:
 			continue
 		if CompactionPrompt.is_compaction_message(message):
 			continue

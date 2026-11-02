@@ -3,7 +3,7 @@ extends RefCounted
 
 ## Project prompt — loads the workspace-root AGENTS.md once and caches its text.
 ## The file text is appended to a session right after the system prompt (messages[0]); it is
-## identified by role + content so the AGENTS.md text never has to be re-read for matching.
+## identified by [SystemChatMessage] text so the AGENTS.md text never has to be re-read for matching.
 
 
 const AGENTS_PATH := "AGENTS.md"
@@ -27,4 +27,4 @@ static func has_agent_context() -> bool:
 
 
 static func is_agent_context_message(msg: ChatMessage) -> bool:
-	return msg.role == ChatMessage.ROLE_SYSTEM && msg.content == agent_context
+	return msg is SystemChatMessage and (msg as SystemChatMessage).text == agent_context

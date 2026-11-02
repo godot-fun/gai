@@ -3,7 +3,7 @@ extends RefCounted
 
 ## Project memory prompt — loads the workspace memory index once and caches its text.
 ## The file text is appended to a session as a context message and is identified by
-## role + content so it can be removed without disturbing other system messages.
+## matching [SystemChatMessage] text so it can be removed without disturbing other system messages.
 
 
 const MEMORY_README_PATH := ".memory/README.md"
@@ -33,4 +33,4 @@ static func has_memory_context() -> bool:
 
 
 static func is_memory_context_message(msg: ChatMessage) -> bool:
-	return msg.role == ChatMessage.ROLE_SYSTEM && msg.content == memory_context
+	return msg is SystemChatMessage and (msg as SystemChatMessage).text == memory_context
