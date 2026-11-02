@@ -80,37 +80,82 @@ static func assistant_tool_calls(calls: Array[OpenAiToolCall], text: String = ""
 	return msg
 
 
+## Empty when valid; otherwise a short reason the message cannot be sent to the API.
+func validate() -> String:
+	if StringUtils.is_blank(role):
+		return "ChatMessage role is empty"
+	match role:
+		ROLE_SYSTEM:
+			return validate_no_tool_protocol("system")
+		ROLE_USER:
+			return validate_no_tool_protocol("user", true)
+		ROLE_ASSISTANT:
+			if StringUtils.is_not_blank(tool_call_id):
+				return "assistant message must not set tool_call_id"
+			if StringUtils.is_not_blank(image_data_url):
+				return "assistant message must not set image_data_url"
+			return StringUtils.EMPTY
+		ROLE_TOOL:
+			if StringUtils.is_not_blank(reasoning_content):
+				return "tool message must not set reasoning_content"
+			if StringUtils.is_not_blank(image_data_url):
+				return "tool message must not set image_data_url"
+			if not tool_calls.is_empty():
+				return "tool message must not set tool_calls"
+			if StringUtils.is_blank(tool_call_id):
+				return "tool message requires tool_call_id"
+		_:
+			return StringUtils.format("ChatMessage has unknown role:[{}]", role)
+	return StringUtils.EMPTY
+
+
+func validate_no_tool_protocol(role_label: String, allow_image: bool = false) -> String:
+	if StringUtils.is_not_blank(tool_call_id):
+		return StringUtils.format("{} message must not set tool_call_id", role_label)
+	if not tool_calls.is_empty():
+		return StringUtils.format("{} message must not set tool_calls", role_label)
+	if StringUtils.is_not_blank(reasoning_content):
+		return StringUtils.format("{} message must not set reasoning_content", role_label)
+	if not allow_image and StringUtils.is_not_blank(image_data_url):
+		return StringUtils.format("{} message must not set image_data_url", role_label)
+	return StringUtils.EMPTY
+
+
 ## OpenAI wire shape
 func to_api_dict() -> Dictionary:
-	if role == ROLE_TOOL:
-		return {
-			"role": role,
-			"content": content,
-			"tool_call_id": tool_call_id,
-		}
-	if not tool_calls.is_empty():
-		var wire := {
-			"role": role,
-			"content": StringUtils.trim(content),
-			"reasoning_content": StringUtils.trim(reasoning_content),
-			"tool_calls": tool_calls,
-		}
-		return wire
-	if role == ROLE_USER and StringUtils.is_not_blank(image_data_url):
-		return {
-			"role": role,
-			"content": [
-				{"type": "text", "text": content},
-				{"type": "image_url", "image_url": {"url": image_data_url}},
-			],
-		}
-	var wire := {
-		"role": role,
-		"content": content,
-	}
-	if role == ROLE_ASSISTANT and StringUtils.is_not_blank(reasoning_content):
-		wire["reasoning_content"] = StringUtils.trim(reasoning_content)
-	return wire
+	match role:
+		ROLE_TOOL:
+			return {
+				"role": role,
+				"content": content,
+				"tool_call_id": tool_call_id,
+			}
+		ROLE_USER:
+			if StringUtils.is_not_blank(image_data_url):
+				return {
+					"role": role,
+					"content": [
+						{"type": "text", "text": content},
+						{"type": "image_url", "image_url": {"url": image_data_url}},
+					],
+				}
+			return {"role": role, "content": content}
+		ROLE_ASSISTANT:
+			if not tool_calls.is_empty():
+				var tool_wire := {
+					"role": role,
+					"content": StringUtils.trim(content),
+					"tool_calls": tool_calls,
+				}
+				if StringUtils.is_not_blank(reasoning_content):
+					tool_wire["reasoning_content"] = StringUtils.trim(reasoning_content)
+				return tool_wire
+			var assistant_wire := {"role": role, "content": content}
+			if StringUtils.is_not_blank(reasoning_content):
+				assistant_wire["reasoning_content"] = StringUtils.trim(reasoning_content)
+			return assistant_wire
+		_:
+			return {"role": role, "content": content}
 
 
 # ---------------------------------------------------------------------------

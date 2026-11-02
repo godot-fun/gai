@@ -216,6 +216,56 @@ func open_ai_request_to_json_escapes_control_characters_test() -> void:
 	pass
 
 
+func chat_message_validate_accepts_factories_test() -> void:
+	assert(ChatMessage.system("sys").validate() == StringUtils.EMPTY)
+	assert(ChatMessage.user("hi").validate() == StringUtils.EMPTY)
+	assert(ChatMessage.assistant("done", "think").validate() == StringUtils.EMPTY)
+	assert(ChatMessage.tool_result("call_1", "ok").validate() == StringUtils.EMPTY)
+	var tool_call := OpenAiToolCall.new()
+	tool_call.id = "call_1"
+	assert(ChatMessage.assistant_tool_calls([tool_call], "", "think").validate() == StringUtils.EMPTY)
+	pass
+
+
+func chat_message_validate_rejects_user_with_tool_calls_test() -> void:
+	var message := ChatMessage.user("hi")
+	message.tool_calls.append(OpenAiToolCall.new())
+	assert(message.validate() == "user message must not set tool_calls")
+	pass
+
+
+func chat_message_validate_rejects_user_image_on_system_test() -> void:
+	var message := ChatMessage.system("ctx")
+	message.image_data_url = "data:image/png;base64,AAAA"
+	assert(message.validate() == "system message must not set image_data_url")
+	pass
+
+
+func chat_message_validate_accepts_user_image_test() -> void:
+	var message := ChatMessage.user("caption")
+	message.image_data_url = "data:image/png;base64,AAAA"
+	assert(message.validate() == StringUtils.EMPTY)
+	pass
+
+
+func chat_message_tool_calls_reasoning_omits_empty_reasoning_test() -> void:
+	var tool_call := OpenAiToolCall.new()
+	tool_call.id = "call_1"
+	var message := ChatMessage.assistant_tool_calls([tool_call])
+	assert(not message.to_api_dict().has("reasoning_content"))
+	pass
+
+
+func open_ai_check_request_rejects_invalid_message_test() -> void:
+	var messages: Array[ChatMessage] = []
+	messages.append(ChatMessage.user("hi"))
+	var invalid := ChatMessage.user("bad")
+	invalid.tool_calls.append(OpenAiToolCall.new())
+	messages.append(invalid)
+	assert(client.check_request(messages) == "user message must not set tool_calls")
+	pass
+
+
 func chat_message_tool_calls_reasoning_roundtrip_test() -> void:
 	var tool_call := OpenAiToolCall.new()
 	tool_call.id = "call_1"
