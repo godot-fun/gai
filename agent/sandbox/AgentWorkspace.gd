@@ -23,7 +23,6 @@ static func set_root(path: String) -> bool:
 		return false
 	Setting.set_string(SETTING_KEY, normalized)
 	Setting.save()
-	GlobTool._static_init()
 	AgentEvents.events.workspace_changed.emit(normalized)
 	return true
 

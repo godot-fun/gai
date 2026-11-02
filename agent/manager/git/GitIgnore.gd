@@ -1,6 +1,14 @@
 class_name GitIgnore
 extends Object
 
+## Single home for the ignore rules used by the agent:
+## - Shadow checkpoint repositories get a generated `.git/info/exclude` from [member ignore_rules].
+## - Workspace search (glob / grep) skips directories matched by the same rules.
+
+# ---------------------------------------------------------------------------
+# Shadow checkpoint repository exclude rules
+# ---------------------------------------------------------------------------
+
 const COMMON_EXCLUDE_RULES := """
 # OS metadata
 .DS_Store
@@ -150,22 +158,61 @@ const MANDATORY_EXCLUDE_RULES := """
 .dependency/
 """
 
+# ---------------------------------------------------------------------------
+# Built ignore rules — one list for the exclude file and for workspace search
+# ---------------------------------------------------------------------------
+
+## Workspace ignore files whose lines join the built-in blocks below.
+const WORKSPACE_IGNORE_FILES: Array[String] = [".gitignore", ".cursorignore", ".agentignore", ".aiignore"]
+
+## Every ignore rule: the built-in blocks, [constant WORKSPACE_IGNORE_FILES], and the agent data folder.
+## [method ensure_exclude_rules] writes it to a checkpoint repository, and workspace search
+## (glob / grep) passes it to [method GlobUtils.glob] as skip rules.
+## Rebuilt from the current workspace root by [method refresh_ignore_rules].
+static var ignore_rules: Array[String] = []
+
+
+static func _static_init() -> void:
+	# Rules follow the workspace root, so rebuild them whenever it is switched.
+	AgentEvents.events.workspace_changed.connect(func(_path: String) -> void: refresh_ignore_rules())
+	refresh_ignore_rules()
+	pass
+
+
+## Rebuilds [member ignore_rules] from the built-in blocks and the current workspace root.
+static func refresh_ignore_rules() -> void:
+	var rules: Array[String] = []
+	append_rule_lines(rules, COMMON_EXCLUDE_RULES)
+	append_rule_lines(rules, LARGE_FILE_EXCLUDE_RULES)
+	append_rule_lines(rules, MANDATORY_EXCLUDE_RULES)
+	for file_name in WORKSPACE_IGNORE_FILES:
+		append_rule_lines(rules, FileUtils.read_file_to_string(AgentWorkspace.resolve_path(file_name)))
+	append_rule_lines(rules, AgentWorkspace.data_dir + "/")
+	ignore_rules = rules
+	pass
+
+
+## Appends the trimmed, non-empty, not-yet-present lines of one rule block or ignore file.
+static func append_rule_lines(rules: Array[String], text: String) -> void:
+	for line in text.split(FileUtils.NEWLINE_LF):
+		var rule := line.strip_edges()
+		if not rule.is_empty() and not rules.has(rule):
+			rules.append(rule)
+	pass
+
+
+# ---------------------------------------------------------------------------
+# Git exclude file for shadow checkpoint repositories
+# ---------------------------------------------------------------------------
 
 static func ensure_exclude_rules(git_dir: String) -> void:
-	var project_gitignore_path := AgentWorkspace.get_root().path_join(".gitignore")
-	var project_gitignore_rules := FileUtils.read_file_to_string(project_gitignore_path)
+	# Ignore files may have changed since the last rebuild, and the exclude file is
+	# compared against the current rules.
+	refresh_ignore_rules()
 	var git_exclude_path := git_dir.path_join("info/exclude")
-	if FileAccess.file_exists(git_exclude_path):
-		var existing_rules := FileUtils.read_file_to_string(git_exclude_path)
-		if existing_rules.contains(project_gitignore_rules):
-			return
-	var build := StringBuilder.new()
-	build.append_if_not_empty(project_gitignore_rules)
-	build.append(COMMON_EXCLUDE_RULES)
-	build.append(LARGE_FILE_EXCLUDE_RULES)
-	build.append(MANDATORY_EXCLUDE_RULES)
-	build.append(AgentWorkspace.data_dir + "/")
-	var exclude_rules := build.build_joined(FileUtils.NEWLINE_LF)
+	var exclude_rules := StringBuilder.new(ignore_rules).build_joined(FileUtils.NEWLINE_LF) + FileUtils.NEWLINE_LF
+	if FileUtils.read_file_to_string(git_exclude_path) == exclude_rules:
+		return
 	var write_error := FileUtils.write_string_to_file(git_exclude_path, exclude_rules)
 	if write_error != OK:
 		Log.error("agent checkpoint exclude write failed path:[{}] error:[{}]", git_exclude_path, error_string(write_error))

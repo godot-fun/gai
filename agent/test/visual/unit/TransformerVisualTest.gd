@@ -100,8 +100,8 @@ func LocalTokenizer_splits_cjk_latin_and_punctuation_test() -> void:
 	var pieces: Array[String] = []
 	for token in tokens:
 		pieces.append(token.piece)
-	# CJK per character, latin runs keep their word marker, long runs fragment into 4-char chunks.
-	assert(pieces == ["你", "好", "▁tran", "sfor", "mer", "，", "ok", "!"])
+	# CJK per character, latin words stay whole (split on spaces only), punctuation alone.
+	assert(pieces == ["你", "好", "▁transformer", "，", "ok", "!"])
 	pass
 
 
@@ -131,11 +131,14 @@ func LocalTokenizer_caps_long_input_test() -> void:
 	pass
 
 
-func LocalTokenizer_chunks_long_words_test() -> void:
-	assert(LocalTokenizer.split_run("abcdefghij") == PackedStringArray(["abcd", "efgh", "ij"]))
-	# A one-character tail merges into the previous piece instead of standing alone.
-	assert(LocalTokenizer.split_run("abcdefghi") == PackedStringArray(["abcd", "efghi"]))
-	assert(LocalTokenizer.split_run("short") == PackedStringArray(["short"]))
+func LocalTokenizer_keeps_words_whole_test() -> void:
+	var tokens := LocalTokenizer.tokenize("tokenization reproducibility internationalization")
+	var pieces: Array[String] = []
+	for token in tokens:
+		pieces.append(token.piece)
+	assert(pieces == ["tokenization", "▁reproducibility", "▁internationalization"])
+	# Word-internal marks stay glued to the word instead of producing their own pieces.
+	assert(LocalTokenizer.tokenize("don't stop-believing 2026").size() == 3)
 	pass
 
 
@@ -145,7 +148,7 @@ func tokenize_text_never_returns_empty_for_visible_prompt_test() -> void:
 	var tokens := await controller.tokenize_text(text)
 	controller.free()
 	assert(not tokens.is_empty())
-	assert(TokenizerEffect.select_complete_sentence(tokens).size() >= LocalTokenizer.WORD_MAX)
+	assert(TokenizerEffect.select_complete_sentence(tokens).size() >= TokenizerEffect.MIN_TOKEN_COUNT)
 	# Without a running llama server the offline splitter reproduces the prompt piece by piece.
 	if not VLMServer.is_running():
 		assert(LocalTokenizer.restore_text(tokens) == text)

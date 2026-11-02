@@ -34,7 +34,7 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 	if not SandboxPolicy.check_path_access(search_root):
 		return AgentToolResult.error(StringUtils.format("error: sandbox denied path outside workspace: {}", search_root))
 	var glob_filter := str(args.get(ARG_GLOB, "")).strip_edges()
-	var all_files := GlobUtils.glob(search_root, glob_filter, true, MAX_FILE_BYTES, GlobTool.workspace_skip_glob_rules)
+	var all_files := GlobUtils.glob(search_root, glob_filter, true, MAX_FILE_BYTES, GitIgnore.ignore_rules)
 	if all_files.is_empty():
 		return AgentToolResult.ok("No files to search")
 
