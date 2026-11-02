@@ -147,31 +147,11 @@ func async_chat_messages_stream(messages: Array[ChatMessage], tools: Array[OpenA
 	result.tool_calls = extract_stream_tool_calls(chunks)
 	result.finish_reason = extract_finish_reason(chunks)
 	result.usage = extract_stream_usage(chunks)
-	apply_finish_reason_error(result)
+	result.error = extract_finish_error(result.finish_reason)
 	if StringUtils.is_not_blank(result.error):
 		Log.error("OpenAI stream failed:[{}]", result.error)
 	return result
 
-
-## Maps provider [member OpenAiCompletion.finish_reason] values the agent loop cannot handle into [member OpenAiCompletion.error].
-func apply_finish_reason_error(result: OpenAiCompletion) -> void:
-	# A turn the loop cannot act on must be reported instead of silently looking like a finished answer.
-	# `stop` / `end` / `tool_calls` / `function_call` are the normal ends; anything else names the raw
-	# value so an unrecognized provider reason stays visible. Missing values are left alone: not every
-	# endpoint sends one, and a false failure would be worse than a silent one.
-	match result.finish_reason:
-		"", "stop", "end", "tool_calls", "function_call":
-			pass
-		"length":
-			result.error = "response truncated by the output token limit"
-		"content_filter":
-			result.error = "response stopped by the provider content filter"
-		"network_error":
-			result.error = "provider reported a network error"
-		_:
-			if StringUtils.is_not_blank(result.finish_reason):
-				result.error = StringUtils.format("unhandled finish_reason: {}", result.finish_reason)
-	pass
 
 # ----------------------------------------------------------------------------------------------------------------------
 const STREAM_KIND_CONTENT := "content"
@@ -270,6 +250,27 @@ func extract_finish_reason(chunks: Array[OpenAiStreamChunk]) -> String:
 		if StringUtils.is_not_empty(chunk.choices[0].finish_reason):
 			finish_reason = chunk.choices[0].finish_reason
 	return finish_reason
+
+
+## Agent-loop failure message for provider [param finish_reason], or empty when the turn can proceed.
+func extract_finish_error(finish_reason: String) -> String:
+	# A turn the loop cannot act on must be reported instead of silently looking like a finished answer.
+	# `stop` / `end` / `tool_calls` / `function_call` are the normal ends; anything else names the raw
+	# value so an unrecognized provider reason stays visible. Missing values are left alone: not every
+	# endpoint sends one, and a false failure would be worse than a silent one.
+	match finish_reason:
+		"", "stop", "end", "tool_calls", "function_call":
+			return StringUtils.EMPTY
+		"length":
+			return "response truncated by the output token limit"
+		"content_filter":
+			return "response stopped by the provider content filter"
+		"network_error":
+			return "provider reported a network error"
+		_:
+			if StringUtils.is_not_blank(finish_reason):
+				return StringUtils.format("unhandled finish_reason: {}", finish_reason)
+			return StringUtils.EMPTY
 
 
 func extract_stream_usage(chunks: Array[OpenAiStreamChunk]) -> OpenAiUsage:

@@ -366,9 +366,6 @@ func open_ai_request_to_json_tool_calls_reasoning_test() -> void:
 	pass
 
 
-func apply_finish_reason_error_length_test() -> void:
-	var completion := OpenAiCompletion.new()
-	completion.finish_reason = "length"
-	client.apply_finish_reason_error(completion)
-	assert(completion.error == "response truncated by the output token limit")
+func extract_finish_error_length_test() -> void:
+	assert(client.extract_finish_error("length") == "response truncated by the output token limit")
 	pass
