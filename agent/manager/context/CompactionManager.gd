@@ -124,7 +124,16 @@ static func collect_context_entries(entries: Array[ChatEntry]) -> Array[ChatEntr
 static func update_estimated_usage(session: AgentSession) -> void:
 	var character_count := 0
 	for message: ChatMessage in session.messages:
+		if message == null:
+			continue
 		character_count += message.content.length()
+		character_count += message.reasoning_content.length()
+		character_count += message.tool_call_id.length()
+		character_count += message.image_data_url.length()
+		for tool_call: OpenAiToolCall in message.tool_calls:
+			if tool_call == null:
+				continue
+			character_count += JsonUtils.object_to_json(tool_call).length()
 	# A stable UI estimate until the next API response supplies authoritative usage.
 	session.usage.prompt_tokens = maxi(1, int(ceil(float(character_count) / 4.0)))
 	session.usage.completion_tokens = 0
