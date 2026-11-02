@@ -10,12 +10,6 @@ const ROLE_TOOL := "tool"
 var role: String = ""
 
 
-func validate() -> String:
-	if StringUtils.is_blank(role):
-		return "ChatMessage role is empty"
-	return "ChatMessage base cannot be sent"
-
-
 func to_api_dict() -> Dictionary:
 	return {}
 

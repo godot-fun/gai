@@ -10,10 +10,6 @@ func _init(_text: String = "") -> void:
 	pass
 
 
-func validate() -> String:
-	return StringUtils.EMPTY
-
-
 func to_api_dict() -> Dictionary:
 	return {"role": role, "content": text}
 

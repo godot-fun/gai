@@ -33,15 +33,6 @@ func check_request(messages: Array[ChatMessage]) -> String:
 	if messages.is_empty():
 		Log.error("OpenAI messages is empty")
 		return "OpenAI messages is empty"
-	for index in messages.size():
-		var message := messages[index]
-		if message == null:
-			Log.error("OpenAI message at index:[{}] is null", index)
-			return StringUtils.format("OpenAI message at index {} is null", index)
-		var message_error := message.validate()
-		if StringUtils.is_not_blank(message_error):
-			Log.error("OpenAI message at index:[{}] invalid:[{}]", index, message_error)
-			return StringUtils.format("OpenAI message at index {} invalid: {}", index, message_error)
 	return StringUtils.EMPTY
 
 

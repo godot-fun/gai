@@ -7,10 +7,6 @@ const TYPE_IMAGE_URL := "image_url"
 var part_type: String = ""
 
 
-func validate() -> String:
-	return "ChatUserPart base is invalid"
-
-
 func to_api_dict() -> Dictionary:
 	return {}
 

@@ -12,12 +12,6 @@ func _init(_tool_call_id: String = "", _text: String = "") -> void:
 	pass
 
 
-func validate() -> String:
-	if StringUtils.is_blank(tool_call_id):
-		return "tool message requires tool_call_id"
-	return StringUtils.EMPTY
-
-
 func to_api_dict() -> Dictionary:
 	return {"role": role, "content": text, "tool_call_id": tool_call_id}
 

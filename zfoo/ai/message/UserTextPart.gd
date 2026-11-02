@@ -10,12 +10,6 @@ func _init(_text: String = "") -> void:
 	pass
 
 
-func validate() -> String:
-	if StringUtils.is_blank(text):
-		return "user text part requires text"
-	return StringUtils.EMPTY
-
-
 func to_api_dict() -> Dictionary:
 	return {"type": part_type, "text": text}
 

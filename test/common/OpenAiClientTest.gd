@@ -225,66 +225,11 @@ func chat_message_from_dict_dispatches_by_role_test() -> void:
 	pass
 
 
-func chat_message_validate_accepts_factories_test() -> void:
-	assert(ChatMessage.system("sys").validate() == StringUtils.EMPTY)
-	assert(ChatMessage.user("hi").validate() == StringUtils.EMPTY)
-	assert(ChatMessage.assistant("done", "think").validate() == StringUtils.EMPTY)
-	assert(ChatMessage.tool_result("call_1", "ok").validate() == StringUtils.EMPTY)
-	var tool_call := OpenAiToolCall.new()
-	tool_call.id = "call_1"
-	tool_call.function.name = "read"
-	assert(ChatMessage.assistant_tool_calls([tool_call], "", "think").validate() == StringUtils.EMPTY)
-	pass
-
-
-func chat_message_validate_rejects_user_without_parts_test() -> void:
-	var message := UserChatMessage.new([])
-	assert(message.validate() == "user message requires at least one part")
-	pass
-
-
-func chat_message_validate_accepts_user_image_test() -> void:
-	var message := UserChatMessage.with_text_and_data_url("caption", "data:image/png;base64,AAAA")
-	assert(message.validate() == StringUtils.EMPTY)
-	pass
-
-
-func chat_message_validate_accepts_assistant_tool_calls_empty_arguments_test() -> void:
-	var tool_call := OpenAiToolCall.new()
-	tool_call.id = "call_1"
-	tool_call.function.name = "read"
-	tool_call.function.arguments = "{}"
-	assert(ChatMessage.assistant_tool_calls([tool_call]).validate() == StringUtils.EMPTY)
-	pass
-
-
-func chat_message_validate_rejects_assistant_tool_call_missing_id_test() -> void:
-	var tool_call := OpenAiToolCall.new()
-	tool_call.function.name = "read"
-	assert(ChatMessage.assistant_tool_calls([tool_call]).validate() == "assistant tool_calls[0] requires id")
-	pass
-
-
-func chat_message_validate_rejects_assistant_tool_call_missing_name_test() -> void:
-	var tool_call := OpenAiToolCall.new()
-	tool_call.id = "call_1"
-	assert(ChatMessage.assistant_tool_calls([tool_call]).validate() == "assistant tool_calls[0] requires function.name")
-	pass
-
-
 func chat_message_tool_calls_reasoning_omits_empty_reasoning_test() -> void:
 	var tool_call := OpenAiToolCall.new()
 	tool_call.id = "call_1"
 	var message := ChatMessage.assistant_tool_calls([tool_call])
 	assert(not message.to_api_dict().has("reasoning_content"))
-	pass
-
-
-func open_ai_check_request_rejects_invalid_message_test() -> void:
-	var messages: Array[ChatMessage] = []
-	messages.append(ChatMessage.user("hi"))
-	messages.append(UserChatMessage.new([]))
-	assert(client.check_request(messages) == "OpenAI message at index 1 invalid: user message requires at least one part")
 	pass
 
 

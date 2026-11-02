@@ -13,18 +13,6 @@ func _init(_text: String = "", _reasoning: String = "") -> void:
 	pass
 
 
-func validate() -> String:
-	for index in tool_calls.size():
-		var tool_call := tool_calls[index]
-		if tool_call == null:
-			return StringUtils.format("assistant tool_calls[{}] is null", index)
-		if StringUtils.is_blank(tool_call.id):
-			return StringUtils.format("assistant tool_calls[{}] requires id", index)
-		if StringUtils.is_blank(tool_call.function.name):
-			return StringUtils.format("assistant tool_calls[{}] requires function.name", index)
-	return StringUtils.EMPTY
-
-
 func to_api_dict() -> Dictionary:
 	var wire := {"role": role, "content": StringUtils.trim(text)}
 	if StringUtils.is_not_blank(reasoning_content):

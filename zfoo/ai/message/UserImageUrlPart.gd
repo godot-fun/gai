@@ -10,12 +10,6 @@ func _init(_url: String = "") -> void:
 	pass
 
 
-func validate() -> String:
-	if StringUtils.is_blank(image_url):
-		return "user image part requires image_url"
-	return StringUtils.EMPTY
-
-
 func to_api_dict() -> Dictionary:
 	return {"type": part_type, "image_url": {"url": image_url}}
 

@@ -19,19 +19,6 @@ func first_image_data_url() -> String:
 	return StringUtils.EMPTY
 
 
-func validate() -> String:
-	if parts.is_empty():
-		return "user message requires at least one part"
-	for index in parts.size():
-		var part := parts[index]
-		if part == null:
-			return StringUtils.format("user parts[{}] is null", index)
-		var part_error := part.validate()
-		if StringUtils.is_not_blank(part_error):
-			return StringUtils.format("user parts[{}]: {}", index, part_error)
-	return StringUtils.EMPTY
-
-
 func to_api_dict() -> Dictionary:
 	if parts.size() == 1 and parts[0] is UserTextPart:
 		return {"role": role, "content": (parts[0] as UserTextPart).text}
