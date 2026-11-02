@@ -132,6 +132,7 @@ desktop.ini
 # AI tool state, local dependencies, and vector-store caches
 # =============================================================================
 .gai/
+.gai2/
 .dependency/
 .cursor/
 .codex/
