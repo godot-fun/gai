@@ -96,7 +96,7 @@ static func compaction_replaces_previous_summary_message_test() -> void:
 	]
 	var context := CompactionManager.collect_context_messages(messages)
 	assert(context.size() == 1)
-	assert(context[0].content == "system")
+	assert((context[0] as SystemChatMessage).text == "system")
 	pass
 
 
@@ -140,7 +140,7 @@ static func compaction_refreshes_memory_before_notification_test() -> void:
 	ContextInjectionManager.refresh_memory_after_compaction(session)
 	var refreshed_context := MemoryPrompt.get_memory_context()
 	assert(StringUtils.is_not_blank(refreshed_context))
-	assert(session.messages[0].content == refreshed_context)
+	assert((session.messages[0] as SystemChatMessage).text == refreshed_context)
 	assert(session.chat_entries[0].body == refreshed_context)
 	pass
 
@@ -161,9 +161,11 @@ static func memory_messages_drop_thinking_and_tool_protocol_test() -> void:
 	var memory_messages := MemoryManager.collect_memory_messages(messages)
 	assert(memory_messages.size() == 3)
 	assert(memory_messages[0].role == ChatMessage.ROLE_USER)
-	assert(memory_messages[0].content == CompactionPrompt.build_memory_context("previous work"))
-	assert(memory_messages[1].role == ChatMessage.ROLE_USER and memory_messages[1].content == "question")
-	assert(memory_messages[2].role == ChatMessage.ROLE_ASSISTANT and memory_messages[2].content == "answer")
-	assert(memory_messages[2].reasoning_content.is_empty())
-	assert(memory_messages[2].tool_calls.is_empty())
+	assert(UserChatMessage.joined_text(memory_messages[0] as UserChatMessage) == CompactionPrompt.build_memory_context("previous work"))
+	assert(memory_messages[1].role == ChatMessage.ROLE_USER and UserChatMessage.joined_text(memory_messages[1] as UserChatMessage) == "question")
+	assert(memory_messages[2] is AssistantChatMessage)
+	var answer := memory_messages[2] as AssistantChatMessage
+	assert(answer.text == "answer")
+	assert(answer.reasoning_content.is_empty())
+	assert(answer.tool_calls.is_empty())
 	pass

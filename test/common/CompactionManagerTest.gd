@@ -1,6 +1,5 @@
 static func update_estimated_usage_includes_image_data_url_test() -> void:
-	var message := ChatMessage.user("")
-	message.image_data_url = "a".repeat(40)
+	var message := UserChatMessage.new([ChatUserPart.image_url_part("a".repeat(40))])
 	var session := AgentSession.new(1)
 	session.messages.append(message)
 	CompactionManager.update_estimated_usage(session)

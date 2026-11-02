@@ -228,23 +228,14 @@ func chat_message_validate_accepts_factories_test() -> void:
 	pass
 
 
-func chat_message_validate_rejects_user_with_tool_calls_test() -> void:
-	var message := ChatMessage.user("hi")
-	message.tool_calls.append(OpenAiToolCall.new())
-	assert(message.validate() == "user message must not set tool_calls")
-	pass
-
-
-func chat_message_validate_rejects_user_image_on_system_test() -> void:
-	var message := ChatMessage.system("ctx")
-	message.image_data_url = "data:image/png;base64,AAAA"
-	assert(message.validate() == "system message must not set image_data_url")
+func chat_message_validate_rejects_user_without_parts_test() -> void:
+	var message := UserChatMessage.new([])
+	assert(message.validate() == "user message requires at least one part")
 	pass
 
 
 func chat_message_validate_accepts_user_image_test() -> void:
-	var message := ChatMessage.user("caption")
-	message.image_data_url = "data:image/png;base64,AAAA"
+	var message := UserChatMessage.with_text_and_data_url("caption", "data:image/png;base64,AAAA")
 	assert(message.validate() == StringUtils.EMPTY)
 	pass
 
@@ -283,10 +274,8 @@ func chat_message_tool_calls_reasoning_omits_empty_reasoning_test() -> void:
 func open_ai_check_request_rejects_invalid_message_test() -> void:
 	var messages: Array[ChatMessage] = []
 	messages.append(ChatMessage.user("hi"))
-	var invalid := ChatMessage.user("bad")
-	invalid.tool_calls.append(OpenAiToolCall.new())
-	messages.append(invalid)
-	assert(client.check_request(messages) == "OpenAI message at index 1 invalid: user message must not set tool_calls")
+	messages.append(UserChatMessage.new([]))
+	assert(client.check_request(messages) == "OpenAI message at index 1 invalid: user message requires at least one part")
 	pass
 
 
@@ -294,14 +283,14 @@ func chat_message_tool_calls_reasoning_roundtrip_test() -> void:
 	var tool_call := OpenAiToolCall.new()
 	tool_call.id = "call_1"
 	tool_call.function.name = "read"
-	var message := ChatMessage.assistant_tool_calls([tool_call], "", "thinking")
+	var message := ChatMessage.assistant_tool_calls([tool_call], "", "thinking") as AssistantChatMessage
 	assert(message.reasoning_content == "thinking")
 	assert(message.to_api_dict()["reasoning_content"] == "thinking")
 	pass
 
 
 func chat_message_plain_assistant_reasoning_roundtrip_test() -> void:
-	var message := ChatMessage.assistant("done", "thinking")
+	var message := ChatMessage.assistant("done", "thinking") as AssistantChatMessage
 	assert(message.reasoning_content == "thinking")
 	assert(message.to_api_dict()["reasoning_content"] == "thinking")
 	pass
@@ -314,40 +303,40 @@ func chat_message_plain_assistant_without_reasoning_omits_field_test() -> void:
 
 
 func chat_message_user_image_wire_shape_test() -> void:
-	var message := ChatMessage.user("Inspect this image")
-	message.image_data_url = "data:image/png;base64,AAAA"
+	var message := UserChatMessage.with_text_and_data_url("Inspect this image", "data:image/png;base64,AAAA")
 	var wire := message.to_api_dict()
 	assert(wire["role"] == ChatMessage.ROLE_USER)
 	assert(wire["content"].size() == 2)
 	assert(wire["content"][0] == {"type": "text", "text": "Inspect this image"})
-	assert(wire["content"][1] == {"type": "image_url", "image_url": {"url": message.image_data_url}})
+	assert(wire["content"][1] == {"type": "image_url", "image_url": {"url": "data:image/png;base64,AAAA"}})
 	pass
 
 
 func chat_message_user_image_roundtrip_test() -> void:
-	var message := ChatMessage.user("Inspect this image")
-	message.image_data_url = "data:image/png;base64,AAAA"
-	var restored: ChatMessage = JsonUtils.json_to_object(JsonUtils.object_to_json(message), ChatMessage)
-	assert(restored != null)
-	assert(restored.role == ChatMessage.ROLE_USER)
-	assert(restored.content == message.content)
-	assert(restored.image_data_url == message.image_data_url)
+	var message := UserChatMessage.with_text_and_data_url("Inspect this image", "data:image/png;base64,AAAA")
+	var json := JsonUtils.object_to_json(message)
+	var parser := JSON.new()
+	assert(parser.parse(json) == OK)
+	var user := UserChatMessage.from_dict(parser.data)
+	assert(user != null)
+	assert(UserChatMessage.joined_text(user) == UserChatMessage.joined_text(message))
+	assert(user.first_image_data_url() == message.first_image_data_url())
 	pass
 
 
 func chat_message_user_image_default_caption_test() -> void:
 	var path := ProjectSettings.globalize_path("res://test/asset/explosion_animation.png")
-	var message := ChatMessage.user_image(StringUtils.EMPTY, path)
-	assert(StringUtils.is_not_blank(message.image_data_url))
-	assert(message.content == StringUtils.format("Image read: {}", path))
+	var message := ChatMessage.user_image(StringUtils.EMPTY, path) as UserChatMessage
+	assert(StringUtils.is_not_blank(message.first_image_data_url()))
+	assert(UserChatMessage.joined_text(message) == StringUtils.format("Image read: {}", path))
 	pass
 
 
 func chat_message_user_image_missing_file_has_no_data_url_test() -> void:
 	var path := ProjectSettings.globalize_path("res://test/asset/does_not_exist.png")
-	var message := ChatMessage.user_image("caption", path)
-	assert(StringUtils.is_blank(message.image_data_url))
-	assert(message.content == "caption")
+	var message := ChatMessage.user_image("caption", path) as UserChatMessage
+	assert(StringUtils.is_blank(message.first_image_data_url()))
+	assert(UserChatMessage.joined_text(message) == "caption")
 	pass
 
 

@@ -126,14 +126,24 @@ static func update_estimated_usage(session: AgentSession) -> void:
 	for message: ChatMessage in session.messages:
 		if message == null:
 			continue
-		character_count += message.content.length()
-		character_count += message.reasoning_content.length()
-		character_count += message.tool_call_id.length()
-		character_count += message.image_data_url.length()
-		for tool_call: OpenAiToolCall in message.tool_calls:
-			if tool_call == null:
-				continue
-			character_count += JsonUtils.object_to_json(tool_call).length()
+		if message is SystemChatMessage:
+			character_count += (message as SystemChatMessage).text.length()
+		elif message is UserChatMessage:
+			var user := message as UserChatMessage
+			for part: ChatUserPart in user.parts:
+				if part is UserTextPart:
+					character_count += (part as UserTextPart).text.length()
+				elif part is UserImageUrlPart:
+					character_count += (part as UserImageUrlPart).image_url.length()
+		elif message is AssistantChatMessage:
+			var assistant := message as AssistantChatMessage
+			character_count += assistant.reasoning_content.length()
+			for tool_call: OpenAiToolCall in assistant.tool_calls:
+				if tool_call != null:
+					character_count += JsonUtils.object_to_json(tool_call).length()
+		elif message is ToolResultChatMessage:
+			var tool_message := message as ToolResultChatMessage
+			character_count += tool_message.text.length() + tool_message.tool_call_id.length()
 	# A stable UI estimate until the next API response supplies authoritative usage.
 	session.usage.prompt_tokens = maxi(1, int(ceil(float(character_count) / 4.0)))
 	session.usage.completion_tokens = 0

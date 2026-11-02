@@ -68,15 +68,20 @@ func async_chat_messages(messages: Array[ChatMessage], proxy: String = "", respo
 	if not response.success or response.code != 200:
 		Log.error("OpenAI request failed, http code:[{}], {}", response.code, StringUtils.truncate(response.get_error_string(), 512))
 		return StringUtils.EMPTY
-	var chat_response: OpenAiResponse = JsonUtils.json_to_object(body, OpenAiResponse)
-	if chat_response == null or chat_response.choices.is_empty():
-		Log.error("OpenAI response parse failed body:[{}]", StringUtils.truncate(body, 512))
-		return StringUtils.EMPTY
-	var message := chat_response.choices[0].message
-	if message == null or StringUtils.is_blank(message.content):
+	var content := StringUtils.EMPTY
+	var parser := JSON.new()
+	if parser.parse(body) == OK and typeof(parser.data) == TYPE_DICTIONARY:
+		var choices: Variant = parser.data.get("choices", [])
+		if typeof(choices) == TYPE_ARRAY and not choices.is_empty():
+			var choice: Variant = choices[0]
+			if typeof(choice) == TYPE_DICTIONARY:
+				var message: Variant = choice.get("message", {})
+				if typeof(message) == TYPE_DICTIONARY:
+					content = str(message.get("content", ""))
+	if StringUtils.is_blank(content):
 		Log.error("OpenAI response missing content body:[{}]", StringUtils.truncate(body, 512))
 		return StringUtils.EMPTY
-	return message.content
+	return content
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Example sse request:

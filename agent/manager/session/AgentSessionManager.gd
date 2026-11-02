@@ -334,7 +334,7 @@ static func message_index_for_chat_entry(session: AgentSession, entry_idx: int) 
 			var message: ChatMessage = session.messages[message_idx]
 			var matches := false
 			if entry.kind == ChatEntry.KIND_SYSTEM:
-				matches = message.role == ChatMessage.ROLE_SYSTEM and message.content == entry.body
+				matches = message is SystemChatMessage and (message as SystemChatMessage).text == entry.body
 			elif entry.kind == ChatEntry.KIND_SKILL:
 				matches = SkillPrompt.is_skill_context_message(message)
 			elif entry.kind == ChatEntry.KIND_MEMORY:

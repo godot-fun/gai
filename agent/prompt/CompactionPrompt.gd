@@ -27,7 +27,7 @@ static func build_summary_context(summary: String) -> String:
 
 ## Returns whether [param message] is the system message persisted for a prior compaction.
 static func is_compaction_message(message: ChatMessage) -> bool:
-	return message.role == ChatMessage.ROLE_SYSTEM and message.content.begins_with(SUMMARY_PREFIX)
+	return message is SystemChatMessage and (message as SystemChatMessage).text.begins_with(SUMMARY_PREFIX)
 
 
 ## Strips [method build_summary_context] wrapping so memory maintenance receives plain summary text.

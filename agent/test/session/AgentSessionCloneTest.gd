@@ -17,8 +17,8 @@ static func agent_session_deep_clone_is_independent_test() -> void:
 
 	var cloned := session.deep_clone()
 	assert(JsonUtils.object_to_json(cloned) == JsonUtils.object_to_json(session))
-	session.messages[0].content = "changed"
-	session.messages[0].tool_calls[0].function.arguments = "changed"
+	(session.messages[0] as AssistantChatMessage).text = "changed"
+	(session.messages[0] as AssistantChatMessage).tool_calls[0].function.arguments = "changed"
 	session.chat_entries[0].body = "changed"
 	session.chat_entries[0].details["key"] = "changed"
 	session.pending_messages[0] = "changed"
@@ -26,9 +26,9 @@ static func agent_session_deep_clone_is_independent_test() -> void:
 
 	assert(cloned != session)
 	assert(cloned.messages[0] != session.messages[0])
-	assert(cloned.messages[0].content == "answer")
-	assert(cloned.messages[0].tool_calls[0] != session.messages[0].tool_calls[0])
-	assert(cloned.messages[0].tool_calls[0].function.arguments == "{\"path\":\"before\"}")
+	assert((cloned.messages[0] as AssistantChatMessage).text == "answer")
+	assert((cloned.messages[0] as AssistantChatMessage).tool_calls[0] != (session.messages[0] as AssistantChatMessage).tool_calls[0])
+	assert((cloned.messages[0] as AssistantChatMessage).tool_calls[0].function.arguments == "{\"path\":\"before\"}")
 	assert(cloned.chat_entries[0] != session.chat_entries[0])
 	assert(cloned.chat_entries[0].body == "body")
 	assert(cloned.chat_entries[0].details["key"] == "before")

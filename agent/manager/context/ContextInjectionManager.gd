@@ -107,8 +107,8 @@ static func refresh_memory_after_compaction(session: AgentSession) -> void:
 		found = true
 		var previous_context := entry.body
 		for message: ChatMessage in session.messages:
-			if message.role == ChatMessage.ROLE_SYSTEM and message.content == previous_context:
-				message.content = context
+			if message is SystemChatMessage and (message as SystemChatMessage).text == previous_context:
+				(message as SystemChatMessage).text = context
 				break
 		entry.body = context
 	if not found and AgentSetting.get_memory_in_prompt_enabled():
