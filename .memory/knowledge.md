@@ -15,6 +15,12 @@ description: Records verified facts, concepts, and project knowledge worth reusi
 - Source: agent/server/LocalTokenizer.gd, agent/ui/visuals/transformer/TransformerController.gd
 - Confidence: Confirmed
 
+### Skill index lives in the manager layer and self-refreshes by disk fingerprint
+- Knowledge: `SkillManager` (`agent/manager/skill/SkillManager.gd`) owns `.agents/skills` discovery, `SKILL.md` front-matter parsing, and description trimming. Entries are typed `SkillSummary` objects (`name` + `description`; explicitly a summary, not the skill body or path), never bare `Dictionary`. `get_summaries()` rescans when the disk fingerprint changed: `build_signature(folders)` is folder names + each `SKILL.md` mtime, joined with a `StringBuilder`, so a skill added/renamed/edited while the app runs appears on the next `/` completion with no watcher and no restart. Godot reports mtime in whole seconds, so two edits inside one second may only be noticed by a later change. `ChatInputSkillCompletion` (`agent/ui/input/`) keeps only CodeEdit popup behavior plus static `matching_summaries(summaries, token)` / `build_display_text(summary)` helpers. `SkillPrompt` intentionally keeps its own static README snapshot, because `is_skill_context_message` compares existing session messages against that exact text — the model-facing skill index still only refreshes on restart or new-session injection.
+- Updated: 2026-11-02
+- Source: agent/manager/skill/SkillManager.gd, agent/ui/input/ChatInputSkillCompletion.gd, agent/test/manager/SkillManagerTest.gd
+- Confidence: Confirmed
+
 ### Visual unit test suite segfaults at shutdown
 - Knowledge: `agent/test/visual/unit/VisualUnitTest.tscn` passes its assertions in headless mode but Godot exits 139 (segfault during teardown); the same behavior exists at commit 86ac4cfb, so it is unrelated to any single test change. Some visual tests (GeometricGenesis / InkLandscape) also report FAIL when an earlier test in the folder logs an error, because `UnitTest.gd` fails the remaining tests after the first error.
 - Updated: 2026-11-02

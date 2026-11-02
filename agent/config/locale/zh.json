@@ -281,7 +281,7 @@
       "dialog_title": "打开文件夹"
     },
     "input": {
-      "placeholder": "让 gai Code Agent 读取、编辑文件或运行命令…（Enter 发送，Shift+Enter 换行）",
+      "placeholder": "让 gai Code Agent 读取、编辑文件或运行命令…（Enter 发送，Shift+Enter 换行，/ 调用技能）",
       "click_to_ask": "点击询问 gai Code Agent…",
       "send": "发送（Enter）",
       "queued": "排队中（{}）",

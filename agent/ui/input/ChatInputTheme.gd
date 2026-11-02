@@ -44,6 +44,31 @@ static func apply_field(input_field: TextEdit) -> void:
 	pass
 
 
+## Themes the built-in `/skill` completion list: same surface, radius and text colors as the
+## composer so the popup does not look like an editor widget.
+static func apply_completion(input_field: CodeEdit) -> void:
+	var panel := StyleBoxHelper.create_style_box_flat(Colors.elevated_surface, ControlSize.radius_md,
+		Margin.ma_2, Margin.ma_2)
+	panel.border_color = Colors.border
+	panel.set_border_width(SIDE_LEFT, ControlSize.border_xs)
+	panel.set_border_width(SIDE_TOP, ControlSize.border_xs)
+	panel.set_border_width(SIDE_RIGHT, ControlSize.border_xs)
+	panel.set_border_width(SIDE_BOTTOM, ControlSize.border_xs)
+	panel.shadow_color = Color(0, 0, 0, 0.32 if ThemeColor.is_dark_theme() else 0.10)
+	panel.shadow_size = 10
+	panel.shadow_offset = Vector2(0, 3)
+	input_field.add_theme_stylebox_override("completion", panel)
+	input_field.add_theme_color_override("completion_background_color", Color.TRANSPARENT)
+	input_field.add_theme_color_override("completion_selected_color", ThemeColor.alpha_theme_color(0.22))
+	input_field.add_theme_color_override("completion_existing_color", ThemeColor.alpha_theme_color(0.12))
+	input_field.add_theme_color_override("completion_scroll_color", ThemeColor.alpha_theme_color(0.35))
+	input_field.add_theme_color_override("completion_scroll_hovered_color", ThemeColor.accent_theme_color())
+	input_field.add_theme_constant_override("completion_lines", ChatInputSkillCompletion.POPUP_ROWS)
+	input_field.add_theme_constant_override("completion_max_width", 72)
+	input_field.add_theme_constant_override("completion_scroll_width", 4)
+	pass
+
+
 static func apply_send_button(send_button: Button, stop_action: bool, show_activity: bool,
 		compacting: bool) -> void:
 	var show_shader_effect := not show_activity

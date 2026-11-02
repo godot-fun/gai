@@ -289,7 +289,7 @@ custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="InputField" type="TextEdit" parent="Root/Body/ChatArea/InputBar/InputWrap/InputInner" unique_id=1607672378]
+[node name="InputField" type="CodeEdit" parent="Root/Body/ChatArea/InputBar/InputWrap/InputInner" unique_id=1607672378]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
