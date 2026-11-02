@@ -142,6 +142,7 @@ static func compaction_refreshes_memory_before_notification_test() -> void:
 static func memory_messages_drop_thinking_and_tool_protocol_test() -> void:
 	var tool_call := OpenAiToolCall.new()
 	tool_call.id = "call-1"
+	tool_call.function.name = "read"
 	var messages: Array[ChatMessage] = [
 		ChatMessage.system("system"),
 		ChatMessage.system(CompactionPrompt.build_summary_context("previous work")),

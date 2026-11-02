@@ -113,6 +113,14 @@ func validate() -> String:
 				return "assistant message must not set tool_call_id"
 			if StringUtils.is_not_blank(image_data_url):
 				return "assistant message must not set image_data_url"
+			for index in tool_calls.size():
+				var tool_call := tool_calls[index]
+				if tool_call == null:
+					return StringUtils.format("assistant tool_calls[{}] is null", index)
+				if StringUtils.is_blank(tool_call.id):
+					return StringUtils.format("assistant tool_calls[{}] requires id", index)
+				if StringUtils.is_blank(tool_call.function.name):
+					return StringUtils.format("assistant tool_calls[{}] requires function.name", index)
 			return StringUtils.EMPTY
 		ROLE_TOOL:
 			if StringUtils.is_not_blank(reasoning_content):

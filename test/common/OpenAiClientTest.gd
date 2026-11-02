@@ -223,6 +223,7 @@ func chat_message_validate_accepts_factories_test() -> void:
 	assert(ChatMessage.tool_result("call_1", "ok").validate() == StringUtils.EMPTY)
 	var tool_call := OpenAiToolCall.new()
 	tool_call.id = "call_1"
+	tool_call.function.name = "read"
 	assert(ChatMessage.assistant_tool_calls([tool_call], "", "think").validate() == StringUtils.EMPTY)
 	pass
 
@@ -245,6 +246,29 @@ func chat_message_validate_accepts_user_image_test() -> void:
 	var message := ChatMessage.user("caption")
 	message.image_data_url = "data:image/png;base64,AAAA"
 	assert(message.validate() == StringUtils.EMPTY)
+	pass
+
+
+func chat_message_validate_accepts_assistant_tool_calls_empty_arguments_test() -> void:
+	var tool_call := OpenAiToolCall.new()
+	tool_call.id = "call_1"
+	tool_call.function.name = "read"
+	tool_call.function.arguments = "{}"
+	assert(ChatMessage.assistant_tool_calls([tool_call]).validate() == StringUtils.EMPTY)
+	pass
+
+
+func chat_message_validate_rejects_assistant_tool_call_missing_id_test() -> void:
+	var tool_call := OpenAiToolCall.new()
+	tool_call.function.name = "read"
+	assert(ChatMessage.assistant_tool_calls([tool_call]).validate() == "assistant tool_calls[0] requires id")
+	pass
+
+
+func chat_message_validate_rejects_assistant_tool_call_missing_name_test() -> void:
+	var tool_call := OpenAiToolCall.new()
+	tool_call.id = "call_1"
+	assert(ChatMessage.assistant_tool_calls([tool_call]).validate() == "assistant tool_calls[0] requires function.name")
 	pass
 
 
