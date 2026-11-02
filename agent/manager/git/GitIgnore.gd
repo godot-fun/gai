@@ -1,4 +1,4 @@
-﻿class_name GitIgnore
+class_name GitIgnore
 extends Object
 
 const COMMON_EXCLUDE_RULES := """
@@ -38,6 +38,8 @@ $RECYCLE.BIN/
 *.dmp
 *.tmp
 *.temp
+tmp*
+temp*
 *.bak
 *.orig
 *.rej
