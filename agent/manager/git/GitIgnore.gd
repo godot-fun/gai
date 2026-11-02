@@ -1,12 +1,12 @@
 class_name GitIgnore
 extends Object
 
-## Single home for the ignore rules used by the agent:
-## - Shadow checkpoint repositories get a generated `.git/info/exclude` from [member ignore_rules].
-## - Workspace search (glob / grep) skips directories matched by the same rules.
+## What the agent ignores: the built-in rule blocks, [constant WORKSPACE_IGNORE_FILES], and the data folder.
+## [member ignore_rules] is the single list — [method GitCheckpointManager.ensure_exclude_file] writes it
+## into shadow repositories, and workspace search (glob / grep) uses it as skip rules.
 
 # ---------------------------------------------------------------------------
-# Shadow checkpoint repository exclude rules
+# Ignore rules
 # ---------------------------------------------------------------------------
 
 const COMMON_EXCLUDE_RULES := """
@@ -158,17 +158,11 @@ const MANDATORY_EXCLUDE_RULES := """
 .dependency/
 """
 
-# ---------------------------------------------------------------------------
-# Built ignore rules — one list for the exclude file and for workspace search
-# ---------------------------------------------------------------------------
-
-## Workspace ignore files whose lines join the built-in blocks below.
+## Workspace ignore files whose lines join the built-in blocks above.
 const WORKSPACE_IGNORE_FILES: Array[String] = [".gitignore", ".cursorignore", ".agentignore", ".aiignore"]
 
-## Every ignore rule: the built-in blocks, [constant WORKSPACE_IGNORE_FILES], and the agent data folder.
-## [method ensure_exclude_rules] writes it to a checkpoint repository, and workspace search
-## (glob / grep) passes it to [method GlobUtils.glob] as skip rules.
-## Rebuilt from the current workspace root by [method refresh_ignore_rules].
+## Every ignore rule, in apply order. Rebuilt from the current workspace root by
+## [method refresh_ignore_rules] on startup and on every workspace switch.
 static var ignore_rules: Array[String] = []
 
 
@@ -200,20 +194,3 @@ static func append_rule_lines(rules: Array[String], text: String) -> void:
 			rules.append(rule)
 	pass
 
-
-# ---------------------------------------------------------------------------
-# Git exclude file for shadow checkpoint repositories
-# ---------------------------------------------------------------------------
-
-static func ensure_exclude_rules(git_dir: String) -> void:
-	# Ignore files may have changed since the last rebuild, and the exclude file is
-	# compared against the current rules.
-	refresh_ignore_rules()
-	var git_exclude_path := git_dir.path_join("info/exclude")
-	var exclude_rules := StringBuilder.new(ignore_rules).build_joined(FileUtils.NEWLINE_LF) + FileUtils.NEWLINE_LF
-	if FileUtils.read_file_to_string(git_exclude_path) == exclude_rules:
-		return
-	var write_error := FileUtils.write_string_to_file(git_exclude_path, exclude_rules)
-	if write_error != OK:
-		Log.error("agent checkpoint exclude write failed path:[{}] error:[{}]", git_exclude_path, error_string(write_error))
-	pass

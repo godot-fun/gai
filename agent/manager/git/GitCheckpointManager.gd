@@ -29,6 +29,19 @@ static func create_git_context(session_id: int) -> GitHelper.Git:
 	return GitHelper.Git.new(git_dir, workspace_root)
 
 
+## Brings the shadow repository's `info/exclude` in line with [member GitIgnore.ignore_rules].
+static func ensure_exclude_file(git_dir: String) -> void:
+	GitIgnore.refresh_ignore_rules()
+	var exclude_path := git_dir.path_join("info/exclude")
+	var exclude_rules := StringBuilder.new(GitIgnore.ignore_rules).build_joined(FileUtils.NEWLINE_LF) + FileUtils.NEWLINE_LF
+	if FileUtils.read_file_to_string(exclude_path) == exclude_rules:
+		return
+	var write_error := FileUtils.write_string_to_file(exclude_path, exclude_rules)
+	if write_error != OK:
+		Log.error("agent checkpoint exclude write failed path:[{}] error:[{}]", exclude_path, error_string(write_error))
+	pass
+
+
 static func ensure_repo(git: GitHelper.Git) -> Error:
 	var git_dir := git.git_dir
 	if DirAccess.dir_exists_absolute(git_dir):
@@ -52,7 +65,7 @@ static func ensure_repo(git: GitHelper.Git) -> Error:
 	if init.exit_code != 0:
 		Log.error("agent checkpoint init failed:[{}]", init.output.build_string())
 		return ERR_CANT_CREATE
-	GitIgnore.ensure_exclude_rules(git_dir)
+	ensure_exclude_file(git_dir)
 	return OK
 
 
@@ -119,7 +132,7 @@ static func async_cleanup() -> void:
 		var repo_error := await ensure_repo(git)
 		if repo_error != OK:
 			continue
-		GitIgnore.ensure_exclude_rules(git_dir)
+		ensure_exclude_file(git_dir)
 		var history := await git.async_list_commits(MAX_CHECKPOINTS + 1)
 		if history.exit_code != 0:
 			# An initialized repository without its first commit has nothing to clean.
