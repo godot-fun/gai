@@ -269,7 +269,7 @@ func async_wait_screen_context() -> String:
 
 ## Remote OpenAI-compatible chat via [ApiSetting].
 func async_remote_chat(prompt: String, system_prompt: String) -> String:
-	return await ApiSetting.get_client().async_chat(prompt, system_prompt, ApiSetting.get_proxy_address())
+	return await ApiSetting.get_client().async_chat_text(prompt, system_prompt, ApiSetting.get_proxy_address())
 
 
 ## Fill the remote diverge result into the open picker when the early guess finishes.

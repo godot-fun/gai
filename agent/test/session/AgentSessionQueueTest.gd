@@ -1,5 +1,39 @@
 ## Unit coverage for persisted per-session drafts and pending message order.
 
+static func session_messages_save_shape_roundtrip_test() -> void:
+	var tool_call := OpenAiToolCall.new()
+	tool_call.id = "call-1"
+	tool_call.function.name = "read"
+	tool_call.function.arguments = "{}"
+	var session := AgentSession.new(99)
+	session.messages.append(ChatMessage.system("system"))
+	session.messages.append(UserChatMessage.with_text_and_data_url("see image", "data:image/png;base64,QQ=="))
+	session.messages.append(ChatMessage.assistant_tool_calls([tool_call], "hi", "think"))
+	session.messages.append(ChatMessage.tool_result("call-1", "ok"))
+	var json := JsonUtils.object_to_json(session)
+	var parser := JSON.new()
+	assert(parser.parse(json) == OK)
+	var messages_raw: Array = parser.data["messages"]
+	assert(messages_raw.size() == session.messages.size())
+	var restored: Array[ChatMessage] = []
+	for item: Variant in messages_raw:
+		var role_id := str(item.get("role", ""))
+		match role_id:
+			ChatMessage.ROLE_SYSTEM:
+				restored.append(SystemChatMessage.from_dict(item))
+			ChatMessage.ROLE_USER:
+				restored.append(UserChatMessage.from_dict(item))
+			ChatMessage.ROLE_ASSISTANT:
+				restored.append(AssistantChatMessage.from_dict(item))
+			ChatMessage.ROLE_TOOL:
+				restored.append(ToolResultChatMessage.from_dict(item))
+	assert((restored[0] as SystemChatMessage).text == "system")
+	assert((restored[1] as UserChatMessage).first_image_data_url().begins_with("data:image/png;base64,"))
+	assert((restored[2] as AssistantChatMessage).tool_calls.size() == 1)
+	assert((restored[3] as ToolResultChatMessage).text == "ok")
+	pass
+
+
 static func session_queue_json_round_trip_test() -> void:
 	var session := AgentSession.new(42)
 	session.draft_text = "unfinished draft"

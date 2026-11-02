@@ -15,7 +15,7 @@ func _ready() -> void:
 
 func on_chat_pressed() -> void:
 	var client := ApiSetting.get_client()
-	var text := await client.async_chat(PROMPT)
+	var text := await client.async_chat_text(PROMPT)
 	if StringUtils.is_blank(text):
 		Log.error("OpenAI returned empty text")
 		return

@@ -86,13 +86,16 @@ Chat roles and factories live on `ChatMessage` under `zfoo/ai/message/` (`System
 
 ```gdscript
 var client := OpenAiClient.new(OS.get_environment("OPENAI_API_KEY"), "https://api.deepseek.com/chat/completions", "deepseek-v4-flash")
-var reply: String = await client.async_chat("hello", "you are a helpful assistant", proxy_address)
-
 # Optional: one CancelScope per run aborts in-flight HTTP for that client
 client.cancel_scope = CancelScope.new()
 
-# Streaming — on_delta(delta, stream_kind); read content, tool_calls, and usage from OpenAiCompletion
+var reply: String = await client.async_chat_text("hello", "you are a helpful assistant", proxy_address)
+
+# Non-stream with full message list — returns assistant text; failures return empty string
 var messages: Array[ChatMessage] = [ChatMessage.system("you are a helpful assistant"), ChatMessage.user("hello")]
+var text: String = await client.async_chat_messages_text(messages, proxy_address)
+
+# Streaming — on_delta(delta, stream_kind); read content, tool_calls, and usage from OpenAiCompletion
 var stream_completion := await client.async_chat_messages_stream(messages, tool_defs, proxy_address,
 	func(delta: String, stream_kind: String) -> void: print(delta))
 var streamed := stream_completion.content

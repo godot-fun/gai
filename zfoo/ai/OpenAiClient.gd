@@ -46,14 +46,17 @@ func check_request(messages: Array[ChatMessage]) -> String:
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-func async_chat(prompt: String, system_prompt: String = "", proxy: String = "", response_format: String = "") -> String:
+## Non-stream single-turn assistant text (builds system + user messages). Same as [method async_chat_messages_text].
+func async_chat_text(prompt: String, system_prompt: String = "", proxy: String = "", response_format: String = "") -> String:
 	var messages: Array[ChatMessage] = []
 	if StringUtils.is_not_blank(system_prompt):
 		messages.append(ChatMessage.system(system_prompt))
 	messages.append(ChatMessage.user(prompt))
-	return await async_chat_messages(messages, proxy, response_format)
+	return await async_chat_messages_text(messages, proxy, response_format)
 
-func async_chat_messages(messages: Array[ChatMessage], proxy: String = "", response_format: String = "") -> String:
+
+## Non-stream assistant text from [param messages]. Errors and empty replies return [member StringUtils.EMPTY].
+func async_chat_messages_text(messages: Array[ChatMessage], proxy: String = "", response_format: String = "") -> String:
 	if StringUtils.is_not_blank(check_request(messages)):
 		return StringUtils.EMPTY
 	var request := OpenAiRequest.new(model, messages, false)
@@ -68,16 +71,23 @@ func async_chat_messages(messages: Array[ChatMessage], proxy: String = "", respo
 	if not response.success or response.code != 200:
 		Log.error("OpenAI request failed, http code:[{}], {}", response.code, StringUtils.truncate(response.get_error_string(), 512))
 		return StringUtils.EMPTY
-	var content := StringUtils.EMPTY
 	var parser := JSON.new()
-	if parser.parse(body) == OK and typeof(parser.data) == TYPE_DICTIONARY:
-		var choices: Variant = parser.data.get("choices", [])
-		if typeof(choices) == TYPE_ARRAY and not choices.is_empty():
-			var choice: Variant = choices[0]
-			if typeof(choice) == TYPE_DICTIONARY:
-				var message: Variant = choice.get("message", {})
-				if typeof(message) == TYPE_DICTIONARY:
-					content = str(message.get("content", ""))
+	if parser.parse(body) != OK or typeof(parser.data) != TYPE_DICTIONARY:
+		Log.error("OpenAI response is not valid JSON body:[{}]", StringUtils.truncate(body, 512))
+		return StringUtils.EMPTY
+	var choices: Variant = (parser.data as Dictionary).get("choices", [])
+	if typeof(choices) != TYPE_ARRAY or choices.is_empty():
+		Log.error("OpenAI response missing choices body:[{}]", StringUtils.truncate(body, 512))
+		return StringUtils.EMPTY
+	var choice: Variant = choices[0]
+	if typeof(choice) != TYPE_DICTIONARY:
+		Log.error("OpenAI response choice is invalid body:[{}]", StringUtils.truncate(body, 512))
+		return StringUtils.EMPTY
+	var message: Variant = choice.get("message", {})
+	if typeof(message) != TYPE_DICTIONARY:
+		Log.error("OpenAI response message is invalid body:[{}]", StringUtils.truncate(body, 512))
+		return StringUtils.EMPTY
+	var content := str(message.get("content", ""))
 	if StringUtils.is_blank(content):
 		Log.error("OpenAI response missing content body:[{}]", StringUtils.truncate(body, 512))
 		return StringUtils.EMPTY
@@ -133,6 +143,14 @@ func async_chat_messages_stream(messages: Array[ChatMessage], tools: Array[OpenA
 	result.tool_calls = extract_stream_tool_calls(chunks)
 	result.finish_reason = extract_finish_reason(chunks)
 	result.usage = extract_stream_usage(chunks)
+	apply_finish_reason_error(result)
+	if StringUtils.is_not_blank(result.error):
+		Log.error("OpenAI stream failed:[{}]", result.error)
+	return result
+
+
+## Maps provider [member OpenAiCompletion.finish_reason] values the agent loop cannot handle into [member OpenAiCompletion.error].
+func apply_finish_reason_error(result: OpenAiCompletion) -> void:
 	# A turn the loop cannot act on must be reported instead of silently looking like a finished answer.
 	# `stop` / `end` / `tool_calls` / `function_call` are the normal ends; anything else names the raw
 	# value so an unrecognized provider reason stays visible. Missing values are left alone: not every
@@ -147,10 +165,9 @@ func async_chat_messages_stream(messages: Array[ChatMessage], tools: Array[OpenA
 		"network_error":
 			result.error = "provider reported a network error"
 		_:
-			result.error = StringUtils.format("unhandled finish_reason: {}", result.finish_reason)
-	if StringUtils.is_not_blank(result.error):
-		Log.error("OpenAI stream failed:[{}]", result.error)
-	return result
+			if StringUtils.is_not_blank(result.finish_reason):
+				result.error = StringUtils.format("unhandled finish_reason: {}", result.finish_reason)
+	pass
 
 # ----------------------------------------------------------------------------------------------------------------------
 const STREAM_KIND_CONTENT := "content"

@@ -96,7 +96,7 @@ static func compact_session(session_id: int) -> void:
 
 ## Starts before memory maintenance is awaited and publishes its result through [param state].
 static func async_generate_summary(client: OpenAiClient, messages: Array[ChatMessage], state: CompactionState) -> void:
-	state.summary = await client.async_chat_messages(messages, ApiSetting.get_proxy_address())
+	state.summary = await client.async_chat_messages_text(messages, ApiSetting.get_proxy_address())
 	state.summary_finished = true
 	pass
 

@@ -44,7 +44,7 @@ static func run(ai_client: OpenAiClient, session: AgentSession) -> void:
 				var unknown_tool_result := AgentToolResult.error(StringUtils.format("unknown tool '{}'", tool_name))
 				AgentEvents.events.tool_execution_start.emit(session.id, tool_call_id, tool_name, {})
 				AgentEvents.events.tool_execution_end.emit(session.id, tool_call_id, tool_name, unknown_tool_result)
-				session.messages.append(ChatMessage.tool_result(tool_call.id, unknown_tool_result.content))
+				session.messages.append(ChatMessage.tool_result(tool_call_id, unknown_tool_result.content))
 				continue
 			var args := tool.parse_args(tool_call.function.arguments)
 			AgentEvents.events.tool_execution_start.emit(session.id, tool_call_id, tool_name, args)
@@ -54,7 +54,7 @@ static func run(ai_client: OpenAiClient, session: AgentSession) -> void:
 			else:
 				agent_tool_result = await tool.async_execute(args, ai_client.cancel_scope)
 			AgentEvents.events.tool_execution_end.emit(session.id, tool_call_id, tool_name, agent_tool_result)
-			session.messages.append(ChatMessage.tool_result(tool_call.id, agent_tool_result.content))
+			session.messages.append(ChatMessage.tool_result(tool_call_id, agent_tool_result.content))
 			deferred_messages.append_array(agent_tool_result.deferred_messages)
 		session.messages.append_array(deferred_messages)
 		AgentEvents.events.turn_end.emit(session.id)
