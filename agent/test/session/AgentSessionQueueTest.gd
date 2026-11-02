@@ -126,6 +126,13 @@ static func compaction_message_identification_test() -> void:
 	pass
 
 
+static func compaction_extract_summary_body_test() -> void:
+	var summary := "previous work"
+	assert(CompactionPrompt.extract_summary_body(CompactionPrompt.build_summary_context(summary)) == summary)
+	assert(CompactionPrompt.extract_summary_body("plain text") == "plain text")
+	pass
+
+
 static func compaction_refreshes_memory_before_notification_test() -> void:
 	var previous_context := "stale memory snapshot"
 	var session := AgentSession.new(42)
