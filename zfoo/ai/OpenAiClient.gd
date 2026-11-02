@@ -17,14 +17,6 @@ func _init(p_api_key: String, p_base_url: String, p_model: String) -> void:
 	pass
 
 
-func build_messages(prompt: String, system_prompt: String = "") -> Array[ChatMessage]:
-	var messages: Array[ChatMessage] = []
-	if StringUtils.is_not_blank(system_prompt):
-		messages.append(ChatMessage.new(ChatMessage.ROLE_SYSTEM, system_prompt))
-	messages.append(ChatMessage.new(ChatMessage.ROLE_USER, prompt))
-	return messages
-
-
 func build_headers(stream: bool = false) -> PackedStringArray:
 	var headers := PackedStringArray([StringUtils.format("Authorization: Bearer {}", api_key)])
 	if stream:
@@ -55,7 +47,11 @@ func check_request(messages: Array[ChatMessage]) -> String:
 
 # ----------------------------------------------------------------------------------------------------------------------
 func async_chat(prompt: String, system_prompt: String = "", proxy: String = "", response_format: String = "") -> String:
-	return await async_chat_messages(build_messages(prompt, system_prompt), proxy, response_format)
+	var messages: Array[ChatMessage] = []
+	if StringUtils.is_not_blank(system_prompt):
+		messages.append(ChatMessage.system(system_prompt))
+	messages.append(ChatMessage.user(prompt))
+	return await async_chat_messages(messages, proxy, response_format)
 
 func async_chat_messages(messages: Array[ChatMessage], proxy: String = "", response_format: String = "") -> String:
 	if StringUtils.is_not_blank(check_request(messages)):

@@ -25,8 +25,9 @@ func on_chat_pressed() -> void:
 
 func on_chat_stream_pressed() -> void:
 	var client := ApiSetting.get_client()
+	var messages: Array[ChatMessage] = [ChatMessage.user(PROMPT)]
 	var completion := await client.async_chat_messages_stream(
-		client.build_messages(PROMPT),
+		messages,
 		[],
 			"",
 		func(delta: String, stream_kind: String) -> void:

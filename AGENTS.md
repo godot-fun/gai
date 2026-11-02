@@ -90,7 +90,7 @@ var reply: String = await client.async_chat("hello", "you are a helpful assistan
 client.cancel_scope = CancelScope.new()
 
 # Streaming — on_delta(delta, stream_kind); read content, tool_calls, and usage from OpenAiCompletion
-var messages := client.build_messages("hello", "you are a helpful assistant")
+var messages: Array[ChatMessage] = [ChatMessage.system("you are a helpful assistant"), ChatMessage.user("hello")]
 var stream_completion := await client.async_chat_messages_stream(messages, tool_defs, proxy_address,
 	func(delta: String, stream_kind: String) -> void: print(delta))
 var streamed := stream_completion.content
