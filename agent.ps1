@@ -1,5 +1,6 @@
 # Launch the agent desktop app. Usage: .\agent.ps1  |  .\agent.ps1 -Wait  |  .\agent.ps1 --data-dir .gai3
 # The data folder defaults to <workspace>\.gai2; pass --data-dir <workspace-relative path> to change it.
+# Every launch first syncs the import cache (~4 s), then starts the app.
 
 param(
 	[switch]$Wait,
@@ -45,6 +46,31 @@ if (-not (Test-Path -LiteralPath $Editor)) {
 	Write-Host "Godot editor not found: $Editor"
 	exit 1
 }
+
+# ---------------------------------------------------------------------------
+# Refresh import cache
+# ---------------------------------------------------------------------------
+# Game mode never scans res://, so it only sees what .godot already contains:
+# replaced images / audio / fonts stay stale, and new assets or new class_name
+# scripts fail to load. Always run `--import` first: it starts the editor
+# headless, syncs imports (plus global_script_class_cache.cfg and uid_cache.bin),
+# then quits.
+
+Push-Location $Root
+try {
+	& $Editor --headless --path $Root --import
+	$ImportExit = $LASTEXITCODE
+} finally {
+	Pop-Location
+}
+
+# Headless --import often leaves $LASTEXITCODE unset on Windows; only fail on a positive code.
+if ($ImportExit -gt 0) {
+	Write-Host "Asset import failed (exit $ImportExit)"
+	exit $ImportExit
+}
+
+Start-Sleep -Seconds 3
 
 # ---------------------------------------------------------------------------
 # Start agent main scene
