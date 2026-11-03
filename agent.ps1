@@ -173,9 +173,6 @@ if ($ImportExit -gt 0) {
 
 Write-StepDone "done" "exit 0"
 
-# Small safety margin so the OS finishes flushing .godot before the app maps it.
-Start-Sleep -Seconds 1
-
 # ---------------------------------------------------------------------------
 # Start agent main scene
 # ---------------------------------------------------------------------------
@@ -212,11 +209,6 @@ if ($Wait) {
 	exit $AppExit
 }
 
-Start-Sleep -Seconds 1
-
 Start-Process -FilePath $Editor -ArgumentList $ArgumentList -WorkingDirectory $Root
 Write-StepDone "started" "new window"
-
-Start-Sleep -Seconds 1
-
 exit 0
