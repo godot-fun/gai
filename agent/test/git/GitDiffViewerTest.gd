@@ -35,8 +35,8 @@ func applies_file_highlighter_test() -> void:
 	var viewer := GitDiffViewer.new()
 	viewer.files = [file]
 	viewer.load_selected_file()
-	assert(viewer.left_edit.syntax_highlighter is CodeHighlighter)
-	assert(viewer.right_edit.syntax_highlighter is CodeHighlighter)
+	assert(viewer.left_edit.syntax_highlighter is CodeHighlighterInstance)
+	assert(viewer.right_edit.syntax_highlighter is CodeHighlighterInstance)
 	assert(viewer.left_edit.syntax_highlighter != viewer.right_edit.syntax_highlighter)
 	viewer.free()
 	pass

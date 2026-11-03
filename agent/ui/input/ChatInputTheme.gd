@@ -5,6 +5,8 @@ extends Object
 
 const TRASH_ICON_PATH := "res://agent/asset/image/icon/trash.svg"
 const RESUME_ICON_PATH := "res://agent/asset/image/icon/resume.svg"
+## Markdown rules match file chips, links, and inline markup in the composer.
+const COMPOSER_SYNTAX_PATH := "composer.md"
 
 static func apply_wrap(input_wrap: PanelContainer, expanded: bool) -> void:
 	input_wrap.add_theme_stylebox_override("panel", build_wrap_style(expanded))
@@ -25,21 +27,17 @@ static func build_wrap_style(expanded: bool) -> StyleBoxFlat:
 	return wrap_style
 
 
-static func apply_field(input_field: TextEdit) -> void:
+static func apply_field(input_field: CodeEdit) -> void:
 	var input_style := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, 0, Margin.ma_3, Margin.ma_3)
 	input_style.content_margin_right = Margin.ma_12
 	input_field.add_theme_stylebox_override("normal", input_style)
 	input_field.add_theme_stylebox_override("focus", input_style.duplicate())
 	input_field.add_theme_stylebox_override("read_only", input_style.duplicate())
-	input_field.add_theme_font_override("font", Fonts.regular())
-	input_field.add_theme_color_override("font_color", Colors.primary_text)
+	CodeEditStyle.apply_base(input_field)
 	input_field.add_theme_color_override("font_placeholder_color", Colors.secondary_text)
 	input_field.add_theme_color_override("font_readonly_color", Colors.secondary_text)
-	input_field.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
 	input_field.add_theme_color_override("font_selected_color", ThemeColor.title_color)
-	input_field.add_theme_color_override("selection_color", ThemeColor.selection_color)
-	ScrollBarStyle.apply(input_field.get_v_scroll_bar())
-	ScrollBarStyle.apply(input_field.get_h_scroll_bar())
+	input_field.syntax_highlighter = CommonHighlighter.create(COMPOSER_SYNTAX_PATH)
 	input_field.caret_blink = true
 	pass
 

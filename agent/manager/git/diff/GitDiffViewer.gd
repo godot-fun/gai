@@ -316,8 +316,8 @@ func load_selected_file() -> void:
 ## Both panes use independently-owned highlighters because a SyntaxHighlighter can belong to only
 ## one TextEdit. Rebuilding on theme changes also refreshes every syntax color.
 func apply_syntax_highlighting(file_path: String) -> void:
-	left_edit.syntax_highlighter = GitCodeHighlighter.create(file_path)
-	right_edit.syntax_highlighter = GitCodeHighlighter.create(file_path)
+	left_edit.syntax_highlighter = CommonHighlighter.create(file_path)
+	right_edit.syntax_highlighter = CommonHighlighter.create(file_path)
 	pass
 
 
@@ -573,24 +573,8 @@ func apply_theme() -> void:
 		label.add_theme_color_override("font_color", Colors.secondary_text)
 	for button in [previous_button, next_button, previous_change_button, next_change_button, revert_button]:
 		style_compact_button(button)
-	# Horizontal margins stay 0 so line highlights meet the connector and the VScrollBar sits flush
-	# (TextEdit insets the bar by content_margin_right). Keep a little vertical padding only.
-	var editor_style := StyleBoxHelper.create_style_box_flat(Colors.app_background, 0, 0, Margin.ma_2)
 	for edit in [left_edit, right_edit]:
-		edit.add_theme_stylebox_override("normal", editor_style.duplicate())
-		edit.add_theme_stylebox_override("focus", editor_style.duplicate())
-		edit.add_theme_stylebox_override("read_only", editor_style.duplicate())
-		edit.add_theme_color_override("background_color", Colors.app_background)
-		edit.add_theme_color_override("font_color", Colors.primary_text)
-		edit.add_theme_color_override("font_readonly_color", Colors.primary_text)
-		edit.add_theme_color_override("font_selected_color", Colors.primary_text)
-		edit.add_theme_color_override("line_number_color", Colors.secondary_text)
-		edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
-		edit.add_theme_color_override("selection_color", ThemeColor.selection_color)
-		edit.add_theme_color_override("current_line_color", Color(ThemeColor.accent_theme_color(), 0.10))
-		edit.add_theme_font_override("font", Fonts.regular())
-		ScrollBarStyle.apply(edit.get_v_scroll_bar())
-		ScrollBarStyle.apply(edit.get_h_scroll_bar())
+		CodeEditStyle.apply_diff_editor(edit)
 	if not files.is_empty():
 		apply_syntax_highlighting(files[selected_index].display_path())
 	if not files.is_empty():

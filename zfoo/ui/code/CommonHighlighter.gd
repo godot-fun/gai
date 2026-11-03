@@ -1,8 +1,8 @@
-class_name GitCodeHighlighter
+class_name CommonHighlighter
 extends Object
 
-## Creates a theme-aware CodeEdit highlighter from a repository file name. CodeHighlighter is
-## deliberately used instead of a parser so incomplete code remains colorful while it is edited.
+## Creates a theme-aware CodeEdit highlighter from a repository file name. [CodeHighlighterInstance] wraps
+## the engine [CodeHighlighter] so incomplete code stays colorful while it is edited.
 
 const SCRIPT_EXTENSIONS := ["gd", "py", "pyw", "pyi", "rb", "rake", "lua", "r", "jl", "pl", "pm", "tcl"]
 const C_STYLE_EXTENSIONS := ["c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx", "m", "mm", "cs", "java", "js", "jsx", "mjs", "cjs", "ts", "tsx", "go", "rs", "swift", "kt", "kts", "dart", "scala", "groovy", "gradle", "php", "sol", "proto"]
@@ -33,8 +33,8 @@ const SHADER_TYPES := ["bvec2", "bvec3", "bvec4", "ivec2", "ivec3", "ivec4", "uv
 const SQL_KEYWORDS := ["ADD", "ALL", "ALTER", "AND", "AS", "ASC", "BEGIN", "BETWEEN", "BY", "CASE", "CHECK", "COLUMN", "COMMIT", "CONSTRAINT", "CREATE", "DATABASE", "DEFAULT", "DELETE", "DESC", "DISTINCT", "DROP", "ELSE", "END", "EXISTS", "FOREIGN", "FROM", "FULL", "GRANT", "GROUP", "HAVING", "IN", "INDEX", "INNER", "INSERT", "INTO", "IS", "JOIN", "KEY", "LEFT", "LIKE", "LIMIT", "NOT", "NULL", "ON", "OR", "ORDER", "OUTER", "PRIMARY", "REFERENCES", "RETURNING", "REVOKE", "RIGHT", "ROLLBACK", "SELECT", "SET", "TABLE", "THEN", "TRUNCATE", "UNION", "UNIQUE", "UPDATE", "VALUES", "VIEW", "WHEN", "WHERE", "WITH"]
 
 
-static func create(file_path: String) -> CodeHighlighter:
-	var highlighter := CodeHighlighter.new()
+static func create(file_path: String) -> CodeHighlighterInstance:
+	var highlighter := CodeHighlighterInstance.new()
 	highlighter.number_color = CodeColors.number
 	highlighter.symbol_color = CodeColors.symbol
 	highlighter.function_color = CodeColors.function
@@ -66,19 +66,19 @@ static func create(file_path: String) -> CodeHighlighter:
 	return highlighter
 
 
-static func add_keywords(highlighter: CodeHighlighter, words: Array, color: Color) -> void:
+static func add_keywords(highlighter: CodeHighlighterInstance, words: Array, color: Color) -> void:
 	for word in words:
 		highlighter.add_keyword_color(word, color)
 	pass
 
 
-static func add_quoted_strings(highlighter: CodeHighlighter, color: Color) -> void:
+static func add_quoted_strings(highlighter: CodeHighlighterInstance, color: Color) -> void:
 	highlighter.add_color_region('"', '"', color)
 	highlighter.add_color_region("'", "'", color)
 	pass
 
 
-static func configure_script(highlighter: CodeHighlighter, extension: String) -> void:
+static func configure_script(highlighter: CodeHighlighterInstance, extension: String) -> void:
 	add_keywords(highlighter, COMMON_KEYWORDS, CodeColors.keyword)
 	add_keywords(highlighter, TYPE_KEYWORDS, CodeColors.type)
 	add_keywords(highlighter, DECLARATION_KEYWORDS, CodeColors.declaration)
@@ -89,7 +89,6 @@ static func configure_script(highlighter: CodeHighlighter, extension: String) ->
 		add_keywords(highlighter, GDSCRIPT_TYPES, CodeColors.type)
 		highlighter.add_color_region(r'"""', r'"""', CodeColors.string)
 		highlighter.add_color_region(r"'''", r"'''", CodeColors.string)
-		# StringName / NodePath literals: &"name", ^"path"
 		highlighter.add_color_region('&"', '"', CodeColors.string)
 		highlighter.add_color_region('^"', '"', CodeColors.string)
 	elif extension.begins_with("py"):
@@ -102,14 +101,13 @@ static func configure_script(highlighter: CodeHighlighter, extension: String) ->
 	pass
 
 
-static func configure_c_style(highlighter: CodeHighlighter, extension: String) -> void:
+static func configure_c_style(highlighter: CodeHighlighterInstance, extension: String) -> void:
 	add_keywords(highlighter, COMMON_KEYWORDS, CodeColors.keyword)
 	add_keywords(highlighter, TYPE_KEYWORDS, CodeColors.type)
 	add_keywords(highlighter, DECLARATION_KEYWORDS, CodeColors.declaration)
 	add_quoted_strings(highlighter, CodeColors.string)
 	highlighter.add_color_region("//", "", CodeColors.comment, true)
 	highlighter.add_color_region("/*", "*/", CodeColors.comment)
-	# JS/TS private fields use `#name`; only C-family preprocessors should own line `#`.
 	if extension in JS_EXTENSIONS:
 		add_keywords(highlighter, JS_KEYWORDS, CodeColors.keyword)
 		highlighter.add_color_region("`", "`", CodeColors.string)
@@ -126,7 +124,7 @@ static func configure_c_style(highlighter: CodeHighlighter, extension: String) -
 	pass
 
 
-static func configure_shader(highlighter: CodeHighlighter) -> void:
+static func configure_shader(highlighter: CodeHighlighterInstance) -> void:
 	add_keywords(highlighter, COMMON_KEYWORDS, CodeColors.keyword)
 	add_keywords(highlighter, TYPE_KEYWORDS, CodeColors.type)
 	add_keywords(highlighter, SHADER_KEYWORDS, CodeColors.declaration)
@@ -138,7 +136,7 @@ static func configure_shader(highlighter: CodeHighlighter) -> void:
 	pass
 
 
-static func configure_data(highlighter: CodeHighlighter, extension: String, file_name: String) -> void:
+static func configure_data(highlighter: CodeHighlighterInstance, extension: String, file_name: String) -> void:
 	add_keywords(highlighter, ["true", "false", "null", "yes", "no", "on", "off"], CodeColors.type)
 	add_quoted_strings(highlighter, CodeColors.string)
 	if extension in ["jsonc", "json5"]:
@@ -156,18 +154,16 @@ static func configure_data(highlighter: CodeHighlighter, extension: String, file
 	pass
 
 
-static func configure_markup(highlighter: CodeHighlighter, extension: String) -> void:
+static func configure_markup(highlighter: CodeHighlighterInstance, extension: String) -> void:
 	add_quoted_strings(highlighter, CodeColors.string)
 	if extension in ["md", "markdown", "mdx"]:
 		add_keywords(highlighter, MARKDOWN_KEYWORDS, CodeColors.declaration)
-		# Fenced blocks before single backticks so ```…``` wins over nested `.
 		highlighter.add_color_region("```", "```", CodeColors.string)
 		highlighter.add_color_region("`", "`", CodeColors.string)
 		highlighter.add_color_region("<!--", "-->", CodeColors.comment)
 		highlighter.add_color_region("#", "", CodeColors.declaration, true)
 		highlighter.add_color_region("**", "**", CodeColors.keyword)
 		highlighter.add_color_region("~~", "~~", CodeColors.comment)
-		# Inline HTML (and JSX in MDX).
 		highlighter.add_color_region("<", ">", CodeColors.tag)
 	else:
 		highlighter.add_color_region("<!--", "-->", CodeColors.comment)
@@ -177,7 +173,7 @@ static func configure_markup(highlighter: CodeHighlighter, extension: String) ->
 	pass
 
 
-static func configure_shell(highlighter: CodeHighlighter, extension: String) -> void:
+static func configure_shell(highlighter: CodeHighlighterInstance, extension: String) -> void:
 	add_keywords(highlighter, SHELL_KEYWORDS, CodeColors.keyword)
 	add_keywords(highlighter, ["true", "false", "null"], CodeColors.type)
 	add_quoted_strings(highlighter, CodeColors.string)
@@ -188,7 +184,7 @@ static func configure_shell(highlighter: CodeHighlighter, extension: String) -> 
 	pass
 
 
-static func configure_sql(highlighter: CodeHighlighter) -> void:
+static func configure_sql(highlighter: CodeHighlighterInstance) -> void:
 	add_keywords(highlighter, SQL_KEYWORDS, CodeColors.keyword)
 	add_keywords(highlighter, ["BOOLEAN", "CHAR", "DATE", "DECIMAL", "FLOAT", "INT", "INTEGER", "JSON", "NUMERIC", "REAL", "TEXT", "TIME", "TIMESTAMP", "UUID", "VARCHAR", "TRUE", "FALSE", "NULL"], CodeColors.type)
 	add_quoted_strings(highlighter, CodeColors.string)
@@ -197,7 +193,7 @@ static func configure_sql(highlighter: CodeHighlighter) -> void:
 	pass
 
 
-static func configure_diff(highlighter: CodeHighlighter) -> void:
+static func configure_diff(highlighter: CodeHighlighterInstance) -> void:
 	highlighter.add_keyword_color("diff", CodeColors.function)
 	highlighter.add_color_region("@@", "@@", CodeColors.declaration, true)
 	highlighter.add_color_region("+++", "", CodeColors.type, true)
@@ -207,7 +203,7 @@ static func configure_diff(highlighter: CodeHighlighter) -> void:
 	pass
 
 
-static func configure_latex(highlighter: CodeHighlighter) -> void:
+static func configure_latex(highlighter: CodeHighlighterInstance) -> void:
 	highlighter.add_color_region("%", "", CodeColors.comment, true)
 	highlighter.add_color_region(r"\begin{", "}", CodeColors.declaration)
 	highlighter.add_color_region(r"\end{", "}", CodeColors.declaration)
@@ -215,7 +211,7 @@ static func configure_latex(highlighter: CodeHighlighter) -> void:
 	pass
 
 
-static func configure_cmake(highlighter: CodeHighlighter) -> void:
+static func configure_cmake(highlighter: CodeHighlighterInstance) -> void:
 	add_keywords(highlighter, ["add_custom_command", "add_custom_target", "add_executable", "add_library", "cmake_minimum_required", "else", "elseif", "endforeach", "endfunction", "endif", "endmacro", "endwhile", "find_package", "foreach", "function", "if", "include", "install", "macro", "message", "option", "project", "return", "set", "target_compile_definitions", "target_compile_options", "target_include_directories", "target_link_libraries", "while"], CodeColors.keyword)
 	add_quoted_strings(highlighter, CodeColors.string)
 	highlighter.add_color_region("#", "", CodeColors.comment, true)
