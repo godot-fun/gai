@@ -26,10 +26,7 @@ static func get_search_shortcut() -> Key:
 
 
 static func set_search_shortcut(key: Key) -> void:
-	if get_search_shortcut() == key:
-		return
-	Setting.set_int(SEARCH_SHORTCUT_KEY, key)
-	Setting.save()
+	save_shortcut(SEARCH_SHORTCUT_KEY, key)
 	AgentEvents.events.search_shortcut_changed.emit()
 	pass
 
@@ -43,19 +40,13 @@ static func get_next_user_message_shortcut() -> Key:
 
 
 static func set_prev_user_message_shortcut(key: Key) -> void:
-	if get_prev_user_message_shortcut() == key:
-		return
-	Setting.set_int(PREV_USER_MESSAGE_SHORTCUT_KEY, key)
-	Setting.save()
+	save_shortcut(PREV_USER_MESSAGE_SHORTCUT_KEY, key)
 	AgentEvents.events.prev_user_message_shortcut_changed.emit()
 	pass
 
 
 static func set_next_user_message_shortcut(key: Key) -> void:
-	if get_next_user_message_shortcut() == key:
-		return
-	Setting.set_int(NEXT_USER_MESSAGE_SHORTCUT_KEY, key)
-	Setting.save()
+	save_shortcut(NEXT_USER_MESSAGE_SHORTCUT_KEY, key)
 	AgentEvents.events.next_user_message_shortcut_changed.emit()
 	pass
 
@@ -69,19 +60,13 @@ static func get_next_reply_shortcut() -> Key:
 
 
 static func set_prev_reply_shortcut(key: Key) -> void:
-	if get_prev_reply_shortcut() == key:
-		return
-	Setting.set_int(PREV_REPLY_SHORTCUT_KEY, key)
-	Setting.save()
+	save_shortcut(PREV_REPLY_SHORTCUT_KEY, key)
 	AgentEvents.events.prev_reply_shortcut_changed.emit()
 	pass
 
 
 static func set_next_reply_shortcut(key: Key) -> void:
-	if get_next_reply_shortcut() == key:
-		return
-	Setting.set_int(NEXT_REPLY_SHORTCUT_KEY, key)
-	Setting.save()
+	save_shortcut(NEXT_REPLY_SHORTCUT_KEY, key)
 	AgentEvents.events.next_reply_shortcut_changed.emit()
 	pass
 
@@ -107,3 +92,9 @@ static func make_shortcut_event(key: Key) -> InputEventKey:
 	key_event.shift_pressed = (key & KEY_MASK_SHIFT) != 0
 	key_event.meta_pressed = (key & KEY_MASK_META) != 0
 	return key_event
+
+
+static func save_shortcut(setting_key: String, key: Key) -> void:
+	Setting.set_int(setting_key, key)
+	Setting.save()
+	pass
