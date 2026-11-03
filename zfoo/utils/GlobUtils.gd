@@ -176,18 +176,18 @@ static func get_or_compile_regex(glob_rule: String, directory_rule: bool = false
 
 
 # ---------------------------------------------------------------------------
-# .gitignore skip rules — inner [code]GitIgnoreMatcher[/code] and [method gitignore_is_ignored]
+# .gitignore skip rules
 # ---------------------------------------------------------------------------
 
-## [code]true[/code] when [param ignore_rules] exclude [param relative_path] (last match wins, [code]![/code] un-ignores).
+## true when ignore_rules exclude relative_path. Same last-match and ! rules as GitIgnoreMatcher.
 static func gitignore_is_ignored(ignore_rules: Array[String], relative_path: String, is_directory: bool = false) -> bool:
 	return GitIgnoreMatcher.from_lines(ignore_rules).is_ignored(relative_path, is_directory)
 
 
 class GitIgnoreRule extends RefCounted:
-	## [code]false[/code] for a normal ignore line ([code]*.tmp[/code]); [code]true[/code] when the source line was negated ([code]!keep.tmp[/code] → un-ignore if this rule wins last).
+	## false for *.tmp; true for a negated source line !keep.tmp (un-ignore when this rule wins last).
 	var negated: bool = false
-	## Glob / ignore pattern without leading [code]![/code] (e.g. [code]node_modules/[/code], [code].godot/**[/code]).
+	## Pattern text without leading ! (e.g. node_modules/, .env.example).
 	var pattern: String = ""
 
 	func _init(p_negated: bool, p_pattern: String) -> void:
@@ -196,6 +196,13 @@ class GitIgnoreRule extends RefCounted:
 		pass
 
 
+## .gitignore-style skip lines for GlobUtils.glob and gitignore_is_ignored.
+##
+## Same as Git for is_ignored: skip blanks and # lines; last match wins; ! un-ignores; glob patterns via glob_match_pattern.
+##
+## Walk-only difference (may_enter_dir) — only how ! interacts with already-ignored directories:
+## 1. ! with no / in the pattern (e.g. !.env.example): last-match still applies on paths the walk already hit; never descends into an ignored dir just because this rule exists (.dependency/, node_modules/, … stay pruned).
+## 2. ! with / in the pattern (e.g. !.godot/extension_list.cfg): may descend into that ignored directory so the exception file can appear in the glob result.
 class GitIgnoreMatcher extends RefCounted:
 	var rules: Array[GitIgnoreRule] = []
 
