@@ -92,6 +92,10 @@ class Events:
 	signal prev_user_message_shortcut_changed
 	## Next user-message shortcut changed (see [method ShortcutSetting.set_next_user_message_shortcut]).
 	signal next_user_message_shortcut_changed
+	## Previous agent-reply shortcut changed (see [method ShortcutSetting.set_prev_reply_shortcut]).
+	signal prev_reply_shortcut_changed
+	## Next agent-reply shortcut changed (see [method ShortcutSetting.set_next_reply_shortcut]).
+	signal next_reply_shortcut_changed
 
 	# ===========================================================================
 	# UI-ONLY COORDINATION — UI -> UI; managers must never subscribe below

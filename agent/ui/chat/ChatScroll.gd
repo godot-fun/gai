@@ -121,15 +121,23 @@ func reveal_entry(entry_index: int) -> void:
 
 
 func navigate_user_message(direction: int) -> bool:
+	return navigate_transcript_entry(ChatEntry.KIND_USER, direction)
+
+
+func navigate_reply(direction: int) -> bool:
+	return navigate_transcript_entry(ChatEntry.KIND_AGENT, direction)
+
+
+func navigate_transcript_entry(entry_kind: String, direction: int) -> bool:
 	if direction == 0 or not is_instance_valid(active_chat_list):
 		return false
 	var session: AgentSession = AgentSessionStore.load_session(AgentSessionManager.active_session_id)
 	if session == null:
 		return false
-	var user_entry_indices := collect_user_entry_indices(session)
-	if user_entry_indices.is_empty():
+	var entry_indices := collect_entry_indices(session, entry_kind)
+	if entry_indices.is_empty():
 		return false
-	var target_index := find_user_message_entry_index(user_entry_indices, direction)
+	var target_index := find_transcript_entry_index(entry_indices, direction)
 	if target_index < 0:
 		return false
 	stick_to_bottom = false
@@ -138,32 +146,32 @@ func navigate_user_message(direction: int) -> bool:
 	return true
 
 
-func collect_user_entry_indices(session: AgentSession) -> Array[int]:
+func collect_entry_indices(session: AgentSession, entry_kind: String) -> Array[int]:
 	var indices: Array[int] = []
 	for entry_index in range(session.chat_entries.size()):
-		if session.chat_entries[entry_index].kind == ChatEntry.KIND_USER:
+		if session.chat_entries[entry_index].kind == entry_kind:
 			indices.append(entry_index)
 	return indices
 
 
-func find_user_message_entry_index(user_entry_indices: Array[int], direction: int) -> int:
+func find_transcript_entry_index(entry_indices: Array[int], direction: int) -> int:
 	var vbar: VScrollBar = chat_scroll.get_v_scroll_bar()
 	if vbar == null:
 		return -1
 	var anchor := vbar.value + Margin.ma_5
 	var current_slot := -1
-	for slot in range(user_entry_indices.size()):
-		var entry_index: int = user_entry_indices[slot]
+	for slot in range(entry_indices.size()):
+		var entry_index: int = entry_indices[slot]
 		if entry_y_for_index(entry_index) <= anchor + 1.0:
 			current_slot = slot
 	if direction > 0:
 		var next_slot := current_slot + 1
-		if next_slot >= user_entry_indices.size():
-			next_slot = user_entry_indices.size() - 1
-		return user_entry_indices[next_slot]
+		if next_slot >= entry_indices.size():
+			next_slot = entry_indices.size() - 1
+		return entry_indices[next_slot]
 	if current_slot <= 0:
-		return user_entry_indices[0]
-	return user_entry_indices[current_slot - 1]
+		return entry_indices[0]
+	return entry_indices[current_slot - 1]
 
 
 func entry_y_for_index(entry_index: int) -> float:
@@ -184,13 +192,22 @@ func on_chat_scroll_gui_input(event: InputEvent) -> void:
 		var mouse: InputEventMouseButton = event as InputEventMouseButton
 		if not mouse.pressed:
 			return
-		if mouse.shift_pressed:
-			var direction := 0
+		if mouse.shift_pressed and (mouse.ctrl_pressed or mouse.meta_pressed):
+			var reply_direction := 0
 			if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
-				direction = -1
+				reply_direction = -1
 			elif mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-				direction = 1
-			if direction != 0 and navigate_user_message(direction):
+				reply_direction = 1
+			if reply_direction != 0 and navigate_reply(reply_direction):
+				chat_scroll.accept_event()
+				return
+		if mouse.shift_pressed and not mouse.ctrl_pressed and not mouse.meta_pressed:
+			var user_direction := 0
+			if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
+				user_direction = -1
+			elif mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+				user_direction = 1
+			if user_direction != 0 and navigate_user_message(user_direction):
 				chat_scroll.accept_event()
 				return
 		if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
@@ -240,6 +257,14 @@ func on_chat_window_input(event: InputEvent) -> void:
 		return
 	if not key.echo and key.get_keycode_with_modifiers() == ShortcutSetting.get_next_user_message_shortcut():
 		if navigate_user_message(1):
+			chat_scroll.get_viewport().set_input_as_handled()
+		return
+	if not key.echo and key.get_keycode_with_modifiers() == ShortcutSetting.get_prev_reply_shortcut():
+		if navigate_reply(-1):
+			chat_scroll.get_viewport().set_input_as_handled()
+		return
+	if not key.echo and key.get_keycode_with_modifiers() == ShortcutSetting.get_next_reply_shortcut():
+		if navigate_reply(1):
 			chat_scroll.get_viewport().set_input_as_handled()
 		return
 	var direction: int = 0
