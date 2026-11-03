@@ -50,13 +50,7 @@ func cancel() -> void:
 	pass
 
 
-## Called on every keystroke: rows are pre-filtered here, so the engine only sees surviving rows.
-func refresh_on_text_change() -> void:
-	await async_refresh(true)
-	pass
-
-
-func async_refresh(force: bool) -> void:
+func async_refresh() -> void:
 	var provider := active_provider()
 	if provider == null:
 		cancel()
@@ -71,7 +65,7 @@ func async_refresh(force: bool) -> void:
 	options.append_array(rows)
 	# Copying the rows back through [method filter_candidates] is what activates the list and resets
 	# the highlighted row for the new match set.
-	input_field.update_code_completion_options(force)
+	input_field.update_code_completion_options(true)
 	pass
 
 
@@ -110,7 +104,7 @@ func confirm() -> void:
 	input_field.end_complex_operation()
 	# A directory row leaves a live `@dir/` token under the caret and reopens the list; a file row ends
 	# in a Markdown link and a skill row in a blank, so the rebuild finds no provider and stays closed.
-	await refresh_on_text_change()
+	await async_refresh()
 	pass
 
 

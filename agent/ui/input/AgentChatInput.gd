@@ -644,7 +644,7 @@ func on_field_text_changed() -> void:
 	if session != null:
 		session.draft_text = input_field.text
 	refresh_send_button()
-	chat_completion.refresh_on_text_change()
+	await chat_completion.async_refresh()
 	relayout_if_height_changed()
 	# The open list re-filters once this signal returns, so fit again with the new row count.
 	relayout_if_height_changed.call_deferred()

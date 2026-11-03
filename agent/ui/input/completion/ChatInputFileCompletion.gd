@@ -52,12 +52,16 @@ var indexed: bool = false
 
 
 func is_active() -> bool:
-	return mention_start(caret_prefix()) >= 0
+	var line: String = input_field.get_line(input_field.get_caret_line())
+	return mention_start(line.substr(0, input_field.get_caret_column())) >= 0
 
 
 func build_options() -> Array[ChatInputCompletionProvider.CompletionRow]:
 	var options: Array[ChatInputCompletionProvider.CompletionRow] = []
-	var matches: Array[MentionPath] = matching_entries(entries, query(), MAX_OPTIONS)
+	var prefix: String = input_field.get_line(input_field.get_caret_line()).substr(0, input_field.get_caret_column())
+	var mention_at: int = mention_start(prefix)
+	var query_text: String = prefix.substr(mention_at + MENTION.length()) if mention_at >= 0 else StringUtils.EMPTY
+	var matches: Array[MentionPath] = matching_entries(entries, query_text, MAX_OPTIONS)
 	for entry: MentionPath in matches:
 		options.append(ChatInputCompletionProvider.CompletionRow.new(build_display_text(entry), build_insert_text(entry)))
 	return options
@@ -72,20 +76,6 @@ func token_span() -> Vector2i:
 	if start < 0:
 		return Vector2i(-1, -1)
 	return Vector2i(start, token_end(line, caret_column))
-
-
-## What the user typed after the `@`, with no separator normalization — matching lowercases it.
-func query() -> String:
-	var prefix: String = caret_prefix()
-	var start: int = mention_start(prefix)
-	if start < 0:
-		return StringUtils.EMPTY
-	return prefix.substr(start + MENTION.length())
-
-
-func caret_prefix() -> String:
-	var line: String = input_field.get_line(input_field.get_caret_line())
-	return line.substr(0, input_field.get_caret_column())
 
 
 ## Column where the `@` of the mention under the caret sits, or -1 when the caret is not in one.

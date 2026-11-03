@@ -10,15 +10,9 @@ const DISPLAY_SEPARATOR := "  ·  "
 
 ## True while the caret sits in a `/` token that starts the current line, e.g. `/audio-tr|`.
 ## A blank after the command means the argument phase started, so the list stays closed.
-func is_slash_command() -> bool:
-	var token: String = current_token()
-	if not token.begins_with("/"):
-		return false
-	return not token.contains(" ") and not token.contains("\t")
-
-
 func is_active() -> bool:
-	return is_slash_command()
+	var token: String = current_token()
+	return token.begins_with("/") and not token.contains(" ") and not token.contains("\t")
 
 
 ## The text between the start of the caret line and the caret, left-trimmed only.

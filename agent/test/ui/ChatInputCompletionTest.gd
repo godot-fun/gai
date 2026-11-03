@@ -1,8 +1,8 @@
 extends RefCounted
 
 ## Popup flow on a real [ChatInputEdit]: the engine only keeps its completion state on a live node, so
-## these tests drive [method ChatInputCompletion.refresh_on_text_change] and [method
-## ChatInputCompletion.confirm] the way the field's virtuals do on a keystroke and on Enter.
+## these tests drive [method ChatInputCompletion.async_refresh] and [method ChatInputCompletion.confirm]
+## the way the field's virtuals do on a keystroke and on Enter.
 
 
 ## A file row replaces the whole `@token` with the shared Markdown link and closes the list.
@@ -10,7 +10,7 @@ func file_row_accept_links_the_file_test() -> void:
 	var root := make_scratch_workspace("accept")
 	var field := make_field(root, "@not")
 	var completion: ChatInputCompletion = field.completion
-	await completion.refresh_on_text_change()
+	await completion.async_refresh()
 	# `notes.md` at the root is offered before `docs/notes.md`, the shallower path winning.
 	assert(completion.options.size() == 2)
 	assert(completion.options[0].insert_text
@@ -29,7 +29,7 @@ func folder_row_accept_keeps_drilling_test() -> void:
 	var root := make_scratch_workspace("drill")
 	var field := make_field(root, "@do")
 	var completion: ChatInputCompletion = field.completion
-	await completion.refresh_on_text_change()
+	await completion.async_refresh()
 	assert(completion.options[0].insert_text == "@docs/")
 	field.set_code_completion_selected_index(0)
 	await completion.confirm()
@@ -64,7 +64,7 @@ func accept_replaces_the_typed_tail_test() -> void:
 	var root := make_scratch_workspace("tail")
 	var field := make_field(root, "@do cs", 3)
 	var completion: ChatInputCompletion = field.completion
-	await completion.refresh_on_text_change()
+	await completion.async_refresh()
 	assert(completion.options[0].insert_text == "@docs/")
 	field.set_code_completion_selected_index(0)
 	await completion.confirm()
@@ -84,7 +84,7 @@ func only_one_provider_claims_the_caret_test() -> void:
 	field.text = "hello"
 	field.set_caret_column(5)
 	assert(completion.active_provider() == null)
-	await completion.refresh_on_text_change()
+	await completion.async_refresh()
 	assert(not completion.is_popup_open())
 	assert(completion.options.is_empty())
 	field.free()

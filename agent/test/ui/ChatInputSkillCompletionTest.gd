@@ -59,7 +59,7 @@ func slash_command_at(completion: ChatInputSkillCompletion, text: String, caret_
 	field.set_caret_line(0, false)
 	field.set_caret_column(text.length() if caret_column < 0 else caret_column, false)
 	completion.input_field = field
-	var result := completion.is_slash_command()
+	var result := completion.is_active()
 	completion.input_field = null
 	field.free()
 	return result

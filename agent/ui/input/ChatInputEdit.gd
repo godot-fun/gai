@@ -8,22 +8,21 @@ extends CodeEdit
 var completion: ChatInputCompletion
 
 
-func _request_code_completion(force: bool) -> void:
+func _request_code_completion(_force: bool) -> void:
 	if completion == null:
 		return
-	await completion.async_refresh(force)
+	await completion.async_refresh()
 	pass
 
 
 func _filter_code_completion_candidates(_candidates: Array[Dictionary]) -> Array[Dictionary]:
 	if completion != null:
 		return completion.filter_candidates()
-	var none: Array[Dictionary] = []
-	return none
+	return []
 
 
 func _confirm_code_completion(_replace: bool) -> void:
 	if completion == null:
 		return
-	completion.confirm()
+	await completion.confirm()
 	pass
