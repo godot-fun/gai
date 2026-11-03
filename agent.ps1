@@ -1,10 +1,8 @@
-# Launch the agent desktop app. Usage: .\agent.ps1  |  .\agent.ps1 -Wait  |  .\agent.ps1 --data-dir .gai3
+# Launch the agent desktop app. Usage: .\agent.ps1  |  .\agent.ps1 --data-dir .gai3
 # The data folder defaults to <workspace>\.gai2; pass --data-dir <workspace-relative path> to change it.
 # Every launch first pulls the latest code, then syncs the import cache (~4 s), then starts the app.
 
 param(
-	[switch]$Wait,
-
 	# Extra arguments are forwarded to Godot as user args (after `--`), e.g. --data-dir <path>.
 	[Parameter(ValueFromRemainingArguments = $true)]
 	[string[]]$Rest
@@ -176,7 +174,9 @@ Write-StepDone "done" "exit 0"
 # ---------------------------------------------------------------------------
 # Start agent main scene
 # ---------------------------------------------------------------------------
-# Default: new process (same as agent.bat). -Wait: run in this console + exit code.
+# New process (same as agent.bat). Godot is a GUI-subsystem exe, so `& $Editor`
+# returns at once and leaves $LASTEXITCODE empty. Start-Process detaches it
+# into its own window; this script then exits 0.
 # Everything after `--` reaches the app through OS.get_cmdline_user_args():
 #   --data-dir <path>   agent data folder, workspace-relative (default here: .gai2)
 
@@ -188,26 +188,6 @@ if (-not ($UserArgs -match '^--data-dir(=.*)?$')) {
 $ArgumentList = @("--path", $Root, "res://agent/Agent.tscn", "--") + $UserArgs
 
 Write-Step ("Start agent (res://agent/Agent.tscn {0})" -f ($UserArgs -join " "))
-
-if ($Wait) {
-	Push-Location $Root
-	try {
-		& $Editor @ArgumentList
-		$AppExit = $LASTEXITCODE
-	} finally {
-		Pop-Location
-	}
-	# A GUI-subsystem exe leaves $LASTEXITCODE empty; treat that as success.
-	if ($null -eq $AppExit) {
-		$AppExit = 0
-	}
-	if ($AppExit -eq 0) {
-		Write-StepDone "done" "exit 0"
-	} else {
-		Write-StepDone "failed" "exit $AppExit"
-	}
-	exit $AppExit
-}
 
 Start-Process -FilePath $Editor -ArgumentList $ArgumentList -WorkingDirectory $Root
 Write-StepDone "started" "new window"
