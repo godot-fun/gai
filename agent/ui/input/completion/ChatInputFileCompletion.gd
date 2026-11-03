@@ -4,7 +4,8 @@ extends ChatInputCompletionProvider
 ## `@path` file references for the composer list.
 ##
 ## An `@` that opens a word starts a mention (`@agent/ui`, `@SKILL.md`) and the rows come from the
-## workspace, minus the folders [member GitIgnore.ignore_rules] hides. Folders end in `/` so accepting
+## workspace index ([method async_refresh_index] walks it on a worker), minus the folders
+## [member GitIgnore.ignore_rules] hides. Folders end in `/` so accepting
 ## one drills into it; files become the same Markdown link the drop and clipboard paths produce
 ## ([method MarkdownHelper.format_file_as_markdown]), so bubbles and the agent see one shape no matter
 ## how the file got in.
@@ -55,7 +56,6 @@ func is_active() -> bool:
 
 
 func build_options() -> Array[ChatInputCompletionProvider.CompletionRow]:
-	refresh_index()
 	var options: Array[ChatInputCompletionProvider.CompletionRow] = []
 	var matches: Array[MentionPath] = matching_entries(entries, query(), MAX_OPTIONS)
 	for entry: MentionPath in matches:
@@ -175,22 +175,26 @@ static func entry_order_before(left: MentionPath, right: MentionPath) -> bool:
 	return left.path < right.path
 
 
-## Workspace-relative [member entries], sorted by path so rows stay stable. [method GlobUtils.glob] walks
-## [member indexed_root] with directories on — folders keep their trailing `/`, matching agent glob/grep
-## — and [member GitIgnore.ignore_rules] as skip rules. [constant MAX_ENTRIES] caps the walk; breadth-first
-## order keeps the shallowest paths.
-func refresh_index() -> void:
+## Workspace-relative [member entries]. [method GlobUtils.glob] runs on a worker
+## ([method ExecutorHelper.async_execute_pooled]); matching stays on the main thread.
+func async_refresh_index() -> void:
 	var root := resolve_root()
-	if indexed and root == indexed_root:
+	if indexed and indexed_root == root:
 		return
 	indexed_root = root
+	indexed = false
 	entries = []
 	if root.is_empty():
 		indexed = true
 		return
+	var skip_rules := GitIgnore.ignore_rules.duplicate()
+	var paths: Array[String] = await ExecutorHelper.async_execute_pooled(func() -> Array[String]:
+		return GlobUtils.glob(root, StringUtils.EMPTY, true, 0, skip_rules, true, MAX_ENTRIES)
+	)
+	if resolve_root() != root:
+		return
 	var root_prefix := root.replace("\\", "/")
 	root_prefix = root_prefix if root_prefix.ends_with(DIRECTORY_SUFFIX) else root_prefix + DIRECTORY_SUFFIX
-	var paths := GlobUtils.glob(root, StringUtils.EMPTY, true, 0, GitIgnore.ignore_rules, true, MAX_ENTRIES)
 	for path: String in paths:
 		var relative := path.replace("\\", "/").substr(root_prefix.length())
 		entries.append(MentionPath.folder(relative) if relative.ends_with(DIRECTORY_SUFFIX) else MentionPath.file(relative))

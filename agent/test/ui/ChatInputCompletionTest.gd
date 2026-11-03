@@ -10,14 +10,14 @@ func file_row_accept_links_the_file_test() -> void:
 	var root := make_scratch_workspace("accept")
 	var field := make_field(root, "@not")
 	var completion: ChatInputCompletion = field.completion
-	completion.refresh_on_text_change()
+	await completion.refresh_on_text_change()
 	# `notes.md` at the root is offered before `docs/notes.md`, the shallower path winning.
 	assert(completion.options.size() == 2)
 	assert(completion.options[0].insert_text
 		== MarkdownHelper.format_file_as_markdown(root.path_join("notes.md")) + " ")
 	assert(completion.is_popup_open())
 	field.set_code_completion_selected_index(0)
-	completion.confirm()
+	await completion.confirm()
 	assert(field.text == MarkdownHelper.format_file_as_markdown(root.path_join("notes.md")) + " ")
 	assert(not completion.is_popup_open())
 	field.free()
@@ -29,10 +29,10 @@ func folder_row_accept_keeps_drilling_test() -> void:
 	var root := make_scratch_workspace("drill")
 	var field := make_field(root, "@do")
 	var completion: ChatInputCompletion = field.completion
-	completion.refresh_on_text_change()
+	await completion.refresh_on_text_change()
 	assert(completion.options[0].insert_text == "@docs/")
 	field.set_code_completion_selected_index(0)
-	completion.confirm()
+	await completion.confirm()
 	assert(field.text == "@docs/")
 	assert(completion.is_popup_open())
 	assert(completion.options.size() == 1)
@@ -52,7 +52,7 @@ func skill_row_accept_replaces_the_command_test() -> void:
 	field.update_code_completion_options(true)
 	assert(completion.is_popup_open())
 	field.set_code_completion_selected_index(0)
-	completion.confirm()
+	await completion.confirm()
 	assert(field.text == "/audio-trim ")
 	assert(not completion.is_popup_open())
 	field.free()
@@ -64,10 +64,10 @@ func accept_replaces_the_typed_tail_test() -> void:
 	var root := make_scratch_workspace("tail")
 	var field := make_field(root, "@do cs", 3)
 	var completion: ChatInputCompletion = field.completion
-	completion.refresh_on_text_change()
+	await completion.refresh_on_text_change()
 	assert(completion.options[0].insert_text == "@docs/")
 	field.set_code_completion_selected_index(0)
-	completion.confirm()
+	await completion.confirm()
 	assert(field.text == "@docs/ cs")
 	field.free()
 	pass
@@ -84,7 +84,7 @@ func only_one_provider_claims_the_caret_test() -> void:
 	field.text = "hello"
 	field.set_caret_column(5)
 	assert(completion.active_provider() == null)
-	completion.refresh_on_text_change()
+	await completion.refresh_on_text_change()
 	assert(not completion.is_popup_open())
 	assert(completion.options.is_empty())
 	field.free()

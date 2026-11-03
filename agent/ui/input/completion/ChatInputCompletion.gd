@@ -9,7 +9,7 @@ extends RefCounted
 ## therefore overrides the three completion virtuals — request, filter, confirm — and every decision
 ## lands here:
 ##
-## - request: ask the active provider for rows and hand them over ([method refresh]);
+## - request: ask the active provider for rows and hand them over ([method async_refresh]);
 ## - filter: give the rows back untouched ([method filter_candidates]);
 ## - confirm: replace the whole token with the accepted row ([method confirm]).
 ##
@@ -52,15 +52,17 @@ func cancel() -> void:
 
 ## Called on every keystroke: rows are pre-filtered here, so the engine only sees surviving rows.
 func refresh_on_text_change() -> void:
-	refresh(true)
+	await async_refresh(true)
 	pass
 
 
-func refresh(force: bool) -> void:
+func async_refresh(force: bool) -> void:
 	var provider := active_provider()
 	if provider == null:
 		cancel()
 		return
+	if provider == file_completion:
+		await file_completion.async_refresh_index()
 	var rows: Array[ChatInputCompletionProvider.CompletionRow] = provider.build_options()
 	if rows.is_empty():
 		cancel()
@@ -108,7 +110,7 @@ func confirm() -> void:
 	input_field.end_complex_operation()
 	# A directory row leaves a live `@dir/` token under the caret and reopens the list; a file row ends
 	# in a Markdown link and a skill row in a blank, so the rebuild finds no provider and stays closed.
-	refresh_on_text_change()
+	await refresh_on_text_change()
 	pass
 
 

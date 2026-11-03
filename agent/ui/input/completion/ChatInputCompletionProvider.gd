@@ -4,14 +4,14 @@ extends RefCounted
 ## One trigger of the composer completion list — `/skill` today, `@file` — and the shared contract
 ## [ChatInputCompletion] needs from it.
 ##
-## A provider owns three facts and nothing else: whether the caret sits in its token, which rows the
-## list may show for that token, and which columns of the caret line an accepted row replaces. The
-## dispatcher adds colors and kinds, talks to [CodeEdit], and performs the replacement.
+## A provider owns three facts and nothing else: whether the caret sits in its token, which
+## [CompletionRow]s the list may show for that token, and which columns of the caret line an accepted
+## row replaces. [ChatInputCompletion] maps those rows for [CodeEdit] and performs the replacement.
 
 var input_field: CodeEdit
 
 
-## One completion row before [ChatInputCompletion] adds engine fields ([member kind], [member font_color]).
+## One completion list row: popup label, insert payload, and the [CodeEdit] option fields.
 class CompletionRow extends RefCounted:
 	var display_text: String = ""
 	var insert_text: String = ""
@@ -31,8 +31,7 @@ func is_active() -> bool:
 
 ## Rows for the current token in display order.
 func build_options() -> Array[CompletionRow]:
-	var options: Array[CompletionRow] = []
-	return options
+	return []
 
 
 ## Caret-line column span the accepted row replaces: `x` is the first token column, `y` the column

@@ -11,7 +11,7 @@ var completion: ChatInputCompletion
 func _request_code_completion(force: bool) -> void:
 	if completion == null:
 		return
-	completion.refresh(force)
+	await completion.async_refresh(force)
 	pass
 
 
