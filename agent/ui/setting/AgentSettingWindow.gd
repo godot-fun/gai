@@ -42,10 +42,10 @@ func build_window() -> void:
 
 	sections = [
 		AppearanceSettingSection.new(),
-		ShortcutSettingSection.new(),
 		ConnectionSettingSection.new(),
 		BehaviorSettingSection.new(),
 		NotificationSettingSection.new(),
+		ShortcutSettingSection.new(),
 	]
 	for index in range(sections.size()):
 		sections[index].set_up(self, fields, self)

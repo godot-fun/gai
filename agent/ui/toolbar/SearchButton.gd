@@ -10,7 +10,6 @@ var button: Button
 
 func setup(p_button: Button) -> void:
 	button = p_button
-	apply_shortcut()
 	button.pressed.connect(on_button_pressed)
 	button.mouse_entered.connect(on_mouse_entered)
 	button.mouse_exited.connect(on_mouse_exited)
@@ -18,6 +17,7 @@ func setup(p_button: Button) -> void:
 	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(apply_theme)
 	AgentEvents.events.search_shortcut_changed.connect(on_search_shortcut_changed)
+	apply_shortcut()
 	apply_theme()
 	pass
 
