@@ -5,9 +5,25 @@ extends CommonWindow
 
 const FIELD_LABEL_RATIO: float = 1.0
 const FIELD_CONTROL_RATIO: float = 5.0
+const NAV_COLUMN_WIDTH: int = 168
+const NAV_LOCALE_KEYS: Array[String] = [
+	"agent.settings.appearance",
+	"agent.settings.heading",
+	"agent.settings.agent_behavior",
+	"agent.settings.notification",
+	"agent.settings.shortcut",
+]
 const GROUP_NAME: StringName = &"agent_setting_window"
 var sections: Array[SettingSection] = []
 var separators: Array[HSeparator] = []
+var nav_buttons: Array[Button] = []
+var nav_button_group: ButtonGroup
+var nav_panel: PanelContainer
+var nav_column: VBoxContainer
+var nav_divider: VSeparator
+var content_margin: MarginContainer
+var settings_fields: VBoxContainer
+var settings_pad: MarginContainer
 var settings_scroll: ScrollContainer
 
 
@@ -23,34 +39,64 @@ func _init() -> void:
 func build_window() -> void:
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", Margin.ma_5)
+	margin.add_theme_constant_override("margin_left", 0)
 	margin.add_theme_constant_override("margin_right", 0)
-	margin.add_theme_constant_override("margin_top", Margin.ma_3)
-	margin.add_theme_constant_override("margin_bottom", Margin.ma_3)
+	margin.add_theme_constant_override("margin_top", 0)
+	margin.add_theme_constant_override("margin_bottom", 0)
 	container.add_child(margin)
 
-	var card_margin := MarginContainer.new()
-	card_margin.add_theme_constant_override("margin_left", Margin.ma_5)
-	card_margin.add_theme_constant_override("margin_right", 0)
-	card_margin.add_theme_constant_override("margin_top", Margin.ma_4)
-	card_margin.add_theme_constant_override("margin_bottom", Margin.ma_4)
-	card_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	card_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	margin.add_child(card_margin)
+	var body := HBoxContainer.new()
+	body.add_theme_constant_override("separation", 0)
+	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	margin.add_child(body)
+
+	nav_button_group = ButtonGroup.new()
+	nav_panel = PanelContainer.new()
+	nav_panel.custom_minimum_size.x = NAV_COLUMN_WIDTH
+	nav_panel.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	nav_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_child(nav_panel)
+	var nav_pad := MarginContainer.new()
+	nav_pad.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	nav_pad.add_theme_constant_override("margin_left", 0)
+	nav_pad.add_theme_constant_override("margin_right", 0)
+	nav_pad.add_theme_constant_override("margin_top", Margin.ma_3)
+	nav_pad.add_theme_constant_override("margin_bottom", Margin.ma_3)
+	nav_panel.add_child(nav_pad)
+	nav_column = VBoxContainer.new()
+	nav_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	nav_column.add_theme_constant_override("separation", Margin.ma_1)
+	nav_pad.add_child(nav_column)
+
+	nav_divider = VSeparator.new()
+	nav_divider.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_child(nav_divider)
+
+	content_margin = MarginContainer.new()
+	content_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content_margin.add_theme_constant_override("margin_top", Margin.ma_3)
+	content_margin.add_theme_constant_override("margin_right", 0)
+	content_margin.add_theme_constant_override("margin_bottom", Margin.ma_3)
+	body.add_child(content_margin)
+
 	settings_scroll = ScrollContainer.new()
 	settings_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	settings_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	settings_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	settings_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	card_margin.add_child(settings_scroll)
-	var settings_pad := MarginContainer.new()
+	settings_scroll.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	content_margin.add_child(settings_scroll)
+	settings_pad = MarginContainer.new()
 	settings_pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	settings_pad.add_theme_constant_override("margin_left", Margin.ma_4)
 	settings_pad.add_theme_constant_override("margin_right", Margin.ma_4)
 	settings_scroll.add_child(settings_pad)
-	var fields := VBoxContainer.new()
-	fields.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	fields.add_theme_constant_override("separation", Margin.ma_3)
-	settings_pad.add_child(fields)
+	settings_fields = VBoxContainer.new()
+	settings_fields.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	settings_fields.add_theme_constant_override("separation", Margin.ma_3)
+	settings_pad.add_child(settings_fields)
 
 	sections = [
 		AppearanceSettingSection.new(),
@@ -60,9 +106,58 @@ func build_window() -> void:
 		ShortcutSettingSection.new(),
 	]
 	for index in range(sections.size()):
-		sections[index].set_up(self, fields, self)
+		sections[index].set_up(self, settings_fields, self)
 		if index < sections.size() - 1:
-			add_separator(fields)
+			add_separator(settings_fields)
+		add_nav_button(index)
+	pass
+
+
+func add_nav_button(index: int) -> void:
+	var button := Button.new()
+	button.toggle_mode = true
+	button.button_group = nav_button_group
+	button.text = I18n.t(NAV_LOCALE_KEYS[index])
+	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.custom_minimum_size.y = ControlSize.md
+	button.pressed.connect(on_nav_button_pressed.bind(index))
+	nav_column.add_child(button)
+	nav_buttons.append(button)
+	pass
+
+
+func on_nav_button_pressed(index: int) -> void:
+	scroll_to_section(index)
+	pass
+
+
+func scroll_to_section(index: int) -> void:
+	if index < 0 or index >= sections.size():
+		return
+	queue_scroll_to_section_after_layout(index)
+	pass
+
+
+func queue_scroll_to_section_after_layout(index: int) -> void:
+	var tree := settings_scroll.get_tree()
+	if tree == null:
+		apply_scroll_to_section(index)
+		return
+	tree.process_frame.connect(func() -> void: apply_scroll_to_section(index), CONNECT_ONE_SHOT)
+	pass
+
+
+func apply_scroll_to_section(index: int) -> void:
+	var anchor := sections[index].nav_scroll_anchor()
+	if anchor == null:
+		return
+	var vbar: VScrollBar = settings_scroll.get_v_scroll_bar()
+	if vbar == null:
+		return
+	var entry_y := settings_pad.position.y + settings_fields.position.y + anchor.position.y
+	var max_scroll := maxf(vbar.min_value, vbar.max_value - vbar.page)
+	vbar.value = clampf(entry_y - Margin.ma_5, vbar.min_value, max_scroll)
 	pass
 
 
@@ -189,7 +284,9 @@ func refresh_check_button(check: CheckButton, enabled: bool) -> void:
 func open() -> void:
 	for section in sections:
 		section.refresh()
-	present_centered(30, 70)
+	present_centered(44, 70)
+	if nav_buttons.size() > 0:
+		nav_buttons[0].button_pressed = true
 	pass
 
 
@@ -208,6 +305,8 @@ func apply_locale() -> void:
 	title = I18n.t("agent.settings.tooltip")
 	for section in sections:
 		section.apply_locale()
+	for index in range(nav_buttons.size()):
+		nav_buttons[index].text = I18n.t(NAV_LOCALE_KEYS[index])
 	apply_theme()
 	pass
 
@@ -216,6 +315,8 @@ func apply_theme() -> void:
 	super()
 	style_content()
 	ScrollBarStyle.apply(settings_scroll.get_v_scroll_bar(), ScrollBarStyle.Thickness.LG)
+	for button in nav_buttons:
+		SettingNavTheme.apply_nav_button(button)
 	for section in sections:
 		section.apply_theme()
 	pass
@@ -230,6 +331,15 @@ func style_content() -> void:
 	separator_style.thickness = 1
 	for separator in separators:
 		separator.add_theme_stylebox_override("separator", separator_style)
+	style_nav_rail()
+	pass
+
+
+func style_nav_rail() -> void:
+	if nav_panel != null:
+		nav_panel.add_theme_stylebox_override("panel", SettingNavTheme.nav_panel())
+	if nav_divider != null:
+		nav_divider.add_theme_stylebox_override("separator", SettingNavTheme.nav_divider())
 	pass
 
 

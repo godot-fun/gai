@@ -10,6 +10,11 @@ func set_up(p_ui: AgentSettingWindow, _parent: VBoxContainer, _window: Window) -
 	pass
 
 
+func nav_scroll_anchor() -> Control:
+	return heading_label
+	pass
+
+
 func refresh() -> void:
 	pass
 
