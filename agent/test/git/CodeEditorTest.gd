@@ -51,7 +51,7 @@ const PREVIEW_SAMPLES: Array[Dictionary] = [
 	{
 		"label": "Markdown",
 		"path": "README.md",
-		"text": "# Code Highlighter Preview\n\n> NOTE: Toggle extensions above to compare palettes.\n\nInline `code`, **bold**, ~~strike~~, and a [link](https://example.com).\n\n```gdscript\nfunc hello() -> void:\n\tprint(\"demo\")\n```",
+		"text": MarkdownArticleFixture.ARTICLE,
 	},
 	{
 		"label": "MDX",
