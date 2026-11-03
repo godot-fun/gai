@@ -69,16 +69,26 @@ class Events:
 	## A chat entry was deleted. When delete_from_here is true, the selected entry and every
 	## entry after it were removed; otherwise only the selected entry was removed.
 	signal chat_entry_delete(session_id: int, entry_idx: int, delete_from_here: bool)
-	# Appearance
-	## Markdown bubble rendering switched (see [method AgentSetting.set_markdown_enabled]).
-	signal markdown_changed(enabled: bool)
+
 	# Workspace
 	## Workspace root switched (see [method AgentWorkspace.set_root]) — sessions and file
 	## paths now resolve under the new root, so listeners reload their state.
 	signal workspace_changed(path: String)
 
+	# ===========================================================================
+	# SETTINGS — common -> UI
+	# ===========================================================================
+
+	## Markdown bubble rendering switched (see [method AgentSetting.set_markdown_enabled]).
+	signal markdown_changed(enabled: bool)
 	## Proxy address changed (see [method ApiSetting.save]).
 	signal proxy_address_changed
+
+	# ---------------------------------------------------------------------------
+
+	## Chat-search shortcut changed (see [method ShortcutSetting.set_search_shortcut]).
+	signal search_shortcut_changed
+
 	# ===========================================================================
 	# UI-ONLY COORDINATION — UI -> UI; managers must never subscribe below
 	# ===========================================================================

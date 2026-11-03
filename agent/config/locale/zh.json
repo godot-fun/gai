@@ -366,6 +366,11 @@
       "sound_folder_title": "选择通知声音文件夹",
       "api_token": "API 令牌",
       "token_help": "保存在本地 user://setting.config",
+      "shortcut": "快捷键",
+      "open_search": "打开搜索",
+      "shortcut_help": "点击后按下新的组合键。需要包含 Ctrl、Alt、Shift 或 Meta。",
+      "shortcut_capture": "请按快捷键…",
+      "shortcut_invalid": "快捷键需要包含 Ctrl、Alt、Shift 或 Meta",
       "tooltip": "AI 设置"
     }
   },

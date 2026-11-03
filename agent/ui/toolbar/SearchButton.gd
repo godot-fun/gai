@@ -10,24 +10,27 @@ var button: Button
 
 func setup(p_button: Button) -> void:
 	button = p_button
-	button.shortcut = make_shortcut(KEY_F, true)
+	apply_shortcut()
 	button.pressed.connect(on_button_pressed)
 	button.mouse_entered.connect(on_mouse_entered)
 	button.mouse_exited.connect(on_mouse_exited)
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(apply_theme)
+	AgentEvents.events.search_shortcut_changed.connect(on_search_shortcut_changed)
 	apply_theme()
 	pass
 
 
-func make_shortcut(keycode: Key, ctrl_pressed: bool = false) -> Shortcut:
-	var key_event := InputEventKey.new()
-	key_event.keycode = keycode
-	key_event.ctrl_pressed = ctrl_pressed
-	var shortcut := Shortcut.new()
-	shortcut.events = [key_event]
-	return shortcut
+func on_search_shortcut_changed() -> void:
+	apply_shortcut()
+	apply_theme()
+	pass
+
+
+func apply_shortcut() -> void:
+	button.shortcut = ShortcutSetting.make_search_shortcut()
+	pass
 
 
 func on_button_pressed() -> void:
@@ -46,7 +49,7 @@ func on_mouse_exited() -> void:
 
 
 func apply_theme() -> void:
-	AgentToolbarButton.style_round(button, I18n.t("agent.search.tooltip"))
+	AgentToolbarButton.style_round(button, I18n.t("agent.search.tooltip") + " (" + ShortcutSetting.search_shortcut_text() + ")")
 	update_icon(button.is_hovered())
 	pass
 

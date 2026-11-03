@@ -366,6 +366,11 @@
       "sound_folder_title": "Select the notification sound folder",
       "api_token": "API token",
       "token_help": "Stored locally in user://setting.config",
+      "shortcut": "Shortcuts",
+      "open_search": "Open search",
+      "shortcut_help": "Click, then press a new shortcut. Include Ctrl, Alt, Shift, or Meta.",
+      "shortcut_capture": "Press a shortcut…",
+      "shortcut_invalid": "Include Ctrl, Alt, Shift, or Meta",
       "tooltip": "AI settings"
     }
   },
