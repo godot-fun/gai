@@ -13,7 +13,7 @@ var root: VBoxContainer
 var toolbar_panel: PanelContainer
 var toolbar: HBoxContainer
 var split_container: HSplitContainer
-var text_edit: TextEdit
+var text_edit: CodeEdit
 var preview_panel: PanelContainer
 var preview_label: RichTextLabel
 var open_on_startup_check: CheckButton
@@ -78,10 +78,12 @@ func build_layout() -> void:
 	split_container.dragged.connect(on_split_dragged)
 	root.add_child(split_container)
 
-	text_edit = TextEdit.new()
+	text_edit = CodeEdit.new()
 	text_edit.editable = true
 	text_edit.caret_blink = true
+	text_edit.highlight_current_line = true
 	text_edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+	text_edit.syntax_highlighter = MarkdownHighlighter.create()
 	text_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	text_edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	text_edit.text_changed.connect(on_text_changed)
@@ -157,17 +159,10 @@ func style_text_edit() -> void:
 	text_edit.add_theme_stylebox_override("focus", style.duplicate())
 	text_edit.add_theme_stylebox_override("read_only", style.duplicate())
 	text_edit.add_theme_color_override("background_color", Colors.app_background)
-	text_edit.add_theme_color_override("font_color", Colors.primary_text)
-	text_edit.add_theme_color_override("font_readonly_color", Colors.primary_text)
-	text_edit.add_theme_color_override("font_selected_color", Colors.primary_text)
+	CodeEditStyle.apply_base(text_edit)
 	text_edit.add_theme_color_override("font_placeholder_color", Colors.secondary_text)
-	text_edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
-	text_edit.add_theme_color_override("selection_color", ThemeColor.selection_color)
 	text_edit.add_theme_color_override("current_line_color", Color(ThemeColor.accent_theme_color(), 0.10))
-	text_edit.add_theme_font_override("font", Fonts.regular())
 	text_edit.add_theme_font_size_override("font_size", Typography.body_large_size)
-	ScrollBarStyle.apply(text_edit.get_v_scroll_bar())
-	ScrollBarStyle.apply(text_edit.get_h_scroll_bar())
 	pass
 
 
