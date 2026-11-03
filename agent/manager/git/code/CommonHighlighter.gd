@@ -9,7 +9,7 @@ const JS_EXTENSIONS := ["js", "jsx", "mjs", "cjs", "ts", "tsx"]
 const CPP_EXTENSIONS := ["c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx", "m", "mm"]
 const SHADER_EXTENSIONS := ["gdshader", "gdshaderinc", "glsl", "vert", "frag", "geom", "tesc", "tese", "comp", "hlsl", "fx", "wgsl"]
 const DATA_EXTENSIONS := ["json", "jsonc", "json5", "yaml", "yml", "toml", "ini", "cfg", "conf", "env", "properties", "tscn", "tres", "godot", "gdextension", "import", "lock"]
-const MARKUP_EXTENSIONS := ["md", "markdown", "mdx", "html", "htm", "xhtml", "xml", "svg", "vue", "svelte", "css", "scss", "sass", "less"]
+const MARKUP_EXTENSIONS := ["html", "htm", "xhtml", "xml", "svg", "vue", "svelte", "css", "scss", "sass", "less"]
 const SHELL_EXTENSIONS := ["sh", "bash", "zsh", "fish", "ps1", "psm1", "bat", "cmd"]
 const SQL_EXTENSIONS := ["sql", "psql", "ddl", "dml"]
 const DIFF_EXTENSIONS := ["diff", "patch", "rej"]
@@ -21,7 +21,6 @@ const DECLARATION_KEYWORDS := ["class_name", "extends", "signal", "enum", "const
 const SHELL_KEYWORDS := ["case", "do", "done", "elif", "else", "esac", "fi", "for", "foreach", "function", "if", "in", "select", "then", "until", "while", "param", "begin", "end", "process"]
 const PYTHON_KEYWORDS := ["assert", "del", "except", "False", "finally", "global", "lambda", "nonlocal", "pass", "True", "with", "None", "__name__", "__main__"]
 const JS_KEYWORDS := ["constructor", "debugger", "default", "delete", "instanceof", "of", "typeof", "undefined", "NaN", "Infinity", "get", "set", "implements", "declare", "keyof", "satisfies", "unknown", "never", "any", "type", "infer", "asserts", "with", "module", "bigint", "symbol", "globalThis"]
-const MARKDOWN_KEYWORDS := ["TODO", "FIXME", "NOTE", "WARNING", "IMPORTANT", "TIP", "CAUTION"]
 const CPP_KEYWORDS := ["alignas", "alignof", "asm", "auto", "constexpr", "consteval", "constinit", "decltype", "explicit", "extern", "friend", "inline", "mutable", "noexcept", "operator", "register", "requires", "sizeof", "template", "thread_local", "typename", "union", "volatile", "concept", "nullptr"]
 const RUST_KEYWORDS := ["crate", "dyn", "impl", "loop", "macro_rules", "mod", "move", "mut", "pub", "ref", "type", "unsafe", "use", "where", "Self", "Box", "Option", "Result", "Some", "None", "Ok", "Err"]
 const GO_KEYWORDS := ["chan", "defer", "fallthrough", "go", "goto", "map", "range", "select", "type", "interface", "package"]
@@ -46,6 +45,8 @@ static func create(file_path: String) -> SyntaxHighlighter:
 		configure_shader(highlighter)
 	elif extension in DATA_EXTENSIONS or file_name in ["dockerfile", "makefile", ".gitignore", ".gitattributes", ".editorconfig"]:
 		configure_data(highlighter, extension, file_name)
+	elif extension in MarkdownHighlighter.EXTENSIONS:
+		MarkdownHighlighter.configure(highlighter)
 	elif extension in MARKUP_EXTENSIONS:
 		configure_markup(highlighter, extension)
 	elif extension in SHELL_EXTENSIONS:
@@ -146,18 +147,8 @@ static func configure_data(highlighter: CodeHighlighterInstance, extension: Stri
 
 static func configure_markup(highlighter: CodeHighlighterInstance, extension: String) -> void:
 	add_quoted_strings(highlighter, CodeColors.string)
-	if extension in ["md", "markdown", "mdx"]:
-		add_keywords(highlighter, MARKDOWN_KEYWORDS, CodeColors.declaration)
-		highlighter.add_color_region("```", "```", CodeColors.string)
-		highlighter.add_color_region("`", "`", CodeColors.string)
-		highlighter.add_color_region("<!--", "-->", CodeColors.comment)
-		highlighter.add_color_region("#", "", CodeColors.declaration, true)
-		highlighter.add_color_region("**", "**", CodeColors.keyword)
-		highlighter.add_color_region("~~", "~~", CodeColors.comment)
-		highlighter.add_color_region("<", ">", CodeColors.tag)
-	else:
-		highlighter.add_color_region("<!--", "-->", CodeColors.comment)
-		highlighter.add_color_region("<", ">", CodeColors.tag)
+	highlighter.add_color_region("<!--", "-->", CodeColors.comment)
+	highlighter.add_color_region("<", ">", CodeColors.tag)
 	if extension in ["css", "scss", "sass", "less"]:
 		highlighter.add_color_region("/*", "*/", CodeColors.comment)
 	pass

@@ -26,6 +26,8 @@ static func recognizes_extended_languages_test() -> void:
 	assert(jsx.has_color_region("<"))
 	var markdown := CommonHighlighter.create("README.md")
 	assert(markdown.has_color_region("```"))
+	assert(markdown.has_color_region("["))
+	assert(markdown.has_keyword_color("https://"))
 	assert(markdown.has_color_region("#"))
 	assert(markdown.has_color_region("**"))
 	assert(markdown.has_color_region("~~"))

@@ -17,6 +17,7 @@ const DARK_SYMBOL := Color("aeb7c2")
 const DARK_FUNCTION := Color("78b9f2")
 const DARK_MEMBER := Color("f2c97d")
 const DARK_TAG := Color("ff8f70")
+const DARK_LINK := Color("79c0ff")
 
 const LIGHT_KEYWORD := Color("ad3da4")
 const LIGHT_TYPE := Color("0b7f78")
@@ -28,6 +29,7 @@ const LIGHT_SYMBOL := Color("4b5563")
 const LIGHT_FUNCTION := Color("0969da")
 const LIGHT_MEMBER := Color("953800")
 const LIGHT_TAG := Color("cf222e")
+const LIGHT_LINK := Color("0550ae")
 
 static var keyword: Color = DARK_KEYWORD
 static var type: Color = DARK_TYPE
@@ -39,6 +41,7 @@ static var symbol: Color = DARK_SYMBOL
 static var function: Color = DARK_FUNCTION
 static var member: Color = DARK_MEMBER
 static var tag: Color = DARK_TAG
+static var link: Color = DARK_LINK
 
 
 static func _static_init() -> void:
@@ -67,6 +70,7 @@ static func apply_dark_palette() -> void:
 	function = DARK_FUNCTION
 	member = DARK_MEMBER
 	tag = DARK_TAG
+	link = DARK_LINK
 	pass
 
 
@@ -81,4 +85,5 @@ static func apply_light_palette() -> void:
 	function = LIGHT_FUNCTION
 	member = LIGHT_MEMBER
 	tag = LIGHT_TAG
+	link = LIGHT_LINK
 	pass
