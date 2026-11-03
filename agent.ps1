@@ -13,6 +13,46 @@ param(
 $ErrorActionPreference = "Stop"
 
 # ---------------------------------------------------------------------------
+# Console step output
+# ---------------------------------------------------------------------------
+# Three visible steps: update code -> refresh import cache -> start the app.
+# Each step prints "[n/3] title" up front and "[n/3] done in 4.1s" when it ends,
+# so the walls of subprocess output (git, the Godot import) still have clear
+# boundaries. Plain ASCII only: this launcher runs on Windows PowerShell 5.1,
+# which has no $PSStyle, and the default console code page turns box-drawing
+# characters into mojibake.
+
+$StepTotal = 3
+$StepIndex = 0
+$StepStarted = Get-Date
+
+function Write-Step([string]$Title) {
+	$script:StepIndex++
+	$script:StepStarted = Get-Date
+	Write-Host ""
+	Write-Host ("[{0}/{1}] {2}" -f $script:StepIndex, $script:StepTotal, $Title) -ForegroundColor Cyan
+}
+
+function Write-StepNote([string]$Message) {
+	Write-Host ("       {0}" -f $Message) -ForegroundColor Yellow
+}
+
+function Write-StepDone([string]$Status = "done", [string]$Detail = "") {
+	$Seconds = ((Get-Date) - $script:StepStarted).TotalSeconds
+	$Suffix = ""
+	if ($Detail -ne "") {
+		$Suffix = " ({0})" -f $Detail
+	}
+	$Color = switch ($Status) {
+		"done" { "Green" }
+		"started" { "Green" }
+		"skipped" { "Yellow" }
+		default { "Red" }
+	}
+	Write-Host ("[{0}/{1}] {2} in {3:0.0}s{4}" -f $script:StepIndex, $script:StepTotal, $Status, $Seconds, $Suffix) -ForegroundColor $Color
+}
+
+# ---------------------------------------------------------------------------
 # Portable user:// under .godot
 # ---------------------------------------------------------------------------
 # Godot has no CLI flag for user://. Set APPDATA before start so user data stays
@@ -30,20 +70,20 @@ $env:APPDATA = Join-Path $Root ".godot"
 $ManifestPath = Join-Path $Root ".dependency\manifest.json"
 
 if (-not (Test-Path -LiteralPath $ManifestPath)) {
-	Write-Host "Missing .dependency/manifest.json. See agent/Dependency.md"
+	Write-Host "Missing .dependency/manifest.json. See agent/Dependency.md" -ForegroundColor Red
 	exit 1
 }
 
 $Manifest = Get-Content -LiteralPath $ManifestPath -Raw | ConvertFrom-Json
 $GodotEntry = $Manifest.godot
 if ($null -eq $GodotEntry -or -not $GodotEntry.populated) {
-	Write-Host "godot is not populated in .dependency/manifest.json. See agent/Dependency.md"
+	Write-Host "godot is not populated in .dependency/manifest.json. See agent/Dependency.md" -ForegroundColor Red
 	exit 1
 }
 
 $Editor = Join-Path $Root ($GodotEntry.bin -replace "/", "\")
 if (-not (Test-Path -LiteralPath $Editor)) {
-	Write-Host "Godot editor not found: $Editor"
+	Write-Host "Godot editor not found: $Editor" -ForegroundColor Red
 	exit 1
 }
 
@@ -56,9 +96,15 @@ if (-not (Test-Path -LiteralPath $Editor)) {
 # starts from the local checkout. Fast-forward only — a diverged branch is left
 # alone instead of creating a merge commit or overwriting local work.
 
+Write-Step "Update code (git pull --ff-only)"
+
+# Only a successful fast-forward counts as "done"; every other outcome starts the
+# app from the local checkout and reports itself as "skipped" with a note above.
+$PullStatus = "skipped"
+
 $Git = Get-Command git -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
 if ($null -eq $Git) {
-	Write-Host "git not found, starting from local code"
+	Write-StepNote "git not found, starting from local code"
 } else {
 	# Git writes expected states ("not a git repository", diverged pull) to stderr.
 	# $ErrorActionPreference = "Stop" turns that into a terminating error, so relax
@@ -74,16 +120,17 @@ if ($null -eq $Git) {
 		$Branch = (& $Git.Source rev-parse --abbrev-ref HEAD 2>&1 | Out-String).Trim()
 		$IsRepo = $LASTEXITCODE -eq 0
 		if (-not $IsRepo) {
-			Write-Host "Not a git checkout, starting from local code"
+			Write-StepNote "Not a git checkout, starting from local code"
 		} elseif ($Branch -eq "HEAD") {
-			Write-Host "Detached HEAD, skipping git update"
+			Write-StepNote "Detached HEAD, skipping git update"
 		} else {
 			# No dirty-tree check: --ff-only already aborts (leaving files untouched)
 			# when incoming commits would overwrite local edits.
-			Write-Host "Updating code: git pull --ff-only"
 			& $Git.Source pull --ff-only
-			if ($LASTEXITCODE -ne 0) {
-				Write-Host "git pull failed (offline, dirty tree, or diverged branch), starting from local code"
+			if ($LASTEXITCODE -eq 0) {
+				$PullStatus = "done"
+			} else {
+				Write-StepNote "git pull failed (offline, dirty tree, or diverged branch), starting from local code"
 			}
 		}
 	} finally {
@@ -92,6 +139,8 @@ if ($null -eq $Git) {
 		$ErrorActionPreference = $PreviousPreference
 	}
 }
+
+Write-StepDone $PullStatus
 
 # ---------------------------------------------------------------------------
 # Refresh import cache
@@ -106,6 +155,8 @@ if ($null -eq $Git) {
 # $LASTEXITCODE empty — the app would start while the import is still running.
 # Start-Process -Wait blocks until the import process really exits.
 
+Write-Step "Refresh import cache (godot --headless --import)"
+
 Push-Location $Root
 try {
 	$ImportProcess = Start-Process -FilePath $Editor -ArgumentList @("--headless", "--path", $Root, "--import") `
@@ -116,9 +167,11 @@ try {
 }
 
 if ($ImportExit -gt 0) {
-	Write-Host "Asset import failed (exit $ImportExit)"
+	Write-StepDone "failed" "exit $ImportExit"
 	exit $ImportExit
 }
+
+Write-StepDone "done" "exit 0"
 
 # Small safety margin so the OS finishes flushing .godot before the app maps it.
 Start-Sleep -Seconds 1
@@ -137,15 +190,28 @@ if (-not ($UserArgs -match '^--data-dir(=.*)?$')) {
 
 $ArgumentList = @("--path", $Root, "res://agent/Agent.tscn", "--") + $UserArgs
 
+Write-Step ("Start agent (res://agent/Agent.tscn {0})" -f ($UserArgs -join " "))
+
 if ($Wait) {
 	Push-Location $Root
 	try {
 		& $Editor @ArgumentList
-		exit $LASTEXITCODE
+		$AppExit = $LASTEXITCODE
 	} finally {
 		Pop-Location
 	}
+	# A GUI-subsystem exe leaves $LASTEXITCODE empty; treat that as success.
+	if ($null -eq $AppExit) {
+		$AppExit = 0
+	}
+	if ($AppExit -eq 0) {
+		Write-StepDone "done" "exit 0"
+	} else {
+		Write-StepDone "failed" "exit $AppExit"
+	}
+	exit $AppExit
 }
 
 Start-Process -FilePath $Editor -ArgumentList $ArgumentList -WorkingDirectory $Root
+Write-StepDone "started" "new window"
 exit 0
