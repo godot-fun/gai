@@ -15,7 +15,7 @@ var restart_web_server_button: Button
 
 func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> void:
 	super.set_up(p_ui, parent, window)
-	heading_label = ui.add_heading(parent, I18n.t("agent.settings.agent_behavior"))
+	heading_label = ui.add_heading(parent, I18n.t("common.agent"))
 	var sandbox_parts := ui.make_setting_row(parent, 6)
 	sandbox_label = ui.make_label(I18n.t("agent.settings.sandbox_mode"))
 	sandbox_parts[0].add_child(sandbox_label)
@@ -129,7 +129,7 @@ func restart_web_server() -> void:
 
 
 func apply_locale() -> void:
-	heading_label.text = I18n.t("agent.settings.agent_behavior")
+	heading_label.text = I18n.t("common.agent")
 	sandbox_label.text = I18n.t("agent.settings.sandbox_mode")
 	sandbox_label.tooltip_text = I18n.t("agent.settings.sandbox_mode_help")
 	sandbox_toggle_button.tooltip_text = I18n.t("agent.settings.sandbox_mode_help")
