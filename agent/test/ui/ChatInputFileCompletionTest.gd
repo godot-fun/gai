@@ -34,7 +34,7 @@ func token_end_test() -> void:
 func matching_entries_test() -> void:
 	var entries: Array[MentionPath] = [
 		MentionPath.folder("agent/ui/"),
-		MentionPath.file("agent/ui/ChatInputFile.gd"),
+		MentionPath.file("agent/ui/ChatInputAttachment.gd"),
 		MentionPath.file("docs/notes.md"),
 	]
 	assert(ChatInputFileCompletion.matching_entries(entries, "").size() == 3)
@@ -42,8 +42,8 @@ func matching_entries_test() -> void:
 	var ui: Array[MentionPath] = ChatInputFileCompletion.matching_entries(entries, "ui")
 	assert(ui.size() == 2)
 	assert(ui[0].path == "agent/ui/")
-	assert(ui[1].path == "agent/ui/ChatInputFile.gd")
-	assert(ChatInputFileCompletion.matching_entries(entries, "ui/chat")[0].path == "agent/ui/ChatInputFile.gd")
+	assert(ui[1].path == "agent/ui/ChatInputAttachment.gd")
+	assert(ChatInputFileCompletion.matching_entries(entries, "ui/chat")[0].path == "agent/ui/ChatInputAttachment.gd")
 	assert(ChatInputFileCompletion.matching_entries(entries, "notes")[0].path == "docs/notes.md")
 	# A typed Windows separator is the same query as a slash, and the shallower folder wins.
 	assert(ChatInputFileCompletion.matching_entries(entries, "agent\\ui")[0].path == "agent/ui/")
@@ -64,8 +64,8 @@ func display_text_test() -> void:
 	assert(ChatInputFileCompletion.build_display_text(MentionPath.file("notes.md")) == "notes.md")
 	assert(ChatInputFileCompletion.build_display_text(MentionPath.folder("agent/ui/"))
 		== "ui/" + ChatInputFileCompletion.DISPLAY_SEPARATOR + "agent/")
-	assert(ChatInputFileCompletion.build_display_text(MentionPath.file("agent/ui/ChatInputFile.gd"))
-		== "ChatInputFile.gd" + ChatInputFileCompletion.DISPLAY_SEPARATOR + "agent/ui/")
+	assert(ChatInputFileCompletion.build_display_text(MentionPath.file("agent/ui/ChatInputAttachment.gd"))
+		== "ChatInputAttachment.gd" + ChatInputFileCompletion.DISPLAY_SEPARATOR + "agent/ui/")
 	pass
 
 

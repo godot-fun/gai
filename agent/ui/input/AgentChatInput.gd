@@ -29,7 +29,7 @@ var queue_panel: PanelContainer
 var queue_scroll: ScrollContainer
 var queue_rows: VBoxContainer
 var moving_border: MovingAccentBorder
-var chat_input_file: ChatInputFile = ChatInputFile.new()
+var chat_input_attachment: ChatInputAttachment = ChatInputAttachment.new()
 var chat_completion: ChatInputCompletion = ChatInputCompletion.new()
 
 var expanded: bool = false
@@ -87,7 +87,7 @@ func setup(
 	input_wrap.gui_input.connect(on_wrap_gui_input)
 	input_bar.resized.connect(layout_bar)
 	input_bar.get_window().window_input.connect(on_global_input)
-	chat_input_file.setup(input_bar, input_wrap, input_field, prepare_file_drop, focus_input_field, restore_caret)
+	chat_input_attachment.setup(input_bar, input_wrap, input_field, prepare_file_drop, focus_input_field, restore_caret)
 	chat_completion.setup(input_field)
 	gdf.events.theme_changed.connect(on_ui_theme_changed)
 	gdf.events.theme_color_changed.connect(on_ui_theme_changed)
@@ -582,7 +582,7 @@ func collapse_after_send() -> void:
 
 
 func on_global_input(event: InputEvent) -> void:
-	if not expanded or chat_input_file.is_drop_focus_guarded():
+	if not expanded or chat_input_attachment.is_drop_focus_guarded():
 		return
 	if event is InputEventMouseButton:
 		var mouse: InputEventMouseButton = event as InputEventMouseButton
@@ -670,7 +670,7 @@ func on_field_gui_input(event: InputEvent) -> void:
 			return
 		# Escape and Enter open or close the completion list further down, so re-fit once they ran.
 		relayout_if_height_changed.call_deferred()
-		if key.is_action_pressed("ui_paste") and chat_input_file.paste_clipboard_files():
+		if key.is_action_pressed("ui_paste") and chat_input_attachment.paste_clipboard_files():
 			input_field.accept_event()
 			input_field.get_viewport().set_input_as_handled()
 			return
@@ -726,7 +726,7 @@ func on_field_focus_entered() -> void:
 
 
 func on_field_focus_exited() -> void:
-	if chat_input_file.is_drop_focus_guarded():
+	if chat_input_attachment.is_drop_focus_guarded():
 		return
 	# A blurred field cannot draw the list, so drop it instead of keeping the panel tall.
 	chat_completion.cancel()
