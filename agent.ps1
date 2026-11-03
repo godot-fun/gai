@@ -152,9 +152,9 @@ Write-StepDone "done" "exit 0"
 # ---------------------------------------------------------------------------
 # Start agent main scene
 # ---------------------------------------------------------------------------
-# New process (same as agent.bat). Godot is a GUI-subsystem exe, so `& $Editor`
-# returns at once and leaves $LASTEXITCODE empty. Start-Process detaches it
-# into its own window; this script then exits 0.
+# Godot is a GUI-subsystem exe and calls AttachConsole on its parent at startup.
+# FreeConsole first so that attach fails; otherwise Godot keeps this window open
+# after the launcher exits. The app itself opens a separate window.
 # Everything after `--` reaches the app through OS.get_cmdline_user_args():
 #   --data-dir <path>   agent data folder, workspace-relative (default here: .gai2)
 
@@ -166,7 +166,19 @@ if (-not ($UserArgs -match '^--data-dir(=.*)?$')) {
 $ArgumentList = @("--path", $Root, "res://agent/Agent.tscn", "--") + $UserArgs
 
 Write-Step ("Start agent (res://agent/Agent.tscn {0})" -f ($UserArgs -join " "))
-
-Start-Process -FilePath $Editor -ArgumentList $ArgumentList -WorkingDirectory $Root
 Write-StepDone "started" "new window"
+
+# Print the step line before detaching. Write-Host needs the console.
+# A failed detach must still start the app.
+try {
+	if (-not ('Win32.Kernel32Console' -as [type])) {
+		Add-Type -Namespace Win32 -Name Kernel32Console -MemberDefinition @'
+[System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
+public static extern bool FreeConsole();
+'@
+	}
+	[Win32.Kernel32Console]::FreeConsole() | Out-Null
+} catch {
+}
+Start-Process -FilePath $Editor -ArgumentList $ArgumentList -WorkingDirectory $Root
 exit 0
