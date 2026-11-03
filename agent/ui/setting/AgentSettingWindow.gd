@@ -101,7 +101,7 @@ func build_window() -> void:
 	sections = [
 		AppearanceSettingSection.new(),
 		ConnectionSettingSection.new(),
-		BehaviorSettingSection.new(),
+		AgentSettingSection.new(),
 		NotificationSettingSection.new(),
 		ShortcutSettingSection.new(),
 	]

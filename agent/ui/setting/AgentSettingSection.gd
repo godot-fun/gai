@@ -1,4 +1,4 @@
-class_name BehaviorSettingSection
+class_name AgentSettingSection
 extends SettingSection
 
 var sandbox_toggle_button: CheckButton
