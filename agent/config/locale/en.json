@@ -281,7 +281,7 @@
       "dialog_title": "Open a Directory"
     },
     "input": {
-      "placeholder": "Ask gai Code Agent to read, edit, or run commands…  (Enter to send, Shift+Enter for newline, / for skills)",
+      "placeholder": "Ask gai Code Agent to read, edit, or run commands…  (Enter to send, Shift+Enter for newline, / for skills, @ for files)",
       "click_to_ask": "Click to ask gai Code Agent…",
       "send": "Send (Enter)",
       "queued": "Queued ({})",

@@ -30,7 +30,7 @@ var queue_scroll: ScrollContainer
 var queue_rows: VBoxContainer
 var moving_border: MovingAccentBorder
 var chat_input_file: ChatInputFile = ChatInputFile.new()
-var skill_completion: ChatInputSkillCompletion = ChatInputSkillCompletion.new()
+var chat_completion: ChatInputCompletion = ChatInputCompletion.new()
 
 var expanded: bool = false
 var force_expanded: bool = false
@@ -88,7 +88,7 @@ func setup(
 	input_bar.resized.connect(layout_bar)
 	input_bar.get_window().window_input.connect(on_global_input)
 	chat_input_file.setup(input_bar, input_wrap, input_field, prepare_file_drop, focus_input_field, restore_caret)
-	skill_completion.setup(input_field)
+	chat_completion.setup(input_field)
 	gdf.events.theme_changed.connect(on_ui_theme_changed)
 	gdf.events.theme_color_changed.connect(on_ui_theme_changed)
 	gdf.events.locale_changed.connect(on_ui_theme_changed)
@@ -274,7 +274,7 @@ func refresh_from_active_session() -> void:
 	var running: bool = RuntimeManager.is_running(AgentSessionManager.active_session_id)
 	var no_history: bool = session != null and not AgentSessionManager.has_chat_history(session.id)
 	input_field.text = session.draft_text if session != null else ""
-	input_field.cancel_code_completion()
+	chat_completion.cancel()
 	refresh_state(running, no_history)
 	refresh_queue()
 	relayout_if_height_changed()
@@ -644,7 +644,7 @@ func on_field_text_changed() -> void:
 	if session != null:
 		session.draft_text = input_field.text
 	refresh_send_button()
-	skill_completion.refresh_on_text_change()
+	chat_completion.refresh_on_text_change()
 	relayout_if_height_changed()
 	# The open list re-filters once this signal returns, so fit again with the new row count.
 	relayout_if_height_changed.call_deferred()
@@ -668,7 +668,7 @@ func on_field_gui_input(event: InputEvent) -> void:
 		var key: InputEventKey = event as InputEventKey
 		if not key.pressed or key.echo:
 			return
-		# Escape and Enter open or close the `/skill` list further down, so re-fit once they ran.
+		# Escape and Enter open or close the completion list further down, so re-fit once they ran.
 		relayout_if_height_changed.call_deferred()
 		if key.is_action_pressed("ui_paste") and chat_input_file.paste_clipboard_files():
 			input_field.accept_event()
@@ -679,7 +679,7 @@ func on_field_gui_input(event: InputEvent) -> void:
 			is_enter = key.physical_keycode == KEY_ENTER or key.physical_keycode == KEY_KP_ENTER
 		if not is_enter:
 			return
-		# An open `/skill` list owns Enter: let CodeEdit confirm the highlighted option.
+		# An open `/skill` or `@file` list owns Enter: let CodeEdit confirm the highlighted option.
 		if not key.shift_pressed and input_field.get_code_completion_selected_index() >= 0:
 			return
 		if key.shift_pressed:
@@ -729,7 +729,7 @@ func on_field_focus_exited() -> void:
 	if chat_input_file.is_drop_focus_guarded():
 		return
 	# A blurred field cannot draw the list, so drop it instead of keeping the panel tall.
-	input_field.cancel_code_completion()
+	chat_completion.cancel()
 	refresh_moving_border()
 	try_collapse.call_deferred()
 	pass
@@ -861,14 +861,14 @@ func get_wrap_height(is_expanded: bool) -> float:
 	if input_field.scroll_fit_content_height != want_fit:
 		input_field.scroll_fit_content_height = want_fit
 	var inner_h: float = minf(maxf(content_h, min_inner), max_inner)
-	return maxf(maxf(EXPANDED_HEIGHT_MIN, inner_h + Margin.ma_2), get_skill_popup_height())
+	return maxf(maxf(EXPANDED_HEIGHT_MIN, inner_h + Margin.ma_2), get_completion_popup_height())
 
 
-## The `/skill` list is drawn inside the field rect, so an open list needs a taller field.
-func get_skill_popup_height() -> float:
-	if not skill_completion.is_popup_open():
+## The `/skill` and `@file` list is drawn inside the field rect, so an open list needs a taller field.
+func get_completion_popup_height() -> float:
+	if not chat_completion.is_popup_open():
 		return 0.0
-	return skill_completion.get_popup_height()
+	return chat_completion.get_popup_height()
 
 
 func layout_bar() -> void:

@@ -44,7 +44,7 @@ static func apply_field(input_field: TextEdit) -> void:
 	pass
 
 
-## Themes the built-in `/skill` completion list: same surface, radius and text colors as the
+## Themes the built-in `/skill` and `@file` completion list: same surface, radius and text colors as the
 ## composer so the popup does not look like an editor widget.
 static func apply_completion(input_field: CodeEdit) -> void:
 	var panel := StyleBoxHelper.create_style_box_flat(Colors.elevated_surface, ControlSize.radius_md,
@@ -66,8 +66,8 @@ static func apply_completion(input_field: CodeEdit) -> void:
 	input_field.add_theme_color_override("completion_scroll_color", ScrollBarStyle.grabber_color())
 	input_field.add_theme_color_override("completion_scroll_hovered_color", ScrollBarStyle.grabber_hover_color())
 	input_field.add_theme_constant_override("completion_scroll_width", ScrollBarStyle.Thickness.MD)
-	input_field.add_theme_constant_override("completion_lines", ChatInputSkillCompletion.POPUP_ROWS)
-	input_field.add_theme_constant_override("completion_max_width", ChatInputSkillCompletion.POPUP_MAX_WIDTH)
+	input_field.add_theme_constant_override("completion_lines", ChatInputCompletion.POPUP_ROWS)
+	input_field.add_theme_constant_override("completion_max_width", ChatInputCompletion.POPUP_MAX_WIDTH)
 	pass
 
 

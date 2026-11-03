@@ -307,6 +307,48 @@ func glob_match_any_repo_gitignore_test() -> void:
 	pass
 
 
+## `include_directories` turns the same walk into a browsable tree: folders come back with a trailing
+## `/`, right before the entries they hold, and the skip rules prune them with their whole subtree.
+func glob_include_directories_test() -> void:
+	var root := create_fixture_tree()
+	var tree := relative_paths(root, GlobUtils.glob(root, "", true, 0, [".git"], true))
+	assert(tree == ["root.gd", "src/", "src/a.gd", "src/b.txt", "src/nested/", "src/nested/c.gd"], str(tree))
+	# The default stays file-only, so GlobTool and GrepTool keep seeing exactly what they saw before.
+	var files := relative_paths(root, GlobUtils.glob(root, "", true, 0, [".git"]))
+	assert(files == ["root.gd", "src/a.gd", "src/b.txt", "src/nested/c.gd"], str(files))
+	remove_fixture_tree(root)
+	pass
+
+
+func glob_include_directories_skip_rules_test() -> void:
+	var root := create_fixture_tree()
+	DirAccess.make_dir_recursive_absolute(root.path_join(".cursor/skills/humanizer"))
+	FileUtils.write_string_to_file(root.path_join(".cursor/skills/humanizer/skip.gd"), "extends Node\n")
+	DirAccess.make_dir_recursive_absolute(root.path_join("node_modules/pkg"))
+	FileUtils.write_string_to_file(root.path_join("node_modules/pkg/index.js"), "x\n")
+	var tree := relative_paths(root, GlobUtils.glob(root, "", true, 0, [".git", ".cursor/skills/humanizer", "node_modules/"], true))
+	# A path rule, a name rule and a directory rule all drop the folder, its rows and its subtree; its
+	# parents stay rows, because only the ignored folder is missing.
+	assert(tree.has(".cursor/skills/"), str(tree))
+	assert(not tree.has(".cursor/skills/humanizer/"), str(tree))
+	assert(not tree.has(".cursor/skills/humanizer/skip.gd"))
+	assert(not tree.has("node_modules/"))
+	assert(not tree.has("node_modules/pkg/index.js"))
+	assert(tree.has("src/nested/"))
+	remove_fixture_tree(root)
+	pass
+
+
+func glob_caps_test() -> void:
+	var root := create_fixture_tree()
+	# `max_entries` stops the walk itself; its 4096 default is far past a fixture-sized tree.
+	assert(GlobUtils.glob(root, "", true, 0, [".git"], true, 2).size() == 2)
+	assert(GlobUtils.glob(root, "", true, 0, [".git"], true).size() == 6)
+	assert(GlobUtils.glob(root.path_join("missing"), "", true, 0, [".git"], true).is_empty())
+	remove_fixture_tree(root)
+	pass
+
+
 static func relative_paths(search_root: String, files: Array[String]) -> Array[String]:
 	var rel: Array[String] = []
 	var root := search_root.replace("\\", "/").rstrip("/")

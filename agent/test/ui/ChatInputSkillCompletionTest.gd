@@ -1,6 +1,7 @@
 extends RefCounted
 
-## `/skill` popup behavior: name matching and row text. Parsing lives in SkillManagerTest.
+## `/skill` popup behavior: name matching, row text and the token an accepted row replaces. Parsing
+## lives in SkillManagerTest; the popup itself lives in ChatInputCompletionTest.
 
 
 func matching_summaries_test() -> void:
@@ -42,6 +43,14 @@ func accepted_skill_closes_the_list_test() -> void:
 	pass
 
 
+## The row replaces the whole command — indentation included — and leaves `/name ` behind.
+func token_span_covers_the_whole_command_test() -> void:
+	assert(token_span_at("   /audio-t") == Vector2i(3, 11))
+	assert(token_span_at("/agent") == Vector2i(0, 6))
+	assert(token_span_at("/audio-trim more", "/audio-trim".length()) == Vector2i(0, 11))
+	pass
+
+
 ## Types [param text] into a real [CodeEdit] at [param caret_column] and asks whether the caret commands
 ## the list. The caret sits at the end of the text by default.
 func slash_command_at(completion: ChatInputSkillCompletion, text: String, caret_column: int = -1) -> bool:
@@ -56,45 +65,14 @@ func slash_command_at(completion: ChatInputSkillCompletion, text: String, caret_
 	return result
 
 
-## Godot replaces only the trailing word run on accept, so the row must insert just the remainder:
-## on `/audio-t` the engine owns `t`, so `trim ` completes the command.
-func completion_insert_text_keeps_typed_prefix_test() -> void:
-	assert(ChatInputSkillCompletion.completion_insert_text("audio-trim", "/audio") == "/audio-trim ")
-	assert(ChatInputSkillCompletion.completion_insert_text("audio-trim", "/audio-") == "trim ")
-	assert(ChatInputSkillCompletion.completion_insert_text("audio-trim", "/audio-t") == "trim ")
-	assert(ChatInputSkillCompletion.completion_insert_text("audio-to-wav", "/audio-t") == "to-wav ")
-	assert(ChatInputSkillCompletion.completion_insert_text("audio-trim", "/trim") == "/audio-trim ")
-	# The typed tail is not part of the name, but everything before the hyphen still is.
-	assert(ChatInputSkillCompletion.completion_insert_text("audio-trim", "/audio-x") == "trim ")
-	# A loose match that does not share the kept prefix cannot be completed without corrupting the line.
-	assert(ChatInputSkillCompletion.completion_insert_text("x-audio-trim", "/audio-t").is_empty())
-	pass
-
-
-func completion_base_length_follows_the_engine_test() -> void:
-	assert(ChatInputSkillCompletion.completion_base_length("/audio") == 6)
-	assert(ChatInputSkillCompletion.completion_base_length("/audio-") == 0)
-	assert(ChatInputSkillCompletion.completion_base_length("/audio-t") == 1)
-	assert(ChatInputSkillCompletion.completion_base_length("/audio-to-") == 0)
-	assert(ChatInputSkillCompletion.completion_base_length("/audio-to-wav") == 3)
-	# `_` and non-ASCII are word characters, so they stay inside the base.
-	assert(ChatInputSkillCompletion.completion_base_length("/audio_trim") == 11)
-	assert(ChatInputSkillCompletion.completion_base_length("/音频") == 3)
-	assert(ChatInputSkillCompletion.completion_base_length("") == 0)
-	pass
-
-
-## A skill name may contain any ASCII punctuation; the engine cancels the list right after a symbol
-## unless it is a declared prefix, so every symbol must be one.
-func completion_prefixes_cover_every_symbol_test() -> void:
-	var prefixes: Array[String] = ChatInputSkillCompletion.completion_prefixes()
-	assert(prefixes.size() == 31)
-	for symbol in ["/", "-", ".", "_", ":", "@", "#", "+", "~"]:
-		if symbol == "_":
-			# Word character for the engine, so it never breaks completion.
-			assert(not prefixes.has(symbol))
-			continue
-		assert(prefixes.has(symbol))
-	assert(not prefixes.has("a"))
-	assert(not prefixes.has(" "))
-	pass
+func token_span_at(text: String, caret_column: int = -1) -> Vector2i:
+	var field := CodeEdit.new()
+	field.text = text
+	field.set_caret_line(0, false)
+	field.set_caret_column(text.length() if caret_column < 0 else caret_column, false)
+	var completion := ChatInputSkillCompletion.new()
+	completion.input_field = field
+	var span := completion.token_span()
+	completion.input_field = null
+	field.free()
+	return span

@@ -9,33 +9,42 @@ const REGEX_CACHE_MAX_SIZE: int = 256
 static var regex_cache := LruCacheString.new(REGEX_CACHE_MAX_SIZE)
 
 
-## Finds files under [param search_root] whose relative path matches [param glob_pattern].
+## Finds paths under [param search_root] whose relative path matches [param glob_pattern].
 ## Set [param recursive] to [code]false[/code] to search only the root folder.
 ## Uses breadth-first traversal and skips files larger than [param max_file_bytes]; [code]0[/code] disables the limit.
-static func glob(search_root: String, glob_pattern: String, recursive: bool = true, max_file_bytes: int = 0, skip_glob_rules: Array[String] = []) -> Array[String]:
-	var files: Array[String] = []
+##
+## Set [param include_directories] to also return the folders the same pattern matches, written with a
+## trailing `/` so a caller can tell a folder row from a file row; folders [param skip_glob_rules]
+## matches are never returned and never entered. [param max_entries] stops the walk once that many paths
+## are collected — roomy enough for a browsable tree, still a hard stop on a runaway one — so a caller
+## that shows one screenful of a huge workspace pays for that screenful only. Sorted by path, so a folder
+## comes right before the entries it holds.
+static func glob(search_root: String, glob_pattern: String, recursive: bool = true, max_file_bytes: int = 0, skip_glob_rules: Array[String] = [], include_directories: bool = false, max_entries: int = 4096) -> Array[String]:
+	var paths: Array[String] = []
 	var pattern := glob_pattern.strip_edges().replace("\\", "/")
 	var pattern_has_path := pattern.contains("/")
 	if FileAccess.file_exists(search_root):
 		var file_name := search_root.replace("\\", "/").get_file()
 		if (pattern.is_empty() or glob_match(pattern, file_name, false)) and (max_file_bytes <= 0 or FileAccess.get_size(search_root) <= max_file_bytes):
-			files.append(search_root)
-		return files
+			paths.append(search_root)
+		return paths
 	if not DirAccess.dir_exists_absolute(search_root):
-		return files
+		return paths
 
 	var normalized_root := search_root.replace("\\", "/")
 	var root_prefix := normalized_root if normalized_root.ends_with("/") else normalized_root + "/"
 	var folders: Array[String] = [search_root]
 	var folder_index := 0
 	# A moving index provides FIFO/BFS behavior without the O(n) cost of pop_front().
-	while folder_index < folders.size():
+	while folder_index < folders.size() and paths.size() < max_entries:
 		var folder_path := folders[folder_index]
 		folder_index += 1
 		var dir := DirAccess.open(folder_path)
 		if dir == null:
 			continue
 		for file_name in dir.get_files():
+			if paths.size() >= max_entries:
+				break
 			var file_path := folder_path.path_join(file_name)
 			if max_file_bytes > 0 and FileAccess.get_size(file_path) > max_file_bytes:
 				continue
@@ -43,20 +52,26 @@ static func glob(search_root: String, glob_pattern: String, recursive: bool = tr
 			var relative_path := normalized_path.substr(root_prefix.length())
 			var match_path := relative_path if pattern_has_path else file_name
 			if pattern.is_empty() or glob_match(pattern, match_path, false):
-				files.append(file_path)
+				paths.append(file_path)
 		if recursive:
 			for dir_name in dir.get_directories():
+				if paths.size() >= max_entries:
+					break
 				var child_path := folder_path.path_join(dir_name)
 				var normalized_child := child_path.replace("\\", "/")
 				var relative_child := normalized_child.substr(root_prefix.length())
-				if not glob_match_any(skip_glob_rules, relative_child):
-					folders.append(child_path)
+				if glob_match_any(skip_glob_rules, relative_child):
+					continue
+				var match_child := relative_child if pattern_has_path else dir_name
+				if include_directories and (pattern.is_empty() or glob_match(pattern, match_child, false)):
+					paths.append(normalized_child + "/")
+				folders.append(child_path)
 		# Periodically discard consumed queue entries so a large tree is not retained forever.
 		if folder_index >= 1024 and folder_index * 2 >= folders.size():
 			folders = folders.slice(folder_index)
 			folder_index = 0
-	files.sort()
-	return files
+	paths.sort()
+	return paths
 
 
 ## Matches a path against a glob or one ignore-file line.
@@ -75,6 +90,14 @@ static func glob_match(glob_rule: String, path_or_file: String, parse_ignore_syn
 	var path := path_or_file.replace("\\", "/").strip_edges()
 	if rule.is_empty() or path.is_empty():
 		return false
+
+	# One name and no pattern syntax is the common case in an ignore file, and it means "that whole path
+	# segment at any depth" — `node_modules` matches `node_modules`, `a/node_modules` and
+	# `a/node_modules/b`, never `xnode_modules` — which is what the compiled expression below would say,
+	# answered without touching the RegEx cache.
+	var name_rule := rule.trim_suffix("/")
+	if not name_rule.is_empty() and not name_rule.contains("/") and not name_rule.contains("*") and not name_rule.contains("?") and not name_rule.contains("["):
+		return path == name_rule or path.begins_with(name_rule + "/") or path.ends_with("/" + name_rule) or path.contains("/" + name_rule + "/")
 
 	var regex := get_or_compile_regex(rule)
 	return regex != null and regex.search(path) != null

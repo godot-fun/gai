@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dwsh1esychpp5" path="res://agent/Agent.gd" id="1_fwn8y"]
 [ext_resource type="Script" path="res://agent/ui/visuals/VisualControl.gd" id="2_visual"]
+[ext_resource type="Script" path="res://agent/ui/input/ChatInputField.gd" id="3_field"]
 
 [node name="Agent" type="Control" unique_id=1107421514]
 layout_mode = 3
@@ -298,6 +299,7 @@ grow_horizontal = 2
 grow_vertical = 2
 placeholder_text = "Ask gai Code Agent to read, edit, or run commands…  (Enter to send, Shift+Enter for newline)"
 wrap_mode = 1
+script = ExtResource("3_field")
 
 [node name="SendButton" type="Button" parent="Root/Body/ChatArea/InputBar/InputWrap/InputInner" unique_id=1056416949]
 z_index = 1
