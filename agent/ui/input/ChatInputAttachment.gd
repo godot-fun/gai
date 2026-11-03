@@ -67,13 +67,13 @@ func save_clipboard_image() -> String:
 	if error != OK:
 		Log.error("clipboard image cache failed path:[{}] err:[{}]", cache_path, error)
 		return StringUtils.EMPTY
-	return format_files_as_markdown(PackedStringArray([cache_path]))
+	return join_markdown_for_attachments(PackedStringArray([cache_path]))
 
 
 func on_files_dropped(files: PackedStringArray) -> void:
 	if not input_field.editable or files.is_empty() or not input_bar.is_inside_tree():
 		return
-	var markdown := format_files_as_markdown(files)
+	var markdown := join_markdown_for_attachments(files)
 	if markdown.is_empty():
 		return
 	var mouse: Vector2 = input_bar.get_global_mouse_position()
@@ -126,7 +126,7 @@ func get_pasted_file_markdown() -> String:
 	for path in decode_clipboard_paths(output):
 		if FileAccess.file_exists(path) or DirAccess.dir_exists_absolute(path):
 			files.append(path)
-	return format_files_as_markdown(files)
+	return join_markdown_for_attachments(files)
 
 
 func decode_clipboard_paths(output: String) -> PackedStringArray:
@@ -136,10 +136,12 @@ func decode_clipboard_paths(output: String) -> PackedStringArray:
 	return paths
 
 
-func format_files_as_markdown(files: PackedStringArray) -> String:
+## Joins composer insert text from raw OS paths. Skips Godot `.uid` and `.import` sidecars; each path
+## uses [method MarkdownHelper.format_file_as_markdown] with surrounding spaces for paste/drop layout.
+func join_markdown_for_attachments(files: PackedStringArray) -> String:
 	var build := StringBuilder.new()
 	for file in files:
-		if file.ends_with(".uid"):
+		if file.ends_with(".uid") or file.ends_with(".import"):
 			continue
 		build.append("    " + MarkdownHelper.format_file_as_markdown(file) + "    ")
 	return build.build_string()
