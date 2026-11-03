@@ -9,15 +9,15 @@ const SEARCH_SHORTCUT_KEY := "agent_search_shortcut"
 const DEFAULT_SEARCH_SHORTCUT: Key = KEY_F | KEY_MASK_CTRL
 const PREV_USER_MESSAGE_SHORTCUT_KEY := "agent_prev_user_message_shortcut"
 const NEXT_USER_MESSAGE_SHORTCUT_KEY := "agent_next_user_message_shortcut"
-## Jumps to the previous user message in the transcript. Default is Shift+Page Up.
+## Jumps to the previous user message in the chat history. Default is Shift+Page Up.
 const DEFAULT_PREV_USER_MESSAGE_SHORTCUT: Key = KEY_PAGEUP | KEY_MASK_SHIFT
-## Jumps to the next user message in the transcript. Default is Shift+Page Down.
+## Jumps to the next user message in the chat history. Default is Shift+Page Down.
 const DEFAULT_NEXT_USER_MESSAGE_SHORTCUT: Key = KEY_PAGEDOWN | KEY_MASK_SHIFT
 const PREV_REPLY_SHORTCUT_KEY := "agent_prev_reply_shortcut"
 const NEXT_REPLY_SHORTCUT_KEY := "agent_next_reply_shortcut"
-## Jumps to the previous agent reply in the transcript. Default is Ctrl+Shift+Page Up.
+## Jumps to the previous agent reply in the chat history. Default is Ctrl+Shift+Page Up.
 const DEFAULT_PREV_REPLY_SHORTCUT: Key = KEY_PAGEUP | KEY_MASK_SHIFT | KEY_MASK_CTRL
-## Jumps to the next agent reply in the transcript. Default is Ctrl+Shift+Page Down.
+## Jumps to the next agent reply in the chat history. Default is Ctrl+Shift+Page Down.
 const DEFAULT_NEXT_REPLY_SHORTCUT: Key = KEY_PAGEDOWN | KEY_MASK_SHIFT | KEY_MASK_CTRL
 
 

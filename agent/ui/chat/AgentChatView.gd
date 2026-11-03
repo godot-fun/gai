@@ -1,7 +1,7 @@
 class_name AgentChatView
 extends RefCounted
 
-## Chat transcript area — bubbles, streaming, and error resume.
+## Chat history area — bubbles, streaming, and error resume.
 ## One bubble list per session; switching shows the cached list.
 
 var chat_scroll_node: ScrollContainer
@@ -125,7 +125,7 @@ func on_chat_entry_delete(session_id: int, entry_idx: int, delete_from_here: boo
 # AgentEvents — appearance
 # ---------------------------------------------------------------------------
 
-## Re-render the transcript after a context prompt (skills / memory / AGENTS.md) is added or removed.
+## Re-render the chat history after a context prompt (skills / memory / AGENTS.md) is added or removed.
 func on_agent_context_changed(session_id: int) -> void:
 	invalidate_session(session_id)
 	pass
@@ -156,7 +156,7 @@ func on_locale_changed() -> void:
 
 
 ## Markdown colors are derived from the theme color, so a color pick has to re-render the
-## transcript — but only once per window: the picker emits on every drag step.
+## chat history — but only once per window: the picker emits on every drag step.
 func on_theme_color_changed() -> void:
 	ScrollBarStyle.apply(chat_scroll_node.get_v_scroll_bar())
 	if RateLimitUtils.limit_millis_100():

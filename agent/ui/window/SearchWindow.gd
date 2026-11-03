@@ -1,4 +1,4 @@
-## Full-session chat search. Lists matching transcript entries and jumps to the selected bubble.
+## Full-session chat search. Lists matching chat entries and jumps to the selected bubble.
 class_name SearchWindow
 extends CommonWindow
 

@@ -97,7 +97,7 @@ class SelectableRichTextLabel extends RichTextLabel:
 		set_process_input(false)
 		pass
 
-	## Right click opens the copy menu and the wheel only scrolls the transcript — both
+	## Right click opens the copy menu and the wheel only scrolls the chat history — both
 	## read the highlight, so a left press outside is the one that clears it.
 	func _input(event: InputEvent) -> void:
 		if not outside_press_watch:

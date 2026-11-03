@@ -2,7 +2,7 @@
 class_name BubbleContainer
 extends PanelContainer
 
-## Base control for transcript bubbles. Subclasses own their UI and refresh behavior.
+## Base control for chat bubbles. Subclasses own their UI and refresh behavior.
 
 @abstract
 func apply(session_id: int, entry: ChatEntry) -> void

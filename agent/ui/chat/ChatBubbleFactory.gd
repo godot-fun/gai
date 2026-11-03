@@ -1,7 +1,7 @@
 class_name ChatBubbleFactory
 extends Object
 
-## Creates the transcript bubble matching a chat entry kind.
+## Creates the chat bubble matching a chat entry kind.
 
 static var bubble_types: Dictionary[String, Script] = {
 	ChatEntry.KIND_SYSTEM: ContextBubble,

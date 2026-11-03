@@ -4,7 +4,7 @@ extends BubbleContainer
 var rich_text: RichTextLabel
 var resume_button: Button
 
-## Error bubble with optional resume action for the agent chat transcript.
+## Error bubble with optional resume action for the agent chat history.
 
 const MAX_LINES: int = 28
 

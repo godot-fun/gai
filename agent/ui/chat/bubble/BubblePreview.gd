@@ -1,7 +1,7 @@
 class_name BubblePreview
 extends Object
 
-## Shared text-preview calculations for transcript bubbles.
+## Shared text-preview calculations for chat bubbles.
 ## Result / Thinking keep the last PREVIEW_LINES, then the last PREVIEW_CHARS of that window.
 
 const PREVIEW_LINES := 6

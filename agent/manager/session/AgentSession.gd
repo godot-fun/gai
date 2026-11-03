@@ -1,7 +1,7 @@
 class_name AgentSession
 extends RefCounted
 
-## Single conversation session — LLM history and UI transcript.
+## Single conversation session — LLM history and UI chat entries.
 
 var id: int = -1
 var messages: Array[ChatMessage] = []

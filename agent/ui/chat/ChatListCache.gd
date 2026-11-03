@@ -1,7 +1,7 @@
 class_name ChatListCache
 extends RefCounted
 
-## Retains one transcript control tree per recently viewed session.
+## Retains one chat-list control tree per recently viewed session.
 
 const MAX_SIZE: int = 18
 
@@ -17,7 +17,7 @@ func get_list(session_id: int) -> VBoxContainer:
 	return chat_lists.get_value(session_id) as VBoxContainer
 
 
-## Returns the session transcript and makes it the only visible cached list.
+## Returns the session chat list and makes it the only visible cached list.
 func show(session_id: int, chat_lists_container: MarginContainer) -> VBoxContainer:
 	var chat_list := get_list(session_id)
 	if chat_list == null:
@@ -73,7 +73,7 @@ func append_entry(session_id: int, entry: ChatEntry) -> BubbleContainer:
 	return ChatBubbleFactory.append(chat_list, session_id, entry)
 
 
-## Removes only the affected bubbles so long transcripts do not need to be rebuilt.
+## Removes only the affected bubbles so long chat histories do not need to be rebuilt.
 func remove_entries(session_id: int, entry_idx: int, delete_from_here: bool) -> void:
 	var chat_list := get_list(session_id)
 	if chat_list == null or entry_idx < 0 or entry_idx >= chat_list.get_child_count():

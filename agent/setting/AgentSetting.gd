@@ -39,7 +39,7 @@ static func get_markdown_enabled() -> bool:
 	return Setting.get_bool(MARKDOWN_ENABLED_KEY, true)
 
 
-## Announces the switch on [signal AgentEvents.events.markdown_changed] so open transcripts
+## Announces the switch on [signal AgentEvents.events.markdown_changed] so open chat histories
 ## re-render their bubbles.
 static func set_markdown_enabled(enabled: bool) -> void:
 	if get_markdown_enabled() == enabled:

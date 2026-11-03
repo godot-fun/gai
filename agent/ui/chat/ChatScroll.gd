@@ -1,12 +1,12 @@
 class_name ChatScroll
 extends RefCounted
 
-## Owns transcript scrolling, per-session positions, search reveals, and bottom following.
+## Owns chat-history scrolling, per-session positions, search reveals, and bottom following.
 
 var chat_scroll: ScrollContainer
 var active_chat_list: VBoxContainer
 var scroll_position_caches: Dictionary[int, float] = {}
-## When true, new content keeps the transcript scrolled to the latest bubble.
+## When true, new content keeps the chat history scrolled to the latest bubble.
 var stick_to_bottom: bool = true
 var scroll_to_bottom_queued: bool = false
 var search_target_session_id: int = 0
@@ -83,7 +83,7 @@ func reveal_search_result(session_id: int, entry_index: int) -> void:
 	pass
 
 
-## A newly opened transcript needs two layout passes before RichTextLabel heights and the
+## A newly opened chat list needs two layout passes before RichTextLabel heights and the
 ## ScrollContainer range are final. Waiting here also lets any queued bottom-scroll abort.
 func reveal_entry_after_layout(session_id: int, entry_index: int) -> void:
 	var tree := chat_scroll.get_tree()
@@ -110,8 +110,8 @@ func reveal_entry(entry_index: int) -> void:
 	var vbar := chat_scroll.get_v_scroll_bar()
 	if entry_control == null or vbar == null:
 		return
-# The bar value is expressed in ChatListsContainer content coordinates. The list starts after
-# ChatListsContainer's top inset, and each entry position is local to the list.
+	# The bar value is expressed in ChatListsContainer content coordinates. The list starts after
+	# ChatListsContainer's top inset, and each entry position is local to the list.
 	var entry_y := entry_y_for_control(entry_control)
 	var max_scroll := maxf(vbar.min_value, vbar.max_value - vbar.page)
 	vbar.value = clampf(entry_y - Margin.ma_5, vbar.min_value, max_scroll)
@@ -121,14 +121,14 @@ func reveal_entry(entry_index: int) -> void:
 
 
 func navigate_user_message(direction: int) -> bool:
-	return navigate_transcript_entry(ChatEntry.KIND_USER, direction)
+	return navigate_entry_kind(ChatEntry.KIND_USER, direction)
 
 
 func navigate_reply(direction: int) -> bool:
-	return navigate_transcript_entry(ChatEntry.KIND_AGENT, direction)
+	return navigate_entry_kind(ChatEntry.KIND_AGENT, direction)
 
 
-func navigate_transcript_entry(entry_kind: String, direction: int) -> bool:
+func navigate_entry_kind(entry_kind: String, direction: int) -> bool:
 	if direction == 0 or not is_instance_valid(active_chat_list):
 		return false
 	var session: AgentSession = AgentSessionStore.load_session(AgentSessionManager.active_session_id)
@@ -137,7 +137,7 @@ func navigate_transcript_entry(entry_kind: String, direction: int) -> bool:
 	var entry_indices := collect_entry_indices(session, entry_kind)
 	if entry_indices.is_empty():
 		return false
-	var target_index := find_transcript_entry_index(entry_indices, direction)
+	var target_index := find_entry_nav_index(entry_indices, direction)
 	if target_index < 0:
 		return false
 	stick_to_bottom = false
@@ -154,7 +154,7 @@ func collect_entry_indices(session: AgentSession, entry_kind: String) -> Array[i
 	return indices
 
 
-func find_transcript_entry_index(entry_indices: Array[int], direction: int) -> int:
+func find_entry_nav_index(entry_indices: Array[int], direction: int) -> int:
 	var vbar: VScrollBar = chat_scroll.get_v_scroll_bar()
 	if vbar == null:
 		return -1
@@ -190,35 +190,40 @@ func entry_y_for_control(entry_control: Control) -> float:
 func on_chat_scroll_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mouse: InputEventMouseButton = event as InputEventMouseButton
+		if try_wheel_entry_navigate(mouse):
+			chat_scroll.accept_event()
+			return
 		if not mouse.pressed:
 			return
-		if mouse.shift_pressed and (mouse.ctrl_pressed or mouse.meta_pressed):
-			var reply_direction := 0
-			if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
-				reply_direction = -1
-			elif mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-				reply_direction = 1
-			if reply_direction != 0 and navigate_reply(reply_direction):
-				chat_scroll.accept_event()
-				return
-		if mouse.shift_pressed and not mouse.ctrl_pressed and not mouse.meta_pressed:
-			var user_direction := 0
-			if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
-				user_direction = -1
-			elif mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-				user_direction = 1
-			if user_direction != 0 and navigate_user_message(user_direction):
-				chat_scroll.accept_event()
-				return
 		if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
 			stick_to_bottom = false
 		elif mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN and is_scrolled_to_bottom():
 			# Wheel scrolled all the way down — re-enable follow so new
-			# content automatically keeps the transcript at the bottom.
+			# content automatically keeps the chat history at the bottom.
 			stick_to_bottom = true
 	elif event is InputEventPanGesture:
 		stick_to_bottom = is_scrolled_to_bottom()
 	pass
+
+
+func try_wheel_entry_navigate(mouse: InputEventMouseButton) -> bool:
+	if not mouse.pressed or not mouse.shift_pressed:
+		return false
+	var direction := wheel_direction(mouse)
+	if direction == 0:
+		return false
+	if mouse.ctrl_pressed or mouse.meta_pressed:
+		return navigate_reply(direction)
+	return navigate_user_message(direction)
+	pass
+
+
+static func wheel_direction(mouse: InputEventMouseButton) -> int:
+	if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
+		return -1
+	if mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+		return 1
+	return 0
 
 
 ## Dragging the scrollbar grabber (or wheeling over the bar itself) reads history
@@ -226,6 +231,23 @@ func on_chat_scroll_gui_input(event: InputEvent) -> void:
 func on_chat_scroll_bar_scrolling() -> void:
 	stick_to_bottom = is_scrolled_to_bottom()
 	pass
+
+
+func can_route_window_input() -> bool:
+	if not is_instance_valid(chat_scroll) or not chat_scroll.is_inside_tree():
+		return false
+	if has_visible_embedded_window():
+		return false
+	return chat_scroll.get_window().has_focus()
+
+
+## Binding matched — consume the key even when there is nothing to jump to (avoids Page Up/Down fallthrough).
+func try_entry_nav_shortcut(key: InputEventKey, binding: Key, entry_kind: String, direction: int) -> bool:
+	if key.echo or key.get_keycode_with_modifiers() != binding:
+		return false
+	if navigate_entry_kind(entry_kind, direction):
+		chat_scroll.get_viewport().set_input_as_handled()
+	return true
 
 
 func has_visible_embedded_window() -> bool:
@@ -236,36 +258,20 @@ func has_visible_embedded_window() -> bool:
 
 
 ## Page keys belong to the focused TextEdit by default; route Godot's native page
-## actions to the transcript so they work while composing a message.
+## actions to the chat history so they work while composing a message.
 func on_chat_window_input(event: InputEvent) -> void:
-	# Window input can still arrive while the chat scene is being removed from the tree.
-	if not is_instance_valid(chat_scroll) or not chat_scroll.is_inside_tree():
-		return
-	# Embedded windows do not clear the host window's focus flag, so check them explicitly.
-	if has_visible_embedded_window():
-		return
-	if not chat_scroll.get_window().has_focus():
-		return
-	if not event is InputEventKey:
+	if not can_route_window_input() or not event is InputEventKey:
 		return
 	var key: InputEventKey = event as InputEventKey
 	if not key.pressed:
 		return
-	if not key.echo and key.get_keycode_with_modifiers() == ShortcutSetting.get_prev_user_message_shortcut():
-		if navigate_user_message(-1):
-			chat_scroll.get_viewport().set_input_as_handled()
+	if try_entry_nav_shortcut(key, ShortcutSetting.get_prev_user_message_shortcut(), ChatEntry.KIND_USER, -1):
 		return
-	if not key.echo and key.get_keycode_with_modifiers() == ShortcutSetting.get_next_user_message_shortcut():
-		if navigate_user_message(1):
-			chat_scroll.get_viewport().set_input_as_handled()
+	if try_entry_nav_shortcut(key, ShortcutSetting.get_next_user_message_shortcut(), ChatEntry.KIND_USER, 1):
 		return
-	if not key.echo and key.get_keycode_with_modifiers() == ShortcutSetting.get_prev_reply_shortcut():
-		if navigate_reply(-1):
-			chat_scroll.get_viewport().set_input_as_handled()
+	if try_entry_nav_shortcut(key, ShortcutSetting.get_prev_reply_shortcut(), ChatEntry.KIND_AGENT, -1):
 		return
-	if not key.echo and key.get_keycode_with_modifiers() == ShortcutSetting.get_next_reply_shortcut():
-		if navigate_reply(1):
-			chat_scroll.get_viewport().set_input_as_handled()
+	if try_entry_nav_shortcut(key, ShortcutSetting.get_next_reply_shortcut(), ChatEntry.KIND_AGENT, 1):
 		return
 	var direction: int = 0
 	if key.is_action_pressed(&"ui_page_up", true):
@@ -285,7 +291,7 @@ func on_chat_window_input(event: InputEvent) -> void:
 	pass
 
 
-## True when the transcript is already scrolled to (or within a pixel of) the bottom edge.
+## True when the chat history is already scrolled to (or within a pixel of) the bottom edge.
 func is_scrolled_to_bottom() -> bool:
 	var vbar: VScrollBar = chat_scroll.get_v_scroll_bar()
 	if vbar == null:
@@ -303,7 +309,7 @@ func queue_scroll_to_bottom() -> void:
 
 ## The list lives inside ChatListsContainer, so the last bubble counts as "visible" while the
 ## bar still owes the bottom margin — ensure_control_visible() stops one margin short.
-## Drive the bar to its own bottom edge so the transcript ends flush with the view.
+## Drive the bar to its own bottom edge so the chat history ends flush with the view.
 func flush_scroll_to_bottom() -> void:
 	scroll_to_bottom_queued = false
 	if not stick_to_bottom:
