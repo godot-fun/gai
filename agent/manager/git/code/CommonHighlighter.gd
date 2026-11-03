@@ -1,10 +1,9 @@
 class_name CommonHighlighter
 extends Object
 
-## Creates a theme-aware [CodeEdit] highlighter from a repository file name. [code].gd[/code] uses
-## [GDScriptSyntaxHighlighter]; other extensions use [CodeHighlighterInstance].
+## Creates a theme-aware [CodeEdit] highlighter from a repository file name via [CodeHighlighterInstance].
 
-const SCRIPT_EXTENSIONS := ["py", "pyw", "pyi", "rb", "rake", "lua", "r", "jl", "pl", "pm", "tcl"]
+const SCRIPT_EXTENSIONS := ["gd", "py", "pyw", "pyi", "rb", "rake", "lua", "r", "jl", "pl", "pm", "tcl"]
 const C_STYLE_EXTENSIONS := ["c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx", "m", "mm", "cs", "java", "js", "jsx", "mjs", "cjs", "ts", "tsx", "go", "rs", "swift", "kt", "kts", "dart", "scala", "groovy", "gradle", "php", "sol", "proto"]
 const JS_EXTENSIONS := ["js", "jsx", "mjs", "cjs", "ts", "tsx"]
 const CPP_EXTENSIONS := ["c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx", "m", "mm"]
@@ -34,8 +33,6 @@ const SQL_KEYWORDS := ["ADD", "ALL", "ALTER", "AND", "AS", "ASC", "BEGIN", "BETW
 static func create(file_path: String) -> SyntaxHighlighter:
 	var extension := file_path.get_extension().to_lower()
 	var file_name := file_path.get_file().to_lower()
-	if extension == "gd":
-		return GDScriptSyntaxHighlighter.new()
 	var highlighter := CodeHighlighterInstance.new()
 	highlighter.number_color = CodeColors.number
 	highlighter.symbol_color = CodeColors.symbol

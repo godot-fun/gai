@@ -2,7 +2,10 @@
 
 static func recognizes_gdscript_test() -> void:
 	var highlighter := CommonHighlighter.create("scripts/player.gd")
-	assert(highlighter is GDScriptSyntaxHighlighter)
+	assert(highlighter is CodeHighlighterInstance)
+	assert(highlighter.get_keyword_color("class_name") == CodeColors.declaration)
+	assert(highlighter.get_keyword_color("func") == CodeColors.keyword)
+	assert(highlighter.has_color_region("#"))
 	pass
 
 
