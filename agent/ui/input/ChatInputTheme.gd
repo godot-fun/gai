@@ -5,9 +5,6 @@ extends Object
 
 const TRASH_ICON_PATH := "res://agent/asset/image/icon/trash.svg"
 const RESUME_ICON_PATH := "res://agent/asset/image/icon/resume.svg"
-## Markdown rules match file chips, links, and inline markup in the composer.
-const COMPOSER_SYNTAX_PATH := "composer.md"
-
 static func apply_wrap(input_wrap: PanelContainer, expanded: bool) -> void:
 	input_wrap.add_theme_stylebox_override("panel", build_wrap_style(expanded))
 	pass
@@ -37,7 +34,7 @@ static func apply_field(input_field: CodeEdit) -> void:
 	input_field.add_theme_color_override("font_placeholder_color", Colors.secondary_text)
 	input_field.add_theme_color_override("font_readonly_color", Colors.secondary_text)
 	input_field.add_theme_color_override("font_selected_color", ThemeColor.title_color)
-	input_field.syntax_highlighter = CommonHighlighter.create(COMPOSER_SYNTAX_PATH)
+	input_field.syntax_highlighter = MarkdownHighlighter.create()
 	input_field.caret_blink = true
 	pass
 
