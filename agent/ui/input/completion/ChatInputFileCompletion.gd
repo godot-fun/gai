@@ -54,15 +54,13 @@ func is_active() -> bool:
 	return mention_start(caret_prefix()) >= 0
 
 
-func build_options() -> Array[Dictionary]:
+func build_options() -> Array[ChatInputCompletionProvider.CompletionRow]:
 	refresh_index()
-	var options: Array[Dictionary] = []
+	var options: Array[ChatInputCompletionProvider.CompletionRow] = []
 	var matches: Array[MentionPath] = matching_entries(entries, query(), MAX_OPTIONS)
 	for entry: MentionPath in matches:
-		options.append({
-			"display_text": build_display_text(entry),
-			"insert_text": build_insert_text(entry),
-		})
+		options.append(ChatInputCompletionProvider.CompletionRow.create(
+			build_display_text(entry), build_insert_text(entry)))
 	return options
 
 
@@ -171,24 +169,6 @@ func build_insert_text(entry: MentionPath) -> String:
 	return MarkdownHelper.format_file_as_markdown(indexed_root.path_join(entry.path)) + " "
 
 
-## Workspace-relative entries, sorted by path so rows stay stable. [method GlobUtils.glob] does the
-## walk here with [param include_directories] on — folders come back with their trailing `/`, so `@`
-## rows and agent glob/grep rows agree on what exists — and with [member GitIgnore.ignore_rules] as
-## skip rules, which prune a folder together with its whole subtree. [constant MAX_ENTRIES] bounds that
-## walk: the breadth-first order means the paths kept are the shallowest ones.
-static func scan_workspace(root: String) -> Array[MentionPath]:
-	var entries: Array[MentionPath] = []
-	if root.is_empty():
-		return entries
-	var root_prefix := root.replace("\\", "/")
-	root_prefix = root_prefix if root_prefix.ends_with(DIRECTORY_SUFFIX) else root_prefix + DIRECTORY_SUFFIX
-	var paths := GlobUtils.glob(root, StringUtils.EMPTY, true, 0, GitIgnore.ignore_rules, true, MAX_ENTRIES)
-	for path: String in paths:
-		var relative := path.replace("\\", "/").substr(root_prefix.length())
-		entries.append(MentionPath.folder(relative) if relative.ends_with(DIRECTORY_SUFFIX) else MentionPath.file(relative))
-	return entries
-
-
 ## Shallowest first, then alphabetical: a root file beats the same name nested in a folder.
 static func entry_order_before(left: MentionPath, right: MentionPath) -> bool:
 	if left.path.length() != right.path.length():
@@ -196,12 +176,25 @@ static func entry_order_before(left: MentionPath, right: MentionPath) -> bool:
 	return left.path < right.path
 
 
+## Workspace-relative [member entries], sorted by path so rows stay stable. [method GlobUtils.glob] walks
+## [member indexed_root] with directories on — folders keep their trailing `/`, matching agent glob/grep
+## — and [member GitIgnore.ignore_rules] as skip rules. [constant MAX_ENTRIES] caps the walk; breadth-first
+## order keeps the shallowest paths.
 func refresh_index() -> void:
 	var root := resolve_root()
 	if indexed and root == indexed_root:
 		return
 	indexed_root = root
-	entries = scan_workspace(root)
+	entries = []
+	if root.is_empty():
+		indexed = true
+		return
+	var root_prefix := root.replace("\\", "/")
+	root_prefix = root_prefix if root_prefix.ends_with(DIRECTORY_SUFFIX) else root_prefix + DIRECTORY_SUFFIX
+	var paths := GlobUtils.glob(root, StringUtils.EMPTY, true, 0, GitIgnore.ignore_rules, true, MAX_ENTRIES)
+	for path: String in paths:
+		var relative := path.replace("\\", "/").substr(root_prefix.length())
+		entries.append(MentionPath.folder(relative) if relative.ends_with(DIRECTORY_SUFFIX) else MentionPath.file(relative))
 	indexed = true
 	pass
 

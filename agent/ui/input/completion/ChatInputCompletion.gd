@@ -28,7 +28,7 @@ var input_field: CodeEdit
 var skill_completion: ChatInputSkillCompletion = ChatInputSkillCompletion.new()
 var file_completion: ChatInputFileCompletion = ChatInputFileCompletion.new()
 ## Rows currently offered to the engine, in the same order as its options.
-var options: Array[Dictionary] = []
+var options: Array[ChatInputCompletionProvider.CompletionRow] = []
 
 
 func setup(p_input_field: CodeEdit) -> void:
@@ -61,14 +61,14 @@ func refresh(force: bool) -> void:
 	if provider == null:
 		cancel()
 		return
-	var rows: Array[Dictionary] = provider.build_options()
+	var rows: Array[ChatInputCompletionProvider.CompletionRow] = provider.build_options()
 	if rows.is_empty():
 		cancel()
 		return
 	options.clear()
-	for row: Dictionary in rows:
-		row["kind"] = CodeEdit.KIND_PLAIN_TEXT
-		row["font_color"] = Colors.primary_text
+	for row: ChatInputCompletionProvider.CompletionRow in rows:
+		row.kind = CodeEdit.KIND_PLAIN_TEXT
+		row.font_color = Colors.primary_text
 		options.append(row)
 	# Copying the rows back through [method filter_candidates] is what activates the list and resets
 	# the highlighted row for the new match set.
@@ -78,7 +78,15 @@ func refresh(force: bool) -> void:
 
 ## Engine hook ([ChatInputEdit]): rows are already filtered and ordered, so nothing to narrow.
 func filter_candidates() -> Array[Dictionary]:
-	return options
+	var candidates: Array[Dictionary] = []
+	for row: ChatInputCompletionProvider.CompletionRow in options:
+		candidates.append({
+			"display_text": row.display_text,
+			"insert_text": row.insert_text,
+			"kind": row.kind,
+			"font_color": row.font_color,
+		})
+	return candidates
 
 
 ## Engine hook ([ChatInputEdit]): put the highlighted row in place of the token.
@@ -99,7 +107,7 @@ func confirm() -> void:
 	input_field.begin_complex_operation()
 	input_field.remove_text(line, span.x, line, span.y)
 	input_field.set_caret_column(span.x)
-	input_field.insert_text_at_caret(String(options[index]["insert_text"]))
+	input_field.insert_text_at_caret(options[index].insert_text)
 	input_field.end_complex_operation()
 	# A directory row leaves a live `@dir/` token under the caret and reopens the list; a file row ends
 	# in a Markdown link and a skill row in a blank, so the rebuild finds no provider and stays closed.

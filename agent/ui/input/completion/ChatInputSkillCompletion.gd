@@ -30,14 +30,12 @@ func current_token() -> String:
 	return input_field.get_line(line).substr(0, input_field.get_caret_column()).strip_edges(true, false)
 
 
-func build_options() -> Array[Dictionary]:
-	var options: Array[Dictionary] = []
+func build_options() -> Array[ChatInputCompletionProvider.CompletionRow]:
+	var options: Array[ChatInputCompletionProvider.CompletionRow] = []
 	var summaries: Array[SkillSummary] = matching_summaries(SkillManager.get_summaries(), current_token().to_lower())
 	for summary: SkillSummary in summaries:
-		options.append({
-			"display_text": build_display_text(summary),
-			"insert_text": StringUtils.format("/{} ", summary.name.to_lower()),
-		})
+		options.append(ChatInputCompletionProvider.CompletionRow.create(
+			build_display_text(summary), StringUtils.format("/{} ", summary.name.to_lower())))
 	return options
 
 

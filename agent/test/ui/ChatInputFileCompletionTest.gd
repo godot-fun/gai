@@ -69,14 +69,14 @@ func display_text_test() -> void:
 	pass
 
 
-## The scan is what the popup lists: relative paths with `/`, folders suffixed, noise folders dropped,
+## The index is what the popup lists: relative paths with `/`, folders suffixed, noise folders dropped,
 ## and a stable alphabetical order.
-func scan_workspace_test() -> void:
+func refresh_index_test() -> void:
 	var root := make_scratch_workspace("scan")
 	write_file(root.path_join("docs/notes.md"))
 	# An empty folder is still a row: the walk collects folders, not just the paths of files.
 	DirAccess.make_dir_recursive_absolute(root.path_join("output/images"))
-	var scanned: Array[MentionPath] = ChatInputFileCompletion.scan_workspace(root)
+	var scanned: Array[MentionPath] = indexed_entries(root)
 	var paths: Array[String] = []
 	for scanned_entry: MentionPath in scanned:
 		paths.append(scanned_entry.path)
@@ -90,16 +90,22 @@ func scan_workspace_test() -> void:
 		DirAccess.make_dir_recursive_absolute(root.path_join(ignored))
 		write_file(root.path_join(ignored + "/dropped.txt"))
 	var rescan: Array[String] = []
-	for scanned_entry: MentionPath in ChatInputFileCompletion.scan_workspace(root):
+	for scanned_entry: MentionPath in indexed_entries(root):
 		rescan.append(scanned_entry.path)
 	assert(rescan == paths, str(rescan))
 	pass
 
 
-func scan_workspace_without_root_test() -> void:
-	assert(ChatInputFileCompletion.scan_workspace("").is_empty())
-	assert(ChatInputFileCompletion.scan_workspace("user://chat_input_file_missing_root").is_empty())
+func refresh_index_missing_root_test() -> void:
+	assert(indexed_entries("user://chat_input_file_missing_root").is_empty())
 	pass
+
+
+func indexed_entries(root: String) -> Array[MentionPath]:
+	var completion := ChatInputFileCompletion.new()
+	completion.root_override = root
+	completion.refresh_index()
+	return completion.entries
 
 
 func make_scratch_workspace(name: String) -> String:

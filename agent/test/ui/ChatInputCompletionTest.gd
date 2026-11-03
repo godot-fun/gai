@@ -13,7 +13,7 @@ func file_row_accept_links_the_file_test() -> void:
 	completion.refresh_on_text_change()
 	# `notes.md` at the root is offered before `docs/notes.md`, the shallower path winning.
 	assert(completion.options.size() == 2)
-	assert(completion.options[0]["insert_text"]
+	assert(completion.options[0].insert_text
 		== MarkdownHelper.format_file_as_markdown(root.path_join("notes.md")) + " ")
 	assert(completion.is_popup_open())
 	field.set_code_completion_selected_index(0)
@@ -30,13 +30,13 @@ func folder_row_accept_keeps_drilling_test() -> void:
 	var field := make_field(root, "@do")
 	var completion: ChatInputCompletion = field.completion
 	completion.refresh_on_text_change()
-	assert(completion.options[0]["insert_text"] == "@docs/")
+	assert(completion.options[0].insert_text == "@docs/")
 	field.set_code_completion_selected_index(0)
 	completion.confirm()
 	assert(field.text == "@docs/")
 	assert(completion.is_popup_open())
 	assert(completion.options.size() == 1)
-	assert(completion.options[0]["insert_text"] == MarkdownHelper.format_file_as_markdown(
+	assert(completion.options[0].insert_text == MarkdownHelper.format_file_as_markdown(
 		root.path_join("docs/notes.md")) + " ")
 	field.free()
 	pass
@@ -47,12 +47,8 @@ func folder_row_accept_keeps_drilling_test() -> void:
 func skill_row_accept_replaces_the_command_test() -> void:
 	var field := make_field("", "/aud")
 	var completion: ChatInputCompletion = field.completion
-	completion.options = [{
-		"kind": CodeEdit.KIND_PLAIN_TEXT,
-		"display_text": "/audio-trim",
-		"insert_text": "/audio-trim ",
-		"font_color": Color.WHITE,
-	}]
+	completion.options = [ChatInputCompletionProvider.CompletionRow.create("/audio-trim", "/audio-trim ")]
+	completion.options[0].font_color = Color.WHITE
 	field.update_code_completion_options(true)
 	assert(completion.is_popup_open())
 	field.set_code_completion_selected_index(0)
@@ -69,7 +65,7 @@ func accept_replaces_the_typed_tail_test() -> void:
 	var field := make_field(root, "@do cs", 3)
 	var completion: ChatInputCompletion = field.completion
 	completion.refresh_on_text_change()
-	assert(completion.options[0]["insert_text"] == "@docs/")
+	assert(completion.options[0].insert_text == "@docs/")
 	field.set_code_completion_selected_index(0)
 	completion.confirm()
 	assert(field.text == "@docs/ cs")

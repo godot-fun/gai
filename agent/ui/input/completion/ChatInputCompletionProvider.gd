@@ -11,15 +11,30 @@ extends RefCounted
 var input_field: CodeEdit
 
 
+## One completion row before [ChatInputCompletion] adds engine fields ([member kind], [member font_color]).
+class CompletionRow extends RefCounted:
+	var display_text: String = ""
+	var insert_text: String = ""
+	var kind: int = CodeEdit.KIND_PLAIN_TEXT
+	var font_color: Color = Colors.primary_text
+
+	func _init(row_display_text: String = "", row_insert_text: String = "") -> void:
+		display_text = row_display_text
+		insert_text = row_insert_text
+		pass
+
+	static func create(row_display_text: String, row_insert_text: String) -> CompletionRow:
+		return CompletionRow.new(row_display_text, row_insert_text)
+
+
 ## True while the caret sits inside this provider's token, i.e. while the list may show at all.
 func is_active() -> bool:
 	return false
 
 
-## Rows for the current token in display order. Each row carries `display_text` (what the popup
-## draws) and `insert_text` (what the field holds once the row is accepted).
-func build_options() -> Array[Dictionary]:
-	var options: Array[Dictionary] = []
+## Rows for the current token in display order.
+func build_options() -> Array[CompletionRow]:
+	var options: Array[CompletionRow] = []
 	return options
 
 
