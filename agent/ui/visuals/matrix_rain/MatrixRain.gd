@@ -10,7 +10,10 @@ const MAX_TRAIL_LENGTH := 22
 const GLYPH_REFRESH_SECONDS := 0.075
 const MAX_REPLY_RAINS := 64
 const MIN_REPLY_RAIN_SPEED := 80.0
-const MAX_REPLY_RAIN_SPEED := 240.0
+const MAX_REPLY_RAIN_SPEED := 420.0
+## Character count at which a reply sentence falls at [constant MAX_REPLY_RAIN_SPEED]; longer
+## sentences keep that speed so a long reply does not crawl down the screen for many seconds.
+const REPLY_RAIN_FULL_SPEED_LENGTH := 60.0
 const END_DROP_SECONDS := 0.55
 const END_DROP_MIN_SPEED := 1200.0
 
@@ -202,7 +205,7 @@ func spawn_reply_rain(sentence: String) -> void:
 	reply_sentence_index += 1
 	var spacing := maxf(MIN_COLUMN_STEP, size.x / float(maxi(columns.size(), 1)))
 	var first_slot: int = (reply_sentence_index * 11) % maxi(columns.size(), 1)
-	var rain_speed := randf_range(MIN_REPLY_RAIN_SPEED, MAX_REPLY_RAIN_SPEED)
+	var rain_speed := reply_rain_speed(characters.length())
 	for character_index: int in range(characters.length()):
 		if character_index == 0:
 			active_reply_rain_count += 1
@@ -217,6 +220,13 @@ func spawn_reply_rain(sentence: String) -> void:
 		reply_glyph.releases_rain_slot = character_index == characters.length() - 1
 		reply_glyphs.append(reply_glyph)
 	pass
+
+
+## Longer sentences fall faster: speed ramps with character count and saturates at a comfortable cap.
+static func reply_rain_speed(character_count: int) -> float:
+	var length_factor := clampf(float(character_count) / REPLY_RAIN_FULL_SPEED_LENGTH, 0.0, 1.0)
+	var base_speed := lerpf(MIN_REPLY_RAIN_SPEED, MAX_REPLY_RAIN_SPEED, length_factor)
+	return base_speed * randf_range(0.92, 1.1)
 
 
 func ensure_columns() -> void:
