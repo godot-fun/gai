@@ -1,12 +1,20 @@
 class_name MarkdownHighlighter
 extends SyntaxHighlighter
 
-## Markdown and MDX [CodeEdit] highlighting ([member EXTENSIONS]).
-## Region rules run on [member region_highlighter]; this class adds [FileColors] for `[label](file)`.
+## Markdown and MDX [CodeEdit] highlighting ([member EXTENSIONS]) — chat composer and `.md` diff panes.
+##
+## Inline links: `[label](https://…)` / `mailto:` keep [CodeColors.link] on the `(destination)` span;
+## `[label](local file)` uses [FileColors.color_for_path] from the path extension (same rules as rendered
+## link chips in [MarkdownParser], without the emoji prefix). Label text `[…]` stays generic link color.
+##
+## Region rules run on [member region_highlighter]; prose uses the editor [code]font_color[/code].
 ## [CodeHighlighter] start keys must be symbol-only ([code]__[/code] and [code]][/code] are invalid).
 
-const EXTENSIONS := ["md", "markdown", "mdx"]
-const ALERT_KEYWORDS := ["TODO", "FIXME", "NOTE", "WARNING", "IMPORTANT", "TIP", "CAUTION"]
+const EXTENSIONS := ["md", "markdown", "mdown", "mkd", "mdx", "mdc", "mmd", "qmd", "rmd"]
+const ALERT_KEYWORDS := [
+	"TODO", "FIXME", "XXX", "HACK", "BUG", "REVIEW", "DEPRECATED",
+	"NOTE", "INFO", "TIP", "IMPORTANT", "WARNING", "CAUTION", "DANGER", "ERROR", "SUCCESS", "QUESTION", "EXAMPLE", "ABSTRACT",
+]
 
 var region_edit: CodeEdit
 var region_highlighter: CodeHighlighter
@@ -126,6 +134,16 @@ static func color_at_column(region: Dictionary, column: int, base_color: Color) 
 	pass
 
 
+## [code]null[/code] keeps [CodeColors.link] for http(s) / mailto; otherwise [FileColors.color_for_path].
+static func syntax_color_for_link_destination(raw_destination: String) -> Variant:
+	var path := MarkdownParser.parse_link_destination(raw_destination)
+	if HttpUtils.is_valid_http_url(path) or path.to_lower().begins_with("mailto:"):
+		return null
+	return FileColors.color_for_path(path)
+	pass
+
+
+## Paints `(…)` after `](` for inline links only; skips destinations inside `` ` ``.
 static func highlight_file_link_destinations(line: String, highlighting: Dictionary) -> void:
 	var search_from := 0
 	while true:
@@ -142,7 +160,7 @@ static func highlight_file_link_destinations(line: String, highlighting: Diction
 			search_from = dest_start
 			continue
 		var raw_destination := line.substr(dest_start, close - dest_start)
-		var destination_color: Variant = MarkdownParser.markdown_link_destination_color(raw_destination)
+		var destination_color: Variant = syntax_color_for_link_destination(raw_destination)
 		if destination_color == null:
 			destination_color = CodeColors.link
 		for column in range(paren, close + 1):

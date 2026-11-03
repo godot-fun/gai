@@ -44,8 +44,8 @@ static func recognizes_extended_languages_test() -> void:
 	var prose_color := markdown_edit.get_theme_color("font_color")
 	var long_form_line := markdown.get_line_syntax_highlighting(0)
 	assert(long_form_line[0]["color"] == prose_color)
-	assert(MarkdownParser.markdown_link_destination_color("https://godotengine.org") == null)
-	assert(MarkdownParser.file_path_color("C:/clips/voice.wav") == FileColors.audio_color)
+	assert(MarkdownHighlighter.syntax_color_for_link_destination("https://godotengine.org") == null)
+	assert(FileColors.color_for_path("C:/clips/voice.wav") == FileColors.audio_color)
 	markdown_edit.free()
 	var mdx := CommonHighlighter.create("docs/page.mdx") as MarkdownHighlighter
 	assert(mdx.region_highlighter.has_color_region("`"))

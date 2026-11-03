@@ -57,6 +57,8 @@ const PROTECT_START := "\uE000"
 const PROTECT_END := "\uE001"
 const ESCAPE_SENTINEL := "\uE002"
 const NBSP := "\u00A0"
+## Colored emoji markers before link labels for local paths in RichText BBCode (see [method get_link_prefix]).
+## Category and color follow [FileColors.category_for_path]; image / video use dedicated icons instead of [member FILE_PREFIX].
 const FOLDER_PREFIX := "📁 "
 const FILE_PREFIX := "📄 "
 const IMAGE_PREFIX := "📷 "
@@ -64,16 +66,9 @@ const VIDEO_PREFIX := "🎬 "
 const AUDIO_PREFIX := "🎵 "
 const WEB_PREFIX := "🔗 "
 const EMAIL_PREFIX := "✉ "
-const EXECUTABLE_CONFIG_PREFIX := "⚙ "
+const CONFIG_PREFIX := "⚙ "
 const TEXT_DOCUMENT_PREFIX := "📝 "
 const CODE_LANGUAGE_PREFIX := "⌨ "
-const EXECUTABLE_CONFIG_EXTENSIONS: PackedStringArray = [
-	"apk", "app", "bat", "cfg", "cmd", "conf", "env", "exe", "godot", "ini", "json",
-	"msi", "plist", "properties", "ps1", "sh", "toml", "xml", "yaml", "yml",
-]
-const TEXT_DOCUMENT_EXTENSIONS: PackedStringArray = [
-	"doc", "docx", "gd", "log", "markdown", "md", "odt", "pdf", "rtf", "rst", "txt",
-]
 const TABLE_CELL_PADDING := "8,4,8,4"
 const CODE_BLOCK_PADDING := "6,6,6,6"
 const BLOCKQUOTE_BAR_PADDING := "2,0,0,0"
@@ -764,6 +759,8 @@ static func replace_inline_match(
 # ---------------------------------------------------------------------------
 # Link and file markers
 # ---------------------------------------------------------------------------
+## Local `[text](file)` chips: emoji + [FileColors] by file category (composer [MarkdownHighlighter] uses the
+## same classification for `(file)` paint only — no emoji in CodeEdit). Web and mailto use info color below.
 
 ## Adds a theme-colored visual marker based on the link destination type.
 static func get_link_prefix(path: String) -> String:
@@ -773,59 +770,31 @@ static func get_link_prefix(path: String) -> String:
 		return format_link_prefix(EMAIL_PREFIX, Colors.info)
 	if not (path.is_absolute_path() or path.begins_with("res://") or path.begins_with("user://")):
 		return StringUtils.EMPTY
-	if DirAccess.dir_exists_absolute(path):
-		return format_link_prefix(FOLDER_PREFIX, FileColors.folder_color)
-	var extension := path.get_extension().to_lower()
-	if ResourceHelper.AUDIO_EXTENSIONS.has(extension):
-		return format_link_prefix(AUDIO_PREFIX, FileColors.audio_color)
-	if ImageHelper.EXTENSIONS.has(extension):
-		return format_link_prefix(IMAGE_PREFIX, FileColors.image_color)
-	if VideoHelper.EXTENSIONS.has(extension):
-		return format_link_prefix(VIDEO_PREFIX, FileColors.video_color)
-	if EXECUTABLE_CONFIG_EXTENSIONS.has(extension):
-		return format_link_prefix(EXECUTABLE_CONFIG_PREFIX, FileColors.video_color)
-	if TEXT_DOCUMENT_EXTENSIONS.has(extension):
-		return format_link_prefix(TEXT_DOCUMENT_PREFIX, FileColors.text_color)
-	return format_link_prefix(FILE_PREFIX, FileColors.text_color)
+	match FileColors.category_for_path(path):
+		FileColors.Category.GENERIC:
+			return format_link_prefix(FILE_PREFIX, FileColors.generic_color)
+		FileColors.Category.FOLDER:
+			return format_link_prefix(FOLDER_PREFIX, FileColors.folder_color)
+		FileColors.Category.AUDIO:
+			return format_link_prefix(AUDIO_PREFIX, FileColors.audio_color)
+		FileColors.Category.IMAGE:
+			return format_link_prefix(IMAGE_PREFIX, FileColors.image_color)
+		FileColors.Category.VIDEO:
+			return format_link_prefix(VIDEO_PREFIX, FileColors.video_color)
+		FileColors.Category.CONFIG:
+			return format_link_prefix(CONFIG_PREFIX, FileColors.config_color)
+		FileColors.Category.TEXT:
+			return format_link_prefix(TEXT_DOCUMENT_PREFIX, FileColors.text_color)
+	return format_link_prefix(FILE_PREFIX, FileColors.generic_color)
+	pass
 
 
 static func format_link_prefix(prefix: String, color: Color) -> String:
 	return StringUtils.format("[color={}]{}[/color]", to_bbcode_color(color), prefix)
 
 
-## [FileColors] for local paths; [code]null[/code] when the destination should keep URL highlighting.
-static func markdown_link_destination_color(raw_destination: String) -> Variant:
-	var path := parse_link_destination(raw_destination)
-	if HttpUtils.is_valid_http_url(path) or path.to_lower().begins_with("mailto:"):
-		return null
-	return file_path_color(path)
-
-
-static func file_path_color(path: String) -> Color:
-	var clean_path := path.get_slice("?", 0).get_slice("#", 0).strip_edges()
-	if clean_path.is_empty():
-		return FileColors.text_color
-	if clean_path.ends_with("/") or clean_path.ends_with("\\"):
-		return FileColors.folder_color
-	if DirAccess.dir_exists_absolute(clean_path):
-		return FileColors.folder_color
-	var extension := clean_path.get_extension().to_lower()
-	if ResourceHelper.AUDIO_EXTENSIONS.has(extension):
-		return FileColors.audio_color
-	if ImageHelper.EXTENSIONS.has(extension):
-		return FileColors.image_color
-	if VideoHelper.EXTENSIONS.has(extension):
-		return FileColors.video_color
-	if EXECUTABLE_CONFIG_EXTENSIONS.has(extension):
-		return FileColors.video_color
-	if TEXT_DOCUMENT_EXTENSIONS.has(extension):
-		return FileColors.text_color
-	if Fonts.EXTENSIONS.has(extension):
-		return FileColors.text_color
-	return FileColors.text_color
-
-
 ## Link/image dest: `[t](<url>)` unwraps; `[t](url "title")` / `[t](url 'title')` drops title.
+## Shared with [MarkdownHighlighter.syntax_color_for_link_destination] when coloring `(destination)`.
 static func parse_link_destination(raw: String) -> String:
 	var dest := raw.strip_edges()
 	if dest.begins_with("<"):

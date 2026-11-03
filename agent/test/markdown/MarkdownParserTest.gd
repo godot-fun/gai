@@ -346,6 +346,7 @@ func local_file_link_prefix_test() -> void:
 	assert("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.text_color) in document_bbcode)
 	assert("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.image_color) in image_bbcode)
 	assert("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.video_color) in video_bbcode)
+	assert("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.config_color) in config_bbcode)
 	pass
 
 
