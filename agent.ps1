@@ -212,6 +212,11 @@ if ($Wait) {
 	exit $AppExit
 }
 
+Start-Sleep -Seconds 1
+
 Start-Process -FilePath $Editor -ArgumentList $ArgumentList -WorkingDirectory $Root
 Write-StepDone "started" "new window"
+
+Start-Sleep -Seconds 1
+
 exit 0
