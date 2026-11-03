@@ -110,16 +110,14 @@ if ($null -eq $Git) {
 	# HEAD, offline, or a diverged branch fail the same way.
 	$PreviousPrompt = $env:GIT_TERMINAL_PROMPT
 	$env:GIT_TERMINAL_PROMPT = "0"
-	Push-Location $Root
 	try {
-		& $Git.Source pull --ff-only
+		& $Git.Source -C $Root pull --ff-only
 		if ($LASTEXITCODE -eq 0) {
 			$PullStatus = "done"
 		} else {
 			Write-StepNote "git pull failed, starting from local code"
 		}
 	} finally {
-		Pop-Location
 		$env:GIT_TERMINAL_PROMPT = $PreviousPrompt
 	}
 }
