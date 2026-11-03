@@ -1,10 +1,10 @@
 class_name CommonHighlighter
 extends Object
 
-## Creates a theme-aware CodeEdit highlighter from a repository file name. [CodeHighlighterInstance] wraps
-## the engine [CodeHighlighter] so incomplete code stays colorful while it is edited.
+## Creates a theme-aware [CodeEdit] highlighter from a repository file name. [code].gd[/code] uses
+## [GDScriptSyntaxHighlighter]; other extensions use [CodeHighlighterInstance].
 
-const SCRIPT_EXTENSIONS := ["gd", "py", "pyw", "pyi", "rb", "rake", "lua", "r", "jl", "pl", "pm", "tcl"]
+const SCRIPT_EXTENSIONS := ["py", "pyw", "pyi", "rb", "rake", "lua", "r", "jl", "pl", "pm", "tcl"]
 const C_STYLE_EXTENSIONS := ["c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx", "m", "mm", "cs", "java", "js", "jsx", "mjs", "cjs", "ts", "tsx", "go", "rs", "swift", "kt", "kts", "dart", "scala", "groovy", "gradle", "php", "sol", "proto"]
 const JS_EXTENSIONS := ["js", "jsx", "mjs", "cjs", "ts", "tsx"]
 const CPP_EXTENSIONS := ["c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx", "m", "mm"]
@@ -20,8 +20,6 @@ const COMMON_KEYWORDS := ["if", "else", "elif", "for", "while", "do", "match", "
 const TYPE_KEYWORDS := ["void", "bool", "boolean", "int", "uint", "float", "double", "char", "string", "String", "StringName", "Array", "Dictionary", "Variant", "Object", "Node", "Resource", "Vector2", "Vector2i", "Vector3", "Vector3i", "Color", "Callable", "Signal", "true", "false", "null", "nil", "None"]
 const DECLARATION_KEYWORDS := ["class_name", "extends", "signal", "enum", "const", "static", "var", "func", "@export", "@onready", "@tool", "@warning_ignore", "@rpc", "override", "virtual", "abstract", "readonly", "typedef", "using"]
 const SHELL_KEYWORDS := ["case", "do", "done", "elif", "else", "esac", "fi", "for", "foreach", "function", "if", "in", "select", "then", "until", "while", "param", "begin", "end", "process"]
-const GDSCRIPT_KEYWORDS := ["assert", "breakpoint", "class_name", "extends", "is_instance_of", "preload", "signal", "super", "when", "@abstract", "@export", "@export_category", "@export_color_no_alpha", "@export_custom", "@export_dir", "@export_enum", "@export_exp_easing", "@export_file", "@export_file_path", "@export_flags", "@export_flags_2d_navigation", "@export_flags_2d_physics", "@export_flags_2d_render", "@export_flags_3d_navigation", "@export_flags_3d_physics", "@export_flags_3d_render", "@export_flags_avoidance", "@export_global_dir", "@export_global_file", "@export_group", "@export_multiline", "@export_node_path", "@export_placeholder", "@export_range", "@export_storage", "@export_subgroup", "@export_tool_button", "@icon", "@onready", "@rpc", "@static_unload", "@tool", "@warning_ignore", "@warning_ignore_start", "@warning_ignore_restore"]
-const GDSCRIPT_TYPES := ["AABB", "Basis", "NodePath", "PackedByteArray", "PackedColorArray", "PackedFloat32Array", "PackedFloat64Array", "PackedInt32Array", "PackedInt64Array", "PackedStringArray", "PackedVector2Array", "PackedVector3Array", "PackedVector4Array", "Plane", "Projection", "Quaternion", "Rect2", "Rect2i", "RID", "Transform2D", "Transform3D", "Vector4", "Vector4i", "PI", "TAU", "INF", "NAN"]
 const PYTHON_KEYWORDS := ["assert", "del", "except", "False", "finally", "global", "lambda", "nonlocal", "pass", "True", "with", "None", "__name__", "__main__"]
 const JS_KEYWORDS := ["constructor", "debugger", "default", "delete", "instanceof", "of", "typeof", "undefined", "NaN", "Infinity", "get", "set", "implements", "declare", "keyof", "satisfies", "unknown", "never", "any", "type", "infer", "asserts", "with", "module", "bigint", "symbol", "globalThis"]
 const MARKDOWN_KEYWORDS := ["TODO", "FIXME", "NOTE", "WARNING", "IMPORTANT", "TIP", "CAUTION"]
@@ -33,14 +31,16 @@ const SHADER_TYPES := ["bvec2", "bvec3", "bvec4", "ivec2", "ivec3", "ivec4", "uv
 const SQL_KEYWORDS := ["ADD", "ALL", "ALTER", "AND", "AS", "ASC", "BEGIN", "BETWEEN", "BY", "CASE", "CHECK", "COLUMN", "COMMIT", "CONSTRAINT", "CREATE", "DATABASE", "DEFAULT", "DELETE", "DESC", "DISTINCT", "DROP", "ELSE", "END", "EXISTS", "FOREIGN", "FROM", "FULL", "GRANT", "GROUP", "HAVING", "IN", "INDEX", "INNER", "INSERT", "INTO", "IS", "JOIN", "KEY", "LEFT", "LIKE", "LIMIT", "NOT", "NULL", "ON", "OR", "ORDER", "OUTER", "PRIMARY", "REFERENCES", "RETURNING", "REVOKE", "RIGHT", "ROLLBACK", "SELECT", "SET", "TABLE", "THEN", "TRUNCATE", "UNION", "UNIQUE", "UPDATE", "VALUES", "VIEW", "WHEN", "WHERE", "WITH"]
 
 
-static func create(file_path: String) -> CodeHighlighterInstance:
+static func create(file_path: String) -> SyntaxHighlighter:
+	var extension := file_path.get_extension().to_lower()
+	var file_name := file_path.get_file().to_lower()
+	if extension == "gd":
+		return GDScriptSyntaxHighlighter.new()
 	var highlighter := CodeHighlighterInstance.new()
 	highlighter.number_color = CodeColors.number
 	highlighter.symbol_color = CodeColors.symbol
 	highlighter.function_color = CodeColors.function
 	highlighter.member_variable_color = CodeColors.member
-	var extension := file_path.get_extension().to_lower()
-	var file_name := file_path.get_file().to_lower()
 	if extension in SCRIPT_EXTENSIONS:
 		configure_script(highlighter, extension)
 	elif extension in C_STYLE_EXTENSIONS:
@@ -84,14 +84,7 @@ static func configure_script(highlighter: CodeHighlighterInstance, extension: St
 	add_keywords(highlighter, DECLARATION_KEYWORDS, CodeColors.declaration)
 	add_quoted_strings(highlighter, CodeColors.string)
 	highlighter.add_color_region("#", "", CodeColors.comment, true)
-	if extension == "gd":
-		add_keywords(highlighter, GDSCRIPT_KEYWORDS, CodeColors.declaration)
-		add_keywords(highlighter, GDSCRIPT_TYPES, CodeColors.type)
-		highlighter.add_color_region(r'"""', r'"""', CodeColors.string)
-		highlighter.add_color_region(r"'''", r"'''", CodeColors.string)
-		highlighter.add_color_region('&"', '"', CodeColors.string)
-		highlighter.add_color_region('^"', '"', CodeColors.string)
-	elif extension.begins_with("py"):
+	if extension.begins_with("py"):
 		add_keywords(highlighter, PYTHON_KEYWORDS, CodeColors.keyword)
 		highlighter.add_color_region(r'"""', r'"""', CodeColors.string)
 		highlighter.add_color_region(r"'''", r"'''", CodeColors.string)

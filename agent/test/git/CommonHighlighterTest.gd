@@ -2,17 +2,7 @@
 
 static func recognizes_gdscript_test() -> void:
 	var highlighter := CommonHighlighter.create("scripts/player.gd")
-	assert(highlighter.get_keyword_color("func").a > 0.0)
-	assert(highlighter.get_keyword_color("pass") == CodeColors.keyword)
-	assert(highlighter.get_keyword_color("Vector2").a > 0.0)
-	assert(highlighter.get_keyword_color("PackedVector4Array") == CodeColors.type)
-	assert(highlighter.get_keyword_color("PI") == CodeColors.type)
-	assert(highlighter.get_keyword_color("@export_range") == CodeColors.declaration)
-	assert(highlighter.get_keyword_color("@abstract") == CodeColors.declaration)
-	assert(highlighter.get_keyword_color("@export_tool_button") == CodeColors.declaration)
-	assert(highlighter.has_color_region("#"))
-	assert(highlighter.has_color_region('&"'))
-	assert(highlighter.has_color_region('^"'))
+	assert(highlighter is GDScriptSyntaxHighlighter)
 	pass
 
 
