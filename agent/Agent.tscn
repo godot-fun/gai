@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dwsh1esychpp5" path="res://agent/Agent.gd" id="1_fwn8y"]
 [ext_resource type="Script" path="res://agent/ui/visuals/VisualControl.gd" id="2_visual"]
-[ext_resource type="Script" path="res://agent/ui/input/ChatInputField.gd" id="3_field"]
+[ext_resource type="Script" path="res://agent/ui/input/ChatInputEdit.gd" id="3_field"]
 
 [node name="Agent" type="Control" unique_id=1107421514]
 layout_mode = 3

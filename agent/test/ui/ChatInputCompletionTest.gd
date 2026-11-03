@@ -1,6 +1,6 @@
 extends RefCounted
 
-## Popup flow on a real [ChatInputField]: the engine only keeps its completion state on a live node, so
+## Popup flow on a real [ChatInputEdit]: the engine only keeps its completion state on a live node, so
 ## these tests drive [method ChatInputCompletion.refresh_on_text_change] and [method
 ## ChatInputCompletion.confirm] the way the field's virtuals do on a keystroke and on Enter.
 
@@ -95,8 +95,8 @@ func only_one_provider_claims_the_caret_test() -> void:
 	pass
 
 
-func make_field(root: String, text: String, caret_column: int = -1) -> ChatInputField:
-	var field := ChatInputField.new()
+func make_field(root: String, text: String, caret_column: int = -1) -> ChatInputEdit:
+	var field := ChatInputEdit.new()
 	var completion := ChatInputCompletion.new()
 	completion.setup(field)
 	completion.file_completion.root_override = root

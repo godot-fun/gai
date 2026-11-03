@@ -5,7 +5,7 @@ extends RefCounted
 ##
 ## [CodeEdit] owns the popup but none of its default behavior fits a chat box. It filters rows by its
 ## own word rules (subsequence over `display_text`, reordered by match quality) and replaces only the
-## trailing "base" of the token, so `@agent/ui` or `/audio-t` cannot survive it. [ChatInputField]
+## trailing "base" of the token, so `@agent/ui` or `/audio-t` cannot survive it. [ChatInputEdit]
 ## therefore overrides the three completion virtuals — request, filter, confirm — and every decision
 ## lands here:
 ##
@@ -36,7 +36,7 @@ func setup(p_input_field: CodeEdit) -> void:
 	input_field.code_completion_enabled = true
 	skill_completion.input_field = input_field
 	file_completion.input_field = input_field
-	# Assigned by name on purpose: [ChatInputField] holds this dispatcher and this dispatcher drives
+	# Assigned by name on purpose: [ChatInputEdit] holds this dispatcher and this dispatcher drives
 	# that field, so naming the class here would make the two scripts depend on each other, and the
 	# engine crashes at shutdown on that cycle. A field without the script fails loudly right here.
 	input_field.set("completion", self)
@@ -76,12 +76,12 @@ func refresh(force: bool) -> void:
 	pass
 
 
-## Engine hook ([ChatInputField]): rows are already filtered and ordered, so nothing to narrow.
+## Engine hook ([ChatInputEdit]): rows are already filtered and ordered, so nothing to narrow.
 func filter_candidates() -> Array[Dictionary]:
 	return options
 
 
-## Engine hook ([ChatInputField]): put the highlighted row in place of the token.
+## Engine hook ([ChatInputEdit]): put the highlighted row in place of the token.
 func confirm() -> void:
 	var provider := active_provider()
 	if provider == null:

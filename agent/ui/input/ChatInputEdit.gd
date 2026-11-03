@@ -1,4 +1,4 @@
-class_name ChatInputField
+class_name ChatInputEdit
 extends CodeEdit
 
 ## The composer's editor. [CodeEdit]'s completion list is driven entirely by [member completion]: the
