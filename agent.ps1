@@ -1,6 +1,6 @@
 # Launch the agent desktop app. Usage: .\agent.ps1  |  .\agent.ps1 -Wait  |  .\agent.ps1 --data-dir .gai3
 # The data folder defaults to <workspace>\.gai2; pass --data-dir <workspace-relative path> to change it.
-# Every launch first syncs the import cache (~4 s), then starts the app.
+# Every launch first pulls the latest code, then syncs the import cache (~4 s), then starts the app.
 
 param(
 	[switch]$Wait,
@@ -45,6 +45,52 @@ $Editor = Join-Path $Root ($GodotEntry.bin -replace "/", "\")
 if (-not (Test-Path -LiteralPath $Editor)) {
 	Write-Host "Godot editor not found: $Editor"
 	exit 1
+}
+
+# ---------------------------------------------------------------------------
+# Update code from git
+# ---------------------------------------------------------------------------
+# Runs before the import step so assets and scripts pulled in this launch are
+# imported by the same run. Never blocks startup: a missing git, a dirty tree,
+# a detached HEAD, or an unreachable remote only prints a warning and the app
+# starts from the local checkout. Fast-forward only — a diverged branch is left
+# alone instead of creating a merge commit or overwriting local work.
+
+$Git = Get-Command git -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+if ($null -eq $Git) {
+	Write-Host "git not found, starting from local code"
+} else {
+	# Git writes expected states ("not a git repository", diverged pull) to stderr.
+	# $ErrorActionPreference = "Stop" turns that into a terminating error, so relax
+	# it around the git calls and merge stderr into captured text instead.
+	# GIT_TERMINAL_PROMPT=0 keeps a private remote from blocking on a credential
+	# prompt: it fails fast and the app starts from the local checkout.
+	$PreviousPreference = $ErrorActionPreference
+	$PreviousPrompt = $env:GIT_TERMINAL_PROMPT
+	$ErrorActionPreference = "Continue"
+	$env:GIT_TERMINAL_PROMPT = "0"
+	Push-Location $Root
+	try {
+		$Branch = (& $Git.Source rev-parse --abbrev-ref HEAD 2>&1 | Out-String).Trim()
+		$IsRepo = $LASTEXITCODE -eq 0
+		if (-not $IsRepo) {
+			Write-Host "Not a git checkout, starting from local code"
+		} elseif ($Branch -eq "HEAD") {
+			Write-Host "Detached HEAD, skipping git update"
+		} else {
+			# No dirty-tree check: --ff-only already aborts (leaving files untouched)
+			# when incoming commits would overwrite local edits.
+			Write-Host "Updating code: git pull --ff-only"
+			& $Git.Source pull --ff-only
+			if ($LASTEXITCODE -ne 0) {
+				Write-Host "git pull failed (offline, dirty tree, or diverged branch), starting from local code"
+			}
+		}
+	} finally {
+		Pop-Location
+		$env:GIT_TERMINAL_PROMPT = $PreviousPrompt
+		$ErrorActionPreference = $PreviousPreference
+	}
 }
 
 # ---------------------------------------------------------------------------
