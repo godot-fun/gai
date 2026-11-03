@@ -112,7 +112,7 @@ func reveal_entry(entry_index: int) -> void:
 		return
 # The bar value is expressed in ChatListsContainer content coordinates. The list starts after
 # ChatListsContainer's top inset, and each entry position is local to the list.
-	var entry_y := active_chat_list.position.y + entry_control.position.y
+	var entry_y := entry_y_for_control(entry_control)
 	var max_scroll := maxf(vbar.min_value, vbar.max_value - vbar.page)
 	vbar.value = clampf(entry_y - Margin.ma_5, vbar.min_value, max_scroll)
 	if entry_control is BubbleContainer:
@@ -120,11 +120,79 @@ func reveal_entry(entry_index: int) -> void:
 	pass
 
 
+func navigate_user_message(direction: int) -> bool:
+	if direction == 0 or not is_instance_valid(active_chat_list):
+		return false
+	var session: AgentSession = AgentSessionStore.load_session(AgentSessionManager.active_session_id)
+	if session == null:
+		return false
+	var user_entry_indices := collect_user_entry_indices(session)
+	if user_entry_indices.is_empty():
+		return false
+	var target_index := find_user_message_entry_index(user_entry_indices, direction)
+	if target_index < 0:
+		return false
+	stick_to_bottom = false
+	reveal_entry(target_index)
+	cache_session_scroll(AgentSessionManager.active_session_id)
+	return true
+
+
+func collect_user_entry_indices(session: AgentSession) -> Array[int]:
+	var indices: Array[int] = []
+	for entry_index in range(session.chat_entries.size()):
+		if session.chat_entries[entry_index].kind == ChatEntry.KIND_USER:
+			indices.append(entry_index)
+	return indices
+
+
+func find_user_message_entry_index(user_entry_indices: Array[int], direction: int) -> int:
+	var vbar: VScrollBar = chat_scroll.get_v_scroll_bar()
+	if vbar == null:
+		return -1
+	var anchor := vbar.value + Margin.ma_5
+	var current_slot := -1
+	for slot in range(user_entry_indices.size()):
+		var entry_index: int = user_entry_indices[slot]
+		if entry_y_for_index(entry_index) <= anchor + 1.0:
+			current_slot = slot
+	if direction > 0:
+		var next_slot := current_slot + 1
+		if next_slot >= user_entry_indices.size():
+			next_slot = user_entry_indices.size() - 1
+		return user_entry_indices[next_slot]
+	if current_slot <= 0:
+		return user_entry_indices[0]
+	return user_entry_indices[current_slot - 1]
+
+
+func entry_y_for_index(entry_index: int) -> float:
+	if not is_instance_valid(active_chat_list) or entry_index < 0 or entry_index >= active_chat_list.get_child_count():
+		return 0.0
+	var entry_control := active_chat_list.get_child(entry_index) as Control
+	if entry_control == null:
+		return 0.0
+	return entry_y_for_control(entry_control)
+
+
+func entry_y_for_control(entry_control: Control) -> float:
+	return active_chat_list.position.y + entry_control.position.y
+
+
 func on_chat_scroll_gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mouse: InputEventMouseButton = event as InputEventMouseButton
 		if not mouse.pressed:
 			return
+		if mouse.shift_pressed:
+			var direction := 0
+			if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
+				direction = -1
+			elif mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+				direction = 1
+			if direction != 0 and navigate_user_message(direction):
+				chat_scroll.accept_event()
+				return
 		if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
 			stick_to_bottom = false
 		elif mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN and is_scrolled_to_bottom():
@@ -165,6 +233,14 @@ func on_chat_window_input(event: InputEvent) -> void:
 		return
 	var key: InputEventKey = event as InputEventKey
 	if not key.pressed:
+		return
+	if not key.echo and key.get_keycode_with_modifiers() == ShortcutSetting.get_prev_user_message_shortcut():
+		if navigate_user_message(-1):
+			chat_scroll.get_viewport().set_input_as_handled()
+		return
+	if not key.echo and key.get_keycode_with_modifiers() == ShortcutSetting.get_next_user_message_shortcut():
+		if navigate_user_message(1):
+			chat_scroll.get_viewport().set_input_as_handled()
 		return
 	var direction: int = 0
 	if key.is_action_pressed(&"ui_page_up", true):

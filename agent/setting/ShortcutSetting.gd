@@ -7,6 +7,12 @@ extends RefCounted
 const SEARCH_SHORTCUT_KEY := "agent_search_shortcut"
 ## Opens chat search. Default is Ctrl+F.
 const DEFAULT_SEARCH_SHORTCUT: Key = KEY_F | KEY_MASK_CTRL
+const PREV_USER_MESSAGE_SHORTCUT_KEY := "agent_prev_user_message_shortcut"
+const NEXT_USER_MESSAGE_SHORTCUT_KEY := "agent_next_user_message_shortcut"
+## Jumps to the previous user message in the transcript. Default is Shift+Page Up.
+const DEFAULT_PREV_USER_MESSAGE_SHORTCUT: Key = KEY_PAGEUP | KEY_MASK_SHIFT
+## Jumps to the next user message in the transcript. Default is Shift+Page Down.
+const DEFAULT_NEXT_USER_MESSAGE_SHORTCUT: Key = KEY_PAGEDOWN | KEY_MASK_SHIFT
 
 
 static func get_search_shortcut() -> Key:
@@ -19,6 +25,32 @@ static func set_search_shortcut(key: Key) -> void:
 	Setting.set_int(SEARCH_SHORTCUT_KEY, key)
 	Setting.save()
 	AgentEvents.events.search_shortcut_changed.emit()
+	pass
+
+
+static func get_prev_user_message_shortcut() -> Key:
+	return Setting.get_int(PREV_USER_MESSAGE_SHORTCUT_KEY, DEFAULT_PREV_USER_MESSAGE_SHORTCUT) as Key
+
+
+static func get_next_user_message_shortcut() -> Key:
+	return Setting.get_int(NEXT_USER_MESSAGE_SHORTCUT_KEY, DEFAULT_NEXT_USER_MESSAGE_SHORTCUT) as Key
+
+
+static func set_prev_user_message_shortcut(key: Key) -> void:
+	if get_prev_user_message_shortcut() == key:
+		return
+	Setting.set_int(PREV_USER_MESSAGE_SHORTCUT_KEY, key)
+	Setting.save()
+	AgentEvents.events.prev_user_message_shortcut_changed.emit()
+	pass
+
+
+static func set_next_user_message_shortcut(key: Key) -> void:
+	if get_next_user_message_shortcut() == key:
+		return
+	Setting.set_int(NEXT_USER_MESSAGE_SHORTCUT_KEY, key)
+	Setting.save()
+	AgentEvents.events.next_user_message_shortcut_changed.emit()
 	pass
 
 

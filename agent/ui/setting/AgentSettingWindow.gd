@@ -8,6 +8,7 @@ const FIELD_CONTROL_RATIO: float = 5.0
 const GROUP_NAME: StringName = &"agent_setting_window"
 var sections: Array[SettingSection] = []
 var separators: Array[HSeparator] = []
+var settings_scroll: ScrollContainer
 
 
 func _init() -> void:
@@ -21,24 +22,35 @@ func _init() -> void:
 
 func build_window() -> void:
 	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_left", Margin.ma_5)
-	margin.add_theme_constant_override("margin_right", Margin.ma_5)
+	margin.add_theme_constant_override("margin_right", 0)
 	margin.add_theme_constant_override("margin_top", Margin.ma_3)
 	margin.add_theme_constant_override("margin_bottom", Margin.ma_3)
 	container.add_child(margin)
 
 	var card_margin := MarginContainer.new()
 	card_margin.add_theme_constant_override("margin_left", Margin.ma_5)
-	card_margin.add_theme_constant_override("margin_right", Margin.ma_5)
+	card_margin.add_theme_constant_override("margin_right", 0)
 	card_margin.add_theme_constant_override("margin_top", Margin.ma_4)
 	card_margin.add_theme_constant_override("margin_bottom", Margin.ma_4)
+	card_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	margin.add_child(card_margin)
+	settings_scroll = ScrollContainer.new()
+	settings_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	settings_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	settings_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	settings_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	card_margin.add_child(settings_scroll)
+	var settings_pad := MarginContainer.new()
+	settings_pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	settings_pad.add_theme_constant_override("margin_right", Margin.ma_4)
+	settings_scroll.add_child(settings_pad)
 	var fields := VBoxContainer.new()
 	fields.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	fields.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	fields.add_theme_constant_override("separation", Margin.ma_3)
-	card_margin.add_child(fields)
+	settings_pad.add_child(fields)
 
 	sections = [
 		AppearanceSettingSection.new(),
@@ -203,6 +215,7 @@ func apply_locale() -> void:
 func apply_theme() -> void:
 	super()
 	style_content()
+	ScrollBarStyle.apply(settings_scroll.get_v_scroll_bar(), ScrollBarStyle.Thickness.LG)
 	for section in sections:
 		section.apply_theme()
 	pass

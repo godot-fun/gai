@@ -88,6 +88,10 @@ class Events:
 
 	## Chat-search shortcut changed (see [method ShortcutSetting.set_search_shortcut]).
 	signal search_shortcut_changed
+	## Previous user-message shortcut changed (see [method ShortcutSetting.set_prev_user_message_shortcut]).
+	signal prev_user_message_shortcut_changed
+	## Next user-message shortcut changed (see [method ShortcutSetting.set_next_user_message_shortcut]).
+	signal next_user_message_shortcut_changed
 
 	# ===========================================================================
 	# UI-ONLY COORDINATION — UI -> UI; managers must never subscribe below
