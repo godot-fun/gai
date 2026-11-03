@@ -47,7 +47,7 @@ func folder_row_accept_keeps_drilling_test() -> void:
 func skill_row_accept_replaces_the_command_test() -> void:
 	var field := make_field("", "/aud")
 	var completion: ChatInputCompletion = field.completion
-	completion.options = [ChatInputCompletionProvider.CompletionRow.create("/audio-trim", "/audio-trim ")]
+	completion.options = [ChatInputCompletionProvider.CompletionRow.new("/audio-trim", "/audio-trim ")]
 	completion.options[0].font_color = Color.WHITE
 	field.update_code_completion_options(true)
 	assert(completion.is_popup_open())

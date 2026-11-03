@@ -66,10 +66,7 @@ func refresh(force: bool) -> void:
 		cancel()
 		return
 	options.clear()
-	for row: ChatInputCompletionProvider.CompletionRow in rows:
-		row.kind = CodeEdit.KIND_PLAIN_TEXT
-		row.font_color = Colors.primary_text
-		options.append(row)
+	options.append_array(rows)
 	# Copying the rows back through [method filter_candidates] is what activates the list and resets
 	# the highlighted row for the new match set.
 	input_field.update_code_completion_options(force)
@@ -116,9 +113,10 @@ func confirm() -> void:
 
 
 func active_provider() -> ChatInputCompletionProvider:
-	for provider: ChatInputCompletionProvider in [skill_completion, file_completion]:
-		if provider.is_active():
-			return provider
+	if skill_completion.is_active():
+		return skill_completion
+	if file_completion.is_active():
+		return file_completion
 	return null
 
 

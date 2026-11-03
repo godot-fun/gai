@@ -59,8 +59,7 @@ func build_options() -> Array[ChatInputCompletionProvider.CompletionRow]:
 	var options: Array[ChatInputCompletionProvider.CompletionRow] = []
 	var matches: Array[MentionPath] = matching_entries(entries, query(), MAX_OPTIONS)
 	for entry: MentionPath in matches:
-		options.append(ChatInputCompletionProvider.CompletionRow.create(
-			build_display_text(entry), build_insert_text(entry)))
+		options.append(ChatInputCompletionProvider.CompletionRow.new(build_display_text(entry), build_insert_text(entry)))
 	return options
 
 

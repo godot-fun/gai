@@ -23,9 +23,6 @@ class CompletionRow extends RefCounted:
 		insert_text = row_insert_text
 		pass
 
-	static func create(row_display_text: String, row_insert_text: String) -> CompletionRow:
-		return CompletionRow.new(row_display_text, row_insert_text)
-
 
 ## True while the caret sits inside this provider's token, i.e. while the list may show at all.
 func is_active() -> bool:

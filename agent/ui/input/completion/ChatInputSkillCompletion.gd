@@ -34,8 +34,7 @@ func build_options() -> Array[ChatInputCompletionProvider.CompletionRow]:
 	var options: Array[ChatInputCompletionProvider.CompletionRow] = []
 	var summaries: Array[SkillSummary] = matching_summaries(SkillManager.get_summaries(), current_token().to_lower())
 	for summary: SkillSummary in summaries:
-		options.append(ChatInputCompletionProvider.CompletionRow.create(
-			build_display_text(summary), StringUtils.format("/{} ", summary.name.to_lower())))
+		options.append(ChatInputCompletionProvider.CompletionRow.new(build_display_text(summary), StringUtils.format("/{} ", summary.name.to_lower())))
 	return options
 
 
