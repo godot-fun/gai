@@ -115,6 +115,9 @@ func on_window_input(event: InputEvent) -> void:
 		var mouse := event as InputEventMouseButton
 		if not mouse.pressed or (not mouse.ctrl_pressed and not mouse.meta_pressed):
 			return
+		# Ctrl+Shift+wheel is reserved for chat reply navigation (see ChatScroll).
+		if mouse.shift_pressed:
+			return
 		var direction := 0
 		if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
 			direction = 1
