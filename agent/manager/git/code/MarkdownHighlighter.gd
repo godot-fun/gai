@@ -10,9 +10,12 @@ const URL_SCHEMES := ["http://", "https://", "mailto:", "res://", "user://", "ft
 
 
 static func configure(highlighter: CodeHighlighterInstance) -> void:
-	CommonHighlighter.add_quoted_strings(highlighter, CodeColors.string)
-	CommonHighlighter.add_keywords(highlighter, ALERT_KEYWORDS, CodeColors.declaration)
-	add_url_keywords(highlighter)
+	highlighter.add_color_region('"', '"', CodeColors.string)
+	highlighter.add_color_region("'", "'", CodeColors.string)
+	for word in ALERT_KEYWORDS:
+		highlighter.add_keyword_color(word, CodeColors.declaration)
+	for scheme in URL_SCHEMES:
+		highlighter.add_keyword_color(scheme, CodeColors.link)
 	highlighter.add_color_region("```", "```", CodeColors.string)
 	highlighter.add_color_region("~~~", "~~~", CodeColors.string)
 	highlighter.add_color_region("`", "`", CodeColors.string)
@@ -22,10 +25,4 @@ static func configure(highlighter: CodeHighlighterInstance) -> void:
 	highlighter.add_color_region("#", "", CodeColors.declaration, true)
 	highlighter.add_color_region("**", "**", CodeColors.keyword)
 	highlighter.add_color_region("~~", "~~", CodeColors.comment)
-	pass
-
-
-static func add_url_keywords(highlighter: CodeHighlighterInstance) -> void:
-	for scheme in URL_SCHEMES:
-		highlighter.add_keyword_color(scheme, CodeColors.link)
 	pass
