@@ -59,6 +59,8 @@ const ESCAPE_SENTINEL := "\uE002"
 const NBSP := "\u00A0"
 const FOLDER_PREFIX := "📁 "
 const FILE_PREFIX := "📄 "
+const IMAGE_PREFIX := "📷 "
+const VIDEO_PREFIX := "🎬 "
 const AUDIO_PREFIX := "🎵 "
 const WEB_PREFIX := "🔗 "
 const EMAIL_PREFIX := "✉ "
@@ -776,6 +778,10 @@ static func get_link_prefix(path: String) -> String:
 	var extension := path.get_extension().to_lower()
 	if ResourceHelper.AUDIO_EXTENSIONS.has(extension):
 		return format_link_prefix(AUDIO_PREFIX, FileColors.audio_color)
+	if ImageHelper.EXTENSIONS.has(extension):
+		return format_link_prefix(IMAGE_PREFIX, FileColors.image_color)
+	if VideoHelper.EXTENSIONS.has(extension):
+		return format_link_prefix(VIDEO_PREFIX, FileColors.video_color)
 	if EXECUTABLE_CONFIG_EXTENSIONS.has(extension):
 		return format_link_prefix(EXECUTABLE_CONFIG_PREFIX, FileColors.video_color)
 	if TEXT_DOCUMENT_EXTENSIONS.has(extension):
@@ -785,6 +791,38 @@ static func get_link_prefix(path: String) -> String:
 
 static func format_link_prefix(prefix: String, color: Color) -> String:
 	return StringUtils.format("[color={}]{}[/color]", to_bbcode_color(color), prefix)
+
+
+## [FileColors] for local paths; [code]null[/code] when the destination should keep URL highlighting.
+static func markdown_link_destination_color(raw_destination: String) -> Variant:
+	var path := parse_link_destination(raw_destination)
+	if HttpUtils.is_valid_http_url(path) or path.to_lower().begins_with("mailto:"):
+		return null
+	return file_path_color(path)
+
+
+static func file_path_color(path: String) -> Color:
+	var clean_path := path.get_slice("?", 0).get_slice("#", 0).strip_edges()
+	if clean_path.is_empty():
+		return FileColors.text_color
+	if clean_path.ends_with("/") or clean_path.ends_with("\\"):
+		return FileColors.folder_color
+	if DirAccess.dir_exists_absolute(clean_path):
+		return FileColors.folder_color
+	var extension := clean_path.get_extension().to_lower()
+	if ResourceHelper.AUDIO_EXTENSIONS.has(extension):
+		return FileColors.audio_color
+	if ImageHelper.EXTENSIONS.has(extension):
+		return FileColors.image_color
+	if VideoHelper.EXTENSIONS.has(extension):
+		return FileColors.video_color
+	if EXECUTABLE_CONFIG_EXTENSIONS.has(extension):
+		return FileColors.video_color
+	if TEXT_DOCUMENT_EXTENSIONS.has(extension):
+		return FileColors.text_color
+	if Fonts.EXTENSIONS.has(extension):
+		return FileColors.text_color
+	return FileColors.text_color
 
 
 ## Link/image dest: `[t](<url>)` unwraps; `[t](url "title")` / `[t](url 'title')` drops title.

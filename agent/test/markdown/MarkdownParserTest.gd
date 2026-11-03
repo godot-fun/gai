@@ -330,7 +330,11 @@ func local_file_link_prefix_test() -> void:
 	var document_bbcode := MarkdownParser.inline_to_bbcode("[README.md](<C:/My Files/README.md>)")
 	var website_bbcode := MarkdownParser.inline_to_bbcode("[website](https://example.com/file.txt)")
 	var email_bbcode := MarkdownParser.inline_to_bbcode("[email](mailto:user@example.com)")
+	var image_bbcode := MarkdownParser.inline_to_bbcode("[sprite.png](<C:/assets/sprite.png>)")
+	var video_bbcode := MarkdownParser.inline_to_bbcode("[clip.mp4](<C:/clips/clip.mp4>)")
 	assert("📄 " in file_bbcode and "notes.bin" in file_bbcode)
+	assert("📷 " in image_bbcode and "sprite.png" in image_bbcode)
+	assert("🎬 " in video_bbcode and "clip.mp4" in video_bbcode)
 	assert("🎵 " in audio_bbcode and "voice.WAV" in audio_bbcode)
 	assert("📁 " in folder_bbcode and "markdown" in folder_bbcode)
 	assert("⚙ " in config_bbcode and "settings.json" in config_bbcode)
@@ -340,6 +344,8 @@ func local_file_link_prefix_test() -> void:
 	assert("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.audio_color) in audio_bbcode)
 	assert("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.folder_color) in folder_bbcode)
 	assert("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.text_color) in document_bbcode)
+	assert("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.image_color) in image_bbcode)
+	assert("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.video_color) in video_bbcode)
 	pass
 
 

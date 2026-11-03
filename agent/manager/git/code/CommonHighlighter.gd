@@ -32,6 +32,8 @@ const SQL_KEYWORDS := ["ADD", "ALL", "ALTER", "AND", "AS", "ASC", "BEGIN", "BETW
 static func create(file_path: String) -> SyntaxHighlighter:
 	var extension := file_path.get_extension().to_lower()
 	var file_name := file_path.get_file().to_lower()
+	if extension in MarkdownHighlighter.EXTENSIONS:
+		return MarkdownHighlighter.create()
 	var highlighter := CodeHighlighterInstance.new()
 	highlighter.number_color = CodeColors.number
 	highlighter.symbol_color = CodeColors.symbol

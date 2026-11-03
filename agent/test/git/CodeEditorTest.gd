@@ -230,8 +230,8 @@ func show_sample(index: int) -> void:
 func apply_highlighter_and_editor_style() -> void:
 	if active_path.is_empty() or code_edit == null:
 		return
-	code_edit.syntax_highlighter = CommonHighlighter.create(active_path)
 	CodeEditStyle.apply_diff_editor(code_edit)
+	code_edit.syntax_highlighter = CommonHighlighter.create(active_path)
 	pass
 
 
