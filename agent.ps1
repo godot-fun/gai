@@ -74,6 +74,9 @@ if ($ImportExit -gt 0) {
 	exit $ImportExit
 }
 
+# Small safety margin so the OS finishes flushing .godot before the app maps it.
+Start-Sleep -Seconds 1
+
 # ---------------------------------------------------------------------------
 # Start agent main scene
 # ---------------------------------------------------------------------------
@@ -91,10 +94,8 @@ $ArgumentList = @("--path", $Root, "res://agent/Agent.tscn", "--") + $UserArgs
 if ($Wait) {
 	Push-Location $Root
 	try {
-		# Same GUI-subsystem caveat as the import step: wait for the real process.
-		$AppProcess = Start-Process -FilePath $Editor -ArgumentList $ArgumentList `
-			-WorkingDirectory $Root -NoNewWindow -Wait -PassThru
-		exit $AppProcess.ExitCode
+		& $Editor @ArgumentList
+		exit $LASTEXITCODE
 	} finally {
 		Pop-Location
 	}
