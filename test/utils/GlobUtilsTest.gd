@@ -307,6 +307,47 @@ func glob_match_any_repo_gitignore_test() -> void:
 	pass
 
 
+func gitignore_is_ignored_last_rule_wins_test() -> void:
+	var rules: Array[String] = ["*.tmp", "!keep.tmp", "build/", "!build/public/"]
+	assert(GlobUtils.gitignore_is_ignored(rules, "scratch.tmp"))
+	assert(not GlobUtils.gitignore_is_ignored(rules, "keep.tmp"))
+	assert(GlobUtils.gitignore_is_ignored(rules, "build/out.txt"))
+	assert(not GlobUtils.gitignore_is_ignored(rules, "build/public/index.html"))
+	pass
+
+
+func gitignore_is_ignored_repo_order_test() -> void:
+	var rules: Array[String] = []
+	for line in FileUtils.read_file_to_lines("res://.gitignore"):
+		var rule := line.strip_edges()
+		if not rule.is_empty() and not rule.begins_with("#"):
+			rules.append(rule)
+	assert(GlobUtils.gitignore_is_ignored(rules, ".godot/imported/icon.ctex"))
+	assert(not GlobUtils.gitignore_is_ignored(rules, ".godot/extension_list.cfg"))
+	assert(not GlobUtils.gitignore_is_ignored(rules, "script/main.gd"))
+	pass
+
+
+func glob_gitignore_skips_files_test() -> void:
+	var root := create_fixture_tree()
+	FileUtils.write_string_to_file(root.path_join("scratch.tmp"), "x\n")
+	FileUtils.write_string_to_file(root.path_join("keep.tmp"), "x\n")
+	var rules: Array[String] = ["*.tmp", "!keep.tmp"]
+	var rel := relative_paths(root, GlobUtils.glob(root, "**/*", true, 0, rules))
+	assert(not rel.has("scratch.tmp"))
+	assert(rel.has("keep.tmp"))
+	remove_fixture_tree(root)
+	pass
+
+
+func glob_match_anchored_root_pattern_test() -> void:
+	assert(GlobUtils.glob_match("/debug.log", "debug.log"))
+	assert(not GlobUtils.glob_match("/debug.log", "tools/debug.log"))
+	assert(GlobUtils.glob_match("/build/", "build/out.txt"))
+	assert(not GlobUtils.glob_match("/build/", "other/build/out.txt"))
+	pass
+
+
 ## `include_directories` turns the same walk into a browsable tree: folders come back with a trailing
 ## `/`, right before the entries they hold, and the skip rules prune them with their whole subtree.
 func glob_include_directories_test() -> void:
