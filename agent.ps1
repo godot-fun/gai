@@ -22,7 +22,6 @@ $ErrorActionPreference = "Stop"
 
 $StepTotal = 3
 $StepIndex = 0
-$StepStarted = Get-Date
 
 function Write-Step([string]$Title) {
 	$script:StepIndex++
@@ -104,37 +103,24 @@ $Git = Get-Command git -CommandType Application -ErrorAction SilentlyContinue | 
 if ($null -eq $Git) {
 	Write-StepNote "git not found, starting from local code"
 } else {
-	# Git writes expected states ("not a git repository", diverged pull) to stderr.
-	# $ErrorActionPreference = "Stop" turns that into a terminating error, so relax
-	# it around the git calls and merge stderr into captured text instead.
 	# GIT_TERMINAL_PROMPT=0 keeps a private remote from blocking on a credential
 	# prompt: it fails fast and the app starts from the local checkout.
-	$PreviousPreference = $ErrorActionPreference
+	# No dirty-tree check: --ff-only already aborts (leaving files untouched)
+	# when incoming commits would overwrite local edits. Not a repo, detached
+	# HEAD, offline, or a diverged branch fail the same way.
 	$PreviousPrompt = $env:GIT_TERMINAL_PROMPT
-	$ErrorActionPreference = "Continue"
 	$env:GIT_TERMINAL_PROMPT = "0"
 	Push-Location $Root
 	try {
-		$Branch = (& $Git.Source rev-parse --abbrev-ref HEAD 2>&1 | Out-String).Trim()
-		$IsRepo = $LASTEXITCODE -eq 0
-		if (-not $IsRepo) {
-			Write-StepNote "Not a git checkout, starting from local code"
-		} elseif ($Branch -eq "HEAD") {
-			Write-StepNote "Detached HEAD, skipping git update"
+		& $Git.Source pull --ff-only
+		if ($LASTEXITCODE -eq 0) {
+			$PullStatus = "done"
 		} else {
-			# No dirty-tree check: --ff-only already aborts (leaving files untouched)
-			# when incoming commits would overwrite local edits.
-			& $Git.Source pull --ff-only
-			if ($LASTEXITCODE -eq 0) {
-				$PullStatus = "done"
-			} else {
-				Write-StepNote "git pull failed (offline, dirty tree, or diverged branch), starting from local code"
-			}
+			Write-StepNote "git pull failed, starting from local code"
 		}
 	} finally {
 		Pop-Location
 		$env:GIT_TERMINAL_PROMPT = $PreviousPrompt
-		$ErrorActionPreference = $PreviousPreference
 	}
 }
 
@@ -155,14 +141,8 @@ Write-StepDone $PullStatus
 
 Write-Step "Refresh import cache (godot --headless --import)"
 
-Push-Location $Root
-try {
-	$ImportProcess = Start-Process -FilePath $Editor -ArgumentList @("--headless", "--path", $Root, "--import") `
-		-WorkingDirectory $Root -NoNewWindow -Wait -PassThru
-	$ImportExit = $ImportProcess.ExitCode
-} finally {
-	Pop-Location
-}
+$ImportProcess = Start-Process -FilePath $Editor -ArgumentList @("--headless", "--path", $Root, "--import") -WorkingDirectory $Root -NoNewWindow -Wait -PassThru
+$ImportExit = $ImportProcess.ExitCode
 
 if ($ImportExit -gt 0) {
 	Write-StepDone "failed" "exit $ImportExit"
