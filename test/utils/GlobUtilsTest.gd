@@ -403,7 +403,7 @@ func glob_caps_test() -> void:
 # - Literal `[` `]` `{` `}` (no char-class / brace expansion)
 # - Escaped regex metacharacters in patterns (`.`, `+`, `(`, `)`, `$`, …)
 # - `tmp*`, `*.tmp.*`, `npm-debug.log*`-style suffix stars
-# - [method GlobUtils.gitignore_may_descend] for `!` under ignored directories
+# - Path-shaped `!` opens ignored dirs during [method GlobUtils.glob] walks
 # - [method GlobUtils.glob] + ignore + search pattern + include_directories
 # - Full `res://.gitignore` rule list spot checks
 # ---------------------------------------------------------------------------
@@ -474,24 +474,28 @@ func gitignore_is_ignored_table_test() -> void:
 	pass
 
 
-func gitignore_parse_rules_matches_is_ignored_test() -> void:
+func gitignore_comments_and_negation_test() -> void:
 	var lines: Array[String] = ["# header", "", "*.bin", "!keep.bin", "build/"]
-	var parsed := GlobUtils.gitignore_parse_rules(lines)
-	assert(parsed.size() == 3)
-	assert(GlobUtils.gitignore_last_match(parsed, "drop.bin", false))
-	assert(not GlobUtils.gitignore_last_match(parsed, "keep.bin", false))
-	assert(GlobUtils.gitignore_last_match(parsed, "build/out.txt", false))
 	assert(GlobUtils.gitignore_is_ignored(lines, "drop.bin"))
 	assert(not GlobUtils.gitignore_is_ignored(lines, "keep.bin"))
+	assert(GlobUtils.gitignore_is_ignored(lines, "build/out.txt"))
 	pass
 
 
-func gitignore_may_descend_negated_under_ignored_dir_test() -> void:
-	var rules := GlobUtils.gitignore_parse_rules([".godot/**", "!.godot/extension_list.cfg"])
-	assert(GlobUtils.gitignore_may_descend(rules, ".godot"))
-	assert(GlobUtils.gitignore_may_descend(rules, "src"))
-	var blocked := GlobUtils.gitignore_parse_rules(["node_modules/"])
-	assert(not GlobUtils.gitignore_may_descend(blocked, "node_modules"))
+func glob_gitignore_enter_ignored_dir_test() -> void:
+	var root := create_fixture_tree()
+	DirAccess.make_dir_recursive_absolute(root.path_join(".godot"))
+	FileUtils.write_string_to_file(root.path_join(".godot/extension_list.cfg"), "cfg\n")
+	FileUtils.write_string_to_file(root.path_join(".godot/editor.log"), "log\n")
+	DirAccess.make_dir_recursive_absolute(root.path_join("node_modules/pkg"))
+	FileUtils.write_string_to_file(root.path_join("node_modules/pkg/index.js"), "js\n")
+	var rules: Array[String] = [".godot/**", "!.godot/extension_list.cfg", "node_modules/"]
+	var rel := relative_paths(root, GlobUtils.glob(root, "**/*", true, 0, rules))
+	assert(rel.has(".godot/extension_list.cfg"), str(rel))
+	assert(not rel.has(".godot/editor.log"), str(rel))
+	assert(not rel.has("node_modules/pkg/index.js"), str(rel))
+	assert(rel.has("src/a.gd"), str(rel))
+	remove_fixture_tree(root)
 	pass
 
 
@@ -753,12 +757,24 @@ func gitignore_is_ignored_full_repo_gitignore_test() -> void:
 	pass
 
 
-func gitignore_may_descend_extended_test() -> void:
-	var vendor_rules := GlobUtils.gitignore_parse_rules(["vendor/**", "!vendor/keep.txt", "!vendor/pub/"])
-	assert(GlobUtils.gitignore_may_descend(vendor_rules, "vendor"))
-	assert(not GlobUtils.gitignore_may_descend(GlobUtils.gitignore_parse_rules(["cache/"]), "cache"))
-	var basename_neg := GlobUtils.gitignore_parse_rules(["blocked/", "!important.dat"])
-	assert(GlobUtils.gitignore_may_descend(basename_neg, "blocked"))
+func glob_gitignore_enter_dir_exceptions_test() -> void:
+	var root := create_fixture_tree()
+	DirAccess.make_dir_recursive_absolute(root.path_join("vendor/pub"))
+	DirAccess.make_dir_recursive_absolute(root.path_join("vendor/cache"))
+	DirAccess.make_dir_recursive_absolute(root.path_join("cache"))
+	DirAccess.make_dir_recursive_absolute(root.path_join("blocked"))
+	FileUtils.write_string_to_file(root.path_join("vendor/keep.txt"), "ok\n")
+	FileUtils.write_string_to_file(root.path_join("vendor/pub/readme.txt"), "ok\n")
+	FileUtils.write_string_to_file(root.path_join("vendor/cache/x.bin"), "bin\n")
+	FileUtils.write_string_to_file(root.path_join("cache/stale.tmp"), "tmp\n")
+	FileUtils.write_string_to_file(root.path_join("blocked/important.dat"), "dat\n")
+	var vendor_rel := relative_paths(root, GlobUtils.glob(root, "**/*", true, 0, ["vendor/**", "!vendor/keep.txt", "!vendor/pub/"]))
+	assert(vendor_rel.has("vendor/keep.txt") and vendor_rel.has("vendor/pub/readme.txt"), str(vendor_rel))
+	assert(not vendor_rel.has("vendor/cache/x.bin"), str(vendor_rel))
+	assert(relative_paths(root, GlobUtils.glob(root, "**/*", true, 0, ["cache/"])).has("src/a.gd"))
+	assert(not relative_paths(root, GlobUtils.glob(root, "**/*", true, 0, ["cache/"])).has("cache/stale.tmp"))
+	assert(not relative_paths(root, GlobUtils.glob(root, "**/*", true, 0, ["blocked/", "!important.dat"])).has("blocked/important.dat"))
+	remove_fixture_tree(root)
 	pass
 
 

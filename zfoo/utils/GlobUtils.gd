@@ -24,7 +24,10 @@ static func glob(search_root: String, glob_pattern: String, recursive: bool = tr
 	var paths: Array[String] = []
 	var pattern := glob_pattern.strip_edges().replace("\\", "/")
 	var pattern_has_path := pattern.contains("/")
-	var ignore_rules := gitignore_parse_rules(skip_glob_rules)
+	var skip: GitIgnoreMatcher = null
+	if not skip_glob_rules.is_empty():
+		skip = GitIgnoreMatcher.from_lines(skip_glob_rules)
+
 	if FileAccess.file_exists(search_root):
 		var file_name := search_root.replace("\\", "/").get_file()
 		if (pattern.is_empty() or glob_match(pattern, file_name, false)) and (max_file_bytes <= 0 or FileAccess.get_size(search_root) <= max_file_bytes):
@@ -50,7 +53,7 @@ static func glob(search_root: String, glob_pattern: String, recursive: bool = tr
 			if max_file_bytes > 0 and FileAccess.get_size(file_path) > max_file_bytes:
 				continue
 			var relative_path := file_path.replace("\\", "/").substr(root_prefix.length())
-			if not ignore_rules.is_empty() and gitignore_last_match(ignore_rules, relative_path, false):
+			if skip != null and skip.is_ignored(relative_path, false):
 				continue
 			var match_path := relative_path if pattern_has_path else file_name
 			if pattern.is_empty() or glob_match(pattern, match_path, false):
@@ -61,11 +64,11 @@ static func glob(search_root: String, glob_pattern: String, recursive: bool = tr
 					break
 				var child_path := folder_path.path_join(dir_name)
 				var relative_child := child_path.replace("\\", "/").substr(root_prefix.length())
-				if not ignore_rules.is_empty() and not gitignore_may_descend(ignore_rules, relative_child):
+				if skip != null and not skip.may_enter_dir(relative_child):
 					continue
 				var match_child := relative_child if pattern_has_path else dir_name
 				if include_directories and (pattern.is_empty() or glob_match(pattern, match_child, false)):
-					if ignore_rules.is_empty() or not gitignore_last_match(ignore_rules, relative_child, true):
+					if skip == null or not skip.is_ignored(relative_child, true):
 						paths.append(child_path.replace("\\", "/") + "/")
 				folders.append(child_path)
 		if folder_index >= 1024 and folder_index * 2 >= folders.size():
@@ -173,85 +176,65 @@ static func get_or_compile_regex(glob_rule: String, directory_rule: bool = false
 
 
 # ---------------------------------------------------------------------------
-# .gitignore skip rules — ordered lines, last match wins, `!` un-ignores
-#
-# Used by [method glob] ([param skip_glob_rules]) and [method gitignore_is_ignored].
-# Blank lines and `#` comments are skipped. During a walk, ignored files are dropped;
-# ignored directories are skipped unless a later negated rule could match a path under
-# them (for example `.godot/**` together with `!.godot/extension_list.cfg`).
+# .gitignore skip rules — inner [code]GitIgnoreMatcher[/code] and [method gitignore_is_ignored]
 # ---------------------------------------------------------------------------
 
-## [code]true[/code] when [param ignore_rules] ignore [param relative_path] (last matching rule wins).
+## [code]true[/code] when [param ignore_rules] exclude [param relative_path] (last match wins, [code]![/code] un-ignores).
 static func gitignore_is_ignored(ignore_rules: Array[String], relative_path: String, is_directory: bool = false) -> bool:
-	var path := relative_path.replace("\\", "/").strip_edges()
-	if path.is_empty():
+	return GitIgnoreMatcher.from_lines(ignore_rules).is_ignored(relative_path, is_directory)
+
+
+class GitIgnoreRule extends RefCounted:
+	## [code]false[/code] for a normal ignore line ([code]*.tmp[/code]); [code]true[/code] when the source line was negated ([code]!keep.tmp[/code] → un-ignore if this rule wins last).
+	var negated: bool = false
+	## Glob / ignore pattern without leading [code]![/code] (e.g. [code]node_modules/[/code], [code].godot/**[/code]).
+	var pattern: String = ""
+
+	func _init(p_negated: bool, p_pattern: String) -> void:
+		negated = p_negated
+		pattern = p_pattern.replace("\\", "/").strip_edges()
+		pass
+
+
+class GitIgnoreMatcher extends RefCounted:
+	var rules: Array[GitIgnoreRule] = []
+
+	static func from_lines(lines: Array[String]) -> GitIgnoreMatcher:
+		var matcher := GitIgnoreMatcher.new()
+		for line in lines:
+			var trimmed := line.strip_edges()
+			if trimmed.is_empty() or trimmed.begins_with("#"):
+				continue
+			var negated := trimmed.begins_with("!")
+			var pattern := trimmed.substr(1).strip_edges() if negated else trimmed
+			if pattern.is_empty():
+				continue
+			matcher.rules.append(GitIgnoreRule.new(negated, pattern))
+		return matcher
+
+	func is_ignored(relative_path: String, is_directory: bool = false) -> bool:
+		var path := relative_path.replace("\\", "/").strip_edges()
+		if path.is_empty():
+			return false
+		for index in range(rules.size() - 1, -1, -1):
+			var rule := rules[index]
+			if GlobUtils.glob_match_pattern(rule.pattern, path, is_directory):
+				return not rule.negated
 		return false
-	var ignored := false
-	var matched := false
-	for line in ignore_rules:
-		var trimmed := line.strip_edges()
-		if trimmed.is_empty() or trimmed.begins_with("#"):
-			continue
-		var negated := trimmed.begins_with("!")
-		var rule := trimmed.substr(1).strip_edges() if negated else trimmed
-		if rule.is_empty():
-			continue
-		rule = rule.replace("\\", "/").strip_edges()
-		if glob_match_pattern(rule, path, is_directory):
-			ignored = not negated
-			matched = true
-	return ignored if matched else false
 
-
-## Parses [param skip_glob_rules] once per [method glob] walk.
-static func gitignore_parse_rules(skip_glob_rules: Array[String]) -> Array[Dictionary]:
-	var parsed: Array[Dictionary] = []
-	for line in skip_glob_rules:
-		var trimmed := line.strip_edges()
-		if trimmed.is_empty() or trimmed.begins_with("#"):
-			continue
-		var negated := trimmed.begins_with("!")
-		var pattern := trimmed.substr(1).strip_edges() if negated else trimmed
-		if pattern.is_empty():
-			continue
-		parsed.append({"negated": negated, "pattern": pattern.replace("\\", "/").strip_edges()})
-	return parsed
-
-
-## Last matching parsed rule decides whether [param relative_path] is ignored.
-static func gitignore_last_match(parsed_rules: Array[Dictionary], relative_path: String, is_directory: bool) -> bool:
-	var path := relative_path.replace("\\", "/").strip_edges()
-	if path.is_empty():
-		return false
-	var ignored := false
-	var matched := false
-	for rule in parsed_rules:
-		if glob_match_pattern(rule["pattern"], path, is_directory):
-			ignored = not rule["negated"]
-			matched = true
-	return ignored if matched else false
-
-
-## [code]true[/code] when the walk should enter [param relative_dir] despite it being ignored.
-static func gitignore_may_descend(parsed_rules: Array[Dictionary], relative_dir: String) -> bool:
-	var path := relative_dir.replace("\\", "/").strip_edges().trim_suffix("/")
-	if path.is_empty() or not gitignore_last_match(parsed_rules, path, true):
-		return true
-	var prefix := path + "/"
-	for rule in parsed_rules:
-		if not rule["negated"]:
-			continue
-		var neg_rule := rule["pattern"] as String
-		if neg_rule.is_empty():
-			continue
-		if neg_rule.begins_with("/"):
-			neg_rule = neg_rule.substr(1).strip_edges()
-		if not neg_rule.contains("/"):
+	func may_enter_dir(relative_dir: String) -> bool:
+		var path := relative_dir.replace("\\", "/").strip_edges().trim_suffix("/")
+		if path.is_empty() or not is_ignored(path, true):
 			return true
-		neg_rule = neg_rule.trim_suffix("/")
-		if neg_rule.contains("*") or neg_rule.contains("?"):
-			if glob_match_pattern(neg_rule, prefix + "x", false):
+		var head := path + "/"
+		for rule in rules:
+			if not rule.negated:
+				continue
+			var neg := rule.pattern
+			if neg.begins_with("/"):
+				neg = neg.substr(1).strip_edges()
+			if not neg.contains("/"):
+				continue
+			if neg.begins_with(head) or (neg.contains("*") and GlobUtils.glob_match_pattern(neg, head + "x", false)):
 				return true
-		elif neg_rule.begins_with(prefix) or prefix.begins_with(neg_rule.split("/")[0] + "/"):
-			return true
-	return false
+		return false
