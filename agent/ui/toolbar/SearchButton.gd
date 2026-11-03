@@ -24,7 +24,7 @@ func setup(p_button: Button) -> void:
 
 func on_search_shortcut_changed() -> void:
 	apply_shortcut()
-	apply_theme()
+	button.tooltip_text = search_tooltip()
 	pass
 
 
@@ -49,9 +49,13 @@ func on_mouse_exited() -> void:
 
 
 func apply_theme() -> void:
-	AgentToolbarButton.style_round(button, I18n.t("agent.search.tooltip") + " (" + ShortcutSetting.search_shortcut_text() + ")")
+	AgentToolbarButton.style_round(button, search_tooltip())
 	update_icon(button.is_hovered())
 	pass
+
+
+func search_tooltip() -> String:
+	return I18n.t("agent.search.tooltip") + " (" + OS.get_keycode_string(ShortcutSetting.get_search_shortcut()) + ")"
 
 
 func update_icon(hovered: bool) -> void:

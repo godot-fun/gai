@@ -10,8 +10,7 @@ const DEFAULT_SEARCH_SHORTCUT: Key = KEY_F | KEY_MASK_CTRL
 
 
 static func get_search_shortcut() -> Key:
-	var key: Key = Setting.get_int(SEARCH_SHORTCUT_KEY, DEFAULT_SEARCH_SHORTCUT)
-	return key
+	return Setting.get_int(SEARCH_SHORTCUT_KEY, DEFAULT_SEARCH_SHORTCUT) as Key
 
 
 static func set_search_shortcut(key: Key) -> void:
@@ -28,10 +27,6 @@ static func is_search_shortcut_valid(key: Key) -> bool:
 	if code == KEY_NONE or code in [KEY_CTRL, KEY_ALT, KEY_SHIFT, KEY_META]:
 		return false
 	return (key & (KEY_MASK_CTRL | KEY_MASK_ALT | KEY_MASK_SHIFT | KEY_MASK_META)) != 0
-
-
-static func search_shortcut_text(key: Key = get_search_shortcut()) -> String:
-	return OS.get_keycode_string(key)
 
 
 static func make_search_shortcut() -> Shortcut:
