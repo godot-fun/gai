@@ -59,6 +59,20 @@ static func recognizes_extended_languages_test() -> void:
 	assert(MarkdownHighlighter.color_at_column(link_line, link_close + 1, prose_color) == prose_color)
 	assert(MarkdownHighlighter.syntax_color_for_link_destination("https://godotengine.org") == null)
 	assert(FileColors.color_for_path("C:/clips/voice.wav") == FileColors.audio_color)
+	var slash_sample := "/audio-trim @agent/readme.md"
+	markdown_edit.text = slash_sample + "\n"
+	var slash_line := markdown.get_line_syntax_highlighting(0)
+	assert(MarkdownHighlighter.color_at_column(slash_line, 0, prose_color) == CodeColors.member)
+	assert(MarkdownHighlighter.color_at_column(slash_line, slash_sample.find("@"), prose_color) == FileColors.color_for_path("agent/readme.md"))
+	markdown_edit.text = "hello /git\n"
+	assert(MarkdownHighlighter.color_at_column(markdown.get_line_syntax_highlighting(0), "hello /git".find("/"), prose_color) == prose_color)
+	markdown_edit.text = "   /git args\n"
+	assert(MarkdownHighlighter.color_at_column(markdown.get_line_syntax_highlighting(0), 3, prose_color) == CodeColors.member)
+	var inline_mention := "x `@agent/ui` y"
+	markdown_edit.text = inline_mention + "\n"
+	var mention_line := markdown.get_line_syntax_highlighting(0)
+	var mention_at := inline_mention.find("@")
+	assert(MarkdownHighlighter.color_at_column(mention_line, mention_at, prose_color) == CodeColors.string)
 	markdown_edit.free()
 	var mdx := CommonHighlighter.create("docs/page.mdx") as MarkdownHighlighter
 	assert(mdx.region_highlighter.has_color_region("`"))

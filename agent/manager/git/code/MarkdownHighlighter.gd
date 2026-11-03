@@ -7,6 +7,8 @@ extends SyntaxHighlighter
 ## `[label](local file)` uses [FileColors.color_for_path] from the path extension (same rules as rendered
 ## link chips in [MarkdownParser], without the emoji prefix). Label text `[…]` stays generic link color.
 ##
+## Composer: line-leading `/skill` → [CodeColors.member]; `@path` → [FileColors] (same bounds as completion; skip `` ` ``).
+##
 ## Region rules run on [member region_highlighter]. [method sync_region_colors] copies the visible editor's
 ## [code]font_color[/code] onto that scratch [CodeEdit] — it stays outside the tree, so the theme cache
 ## updates only when [method CanvasItem.notification] is sent directly.
@@ -33,6 +35,7 @@ func _get_line_syntax_highlighting(line: int) -> Dictionary:
 	region_highlighter.clear_highlighting_cache()
 	var highlighting := region_highlighter.get_line_syntax_highlighting(0)
 	highlight_file_link_destinations(line_text, highlighting, base_color)
+	highlight_composer_tokens(line_text, highlighting)
 	return highlighting
 	pass
 
@@ -162,4 +165,24 @@ static func find_link_destination_close(line: String, dest_start: int) -> int:
 			return -1
 		return line.find(")", gt + 1)
 	return line.find(")", dest_start)
+	pass
+
+
+static func highlight_composer_tokens(line: String, highlighting: Dictionary) -> void:
+	var slash_start := line.length() - line.strip_edges(true, false).length()
+	if slash_start < line.length() and line[slash_start] == "/":
+		var slash_end := slash_start + 1
+		while slash_end < line.length() and line[slash_end] != " " and line[slash_end] != "\t":
+			slash_end += 1
+		for column in range(slash_start, slash_end):
+			if not is_inside_inline_code(line, column):
+				highlighting[column] = {"color": CodeColors.member}
+	for column in range(line.length()):
+		if line[column] != "@" or ChatInputFileCompletion.mention_start(line.substr(0, column + 1)) != column:
+			continue
+		var mention_end := ChatInputFileCompletion.token_end(line, column + 1)
+		var mention_color := FileColors.color_for_path(line.substr(column + 1, mention_end - column - 1))
+		for paint_at in range(column, mention_end):
+			if not is_inside_inline_code(line, paint_at):
+				highlighting[paint_at] = {"color": mention_color}
 	pass
