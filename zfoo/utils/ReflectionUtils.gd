@@ -3,13 +3,11 @@ class_name ReflectionUtils
 
 static func has_empty_constructor(type: Variant) -> bool:
 	if !type.has_method("new"):
-		Log.error("type:[{}] can not be instantiated", get_type_name(type))
 		return false
 	for method in get_init_methods(type):
 		# GDScript allows Type.new() when every _init arg has a default.
 		var default_args: Array = method.get("default_args", [])
 		if method.args.size() > default_args.size():
-			Log.error("type:[{}] has no default _init() constructor", get_type_name(type))
 			return false
 	if !type.has_method("can_instantiate") || !type.can_instantiate():
 		return false
