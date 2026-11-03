@@ -11,6 +11,7 @@ static var last_limit_millis_600: int = 0
 static var last_limit_second_1: int = 0
 static var last_limit_second_2: int = 0
 static var last_limit_second_3: int = 0
+static var last_limit_second_30: int = 0
 
 static func limit_millis_100() -> bool:
 	var ticks := Time.get_ticks_msec()
@@ -99,4 +100,14 @@ static func limit_second_3() -> bool:
 		return true
 
 	last_limit_second_3 = ticks
+	return false
+
+
+static func limit_second_30() -> bool:
+	var ticks := Time.get_ticks_msec()
+
+	if ticks - last_limit_second_30 < 30 * TimeUtils.MILLIS_PER_SECOND:
+		return true
+
+	last_limit_second_30 = ticks
 	return false

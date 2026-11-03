@@ -44,11 +44,10 @@ class MentionPath extends RefCounted:
 		return MentionPath.new(entry_path, false)
 
 
-## Absolute folder to list; empty means the workspace root. Tests point this at a scratch folder.
-var root_override: String = ""
-var indexed_root: String = ""
 var entries: Array[MentionPath] = []
 var indexed: bool = false
+## Workspace root [member entries] were built for; compared to [method AgentWorkspace.get_root] on refresh.
+var indexed_root: String = ""
 
 
 func is_active() -> bool:
@@ -168,12 +167,12 @@ static func entry_order_before(left: MentionPath, right: MentionPath) -> bool:
 ## Workspace-relative [member entries]. [method GlobUtils.glob] runs on a worker
 ## ([method ExecutorHelper.async_execute_pooled]); matching stays on the main thread.
 func async_refresh_index() -> void:
-	var root := resolve_root()
-	if indexed and indexed_root == root:
+	if RateLimitUtils.limit_second_30() and indexed and indexed_root == AgentWorkspace.get_root():
 		return
-	indexed_root = root
+	var root := AgentWorkspace.get_root()
 	indexed = false
 	entries = []
+	indexed_root = root
 	if root.is_empty():
 		indexed = true
 		return
@@ -181,7 +180,7 @@ func async_refresh_index() -> void:
 	var paths: Array[String] = await ExecutorHelper.async_execute_pooled(func() -> Array[String]:
 		return GlobUtils.glob(root, StringUtils.EMPTY, true, 0, skip_rules, true, MAX_ENTRIES)
 	)
-	if resolve_root() != root:
+	if AgentWorkspace.get_root() != root:
 		return
 	var root_prefix := root.replace("\\", "/")
 	root_prefix = root_prefix if root_prefix.ends_with(DIRECTORY_SUFFIX) else root_prefix + DIRECTORY_SUFFIX
@@ -190,9 +189,3 @@ func async_refresh_index() -> void:
 		entries.append(MentionPath.folder(relative) if relative.ends_with(DIRECTORY_SUFFIX) else MentionPath.file(relative))
 	indexed = true
 	pass
-
-
-func resolve_root() -> String:
-	if not root_override.is_empty():
-		return FileUtils.normalize_path(root_override)
-	return AgentWorkspace.get_root()

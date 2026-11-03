@@ -96,16 +96,23 @@ func refresh_index_test() -> void:
 	pass
 
 
-func refresh_index_missing_root_test() -> void:
-	assert((await indexed_entries("user://chat_input_file_missing_root")).is_empty())
+func refresh_index_empty_workspace_test() -> void:
+	var prior_workspace := AgentWorkspace.get_root()
+	var root := FileUtils.normalize_path("user://chat_input_file_completion/empty")
+	DirAccess.make_dir_recursive_absolute(root)
+	assert((await indexed_entries(root)).is_empty())
+	AgentWorkspace.set_root(prior_workspace)
 	pass
 
 
 func indexed_entries(root: String) -> Array[MentionPath]:
+	var prior_workspace := AgentWorkspace.get_root()
+	assert(AgentWorkspace.set_root(root))
 	var completion := ChatInputFileCompletion.new()
-	completion.root_override = root
 	await completion.async_refresh_index()
-	return completion.entries
+	var indexed := completion.entries
+	AgentWorkspace.set_root(prior_workspace)
+	return indexed
 
 
 func make_scratch_workspace(name: String) -> String:

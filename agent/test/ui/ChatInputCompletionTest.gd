@@ -8,7 +8,8 @@ extends RefCounted
 ## A file row replaces the whole `@token` with the shared Markdown link and closes the list.
 func file_row_accept_links_the_file_test() -> void:
 	var root := make_scratch_workspace("accept")
-	var field := make_field(root, "@not")
+	var prior_workspace := swap_workspace(root)
+	var field := make_field("@not")
 	var completion: ChatInputCompletion = field.completion
 	await completion.async_refresh()
 	# `notes.md` at the root is offered before `docs/notes.md`, the shallower path winning.
@@ -21,13 +22,15 @@ func file_row_accept_links_the_file_test() -> void:
 	assert(field.text == MarkdownHelper.format_file_as_markdown(root.path_join("notes.md")) + " ")
 	assert(not completion.is_popup_open())
 	field.free()
+	swap_workspace(prior_workspace)
 	pass
 
 
 ## A folder row stays open: `@docs/` is left under the caret so the next level lists right away.
 func folder_row_accept_keeps_drilling_test() -> void:
 	var root := make_scratch_workspace("drill")
-	var field := make_field(root, "@do")
+	var prior_workspace := swap_workspace(root)
+	var field := make_field("@do")
 	var completion: ChatInputCompletion = field.completion
 	await completion.async_refresh()
 	assert(completion.options[0].insert_text == "@docs/")
@@ -39,13 +42,14 @@ func folder_row_accept_keeps_drilling_test() -> void:
 	assert(completion.options[0].insert_text == MarkdownHelper.format_file_as_markdown(
 		root.path_join("docs/notes.md")) + " ")
 	field.free()
+	swap_workspace(prior_workspace)
 	pass
 
 
 ## The same accept path serves `/skill`: the whole command is replaced, not just the typed tail, and
 ## the trailing blank keeps the list closed.
 func skill_row_accept_replaces_the_command_test() -> void:
-	var field := make_field("", "/aud")
+	var field := make_field("/aud")
 	var completion: ChatInputCompletion = field.completion
 	completion.options = [ChatInputCompletionProvider.CompletionRow.new("/audio-trim", "/audio-trim ")]
 	completion.options[0].font_color = Color.WHITE
@@ -62,7 +66,8 @@ func skill_row_accept_replaces_the_command_test() -> void:
 ## A caret parked in the middle of the mention still leaves one clean reference behind.
 func accept_replaces_the_typed_tail_test() -> void:
 	var root := make_scratch_workspace("tail")
-	var field := make_field(root, "@do cs", 3)
+	var prior_workspace := swap_workspace(root)
+	var field := make_field("@do cs", 3)
 	var completion: ChatInputCompletion = field.completion
 	await completion.async_refresh()
 	assert(completion.options[0].insert_text == "@docs/")
@@ -70,12 +75,14 @@ func accept_replaces_the_typed_tail_test() -> void:
 	await completion.confirm()
 	assert(field.text == "@docs/ cs")
 	field.free()
+	swap_workspace(prior_workspace)
 	pass
 
 
 func only_one_provider_claims_the_caret_test() -> void:
 	var root := make_scratch_workspace("providers")
-	var field := make_field(root, "/agent")
+	var prior_workspace := swap_workspace(root)
+	var field := make_field("/agent")
 	var completion: ChatInputCompletion = field.completion
 	assert(completion.active_provider() == completion.skill_completion)
 	field.text = "@age"
@@ -88,14 +95,20 @@ func only_one_provider_claims_the_caret_test() -> void:
 	assert(not completion.is_popup_open())
 	assert(completion.options.is_empty())
 	field.free()
+	swap_workspace(prior_workspace)
 	pass
 
 
-func make_field(root: String, text: String, caret_column: int = -1) -> ChatInputEdit:
+func swap_workspace(root: String) -> String:
+	var prior_workspace := AgentWorkspace.get_root()
+	AgentWorkspace.set_root(root)
+	return prior_workspace
+
+
+func make_field(text: String, caret_column: int = -1) -> ChatInputEdit:
 	var field := ChatInputEdit.new()
 	var completion := ChatInputCompletion.new()
 	completion.setup(field)
-	completion.file_completion.root_override = root
 	field.text = text
 	field.set_caret_line(0, false)
 	field.set_caret_column(text.length() if caret_column < 0 else caret_column, false)
