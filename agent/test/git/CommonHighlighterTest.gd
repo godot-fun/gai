@@ -44,6 +44,19 @@ static func recognizes_extended_languages_test() -> void:
 	var prose_color := markdown_edit.get_theme_color("font_color")
 	var long_form_line := markdown.get_line_syntax_highlighting(0)
 	assert(long_form_line[0]["color"] == prose_color)
+	assert(MarkdownHighlighter.color_at_column(long_form_line, 1, prose_color) == prose_color)
+	assert(MarkdownHighlighter.color_at_column(long_form_line, 4, prose_color) == prose_color)
+	var bold_at := long_form.find("**")
+	assert(MarkdownHighlighter.color_at_column(long_form_line, bold_at, prose_color) == CodeColors.keyword)
+	markdown_edit.text = "# Title\n"
+	var heading := markdown.get_line_syntax_highlighting(0)
+	assert(heading[0]["color"] == CodeColors.declaration)
+	var link_sample := "see [docs](readme.md) end"
+	markdown_edit.text = link_sample + "\n"
+	var link_line := markdown.get_line_syntax_highlighting(0)
+	var link_close := link_sample.find(")")
+	assert(MarkdownHighlighter.color_at_column(link_line, link_close, prose_color) == FileColors.color_for_path("readme.md"))
+	assert(MarkdownHighlighter.color_at_column(link_line, link_close + 1, prose_color) == prose_color)
 	assert(MarkdownHighlighter.syntax_color_for_link_destination("https://godotengine.org") == null)
 	assert(FileColors.color_for_path("C:/clips/voice.wav") == FileColors.audio_color)
 	markdown_edit.free()
