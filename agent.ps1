@@ -55,22 +55,24 @@ if (-not (Test-Path -LiteralPath $Editor)) {
 # scripts fail to load. Always run `--import` first: it starts the editor
 # headless, syncs imports (plus global_script_class_cache.cfg and uid_cache.bin),
 # then quits.
+#
+# Godot ships a GUI-subsystem exe, so `& $Editor ...` returns at once and leaves
+# $LASTEXITCODE empty — the app would start while the import is still running.
+# Start-Process -Wait blocks until the import process really exits.
 
 Push-Location $Root
 try {
-	& $Editor --headless --path $Root --import
-	$ImportExit = $LASTEXITCODE
+	$ImportProcess = Start-Process -FilePath $Editor -ArgumentList @("--headless", "--path", $Root, "--import") `
+		-WorkingDirectory $Root -NoNewWindow -Wait -PassThru
+	$ImportExit = $ImportProcess.ExitCode
 } finally {
 	Pop-Location
 }
 
-# Headless --import often leaves $LASTEXITCODE unset on Windows; only fail on a positive code.
 if ($ImportExit -gt 0) {
 	Write-Host "Asset import failed (exit $ImportExit)"
 	exit $ImportExit
 }
-
-Start-Sleep -Seconds 3
 
 # ---------------------------------------------------------------------------
 # Start agent main scene
@@ -89,8 +91,10 @@ $ArgumentList = @("--path", $Root, "res://agent/Agent.tscn", "--") + $UserArgs
 if ($Wait) {
 	Push-Location $Root
 	try {
-		& $Editor @ArgumentList
-		exit $LASTEXITCODE
+		# Same GUI-subsystem caveat as the import step: wait for the real process.
+		$AppProcess = Start-Process -FilePath $Editor -ArgumentList $ArgumentList `
+			-WorkingDirectory $Root -NoNewWindow -Wait -PassThru
+		exit $AppProcess.ExitCode
 	} finally {
 		Pop-Location
 	}
