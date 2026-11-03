@@ -8,7 +8,7 @@ const FIELD_CONTROL_RATIO: float = 5.0
 const NAV_COLUMN_WIDTH: int = 140
 const NAV_LOCALE_KEYS: Array[String] = [
 	"agent.settings.appearance",
-	"agent.settings.heading",
+	"agent.settings.connection",
 	"common.agent",
 	"agent.settings.notification",
 	"agent.settings.shortcut",

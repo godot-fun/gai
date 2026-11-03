@@ -17,7 +17,7 @@ var proxy_address_edit: LineEdit
 
 func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> void:
 	super.set_up(p_ui, parent, window)
-	heading_label = ui.add_heading(parent, I18n.t("agent.settings.heading"))
+	heading_label = ui.add_heading(parent, I18n.t("agent.settings.connection"))
 	var api_result := add_field(parent, I18n.t("agent.settings.api_url"), "https://api.example.com/v1/chat/completions", I18n.t("agent.settings.api_url_help"))
 	api_url_edit = api_result[0]
 	api_url_label = api_result[1]
@@ -203,7 +203,7 @@ func refresh_history_hover() -> void:
 
 
 func apply_locale() -> void:
-	heading_label.text = I18n.t("agent.settings.heading")
+	heading_label.text = I18n.t("agent.settings.connection")
 	api_url_label.text = I18n.t("agent.settings.api_url")
 	model_label.text = I18n.t("common.model")
 	api_token_label.text = I18n.t("agent.settings.api_token")
