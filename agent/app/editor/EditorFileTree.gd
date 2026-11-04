@@ -68,6 +68,7 @@ func delete_selected() -> bool:
 	if next != null and not bool(next.get_meta("placeholder", false)):
 		next.select(0)
 	file_deleted.emit(path)
+	Alert.alert(StringUtils.format(I18n.t("editor.delete_succeeded"), path.get_file()), Colors.success)
 	return true
 
 

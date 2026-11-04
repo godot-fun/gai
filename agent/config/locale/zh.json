@@ -102,7 +102,8 @@
     "save_changes_many": "保存对 {} 个文件的更改？",
     "save_failed": "保存文件失败",
     "not_text": "这个文件不能当作文本编辑",
-    "delete_failed": "删除文件失败"
+    "delete_failed": "删除文件失败",
+    "delete_succeeded": "已删除 {}"
   },
   "markdown": {
     "mode_edit": "编辑模式",
