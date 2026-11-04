@@ -91,6 +91,18 @@
     "open_on_startup": "Open on startup",
     "open_on_startup_hint": "Open this note automatically when the app starts"
   },
+  "editor": {
+    "title": "Editor",
+    "tooltip": "Open editor",
+    "back": "Back to GAI",
+    "close": "Close",
+    "discard": "Don't save",
+    "save_title": "Save changes",
+    "save_changes": "Save changes to {}?",
+    "save_changes_many": "Save changes to {} files?",
+    "save_failed": "Failed to save file",
+    "not_text": "This file cannot be edited as text"
+  },
   "markdown": {
     "mode_edit": "Edit mode",
     "mode_split": "Edit and preview Markdown",

@@ -91,6 +91,18 @@
     "open_on_startup": "每次打开应用时弹出",
     "open_on_startup_hint": "应用启动时自动打开此笔记"
   },
+  "editor": {
+    "title": "编辑器",
+    "tooltip": "打开编辑器",
+    "back": "返回 GAI",
+    "close": "关闭",
+    "discard": "不保存",
+    "save_title": "保存更改",
+    "save_changes": "保存对 {} 的更改？",
+    "save_changes_many": "保存对 {} 个文件的更改？",
+    "save_failed": "保存文件失败",
+    "not_text": "这个文件不能当作文本编辑"
+  },
   "markdown": {
     "mode_edit": "编辑模式",
     "mode_split": "编辑和预览 Markdown",

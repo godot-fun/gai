@@ -1,0 +1,72 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://agent/app/editor/Editor.gd" id="1_editor"]
+[ext_resource type="Script" path="res://agent/app/editor/EditorFileTree.gd" id="2_tree"]
+
+[node name="Editor" type="PanelContainer"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_editor")
+
+[node name="Root" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Toolbar" type="PanelContainer" parent="Root"]
+layout_mode = 2
+
+[node name="ToolbarMargin" type="MarginContainer" parent="Root/Toolbar"]
+layout_mode = 2
+
+[node name="ToolbarRow" type="HBoxContainer" parent="Root/Toolbar/ToolbarMargin"]
+layout_mode = 2
+
+[node name="Logo" type="Button" parent="Root/Toolbar/ToolbarMargin/ToolbarRow"]
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 0
+mouse_default_cursor_shape = 2
+flat = true
+text = "GAI Editor"
+
+[node name="TabSpacer" type="Control" parent="Root/Toolbar/ToolbarMargin/ToolbarRow"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="TabScroll" type="ScrollContainer" parent="Root/Toolbar/ToolbarMargin/ToolbarRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 1
+vertical_scroll_mode = 0
+
+[node name="TabRow" type="HBoxContainer" parent="Root/Toolbar/ToolbarMargin/ToolbarRow/TabScroll"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/separation = 8
+
+[node name="Body" type="HSplitContainer" parent="Root"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 0
+
+[node name="Sidebar" type="PanelContainer" parent="Root/Body"]
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="FileTree" type="Tree" parent="Root/Body/Sidebar"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+hide_root = true
+script = ExtResource("2_tree")
+
+[node name="EditorHost" type="MarginContainer" parent="Root/Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
