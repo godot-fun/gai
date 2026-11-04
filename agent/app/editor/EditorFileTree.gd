@@ -2,7 +2,8 @@ class_name EditorFileTree
 extends Tree
 
 ## Workspace file tree. Folders load their children the first time they expand.
-## Entries follow [member GitIgnore.ignore_rules] ([GlobUtils.GitIgnoreMatcher], same as glob / grep / completion).
+## Entries follow [member GitIgnore.ignore_rules] ([GlobUtils.GitIgnoreMatcher], same as glob / grep / completion),
+## and hide Godot `.uid` / `.import` sidecar files.
 
 ## A file row was activated with a double-click or Enter. A single click only selects the row.
 signal file_selected(path: String)
@@ -117,7 +118,7 @@ func populate(parent: TreeItem, dir_path: String) -> void:
 				relative = relative.substr(root_prefix.length())
 			var is_directory := DirAccess.dir_exists_absolute(full_path)
 			var show := ignore.may_enter_dir(relative) if is_directory else not ignore.is_ignored(relative, false)
-			if show:
+			if show and (is_directory or (not entry_name.ends_with(".uid") and not entry_name.ends_with(".import"))):
 				names.append(entry_name)
 		entry_name = directory.get_next()
 	directory.list_dir_end()

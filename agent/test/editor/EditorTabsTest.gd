@@ -167,6 +167,8 @@ static func editor_file_tree_respects_gitignore_test() -> void:
 	FileUtils.write_string_to_file(root_path.path_join("node_modules/pkg/index.js"), "x")
 	FileUtils.write_string_to_file(root_path.path_join("target/debug/out.txt"), "y")
 	FileUtils.write_string_to_file(root_path.path_join("visible.md"), "v")
+	FileUtils.write_string_to_file(root_path.path_join("visible.md.uid"), "uid")
+	FileUtils.write_string_to_file(root_path.path_join("sprite.png.import"), "import")
 
 	var tree := EditorFileTree.new()
 	gdf.gdf_node.add_child(tree)
