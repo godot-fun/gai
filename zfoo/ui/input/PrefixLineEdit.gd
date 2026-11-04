@@ -32,6 +32,10 @@ func build_children() -> void:
 	row.add_theme_constant_override("separation", Margin.ma_2)
 	add_child(row)
 	prefix_icon = TextureRect.new()
+	prefix_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	prefix_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	prefix_icon.custom_minimum_size = ControlSize.square(ControlSize.icon_md)
+	prefix_icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	prefix_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(prefix_icon)
 	line_edit = LineEdit.new()
@@ -98,8 +102,6 @@ static func make_default_field_style() -> StyleBoxFlat:
 
 func load_prefix_icon(path: String) -> void:
 	prefix_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	prefix_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	prefix_icon.custom_minimum_size = ControlSize.square(ControlSize.icon_md)
 	prefix_icon.texture = ImageHelper.tint_svg(path, Color.WHITE, 2.0)
 	prefix_icon.self_modulate = Colors.secondary_text
 	pass

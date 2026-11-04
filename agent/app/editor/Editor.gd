@@ -185,7 +185,7 @@ func style_logo() -> void:
 	logo_button.icon = ImageHelper.tint_svg(BACK_ICON_PATH, color)
 	logo_button.add_theme_constant_override("icon_max_width", ControlSize.icon_sm)
 	logo_button.add_theme_constant_override("icon_max_height", ControlSize.icon_sm)
-	logo_button.add_theme_constant_override("h_separation", Margin.ma_1)
+	logo_button.add_theme_constant_override("h_separation", Margin.ma_3)
 	var logo_font := FontVariation.new()
 	logo_font.base_font = Fonts.bold()
 	logo_font.spacing_glyph = Typography.letter_spacing_lg
