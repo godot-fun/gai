@@ -219,11 +219,11 @@ func apply_theme() -> void:
 
 
 func style_text_edit() -> void:
-	var style := StyleBoxHelper.create_style_box_flat(Colors.app_background, 0, Margin.ma_4, Margin.ma_3)
+	var style := StyleBoxHelper.create_style_box_flat(Colors.control_surface, 0, Margin.ma_4, Margin.ma_3)
 	text_edit.add_theme_stylebox_override("normal", style)
 	text_edit.add_theme_stylebox_override("focus", style.duplicate())
 	text_edit.add_theme_stylebox_override("read_only", style.duplicate())
-	text_edit.add_theme_color_override("background_color", Colors.app_background)
+	text_edit.add_theme_color_override("background_color", Colors.control_surface)
 	CodeEditStyle.apply_base(text_edit)
 	text_edit.add_theme_color_override("font_placeholder_color", Colors.secondary_text)
 	text_edit.add_theme_color_override("current_line_color", Color(ThemeColor.accent_theme_color(), 0.10))
@@ -234,7 +234,7 @@ func style_text_edit() -> void:
 
 
 func style_preview() -> void:
-	var style := StyleBoxHelper.create_style_box_flat(Colors.app_background, 0, Margin.ma_4, Margin.ma_3)
+	var style := StyleBoxHelper.create_style_box_flat(Colors.control_surface, 0, Margin.ma_4, Margin.ma_3)
 	if view_mode == ViewMode.SPLIT and is_markdown():
 		style.border_color = Colors.border
 		style.set_border_width(SIDE_LEFT, ControlSize.border_xs)

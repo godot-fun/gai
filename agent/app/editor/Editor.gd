@@ -142,7 +142,7 @@ func apply_theme() -> void:
 	var app_theme := Theme.new()
 	app_theme.default_font = Fonts.regular()
 	theme = app_theme
-	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
+	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.control_surface))
 	toolbar_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.deep_surface, 0, 0, 0, Colors.subtle_border, ControlSize.border_xs))
 	sidebar.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.chrome_surface, 0, 0, 0, Colors.muted_border, ControlSize.border_xs))
 	style_logo()
