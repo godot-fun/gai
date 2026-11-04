@@ -101,7 +101,8 @@
     "save_changes": "Save changes to {}?",
     "save_changes_many": "Save changes to {} files?",
     "save_failed": "Failed to save file",
-    "not_text": "This file cannot be edited as text"
+    "not_text": "This file cannot be edited as text",
+    "delete_failed": "Failed to delete file"
   },
   "markdown": {
     "mode_edit": "Edit mode",

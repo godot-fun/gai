@@ -48,6 +48,7 @@ func _ready() -> void:
 	body_split.dragged.connect(on_split_dragged)
 	resized.connect(align_tabs)
 	file_tree.file_selected.connect(on_file_selected)
+	file_tree.file_deleted.connect(on_file_deleted)
 	AgentEvents.events.workspace_changed.connect(on_workspace_changed)
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
@@ -230,6 +231,19 @@ func style_internal_scroll_bars(node: Node) -> void:
 
 func on_workspace_changed(path: String) -> void:
 	file_tree.reload(path)
+	pass
+
+
+func on_file_deleted(path: String) -> void:
+	var index := tabs.find_index(path)
+	if index < 0:
+		return
+	var was_active := index == tabs.active_index
+	tabs.close_at(index)
+	if was_active:
+		show_active()
+		return
+	rebuild_tabs()
 	pass
 
 

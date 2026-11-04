@@ -99,6 +99,67 @@ static func editor_file_tree_lists_workspace_test() -> void:
 	pass
 
 
+static func editor_file_tree_opens_on_double_click_test() -> void:
+	var root_path := FileUtils.normalize_path(ProjectSettings.globalize_path(TREE_DIR + "_open"))
+	DirAccess.make_dir_recursive_absolute(root_path.path_join("src"))
+	var note_path := FileUtils.normalize_path(root_path.path_join("note.md"))
+	FileUtils.write_string_to_file(note_path, "n")
+
+	var tree := EditorFileTree.new()
+	gdf.gdf_node.add_child(tree)
+	tree.reload(root_path)
+	var opened: Array[String] = []
+	tree.file_selected.connect(func(path: String) -> void: opened.append(path))
+
+	var folder := tree.get_root().get_first_child()
+	folder.select(0)
+	assert(opened.is_empty())
+	tree.on_item_activated()
+	assert(opened.is_empty())
+	assert(not folder.collapsed)
+
+	var note := folder.get_next()
+	note.select(0)
+	assert(opened.is_empty())
+	tree.on_item_activated()
+	assert(opened.size() == 1)
+	assert(FileUtils.normalize_path(opened[0]) == note_path)
+	tree.free()
+	pass
+
+
+static func editor_file_tree_delete_removes_selected_file_test() -> void:
+	var root_path := FileUtils.normalize_path(ProjectSettings.globalize_path(TREE_DIR + "_delete"))
+	DirAccess.make_dir_recursive_absolute(root_path.path_join("src"))
+	var note_path := FileUtils.normalize_path(root_path.path_join("note.md"))
+	var other_path := FileUtils.normalize_path(root_path.path_join("other.md"))
+	FileUtils.write_string_to_file(note_path, "n")
+	FileUtils.write_string_to_file(other_path, "o")
+
+	var tree := EditorFileTree.new()
+	gdf.gdf_node.add_child(tree)
+	tree.reload(root_path)
+	var deleted: Array[String] = []
+	tree.file_deleted.connect(func(path: String) -> void: deleted.append(path))
+
+	var folder := tree.get_root().get_first_child()
+	folder.select(0)
+	assert(not tree.delete_selected())
+	assert(deleted.is_empty())
+	assert(DirAccess.dir_exists_absolute(root_path.path_join("src")))
+
+	var note := folder.get_next()
+	note.select(0)
+	assert(tree.delete_selected())
+	assert(deleted.size() == 1)
+	assert(FileUtils.normalize_path(deleted[0]) == note_path)
+	assert(not FileAccess.file_exists(note_path))
+	assert(FileAccess.file_exists(other_path))
+	assert(tree.get_selected().get_text(0) == "other.md")
+	tree.free()
+	pass
+
+
 static func editor_file_tree_respects_gitignore_test() -> void:
 	var root_path := FileUtils.normalize_path(ProjectSettings.globalize_path(TREE_DIR + "_ignore"))
 	DirAccess.make_dir_recursive_absolute(root_path.path_join("node_modules/pkg"))

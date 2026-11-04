@@ -4,7 +4,10 @@ extends Tree
 ## Workspace file tree. Folders load their children the first time they expand.
 ## Entries follow [member GitIgnore.ignore_rules] ([GlobUtils.GitIgnoreMatcher], same as glob / grep / completion).
 
+## A file row was activated with a double-click or Enter. A single click only selects the row.
 signal file_selected(path: String)
+## The selected file was moved to the system trash. Folders are left in place.
+signal file_deleted(path: String)
 
 var root_path: String = ""
 
@@ -16,8 +19,7 @@ func _ready() -> void:
 	allow_reselect = false
 	select_mode = Tree.SELECT_ROW
 	item_collapsed.connect(on_item_collapsed)
-	item_selected.connect(on_item_selected)
-	item_activated.connect(toggle_folder)
+	item_activated.connect(on_item_activated)
 	pass
 
 
@@ -37,23 +39,47 @@ func on_item_collapsed(item: TreeItem) -> void:
 	pass
 
 
-func toggle_folder() -> void:
-	var item := get_selected()
-	if item == null or item.get_meta("placeholder", false):
+func _gui_input(event: InputEvent) -> void:
+	var key := event as InputEventKey
+	if key == null or not key.pressed or key.echo or key.keycode != KEY_DELETE:
 		return
-	var path := str(item.get_metadata(0))
-	if path.is_empty() or not DirAccess.dir_exists_absolute(path):
-		return
-	item.collapsed = not item.collapsed
+	if delete_selected():
+		accept_event()
 	pass
 
 
-func on_item_selected() -> void:
+## Moves the selected file to the system trash and drops its row. Directories are not removed.
+func delete_selected() -> bool:
+	var item := get_selected()
+	if item == null or bool(item.get_meta("placeholder", false)):
+		return false
+	var path := str(item.get_metadata(0))
+	if path.is_empty() or DirAccess.dir_exists_absolute(path) or not FileAccess.file_exists(path):
+		return false
+	var error := OS.move_to_trash(path)
+	if error != OK:
+		Log.error("editor delete failed path:[{}] err:[{}]", path, error_string(error))
+		Alert.alert(I18n.t("editor.delete_failed"), Colors.error)
+		return false
+	var next := item.get_next()
+	if next == null or bool(next.get_meta("placeholder", false)):
+		next = item.get_prev()
+	item.free()
+	if next != null and not bool(next.get_meta("placeholder", false)):
+		next.select(0)
+	file_deleted.emit(path)
+	return true
+
+
+func on_item_activated() -> void:
 	var item := get_selected()
 	if item == null or item.get_meta("placeholder", false):
 		return
 	var path := str(item.get_metadata(0))
-	if path.is_empty() or DirAccess.dir_exists_absolute(path):
+	if path.is_empty():
+		return
+	if DirAccess.dir_exists_absolute(path):
+		item.collapsed = not item.collapsed
 		return
 	file_selected.emit(path)
 	pass
