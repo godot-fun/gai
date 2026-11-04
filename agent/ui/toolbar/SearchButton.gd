@@ -3,7 +3,7 @@ extends RefCounted
 
 ## Toolbar entry point for session chat search.
 
-const SEARCH_ICON_PATH := "res://agent/asset/image/icon/search.svg"
+const SEARCH_ICON_PATH := "res://agent/asset/image/ui/search.svg"
 
 var button: Button
 
@@ -65,6 +65,8 @@ func update_icon(hovered: bool) -> void:
 
 func make_icon(path: String, color: Color) -> ImageTexture:
 	var svg := FileAccess.get_file_as_string(path)
+	if not svg.contains("fill="):
+		svg = svg.replace("<path ", "<path fill=\"#" + Color.WHITE.to_html(false) + "\" ")
 	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
 	var image := Image.new()
 	if image.load_svg_from_string(svg, 2.0) != OK:

@@ -6,7 +6,7 @@ const MAX_RESULTS := 100
 const MAX_SNIPPET_LENGTH := 260
 ## Typing pause before the scan runs — it walks every entry of every session, so per-keystroke is too heavy.
 const SEARCH_DEBOUNCE_MILLIS := 1000
-const QUERY_ICON_PATH := "res://agent/asset/image/icon/search.svg"
+const QUERY_ICON_PATH := "res://agent/asset/image/ui/search.svg"
 const GROUP_NAME: StringName = &"search_window"
 
 static var query: String = ""

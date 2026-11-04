@@ -3,10 +3,7 @@ extends RefCounted
 
 ## Circular toolbar button with an SVG paintbrush icon and ColorPicker popup.
 
-const BRUSH_ICON_PATH: String = "res://agent/asset/image/icon/brush.svg"
-const SVG_HANDLE_COLOR: String = "#8B949E"
-const SVG_ACCENT_COLOR: String = "#2DD4BF"
-const SVG_FERRULE_COLOR: String = "#A3AAB4"
+const BRUSH_ICON_PATH: String = "res://agent/asset/image/ui/brush.svg"
 
 var button: Button
 var popup: PopupPanel
@@ -56,19 +53,17 @@ func apply_theme() -> void:
 
 func update_icon(hovered: bool) -> void:
 	var theme_color: Color = ThemeColor.accent_theme_color()
-	var handle: Color = Colors.secondary_text
 	if hovered:
 		theme_color = theme_color.lightened(0.10)
-		handle = Colors.primary_text
-	button.icon = make_brush_icon(theme_color, handle)
+	button.icon = make_brush_icon(theme_color)
 	pass
 
 
-func make_brush_icon(theme_color: Color, handle: Color) -> ImageTexture:
+func make_brush_icon(theme_color: Color) -> ImageTexture:
 	var svg: String = FileAccess.get_file_as_string(BRUSH_ICON_PATH)
-	svg = svg.replace(SVG_HANDLE_COLOR, "#" + handle.to_html(false))
-	svg = svg.replace(SVG_ACCENT_COLOR, "#" + theme_color.to_html(false))
-	svg = svg.replace(SVG_FERRULE_COLOR, "#" + handle.lightened(0.14).to_html(false))
+	if not svg.contains("fill="):
+		svg = svg.replace("<path ", "<path fill=\"#" + Color.WHITE.to_html(false) + "\" ")
+	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + theme_color.to_html(false))
 	var image: Image = Image.new()
 	if image.load_svg_from_string(svg, 2.0) != OK:
 		return ImageTexture.new()

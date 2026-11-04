@@ -3,7 +3,7 @@ extends RefCounted
 
 ## Toolbar button for selecting the visual presentation used during agent runs.
 
-const SPARKLE_ICON_PATH: String = "res://agent/asset/image/icon/sparkle.svg"
+const SPARKLE_ICON_PATH: String = "res://agent/asset/image/ui/wand_stars.svg"
 const POPUP_MIN_WIDTH: int = 192
 
 var button: Button
@@ -123,6 +123,8 @@ func on_visual_selected(id: int) -> void:
 
 func make_sparkle_icon(color: Color) -> ImageTexture:
 	var svg: String = FileAccess.get_file_as_string(SPARKLE_ICON_PATH)
+	if not svg.contains("fill="):
+		svg = svg.replace("<path ", "<path fill=\"#" + Color.WHITE.to_html(false) + "\" ")
 	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
 	var image := Image.new()
 	if image.load_svg_from_string(svg, 2.0) != OK:

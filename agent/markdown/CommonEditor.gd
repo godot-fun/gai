@@ -5,9 +5,9 @@
 class_name CommonEditor
 extends VBoxContainer
 
-const EDIT_ICON_PATH := "res://agent/asset/image/icon/edit.svg"
-const SPLIT_ICON_PATH := "res://agent/asset/image/icon/split.svg"
-const PREVIEW_ICON_PATH := "res://agent/asset/image/icon/eye.svg"
+const EDIT_ICON_PATH := "res://agent/asset/image/ui/edit.svg"
+const SPLIT_ICON_PATH := "res://agent/asset/image/ui/vertical_split.svg"
+const PREVIEW_ICON_PATH := "res://agent/asset/image/ui/visibility.svg"
 const DEFAULT_SPLIT_RATIO := 0.5
 
 enum ViewMode { EDIT, SPLIT, PREVIEW }
@@ -278,6 +278,8 @@ func style_mode_button(button: Button) -> void:
 
 func make_icon(path: String, color: Color) -> ImageTexture:
 	var svg := FileAccess.get_file_as_string(path)
+	if not svg.contains("fill="):
+		svg = svg.replace("<path ", "<path fill=\"#" + Color.WHITE.to_html(false) + "\" ")
 	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
 	var image := Image.new()
 	if image.load_svg_from_string(svg, 1.0) != OK:

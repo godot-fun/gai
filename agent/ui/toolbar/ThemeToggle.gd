@@ -3,8 +3,8 @@ extends RefCounted
 
 ## Circular toolbar button for switching dark / light color schemes.
 
-const SUN_ICON_PATH: String = "res://agent/asset/image/icon/sun.svg"
-const MOON_ICON_PATH: String = "res://agent/asset/image/icon/moon.svg"
+const SUN_ICON_PATH: String = "res://agent/asset/image/ui/light_mode.svg"
+const MOON_ICON_PATH: String = "res://agent/asset/image/ui/dark_mode.svg"
 
 var button: Button
 
@@ -67,24 +67,25 @@ func update_icon(hovered: bool) -> void:
 			moon_color = moon_color.lightened(0.12)
 		button.icon = make_moon_icon(moon_color)
 		return
-	var body: Color = Colors.secondary_text
-	var rays: Color = ThemeColor.accent_theme_color().darkened(0.18)
+	var sun_color: Color = ThemeColor.accent_theme_color().darkened(0.18)
 	if hovered:
-		body = Colors.primary_text
-		rays = rays.lightened(0.12)
-	button.icon = make_sun_icon(body, rays)
+		sun_color = sun_color.lightened(0.12)
+	button.icon = make_sun_icon(sun_color)
 	pass
 
 
-func make_sun_icon(body: Color, rays: Color) -> ImageTexture:
+func make_sun_icon(color: Color) -> ImageTexture:
 	var svg: String = FileAccess.get_file_as_string(SUN_ICON_PATH)
-	svg = svg.replace("#" + Color.BLACK.to_html(false), "#" + body.to_html(false))
-	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + rays.to_html(false))
+	if not svg.contains("fill="):
+		svg = svg.replace("<path ", "<path fill=\"#" + Color.WHITE.to_html(false) + "\" ")
+	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
 	return svg_string_to_texture(svg)
 
 
 func make_moon_icon(color: Color) -> ImageTexture:
 	var svg: String = FileAccess.get_file_as_string(MOON_ICON_PATH)
+	if not svg.contains("fill="):
+		svg = svg.replace("<path ", "<path fill=\"#" + Color.WHITE.to_html(false) + "\" ")
 	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
 	return svg_string_to_texture(svg)
 

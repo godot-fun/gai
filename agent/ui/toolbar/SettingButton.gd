@@ -3,7 +3,7 @@ extends RefCounted
 
 ## Toolbar control that opens the agent settings window.
 
-const SETTINGS_ICON_PATH: String = "res://agent/asset/image/icon/settings.svg"
+const SETTINGS_ICON_PATH: String = "res://agent/asset/image/ui/settings.svg"
 
 var button: Button
 
@@ -49,6 +49,8 @@ func update_icon(hovered: bool) -> void:
 
 func make_icon(color: Color) -> ImageTexture:
 	var svg := FileAccess.get_file_as_string(SETTINGS_ICON_PATH)
+	if not svg.contains("fill="):
+		svg = svg.replace("<path ", "<path fill=\"#" + Color.WHITE.to_html(false) + "\" ")
 	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
 	var image := Image.new()
 	if image.load_svg_from_string(svg, 2.0) != OK:

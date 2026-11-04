@@ -6,7 +6,7 @@ static var loader: AsyncResourceLoader = AsyncResourceLoader.new()
 ## Load a resource or a plain file by path. Project resources go through the threaded loader,
 ## a file that is not a resource (an OS folder, or a raw file under `user://`) through
 ## [method load_external_file]:
-##     var texture := await ResourceHelper.async_load("res://agent/asset/image/icon/settings.svg")
+##     var texture := await ResourceHelper.async_load("res://agent/asset/image/ui/settings.svg")
 ##     var clip := await ResourceHelper.async_load("C:/clips/notify.mp3") as AudioStream
 static func async_load(path: String) -> Resource:
 	if ResourceLoader.exists(path):

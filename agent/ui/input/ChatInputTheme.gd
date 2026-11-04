@@ -3,8 +3,8 @@ extends Object
 
 ## Theme styling and generated icons for the floating chat input.
 
-const TRASH_ICON_PATH := "res://agent/asset/image/icon/trash.svg"
-const RESUME_ICON_PATH := "res://agent/asset/image/icon/resume.svg"
+const TRASH_ICON_PATH := "res://agent/asset/image/ui/delete.svg"
+const RESUME_ICON_PATH := "res://agent/asset/image/ui/resume.svg"
 static func apply_wrap(input_wrap: PanelContainer, expanded: bool) -> void:
 	input_wrap.add_theme_stylebox_override("panel", build_wrap_style(expanded))
 	pass
@@ -143,13 +143,15 @@ static func make_trash_icon(size: int, color: Color) -> ImageTexture:
 	return make_tint_svg_icon(TRASH_ICON_PATH, size, color)
 
 
-## Stroke resume mark (bar + triangle), same line weight as trash.
+## Resume mark, same tint path as the delete icon.
 static func make_resume_icon(size: int, color: Color) -> ImageTexture:
 	return make_tint_svg_icon(RESUME_ICON_PATH, size, color)
 
 
 static func make_tint_svg_icon(path: String, size: int, color: Color) -> ImageTexture:
 	var svg := FileAccess.get_file_as_string(path)
+	if not svg.contains("fill="):
+		svg = svg.replace("<path ", "<path fill=\"#" + Color.WHITE.to_html(false) + "\" ")
 	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
 	var image := Image.new()
 	if image.load_svg_from_string(svg, float(size) / 16.0) != OK:
