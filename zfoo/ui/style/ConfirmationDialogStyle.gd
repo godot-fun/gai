@@ -35,10 +35,10 @@ static func style_button(button: Button, primary: bool) -> void:
 	var accent := ThemeColor.accent_theme_color()
 	var border := accent if primary else Color(ThemeColor.title_color, 0.35)
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_md, Margin.ma_3, Margin.ma_1, border, ControlSize.border_xs)
-	var hover_border := accent if primary else ThemeColor.title_color
-	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface, hover_border)
-	var pressed_fill := accent if primary else ThemeColor.selected_surface
-	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, pressed_fill, hover_border)
+	var hover_fill := Color(accent, 0.28) if primary else Color(accent, 0.16)
+	var pressed_fill := Color(accent, 0.42) if primary else Color(accent, 0.28)
+	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, hover_fill, accent)
+	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, pressed_fill, accent)
 	ButtonStyle.apply_style(button, normal, hover, pressed)
 	var text := accent if primary else ThemeColor.title_color
 	var pressed_text := ThemeColor.inset_surface if primary else text

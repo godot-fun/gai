@@ -212,11 +212,13 @@ func style_file_tree() -> void:
 	file_tree.add_theme_constant_override("icon_max_width", ControlSize.icon_sm)
 	file_tree.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT))
 	var selected := StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1)
+	var hover := StyleBoxHelper.create_style_box_flat(Colors.chrome_surface.lerp(ThemeColor.selected_surface, 0.55), ControlSize.radius_md, Margin.ma_2, Margin.ma_1)
 	file_tree.add_theme_stylebox_override("selected", selected)
 	file_tree.add_theme_stylebox_override("selected_focus", selected.duplicate() as StyleBoxFlat)
+	file_tree.add_theme_stylebox_override("hovered", hover)
+	file_tree.add_theme_stylebox_override("hovered_dim", hover.duplicate() as StyleBoxFlat)
 	file_tree.add_theme_stylebox_override("hovered_selected", selected.duplicate() as StyleBoxFlat)
 	file_tree.add_theme_stylebox_override("hovered_selected_focus", selected.duplicate() as StyleBoxFlat)
-	file_tree.add_theme_stylebox_override("hovered", StyleBoxHelper.create_style_box_flat(Colors.hover_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1))
 	style_internal_scroll_bars(file_tree)
 	pass
 
