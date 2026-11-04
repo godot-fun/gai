@@ -161,7 +161,8 @@ static func configure_shell(highlighter: CodeHighlighterInstance, extension: Str
 	add_keywords(highlighter, ["true", "false", "null"], CodeColors.type)
 	add_quoted_strings(highlighter, CodeColors.string)
 	if extension in ["bat", "cmd"]:
-		highlighter.add_color_region("REM ", "", CodeColors.comment, true)
+		add_keywords(highlighter, ["REM", "rem", "Rem"], CodeColors.comment)
+		highlighter.add_color_region("::", "", CodeColors.comment, true)
 	else:
 		highlighter.add_color_region("#", "", CodeColors.comment, true)
 	pass
@@ -188,8 +189,6 @@ static func configure_diff(highlighter: CodeHighlighterInstance) -> void:
 
 static func configure_latex(highlighter: CodeHighlighterInstance) -> void:
 	highlighter.add_color_region("%", "", CodeColors.comment, true)
-	highlighter.add_color_region(r"\begin{", "}", CodeColors.declaration)
-	highlighter.add_color_region(r"\end{", "}", CodeColors.declaration)
 	highlighter.add_color_region("{", "}", CodeColors.string)
 	pass
 

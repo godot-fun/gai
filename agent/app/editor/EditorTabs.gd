@@ -4,6 +4,8 @@ extends RefCounted
 ## Open files in the editor. [method active] is the file shown in the editor pane.
 
 const SAMPLE_BYTES: int = 8192
+## Same set as [constant MarkdownHighlighter.EXTENSIONS]. Kept local so editor tests do not load that highlighter.
+const MARKDOWN_EXTENSIONS := ["md", "markdown", "mdown", "mkd", "mdx", "mdc", "mmd", "qmd", "rmd"]
 
 var files: Array[EditorDocument] = []
 var active_index: int = -1
@@ -78,3 +80,7 @@ static func contains_nul(path: String) -> bool:
 	if length <= 0:
 		return false
 	return file.get_buffer(length).find(0) >= 0
+
+
+static func is_markdown_path(path: String) -> bool:
+	return path.get_extension().to_lower() in MARKDOWN_EXTENSIONS
