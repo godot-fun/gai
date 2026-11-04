@@ -101,6 +101,8 @@
     "save_changes": "保存对 {} 的更改？",
     "save_changes_many": "保存对 {} 个文件的更改？",
     "save_failed": "保存文件失败",
+    "save_succeeded": "已保存 {}",
+    "save_all_succeeded": "已保存 {} 个文件",
     "not_text": "这个文件不能当作文本编辑",
     "delete_failed": "删除文件失败",
     "delete_succeeded": "已删除 {}"

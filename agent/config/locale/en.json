@@ -101,6 +101,8 @@
     "save_changes": "Save changes to {}?",
     "save_changes_many": "Save changes to {} files?",
     "save_failed": "Failed to save file",
+    "save_succeeded": "Saved {}",
+    "save_all_succeeded": "Saved {} files",
     "not_text": "This file cannot be edited as text",
     "delete_failed": "Failed to delete file",
     "delete_succeeded": "Deleted {}"

@@ -40,15 +40,6 @@ func on_item_collapsed(item: TreeItem) -> void:
 	pass
 
 
-func _gui_input(event: InputEvent) -> void:
-	var key := event as InputEventKey
-	if key == null or not key.pressed or key.echo or key.keycode != KEY_DELETE:
-		return
-	if delete_selected():
-		accept_event()
-	pass
-
-
 ## Moves the selected file to the system trash and drops its row. Directories are not removed.
 func delete_selected() -> bool:
 	var item := get_selected()

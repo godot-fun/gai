@@ -23,6 +23,7 @@ enum Pending { NONE, CLOSE, LEAVE, QUIT }
 @onready var editor_host: Control = $Root/Body/EditorHost
 
 var tabs: EditorTabs = EditorTabs.new()
+var shortcut_host: EditorShortcuts.Host
 var editor: CommonEditor
 var confirm: ConfirmationDialog
 var discard_button: Button
@@ -55,6 +56,7 @@ func _ready() -> void:
 	gdf.events.locale_changed.connect(apply_locale)
 
 	build_confirm()
+	shortcut_host = EditorShortcuts.bind_editor(self)
 	configure_layout()
 	apply_theme()
 	apply_locale()
@@ -81,17 +83,9 @@ func _input(event: InputEvent) -> void:
 	if scroll_tabs(event):
 		get_viewport().set_input_as_handled()
 		return
-	var key := event as InputEventKey
-	if key == null or not key.pressed or key.echo:
+	if EditorShortcuts.handle_input(event, shortcut_host):
+		get_viewport().set_input_as_handled()
 		return
-	if confirm != null and confirm.visible:
-		return
-	if key.keycode != KEY_S or key.alt_pressed or key.shift_pressed:
-		return
-	if not key.ctrl_pressed and not key.meta_pressed:
-		return
-	save_active()
-	get_viewport().set_input_as_handled()
 	pass
 
 
@@ -381,7 +375,7 @@ func sync_active() -> void:
 	pass
 
 
-func save_active() -> void:
+func save_active_from_shortcut() -> void:
 	sync_active()
 	var document := tabs.active()
 	if document == null or not document.is_dirty():
@@ -390,6 +384,45 @@ func save_active() -> void:
 		Alert.alert(I18n.t("editor.save_failed"), Colors.error)
 		return
 	update_dirty_marks()
+	Alert.alert(StringUtils.format(I18n.t("editor.save_succeeded"), document.file_name()), Colors.success)
+	pass
+
+
+func save_all_from_shortcut() -> void:
+	sync_active()
+	var dirty := tabs.dirty_files()
+	if dirty.is_empty():
+		return
+	var count := dirty.size()
+	if not save_all_dirty():
+		return
+	Alert.alert(StringUtils.format(I18n.t("editor.save_all_succeeded"), count), Colors.success)
+	pass
+
+
+func close_active_from_shortcut() -> void:
+	var index := tabs.active_index
+	if index < 0:
+		return
+	on_tab_close_pressed(index)
+	pass
+
+
+func switch_tab(direction: int) -> void:
+	if tabs.files.is_empty() or direction == 0:
+		return
+	sync_active()
+	var count := tabs.files.size()
+	var index := tabs.active_index
+	if index < 0:
+		index = 0
+	index = (index + direction) % count
+	if index < 0:
+		index += count
+	if index == tabs.active_index:
+		return
+	tabs.active_index = index
+	show_active()
 	pass
 
 
