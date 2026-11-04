@@ -17,7 +17,7 @@ static func apply(dialog: ConfirmationDialog, secondary_buttons: Array[Button] =
 	dialog.transient = true
 	dialog.oversampling_override = DisplayScale.compute_ui_scale()
 	CommonWindow.apply_window_theme(dialog, ThemeColor.accent_surface, ThemeColor.title_color, ThemeColor.title_color)
-	dialog.add_theme_stylebox_override("panel", make_body_style())
+	dialog.add_theme_stylebox_override("panel", FileDialogStyle.make_dialog_body_style())
 	dialog.add_theme_color_override("font_color", ThemeColor.title_color)
 	dialog.add_theme_font_override("font", Fonts.regular())
 	dialog.add_theme_font_size_override("font_size", Typography.body_medium_size)
@@ -33,23 +33,11 @@ static func apply(dialog: ConfirmationDialog, secondary_buttons: Array[Button] =
 
 static func style_button(button: Button, primary: bool) -> void:
 	var accent := ThemeColor.accent_theme_color()
-	var border := accent if primary else Color(ThemeColor.title_color, 0.35)
-	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_md, Margin.ma_3, Margin.ma_1, border, ControlSize.border_xs)
-	var hover_fill := Color(accent, 0.28) if primary else Color(accent, 0.16)
-	var pressed_fill := Color(accent, 0.42) if primary else Color(accent, 0.28)
-	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, hover_fill, accent)
-	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, pressed_fill, accent)
-	ButtonStyle.apply_style(button, normal, hover, pressed)
 	var text := accent if primary else ThemeColor.title_color
-	var pressed_text := ThemeColor.inset_surface if primary else text
-	ButtonStyle.apply_font_colors(button, text, text, pressed_text)
+	var normal := FileDialogStyle.make_outline_action_normal(accent if primary else Color(text, 0.35))
+	if primary:
+		ButtonStyle.apply_style(button, normal, null, StyleBoxHelper.duplicate_with_bg_color(normal, accent, accent))
+	else:
+		ButtonStyle.apply_style(button, normal)
+	ButtonStyle.apply_font_colors(button, text, text, ThemeColor.inset_surface if primary else text)
 	pass
-
-
-static func make_body_style() -> StyleBoxFlat:
-	var style := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, 0, Margin.ma_2, Margin.ma_2)
-	style.expand_margin_left = ControlSize.border_xs
-	style.expand_margin_top = ControlSize.border_xs
-	style.expand_margin_right = ControlSize.border_xs
-	style.expand_margin_bottom = ControlSize.border_xs
-	return style

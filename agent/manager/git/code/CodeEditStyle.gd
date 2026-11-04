@@ -19,13 +19,10 @@ static func apply_base(edit: CodeEdit) -> void:
 ## Side-by-side diff panes: app background, line numbers, and current-line tint.
 static func apply_diff_editor(edit: CodeEdit) -> void:
 	var editor_style := StyleBoxHelper.create_style_box_flat(Colors.app_background, 0, 0, Margin.ma_2)
-	edit.add_theme_stylebox_override("normal", editor_style.duplicate())
-	edit.add_theme_stylebox_override("focus", editor_style.duplicate())
-	edit.add_theme_stylebox_override("read_only", editor_style.duplicate())
+	for state in ["normal", "focus", "read_only"]:
+		edit.add_theme_stylebox_override(state, editor_style.duplicate())
 	edit.add_theme_color_override("background_color", Colors.app_background)
 	apply_base(edit)
-	ScrollBarStyle.apply(edit.get_v_scroll_bar(), ScrollBarStyle.Thickness.MD)
-	ScrollBarStyle.apply(edit.get_h_scroll_bar(), ScrollBarStyle.Thickness.MD)
 	edit.add_theme_color_override("line_number_color", Colors.secondary_text)
 	edit.add_theme_color_override("current_line_color", Color(ThemeColor.accent_theme_color(), 0.10))
 	pass

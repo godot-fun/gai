@@ -204,21 +204,18 @@ func style_file_tree() -> void:
 	ScrollBarStyle.apply(tab_scroll.get_h_scroll_bar())
 	file_tree.add_theme_font_override("font", Fonts.regular())
 	file_tree.add_theme_font_size_override("font_size", Typography.body_medium_size)
-	file_tree.add_theme_color_override("font_color", Colors.primary_text)
-	file_tree.add_theme_color_override("font_hovered_color", Colors.primary_text)
-	file_tree.add_theme_color_override("font_selected_color", Colors.primary_text)
-	file_tree.add_theme_color_override("font_hovered_selected_color", Colors.primary_text)
+	for color_name in ["font_color", "font_hovered_color", "font_hovered_dimmed_color", "font_selected_color", "font_hovered_selected_color"]:
+		file_tree.add_theme_color_override(color_name, Colors.primary_text)
 	file_tree.add_theme_constant_override("draw_guides", 0)
 	file_tree.add_theme_constant_override("icon_max_width", ControlSize.icon_sm)
 	file_tree.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT))
+	file_tree.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	var selected := StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1)
-	var hover := StyleBoxHelper.create_style_box_flat(Colors.chrome_surface.lerp(ThemeColor.selected_surface, 0.55), ControlSize.radius_md, Margin.ma_2, Margin.ma_1)
-	file_tree.add_theme_stylebox_override("selected", selected)
-	file_tree.add_theme_stylebox_override("selected_focus", selected.duplicate() as StyleBoxFlat)
-	file_tree.add_theme_stylebox_override("hovered", hover)
-	file_tree.add_theme_stylebox_override("hovered_dim", hover.duplicate() as StyleBoxFlat)
-	file_tree.add_theme_stylebox_override("hovered_selected", selected.duplicate() as StyleBoxFlat)
-	file_tree.add_theme_stylebox_override("hovered_selected_focus", selected.duplicate() as StyleBoxFlat)
+	var hover := FileDialogStyle.make_file_list_hover_style(ControlSize.radius_md, Margin.ma_2, Margin.ma_1)
+	for state in ["selected", "selected_focus", "hovered_selected", "hovered_selected_focus"]:
+		file_tree.add_theme_stylebox_override(state, selected.duplicate() as StyleBoxFlat)
+	for state in ["hovered", "hovered_dimmed"]:
+		file_tree.add_theme_stylebox_override(state, hover.duplicate() as StyleBoxFlat)
 	style_internal_scroll_bars(file_tree)
 	pass
 

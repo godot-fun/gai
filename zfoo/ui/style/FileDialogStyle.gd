@@ -270,10 +270,10 @@ static func file_list_selection_surface() -> Color:
 	return ThemeColor.inset_surface.lerp(ThemeColor.accent_theme_color(), Weights.w_5)
 
 
-static func make_file_list_hover_style() -> StyleBoxFlat:
+static func make_file_list_hover_style(radius: int = ControlSize.radius_sm, margin_x: int = 0, margin_y: int = 0) -> StyleBoxFlat:
 	return StyleBoxHelper.create_style_box_flat(
 		ThemeColor.inset_surface.lerp(ThemeColor.accent_theme_color(), Weights.w_2),
-		ControlSize.radius_sm, 0, 0, ThemeColor.alpha_theme_color(0.45), ControlSize.border_xs
+		radius, margin_x, margin_y, ThemeColor.alpha_theme_color(0.45), ControlSize.border_xs
 	)
 
 
