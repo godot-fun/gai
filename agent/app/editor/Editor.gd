@@ -507,7 +507,7 @@ func make_tab(index: int) -> PanelContainer:
 	name_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	name_button.text = document.file_name()
 	name_button.tooltip_text = document.path
-	name_button.custom_minimum_size.y = ControlSize.sm
+	name_button.custom_minimum_size.y = ControlSize.xs
 	name_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_button.add_theme_font_override("font", Fonts.regular())
 	name_button.add_theme_font_size_override("font_size", Typography.label_medium_size)
