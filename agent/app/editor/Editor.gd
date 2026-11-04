@@ -4,7 +4,7 @@ extends PanelContainer
 ## The body is a workspace file tree beside [CommonEditor].
 
 const AGENT_SCENE_PATH := "res://agent/Agent.tscn"
-const WORDMARK := "GAI Editor"
+const WORDMARK := "GAI · Editor"
 const TAB_WIDTH := ControlSize.image_xs
 
 enum Pending { NONE, CLOSE, LEAVE, QUIT }
@@ -226,7 +226,7 @@ func style_confirm() -> void:
 func style_internal_scroll_bars(node: Node) -> void:
 	for child in node.get_children(true):
 		if child is ScrollBar:
-			ScrollBarStyle.apply(child as ScrollBar)
+			ScrollBarStyle.apply(child as ScrollBar, ScrollBarStyle.Thickness.SM)
 		style_internal_scroll_bars(child)
 	pass
 

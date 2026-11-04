@@ -30,7 +30,7 @@ size_flags_vertical = 4
 focus_mode = 0
 mouse_default_cursor_shape = 2
 flat = true
-text = "GAI Editor"
+text = "GAI · Editor"
 
 [node name="TabSpacer" type="Control" parent="Root/Toolbar/ToolbarMargin/ToolbarRow"]
 layout_mode = 2
