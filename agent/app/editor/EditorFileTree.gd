@@ -102,10 +102,14 @@ func add_entry(parent: TreeItem, dir_path: String, entry_name: String) -> void:
 	if item == null:
 		return
 	var full_path := EditorDocument.normalize(dir_path.path_join(entry_name))
+	var is_directory := DirAccess.dir_exists_absolute(full_path)
 	item.set_text(0, entry_name)
 	item.set_tooltip_text(0, full_path)
 	item.set_metadata(0, full_path)
-	if DirAccess.dir_exists_absolute(full_path):
+	var icon := EditorFileIcon.texture(full_path, is_directory)
+	if icon != null:
+		item.set_icon(0, icon)
+	if is_directory:
 		var placeholder := create_item(item)
 		if placeholder != null:
 			placeholder.set_meta("placeholder", true)

@@ -4,6 +4,20 @@ const TREE_DIR := "user://editor_file_tree_test"
 const FILES_DIR := "user://editor_tabs_test"
 
 
+static func editor_file_icon_matches_name_and_extension_test() -> void:
+	assert(EditorFileIcon.icon_path("res://player.gd", false).ends_with("godot.svg"))
+	assert(EditorFileIcon.icon_path("C:/src/Player.GD", false).ends_with("godot.svg"))
+	assert(EditorFileIcon.icon_path("res://scene.tscn", false).ends_with("godot-assets.svg"))
+	assert(EditorFileIcon.icon_path("Dockerfile", false).ends_with("docker.svg"))
+	assert(EditorFileIcon.icon_path(".gitignore", false).ends_with("git.svg"))
+	assert(EditorFileIcon.icon_path("notes.md", false).ends_with("markdown.svg"))
+	assert(EditorFileIcon.icon_path("pic.png", false).ends_with("image.svg"))
+	assert(EditorFileIcon.icon_path("data.json", false).ends_with("json.svg"))
+	assert(EditorFileIcon.icon_path("src", true).ends_with("folder.svg"))
+	assert(EditorFileIcon.icon_path("unknown.zzz", false).ends_with("file.svg"))
+	pass
+
+
 static func editor_file_tree_skips_hidden_names_test() -> void:
 	assert(EditorFileTree.is_skipped_name("."))
 	assert(EditorFileTree.is_skipped_name(".."))

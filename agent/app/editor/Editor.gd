@@ -204,6 +204,7 @@ func style_file_tree() -> void:
 	file_tree.add_theme_color_override("font_selected_color", Colors.primary_text)
 	file_tree.add_theme_color_override("font_hovered_selected_color", Colors.primary_text)
 	file_tree.add_theme_constant_override("draw_guides", 0)
+	file_tree.add_theme_constant_override("icon_max_width", ControlSize.icon_sm)
 	file_tree.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT))
 	var selected := StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1)
 	file_tree.add_theme_stylebox_override("selected", selected)
