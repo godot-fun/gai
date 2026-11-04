@@ -41,13 +41,13 @@ mouse_default_cursor_shape = 2
 text = "project"
 flat = true
 
-[node name="WorkflowButton" type="Button" parent="Root/Toolbar/ToolbarRow"]
+[node name="EditorButton" type="Button" parent="Root/Toolbar/ToolbarRow"]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 focus_mode = 0
 mouse_default_cursor_shape = 2
-text = "Workflow"
+text = "Editor"
 
 [node name="SenseButton" type="Button" parent="Root/Toolbar/ToolbarRow"]
 layout_mode = 2
@@ -57,13 +57,13 @@ focus_mode = 0
 mouse_default_cursor_shape = 2
 text = "Sense"
 
-[node name="EditorButton" type="Button" parent="Root/Toolbar/ToolbarRow"]
+[node name="WorkflowButton" type="Button" parent="Root/Toolbar/ToolbarRow"]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 focus_mode = 0
 mouse_default_cursor_shape = 2
-text = "Editor"
+text = "Workflow"
 
 [node name="NoteButton" type="Button" parent="Root/Toolbar/ToolbarRow"]
 layout_mode = 2
