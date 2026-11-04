@@ -1,9 +1,9 @@
-## Markdown note window. Editing and preview live in [MarkdownEdit]; this window loads the note,
+## Markdown note window. Editing and preview live in [CommonEditor]; this window loads the note,
 ## saves it on close, and keeps the open-on-startup preference.
 class_name NoteWindow
 extends CommonWindow
 
-var editor: MarkdownEdit
+var editor: CommonEditor
 var open_on_startup_check: CheckButton
 
 
@@ -23,8 +23,9 @@ func _init() -> void:
 func build_layout() -> void:
 	# Keep the toolbar below the title band; other CommonWindow content covers all fractional edges.
 	container.offset_top = 0
-	editor = MarkdownEdit.new()
+	editor = CommonEditor.new()
 	container.add_child(editor)
+	editor.set_suffix("md")
 
 	open_on_startup_check = CheckButton.new()
 	open_on_startup_check.focus_mode = Control.FOCUS_NONE
@@ -69,7 +70,7 @@ func style_open_on_startup() -> void:
 	pass
 
 
-func on_view_mode_changed(mode: MarkdownEdit.ViewMode) -> void:
+func on_view_mode_changed(mode: CommonEditor.ViewMode) -> void:
 	NoteSetting.set_view_mode(mode)
 	pass
 

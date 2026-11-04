@@ -22,7 +22,7 @@ enum Pending { NONE, CLOSE, LEAVE, QUIT }
 @onready var editor_host: Control = $Root/Body/EditorHost
 
 var tabs: EditorTabs = EditorTabs.new()
-var code_edit: CommonEditor
+var editor: CommonEditor
 var confirm: ConfirmationDialog
 var discard_button: Button
 var tab_cards: Array[PanelContainer] = []
@@ -40,9 +40,9 @@ func _ready() -> void:
 	app_theme.default_font = Fonts.regular()
 	theme = app_theme
 
-	code_edit = CommonEditor.new()
-	editor_host.add_child(code_edit)
-	code_edit.text_changed.connect(on_editor_text_changed)
+	editor = CommonEditor.new()
+	editor_host.add_child(editor)
+	editor.text_changed.connect(on_editor_text_changed)
 	logo_button.pressed.connect(on_logo_pressed)
 	body_split.dragged.connect(on_split_dragged)
 	resized.connect(align_tabs)
@@ -297,7 +297,7 @@ func on_editor_text_changed() -> void:
 	var document := tabs.active()
 	if document == null:
 		return
-	document.text = code_edit.text
+	document.text = editor.text
 	update_dirty_marks()
 	pass
 
@@ -351,23 +351,21 @@ func reveal_active_tab() -> void:
 func show_active() -> void:
 	var document := tabs.active()
 	assigning_text = true
-	var path := "" if document == null else document.path
-	code_edit.editable = document != null
-	code_edit.highlight_current_line = document != null
-	code_edit.caret_blink = document != null
-	code_edit.apply_file(path)
-	code_edit.text = "" if document == null else document.text
+	var suffix := "" if document == null else document.path
+	var body := "" if document == null else document.text
+	editor.editable = document != null
+	editor.set_document(body, suffix)
 	assigning_text = false
 	rebuild_tabs()
-	code_edit.focus_editor()
+	editor.focus_editor()
 	pass
 
 
 func sync_active() -> void:
 	var document := tabs.active()
-	if document == null or code_edit == null:
+	if document == null or editor == null:
 		return
-	document.text = code_edit.text
+	document.text = editor.text
 	pass
 
 

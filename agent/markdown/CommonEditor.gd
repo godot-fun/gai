@@ -1,8 +1,8 @@
-## Split Markdown editor. The left pane edits raw text; the right pane previews rendered Markdown.
-## A toolbar toggles edit / split / preview. The host owns the text and may persist
-## [signal view_mode_changed] and [signal split_ratio_changed]. Extra toolbar controls go in
-## front of the mode buttons through [method add_toolbar_leading].
-class_name MarkdownEdit
+## Text editor. [method set_document] takes the text and a format suffix.
+## Markdown suffixes keep the split editor and preview. Other suffixes are a single highlighted editor.
+## Edit / split / preview float at the top-right of the content, and only for Markdown.
+## Extra controls go in front of the content through [method add_toolbar_leading].
+class_name CommonEditor
 extends VBoxContainer
 
 const EDIT_ICON_PATH := "res://agent/asset/image/icon/edit.svg"
@@ -22,9 +22,15 @@ signal split_ratio_changed(ratio: float)
 var view_mode: ViewMode = ViewMode.SPLIT
 ## Left-pane width as a fraction of the split (0–1). Restored across resizes via split offset.
 var split_ratio: float = DEFAULT_SPLIT_RATIO
+## Lowercase format suffix without a leading dot, such as [code]md[/code] or [code]gd[/code].
+var file_suffix: String = ""
+var source_path: String = ""
 var toolbar_panel: PanelContainer
 var toolbar: HBoxContainer
 var toolbar_spacer: Control
+var content: Control
+var mode_panel: PanelContainer
+var mode_bar: HBoxContainer
 var split_container: HSplitContainer
 var text_edit: CodeEdit
 var preview_panel: PanelContainer
@@ -39,12 +45,12 @@ var text: String:
 		return text_edit.text
 	set(value):
 		if text_edit.text == value:
-			if view_mode != ViewMode.EDIT:
+			if is_markdown() and view_mode != ViewMode.EDIT:
 				refresh_preview()
 			return
 		# CodeEdit does not emit text_changed for a programmatic assignment.
 		text_edit.text = value
-		if view_mode != ViewMode.EDIT:
+		if is_markdown() and view_mode != ViewMode.EDIT:
 			refresh_preview()
 		text_changed.emit()
 		pass
@@ -54,6 +60,15 @@ var placeholder_text: String:
 		return text_edit.placeholder_text
 	set(value):
 		text_edit.placeholder_text = value
+		pass
+
+var editable: bool:
+	get:
+		return text_edit.editable
+	set(value):
+		text_edit.editable = value
+		text_edit.caret_blink = value
+		text_edit.highlight_current_line = value
 		pass
 
 
@@ -71,8 +86,27 @@ func _init() -> void:
 	pass
 
 
+## Shows [param body] and switches layout from [param suffix] ([code]md[/code], [code].gd[/code], or a full file name).
+func set_document(body: String, suffix: String) -> void:
+	set_suffix(suffix)
+	text = body
+	pass
+
+
+func set_suffix(suffix: String) -> void:
+	var normalized := normalize_suffix(suffix)
+	var probe := probe_for(suffix)
+	if normalized == file_suffix and probe == source_path:
+		return
+	file_suffix = normalized
+	source_path = probe
+	apply_format()
+	pass
+
+
 func build_layout() -> void:
 	toolbar_panel = PanelContainer.new()
+	toolbar_panel.visible = false
 	toolbar_panel.custom_minimum_size.y = ControlSize.sm
 	add_child(toolbar_panel)
 
@@ -86,33 +120,32 @@ func build_layout() -> void:
 	toolbar_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	toolbar.add_child(toolbar_spacer)
 
-	mode_button_group = ButtonGroup.new()
-	edit_mode_button = make_mode_button(ViewMode.EDIT, EDIT_ICON_PATH)
-	split_mode_button = make_mode_button(ViewMode.SPLIT, SPLIT_ICON_PATH)
-	preview_mode_button = make_mode_button(ViewMode.PREVIEW, PREVIEW_ICON_PATH)
-	toolbar.add_child(edit_mode_button)
-	toolbar.add_child(split_mode_button)
-	toolbar.add_child(preview_mode_button)
+	content = Control.new()
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content.resized.connect(position_mode_panel)
+	add_child(content)
 
 	split_container = HSplitContainer.new()
-	split_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	split_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	split_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	split_container.add_theme_constant_override("separation", 0)
 	split_container.dragged.connect(on_split_dragged)
-	add_child(split_container)
+	content.add_child(split_container)
 
 	text_edit = CodeEdit.new()
 	text_edit.editable = true
 	text_edit.caret_blink = true
 	text_edit.highlight_current_line = true
-	text_edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
-	text_edit.syntax_highlighter = MarkdownHighlighter.create()
+	text_edit.wrap_mode = TextEdit.LINE_WRAPPING_NONE
+	text_edit.gutters_draw_line_numbers = true
 	text_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	text_edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	text_edit.text_changed.connect(on_text_changed)
 	split_container.add_child(text_edit)
 
 	preview_panel = PanelContainer.new()
+	preview_panel.visible = false
 	preview_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	preview_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	split_container.add_child(preview_panel)
@@ -123,23 +156,38 @@ func build_layout() -> void:
 	preview_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	preview_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	preview_panel.add_child(preview_label)
+
+	mode_button_group = ButtonGroup.new()
+	edit_mode_button = make_mode_button(ViewMode.EDIT, EDIT_ICON_PATH)
+	split_mode_button = make_mode_button(ViewMode.SPLIT, SPLIT_ICON_PATH)
+	preview_mode_button = make_mode_button(ViewMode.PREVIEW, PREVIEW_ICON_PATH)
+	mode_bar = HBoxContainer.new()
+	mode_bar.add_theme_constant_override("separation", Margin.ma_1)
+	mode_bar.alignment = BoxContainer.ALIGNMENT_CENTER
+	mode_bar.add_child(edit_mode_button)
+	mode_bar.add_child(split_mode_button)
+	mode_bar.add_child(preview_mode_button)
+
+	mode_panel = PanelContainer.new()
+	mode_panel.visible = false
+	mode_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mode_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mode_panel.anchor_left = 1.0
+	mode_panel.anchor_top = 0.0
+	mode_panel.anchor_right = 1.0
+	mode_panel.anchor_bottom = 0.0
+	mode_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	mode_panel.grow_vertical = Control.GROW_DIRECTION_END
+	mode_panel.add_child(mode_bar)
+	content.add_child(mode_panel)
 	pass
 
 
-## Insert [param control] on the left side of the toolbar, before the mode buttons.
+## Insert [param control] on the left side of the top bar, above the content.
 func add_toolbar_leading(control: Control) -> void:
+	toolbar_panel.visible = true
 	toolbar.add_child(control)
 	toolbar.move_child(control, toolbar_spacer.get_index())
-	pass
-
-
-## Moves the edit / split / preview buttons into [param parent] and hides this editor's toolbar,
-## so the text sits against the host's own bar. The buttons keep their mode behavior.
-func detach_mode_bar(parent: Container) -> void:
-	toolbar_panel.visible = false
-	edit_mode_button.reparent(parent)
-	split_mode_button.reparent(parent)
-	preview_mode_button.reparent(parent)
 	pass
 
 
@@ -165,13 +213,14 @@ func apply_locale() -> void:
 	pass
 
 
-## Palette matches [GitDiffViewer]: toolbar on [member Colors.surface], editors on
-## [member Colors.app_background], body text on [member Colors.primary_text].
 func apply_theme() -> void:
 	split_container.add_theme_icon_override("grabber", make_transparent_grabber())
 	style_text_edit()
 	style_preview()
 	style_toolbar()
+	style_mode_panel()
+	apply_highlighter()
+	position_mode_panel()
 	pass
 
 
@@ -185,12 +234,14 @@ func style_text_edit() -> void:
 	text_edit.add_theme_color_override("font_placeholder_color", Colors.secondary_text)
 	text_edit.add_theme_color_override("current_line_color", Color(ThemeColor.accent_theme_color(), 0.10))
 	text_edit.add_theme_font_size_override("font_size", Typography.body_large_size)
+	if not is_markdown():
+		text_edit.add_theme_color_override("line_number_color", Colors.secondary_text)
 	pass
 
 
 func style_preview() -> void:
 	var style := StyleBoxHelper.create_style_box_flat(Colors.app_background, 0, Margin.ma_4, Margin.ma_3)
-	if view_mode == ViewMode.SPLIT:
+	if view_mode == ViewMode.SPLIT and is_markdown():
 		style.border_color = Colors.border
 		style.set_border_width(SIDE_LEFT, ControlSize.border_xs)
 	preview_panel.add_theme_stylebox_override("panel", style)
@@ -209,7 +260,22 @@ func style_toolbar() -> void:
 	pass
 
 
-## Square icon button; selection uses the same surface treatment as [GitDiffViewer].
+func style_mode_panel() -> void:
+	mode_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	pass
+
+
+func position_mode_panel() -> void:
+	var size := mode_panel.get_combined_minimum_size()
+	var inset := Margin.ma_8
+	mode_panel.offset_top = Margin.ma_3
+	mode_panel.offset_right = -inset
+	mode_panel.offset_left = -inset - size.x
+	mode_panel.offset_bottom = Margin.ma_3 + size.y
+	pass
+
+
+## Icon-only mode button. The fill stays clear so the text underneath remains visible.
 func style_mode_button(button: Button) -> void:
 	button.text = ""
 	button.expand_icon = false
@@ -218,16 +284,12 @@ func style_mode_button(button: Button) -> void:
 	button.custom_minimum_size = ControlSize.square(ControlSize.sm)
 	button.add_theme_constant_override("icon_max_width", ControlSize.icon_sm)
 	button.add_theme_constant_override("icon_max_height", ControlSize.icon_sm)
-	var normal := StyleBoxHelper.create_style_box_flat(
-		Colors.control_surface, ControlSize.radius_sm, Margin.ma_1, Margin.ma_1,
-		Colors.subtle_border, ControlSize.border_xs)
-	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface, ThemeColor.accent_theme_color())
-	var pressed := StyleBoxHelper.duplicate_with_bg_color(
-		normal, ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), Weights.w_2),
-		ThemeColor.accent_theme_color())
-	var disabled := StyleBoxHelper.duplicate_with_bg_color(normal, Colors.surface, Colors.subtle_border)
+	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_sm)
+	var accent := ThemeColor.accent_theme_color()
+	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, Color(accent, 0.16))
+	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, Color(accent, 0.28))
 	ButtonStyle.apply_style(button, normal, hover, pressed)
-	button.add_theme_stylebox_override("disabled", disabled)
+	button.add_theme_stylebox_override("disabled", normal.duplicate())
 	var icon_path := str(button.get_meta("markdown_edit_icon_path", ""))
 	var icon_color := ThemeColor.accent_theme_color() if button.button_pressed else Colors.primary_text
 	button.icon = make_icon(icon_path, icon_color)
@@ -252,8 +314,7 @@ func make_transparent_grabber() -> ImageTexture:
 func set_view_mode(mode: ViewMode) -> void:
 	var changed := view_mode != mode
 	view_mode = mode
-	text_edit.visible = mode != ViewMode.PREVIEW
-	preview_panel.visible = mode != ViewMode.EDIT
+	apply_view_visibility()
 	edit_mode_button.set_pressed_no_signal(mode == ViewMode.EDIT)
 	split_mode_button.set_pressed_no_signal(mode == ViewMode.SPLIT)
 	preview_mode_button.set_pressed_no_signal(mode == ViewMode.PREVIEW)
@@ -261,9 +322,9 @@ func set_view_mode(mode: ViewMode) -> void:
 	style_mode_button(edit_mode_button)
 	style_mode_button(split_mode_button)
 	style_mode_button(preview_mode_button)
-	if mode != ViewMode.EDIT:
+	if is_markdown() and mode != ViewMode.EDIT:
 		refresh_preview()
-	if mode == ViewMode.SPLIT:
+	if is_markdown() and mode == ViewMode.SPLIT:
 		reset_split.call_deferred()
 	focus_editor()
 	if changed:
@@ -272,7 +333,7 @@ func set_view_mode(mode: ViewMode) -> void:
 
 
 func focus_editor() -> void:
-	if view_mode == ViewMode.PREVIEW:
+	if is_markdown() and view_mode == ViewMode.PREVIEW:
 		return
 	if is_inside_tree() and is_visible_in_tree():
 		text_edit.grab_focus()
@@ -280,7 +341,7 @@ func focus_editor() -> void:
 
 
 func on_text_changed() -> void:
-	if view_mode != ViewMode.EDIT:
+	if is_markdown() and view_mode != ViewMode.EDIT:
 		refresh_preview()
 	text_changed.emit()
 	pass
@@ -316,4 +377,71 @@ func reset_split() -> void:
 	if width <= 0.0:
 		return
 	split_container.split_offset = roundi(width * (split_ratio - 0.5))
+	pass
+
+
+func is_markdown() -> bool:
+	return file_suffix in MarkdownHighlighter.EXTENSIONS
+
+
+func normalize_suffix(suffix: String) -> String:
+	var name := file_label(suffix)
+	if name.contains("."):
+		return name.get_extension()
+	if is_special_file_name(name):
+		return ""
+	return name.trim_prefix(".")
+
+
+func file_label(suffix: String) -> String:
+	return suffix.strip_edges().replace("\\", "/").get_file().to_lower()
+
+
+func is_special_file_name(name: String) -> bool:
+	return name.begins_with(".") or name in ["dockerfile", "makefile"]
+
+
+func probe_for(suffix: String) -> String:
+	var name := file_label(suffix)
+	if name.contains(".") or is_special_file_name(name):
+		return name
+	var extension := name.trim_prefix(".")
+	if extension.is_empty():
+		return ""
+	return "file." + extension
+
+
+func probe_path() -> String:
+	return source_path
+
+
+func apply_format() -> void:
+	var markdown := is_markdown()
+	mode_panel.visible = markdown
+	text_edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY if markdown else TextEdit.LINE_WRAPPING_NONE
+	text_edit.gutters_draw_line_numbers = not markdown
+	apply_highlighter()
+	apply_view_visibility()
+	style_text_edit()
+	style_preview()
+	if markdown and view_mode != ViewMode.EDIT:
+		refresh_preview()
+	if markdown and view_mode == ViewMode.SPLIT:
+		reset_split.call_deferred()
+	position_mode_panel()
+	pass
+
+
+func apply_view_visibility() -> void:
+	if not is_markdown():
+		text_edit.visible = true
+		preview_panel.visible = false
+		return
+	text_edit.visible = view_mode != ViewMode.PREVIEW
+	preview_panel.visible = view_mode != ViewMode.EDIT
+	pass
+
+
+func apply_highlighter() -> void:
+	text_edit.syntax_highlighter = CommonHighlighter.create(probe_path())
 	pass
