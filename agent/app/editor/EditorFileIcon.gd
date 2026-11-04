@@ -8,7 +8,6 @@ const ICON_DIRECTORY := "res://agent/asset/image/file/"
 
 const FILE_NAMES: Dictionary[String, String] = {
 	"dockerfile": "docker",
-	"makefile": "makefile",
 	"gnumakefile": "makefile",
 	"sconstruct": "scons",
 	"sconscript": "scons",
@@ -17,72 +16,136 @@ const FILE_NAMES: Dictionary[String, String] = {
 	".gitattributes": "git",
 	".gitmodules": "git",
 	".gitconfig": "git",
-	".editorconfig": "editorconfig",
 	"go.mod": "go-mod",
 	"go.sum": "go-mod",
 	"package.json": "nodejs",
 	"tsconfig.json": "tsconfig",
-	"license": "license",
 	"copying": "license",
-	"readme": "readme",
-	"changelog": "changelog",
-	"authors": "authors",
 	"contributors": "authors",
-	"contributing": "contributing",
-	"codeowners": "codeowners",
 }
 
-static var extensions: Dictionary[String, String] = {}
+const EXTENSIONS: Dictionary[String, String] = {
+	"gd": "godot",
+	"tscn": "godot-assets",
+	"tres": "godot-assets",
+	"godot": "godot-assets",
+	"gdextension": "godot-assets",
+	"gdshader": "godot-assets",
+	"gdshaderinc": "godot-assets",
+	"import": "godot-assets",
+	"py": "python",
+	"pyw": "python",
+	"pyi": "python",
+	"rb": "ruby",
+	"rake": "ruby",
+	"pl": "prolog",
+	"pm": "perl",
+	"cs": "csharp",
+	"cc": "cpp",
+	"cxx": "cpp",
+	"hh": "hpp",
+	"hxx": "hpp",
+	"m": "objective-c",
+	"mm": "objective-cpp",
+	"js": "javascript",
+	"mjs": "javascript",
+	"cjs": "javascript",
+	"jsx": "react",
+	"ts": "typescript",
+	"mts": "typescript",
+	"cts": "typescript",
+	"tsx": "react_ts",
+	"kt": "kotlin",
+	"kts": "kotlin",
+	"rs": "rust",
+	"yml": "yaml",
+	"jsonc": "json",
+	"json5": "json",
+	"ini": "settings",
+	"cfg": "settings",
+	"conf": "settings",
+	"properties": "settings",
+	"env": "tune",
+	"htm": "html",
+	"xhtml": "html",
+	"md": "markdown",
+	"mdown": "markdown",
+	"mkd": "markdown",
+	"scss": "sass",
+	"sh": "console",
+	"bash": "console",
+	"zsh": "console",
+	"fish": "console",
+	"bat": "console",
+	"cmd": "console",
+	"ps1": "powershell",
+	"psm1": "powershell",
+	"sql": "database",
+	"psql": "database",
+	"ddl": "database",
+	"dml": "database",
+	"rej": "diff",
+	"patch": "git",
+	"cls": "tex",
+	"sty": "tex",
+	"bib": "bibliography",
+	"glsl": "shader",
+	"vert": "shader",
+	"frag": "shader",
+	"geom": "shader",
+	"tesc": "shader",
+	"tese": "shader",
+	"comp": "shader",
+	"hlsl": "shader",
+	"fx": "shader",
+	"wgsl": "shader",
+	"bmp": "image",
+	"dds": "image",
+	"exr": "image",
+	"jpg": "image",
+	"jpeg": "image",
+	"gif": "image",
+	"ktx": "image",
+	"png": "image",
+	"tga": "image",
+	"webp": "image",
+	"ico": "image",
+	"tif": "image",
+	"tiff": "image",
+	"avif": "image",
+	"heic": "image",
+	"wav": "audio",
+	"mp3": "audio",
+	"ogg": "audio",
+	"flac": "audio",
+	"aac": "audio",
+	"m4a": "audio",
+	"avi": "video",
+	"m4v": "video",
+	"mkv": "video",
+	"mov": "video",
+	"mp4": "video",
+	"mpeg": "video",
+	"mpg": "video",
+	"ogv": "video",
+	"webm": "video",
+	"ttf": "font",
+	"otf": "font",
+	"woff": "font",
+	"woff2": "font",
+	"eot": "font",
+	"gz": "zip",
+	"tgz": "zip",
+	"tar": "zip",
+	"bz2": "zip",
+	"xz": "zip",
+	"7z": "zip",
+	"rar": "zip",
+	"txt": "document",
+}
+
 static var present: Dictionary[String, bool] = {}
 static var textures: Dictionary = {}
-
-
-static func _static_init() -> void:
-	bind_extensions(["gd"], "godot")
-	bind_extensions(["tscn", "tres", "godot", "gdextension", "gdshader", "gdshaderinc", "import"], "godot-assets")
-	bind_extensions(["py", "pyw", "pyi"], "python")
-	bind_extensions(["rb", "rake"], "ruby")
-	bind_extensions(["pl"], "prolog")
-	bind_extensions(["pm"], "perl")
-	bind_extensions(["cs"], "csharp")
-	bind_extensions(["cc", "cpp", "cxx"], "cpp")
-	bind_extensions(["hh", "hpp", "hxx"], "hpp")
-	bind_extensions(["m"], "objective-c")
-	bind_extensions(["mm"], "objective-cpp")
-	bind_extensions(["js", "mjs", "cjs"], "javascript")
-	bind_extensions(["jsx"], "react")
-	bind_extensions(["ts", "mts", "cts"], "typescript")
-	bind_extensions(["tsx"], "react_ts")
-	bind_extensions(["kt", "kts"], "kotlin")
-	bind_extensions(["rs"], "rust")
-	bind_extensions(["yml"], "yaml")
-	bind_extensions(["jsonc", "json5"], "json")
-	bind_extensions(["ini", "cfg", "conf", "properties"], "settings")
-	bind_extensions(["env"], "tune")
-	bind_extensions(["htm", "xhtml"], "html")
-	bind_extensions(["md", "markdown", "mdown", "mkd"], "markdown")
-	bind_extensions(["scss", "sass"], "sass")
-	bind_extensions(["sh", "bash", "zsh", "fish", "bat", "cmd"], "console")
-	bind_extensions(["ps1", "psm1"], "powershell")
-	bind_extensions(["sql", "psql", "ddl", "dml"], "database")
-	bind_extensions(["diff", "rej"], "diff")
-	bind_extensions(["patch"], "git")
-	bind_extensions(["tex", "cls", "sty"], "tex")
-	bind_extensions(["bib"], "bibliography")
-	bind_extensions(["glsl", "vert", "frag", "geom", "tesc", "tese", "comp", "hlsl", "fx", "wgsl"], "shader")
-	bind_extensions(["bmp", "dds", "exr", "jpg", "jpeg", "gif", "ktx", "png", "tga", "webp", "ico", "tif", "tiff", "avif", "heic"], "image")
-	bind_extensions(["wav", "mp3", "ogg", "flac", "aac", "m4a"], "audio")
-	bind_extensions(["avi", "m4v", "mkv", "mov", "mp4", "mpeg", "mpg", "ogv", "webm"], "video")
-	bind_extensions(["ttf", "otf", "woff", "woff2", "eot"], "font")
-	bind_extensions(["gz", "tgz", "tar", "bz2", "xz", "7z", "rar"], "zip")
-	bind_extensions(["txt"], "document")
-	pass
-
-
-static func bind_extensions(names: PackedStringArray, stem: String) -> void:
-	for name in names:
-		extensions[name] = stem
-	pass
 
 
 ## Resource path of the SVG for [param file_path]. Directories use the folder icon.
@@ -90,12 +153,15 @@ static func icon_path(file_path: String, is_directory: bool) -> String:
 	if is_directory:
 		return icon_file("folder")
 	var file_name := file_path.get_file().to_lower()
-	var stem := str(FILE_NAMES.get(file_name, ""))
+	var stem: String = FILE_NAMES.get(file_name, "")
 	if stem.is_empty():
 		var extension := file_name.get_extension()
-		stem = str(extensions.get(extension, ""))
-		if stem.is_empty() and not extension.is_empty() and has_icon(extension):
-			stem = extension
+		if extension.is_empty():
+			stem = file_name if has_icon(file_name) else ""
+		else:
+			stem = EXTENSIONS.get(extension, "")
+			if stem.is_empty() and has_icon(extension):
+				stem = extension
 	if not has_icon(stem):
 		stem = "file"
 	return icon_file(stem)

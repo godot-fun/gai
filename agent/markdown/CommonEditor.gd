@@ -133,7 +133,7 @@ func build_layout() -> void:
 	text_edit.caret_blink = true
 	text_edit.highlight_current_line = true
 	text_edit.wrap_mode = TextEdit.LINE_WRAPPING_NONE
-	text_edit.gutters_draw_line_numbers = true
+	text_edit.gutters_draw_line_numbers = false
 	text_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	text_edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	text_edit.text_changed.connect(on_text_changed)
@@ -373,7 +373,7 @@ func apply_format() -> void:
 	var markdown := is_markdown()
 	mode_bar.visible = markdown
 	text_edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY if markdown else TextEdit.LINE_WRAPPING_NONE
-	text_edit.gutters_draw_line_numbers = not markdown
+	text_edit.gutters_draw_line_numbers = not markdown and not source_path.is_empty()
 	apply_view_visibility()
 	style_text_edit()
 	style_preview()

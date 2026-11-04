@@ -9,6 +9,8 @@ static func editor_file_icon_matches_name_and_extension_test() -> void:
 	assert(EditorFileIcon.icon_path("C:/src/Player.GD", false).ends_with("godot.svg"))
 	assert(EditorFileIcon.icon_path("res://scene.tscn", false).ends_with("godot-assets.svg"))
 	assert(EditorFileIcon.icon_path("Dockerfile", false).ends_with("docker.svg"))
+	assert(EditorFileIcon.icon_path("Makefile", false).ends_with("makefile.svg"))
+	assert(EditorFileIcon.icon_path(".editorconfig", false).ends_with("editorconfig.svg"))
 	assert(EditorFileIcon.icon_path(".gitignore", false).ends_with("git.svg"))
 	assert(EditorFileIcon.icon_path("notes.md", false).ends_with("markdown.svg"))
 	assert(EditorFileIcon.icon_path("pic.png", false).ends_with("image.svg"))
