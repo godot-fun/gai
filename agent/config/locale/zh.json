@@ -115,7 +115,6 @@
     "replace_placeholder": "替换为",
     "find_previous": "查找上一处",
     "find_next": "查找下一处",
-    "find_close": "关闭查找",
     "replace": "替换",
     "replace_all": "全部替换",
     "find_count": "{}/{}",

@@ -138,6 +138,10 @@ func common_editor_replace_test() -> void:
 	assert(editor.find_edit.get_parent() == editor.replace_edit.get_parent())
 	assert(editor.find_edit.custom_minimum_size.x == ControlSize.image_md)
 	assert(editor.replace_edit.custom_minimum_size.x == ControlSize.image_md)
+	assert(editor.replace_button.get_meta("find_icon_path") == "res://agent/asset/image/ui/find_replace.svg")
+	assert(editor.replace_all_button.get_meta("find_icon_path") == "res://agent/asset/image/ui/done_all.svg")
+	assert(editor.replace_button.text == "")
+	assert(editor.replace_all_button.text == "")
 	editor.set_find_query("cat")
 	editor.replace_edit.text = "dog"
 	editor.text_edit.deselect()

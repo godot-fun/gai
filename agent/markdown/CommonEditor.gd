@@ -11,7 +11,8 @@ const SPLIT_ICON_PATH := "res://agent/asset/image/ui/vertical_split.svg"
 const PREVIEW_ICON_PATH := "res://agent/asset/image/ui/visibility.svg"
 const FIND_PREVIOUS_ICON_PATH := "res://agent/asset/image/ui/keyboard_arrow_up.svg"
 const FIND_NEXT_ICON_PATH := "res://agent/asset/image/ui/keyboard_arrow_down.svg"
-const FIND_CLOSE_ICON_PATH := "res://agent/asset/image/ui/close.svg"
+const FIND_REPLACE_ICON_PATH := "res://agent/asset/image/ui/find_replace.svg"
+const FIND_REPLACE_ALL_ICON_PATH := "res://agent/asset/image/ui/done_all.svg"
 const DEFAULT_SPLIT_RATIO := 0.5
 
 enum ViewMode { EDIT, SPLIT, PREVIEW }
@@ -49,7 +50,6 @@ var replace_edit: LineEdit
 var find_count_label: Label
 var find_previous_button: Button
 var find_next_button: Button
-var find_close_button: Button
 var replace_button: Button
 var replace_all_button: Button
 ## Caret where this find session started. Typing in the query keeps searching from here.
@@ -232,10 +232,7 @@ func apply_locale() -> void:
 	replace_edit.placeholder_text = I18n.t("markdown.replace_placeholder")
 	find_previous_button.tooltip_text = I18n.t("markdown.find_previous")
 	find_next_button.tooltip_text = I18n.t("markdown.find_next")
-	find_close_button.tooltip_text = I18n.t("markdown.find_close")
-	replace_button.text = I18n.t("markdown.replace")
 	replace_button.tooltip_text = I18n.t("markdown.replace")
-	replace_all_button.text = I18n.t("markdown.replace_all")
 	replace_all_button.tooltip_text = I18n.t("markdown.replace_all")
 	position_find_bar()
 	pass
@@ -501,10 +498,6 @@ func build_find_bar() -> void:
 	find_next_button.pressed.connect(find_next)
 	find_row.add_child(find_next_button)
 
-	find_close_button = make_find_icon_button(FIND_CLOSE_ICON_PATH)
-	find_close_button.pressed.connect(close_find)
-	find_row.add_child(find_close_button)
-
 	replace_edit = make_find_line_edit()
 	replace_edit.visible = false
 	replace_edit.gui_input.connect(on_replace_edit_gui_input)
@@ -521,11 +514,11 @@ func build_find_bar() -> void:
 	replace_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	replace_row.add_child(replace_spacer)
 
-	replace_button = make_find_text_button()
+	replace_button = make_find_icon_button(FIND_REPLACE_ICON_PATH)
 	replace_button.pressed.connect(replace_current)
 	replace_row.add_child(replace_button)
 
-	replace_all_button = make_find_text_button()
+	replace_all_button = make_find_icon_button(FIND_REPLACE_ALL_ICON_PATH)
 	replace_all_button.pressed.connect(replace_all_matches)
 	replace_row.add_child(replace_all_button)
 	pass
@@ -551,14 +544,6 @@ func make_find_icon_button(icon_path: String) -> Button:
 	return button
 
 
-func make_find_text_button() -> Button:
-	var button := Button.new()
-	button.focus_mode = Control.FOCUS_NONE
-	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	button.custom_minimum_size.y = ControlSize.sm
-	return button
-
-
 func style_find_bar() -> void:
 	var panel := StyleBoxHelper.create_style_box_flat(Colors.elevated_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_2, Colors.border, ControlSize.border_xs)
 	find_bar.add_theme_stylebox_override("panel", panel)
@@ -571,9 +556,8 @@ func style_find_bar() -> void:
 	find_count_label.add_theme_color_override("font_color", Colors.secondary_text)
 	style_find_icon_button(find_previous_button)
 	style_find_icon_button(find_next_button)
-	style_find_icon_button(find_close_button)
-	style_find_text_button(replace_button)
-	style_find_text_button(replace_all_button)
+	style_find_icon_button(replace_button)
+	style_find_icon_button(replace_all_button)
 	pass
 
 
@@ -591,20 +575,6 @@ func style_find_icon_button(button: Button) -> void:
 	ButtonStyle.apply_style(button, normal, hover, pressed)
 	var icon_path := str(button.get_meta("find_icon_path", ""))
 	button.icon = ImageHelper.tint_svg(icon_path, Colors.primary_text)
-	pass
-
-
-func style_find_text_button(button: Button) -> void:
-	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_sm, Margin.ma_2, Margin.ma_0, Colors.border, ControlSize.border_xs)
-	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, Color(ThemeColor.accent_theme_color(), 0.16))
-	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, Color(ThemeColor.accent_theme_color(), 0.28))
-	ButtonStyle.apply_style(button, normal, hover, pressed)
-	button.add_theme_font_override("font", Fonts.regular())
-	button.add_theme_font_size_override("font_size", Typography.label_large_size)
-	button.add_theme_color_override("font_color", Colors.primary_text)
-	button.add_theme_color_override("font_hover_color", Colors.primary_text)
-	button.add_theme_color_override("font_pressed_color", Colors.primary_text)
-	button.add_theme_color_override("font_disabled_color", Colors.secondary_text)
 	pass
 
 
