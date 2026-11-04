@@ -533,7 +533,7 @@ func rebuild_tabs() -> void:
 func make_tab(index: int) -> PanelContainer:
 	var document := tabs.files[index]
 	var card := PanelContainer.new()
-	card.custom_minimum_size.x = TAB_WIDTH
+	card.custom_minimum_size = Vector2(TAB_WIDTH, AgentLayout.TOOLBAR_HEIGHT - Margin.ma_2 * 2)
 	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	card.mouse_filter = Control.MOUSE_FILTER_STOP
