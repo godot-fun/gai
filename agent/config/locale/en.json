@@ -89,10 +89,15 @@
     "placeholder": "Write your notes here...\n\nMarkdown is supported:\n# Heading\n- List item\n**Bold text**",
     "save_failed": "Failed to save note",
     "open_on_startup": "Open on startup",
-    "open_on_startup_hint": "Open this note automatically when the app starts",
+    "open_on_startup_hint": "Open this note automatically when the app starts"
+  },
+  "markdown": {
     "mode_edit": "Edit mode",
     "mode_split": "Edit and preview Markdown",
-    "mode_preview": "Markdown preview mode"
+    "mode_preview": "Markdown preview mode",
+    "render": "Render Markdown",
+    "render_help": "Render chat content with Markdown formatting.",
+    "render_bbcode": "Render Markdown as BBCode"
   },
   "agent": {
     "chat": {
@@ -187,7 +192,6 @@
       "light_theme": "Switch to light theme",
       "dark_theme": "Switch to dark theme",
       "raw_text": "Show raw text",
-      "markdown": "Render Markdown as BBCode",
       "add_skills": "Add skill index to this chat",
       "remove_skills": "Remove skill index from this chat",
       "add_memory": "Add memory to this chat",
@@ -331,8 +335,6 @@
       "ui_scale": "Interface scale",
       "ui_scale_help": "Hold Ctrl and scroll the mouse wheel to change interface scale.",
       "ui_scale_help_mac": "Hold ⌘ and scroll the mouse wheel to change interface scale.",
-      "markdown": "Render Markdown",
-      "markdown_help": "Render chat content with Markdown formatting.",
       "connection": "AI connection",
       "api_url": "API url",
       "api_url_help": "Full chat-completions endpoint URL",

@@ -322,7 +322,7 @@ func dropped_file_markdown_test() -> void:
 
 
 func local_file_link_prefix_test() -> void:
-	var folder_path := ProjectSettings.globalize_path("res://zfoo/markdown").replace("\\", "/")
+	var folder_path := ProjectSettings.globalize_path("res://agent/markdown").replace("\\", "/")
 	var file_bbcode := MarkdownParser.inline_to_bbcode(MarkdownHelper.format_file_as_markdown(r"C:\My Files\notes.bin"))
 	var audio_bbcode := MarkdownParser.inline_to_bbcode(MarkdownHelper.format_file_as_markdown(r"C:\My Files\voice.WAV"))
 	var folder_bbcode := MarkdownParser.inline_to_bbcode(MarkdownHelper.format_file_as_markdown(folder_path))

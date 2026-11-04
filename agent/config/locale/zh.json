@@ -89,10 +89,15 @@
     "placeholder": "在这里写笔记…\n\n支持 Markdown：\n# 标题\n- 列表项\n**粗体文字**",
     "save_failed": "保存笔记失败",
     "open_on_startup": "每次打开应用时弹出",
-    "open_on_startup_hint": "应用启动时自动打开此笔记",
+    "open_on_startup_hint": "应用启动时自动打开此笔记"
+  },
+  "markdown": {
     "mode_edit": "编辑模式",
     "mode_split": "编辑和预览 Markdown",
-    "mode_preview": "Markdown 预览模式"
+    "mode_preview": "Markdown 预览模式",
+    "render": "Markdown 渲染",
+    "render_help": "使用 Markdown 格式渲染聊天内容。",
+    "render_bbcode": "将 Markdown 渲染为 BBCode"
   },
   "agent": {
     "chat": {
@@ -187,7 +192,6 @@
       "light_theme": "切换到浅色主题",
       "dark_theme": "切换到深色主题",
       "raw_text": "显示原始文本",
-      "markdown": "将 Markdown 渲染为 BBCode",
       "add_skills": "将技能索引加入当前对话",
       "remove_skills": "从当前对话移除技能索引",
       "add_memory": "将记忆加入当前对话",
@@ -331,8 +335,6 @@
       "ui_scale": "界面缩放",
       "ui_scale_help": "按住 Ctrl 并滚动鼠标滚轮可切换界面缩放档位。",
       "ui_scale_help_mac": "按住 ⌘ 并滚动鼠标滚轮可切换界面缩放档位。",
-      "markdown": "Markdown 渲染",
-      "markdown_help": "使用 Markdown 格式渲染聊天内容。",
       "connection": "AI 连接",
       "api_url": "API 地址",
       "api_url_help": "完整的聊天补全接口地址",

@@ -2,8 +2,7 @@ class_name NoteSetting
 extends RefCounted
 
 ## Persisted preferences for the Note app — open-on-startup, view mode, split ratio, and related toggles.
-
-enum ViewMode { EDIT, SPLIT, PREVIEW }
+## View mode values match [enum MarkdownEdit.ViewMode].
 
 const NOTE_FILE := "user://note.md"
 const OPEN_ON_STARTUP_KEY := "note_open_on_startup"
@@ -39,14 +38,14 @@ static func set_open_on_startup(enabled: bool) -> void:
 	pass
 
 
-static func get_view_mode() -> ViewMode:
-	var mode: ViewMode = Setting.get_int(VIEW_MODE_KEY, ViewMode.SPLIT)
-	if mode == ViewMode.EDIT or mode == ViewMode.SPLIT or mode == ViewMode.PREVIEW:
+static func get_view_mode() -> MarkdownEdit.ViewMode:
+	var mode: MarkdownEdit.ViewMode = Setting.get_int(VIEW_MODE_KEY, MarkdownEdit.ViewMode.SPLIT)
+	if mode == MarkdownEdit.ViewMode.EDIT or mode == MarkdownEdit.ViewMode.SPLIT or mode == MarkdownEdit.ViewMode.PREVIEW:
 		return mode
-	return ViewMode.SPLIT
+	return MarkdownEdit.ViewMode.SPLIT
 
 
-static func set_view_mode(mode: ViewMode) -> void:
+static func set_view_mode(mode: MarkdownEdit.ViewMode) -> void:
 	if get_view_mode() == mode:
 		return
 	Setting.set_int(VIEW_MODE_KEY, mode)
