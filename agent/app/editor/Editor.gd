@@ -559,8 +559,7 @@ func style_card(card: PanelContainer) -> void:
 	var close_button := card.get_meta("close_button") as Button
 	var dirty_label := card.get_meta("dirty_label") as Label
 	var background := ThemeColor.selected_surface if active else Colors.control_surface
-	var border := ThemeColor.accent_theme_color() if active else Colors.subtle_border
-	card.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(background, ControlSize.radius_md, Margin.ma_2, Margin.ma_1, border, ControlSize.border_xs))
+	card.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(background, ControlSize.radius_md, Margin.ma_2, Margin.ma_1))
 	var text_color := Colors.primary_text if active else Colors.secondary_text
 	ButtonStyle.apply_font_colors(name_button, text_color, Colors.primary_text, Colors.primary_text)
 	ButtonStyle.apply_font_colors(close_button, Colors.secondary_text, Colors.primary_text, Colors.primary_text)
