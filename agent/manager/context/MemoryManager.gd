@@ -13,8 +13,8 @@ static func update_memory(session_id: int) -> void:
 	var client := ApiSetting.get_client()
 	client.cancel_scope = CancelScope.new()
 	var memory_messages := collect_memory_messages(session.messages)
-	memory_messages.append(ChatMessage.user(CompactionPrompt.MEMORY_UPDATE_REQUEST))
-	var completion := await CompactionAgent.run(client, memory_messages)
+	memory_messages.append(ChatMessage.user(MemoryPrompt.MEMORY_UPDATE_REQUEST))
+	var completion := await MemoryAgent.run(client, memory_messages)
 	if not completion.has_error():
 		MemoryPrompt.reload_memory_context()
 	pass
@@ -28,7 +28,7 @@ static func collect_memory_messages(messages: Array[ChatMessage]) -> Array[ChatM
 	for message: ChatMessage in messages:
 		if CompactionPrompt.is_compaction_message(message):
 			var summary := CompactionPrompt.extract_summary((message as SystemChatMessage).text)
-			transcript.append(ChatMessage.user(CompactionPrompt.build_memory_context(summary)))
+			transcript.append(ChatMessage.user(MemoryPrompt.build_memory_context(summary)))
 		elif message is UserChatMessage:
 			var user := message as UserChatMessage
 			var user_text := StringUtils.EMPTY

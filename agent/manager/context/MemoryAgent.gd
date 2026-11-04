@@ -1,7 +1,7 @@
-class_name CompactionAgent
+class_name MemoryAgent
 extends RefCounted
 
-## Event-free agent loop used by context compaction. It shares the normal agent's tool
+## Event-free agent loop used to maintain workspace memory. It shares the normal agent's tool
 ## registry and sandboxed tool implementations, but keeps its internal turns out of chat UI.
 ##
 ## Unlike [AgentLoop], this class emits no lifecycle, streaming, or tool events and does not
@@ -31,4 +31,4 @@ static func run(ai_client: OpenAiClient, messages: Array[ChatMessage]) -> OpenAi
 					result = await tool.async_execute(args, ai_client.cancel_scope)
 			messages.append(ChatMessage.tool_result(tool_call.id, result.content))
 
-	return OpenAiCompletion.failure("compaction agent max turns exceeded")
+	return OpenAiCompletion.failure("memory agent max turns exceeded")
