@@ -1,11 +1,11 @@
 ---
 name: relationships
-description: Records important people, teams, organizations, relationships, and collaboration patterns. Read when relevant people, roles, responsibilities, or communication preferences are involved; update when a relationship changes.
+description: Records people, teams, and organizations that still matter across tasks. Read when a task involves a known person, role, or collaboration; replace an entry when the relationship changes.
 ---
 
 # Relationships
 
-> Records important people, teams, organizations, and how they relate and collaborate.
+> People, teams, and organizations that still matter across tasks. Replace an entry when a new statement supersedes it.
 
 ## People
 

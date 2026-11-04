@@ -42,14 +42,14 @@ static func extract_summary(compaction_content: String) -> String:
 
 const MEMORY_PREFIX := "Previous compacted context:"
 
-const MEMORY_UPDATE_REQUEST := """Update `.memory/` with durable, reusable information from this conversation.
+const MEMORY_UPDATE_REQUEST := """Update `.memory/` with information from this conversation that is worth keeping.
 
 Work immediately without explaining or planning:
 1. Read `.memory/README.md`.
 2. If nothing is worth retaining, return `Done` without reading other files.
 3. Otherwise, read only the directly relevant memory files and update them in place with the fewest tool calls.
 
-Avoid duplicates, transcripts, temporary details, and secrets. Keep `focus.md` short and current. Never edit outside `.memory/`. Return only `Done`."""
+Rewrite `focus.md` completely when the active task changes, and keep it short. Replace a standing fact or rule in `user.md`, `relationships.md`, or `goals.md` when a new statement supersedes it. Append to `experiences.md` without rewriting older entries; when a lesson becomes a standing rule, move the rule into `user.md` and leave a pointer. Do not store transcripts, secrets, or project implementation notes. Never create memory files beyond those listed in the index, and never edit outside `.memory/`. Return only `Done`."""
 
 
 ## Labels a prior summary so the memory-maintenance agent treats it as compacted history.

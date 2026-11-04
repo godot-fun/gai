@@ -1,12 +1,13 @@
 ---
 name: focus
-description: Records the current task, focus, known conditions, next action, and blockers. Read when continuing current work or resuming an interrupted task; rewrite as work progresses, then clear or archive when finished.
+description: Records the current task, stage, next action, and blockers. Read when continuing or resuming work. Rewrite the whole file when the task changes, and keep it to these fields.
 ---
 
 # Focus
 
-> Holds the current focus and task context. Keep this file short and rewrite it when the task changes.
+> The current task only. Rewrite this whole file when the task changes. Clear every field when no task is active.
 
+- Updated:
 - Current task:
 - Current stage:
 - Known conditions:
