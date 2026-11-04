@@ -1,7 +1,10 @@
 class_name CommonHighlighter
 extends Object
 
-## Creates a theme-aware [CodeEdit] highlighter from a repository file name via [CodeHighlighterInstance].
+## Creates a theme-aware [CodeEdit] highlighter from a file path or a bare suffix such as [code]gd[/code] or [code].md[/code].
+
+const DATA_FILE_NAMES := ["dockerfile", "makefile", ".gitignore", ".gitattributes", ".editorconfig"]
+const SCRIPT_FILE_NAMES := ["sconstruct", "sconscript"]
 
 const SCRIPT_EXTENSIONS := ["gd", "py", "pyw", "pyi", "rb", "rake", "lua", "r", "jl", "pl", "pm", "tcl"]
 const C_STYLE_EXTENSIONS := ["c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx", "m", "mm", "cs", "java", "js", "jsx", "mjs", "cjs", "ts", "tsx", "go", "rs", "swift", "kt", "kts", "dart", "scala", "groovy", "gradle", "php", "sol", "proto"]
@@ -29,9 +32,11 @@ const SHADER_TYPES := ["bvec2", "bvec3", "bvec4", "ivec2", "ivec3", "ivec4", "uv
 const SQL_KEYWORDS := ["ADD", "ALL", "ALTER", "AND", "AS", "ASC", "BEGIN", "BETWEEN", "BY", "CASE", "CHECK", "COLUMN", "COMMIT", "CONSTRAINT", "CREATE", "DATABASE", "DEFAULT", "DELETE", "DESC", "DISTINCT", "DROP", "ELSE", "END", "EXISTS", "FOREIGN", "FROM", "FULL", "GRANT", "GROUP", "HAVING", "IN", "INDEX", "INNER", "INSERT", "INTO", "IS", "JOIN", "KEY", "LEFT", "LIKE", "LIMIT", "NOT", "NULL", "ON", "OR", "ORDER", "OUTER", "PRIMARY", "REFERENCES", "RETURNING", "REVOKE", "RIGHT", "ROLLBACK", "SELECT", "SET", "TABLE", "THEN", "TRUNCATE", "UNION", "UNIQUE", "UPDATE", "VALUES", "VIEW", "WHEN", "WHERE", "WITH"]
 
 
-static func create(file_path: String) -> SyntaxHighlighter:
-	var extension := file_path.get_extension().to_lower()
-	var file_name := file_path.get_file().to_lower()
+static func create(path_or_suffix: String) -> SyntaxHighlighter:
+	var file_name := FileUtils.normalize_path(path_or_suffix).get_file().to_lower()
+	var extension := StringUtils.substring_after_last(file_name, ".")
+	if extension.is_empty():
+		extension = file_name.trim_prefix(".")
 	if extension in MarkdownHighlighter.EXTENSIONS:
 		return MarkdownHighlighter.create()
 	var highlighter := CodeHighlighterInstance.new()
@@ -45,7 +50,7 @@ static func create(file_path: String) -> SyntaxHighlighter:
 		configure_c_style(highlighter, extension)
 	elif extension in SHADER_EXTENSIONS:
 		configure_shader(highlighter)
-	elif extension in DATA_EXTENSIONS or file_name in ["dockerfile", "makefile", ".gitignore", ".gitattributes", ".editorconfig"]:
+	elif extension in DATA_EXTENSIONS or file_name in DATA_FILE_NAMES:
 		configure_data(highlighter, extension, file_name)
 	elif extension in MarkdownHighlighter.EXTENSIONS:
 		MarkdownHighlighter.configure(highlighter)
@@ -59,7 +64,7 @@ static func create(file_path: String) -> SyntaxHighlighter:
 		configure_diff(highlighter)
 	elif extension in LATEX_EXTENSIONS:
 		configure_latex(highlighter)
-	elif file_name in ["sconstruct", "sconscript"]:
+	elif file_name in SCRIPT_FILE_NAMES:
 		configure_script(highlighter, "py")
 	elif file_name == "cmakelists.txt" or extension == "cmake":
 		configure_cmake(highlighter)

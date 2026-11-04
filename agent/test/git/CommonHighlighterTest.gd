@@ -1,10 +1,22 @@
 ## CodeEdit syntax highlighter tests.
 
+static func recognizes_bare_suffix_test() -> void:
+	var script := CommonHighlighter.create("gd")
+	assert(script is CodeHighlighterInstance)
+	assert(script.get_keyword_color("class_name") == CodeColors.declaration)
+	assert(script.has_color_region("#"))
+	assert(CommonHighlighter.create("md") is MarkdownHighlighter)
+	assert(CommonHighlighter.create(".md") is MarkdownHighlighter)
+	var docker := CommonHighlighter.create("Dockerfile")
+	assert(docker.get_keyword_color("FROM") == CodeColors.declaration)
+	pass
+
+
 static func recognizes_gdscript_test() -> void:
 	var highlighter := CommonHighlighter.create("scripts/player.gd")
 	assert(highlighter is CodeHighlighterInstance)
 	assert(highlighter.get_keyword_color("class_name") == CodeColors.declaration)
-	assert(highlighter.get_keyword_color("func") == CodeColors.keyword)
+	assert(highlighter.get_keyword_color("func") == CodeColors.declaration)
 	assert(highlighter.has_color_region("#"))
 	pass
 

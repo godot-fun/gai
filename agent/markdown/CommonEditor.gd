@@ -29,7 +29,6 @@ var toolbar_panel: PanelContainer
 var toolbar: HBoxContainer
 var toolbar_spacer: Control
 var content: Control
-var mode_panel: PanelContainer
 var mode_bar: HBoxContainer
 var split_container: HSplitContainer
 var text_edit: CodeEdit
@@ -45,12 +44,12 @@ var text: String:
 		return text_edit.text
 	set(value):
 		if text_edit.text == value:
-			if is_markdown() and view_mode != ViewMode.EDIT:
+			if shows_preview():
 				refresh_preview()
 			return
 		# CodeEdit does not emit text_changed for a programmatic assignment.
 		text_edit.text = value
-		if is_markdown() and view_mode != ViewMode.EDIT:
+		if shows_preview():
 			refresh_preview()
 		text_changed.emit()
 		pass
@@ -86,7 +85,7 @@ func _init() -> void:
 	pass
 
 
-## Shows [param body] and switches layout from [param suffix] ([code]md[/code], [code].gd[/code], or a full file name).
+## Shows [param body] and switches layout from [param suffix] ([code]md[/code], [code].gd[/code], or a file path).
 func set_document(body: String, suffix: String) -> void:
 	set_suffix(suffix)
 	text = body
@@ -94,12 +93,12 @@ func set_document(body: String, suffix: String) -> void:
 
 
 func set_suffix(suffix: String) -> void:
-	var normalized := normalize_suffix(suffix)
-	var probe := probe_for(suffix)
-	if normalized == file_suffix and probe == source_path:
+	if suffix == source_path:
 		return
-	file_suffix = normalized
-	source_path = probe
+	source_path = suffix
+	var name := FileUtils.normalize_path(suffix).get_file().to_lower()
+	var extension := StringUtils.substring_after_last(name, ".")
+	file_suffix = extension if not extension.is_empty() else name.trim_prefix(".")
 	apply_format()
 	pass
 
@@ -124,7 +123,7 @@ func build_layout() -> void:
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	content.resized.connect(position_mode_panel)
+	content.resized.connect(position_mode_bar)
 	add_child(content)
 
 	split_container = HSplitContainer.new()
@@ -162,24 +161,20 @@ func build_layout() -> void:
 	split_mode_button = make_mode_button(ViewMode.SPLIT, SPLIT_ICON_PATH)
 	preview_mode_button = make_mode_button(ViewMode.PREVIEW, PREVIEW_ICON_PATH)
 	mode_bar = HBoxContainer.new()
+	mode_bar.visible = false
+	mode_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	mode_bar.add_theme_constant_override("separation", Margin.ma_1)
 	mode_bar.alignment = BoxContainer.ALIGNMENT_CENTER
+	mode_bar.anchor_left = 1.0
+	mode_bar.anchor_top = 0.0
+	mode_bar.anchor_right = 1.0
+	mode_bar.anchor_bottom = 0.0
+	mode_bar.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	mode_bar.grow_vertical = Control.GROW_DIRECTION_END
 	mode_bar.add_child(edit_mode_button)
 	mode_bar.add_child(split_mode_button)
 	mode_bar.add_child(preview_mode_button)
-
-	mode_panel = PanelContainer.new()
-	mode_panel.visible = false
-	mode_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	mode_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	mode_panel.anchor_left = 1.0
-	mode_panel.anchor_top = 0.0
-	mode_panel.anchor_right = 1.0
-	mode_panel.anchor_bottom = 0.0
-	mode_panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	mode_panel.grow_vertical = Control.GROW_DIRECTION_END
-	mode_panel.add_child(mode_bar)
-	content.add_child(mode_panel)
+	content.add_child(mode_bar)
 	pass
 
 
@@ -201,6 +196,8 @@ func make_mode_button(mode: ViewMode, icon_path: String) -> Button:
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.custom_minimum_size = ControlSize.square(ControlSize.sm)
+	button.add_theme_constant_override("icon_max_width", ControlSize.icon_sm)
+	button.add_theme_constant_override("icon_max_height", ControlSize.icon_sm)
 	button.set_meta("markdown_edit_icon_path", icon_path)
 	button.pressed.connect(func() -> void: set_view_mode(mode))
 	return button
@@ -218,9 +215,8 @@ func apply_theme() -> void:
 	style_text_edit()
 	style_preview()
 	style_toolbar()
-	style_mode_panel()
 	apply_highlighter()
-	position_mode_panel()
+	position_mode_bar()
 	pass
 
 
@@ -260,30 +256,16 @@ func style_toolbar() -> void:
 	pass
 
 
-func style_mode_panel() -> void:
-	mode_panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+func position_mode_bar() -> void:
+	var size := mode_bar.get_combined_minimum_size()
+	mode_bar.offset_top = Margin.ma_3
+	mode_bar.offset_right = -Margin.ma_8
+	mode_bar.offset_left = -Margin.ma_8 - size.x
+	mode_bar.offset_bottom = Margin.ma_3 + size.y
 	pass
 
 
-func position_mode_panel() -> void:
-	var size := mode_panel.get_combined_minimum_size()
-	var inset := Margin.ma_8
-	mode_panel.offset_top = Margin.ma_3
-	mode_panel.offset_right = -inset
-	mode_panel.offset_left = -inset - size.x
-	mode_panel.offset_bottom = Margin.ma_3 + size.y
-	pass
-
-
-## Icon-only mode button. The fill stays clear so the text underneath remains visible.
 func style_mode_button(button: Button) -> void:
-	button.text = ""
-	button.expand_icon = false
-	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	button.custom_minimum_size = ControlSize.square(ControlSize.sm)
-	button.add_theme_constant_override("icon_max_width", ControlSize.icon_sm)
-	button.add_theme_constant_override("icon_max_height", ControlSize.icon_sm)
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_sm)
 	var accent := ThemeColor.accent_theme_color()
 	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, Color(accent, 0.16))
@@ -322,7 +304,7 @@ func set_view_mode(mode: ViewMode) -> void:
 	style_mode_button(edit_mode_button)
 	style_mode_button(split_mode_button)
 	style_mode_button(preview_mode_button)
-	if is_markdown() and mode != ViewMode.EDIT:
+	if shows_preview():
 		refresh_preview()
 	if is_markdown() and mode == ViewMode.SPLIT:
 		reset_split.call_deferred()
@@ -341,7 +323,7 @@ func focus_editor() -> void:
 
 
 func on_text_changed() -> void:
-	if is_markdown() and view_mode != ViewMode.EDIT:
+	if shows_preview():
 		refresh_preview()
 	text_changed.emit()
 	pass
@@ -384,51 +366,24 @@ func is_markdown() -> bool:
 	return file_suffix in MarkdownHighlighter.EXTENSIONS
 
 
-func normalize_suffix(suffix: String) -> String:
-	var name := file_label(suffix)
-	if name.contains("."):
-		return name.get_extension()
-	if is_special_file_name(name):
-		return ""
-	return name.trim_prefix(".")
-
-
-func file_label(suffix: String) -> String:
-	return suffix.strip_edges().replace("\\", "/").get_file().to_lower()
-
-
-func is_special_file_name(name: String) -> bool:
-	return name.begins_with(".") or name in ["dockerfile", "makefile"]
-
-
-func probe_for(suffix: String) -> String:
-	var name := file_label(suffix)
-	if name.contains(".") or is_special_file_name(name):
-		return name
-	var extension := name.trim_prefix(".")
-	if extension.is_empty():
-		return ""
-	return "file." + extension
-
-
-func probe_path() -> String:
-	return source_path
+func shows_preview() -> bool:
+	return is_markdown() and view_mode != ViewMode.EDIT
 
 
 func apply_format() -> void:
 	var markdown := is_markdown()
-	mode_panel.visible = markdown
+	mode_bar.visible = markdown
 	text_edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY if markdown else TextEdit.LINE_WRAPPING_NONE
 	text_edit.gutters_draw_line_numbers = not markdown
 	apply_highlighter()
 	apply_view_visibility()
 	style_text_edit()
 	style_preview()
-	if markdown and view_mode != ViewMode.EDIT:
+	if shows_preview():
 		refresh_preview()
 	if markdown and view_mode == ViewMode.SPLIT:
 		reset_split.call_deferred()
-	position_mode_panel()
+	position_mode_bar()
 	pass
 
 
@@ -443,5 +398,5 @@ func apply_view_visibility() -> void:
 
 
 func apply_highlighter() -> void:
-	text_edit.syntax_highlighter = CommonHighlighter.create(probe_path())
+	text_edit.syntax_highlighter = CommonHighlighter.create(source_path)
 	pass
