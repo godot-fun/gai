@@ -148,8 +148,10 @@ func build_layout() -> void:
 	preview_label = MarkdownHelper.create_rich_text_label(Colors.primary_text, "", true)
 	preview_label.fit_content = false
 	preview_label.scroll_active = true
+	preview_label.clip_contents = true
 	preview_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	preview_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	preview_panel.clip_contents = true
 	preview_panel.add_child(preview_label)
 
 	mode_button_group = ButtonGroup.new()
