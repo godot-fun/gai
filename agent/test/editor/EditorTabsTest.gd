@@ -18,17 +18,6 @@ static func editor_file_icon_matches_name_and_extension_test() -> void:
 	pass
 
 
-static func editor_file_tree_skips_hidden_names_test() -> void:
-	assert(EditorFileTree.is_skipped_name("."))
-	assert(EditorFileTree.is_skipped_name(".."))
-	assert(EditorFileTree.is_skipped_name(".git"))
-	assert(EditorFileTree.is_skipped_name(".godot"))
-	assert(EditorFileTree.is_skipped_name(".gai"))
-	assert(not EditorFileTree.is_skipped_name("src"))
-	assert(not EditorFileTree.is_skipped_name("readme.md"))
-	pass
-
-
 static func editor_tabs_open_and_save_test() -> void:
 	var directory := FileUtils.normalize_path(ProjectSettings.globalize_path(FILES_DIR))
 	var note_path := directory.path_join("note.md")
@@ -95,6 +84,8 @@ static func editor_file_tree_lists_workspace_test() -> void:
 	assert(top.size() == 2)
 	assert(top[0] == "src")
 	assert(top[1] == "readme.md")
+	assert(not top.has(".git"))
+	assert(not top.has(".gai"))
 
 	var src := tree.get_root().get_first_child()
 	tree.ensure_loaded(src)
@@ -102,6 +93,24 @@ static func editor_file_tree_lists_workspace_test() -> void:
 	assert(nested.size() == 2)
 	assert(nested[0] == "a.md")
 	assert(nested[1] == "b.txt")
+	tree.free()
+	pass
+
+
+static func editor_file_tree_respects_gitignore_test() -> void:
+	var root_path := FileUtils.normalize_path(ProjectSettings.globalize_path(TREE_DIR + "_ignore"))
+	DirAccess.make_dir_recursive_absolute(root_path.path_join("node_modules/pkg"))
+	DirAccess.make_dir_recursive_absolute(root_path.path_join("target/debug"))
+	FileUtils.write_string_to_file(root_path.path_join("node_modules/pkg/index.js"), "x")
+	FileUtils.write_string_to_file(root_path.path_join("target/debug/out.txt"), "y")
+	FileUtils.write_string_to_file(root_path.path_join("visible.md"), "v")
+
+	var tree := EditorFileTree.new()
+	gdf.gdf_node.add_child(tree)
+	tree.reload(root_path)
+	var top := child_names(tree.get_root())
+	assert(top.size() == 1)
+	assert(top[0] == "visible.md")
 	tree.free()
 	pass
 

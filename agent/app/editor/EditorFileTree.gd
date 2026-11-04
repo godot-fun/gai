@@ -2,9 +2,7 @@ class_name EditorFileTree
 extends Tree
 
 ## Workspace file tree. Folders load their children the first time they expand.
-## [.git], [.godot], and [.gai] are skipped at every level.
-
-const SKIPPED_NAMES: PackedStringArray = [".git", ".godot", ".gai"]
+## Entries follow [member GitIgnore.ignore_rules] ([GlobUtils.GitIgnoreMatcher], same as glob / grep / completion).
 
 signal file_selected(path: String)
 
@@ -35,13 +33,7 @@ func on_item_collapsed(item: TreeItem) -> void:
 	# create_item() returns null while this signal is running, so load on the next frame.
 	if item == null or item.collapsed or bool(item.get_meta("loaded", false)):
 		return
-	load_item.call_deferred(item)
-	pass
-
-
-func load_item(item: TreeItem) -> void:
-	if is_instance_valid(item):
-		ensure_loaded(item)
+	ensure_loaded.call_deferred(item)
 	pass
 
 
@@ -83,12 +75,23 @@ func populate(parent: TreeItem, dir_path: String) -> void:
 	var directory := DirAccess.open(dir_path)
 	if directory == null:
 		return
+	var ignore := GlobUtils.GitIgnoreMatcher.from_lines(GitIgnore.ignore_rules)
+	var root_prefix := root_path.replace("\\", "/")
+	if not root_prefix.ends_with("/"):
+		root_prefix += "/"
 	var names: Array[String] = []
 	directory.list_dir_begin()
 	var entry_name := directory.get_next()
 	while not entry_name.is_empty():
-		if not is_skipped_name(entry_name):
-			names.append(entry_name)
+		if entry_name != "." and entry_name != "..":
+			var full_path := EditorDocument.normalize(dir_path.path_join(entry_name))
+			var relative := EditorDocument.normalize(full_path).replace("\\", "/")
+			if relative.begins_with(root_prefix):
+				relative = relative.substr(root_prefix.length())
+			var is_directory := DirAccess.dir_exists_absolute(full_path)
+			var show := ignore.may_enter_dir(relative) if is_directory else not ignore.is_ignored(relative, false)
+			if show:
+				names.append(entry_name)
 		entry_name = directory.get_next()
 	directory.list_dir_end()
 	names.sort_custom(func(a: String, b: String) -> bool: return entry_before(dir_path, a, b))
@@ -115,10 +118,6 @@ func add_entry(parent: TreeItem, dir_path: String, entry_name: String) -> void:
 			placeholder.set_meta("placeholder", true)
 		item.collapsed = true
 	pass
-
-
-static func is_skipped_name(entry_name: String) -> bool:
-	return entry_name == "." or entry_name == ".." or SKIPPED_NAMES.has(entry_name)
 
 
 static func entry_before(dir_path: String, a: String, b: String) -> bool:
