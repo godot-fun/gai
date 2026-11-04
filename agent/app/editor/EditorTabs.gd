@@ -59,7 +59,7 @@ func dirty_files() -> Array[EditorDocument]:
 
 ## Text and config files open. Audio, image, and video do not. Other files open when the sample has no NUL bytes.
 static func can_open(path: String) -> bool:
-	var normalized := EditorDocument.normalize(path)
+	var normalized := FileUtils.normalize_path(path)
 	if normalized.is_empty() or not FileAccess.file_exists(normalized):
 		return false
 	if DirAccess.dir_exists_absolute(normalized):
@@ -78,3 +78,35 @@ static func contains_nul(path: String) -> bool:
 	if length <= 0:
 		return false
 	return file.get_buffer(length).find(0) >= 0
+
+
+# ---------------------------------------------------------------------------
+# Persist open tabs to `.gai/app/editor.gai`
+# ---------------------------------------------------------------------------
+
+const EDITOR_GAI := "app/editor.gai"
+
+
+static func load() -> EditorTabs:
+	var path := AgentWorkspace.get_data_path(EDITOR_GAI)
+	if not FileAccess.file_exists(path):
+		return EditorTabs.new()
+	var tabs: Variant = JsonUtils.json_to_object(FileUtils.read_file_to_string(path), EditorTabs)
+	if tabs is not EditorTabs:
+		return EditorTabs.new()
+	var loaded := tabs as EditorTabs
+	if loaded.files.is_empty():
+		loaded.active_index = -1
+	elif loaded.active_index < 0 or loaded.active_index >= loaded.files.size():
+		loaded.active_index = 0
+	return loaded
+
+
+func save() -> void:
+	var path := AgentWorkspace.get_data_path(EDITOR_GAI)
+	if files.is_empty() and not FileAccess.file_exists(path):
+		return
+	var error := FileUtils.write_string_to_file(path, JsonUtils.object_to_json(self))
+	if error != OK:
+		Log.error("editor tabs save failed path:[{}] err:[{}]", path, error)
+	pass

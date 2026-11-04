@@ -106,14 +106,17 @@ static func globalize_writable_path(path: String) -> String:
 ## Opens a file or directory with the operating system's default application.
 ## If a file has no associated application, opens its containing folder instead.
 static func open_file(path: String) -> int:
-	if DirAccess.dir_exists_absolute(path):
-		return OS.shell_open(path)
-	if not FileAccess.file_exists(path):
+	var normalized := normalize_path(path)
+	if normalized.is_empty():
 		return ERR_FILE_NOT_FOUND
-	var error := OS.shell_open(path)
+	if DirAccess.dir_exists_absolute(normalized):
+		return OS.shell_open(normalized)
+	if not FileAccess.file_exists(normalized):
+		return ERR_FILE_NOT_FOUND
+	var error := OS.shell_open(normalized)
 	if error == OK:
 		return OK
-	var folder_path := path.get_base_dir()
+	var folder_path := normalized.get_base_dir()
 	if not DirAccess.dir_exists_absolute(folder_path):
 		return error
 	return OS.shell_open(folder_path)

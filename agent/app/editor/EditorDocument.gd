@@ -24,20 +24,16 @@ func save() -> Error:
 	return OK
 
 
-static func normalize(path: String) -> String:
-	return FileUtils.normalize_path(path)
-
-
 static func same_path(a: String, b: String) -> bool:
-	var left := normalize(a)
-	var right := normalize(b)
+	var left := FileUtils.normalize_path(a)
+	var right := FileUtils.normalize_path(b)
 	if OSUtils.is_windows():
 		return left.to_lower() == right.to_lower()
 	return left == right
 
 
 static func read(path: String) -> EditorDocument:
-	var normalized := normalize(path)
+	var normalized := FileUtils.normalize_path(path)
 	if not EditorTabs.can_open(normalized):
 		return null
 	var file := EditorDocument.new()

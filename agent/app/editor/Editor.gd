@@ -60,13 +60,16 @@ func _ready() -> void:
 	configure_layout()
 	apply_theme()
 	apply_locale()
-	show_active()
 	file_tree.reload(AgentWorkspace.get_root())
+	tabs = EditorTabs.load()
+	show_active()
 	align_tabs.call_deferred()
 	pass
 
 
 func _exit_tree() -> void:
+	sync_active()
+	tabs.save()
 	var tree := get_tree()
 	if tree != null:
 		tree.set_auto_accept_quit(true)
@@ -238,6 +241,8 @@ func on_file_deleted(path: String) -> void:
 		show_active()
 		return
 	rebuild_tabs()
+	sync_active()
+	tabs.save()
 	pass
 
 
@@ -246,11 +251,11 @@ func on_file_selected(path: String) -> void:
 	if existing >= 0 and existing == tabs.active_index:
 		return
 	if not EditorTabs.can_open(path):
-		Alert.alert(I18n.t("editor.not_text"), Colors.error)
+		FileUtils.open_file(path)
 		return
 	sync_active()
 	if tabs.open_file(path) == null:
-		Alert.alert(I18n.t("editor.not_text"), Colors.error)
+		FileUtils.open_file(path)
 		return
 	show_active()
 	pass
@@ -364,6 +369,8 @@ func show_active() -> void:
 	assigning_text = false
 	rebuild_tabs()
 	editor.focus_editor()
+	sync_active()
+	tabs.save()
 	pass
 
 

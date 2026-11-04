@@ -25,7 +25,7 @@ func _ready() -> void:
 
 
 func reload(path: String) -> void:
-	root_path = EditorDocument.normalize(path)
+	root_path = FileUtils.normalize_path(path)
 	clear()
 	var root := create_item()
 	populate(root, root_path)
@@ -95,7 +95,7 @@ func populate(parent: TreeItem, dir_path: String) -> void:
 	if directory == null:
 		return
 	var ignore := GlobUtils.GitIgnoreMatcher.from_lines(GitIgnore.ignore_rules)
-	var root_prefix := root_path.replace("\\", "/")
+	var root_prefix := root_path
 	if not root_prefix.ends_with("/"):
 		root_prefix += "/"
 	var names: Array[String] = []
@@ -103,8 +103,8 @@ func populate(parent: TreeItem, dir_path: String) -> void:
 	var entry_name := directory.get_next()
 	while not entry_name.is_empty():
 		if entry_name != "." and entry_name != "..":
-			var full_path := EditorDocument.normalize(dir_path.path_join(entry_name))
-			var relative := EditorDocument.normalize(full_path).replace("\\", "/")
+			var full_path := FileUtils.normalize_path(dir_path.path_join(entry_name))
+			var relative := full_path
 			if relative.begins_with(root_prefix):
 				relative = relative.substr(root_prefix.length())
 			var is_directory := DirAccess.dir_exists_absolute(full_path)
@@ -123,7 +123,7 @@ func add_entry(parent: TreeItem, dir_path: String, entry_name: String) -> void:
 	var item := create_item(parent)
 	if item == null:
 		return
-	var full_path := EditorDocument.normalize(dir_path.path_join(entry_name))
+	var full_path := FileUtils.normalize_path(dir_path.path_join(entry_name))
 	var is_directory := DirAccess.dir_exists_absolute(full_path)
 	item.set_text(0, entry_name)
 	item.set_tooltip_text(0, full_path)

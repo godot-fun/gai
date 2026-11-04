@@ -2,6 +2,7 @@ extends RefCounted
 
 const TREE_DIR := "user://editor_file_tree_test"
 const FILES_DIR := "user://editor_tabs_test"
+const GAI_DIR := "user://editor_tabs_gai_test"
 
 
 static func editor_file_icon_matches_name_and_extension_test() -> void:
@@ -66,6 +67,51 @@ static func editor_tabs_open_and_save_test() -> void:
 	tabs.close_at(0)
 	assert(tabs.active() == null)
 	assert(tabs.dirty_files().is_empty())
+	pass
+
+
+static func editor_tabs_gai_json_test() -> void:
+	var root := FileUtils.normalize_path(ProjectSettings.globalize_path(GAI_DIR))
+	var prior_root := AgentWorkspace.get_root()
+	AgentWorkspace.set_root(root)
+	var note_path := root.path_join("note.md")
+	var other_path := root.path_join("other.txt")
+	FileUtils.write_string_to_file(note_path, "one")
+	FileUtils.write_string_to_file(other_path, "two")
+
+	var tabs := EditorTabs.new()
+	var note := tabs.open_file(note_path)
+	assert(note != null)
+	assert(tabs.open_file(other_path) != null)
+	note.text = "one!"
+	tabs.save()
+
+	var loaded := EditorTabs.load()
+	assert(loaded.files.size() == 2)
+	assert(loaded.files[0].path == note_path)
+	assert(loaded.files[0].text == "one!")
+	assert(loaded.files[0].saved_text == "one")
+	assert(loaded.files[1].path == other_path)
+	assert(loaded.active_index == 1)
+	AgentWorkspace.set_root(prior_root)
+	pass
+
+
+static func editor_tabs_gai_load_clamps_active_index_test() -> void:
+	var root := FileUtils.normalize_path(ProjectSettings.globalize_path(GAI_DIR + "_clamp"))
+	var prior_root := AgentWorkspace.get_root()
+	AgentWorkspace.set_root(root)
+	var note_path := root.path_join("note.md")
+	FileUtils.write_string_to_file(note_path, "one")
+	var tabs := EditorTabs.new()
+	assert(tabs.open_file(note_path) != null)
+	tabs.save()
+	var gai_path := AgentWorkspace.get_data_path(EditorTabs.EDITOR_GAI)
+	FileUtils.write_string_to_file(gai_path, FileUtils.read_file_to_string(gai_path).replace("\"active_index\": 0", "\"active_index\": 9"))
+	var loaded := EditorTabs.load()
+	assert(loaded.files.size() == 1)
+	assert(loaded.active_index == 0)
+	AgentWorkspace.set_root(prior_root)
 	pass
 
 
