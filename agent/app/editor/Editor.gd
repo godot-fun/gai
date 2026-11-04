@@ -146,7 +146,7 @@ func apply_theme() -> void:
 	sidebar.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.chrome_surface, 0, 0, 0, Colors.muted_border, ControlSize.border_xs))
 	style_logo()
 	style_file_tree()
-	style_confirm()
+	ConfirmationDialogStyle.apply(confirm, [discard_button])
 	for card in tab_cards:
 		style_card(card)
 	if OSUtils.is_windows():
@@ -218,13 +218,6 @@ func style_file_tree() -> void:
 	file_tree.add_theme_stylebox_override("hovered_selected_focus", selected.duplicate() as StyleBoxFlat)
 	file_tree.add_theme_stylebox_override("hovered", StyleBoxHelper.create_style_box_flat(Colors.hover_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1))
 	style_internal_scroll_bars(file_tree)
-	pass
-
-
-func style_confirm() -> void:
-	confirm.add_theme_font_override("font", Fonts.regular())
-	confirm.add_theme_font_size_override("font_size", Typography.body_medium_size)
-	discard_button.focus_mode = Control.FOCUS_NONE
 	pass
 
 

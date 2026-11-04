@@ -241,7 +241,7 @@ func style_preview() -> void:
 	preview_panel.add_theme_stylebox_override("panel", style)
 	preview_label.add_theme_color_override("default_color", Colors.primary_text)
 	MarkdownHelper.apply_selection_theme(preview_label)
-	ScrollBarStyle.apply(preview_label.get_v_scroll_bar())
+	ScrollBarStyle.apply(preview_label.get_v_scroll_bar(), ScrollBarStyle.Thickness.LG)
 	pass
 
 

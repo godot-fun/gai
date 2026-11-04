@@ -11,8 +11,8 @@ static func apply_base(edit: CodeEdit) -> void:
 	edit.add_theme_color_override("font_selected_color", Colors.primary_text)
 	edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
 	edit.add_theme_color_override("selection_color", ThemeColor.selection_color)
-	ScrollBarStyle.apply(edit.get_v_scroll_bar())
-	ScrollBarStyle.apply(edit.get_h_scroll_bar())
+	ScrollBarStyle.apply(edit.get_v_scroll_bar(), ScrollBarStyle.Thickness.LG)
+	ScrollBarStyle.apply(edit.get_h_scroll_bar(), ScrollBarStyle.Thickness.LG)
 	pass
 
 
