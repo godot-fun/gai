@@ -4,14 +4,6 @@ const TREE_DIR := "user://editor_file_tree_test"
 const FILES_DIR := "user://editor_tabs_test"
 
 
-static func editor_picks_markdown_by_extension_test() -> void:
-	assert(EditorTabs.is_markdown_path("docs/readme.md"))
-	assert(EditorTabs.is_markdown_path("docs/page.MDX"))
-	assert(not EditorTabs.is_markdown_path("src/player.gd"))
-	assert(not EditorTabs.is_markdown_path("notes.txt"))
-	pass
-
-
 static func editor_file_tree_skips_hidden_names_test() -> void:
 	assert(EditorFileTree.is_skipped_name("."))
 	assert(EditorFileTree.is_skipped_name(".."))

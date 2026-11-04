@@ -1,7 +1,7 @@
 extends PanelContainer
 
-## Text editor scene. The toolbar is the wordmark, open-file cards, and the Markdown view buttons.
-## Markdown files use [MarkdownEdit]. Every other text file uses [CommonEditor].
+## Text editor scene. The toolbar is the wordmark and the open-file cards.
+## The body is a workspace file tree beside [CommonEditor].
 
 const AGENT_SCENE_PATH := "res://agent/Agent.tscn"
 const WORDMARK := "GAI Editor"
@@ -16,16 +16,13 @@ enum Pending { NONE, CLOSE, LEAVE, QUIT }
 @onready var tab_spacer: Control = $Root/Toolbar/ToolbarMargin/ToolbarRow/TabSpacer
 @onready var tab_scroll: ScrollContainer = $Root/Toolbar/ToolbarMargin/ToolbarRow/TabScroll
 @onready var tab_row: HBoxContainer = $Root/Toolbar/ToolbarMargin/ToolbarRow/TabScroll/TabRow
-@onready var mode_bar: HBoxContainer = $Root/Toolbar/ToolbarMargin/ToolbarRow/ModeBar
 @onready var body_split: HSplitContainer = $Root/Body
 @onready var sidebar: PanelContainer = $Root/Body/Sidebar
 @onready var file_tree: EditorFileTree = $Root/Body/Sidebar/FileTree
 @onready var editor_host: Control = $Root/Body/EditorHost
 
 var tabs: EditorTabs = EditorTabs.new()
-var markdown: MarkdownEdit
 var code_edit: CommonEditor
-var showing_markdown: bool = false
 var confirm: ConfirmationDialog
 var discard_button: Button
 var tab_cards: Array[PanelContainer] = []
@@ -43,10 +40,6 @@ func _ready() -> void:
 	app_theme.default_font = Fonts.regular()
 	theme = app_theme
 
-	markdown = MarkdownEdit.new()
-	editor_host.add_child(markdown)
-	markdown.detach_mode_bar(mode_bar)
-	markdown.text_changed.connect(on_editor_text_changed)
 	code_edit = CommonEditor.new()
 	editor_host.add_child(code_edit)
 	code_edit.text_changed.connect(on_editor_text_changed)
@@ -304,7 +297,7 @@ func on_editor_text_changed() -> void:
 	var document := tabs.active()
 	if document == null:
 		return
-	document.text = current_text()
+	document.text = code_edit.text
 	update_dirty_marks()
 	pass
 
@@ -358,54 +351,23 @@ func reveal_active_tab() -> void:
 func show_active() -> void:
 	var document := tabs.active()
 	assigning_text = true
-	if document != null and EditorTabs.is_markdown_path(document.path):
-		use_markdown(document.text)
-	else:
-		var path := "" if document == null else document.path
-		use_code(document.text if document != null else "", path, document != null)
+	var path := "" if document == null else document.path
+	code_edit.editable = document != null
+	code_edit.highlight_current_line = document != null
+	code_edit.caret_blink = document != null
+	code_edit.apply_file(path)
+	code_edit.text = "" if document == null else document.text
 	assigning_text = false
 	rebuild_tabs()
-	if showing_markdown:
-		markdown.focus_editor()
-	else:
-		code_edit.focus_editor()
+	code_edit.focus_editor()
 	pass
-
-
-func use_markdown(text: String) -> void:
-	showing_markdown = true
-	code_edit.visible = false
-	markdown.visible = true
-	mode_bar.visible = true
-	markdown.text_edit.editable = true
-	markdown.text = text
-	pass
-
-
-func use_code(text: String, path: String, editable: bool) -> void:
-	showing_markdown = false
-	markdown.visible = false
-	mode_bar.visible = false
-	code_edit.visible = true
-	code_edit.editable = editable
-	code_edit.highlight_current_line = editable
-	code_edit.caret_blink = editable
-	code_edit.apply_file(path)
-	code_edit.text = text
-	pass
-
-
-func current_text() -> String:
-	if showing_markdown:
-		return markdown.text
-	return code_edit.text
 
 
 func sync_active() -> void:
 	var document := tabs.active()
-	if document == null or markdown == null or code_edit == null:
+	if document == null or code_edit == null:
 		return
-	document.text = current_text()
+	document.text = code_edit.text
 	pass
 
 
