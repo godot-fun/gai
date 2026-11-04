@@ -22,8 +22,7 @@ signal split_ratio_changed(ratio: float)
 var view_mode: ViewMode = ViewMode.SPLIT
 ## Left-pane width as a fraction of the split (0–1). Restored across resizes via split offset.
 var split_ratio: float = DEFAULT_SPLIT_RATIO
-## Lowercase format suffix without a leading dot, such as [code]md[/code] or [code]gd[/code].
-var file_suffix: String = ""
+## Path or suffix last passed to [method set_suffix]. Empty until the first call.
 var source_path: String = ""
 var toolbar_panel: PanelContainer
 var toolbar: HBoxContainer
@@ -96,9 +95,6 @@ func set_suffix(suffix: String) -> void:
 	if suffix == source_path:
 		return
 	source_path = suffix
-	var name := FileUtils.normalize_path(suffix).get_file().to_lower()
-	var extension := StringUtils.substring_after_last(name, ".")
-	file_suffix = extension if not extension.is_empty() else name.trim_prefix(".")
 	apply_format()
 	pass
 
@@ -363,7 +359,7 @@ func reset_split() -> void:
 
 
 func is_markdown() -> bool:
-	return file_suffix in MarkdownHighlighter.EXTENSIONS
+	return text_edit.syntax_highlighter is MarkdownHighlighter
 
 
 func shows_preview() -> bool:
@@ -371,11 +367,11 @@ func shows_preview() -> bool:
 
 
 func apply_format() -> void:
+	apply_highlighter()
 	var markdown := is_markdown()
 	mode_bar.visible = markdown
 	text_edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY if markdown else TextEdit.LINE_WRAPPING_NONE
 	text_edit.gutters_draw_line_numbers = not markdown
-	apply_highlighter()
 	apply_view_visibility()
 	style_text_edit()
 	style_preview()

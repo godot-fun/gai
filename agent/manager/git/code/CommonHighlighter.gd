@@ -52,8 +52,6 @@ static func create(path_or_suffix: String) -> SyntaxHighlighter:
 		configure_shader(highlighter)
 	elif extension in DATA_EXTENSIONS or file_name in DATA_FILE_NAMES:
 		configure_data(highlighter, extension, file_name)
-	elif extension in MarkdownHighlighter.EXTENSIONS:
-		MarkdownHighlighter.configure(highlighter)
 	elif extension in MARKUP_EXTENSIONS:
 		configure_markup(highlighter, extension)
 	elif extension in SHELL_EXTENSIONS:
