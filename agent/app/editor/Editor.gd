@@ -29,8 +29,8 @@ var discard_button: Button
 var tab_cards: Array[PanelContainer] = []
 var pending_kind: Pending = Pending.NONE
 var pending_index: int = -1
-var applying: bool = false
-var reveal_serial: int = 0
+var assigning_text: bool = false
+var reveal_queued: bool = false
 
 
 func _ready() -> void:
@@ -48,7 +48,7 @@ func _ready() -> void:
 	logo_button.pressed.connect(on_logo_pressed)
 	body_split.dragged.connect(on_split_dragged)
 	resized.connect(align_tabs)
-	file_tree.file_activated.connect(on_file_activated)
+	file_tree.file_selected.connect(on_file_selected)
 	AgentEvents.events.workspace_changed.connect(on_workspace_changed)
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
@@ -237,11 +237,11 @@ func on_workspace_changed(path: String) -> void:
 	pass
 
 
-func on_file_activated(path: String) -> void:
+func on_file_selected(path: String) -> void:
 	var existing := tabs.find_index(path)
 	if existing >= 0 and existing == tabs.active_index:
 		return
-	if not EditorDocument.can_edit(path):
+	if not EditorTabs.can_open(path):
 		Alert.alert(I18n.t("editor.not_text"), Colors.error)
 		return
 	sync_active()
@@ -263,10 +263,10 @@ func on_tab_pressed(index: int) -> void:
 
 func on_tab_close_pressed(index: int) -> void:
 	sync_active()
-	if index < 0 or index >= tabs.documents.size():
+	if index < 0 or index >= tabs.files.size():
 		return
-	if tabs.documents[index].is_dirty():
-		ask(Pending.CLOSE, index)
+	if tabs.files[index].is_dirty():
+		confirm_unsaved(Pending.CLOSE, index)
 		return
 	tabs.close_at(index)
 	show_active()
@@ -275,10 +275,10 @@ func on_tab_close_pressed(index: int) -> void:
 
 func on_logo_pressed() -> void:
 	sync_active()
-	if tabs.dirty_documents().is_empty():
+	if tabs.dirty_files().is_empty():
 		leave()
 		return
-	ask(Pending.LEAVE, -1)
+	confirm_unsaved(Pending.LEAVE, -1)
 	pass
 
 
@@ -286,15 +286,15 @@ func on_window_close_requested() -> void:
 	if pending_kind != Pending.NONE:
 		return
 	sync_active()
-	if tabs.dirty_documents().is_empty():
+	if tabs.dirty_files().is_empty():
 		get_tree().quit()
 		return
-	ask(Pending.QUIT, -1)
+	confirm_unsaved(Pending.QUIT, -1)
 	pass
 
 
 func on_editor_text_changed() -> void:
-	if applying:
+	if assigning_text:
 		return
 	var document := tabs.active()
 	if document == null:
@@ -326,43 +326,40 @@ func scroll_tabs(event: InputEvent) -> bool:
 	return false
 
 
-func reveal_active_tab(serial: int = -1, retries: int = 4) -> void:
-	if serial < 0:
-		reveal_serial += 1
-		serial = reveal_serial
-	if serial != reveal_serial:
+func queue_reveal() -> void:
+	if reveal_queued or not is_inside_tree():
 		return
+	reveal_queued = true
+	get_tree().process_frame.connect(reveal_active_tab, CONNECT_ONE_SHOT)
+	pass
+
+
+func reveal_active_tab() -> void:
+	reveal_queued = false
 	var index := tabs.active_index
-	if index < 0 or index >= tab_cards.size():
+	if index < 0 or index >= tab_cards.size() or tab_scroll.size.x <= 1.0:
 		return
-	var stride := float(TAB_WIDTH + tab_row.get_theme_constant("separation"))
-	var left := index * stride
-	var right := left + float(TAB_WIDTH)
-	var view_width := tab_scroll.size.x
-	# Card positions are still 0 until the row lays out, so wait a frame and measure by index.
-	if view_width <= 1.0 or tab_row.size.x + 1.0 < right:
-		if retries > 0 and is_inside_tree():
-			get_tree().process_frame.connect(func() -> void: reveal_active_tab(serial, retries - 1), CONNECT_ONE_SHOT)
-		return
-	var view_left := float(tab_scroll.scroll_horizontal)
-	var view_right := view_left + view_width
-	if right > view_right:
-		tab_scroll.scroll_horizontal = roundi(right - view_width)
-	elif left < view_left:
-		tab_scroll.scroll_horizontal = roundi(left)
+	var card := tab_cards[index]
+	var left := int(card.position.x)
+	var right := left + int(card.size.x)
+	var view_width := int(tab_scroll.size.x)
+	if right > tab_scroll.scroll_horizontal + view_width:
+		tab_scroll.scroll_horizontal = right - view_width
+	elif left < tab_scroll.scroll_horizontal:
+		tab_scroll.scroll_horizontal = left
 	pass
 
 
 func show_active() -> void:
 	var document := tabs.active()
-	applying = true
+	assigning_text = true
 	if document == null:
 		markdown.text = ""
 		markdown.text_edit.editable = false
 	else:
 		markdown.text_edit.editable = true
 		markdown.text = document.text
-	applying = false
+	assigning_text = false
 	rebuild_tabs()
 	markdown.focus_editor()
 	pass
@@ -390,7 +387,7 @@ func save_active() -> void:
 
 func save_all_dirty() -> bool:
 	sync_active()
-	for document in tabs.dirty_documents():
+	for document in tabs.dirty_files():
 		if document.save() != OK:
 			Alert.alert(I18n.t("editor.save_failed"), Colors.error)
 			return false
@@ -398,12 +395,12 @@ func save_all_dirty() -> bool:
 	return true
 
 
-func ask(kind: Pending, index: int) -> void:
+func confirm_unsaved(kind: Pending, index: int) -> void:
 	pending_kind = kind
 	pending_index = index
-	var dirty := tabs.dirty_documents()
+	var dirty := tabs.dirty_files()
 	if kind == Pending.CLOSE:
-		confirm.dialog_text = StringUtils.format(I18n.t("editor.save_changes"), tabs.documents[index].file_name())
+		confirm.dialog_text = StringUtils.format(I18n.t("editor.save_changes"), tabs.files[index].file_name())
 	elif dirty.size() == 1:
 		confirm.dialog_text = StringUtils.format(I18n.t("editor.save_changes"), dirty[0].file_name())
 	else:
@@ -419,10 +416,10 @@ func on_confirm_saved() -> void:
 		return
 	clear_pending()
 	if kind == Pending.CLOSE:
-		if index < 0 or index >= tabs.documents.size():
+		if index < 0 or index >= tabs.files.size():
 			return
 		sync_active()
-		if tabs.documents[index].save() != OK:
+		if tabs.files[index].save() != OK:
 			Alert.alert(I18n.t("editor.save_failed"), Colors.error)
 			return
 		tabs.close_at(index)
@@ -430,7 +427,7 @@ func on_confirm_saved() -> void:
 		return
 	if not save_all_dirty():
 		return
-	finish_leave(kind)
+	finish_pending(kind)
 	pass
 
 
@@ -447,7 +444,7 @@ func on_confirm_custom(action: StringName) -> void:
 		tabs.close_at(index)
 		show_active()
 		return
-	finish_leave(kind)
+	finish_pending(kind)
 	pass
 
 
@@ -456,7 +453,7 @@ func on_confirm_canceled() -> void:
 	pass
 
 
-func finish_leave(kind: Pending) -> void:
+func finish_pending(kind: Pending) -> void:
 	if kind == Pending.QUIT:
 		get_tree().quit()
 		return
@@ -481,16 +478,19 @@ func rebuild_tabs() -> void:
 		tab_row.remove_child(card)
 		card.queue_free()
 	tab_cards.clear()
-	for index in tabs.documents.size():
+	for index in tabs.files.size():
 		var card := make_tab(index)
 		tab_row.add_child(card)
 		tab_cards.append(card)
-	reveal_active_tab()
+	var count := tab_cards.size()
+	var separation := tab_row.get_theme_constant("separation")
+	tab_row.custom_minimum_size.x = count * TAB_WIDTH + maxi(count - 1, 0) * separation
+	queue_reveal()
 	pass
 
 
 func make_tab(index: int) -> PanelContainer:
-	var document := tabs.documents[index]
+	var document := tabs.files[index]
 	var card := PanelContainer.new()
 	card.custom_minimum_size.x = TAB_WIDTH
 	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -569,5 +569,5 @@ func style_card(card: PanelContainer) -> void:
 func update_dirty_marks() -> void:
 	for index in tab_cards.size():
 		var dirty_label := tab_cards[index].get_meta("dirty_label") as Label
-		dirty_label.modulate.a = 1.0 if tabs.documents[index].is_dirty() else 0.0
+		dirty_label.modulate.a = 1.0 if tabs.files[index].is_dirty() else 0.0
 	pass

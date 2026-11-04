@@ -4,7 +4,9 @@ extends Tree
 ## Workspace file tree. Folders load their children the first time they expand.
 ## [.git], [.godot], and [.gai] are skipped at every level.
 
-signal file_activated(path: String)
+const SKIPPED_NAMES: PackedStringArray = [".git", ".godot", ".gai"]
+
+signal file_selected(path: String)
 
 var root_path: String = ""
 
@@ -17,7 +19,7 @@ func _ready() -> void:
 	select_mode = Tree.SELECT_ROW
 	item_collapsed.connect(on_item_collapsed)
 	item_selected.connect(on_item_selected)
-	item_activated.connect(on_item_activated)
+	item_activated.connect(toggle_folder)
 	pass
 
 
@@ -43,7 +45,7 @@ func load_item(item: TreeItem) -> void:
 	pass
 
 
-func on_item_activated() -> void:
+func toggle_folder() -> void:
 	var item := get_selected()
 	if item == null or item.get_meta("placeholder", false):
 		return
@@ -61,7 +63,7 @@ func on_item_selected() -> void:
 	var path := str(item.get_metadata(0))
 	if path.is_empty() or DirAccess.dir_exists_absolute(path):
 		return
-	file_activated.emit(path)
+	file_selected.emit(path)
 	pass
 
 
@@ -85,7 +87,7 @@ func populate(parent: TreeItem, dir_path: String) -> void:
 	directory.list_dir_begin()
 	var entry_name := directory.get_next()
 	while not entry_name.is_empty():
-		if not EditorDocument.is_skipped_name(entry_name):
+		if not is_skipped_name(entry_name):
 			names.append(entry_name)
 		entry_name = directory.get_next()
 	directory.list_dir_end()
@@ -109,6 +111,10 @@ func add_entry(parent: TreeItem, dir_path: String, entry_name: String) -> void:
 			placeholder.set_meta("placeholder", true)
 		item.collapsed = true
 	pass
+
+
+static func is_skipped_name(entry_name: String) -> bool:
+	return entry_name == "." or entry_name == ".." or SKIPPED_NAMES.has(entry_name)
 
 
 static func entry_before(dir_path: String, a: String, b: String) -> bool:
