@@ -55,19 +55,8 @@ func update_icon(hovered: bool) -> void:
 	var theme_color: Color = ThemeColor.accent_theme_color()
 	if hovered:
 		theme_color = theme_color.lightened(0.10)
-	button.icon = make_brush_icon(theme_color)
+	button.icon = ImageHelper.tint_svg(BRUSH_ICON_PATH, theme_color, 2.0)
 	pass
-
-
-func make_brush_icon(theme_color: Color) -> ImageTexture:
-	var svg: String = FileAccess.get_file_as_string(BRUSH_ICON_PATH)
-	if not svg.contains("fill="):
-		svg = svg.replace("<path ", "<path fill=\"#" + Color.WHITE.to_html(false) + "\" ")
-	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + theme_color.to_html(false))
-	var image: Image = Image.new()
-	if image.load_svg_from_string(svg, 2.0) != OK:
-		return ImageTexture.new()
-	return ImageTexture.create_from_image(image)
 
 
 func on_pressed() -> void:

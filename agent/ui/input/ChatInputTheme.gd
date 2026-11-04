@@ -140,20 +140,9 @@ static func apply_queue_action_button(button: Button) -> void:
 
 
 static func make_trash_icon(size: int, color: Color) -> ImageTexture:
-	return make_tint_svg_icon(TRASH_ICON_PATH, size, color)
+	return ImageHelper.tint_svg(TRASH_ICON_PATH, color, float(size) / 16.0)
 
 
 ## Resume mark, same tint path as the delete icon.
 static func make_resume_icon(size: int, color: Color) -> ImageTexture:
-	return make_tint_svg_icon(RESUME_ICON_PATH, size, color)
-
-
-static func make_tint_svg_icon(path: String, size: int, color: Color) -> ImageTexture:
-	var svg := FileAccess.get_file_as_string(path)
-	if not svg.contains("fill="):
-		svg = svg.replace("<path ", "<path fill=\"#" + Color.WHITE.to_html(false) + "\" ")
-	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
-	var image := Image.new()
-	if image.load_svg_from_string(svg, float(size) / 16.0) != OK:
-		return ImageTexture.new()
-	return ImageTexture.create_from_image(image)
+	return ImageHelper.tint_svg(RESUME_ICON_PATH, color, float(size) / 16.0)

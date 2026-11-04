@@ -99,7 +99,7 @@ func update_icon(hovered: bool) -> void:
 			icon_color = icon_color.lightened(0.12)
 	elif hovered:
 		icon_color = Colors.primary_text
-	button.icon = make_sparkle_icon(icon_color)
+	button.icon = ImageHelper.tint_svg(SPARKLE_ICON_PATH, icon_color, 2.0)
 	pass
 
 
@@ -119,14 +119,3 @@ func on_visual_selected(id: int) -> void:
 	update_popup_items()
 	update_icon(button.is_hovered())
 	pass
-
-
-func make_sparkle_icon(color: Color) -> ImageTexture:
-	var svg: String = FileAccess.get_file_as_string(SPARKLE_ICON_PATH)
-	if not svg.contains("fill="):
-		svg = svg.replace("<path ", "<path fill=\"#" + Color.WHITE.to_html(false) + "\" ")
-	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
-	var image := Image.new()
-	if image.load_svg_from_string(svg, 2.0) != OK:
-		return ImageTexture.new()
-	return ImageTexture.create_from_image(image)

@@ -124,3 +124,30 @@ func detect_image_format_test() -> void:
 	assert(ImageHelper.detect_image_format("<?xml version=\"1.0\"?><svg xmlns=\"http://www.w3.org/2000/svg\"/>".to_utf8_buffer()) == ImageHelper.svg)
 	assert(ImageHelper.detect_image_format(PackedByteArray([0x01, 0x02, 0x03])) == "")
 	pass
+
+
+func tint_svg_test() -> void:
+	var unfilled := "user://image_helper_tint_unfilled.svg"
+	var stroked := "user://image_helper_tint_stroke.svg"
+	var unfilled_file := FileAccess.open(unfilled, FileAccess.WRITE)
+	unfilled_file.store_string("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"8\" height=\"8\"><path d=\"M0 0H8V8H0Z\"/></svg>")
+	unfilled_file.close()
+	var stroked_file := FileAccess.open(stroked, FileAccess.WRITE)
+	stroked_file.store_string("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"8\" height=\"8\"><path d=\"M0 4H8\" fill=\"none\" stroke=\"#ffffff\" stroke-width=\"4\"/></svg>")
+	stroked_file.close()
+	assert(texture_has_red_pixel(ImageHelper.tint_svg(unfilled, Color.RED)))
+	assert(texture_has_red_pixel(ImageHelper.tint_svg(stroked, Color.RED)))
+	assert(ImageHelper.tint_svg("user://image_helper_tint_missing.svg", Color.RED).get_width() == 0)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(unfilled))
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(stroked))
+	pass
+
+
+func texture_has_red_pixel(texture: ImageTexture) -> bool:
+	var image := texture.get_image()
+	for y in image.get_height():
+		for x in image.get_width():
+			var pixel := image.get_pixel(x, y)
+			if pixel.a > 0.8 and pixel.r > 0.8 and pixel.g < 0.2 and pixel.b < 0.2:
+				return true
+	return false

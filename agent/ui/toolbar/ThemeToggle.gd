@@ -65,33 +65,10 @@ func update_icon(hovered: bool) -> void:
 		var moon_color: Color = ThemeColor.accent_theme_color()
 		if hovered:
 			moon_color = moon_color.lightened(0.12)
-		button.icon = make_moon_icon(moon_color)
+		button.icon = ImageHelper.tint_svg(MOON_ICON_PATH, moon_color, 2.0)
 		return
 	var sun_color: Color = ThemeColor.accent_theme_color().darkened(0.18)
 	if hovered:
 		sun_color = sun_color.lightened(0.12)
-	button.icon = make_sun_icon(sun_color)
+	button.icon = ImageHelper.tint_svg(SUN_ICON_PATH, sun_color, 2.0)
 	pass
-
-
-func make_sun_icon(color: Color) -> ImageTexture:
-	var svg: String = FileAccess.get_file_as_string(SUN_ICON_PATH)
-	if not svg.contains("fill="):
-		svg = svg.replace("<path ", "<path fill=\"#" + Color.WHITE.to_html(false) + "\" ")
-	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
-	return svg_string_to_texture(svg)
-
-
-func make_moon_icon(color: Color) -> ImageTexture:
-	var svg: String = FileAccess.get_file_as_string(MOON_ICON_PATH)
-	if not svg.contains("fill="):
-		svg = svg.replace("<path ", "<path fill=\"#" + Color.WHITE.to_html(false) + "\" ")
-	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
-	return svg_string_to_texture(svg)
-
-
-func svg_string_to_texture(svg: String) -> ImageTexture:
-	var image: Image = Image.new()
-	if image.load_svg_from_string(svg, 2.0) != OK:
-		return ImageTexture.new()
-	return ImageTexture.create_from_image(image)

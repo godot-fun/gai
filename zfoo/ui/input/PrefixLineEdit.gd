@@ -100,13 +100,7 @@ func load_prefix_icon(path: String) -> void:
 	prefix_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	prefix_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	prefix_icon.custom_minimum_size = ControlSize.square(ControlSize.icon_md)
-	var svg := FileAccess.get_file_as_string(path)
-	if not svg.contains("fill="):
-		svg = svg.replace("<path ", "<path fill=\"#" + Color.WHITE.to_html(false) + "\" ")
-	var image := Image.new()
-	if image.load_svg_from_string(svg, 2.0) != OK:
-		return
-	prefix_icon.texture = ImageTexture.create_from_image(image)
+	prefix_icon.texture = ImageHelper.tint_svg(path, Color.WHITE, 2.0)
 	prefix_icon.self_modulate = Colors.secondary_text
 	pass
 

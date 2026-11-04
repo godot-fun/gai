@@ -272,19 +272,8 @@ func style_mode_button(button: Button) -> void:
 	button.add_theme_stylebox_override("disabled", normal.duplicate())
 	var icon_path := str(button.get_meta("markdown_edit_icon_path", ""))
 	var icon_color := ThemeColor.accent_theme_color() if button.button_pressed else Colors.primary_text
-	button.icon = make_icon(icon_path, icon_color)
+	button.icon = ImageHelper.tint_svg(icon_path, icon_color)
 	pass
-
-
-func make_icon(path: String, color: Color) -> ImageTexture:
-	var svg := FileAccess.get_file_as_string(path)
-	if not svg.contains("fill="):
-		svg = svg.replace("<path ", "<path fill=\"#" + Color.WHITE.to_html(false) + "\" ")
-	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
-	var image := Image.new()
-	if image.load_svg_from_string(svg, 1.0) != OK:
-		return ImageTexture.new()
-	return ImageTexture.create_from_image(image)
 
 
 func make_transparent_grabber() -> ImageTexture:

@@ -30,6 +30,23 @@ static func load_external_image(path: String) -> ImageTexture:
 	return ImageTexture.create_from_image(image) if image != null and not image.is_empty() else null
 
 
+## Loads an SVG and paints it [param color].
+## A path with no fill gets one, and existing `#ffffff` paint is replaced, so Material icons and white strokes both take the color.
+## [param scale] is the raster scale passed to [method Image.load_svg_from_string].
+static func tint_svg(path: String, color: Color, scale: float = 1.0) -> ImageTexture:
+	var svg := FileAccess.get_file_as_string(path)
+	if svg.is_empty():
+		return ImageTexture.new()
+	var hex := "#" + color.to_html(false)
+	if not svg.contains("fill="):
+		svg = svg.replace("<path ", "<path fill=\"%s\" " % hex)
+	svg = svg.replace("#" + Color.WHITE.to_html(false), hex)
+	var image := Image.new()
+	if image.load_svg_from_string(svg, scale) != OK:
+		return ImageTexture.new()
+	return ImageTexture.create_from_image(image)
+
+
 static func get_image_format(path: String, default_format: String = png) -> String:
 	var path_without_query := path.get_slice("?", 0).get_slice("#", 0)
 	var extension := StringUtils.substring_after_last(path_without_query.to_lower(), ".")

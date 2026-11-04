@@ -59,16 +59,5 @@ func search_tooltip() -> String:
 
 
 func update_icon(hovered: bool) -> void:
-	button.icon = make_icon(SEARCH_ICON_PATH, Colors.primary_text if hovered else Colors.secondary_text)
+	button.icon = ImageHelper.tint_svg(SEARCH_ICON_PATH, Colors.primary_text if hovered else Colors.secondary_text, 2.0)
 	pass
-
-
-func make_icon(path: String, color: Color) -> ImageTexture:
-	var svg := FileAccess.get_file_as_string(path)
-	if not svg.contains("fill="):
-		svg = svg.replace("<path ", "<path fill=\"#" + Color.WHITE.to_html(false) + "\" ")
-	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
-	var image := Image.new()
-	if image.load_svg_from_string(svg, 2.0) != OK:
-		return ImageTexture.new()
-	return ImageTexture.create_from_image(image)

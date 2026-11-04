@@ -43,16 +43,5 @@ func apply_theme() -> void:
 
 func update_icon(hovered: bool) -> void:
 	var icon_color := Colors.primary_text if hovered else Colors.secondary_text
-	button.icon = make_icon(icon_color)
+	button.icon = ImageHelper.tint_svg(SETTINGS_ICON_PATH, icon_color, 2.0)
 	pass
-
-
-func make_icon(color: Color) -> ImageTexture:
-	var svg := FileAccess.get_file_as_string(SETTINGS_ICON_PATH)
-	if not svg.contains("fill="):
-		svg = svg.replace("<path ", "<path fill=\"#" + Color.WHITE.to_html(false) + "\" ")
-	svg = svg.replace("#" + Color.WHITE.to_html(false), "#" + color.to_html(false))
-	var image := Image.new()
-	if image.load_svg_from_string(svg, 2.0) != OK:
-		return ImageTexture.new()
-	return ImageTexture.create_from_image(image)

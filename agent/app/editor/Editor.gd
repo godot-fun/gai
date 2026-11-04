@@ -182,7 +182,7 @@ func style_logo() -> void:
 	logo_button.expand_icon = false
 	var accent := ThemeColor.accent_theme_color()
 	var color := accent if ThemeColor.is_dark_theme() else accent.darkened(0.08)
-	logo_button.icon = make_back_icon(color)
+	logo_button.icon = ImageHelper.tint_svg(BACK_ICON_PATH, color)
 	logo_button.add_theme_constant_override("icon_max_width", ControlSize.icon_sm)
 	logo_button.add_theme_constant_override("icon_max_height", ControlSize.icon_sm)
 	logo_button.add_theme_constant_override("h_separation", Margin.ma_1)
@@ -198,16 +198,6 @@ func style_logo() -> void:
 	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface)
 	ButtonStyle.apply_style(logo_button, normal, hover, pressed)
 	pass
-
-
-func make_back_icon(color: Color) -> ImageTexture:
-	var svg := FileAccess.get_file_as_string(BACK_ICON_PATH)
-	var hex := "#" + color.to_html(false)
-	svg = svg.replace("<path ", "<path fill=\"%s\" " % hex)
-	var image := Image.new()
-	if image.load_svg_from_string(svg, 1.0) != OK:
-		return ImageTexture.new()
-	return ImageTexture.create_from_image(image)
 
 
 func style_file_tree() -> void:
