@@ -1,10 +1,11 @@
 extends PanelContainer
 
-## Text editor scene. The toolbar is the wordmark plus open-file cards.
+## Text editor scene. The toolbar is the wordmark, open-file cards, and the Markdown view buttons.
 ## The body is a workspace file tree beside [MarkdownEdit].
 
 const AGENT_SCENE_PATH := "res://agent/Agent.tscn"
 const WORDMARK := "GAI Editor"
+const TAB_WIDTH := ControlSize.image_xs
 
 enum Pending { NONE, CLOSE, LEAVE, QUIT }
 
@@ -15,6 +16,7 @@ enum Pending { NONE, CLOSE, LEAVE, QUIT }
 @onready var tab_spacer: Control = $Root/Toolbar/ToolbarMargin/ToolbarRow/TabSpacer
 @onready var tab_scroll: ScrollContainer = $Root/Toolbar/ToolbarMargin/ToolbarRow/TabScroll
 @onready var tab_row: HBoxContainer = $Root/Toolbar/ToolbarMargin/ToolbarRow/TabScroll/TabRow
+@onready var mode_bar: HBoxContainer = $Root/Toolbar/ToolbarMargin/ToolbarRow/ModeBar
 @onready var body_split: HSplitContainer = $Root/Body
 @onready var sidebar: PanelContainer = $Root/Body/Sidebar
 @onready var file_tree: EditorFileTree = $Root/Body/Sidebar/FileTree
@@ -40,9 +42,9 @@ func _ready() -> void:
 
 	markdown = MarkdownEdit.new()
 	editor_host.add_child(markdown)
+	markdown.detach_mode_bar(mode_bar)
 	markdown.text_changed.connect(on_editor_text_changed)
 	logo_button.pressed.connect(on_logo_pressed)
-	tab_scroll.gui_input.connect(on_tab_scroll_input)
 	body_split.dragged.connect(on_split_dragged)
 	resized.connect(align_tabs)
 	file_tree.file_activated.connect(on_file_activated)
@@ -75,6 +77,9 @@ func _notification(what: int) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if scroll_tabs(event):
+		get_viewport().set_input_as_handled()
+		return
 	var key := event as InputEventKey
 	if key == null or not key.pressed or key.echo:
 		return
@@ -110,6 +115,8 @@ func configure_layout() -> void:
 	toolbar_margin.add_theme_constant_override("margin_bottom", Margin.ma_2)
 	toolbar_row.add_theme_constant_override("separation", Margin.ma_4)
 	tab_row.add_theme_constant_override("separation", Margin.ma_2)
+	tab_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
+	tab_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	body_split.split_offset = AgentLayout.SIDEBAR_DEFAULT_WIDTH
 	sidebar.custom_minimum_size.x = AgentLayout.SIDEBAR_MIN_WIDTH
 	file_tree.set_column_expand(0, true)
@@ -296,16 +303,44 @@ func on_editor_text_changed() -> void:
 	pass
 
 
-func on_tab_scroll_input(event: InputEvent) -> void:
+## The tab strip scrolls without a bar, so the toolbar height stays put when cards overflow.
+func scroll_tabs(event: InputEvent) -> bool:
+	if confirm != null and confirm.visible:
+		return false
+	if not tab_scroll.get_global_rect().has_point(tab_scroll.get_global_mouse_position()):
+		return false
 	var mouse := event as InputEventMouseButton
-	if mouse == null or not mouse.pressed:
+	if mouse != null and mouse.pressed:
+		if mouse.button_index == MOUSE_BUTTON_WHEEL_UP or mouse.button_index == MOUSE_BUTTON_WHEEL_LEFT:
+			tab_scroll.scroll_horizontal -= TAB_WIDTH
+			return true
+		if mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN or mouse.button_index == MOUSE_BUTTON_WHEEL_RIGHT:
+			tab_scroll.scroll_horizontal += TAB_WIDTH
+			return true
+	var pan := event as InputEventPanGesture
+	if pan != null:
+		var delta := pan.delta.x if absf(pan.delta.x) >= absf(pan.delta.y) else pan.delta.y
+		tab_scroll.scroll_horizontal += roundi(delta)
+		return true
+	return false
+
+
+func reveal_active_tab(retry: bool = true) -> void:
+	if tabs.active_index < 0 or tabs.active_index >= tab_cards.size():
 		return
-	if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
-		tab_scroll.scroll_horizontal -= ControlSize.xl
-		get_viewport().set_input_as_handled()
-	elif mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-		tab_scroll.scroll_horizontal += ControlSize.xl
-		get_viewport().set_input_as_handled()
+	var card := tab_cards[tabs.active_index]
+	if card.size.x <= 1.0:
+		if retry:
+			reveal_active_tab.bind(false).call_deferred()
+		return
+	var left := card.position.x
+	var right := left + card.size.x
+	var view_left := float(tab_scroll.scroll_horizontal)
+	var view_right := view_left + tab_scroll.size.x
+	if right > view_right:
+		tab_scroll.scroll_horizontal = roundi(right - tab_scroll.size.x)
+	elif left < view_left:
+		tab_scroll.scroll_horizontal = roundi(left)
 	pass
 
 
@@ -441,12 +476,15 @@ func rebuild_tabs() -> void:
 		var card := make_tab(index)
 		tab_row.add_child(card)
 		tab_cards.append(card)
+	reveal_active_tab.call_deferred()
 	pass
 
 
 func make_tab(index: int) -> PanelContainer:
 	var document := tabs.documents[index]
 	var card := PanelContainer.new()
+	card.custom_minimum_size.x = TAB_WIDTH
+	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	card.mouse_filter = Control.MOUSE_FILTER_STOP
 	var row := HBoxContainer.new()
@@ -458,12 +496,14 @@ func make_tab(index: int) -> PanelContainer:
 	name_button.focus_mode = Control.FOCUS_NONE
 	name_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	name_button.flat = true
+	name_button.clip_text = true
+	name_button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	name_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	name_button.text = document.file_name()
 	name_button.tooltip_text = document.path
-	var name_font := Fonts.regular()
-	name_button.add_theme_font_override("font", name_font)
-	var name_width := name_font.get_string_size(document.file_name(), HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.label_medium_size).x
-	name_button.custom_minimum_size = Vector2(name_width, ControlSize.sm)
+	name_button.custom_minimum_size.y = ControlSize.sm
+	name_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_button.add_theme_font_override("font", Fonts.regular())
 	name_button.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	name_button.pressed.connect(on_tab_pressed.bind(index))
 	row.add_child(name_button)
@@ -472,7 +512,7 @@ func make_tab(index: int) -> PanelContainer:
 	dirty_label.text = "●"
 	dirty_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	dirty_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	dirty_label.visible = document.is_dirty()
+	dirty_label.modulate.a = 1.0 if document.is_dirty() else 0.0
 	dirty_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	dirty_label.add_theme_color_override("font_color", ThemeColor.accent_theme_color())
 	row.add_child(dirty_label)
@@ -520,5 +560,5 @@ func style_card(card: PanelContainer) -> void:
 func update_dirty_marks() -> void:
 	for index in tab_cards.size():
 		var dirty_label := tab_cards[index].get_meta("dirty_label") as Label
-		dirty_label.visible = tabs.documents[index].is_dirty()
+		dirty_label.modulate.a = 1.0 if tabs.documents[index].is_dirty() else 0.0
 	pass

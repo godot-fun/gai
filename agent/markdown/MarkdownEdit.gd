@@ -133,6 +133,16 @@ func add_toolbar_leading(control: Control) -> void:
 	pass
 
 
+## Moves the edit / split / preview buttons into [param parent] and hides this editor's toolbar,
+## so the text sits against the host's own bar. The buttons keep their mode behavior.
+func detach_mode_bar(parent: Container) -> void:
+	toolbar_panel.visible = false
+	edit_mode_button.reparent(parent)
+	split_mode_button.reparent(parent)
+	preview_mode_button.reparent(parent)
+	pass
+
+
 func make_mode_button(mode: ViewMode, icon_path: String) -> Button:
 	var button := Button.new()
 	button.toggle_mode = true

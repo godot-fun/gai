@@ -40,13 +40,18 @@ mouse_filter = 2
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-horizontal_scroll_mode = 1
+horizontal_scroll_mode = 3
 vertical_scroll_mode = 0
 
 [node name="TabRow" type="HBoxContainer" parent="Root/Toolbar/ToolbarMargin/ToolbarRow/TabScroll"]
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_constants/separation = 8
+
+[node name="ModeBar" type="HBoxContainer" parent="Root/Toolbar/ToolbarMargin/ToolbarRow"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/separation = 4
 
 [node name="Body" type="HSplitContainer" parent="Root"]
 layout_mode = 2
