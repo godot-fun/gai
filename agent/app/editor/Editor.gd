@@ -30,6 +30,7 @@ var tab_cards: Array[PanelContainer] = []
 var pending_kind: Pending = Pending.NONE
 var pending_index: int = -1
 var applying: bool = false
+var reveal_serial: int = 0
 
 
 func _ready() -> void:
@@ -325,20 +326,28 @@ func scroll_tabs(event: InputEvent) -> bool:
 	return false
 
 
-func reveal_active_tab(retry: bool = true) -> void:
-	if tabs.active_index < 0 or tabs.active_index >= tab_cards.size():
+func reveal_active_tab(serial: int = -1, retries: int = 4) -> void:
+	if serial < 0:
+		reveal_serial += 1
+		serial = reveal_serial
+	if serial != reveal_serial:
 		return
-	var card := tab_cards[tabs.active_index]
-	if card.size.x <= 1.0:
-		if retry:
-			reveal_active_tab.bind(false).call_deferred()
+	var index := tabs.active_index
+	if index < 0 or index >= tab_cards.size():
 		return
-	var left := card.position.x
-	var right := left + card.size.x
+	var stride := float(TAB_WIDTH + tab_row.get_theme_constant("separation"))
+	var left := index * stride
+	var right := left + float(TAB_WIDTH)
+	var view_width := tab_scroll.size.x
+	# Card positions are still 0 until the row lays out, so wait a frame and measure by index.
+	if view_width <= 1.0 or tab_row.size.x + 1.0 < right:
+		if retries > 0 and is_inside_tree():
+			get_tree().process_frame.connect(func() -> void: reveal_active_tab(serial, retries - 1), CONNECT_ONE_SHOT)
+		return
 	var view_left := float(tab_scroll.scroll_horizontal)
-	var view_right := view_left + tab_scroll.size.x
+	var view_right := view_left + view_width
 	if right > view_right:
-		tab_scroll.scroll_horizontal = roundi(right - tab_scroll.size.x)
+		tab_scroll.scroll_horizontal = roundi(right - view_width)
 	elif left < view_left:
 		tab_scroll.scroll_horizontal = roundi(left)
 	pass
@@ -476,7 +485,7 @@ func rebuild_tabs() -> void:
 		var card := make_tab(index)
 		tab_row.add_child(card)
 		tab_cards.append(card)
-	reveal_active_tab.call_deferred()
+	reveal_active_tab()
 	pass
 
 
