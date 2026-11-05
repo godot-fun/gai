@@ -17,7 +17,7 @@ static var regular_font: FontFile
 static var medium_font: FontFile
 static var semibold_font: FontFile
 static var bold_font: FontFile
-static var code_font: FontFile
+static var code_font: FontVariation
 
 
 ## Applies the bundled regular font to controls and standalone windows without a local Theme.
@@ -59,5 +59,8 @@ static func bold() -> Font:
 ## The same bundled JetBrains Mono Regular source font used by Godot's script editor.
 static func code() -> Font:
 	if code_font == null:
-		code_font = load(CODE_PATH) as FontFile
+		code_font = FontVariation.new()
+		code_font.base_font = load(CODE_PATH) as FontFile
+		var text_server := TextServerManager.get_primary_interface()
+		code_font.opentype_features = {text_server.name_to_tag("calt"): 0}
 	return code_font

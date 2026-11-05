@@ -27,6 +27,8 @@ static func recognizes_gdscript_test() -> void:
 	var edit := CodeEdit.new()
 	CodeEditStyle.apply_base(edit)
 	assert(edit.get_theme_font("font") == Fonts.code())
+	var contextual_alternates := TextServerManager.get_primary_interface().name_to_tag("calt")
+	assert((Fonts.code() as FontVariation).opentype_features[contextual_alternates] == 0)
 	edit.syntax_highlighter = highlighter
 	edit.text = "class_name Player\nextends CharacterBody2D\n@export var speed: float = 220.0\nfunc _physics_process(delta: float) -> void:\n\tInput.get_vector(\"left\")\n\tpass # done\n"
 	var base_color := edit.get_theme_color("font_color")
@@ -72,7 +74,7 @@ static func recognizes_extended_languages_test() -> void:
 	assert(markdown_regions.get_keyword_color("NOTE") == CodeColors.declaration)
 	var markdown_edit := CodeEdit.new()
 	CodeEditStyle.apply_base(markdown_edit)
-	assert(markdown_edit.get_theme_color("font_readonly_color") == Colors.disabled_text)
+	assert(markdown_edit.get_theme_color("font_readonly_color") == Colors.primary_text)
 	markdown_edit.syntax_highlighter = markdown
 	var long_form := "This long-form article exercises **MarkdownParser** inline."
 	markdown_edit.text = long_form + "\n"
