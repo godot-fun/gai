@@ -1,14 +1,13 @@
 extends PanelContainer
 
-## Text editor scene. The toolbar is the wordmark and the open-file cards.
-## The body is a workspace file tree beside [CommonEditor].
+## Text editor panel. The toolbar is the wordmark and the open-file cards.
+## The body is a workspace file tree beside [CommonEditor]. Hosted by [EditorWindow].
 
-const AGENT_SCENE_PATH := "res://agent/Agent.tscn"
 const BACK_ICON_PATH := "res://agent/asset/image/ui/arrow_back.svg"
 const WORDMARK := "GAI · Editor"
 const TAB_WIDTH := ControlSize.image_xs
 
-enum Pending { NONE, CLOSE, LEAVE, QUIT }
+enum Pending { NONE, CLOSE, LEAVE }
 
 @onready var toolbar_panel: PanelContainer = $Root/Toolbar
 @onready var toolbar_margin: MarginContainer = $Root/Toolbar/ToolbarMargin
@@ -22,6 +21,7 @@ enum Pending { NONE, CLOSE, LEAVE, QUIT }
 @onready var file_tree: EditorFileTree = $Root/Body/Sidebar/FileTree
 @onready var editor_host: MarginContainer = $Root/Body/EditorHost
 
+var host_window: Window
 var tabs: EditorTabs = EditorTabs.new()
 var shortcut_host: EditorShortcuts.Host
 var editor: CommonEditor
@@ -35,9 +35,6 @@ var reveal_queued: bool = false
 
 
 func _ready() -> void:
-	I18nHelper.init_i18n()
-	DisplayScale.apply_ui_scale()
-	get_tree().set_auto_accept_quit(false)
 	var app_theme := Theme.new()
 	app_theme.default_font = Fonts.regular()
 	theme = app_theme
@@ -70,15 +67,6 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	sync_active()
 	tabs.save()
-	var tree := get_tree()
-	if tree != null:
-		tree.set_auto_accept_quit(true)
-	pass
-
-
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_WM_CLOSE_REQUEST:
-		on_window_close_requested()
 	pass
 
 
@@ -147,9 +135,6 @@ func apply_theme() -> void:
 	ConfirmationDialogStyle.apply(confirm, [discard_button])
 	for card in tab_cards:
 		style_card(card)
-	if OSUtils.is_windows():
-		NativeOS.apply_title_bar_dark_mode(DisplayServer.MAIN_WINDOW_ID, ThemeColor.is_dark_theme())
-	DisplayServer.window_set_title(WORDMARK, DisplayServer.MAIN_WINDOW_ID)
 	align_tabs.call_deferred()
 	pass
 
@@ -283,22 +268,35 @@ func on_tab_close_pressed(index: int) -> void:
 
 
 func on_logo_pressed() -> void:
-	sync_active()
-	if tabs.dirty_files().is_empty():
-		leave()
+	if defer_leave_for_unsaved():
 		return
-	confirm_unsaved(Pending.LEAVE, -1)
+	dismiss_host_window()
 	pass
 
 
-func on_window_close_requested() -> void:
+## Returns [code]true[/code] when close is blocked pending a save/discard dialog.
+func handle_host_close_request() -> bool:
+	return defer_leave_for_unsaved()
+
+
+func defer_leave_for_unsaved() -> bool:
 	if pending_kind != Pending.NONE:
-		return
+		return true
 	sync_active()
 	if tabs.dirty_files().is_empty():
-		get_tree().quit()
-		return
-	confirm_unsaved(Pending.QUIT, -1)
+		return false
+	confirm_unsaved(Pending.LEAVE, -1)
+	return true
+
+
+func dismiss_host_window() -> void:
+	if host_window != null and is_instance_valid(host_window):
+		host_window.queue_free()
+	pass
+
+
+func focus_active_editor() -> void:
+	editor.focus_editor()
 	pass
 
 
@@ -502,22 +500,14 @@ func on_confirm_canceled() -> void:
 
 
 func finish_pending(kind: Pending) -> void:
-	if kind == Pending.QUIT:
-		get_tree().quit()
-		return
 	if kind == Pending.LEAVE:
-		leave()
+		dismiss_host_window()
 	pass
 
 
 func clear_pending() -> void:
 	pending_kind = Pending.NONE
 	pending_index = -1
-	pass
-
-
-func leave() -> void:
-	await SceneHelper.async_change_scene_to_file(AGENT_SCENE_PATH)
 	pass
 
 

@@ -1,9 +1,7 @@
 class_name EditorButton
 extends RefCounted
 
-## Toolbar entry point for the editor scene. Its button marks the start of the chat content.
-
-const EDITOR_SCENE_PATH := "res://agent/app/editor/Editor.tscn"
+## Toolbar entry point for the editor window. Its button marks the start of the chat content.
 
 var button: Button
 var workspace_button: Button
@@ -22,7 +20,7 @@ func setup(p_button: Button, p_workspace_button: Button) -> void:
 
 
 func on_button_pressed() -> void:
-	await SceneHelper.async_change_scene_to_file(EDITOR_SCENE_PATH)
+	EditorWindow.show_editor()
 	pass
 
 
