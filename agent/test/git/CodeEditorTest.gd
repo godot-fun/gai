@@ -115,8 +115,7 @@ var page_margin: MarginContainer
 var title_label: Label
 var path_label: Label
 var button_flow: HFlowContainer
-var editor_panel: PanelContainer
-var code_edit: CodeEdit
+var editor: CommonEditor
 
 var sample_buttons: Array[Button] = []
 var button_group: ButtonGroup
@@ -164,8 +163,9 @@ func build_ui() -> void:
 	header.add_child(path_label)
 
 	var toolbar_scroll := ScrollContainer.new()
-	toolbar_scroll.custom_minimum_size.y = 120.0
+	toolbar_scroll.custom_minimum_size.y = ControlSize.md
 	toolbar_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	toolbar_scroll.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	toolbar_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	layout.add_child(toolbar_scroll)
 
@@ -175,20 +175,10 @@ func build_ui() -> void:
 	button_flow.add_theme_constant_override("v_separation", Margin.ma_2)
 	toolbar_scroll.add_child(button_flow)
 
-	editor_panel = PanelContainer.new()
-	editor_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	editor_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	layout.add_child(editor_panel)
-
-	code_edit = CodeEdit.new()
-	code_edit.custom_minimum_size.y = 480.0
-	code_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	code_edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	code_edit.editable = false
-	code_edit.gutters_draw_line_numbers = true
-	code_edit.highlight_current_line = false
-	code_edit.wrap_mode = TextEdit.LINE_WRAPPING_NONE
-	editor_panel.add_child(code_edit)
+	editor = CommonEditor.new()
+	editor.custom_minimum_size.y = 480.0
+	editor.editable = false
+	layout.add_child(editor)
 	pass
 
 
@@ -222,16 +212,7 @@ func show_sample(index: int) -> void:
 	var sample: Dictionary = PREVIEW_SAMPLES[index]
 	active_path = str(sample["path"])
 	path_label.text = active_path
-	code_edit.text = str(sample["text"])
-	apply_highlighter_and_editor_style()
-	pass
-
-
-func apply_highlighter_and_editor_style() -> void:
-	if active_path.is_empty() or code_edit == null:
-		return
-	CodeEditStyle.apply_diff_editor(code_edit)
-	code_edit.syntax_highlighter = CommonHighlighter.create(active_path)
+	editor.set_document(str(sample["text"]), active_path)
 	pass
 
 
@@ -249,10 +230,8 @@ func apply_theme() -> void:
 	path_label.add_theme_font_override("font", Fonts.regular())
 	path_label.add_theme_font_size_override("font_size", Typography.body_medium_size)
 	path_label.add_theme_color_override("font_color", Colors.secondary_text)
-	editor_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_0, Colors.subtle_border, ControlSize.border_xs))
 	for button: Button in sample_buttons:
 		style_sample_button(button)
-	apply_highlighter_and_editor_style()
 	pass
 
 
@@ -260,13 +239,8 @@ func style_sample_button(button: Button) -> void:
 	button.add_theme_font_override("font", Fonts.medium())
 	button.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1, Colors.subtle_border, ControlSize.border_xs)
+	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(Colors.control_surface, Weights.w_2))
 	var selected := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(Colors.control_surface, Weights.w_2), ThemeColor.accent_theme_color())
-	if button.button_pressed:
-		ButtonStyle.apply_style(button, selected, selected, selected)
-		ButtonStyle.apply_font_colors(button, ThemeColor.accent_theme_color(), ThemeColor.accent_theme_color(), ThemeColor.accent_theme_color())
-	else:
-		ButtonStyle.apply_style(button, normal,
-			StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(Colors.control_surface, Weights.w_2)),
-			StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.demote(Colors.control_surface, Weights.w_2)))
-		ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, ThemeColor.accent_theme_color())
+	ButtonStyle.apply_style(button, normal, hover, selected)
+	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, ThemeColor.accent_theme_color())
 	pass
