@@ -124,7 +124,7 @@ func get_pasted_file_markdown() -> String:
 	var files := PackedStringArray()
 	var output := result.output.build_string().strip_edges()
 	for path in decode_clipboard_paths(output):
-		if FileAccess.file_exists(path) or DirAccess.dir_exists_absolute(path):
+		if FileUtils.exists(path):
 			files.append(path)
 	return join_markdown_for_attachments(files)
 

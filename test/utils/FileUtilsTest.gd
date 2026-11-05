@@ -47,6 +47,45 @@ func is_relative_to_test() -> void:
 	pass
 
 
+func exists_test() -> void:
+	var root := ProjectSettings.globalize_path("user://fileutils_exists_test")
+	var file_path := root.path_join("note.txt")
+	assert(DirAccess.make_dir_recursive_absolute(root) == OK)
+	assert(FileUtils.write_string_to_file(file_path, "note") == OK)
+	assert(FileUtils.exists(root))
+	assert(FileUtils.exists(file_path))
+	assert(not FileUtils.exists(root.path_join("missing")))
+	FileUtils.delete_file_or_directory(root)
+	pass
+
+
+func copy_test() -> void:
+	var root := ProjectSettings.globalize_path("user://fileutils_copy_test")
+	var source := root.path_join("source")
+	var target := root.path_join("target")
+	assert(DirAccess.make_dir_recursive_absolute(source.path_join("nested")) == OK)
+	assert(FileUtils.write_string_to_file(source.path_join("one.txt"), "one") == OK)
+	assert(FileUtils.write_string_to_file(source.path_join("nested/two.txt"), "two") == OK)
+	assert(FileUtils.copy(source, target) == OK)
+	assert(FileUtils.read_file_to_string(target.path_join("one.txt")) == "one")
+	assert(FileUtils.read_file_to_string(target.path_join("nested/two.txt")) == "two")
+	assert(FileUtils.copy(source, source.path_join("child")) == ERR_INVALID_PARAMETER)
+	assert(FileUtils.copy(root.path_join("missing"), target.path_join("missing")) == ERR_FILE_NOT_FOUND)
+	FileUtils.delete_file_or_directory(root)
+	pass
+
+
+func is_valid_file_name_test() -> void:
+	assert(FileUtils.is_valid_file_name("note.md"))
+	assert(FileUtils.is_valid_file_name("新建文件夹"))
+	assert(not FileUtils.is_valid_file_name(""))
+	assert(not FileUtils.is_valid_file_name("."))
+	assert(not FileUtils.is_valid_file_name(".."))
+	assert(not FileUtils.is_valid_file_name("../note.md"))
+	assert(not FileUtils.is_valid_file_name("bad:name"))
+	pass
+
+
 func read_file_to_string_rejects_nul_test() -> void:
 	var path := ProjectSettings.globalize_path("user://fileutils_nul_test.bin")
 	var file := FileAccess.open(path, FileAccess.WRITE)

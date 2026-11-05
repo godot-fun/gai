@@ -86,6 +86,39 @@ static func is_relative_to(path: String, base_path: String) -> bool:
 	return false
 
 
+## Returns whether [param path] points to an existing file or directory.
+static func exists(path: String) -> bool:
+	return FileAccess.file_exists(path) or DirAccess.dir_exists_absolute(path)
+
+
+## Copies a file or directory from [param source] to [param target].
+## Directories are copied recursively and cannot be copied into themselves.
+static func copy(source: String, target: String) -> Error:
+	var normalized_source := normalize_path(source)
+	var normalized_target := normalize_path(target)
+	if DirAccess.dir_exists_absolute(normalized_source):
+		if is_relative_to(normalized_target, normalized_source):
+			return ERR_INVALID_PARAMETER
+		var make_error := DirAccess.make_dir_recursive_absolute(normalized_target)
+		if make_error != OK:
+			return make_error
+		var directory := DirAccess.open(normalized_source)
+		if directory == null:
+			return DirAccess.get_open_error()
+		for file_name in directory.get_files():
+			var copy_error := DirAccess.copy_absolute(normalized_source.path_join(file_name), normalized_target.path_join(file_name))
+			if copy_error != OK:
+				return copy_error
+		for directory_name in directory.get_directories():
+			var copy_error := copy(normalized_source.path_join(directory_name), normalized_target.path_join(directory_name))
+			if copy_error != OK:
+				return copy_error
+		return OK
+	if not FileAccess.file_exists(normalized_source):
+		return ERR_FILE_NOT_FOUND
+	return DirAccess.copy_absolute(normalized_source, normalized_target)
+
+
 # ---------------------------------------------------------------------------
 # File read / write / delete
 # ---------------------------------------------------------------------------
@@ -306,6 +339,18 @@ static func cleanup_cache_folder(folder_path: String, max_bytes: int, target_rat
 # ---------------------------------------------------------------------------
 # Filename sanitization
 # ---------------------------------------------------------------------------
+
+## Returns whether [param file_name] is a single non-empty file or directory name
+## without path separators or characters rejected by Windows filesystems.
+static func is_valid_file_name(file_name: String) -> bool:
+	var trimmed := file_name.strip_edges()
+	if trimmed.is_empty() or trimmed == "." or trimmed == "..":
+		return false
+	for invalid in ["/", "\\", ":", "*", "?", "\"", "<", ">", "|"]:
+		if invalid in trimmed:
+			return false
+	return true
+
 
 # Convert a string into a valid filename using underscores as separators.
 # aa bb cc dd -> aa_bb_cc

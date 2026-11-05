@@ -129,25 +129,6 @@ static func editor_tabs_close_others_test() -> void:
 	pass
 
 
-static func editor_file_operations_copy_and_validate_test() -> void:
-	var root := FileUtils.normalize_path(ProjectSettings.globalize_path(TREE_DIR + "_operations"))
-	var source := root.path_join("source")
-	var target := root.path_join("target")
-	DirAccess.make_dir_recursive_absolute(source.path_join("nested"))
-	FileUtils.write_string_to_file(source.path_join("one.txt"), "one")
-	FileUtils.write_string_to_file(source.path_join("nested/two.txt"), "two")
-	assert(EditorFileOperations.copy_entry(source, target) == OK)
-	assert(FileUtils.read_file_to_string(target.path_join("one.txt")) == "one")
-	assert(FileUtils.read_file_to_string(target.path_join("nested/two.txt")) == "two")
-	assert(EditorFileOperations.copy_entry(source, source.path_join("child")) == ERR_INVALID_PARAMETER)
-	assert(EditorFileOperations.valid_entry_name("note.md"))
-	assert(not EditorFileOperations.valid_entry_name("../note.md"))
-	assert(not EditorFileOperations.valid_entry_name("bad:name"))
-	var copy_path := EditorFileOperations.unique_copy_path(source.path_join("one.txt"), source)
-	assert(copy_path.ends_with("one copy.txt"))
-	pass
-
-
 static func editor_tabs_gai_json_test() -> void:
 	var root := FileUtils.normalize_path(ProjectSettings.globalize_path(GAI_DIR))
 	var prior_root := AgentWorkspace.get_root()

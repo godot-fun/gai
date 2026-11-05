@@ -170,7 +170,7 @@ func show_context_menu(local_position: Vector2i) -> void:
 	menu.add_item(I18n.t("common.copy"), MenuAction.COPY)
 	menu.set_item_disabled(menu.item_count - 1, context_path.is_empty())
 	menu.add_item(I18n.t("editor.paste"), MenuAction.PASTE)
-	menu.set_item_disabled(menu.item_count - 1, copied_path.is_empty() or not EditorFileOperations.entry_exists(copied_path))
+	menu.set_item_disabled(menu.item_count - 1, copied_path.is_empty() or not FileUtils.exists(copied_path))
 	menu.add_separator()
 	menu.add_item(I18n.t("common.delete"), MenuAction.DELETE)
 	menu.set_item_disabled(menu.item_count - 1, context_path.is_empty())
@@ -207,12 +207,12 @@ func prompt_create(kind: CreateKind) -> void:
 
 func on_name_confirmed() -> void:
 	var entry_name := name_edit.text.strip_edges()
-	if not EditorFileOperations.valid_entry_name(entry_name):
+	if not FileUtils.is_valid_file_name(entry_name):
 		Alert.alert(I18n.t("editor.invalid_name"), Colors.error)
 		return
 	var directory := target_directory(context_path)
 	var path := FileUtils.normalize_path(directory.path_join(entry_name))
-	if EditorFileOperations.entry_exists(path):
+	if FileUtils.exists(path):
 		Alert.alert(I18n.t("editor.name_exists"), Colors.error)
 		return
 	var error := DirAccess.make_dir_recursive_absolute(path) if pending_create_kind == CreateKind.FOLDER else FileUtils.write_string_to_file(path, "")
@@ -225,12 +225,15 @@ func on_name_confirmed() -> void:
 
 
 func paste_copied() -> void:
-	if copied_path.is_empty() or not EditorFileOperations.entry_exists(copied_path):
+	if copied_path.is_empty() or not FileUtils.exists(copied_path):
 		Alert.alert(I18n.t("editor.copy_source_missing"), Colors.error)
 		return
 	var directory := target_directory(context_path)
-	var target := EditorFileOperations.unique_copy_path(copied_path, directory)
-	var error := EditorFileOperations.copy_entry(copied_path, target)
+	var target := FileUtils.normalize_path(directory.path_join(copied_path.get_file()))
+	if FileUtils.exists(target):
+		Alert.alert(I18n.t("editor.name_exists"), Colors.error)
+		return
+	var error := FileUtils.copy(copied_path, target)
 	if error != OK:
 		Alert.alert(I18n.t("editor.paste_failed"), Colors.error)
 		return
