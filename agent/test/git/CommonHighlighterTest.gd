@@ -46,6 +46,16 @@ static func recognizes_gdscript_test() -> void:
 	assert(MarkdownHighlighter.color_at_column(highlighter.get_line_syntax_highlighting(4), 7, base_color) == CodeColors.function)
 	assert(MarkdownHighlighter.color_at_column(highlighter.get_line_syntax_highlighting(5), 1, base_color) == CodeColors.declaration)
 	assert(MarkdownHighlighter.color_at_column(highlighter.get_line_syntax_highlighting(5), 6, base_color) == CodeColors.comment)
+	edit.text = "const REQUEST_TIMEOUT_MILLIS := 5\n"
+	assert(MarkdownHighlighter.color_at_column(highlighter.get_line_syntax_highlighting(0), 6, base_color) == base_color)
+	edit.text = "5 * TimeUtils.MILLIS_PER_MINUTE\n"
+	var millis_line := highlighter.get_line_syntax_highlighting(0)
+	assert(MarkdownHighlighter.color_at_column(millis_line, 4, base_color) == CodeColors.engine_type)
+	assert(MarkdownHighlighter.color_at_column(millis_line, "5 * TimeUtils.MILLIS_PER_MINUTE".find("MILLIS"), base_color) == base_color)
+	edit.text = "[StringUtils.format(\"x\", api_key)]\n"
+	var format_line := highlighter.get_line_syntax_highlighting(0)
+	assert(MarkdownHighlighter.color_at_column(format_line, "[StringUtils.format(\"x\", api_key)]".find("format"), base_color) == CodeColors.function)
+	assert(MarkdownHighlighter.color_at_column(format_line, "[StringUtils.format(\"x\", api_key)]".find("api_key"), base_color) == base_color)
 	edit.free()
 	pass
 

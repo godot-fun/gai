@@ -122,13 +122,21 @@ static func identifier_color(source: String, start: int, end: int, word: String,
 		return CodeColors.function_definition
 	if previous_word == "class_name" or previous_word == "extends":
 		return CodeColors.engine_type
+	if previous_word == "const":
+		return base_color
+	var dot_before := previous_non_space(source, start)
+	if dot_before >= 0 and source[dot_before] == ".":
+		var next_after := next_non_space(source, end)
+		if next_after < source.length() and source[next_after] == "(":
+			return CodeColors.function
+		if word[0] == word[0].to_upper() and word[0] != word[0].to_lower():
+			return base_color
+		return CodeColors.member
 	if word[0] == word[0].to_upper() and word[0] != word[0].to_lower():
 		return CodeColors.engine_type
 	var next := next_non_space(source, end)
 	if next < source.length() and source[next] == "(":
 		return CodeColors.global_function if GLOBAL_FUNCTIONS.has(word) else CodeColors.function
-	if previous_non_space(source, start) >= 0 and source[previous_non_space(source, start)] == ".":
-		return CodeColors.member
 	return base_color
 
 
