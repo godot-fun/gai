@@ -6,13 +6,12 @@ extends Tree
 ## and hide Godot `.uid` / `.import` sidecar files.
 
 enum MenuAction { NEW_FILE, NEW_FOLDER, COPY, PASTE, DELETE }
+enum CreateKind { FILE, FOLDER }
 
 var root_path: String = ""
 var copied_path: String = ""
 var context_path: String = ""
-var context_directory: String = ""
-var create_directory: String = ""
-var create_folder: bool = false
+var pending_create_kind: CreateKind = CreateKind.FILE
 var menu: PopupMenu
 var name_dialog: ConfirmationDialog
 var name_edit: LineEdit
@@ -61,7 +60,6 @@ func build_dialogs() -> void:
 	delete_dialog.min_size = Vector2i(420, 140)
 	delete_dialog.confirmed.connect(delete_context_entry)
 	add_child(delete_dialog)
-	apply_menu_theme()
 	pass
 
 
@@ -120,7 +118,6 @@ func delete_selected() -> bool:
 	if next != null and not bool(next.get_meta("placeholder", false)):
 		next.select(0)
 	EditorEvents.events.file_deleted.emit(path)
-	EditorEvents.events.files_changed.emit(path.get_base_dir())
 	Alert.alert(StringUtils.format(I18n.t("editor.delete_succeeded"), path.get_file()), Colors.success)
 	return true
 
@@ -150,7 +147,6 @@ func on_gui_input(event: InputEvent) -> void:
 		context_path = FileUtils.normalize_path(str(item.get_metadata(0)))
 	else:
 		context_path = ""
-	context_directory = target_directory(context_path)
 	show_context_menu(Vector2i(mouse.position))
 	accept_event()
 	pass
@@ -185,9 +181,9 @@ func show_context_menu(local_position: Vector2i) -> void:
 func on_menu_action(action: int) -> void:
 	match action:
 		MenuAction.NEW_FILE:
-			prompt_create(false)
+			prompt_create(CreateKind.FILE)
 		MenuAction.NEW_FOLDER:
-			prompt_create(true)
+			prompt_create(CreateKind.FOLDER)
 		MenuAction.COPY:
 			copied_path = context_path
 		MenuAction.PASTE:
@@ -197,10 +193,9 @@ func on_menu_action(action: int) -> void:
 	pass
 
 
-func prompt_create(folder: bool) -> void:
-	create_folder = folder
-	create_directory = context_directory
-	name_dialog.title = I18n.t("editor.new_folder") if folder else I18n.t("editor.new_file")
+func prompt_create(kind: CreateKind) -> void:
+	pending_create_kind = kind
+	name_dialog.title = I18n.t("editor.new_folder") if kind == CreateKind.FOLDER else I18n.t("editor.new_file")
 	name_dialog.dialog_text = I18n.t("editor.name_prompt")
 	name_edit.text = ""
 	name_dialog.popup_centered()
@@ -213,16 +208,15 @@ func on_name_confirmed() -> void:
 	if not EditorFileOperations.valid_entry_name(entry_name):
 		Alert.alert(I18n.t("editor.invalid_name"), Colors.error)
 		return
-	var path := FileUtils.normalize_path(create_directory.path_join(entry_name))
+	var directory := target_directory(context_path)
+	var path := FileUtils.normalize_path(directory.path_join(entry_name))
 	if EditorFileOperations.entry_exists(path):
 		Alert.alert(I18n.t("editor.name_exists"), Colors.error)
 		return
-	var error := DirAccess.make_dir_recursive_absolute(path) if create_folder else FileUtils.write_string_to_file(path, "")
+	var error := DirAccess.make_dir_recursive_absolute(path) if pending_create_kind == CreateKind.FOLDER else FileUtils.write_string_to_file(path, "")
 	if error != OK:
 		Alert.alert(I18n.t("editor.create_failed"), Colors.error)
 		return
-	EditorEvents.events.file_created.emit(path)
-	EditorEvents.events.files_changed.emit(create_directory)
 	reload(root_path)
 	Alert.alert(StringUtils.format(I18n.t("editor.created"), entry_name), Colors.success)
 	pass
@@ -232,13 +226,12 @@ func paste_copied() -> void:
 	if copied_path.is_empty() or not EditorFileOperations.entry_exists(copied_path):
 		Alert.alert(I18n.t("editor.copy_source_missing"), Colors.error)
 		return
-	var target := EditorFileOperations.unique_copy_path(copied_path, context_directory)
+	var directory := target_directory(context_path)
+	var target := EditorFileOperations.unique_copy_path(copied_path, directory)
 	var error := EditorFileOperations.copy_entry(copied_path, target)
 	if error != OK:
 		Alert.alert(I18n.t("editor.paste_failed"), Colors.error)
 		return
-	EditorEvents.events.file_created.emit(target)
-	EditorEvents.events.files_changed.emit(context_directory)
 	reload(root_path)
 	Alert.alert(StringUtils.format(I18n.t("editor.pasted"), target.get_file()), Colors.success)
 	pass
