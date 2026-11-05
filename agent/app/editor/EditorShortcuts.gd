@@ -11,6 +11,9 @@ class Host extends RefCounted:
 	func can_delete_selection() -> bool:
 		return false
 
+	func can_paste_selection() -> bool:
+		return false
+
 	func can_copy_selection() -> bool:
 		return false
 
@@ -29,6 +32,9 @@ class Host extends RefCounted:
 	func delete_selection() -> void:
 		pass
 
+	func paste_selection() -> void:
+		pass
+
 	func copy_selection() -> void:
 		pass
 
@@ -41,6 +47,9 @@ class Binding extends Host:
 
 	func can_delete_selection() -> bool:
 		return editor.file_tree.has_focus()
+
+	func can_paste_selection() -> bool:
+		return editor.file_tree.has_focus() and editor.file_tree.can_paste()
 
 	func can_copy_selection() -> bool:
 		return editor.file_tree.has_focus()
@@ -63,6 +72,10 @@ class Binding extends Host:
 
 	func delete_selection() -> void:
 		editor.file_tree.delete_selected()
+		pass
+
+	func paste_selection() -> void:
+		editor.file_tree.paste_selected()
 		pass
 
 	func copy_selection() -> void:
@@ -102,6 +115,9 @@ static func handle_input(event: InputEvent, host: Host) -> bool:
 		return true
 	if matches_copy(key) and host.can_copy_selection():
 		host.copy_selection()
+		return true
+	if matches_paste(key) and host.can_paste_selection():
+		host.paste_selection()
 		return true
 	return false
 
@@ -152,6 +168,13 @@ static func matches_copy(key: InputEventKey) -> bool:
 	if key.alt_pressed or key.shift_pressed or not chord_modifiers_ok(key):
 		return false
 	return primary_keycode(key) == KEY_C
+
+
+## Paste the copied workspace file or directory when the file tree has focus.
+static func matches_paste(key: InputEventKey) -> bool:
+	if key.alt_pressed or key.shift_pressed or not chord_modifiers_ok(key):
+		return false
+	return primary_keycode(key) == KEY_V
 
 
 static func primary_keycode(key: InputEventKey) -> Key:

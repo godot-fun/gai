@@ -225,6 +225,17 @@ func copy_selected() -> bool:
 	return true
 
 
+func can_paste() -> bool:
+	return not copied_path.is_empty() and FileUtils.exists(copied_path)
+
+
+func paste_selected() -> void:
+	var item := get_selected()
+	context_path = "" if item == null or bool(item.get_meta("placeholder", false)) else FileUtils.normalize_path(str(item.get_metadata(0)))
+	paste_copied()
+	pass
+
+
 func show_context_menu(local_position: Vector2i) -> void:
 	menu.clear()
 	menu.add_item(I18n.t("editor.new_file"), MenuAction.NEW_FILE)

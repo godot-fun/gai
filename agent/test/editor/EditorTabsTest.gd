@@ -270,6 +270,27 @@ static func editor_file_tree_copies_selected_path_test() -> void:
 	pass
 
 
+static func editor_file_tree_pastes_into_selected_folder_test() -> void:
+	var root_path := FileUtils.normalize_path(ProjectSettings.globalize_path(TREE_DIR + "_paste_selected"))
+	var source_path := root_path.path_join("note.md")
+	var target_path := root_path.path_join("src/note.md")
+	DirAccess.make_dir_recursive_absolute(root_path.path_join("src"))
+	FileUtils.write_string_to_file(source_path, "note")
+	var tree := EditorFileTree.new()
+	gdf.gdf_node.add_child(tree)
+	tree.reload(root_path)
+	var folder := tree.get_root().get_first_child()
+	var note := folder.get_next()
+	note.select(0)
+	assert(tree.copy_selected())
+	assert(tree.can_paste())
+	folder.select(0)
+	tree.paste_selected()
+	assert(FileUtils.read_file_to_string(target_path) == "note")
+	tree.free()
+	pass
+
+
 static func editor_file_tree_delete_removes_selected_file_and_folder_test() -> void:
 	var root_path := FileUtils.normalize_path(ProjectSettings.globalize_path(TREE_DIR + "_delete"))
 	DirAccess.make_dir_recursive_absolute(root_path.path_join("src"))
