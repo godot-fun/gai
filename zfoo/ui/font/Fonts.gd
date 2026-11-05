@@ -63,8 +63,8 @@ static func code() -> Font:
 		base.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
 		base.hinting = TextServer.HINTING_LIGHT
 		base.force_autohinter = true
-		base.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
-		base.keep_rounding_remainders = false
+		base.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_AUTO
+		base.keep_rounding_remainders = true
 		base.disable_embedded_bitmaps = true
 		base.fallbacks = [regular()]
 		code_font = FontVariation.new()

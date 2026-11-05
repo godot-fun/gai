@@ -30,8 +30,8 @@ static func recognizes_gdscript_test() -> void:
 	var contextual_alternates := TextServerManager.get_primary_interface().name_to_tag("calt")
 	assert((Fonts.code() as FontVariation).opentype_features[contextual_alternates] == 0)
 	var code_base := (Fonts.code() as FontVariation).base_font as FontFile
-	assert(code_base.subpixel_positioning == TextServer.SUBPIXEL_POSITIONING_DISABLED)
-	assert(not code_base.keep_rounding_remainders)
+	assert(code_base.subpixel_positioning == TextServer.SUBPIXEL_POSITIONING_AUTO)
+	assert(code_base.keep_rounding_remainders)
 	assert(code_base.force_autohinter)
 	assert(edit.get_theme_constant("line_spacing") == 4)
 	edit.syntax_highlighter = highlighter
