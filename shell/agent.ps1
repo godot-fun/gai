@@ -1,4 +1,4 @@
-﻿# Launch the agent desktop app. Usage: .\agent.bat  |  .\shell\agent.ps1  |  .\shell\agent.ps1 --data-dir .gai3
+# Launch the agent desktop app. Usage: .\agent.bat  |  .\shell\agent.ps1  |  .\shell\agent.ps1 --data-dir .gai3
 # The data folder defaults to <workspace>\.gai2; pass --data-dir <workspace-relative path> to change it.
 # Every launch first pulls the latest code, then syncs the import cache (~4 s), then starts the app.
 
@@ -10,44 +10,12 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# ---------------------------------------------------------------------------
-# Console step output
-# ---------------------------------------------------------------------------
-# Three visible steps: update code -> refresh import cache -> start the app.
-# Each step prints "[n/3] title" up front and "[n/3] done in 4.1s" when it ends,
-# so the walls of subprocess output (git, the Godot import) still have clear
-# boundaries. Plain ASCII only: this launcher runs on Windows PowerShell 5.1,
-# which has no $PSStyle, and the default console code page turns box-drawing
-# characters into mojibake.
+$DefaultDataDir = ".gai2"
+$PortableAppDataDir = ".godot"
 
-$StepTotal = 3
-$StepIndex = 0
-
-function Write-Step([string]$Title) {
-	$script:StepIndex++
-	$script:StepStarted = Get-Date
-	Write-Host ""
-	Write-Host ("[{0}/{1}] {2}" -f $script:StepIndex, $script:StepTotal, $Title) -ForegroundColor Cyan
-}
-
-function Write-StepNote([string]$Message) {
-	Write-Host ("       {0}" -f $Message) -ForegroundColor Yellow
-}
-
-function Write-StepDone([string]$Status = "done", [string]$Detail = "") {
-	$Seconds = ((Get-Date) - $script:StepStarted).TotalSeconds
-	$Suffix = ""
-	if ($Detail -ne "") {
-		$Suffix = " ({0})" -f $Detail
-	}
-	$Color = switch ($Status) {
-		"done" { "Green" }
-		"started" { "Green" }
-		"skipped" { "Yellow" }
-		default { "Red" }
-	}
-	Write-Host ("[{0}/{1}] {2} in {3:0.0}s{4}" -f $script:StepIndex, $script:StepTotal, $Status, $Seconds, $Suffix) -ForegroundColor $Color
-}
+. (Join-Path $PSScriptRoot "common.ps1")
+. (Join-Path $PSScriptRoot "console-steps.ps1")
+Initialize-LaunchSteps -StepTotal 3
 
 # ---------------------------------------------------------------------------
 # Portable user:// under .godot
@@ -57,32 +25,9 @@ function Write-StepDone([string]$Status = "done", [string]$Detail = "") {
 # Opening Godot without this script uses the real OS %APPDATA% instead.
 
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-$env:APPDATA = Join-Path $Root ".godot"
+$env:APPDATA = Join-Path $Root $PortableAppDataDir
 
-# ---------------------------------------------------------------------------
-# Resolve Godot editor from dependency manifest
-# ---------------------------------------------------------------------------
-# Binary path: .dependency/manifest.json -> godot.bin (setup: agent/Dependency.md).
-
-$ManifestPath = Join-Path $Root ".dependency\manifest.json"
-
-if (-not (Test-Path -LiteralPath $ManifestPath)) {
-	Write-Host "Missing .dependency/manifest.json. See agent/Dependency.md" -ForegroundColor Red
-	exit 1
-}
-
-$Manifest = Get-Content -LiteralPath $ManifestPath -Raw | ConvertFrom-Json
-$GodotEntry = $Manifest.godot
-if ($null -eq $GodotEntry -or -not $GodotEntry.populated) {
-	Write-Host "godot is not populated in .dependency/manifest.json. See agent/Dependency.md" -ForegroundColor Red
-	exit 1
-}
-
-$Editor = Join-Path $Root ($GodotEntry.bin -replace "/", "\")
-if (-not (Test-Path -LiteralPath $Editor)) {
-	Write-Host "Godot editor not found: $Editor" -ForegroundColor Red
-	exit 1
-}
+$Editor = Resolve-GodotEditorPath -ProjectRoot $Root
 
 # ---------------------------------------------------------------------------
 # Update code from git
@@ -152,14 +97,12 @@ Write-StepDone "done" "exit 0"
 # ---------------------------------------------------------------------------
 # Start agent main scene
 # ---------------------------------------------------------------------------
-# Godot calls AttachConsole on its parent at startup and would keep this window
-# open. Release the console first, then start the app.
 # Everything after `--` reaches the app through OS.get_cmdline_user_args():
 #   --data-dir <path>   agent data folder, workspace-relative (default here: .gai2)
 
 $UserArgs = @($Rest | Where-Object { $null -ne $_ })
 if (-not ($UserArgs -match '^--data-dir(=.*)?$')) {
-	$UserArgs = @("--data-dir", ".gai2") + $UserArgs
+	$UserArgs = @("--data-dir", $DefaultDataDir) + $UserArgs
 }
 
 $ArgumentList = @("--path", $Root, "res://agent/Agent.tscn", "--") + $UserArgs
@@ -167,10 +110,6 @@ $ArgumentList = @("--path", $Root, "res://agent/Agent.tscn", "--") + $UserArgs
 Write-Step ("Start agent (res://agent/Agent.tscn {0})" -f ($UserArgs -join " "))
 Write-StepDone "started" "new window"
 
-try {
-	Add-Type -Namespace Win32 -Name Kernel32Console -MemberDefinition '[System.Runtime.InteropServices.DllImport("kernel32.dll")] public static extern bool FreeConsole();'
-	[Win32.Kernel32Console]::FreeConsole() | Out-Null
-} catch {
-}
+Release-LaunchConsole
 Start-Process -FilePath $Editor -ArgumentList $ArgumentList -WorkingDirectory $Root
 exit 0
