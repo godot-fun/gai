@@ -28,9 +28,40 @@ func _ready() -> void:
 	item_collapsed.connect(on_item_collapsed)
 	item_activated.connect(on_item_activated)
 	gui_input.connect(on_gui_input)
+	set_drag_forwarding(_get_drag_data, can_drop_editor_data, drop_editor_data)
 	EditorEvents.events.file_created.connect(on_file_created)
 	EditorEvents.events.files_changed.connect(on_files_changed)
 	pass
+
+
+func _get_drag_data(position: Vector2) -> Variant:
+	var item := get_item_at_position(position)
+	var paths := drag_paths_for_item(item)
+	if paths.is_empty():
+		return null
+	NativeOS.drag_files(PackedStringArray(paths))
+	return null
+
+
+func can_drop_editor_data(_position: Vector2, _data: Variant) -> bool:
+	return false
+
+
+func drop_editor_data(_position: Vector2, _data: Variant) -> bool:
+	return false
+
+
+func drag_paths_for_item(item: TreeItem) -> Array[String]:
+	var empty: Array[String] = []
+	if item == null or bool(item.get_meta("placeholder", false)):
+		return empty
+	var path := FileUtils.normalize_path(str(item.get_metadata(0)))
+	if path.is_empty() or not FileUtils.exists(path):
+		return empty
+	if item.is_selected(0):
+		return selected_paths()
+	var paths: Array[String] = [path]
+	return paths
 
 
 func ensure_context_ui() -> void:
@@ -370,11 +401,10 @@ func selected_paths() -> Array[String]:
 			if not path.is_empty() and FileUtils.is_relative_to(path, root_path) and FileUtils.exists(path):
 				paths.append(path)
 		item = get_next_selected(item)
-	paths.sort_custom(func(a: String, b: String) -> bool: return a.length() < b.length())
 	var top_level_paths: Array[String] = []
 	for path in paths:
 		var nested := false
-		for parent_path in top_level_paths:
+		for parent_path in paths:
 			if path != parent_path and FileUtils.is_relative_to(path, parent_path):
 				nested = true
 				break

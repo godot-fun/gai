@@ -2,6 +2,7 @@
 
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/variant/string.hpp>
+#include <godot_cpp/variant/packed_string_array.hpp>
 #include <godot_cpp/variant/variant.hpp>
 
 using namespace godot;
@@ -58,6 +59,9 @@ public:
 	bool capture_screen(const String &path) const;
 	/// Windows DWM immersive dark title bar ([param dark_mode]). Returns [code]false[/code] off Windows or when HWND is missing.
 	bool apply_title_bar_dark_mode(int window_id, bool dark_mode);
+	/// Start a native Windows OLE file drag and block until the user drops or cancels it.
+	/// The paths are exposed as CF_HDROP, so Godot windows receive them through files_dropped.
+	bool drag_files(const PackedStringArray &paths) const;
 
 protected:
 	static void _bind_methods();

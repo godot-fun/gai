@@ -2,6 +2,11 @@
 extends RefCounted
 
 
+static func native_file_drag_rejects_empty_paths_test() -> void:
+	assert(not NativeOS.drag_files(PackedStringArray()))
+	pass
+
+
 func native_os_caret_screen_position_smoke_test() -> void:
 	# Headless / no focused caret → null; a real caret yields Vector2i. Either is fine.
 	var caret: Variant = NativeOS.get_caret_screen_position()
