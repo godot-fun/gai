@@ -3,7 +3,6 @@ extends PanelContainer
 ## Text editor panel. The toolbar is the wordmark and the open-file cards.
 ## The body is a workspace file tree beside [CommonEditor]. Hosted by [EditorWindow].
 
-const BACK_ICON_PATH := "res://agent/asset/image/ui/arrow_back.svg"
 const WORDMARK := "GAI · Editor"
 const TAB_WIDTH := ControlSize.image_xs
 
@@ -12,7 +11,7 @@ enum Pending { NONE, CLOSE, LEAVE }
 @onready var toolbar_panel: PanelContainer = $Root/Toolbar
 @onready var toolbar_margin: MarginContainer = $Root/Toolbar/ToolbarMargin
 @onready var toolbar_row: HBoxContainer = $Root/Toolbar/ToolbarMargin/ToolbarRow
-@onready var logo_button: Button = $Root/Toolbar/ToolbarMargin/ToolbarRow/Logo
+@onready var logo_label: Label = $Root/Toolbar/ToolbarMargin/ToolbarRow/Logo
 @onready var tab_spacer: Control = $Root/Toolbar/ToolbarMargin/ToolbarRow/TabSpacer
 @onready var tab_scroll: ScrollContainer = $Root/Toolbar/ToolbarMargin/ToolbarRow/TabScroll
 @onready var tab_row: HBoxContainer = $Root/Toolbar/ToolbarMargin/ToolbarRow/TabScroll/TabRow
@@ -42,7 +41,6 @@ func _ready() -> void:
 	editor = CommonEditor.new()
 	editor_host.add_child(editor)
 	editor.text_changed.connect(on_editor_text_changed)
-	logo_button.pressed.connect(on_logo_pressed)
 	body_split.dragged.connect(on_split_dragged)
 	resized.connect(align_tabs)
 	file_tree.file_selected.connect(on_file_selected)
@@ -112,7 +110,6 @@ func configure_layout() -> void:
 
 
 func apply_locale() -> void:
-	logo_button.tooltip_text = I18n.t("editor.back")
 	confirm.title = I18n.t("editor.save_title")
 	confirm.ok_button_text = I18n.t("common.save")
 	confirm.cancel_button_text = I18n.t("common.cancel")
@@ -157,29 +154,17 @@ func align_tabs() -> void:
 
 
 func style_logo() -> void:
-	logo_button.text = WORDMARK
-	logo_button.flat = true
-	logo_button.focus_mode = Control.FOCUS_NONE
-	logo_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	logo_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	logo_button.expand_icon = false
+	logo_label.text = WORDMARK
+	logo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	logo_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var accent := ThemeColor.accent_theme_color()
 	var color := accent if ThemeColor.is_dark_theme() else accent.darkened(0.08)
-	logo_button.icon = ImageHelper.tint_svg(BACK_ICON_PATH, color)
-	logo_button.add_theme_constant_override("icon_max_width", ControlSize.icon_sm)
-	logo_button.add_theme_constant_override("icon_max_height", ControlSize.icon_sm)
-	logo_button.add_theme_constant_override("h_separation", Margin.ma_3)
 	var logo_font := FontVariation.new()
 	logo_font.base_font = Fonts.bold()
 	logo_font.spacing_glyph = Typography.letter_spacing_lg
-	logo_button.add_theme_font_override("font", logo_font)
-	logo_button.add_theme_font_size_override("font_size", Typography.title_medium_size)
-	ButtonStyle.apply_font_colors(logo_button, color, color, color)
-	ButtonStyle.apply_icon_colors(logo_button, Color.WHITE, Color.WHITE, Color.WHITE)
-	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_md, Margin.ma_2, Margin.ma_1)
-	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, Colors.control_surface)
-	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface)
-	ButtonStyle.apply_style(logo_button, normal, hover, pressed)
+	logo_label.add_theme_font_override("font", logo_font)
+	logo_label.add_theme_font_size_override("font_size", Typography.title_medium_size)
+	logo_label.add_theme_color_override("font_color", color)
 	pass
 
 
@@ -264,13 +249,6 @@ func on_tab_close_pressed(index: int) -> void:
 		return
 	tabs.close_at(index)
 	show_active()
-	pass
-
-
-func on_logo_pressed() -> void:
-	if defer_leave_for_unsaved():
-		return
-	dismiss_host_window()
 	pass
 
 
