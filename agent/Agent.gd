@@ -159,5 +159,5 @@ func apply_theme() -> void:
 	chat_area_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
 	chat_area_panel.queue_redraw()
 	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
-	MainWindowChrome.apply_main_window_chrome(get_window())
+	WindowsHelper.apply(get_window())
 	pass
