@@ -1,14 +1,13 @@
 extends PanelContainer
 
-## Text editor scene. The toolbar is the wordmark and the open-file cards.
+## Text editor scene. The toolbar shows [constant TITLE] and open-file cards.
 ## The body is a workspace file tree beside [CommonEditor].
 
-const AGENT_SCENE_PATH := "res://agent/Agent.tscn"
 const BACK_ICON_PATH := "res://agent/asset/image/ui/arrow_back.svg"
-const WORDMARK := "GAI · Editor"
+const TITLE := "GAI · Editor"
 const TAB_WIDTH := ControlSize.image_xs
 
-enum Pending { NONE, CLOSE, LEAVE, QUIT }
+enum Pending { NONE, CLOSE, QUIT }
 
 @onready var toolbar_panel: PanelContainer = $Root/Toolbar
 @onready var toolbar_margin: MarginContainer = $Root/Toolbar/ToolbarMargin
@@ -50,7 +49,6 @@ func _ready() -> void:
 	resized.connect(align_tabs)
 	file_tree.file_selected.connect(on_file_selected)
 	file_tree.file_deleted.connect(on_file_deleted)
-	AgentEvents.events.workspace_changed.connect(on_workspace_changed)
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(apply_locale)
@@ -147,9 +145,7 @@ func apply_theme() -> void:
 	ConfirmationDialogStyle.apply(confirm, [discard_button])
 	for card in tab_cards:
 		style_card(card)
-	if OSUtils.is_windows():
-		NativeOS.apply_title_bar_dark_mode(DisplayServer.MAIN_WINDOW_ID, ThemeColor.is_dark_theme())
-	DisplayServer.window_set_title(WORDMARK, DisplayServer.MAIN_WINDOW_ID)
+	MainWindowChrome.apply_main_window_chrome(get_window(), TITLE)
 	align_tabs.call_deferred()
 	pass
 
@@ -172,7 +168,7 @@ func align_tabs() -> void:
 
 
 func style_logo() -> void:
-	logo_button.text = WORDMARK
+	logo_button.text = TITLE
 	logo_button.flat = true
 	logo_button.focus_mode = Control.FOCUS_NONE
 	logo_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -223,11 +219,6 @@ func style_internal_scroll_bars(node: Node) -> void:
 		if child is ScrollBar:
 			ScrollBarStyle.apply(child as ScrollBar, ScrollBarStyle.Thickness.SM)
 		style_internal_scroll_bars(child)
-	pass
-
-
-func on_workspace_changed(path: String) -> void:
-	file_tree.reload(path)
 	pass
 
 
@@ -283,11 +274,7 @@ func on_tab_close_pressed(index: int) -> void:
 
 
 func on_logo_pressed() -> void:
-	sync_active()
-	if tabs.dirty_files().is_empty():
-		leave()
-		return
-	confirm_unsaved(Pending.LEAVE, -1)
+	on_window_close_requested()
 	pass
 
 
@@ -504,20 +491,12 @@ func on_confirm_canceled() -> void:
 func finish_pending(kind: Pending) -> void:
 	if kind == Pending.QUIT:
 		get_tree().quit()
-		return
-	if kind == Pending.LEAVE:
-		leave()
 	pass
 
 
 func clear_pending() -> void:
 	pending_kind = Pending.NONE
 	pending_index = -1
-	pass
-
-
-func leave() -> void:
-	await SceneHelper.async_change_scene_to_file(AGENT_SCENE_PATH)
 	pass
 
 

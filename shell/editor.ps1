@@ -1,6 +1,6 @@
 # Launch the standalone code editor. Usage: .\shell\editor.ps1  |  .\shell\editor.ps1 --data-dir .gai
 # The data folder defaults to <workspace>\.gai2; pass --data-dir <workspace-relative path> to change it.
-# Every launch syncs the import cache (~4 s), then starts the app.
+# Starts the editor main scene in a new Godot window.
 
 param(
 	# Extra arguments are forwarded to Godot as user args (after `--`), e.g. --data-dir <path>.
@@ -15,24 +15,12 @@ $PortableAppDataDir = ".godot/app/editor"
 
 . (Join-Path $PSScriptRoot "common.ps1")
 . (Join-Path $PSScriptRoot "console-steps.ps1")
-Initialize-LaunchSteps -StepTotal 2
+Initialize-LaunchSteps -StepTotal 1
 
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $env:APPDATA = Join-Path $Root $PortableAppDataDir
 
 $Editor = Resolve-GodotEditorPath -ProjectRoot $Root
-
-Write-Step "Refresh import cache (godot --headless --import)"
-
-$ImportProcess = Start-Process -FilePath $Editor -ArgumentList @("--headless", "--path", $Root, "--import") -WorkingDirectory $Root -NoNewWindow -Wait -PassThru
-$ImportExit = $ImportProcess.ExitCode
-
-if ($ImportExit -gt 0) {
-	Write-StepDone "failed" "exit $ImportExit"
-	exit $ImportExit
-}
-
-Write-StepDone "done" "exit 0"
 
 $UserArgs = @($Rest | Where-Object { $null -ne $_ })
 if (-not ($UserArgs -match '^--data-dir(=.*)?$')) {
