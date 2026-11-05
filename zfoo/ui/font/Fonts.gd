@@ -10,12 +10,14 @@ const REGULAR_PATH := "res://zfoo/ui/font/NotoSansSC-Regular.woff2"
 const MEDIUM_PATH := "res://zfoo/ui/font/NotoSansSC-Medium.woff2"
 const SEMIBOLD_PATH := "res://zfoo/ui/font/NotoSansSC-SemiBold.woff2"
 const BOLD_PATH := "res://zfoo/ui/font/NotoSansSC-Bold.woff2"
+const CODE_PATH := "res://zfoo/ui/font/JetBrainsMono_Regular.woff2"
 
 static var light_font: FontFile
 static var regular_font: FontFile
 static var medium_font: FontFile
 static var semibold_font: FontFile
 static var bold_font: FontFile
+static var code_font: FontFile
 
 
 ## Applies the bundled regular font to controls and standalone windows without a local Theme.
@@ -52,3 +54,10 @@ static func bold() -> Font:
 	if bold_font == null:
 		bold_font = load(BOLD_PATH) as FontFile
 	return bold_font
+
+
+## The same bundled JetBrains Mono Regular source font used by Godot's script editor.
+static func code() -> Font:
+	if code_font == null:
+		code_font = load(CODE_PATH) as FontFile
+	return code_font

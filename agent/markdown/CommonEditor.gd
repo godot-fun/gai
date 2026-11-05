@@ -914,4 +914,3 @@ func is_match_before(point: Vector2i, other: Vector2i) -> bool:
 	if point.x != other.x:
 		return point.x < other.x
 	return point.y < other.y
-

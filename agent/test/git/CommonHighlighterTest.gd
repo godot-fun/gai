@@ -26,6 +26,7 @@ static func recognizes_gdscript_test() -> void:
 	assert(highlighter is GdScriptHighlighter)
 	var edit := CodeEdit.new()
 	CodeEditStyle.apply_base(edit)
+	assert(edit.get_theme_font("font") == Fonts.code())
 	edit.syntax_highlighter = highlighter
 	edit.text = "class_name Player\nextends CharacterBody2D\n@export var speed: float = 220.0\nfunc _physics_process(delta: float) -> void:\n\tInput.get_vector(\"left\")\n\tpass # done\n"
 	var base_color := edit.get_theme_color("font_color")
