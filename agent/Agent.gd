@@ -146,6 +146,13 @@ func apply_layout() -> void:
 	pass
 
 
+## Boot starts borderless (see project.godot) so the splash phase has no title bar.
+func apply_main_window_chrome() -> void:
+	var app_title := str(ProjectSettings.get_setting("application/config/name", TITLE))
+	DisplayServer.window_set_title(app_title, DisplayServer.MAIN_WINDOW_ID)
+	get_window().borderless = false
+	pass
+
 func apply_locale() -> void:
 	input_field.placeholder_text = I18n.t("agent.input.placeholder")
 	pass
@@ -159,5 +166,7 @@ func apply_theme() -> void:
 	chat_area_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
 	chat_area_panel.queue_redraw()
 	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
-	WindowsHelper.apply(get_window())
+	if OSUtils.is_windows():
+		NativeOS.apply_title_bar_dark_mode(DisplayServer.MAIN_WINDOW_ID, ThemeColor.is_dark_theme())
+		gdf.callable_deferred(apply_main_window_chrome)
 	pass

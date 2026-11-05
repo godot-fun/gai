@@ -24,10 +24,12 @@ layout_mode = 2
 [node name="ToolbarRow" type="HBoxContainer" parent="Root/Toolbar/ToolbarMargin"]
 layout_mode = 2
 
-[node name="Title" type="Label" parent="Root/Toolbar/ToolbarMargin/ToolbarRow"]
+[node name="Logo" type="Button" parent="Root/Toolbar/ToolbarMargin/ToolbarRow"]
 layout_mode = 2
 size_flags_vertical = 4
-mouse_filter = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+flat = true
 text = "GAI · Editor"
 
 [node name="TabSpacer" type="Control" parent="Root/Toolbar/ToolbarMargin/ToolbarRow"]

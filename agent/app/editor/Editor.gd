@@ -1,17 +1,19 @@
 extends PanelContainer
 
-## Text editor scene. The toolbar shows [constant TITLE] and open-file cards.
+## Text editor scene. The toolbar is the wordmark and the open-file cards.
 ## The body is a workspace file tree beside [CommonEditor].
 
-const TITLE := "GAI · Editor"
+const AGENT_SCENE_PATH := "res://agent/Agent.tscn"
+const BACK_ICON_PATH := "res://agent/asset/image/ui/arrow_back.svg"
+const WORDMARK := "GAI · Editor"
 const TAB_WIDTH := ControlSize.image_xs
 
-enum Pending { NONE, CLOSE, QUIT }
+enum Pending { NONE, CLOSE, LEAVE, QUIT }
 
 @onready var toolbar_panel: PanelContainer = $Root/Toolbar
 @onready var toolbar_margin: MarginContainer = $Root/Toolbar/ToolbarMargin
 @onready var toolbar_row: HBoxContainer = $Root/Toolbar/ToolbarMargin/ToolbarRow
-@onready var title_label: Label = $Root/Toolbar/ToolbarMargin/ToolbarRow/Title
+@onready var logo_button: Button = $Root/Toolbar/ToolbarMargin/ToolbarRow/Logo
 @onready var tab_spacer: Control = $Root/Toolbar/ToolbarMargin/ToolbarRow/TabSpacer
 @onready var tab_scroll: ScrollContainer = $Root/Toolbar/ToolbarMargin/ToolbarRow/TabScroll
 @onready var tab_row: HBoxContainer = $Root/Toolbar/ToolbarMargin/ToolbarRow/TabScroll/TabRow
@@ -43,10 +45,12 @@ func _ready() -> void:
 	editor = CommonEditor.new()
 	editor_host.add_child(editor)
 	editor.text_changed.connect(on_editor_text_changed)
+	logo_button.pressed.connect(on_logo_pressed)
 	body_split.dragged.connect(on_split_dragged)
 	resized.connect(align_tabs)
 	file_tree.file_selected.connect(on_file_selected)
 	file_tree.file_deleted.connect(on_file_deleted)
+	AgentEvents.events.workspace_changed.connect(on_workspace_changed)
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(apply_locale)
@@ -120,6 +124,7 @@ func configure_layout() -> void:
 
 
 func apply_locale() -> void:
+	logo_button.tooltip_text = I18n.t("editor.back")
 	confirm.title = I18n.t("editor.save_title")
 	confirm.ok_button_text = I18n.t("common.save")
 	confirm.cancel_button_text = I18n.t("common.cancel")
@@ -137,12 +142,14 @@ func apply_theme() -> void:
 	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
 	toolbar_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.deep_surface, 0, 0, 0, Colors.subtle_border, ControlSize.border_xs))
 	sidebar.add_theme_stylebox_override("panel", SessionSidebarTheme.sidebar_panel())
-	style_title_label()
+	style_logo()
 	style_file_tree()
 	ConfirmationDialogStyle.apply(confirm, [discard_button])
 	for card in tab_cards:
 		style_card(card)
-	WindowsHelper.apply(get_window(), TITLE)
+	if OSUtils.is_windows():
+		NativeOS.apply_title_bar_dark_mode(DisplayServer.MAIN_WINDOW_ID, ThemeColor.is_dark_theme())
+	DisplayServer.window_set_title(WORDMARK, DisplayServer.MAIN_WINDOW_ID)
 	align_tabs.call_deferred()
 	pass
 
@@ -164,16 +171,30 @@ func align_tabs() -> void:
 	pass
 
 
-func style_title_label() -> void:
-	title_label.text = TITLE
+func style_logo() -> void:
+	logo_button.text = WORDMARK
+	logo_button.flat = true
+	logo_button.focus_mode = Control.FOCUS_NONE
+	logo_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	logo_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	logo_button.expand_icon = false
 	var accent := ThemeColor.accent_theme_color()
 	var color := accent if ThemeColor.is_dark_theme() else accent.darkened(0.08)
-	var title_font := FontVariation.new()
-	title_font.base_font = Fonts.bold()
-	title_font.spacing_glyph = Typography.letter_spacing_lg
-	title_label.add_theme_font_override("font", title_font)
-	title_label.add_theme_font_size_override("font_size", Typography.title_medium_size)
-	title_label.add_theme_color_override("font_color", color)
+	logo_button.icon = ImageHelper.tint_svg(BACK_ICON_PATH, color)
+	logo_button.add_theme_constant_override("icon_max_width", ControlSize.icon_sm)
+	logo_button.add_theme_constant_override("icon_max_height", ControlSize.icon_sm)
+	logo_button.add_theme_constant_override("h_separation", Margin.ma_3)
+	var logo_font := FontVariation.new()
+	logo_font.base_font = Fonts.bold()
+	logo_font.spacing_glyph = Typography.letter_spacing_lg
+	logo_button.add_theme_font_override("font", logo_font)
+	logo_button.add_theme_font_size_override("font_size", Typography.title_medium_size)
+	ButtonStyle.apply_font_colors(logo_button, color, color, color)
+	ButtonStyle.apply_icon_colors(logo_button, Color.WHITE, Color.WHITE, Color.WHITE)
+	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_md, Margin.ma_2, Margin.ma_1)
+	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, Colors.control_surface)
+	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface)
+	ButtonStyle.apply_style(logo_button, normal, hover, pressed)
 	pass
 
 
@@ -202,6 +223,11 @@ func style_internal_scroll_bars(node: Node) -> void:
 		if child is ScrollBar:
 			ScrollBarStyle.apply(child as ScrollBar, ScrollBarStyle.Thickness.SM)
 		style_internal_scroll_bars(child)
+	pass
+
+
+func on_workspace_changed(path: String) -> void:
+	file_tree.reload(path)
 	pass
 
 
@@ -253,6 +279,15 @@ func on_tab_close_pressed(index: int) -> void:
 		return
 	tabs.close_at(index)
 	show_active()
+	pass
+
+
+func on_logo_pressed() -> void:
+	sync_active()
+	if tabs.dirty_files().is_empty():
+		leave()
+		return
+	confirm_unsaved(Pending.LEAVE, -1)
 	pass
 
 
@@ -469,12 +504,20 @@ func on_confirm_canceled() -> void:
 func finish_pending(kind: Pending) -> void:
 	if kind == Pending.QUIT:
 		get_tree().quit()
+		return
+	if kind == Pending.LEAVE:
+		leave()
 	pass
 
 
 func clear_pending() -> void:
 	pending_kind = Pending.NONE
 	pending_index = -1
+	pass
+
+
+func leave() -> void:
+	await SceneHelper.async_change_scene_to_file(AGENT_SCENE_PATH)
 	pass
 
 

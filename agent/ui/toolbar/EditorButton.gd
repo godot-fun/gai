@@ -1,9 +1,9 @@
 class_name EditorButton
 extends RefCounted
 
-## Toolbar entry point for the standalone editor. Launches shell/editor.ps1 in a new process (Windows).
+## Toolbar entry point for the editor scene. Its button marks the start of the chat content.
 
-const EDITOR_SCRIPT := "shell/editor.ps1"
+const EDITOR_SCENE_PATH := "res://agent/app/editor/Editor.tscn"
 
 var button: Button
 var workspace_button: Button
@@ -22,23 +22,7 @@ func setup(p_button: Button, p_workspace_button: Button) -> void:
 
 
 func on_button_pressed() -> void:
-	launch_standalone_editor()
-	pass
-
-
-func launch_standalone_editor() -> void:
-	if not OSUtils.is_windows():
-		Alert.alert("The standalone editor launcher is only available on Windows", Colors.error)
-		return
-	var script := FileUtils.get_project_root_path().path_join(EDITOR_SCRIPT)
-	if not FileAccess.file_exists(script):
-		Log.error("editor launcher script missing path:[{}]", script)
-		Alert.alert("Could not start the editor", Colors.error)
-		return
-	var pid := OS.create_process("powershell.exe", PackedStringArray(["-ExecutionPolicy", "Bypass", "-File", script, "--data-dir", AgentWorkspace.data_dir]), true)
-	if pid <= 0:
-		Log.error("failed to launch standalone editor script:[{}]", script)
-		Alert.alert("Could not start the editor", Colors.error)
+	await SceneHelper.async_change_scene_to_file(EDITOR_SCENE_PATH)
 	pass
 
 

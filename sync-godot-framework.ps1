@@ -1,6 +1,6 @@
 # Sync .cursor, .ai, cli, zfoo, AGENTS.md, and opencode.json from godot-fun/godot-framework into this project.
 # Usage (from project root):
-#   .\shell\sync-godot-framework.ps1
+#   .\sync-godot-framework.ps1
 
 param(
 	[string]$RepoUrl = "https://github.com/godot-fun/godot-framework.git"
@@ -8,7 +8,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-$ProjectRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+$ProjectRoot = Resolve-Path $PSScriptRoot
 $TempRoot = Join-Path $env:TEMP ("godot-framework-sync-{0}" -f [guid]::NewGuid().ToString("N"))
 $CloneDir = $TempRoot
 
