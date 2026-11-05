@@ -112,24 +112,7 @@ func _exit_tree() -> void:
 
 
 func on_window_input(event: InputEvent) -> void:
-	if not is_inside_tree() or not get_window().has_focus():
-		return
-	if event is InputEventMouseButton:
-		var mouse := event as InputEventMouseButton
-		if not mouse.pressed or (not mouse.ctrl_pressed and not mouse.meta_pressed):
-			return
-		# Ctrl+Shift+wheel is reserved for chat reply navigation (see ChatScroll).
-		if mouse.shift_pressed:
-			return
-		var direction := 0
-		if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
-			direction = 1
-		elif mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			direction = -1
-		if direction == 0:
-			return
-		DisplayScale.adjust_ui_scale(direction)
-		get_viewport().set_input_as_handled()
+	DisplayScale.handle_window_input(get_window(), event)
 	pass
 
 

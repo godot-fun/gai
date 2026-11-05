@@ -15,6 +15,7 @@ func _init() -> void:
 	transient = false
 	min_size = Vector2i(720, 480)
 	close_requested.connect(on_close_requested)
+	window_input.connect(on_window_input)
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(apply_locale)
@@ -32,6 +33,11 @@ func _init() -> void:
 
 func on_ui_scale_changed(scale: float) -> void:
 	content_scale_factor = scale
+	pass
+
+
+func on_window_input(event: InputEvent) -> void:
+	DisplayScale.handle_window_input(self, event)
 	pass
 
 

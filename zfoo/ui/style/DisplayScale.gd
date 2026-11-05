@@ -62,6 +62,26 @@ static func adjust_ui_scale(direction: int) -> void:
 	pass
 
 
+## Applies Ctrl/Cmd + mouse-wheel UI zoom for a focused window. Ctrl/Cmd + Shift + wheel is
+## intentionally left available to feature-specific navigation such as chat reply history.
+static func handle_window_input(window: Window, event: InputEvent) -> void:
+	if window == null or not window.is_inside_tree() or not window.has_focus():
+		return
+	if not event is InputEventMouseButton:
+		return
+	var mouse := event as InputEventMouseButton
+	if not mouse.pressed or mouse.shift_pressed or (not mouse.ctrl_pressed and not mouse.meta_pressed):
+		return
+	if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
+		adjust_ui_scale(1)
+	elif mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+		adjust_ui_scale(-1)
+	else:
+		return
+	window.set_input_as_handled()
+	pass
+
+
 static func find_ui_scale_index(scale: float) -> int:
 	for index in range(UI_SCALE_PRESETS.size()):
 		if is_equal_approx(scale, UI_SCALE_PRESETS[index]):
