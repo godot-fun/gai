@@ -177,7 +177,7 @@ func build_ui() -> void:
 
 	editor = CommonEditor.new()
 	editor.custom_minimum_size.y = 480.0
-	editor.editable = false
+	editor.editable = true
 	layout.add_child(editor)
 	pass
 

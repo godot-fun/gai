@@ -7,7 +7,7 @@ extends Object
 static func apply_base(edit: CodeEdit) -> void:
 	edit.add_theme_font_override("font", Fonts.code())
 	edit.add_theme_color_override("font_color", Colors.primary_text)
-	edit.add_theme_color_override("font_readonly_color", Colors.primary_text)
+	edit.add_theme_color_override("font_readonly_color", Colors.disabled_text)
 	edit.add_theme_color_override("font_selected_color", Colors.primary_text)
 	edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
 	edit.add_theme_color_override("selection_color", ThemeColor.selection_color)
