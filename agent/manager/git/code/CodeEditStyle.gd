@@ -3,7 +3,6 @@ extends Object
 
 ## Shared CodeEdit fonts, caret, selection, and scrollbars for the git diff viewer and chat composer.
 
-
 static func apply_base(edit: CodeEdit) -> void:
 	edit.add_theme_font_override("font", Fonts.code())
 	edit.add_theme_color_override("font_color", Colors.primary_text)
