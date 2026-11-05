@@ -39,6 +39,27 @@ const LIGHT_TEXT := Color(0.13, 0.13, 0.13)
 const LIGHT_MUTED := Color(0.40, 0.40, 0.40)
 const LIGHT_DISABLED := Color(0.62, 0.62, 0.62)
 
+# ┌─────────────────────────────────────────────────────────────────────────────┐
+# │  app_background  — main window canvas behind everything                     │
+# │  ┌───────────────────────────────────────────────────────────────────────┐  │
+# │  │ deep_surface  — recessed strip “behind” neighbors (toolbars)          │  │
+# │  │ (subtle_border)                                                       │  │
+# │  │  [control_surface]  buttons · fields · icon toggles on the toolbar    │  │
+# │  └───────────────────────────────────────────────────────────────────────┘  │
+# │  ┌────────────────┬──────────────────────────────────────────────────────┐  │
+# │  │ chrome_surface │  surface  — main content panel / editor / chat area  │  │
+# │  │ (muted_border) │                                                      │  │
+# │  │                │  ┌──────────────────────────────────────────────────┐│  │
+# │  │  sidebar /     │  │ elevated_surface  — raised cards, selected row,  ││  │
+# │  │  nav rail /    │  │                                                  ││  │
+# │  │  app frame     │  │  primary_text · secondary_text · disabled_text   ││  │
+# │  │                │  └──────────────────────────────────────────────────┘│  │
+# │  │  list rows:    │                                                      │  │
+# │  │  surface →     │  inline controls still use control_surface           │  │
+# │  │  hover_surface │                                                      │  │
+# │  │  on hover      │                                                      │  │
+# │  └────────────────┴──────────────────────────────────────────────────────┘  │
+# └─────────────────────────────────────────────────────────────────────────────┘
 ## Main application canvas behind panels and content.
 static var app_background: Color = DARK_BACKGROUND
 ## Deepest application layer, used by chrome that should sit behind adjacent regions, such as a toolbar.
