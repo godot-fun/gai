@@ -10,6 +10,7 @@ enum CreateKind { FILE, FOLDER }
 
 var root_path: String = ""
 var copied_path: String = ""
+var copied_paths: Array[String] = []
 var context_path: String = ""
 var pending_create_kind: CreateKind = CreateKind.FILE
 var menu: PopupMenu
@@ -23,7 +24,7 @@ func _ready() -> void:
 	column_titles_visible = false
 	hide_folding = false
 	allow_reselect = false
-	select_mode = Tree.SELECT_ROW
+	select_mode = Tree.SELECT_MULTI
 	item_collapsed.connect(on_item_collapsed)
 	item_activated.connect(on_item_activated)
 	gui_input.connect(on_gui_input)
@@ -156,24 +157,33 @@ func on_item_collapsed(item: TreeItem) -> void:
 
 ## Deletes the selected file or folder and drops its row.
 func delete_selected() -> bool:
-	var item := get_selected()
-	if item == null or bool(item.get_meta("placeholder", false)):
+	var paths := selected_paths()
+	if paths.is_empty():
 		return false
-	var path := FileUtils.normalize_path(str(item.get_metadata(0)))
-	if path.is_empty() or not FileUtils.is_relative_to(path, root_path):
-		return false
-	var error := FileUtils.delete_file_or_directory(path)
-	if error != OK:
-		Log.error("editor delete failed path:[{}] err:[{}]", path, error_string(error))
+	var deleted: Array[String] = []
+	var changed_directories: Array[String] = []
+	for path in paths:
+		var error := FileUtils.delete_file_or_directory(path)
+		if error != OK:
+			Log.error("editor delete failed path:[{}] err:[{}]", path, error_string(error))
+			continue
+		deleted.append(path)
+		var parent_path := path.get_base_dir()
+		if not changed_directories.has(parent_path):
+			changed_directories.append(parent_path)
+		EditorEvents.events.file_deleted.emit(path)
+	for directory in changed_directories:
+		EditorEvents.events.files_changed.emit(directory)
+	if deleted.is_empty():
 		Alert.alert(I18n.t("editor.delete_failed"), Colors.error)
 		return false
-	EditorEvents.events.file_deleted.emit(path)
-	EditorEvents.events.files_changed.emit(path.get_base_dir())
-	var parent := get_root() if path.get_base_dir() == root_path else find_item_by_path(get_root(), path.get_base_dir())
+	var first_parent_path := deleted[0].get_base_dir()
+	var parent := get_root() if first_parent_path == root_path else find_item_by_path(get_root(), first_parent_path)
 	if parent != null and parent.get_first_child() != null:
 		parent.get_first_child().select(0)
-	Alert.alert(StringUtils.format(I18n.t("editor.delete_succeeded"), path.get_file()), Colors.success)
-	return true
+	var deleted_label := deleted[0].get_file() if deleted.size() == 1 else str(deleted.size())
+	Alert.alert(StringUtils.format(I18n.t("editor.delete_succeeded"), deleted_label), Colors.success)
+	return deleted.size() == paths.size()
 
 
 func on_item_activated() -> void:
@@ -197,7 +207,9 @@ func on_gui_input(event: InputEvent) -> void:
 	ensure_context_ui()
 	var item := get_item_at_position(mouse.position)
 	if item != null and not bool(item.get_meta("placeholder", false)):
-		item.select(0)
+		if not item.is_selected(0):
+			deselect_all()
+			item.select(0)
 		context_path = FileUtils.normalize_path(str(item.get_metadata(0)))
 	else:
 		context_path = ""
@@ -215,18 +227,21 @@ func target_directory(path: String) -> String:
 
 
 func copy_selected() -> bool:
-	var item := get_selected()
-	if item == null or bool(item.get_meta("placeholder", false)):
+	var paths := selected_paths()
+	if paths.is_empty():
 		return false
-	var path := FileUtils.normalize_path(str(item.get_metadata(0)))
-	if path.is_empty() or not FileUtils.is_relative_to(path, root_path) or not FileUtils.exists(path):
-		return false
-	copied_path = path
+	copied_paths.assign(paths)
+	copied_path = copied_paths[0]
 	return true
 
 
 func can_paste() -> bool:
-	return not copied_path.is_empty() and FileUtils.exists(copied_path)
+	if copied_paths.is_empty() and not copied_path.is_empty():
+		return FileUtils.exists(copied_path)
+	for path in copied_paths:
+		if not FileUtils.exists(path):
+			return false
+	return not copied_paths.is_empty()
 
 
 func paste_selected() -> void:
@@ -244,7 +259,7 @@ func show_context_menu(local_position: Vector2i) -> void:
 	menu.add_item(I18n.t("common.copy"), MenuAction.COPY)
 	menu.set_item_disabled(menu.item_count - 1, context_path.is_empty())
 	menu.add_item(I18n.t("editor.paste"), MenuAction.PASTE)
-	menu.set_item_disabled(menu.item_count - 1, copied_path.is_empty() or not FileUtils.exists(copied_path))
+	menu.set_item_disabled(menu.item_count - 1, not can_paste())
 	menu.add_separator()
 	menu.add_item(I18n.t("common.delete"), MenuAction.DELETE)
 	menu.set_item_disabled(menu.item_count - 1, context_path.is_empty())
@@ -300,36 +315,72 @@ func on_name_confirmed() -> void:
 
 
 func paste_copied() -> void:
-	if copied_path.is_empty() or not FileUtils.exists(copied_path):
+	var sources: Array[String] = []
+	if not copied_paths.is_empty():
+		sources.assign(copied_paths)
+	elif not copied_path.is_empty():
+		sources.append(copied_path)
+	if sources.is_empty() or not can_paste():
 		Alert.alert(I18n.t("editor.copy_source_missing"), Colors.error)
 		return
 	var directory := target_directory(context_path)
-	var target := FileUtils.normalize_path(directory.path_join(copied_path.get_file()))
-	if FileUtils.exists(target):
-		Alert.alert(I18n.t("editor.name_exists"), Colors.error)
-		return
-	var error := FileUtils.copy(copied_path, target)
-	if error != OK:
-		Alert.alert(I18n.t("editor.paste_failed"), Colors.error)
-		return
-	EditorEvents.events.file_created.emit(target)
-	select_path(target)
-	Alert.alert(StringUtils.format(I18n.t("editor.pasted"), target.get_file()), Colors.success)
+	var targets: Array[String] = []
+	for source in sources:
+		var target := FileUtils.normalize_path(directory.path_join(source.get_file()))
+		if targets.has(target) or FileUtils.exists(target):
+			Alert.alert(I18n.t("editor.name_exists"), Colors.error)
+			return
+		targets.append(target)
+	for index in sources.size():
+		var error := FileUtils.copy(sources[index], targets[index])
+		if error != OK:
+			Alert.alert(I18n.t("editor.paste_failed"), Colors.error)
+			return
+		EditorEvents.events.file_created.emit(targets[index])
+	deselect_all()
+	for target in targets:
+		select_path(target)
+	var pasted_label := targets[0].get_file() if targets.size() == 1 else str(targets.size())
+	Alert.alert(StringUtils.format(I18n.t("editor.pasted"), pasted_label), Colors.success)
 	pass
 
 
 func prompt_delete() -> void:
-	delete_dialog.dialog_text = StringUtils.format(I18n.t("editor.delete_confirm"), context_path.get_file())
+	var paths := selected_paths()
+	var delete_label := context_path.get_file() if paths.size() <= 1 else str(paths.size())
+	delete_dialog.dialog_text = StringUtils.format(I18n.t("editor.delete_confirm"), delete_label)
 	delete_dialog.popup_centered()
 	pass
 
 
 func delete_context_entry() -> void:
-	var selected := get_selected()
-	if selected == null or FileUtils.normalize_path(str(selected.get_metadata(0))) != context_path:
+	if not selected_paths().has(context_path):
 		return
 	delete_selected()
 	pass
+
+
+## Returns selected filesystem paths, dropping descendants when their parent folder is also selected.
+func selected_paths() -> Array[String]:
+	var paths: Array[String] = []
+	var item := get_next_selected(null)
+	while item != null:
+		if not bool(item.get_meta("placeholder", false)):
+			var path := FileUtils.normalize_path(str(item.get_metadata(0)))
+			if not path.is_empty() and FileUtils.is_relative_to(path, root_path) and FileUtils.exists(path):
+				paths.append(path)
+		item = get_next_selected(item)
+	paths.sort_custom(func(a: String, b: String) -> bool: return a.length() < b.length())
+	var top_level_paths: Array[String] = []
+	for path in paths:
+		var nested := false
+		for parent_path in top_level_paths:
+			if path != parent_path and FileUtils.is_relative_to(path, parent_path):
+				nested = true
+				break
+		if not nested:
+			top_level_paths.append(path)
+	return top_level_paths
 
 
 func ensure_loaded(item: TreeItem) -> void:

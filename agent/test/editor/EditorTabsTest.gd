@@ -270,6 +270,43 @@ static func editor_file_tree_copies_selected_path_test() -> void:
 	pass
 
 
+static func editor_file_tree_copies_pastes_and_deletes_multiple_paths_test() -> void:
+	var root_path := FileUtils.normalize_path(ProjectSettings.globalize_path(TREE_DIR + "_multi_selected"))
+	var first_path := root_path.path_join("a.md")
+	var second_path := root_path.path_join("b.txt")
+	var target_dir := root_path.path_join("dest")
+	FileUtils.delete_file_or_directory(root_path)
+	DirAccess.make_dir_recursive_absolute(target_dir)
+	FileUtils.write_string_to_file(first_path, "first")
+	FileUtils.write_string_to_file(second_path, "second")
+	var tree := EditorFileTree.new()
+	gdf.gdf_node.add_child(tree)
+	tree.reload(root_path)
+	var target := tree.get_root().get_first_child()
+	var first := target.get_next()
+	var second := first.get_next()
+	first.select(0)
+	second.select(0)
+	assert(tree.selected_paths().size() == 2)
+	assert(tree.copy_selected())
+	assert(tree.copied_paths.size() == 2)
+	tree.context_path = target_dir
+	tree.paste_copied()
+	assert(FileUtils.read_file_to_string(target_dir.path_join("a.md")) == "first")
+	assert(FileUtils.read_file_to_string(target_dir.path_join("b.txt")) == "second")
+	tree.reload(root_path)
+	target = tree.get_root().get_first_child()
+	first = target.get_next()
+	second = first.get_next()
+	first.select(0)
+	second.select(0)
+	assert(tree.delete_selected())
+	assert(not FileAccess.file_exists(first_path))
+	assert(not FileAccess.file_exists(second_path))
+	tree.free()
+	pass
+
+
 static func editor_file_tree_pastes_into_selected_folder_test() -> void:
 	var root_path := FileUtils.normalize_path(ProjectSettings.globalize_path(TREE_DIR + "_paste_selected"))
 	var source_path := root_path.path_join("note.md")
