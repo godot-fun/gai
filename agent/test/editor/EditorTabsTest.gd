@@ -5,6 +5,14 @@ const FILES_DIR := "user://editor_tabs_test"
 const GAI_DIR := "user://editor_tabs_gai_test"
 
 
+class EventRecorder extends RefCounted:
+	var paths: Array[String] = []
+
+	func record(path: String) -> void:
+		paths.append(path)
+		pass
+
+
 static func editor_file_icon_matches_name_and_extension_test() -> void:
 	assert(EditorFileIcon.icon_path("res://player.gd", false).ends_with("godot.svg"))
 	assert(EditorFileIcon.icon_path("C:/src/Player.GD", false).ends_with("godot.svg"))
@@ -83,6 +91,60 @@ static func editor_tabs_close_under_folder_test() -> void:
 	assert(tabs.files.size() == 1)
 	assert(tabs.active().path == other_path)
 	assert(not tabs.close_under(directory.path_join("missing")))
+	pass
+
+
+static func editor_tabs_close_all_test() -> void:
+	var directory := FileUtils.normalize_path(ProjectSettings.globalize_path(FILES_DIR + "_close_all"))
+	var first_path := directory.path_join("first.md")
+	var second_path := directory.path_join("second.md")
+	FileUtils.write_string_to_file(first_path, "first")
+	FileUtils.write_string_to_file(second_path, "second")
+	var tabs := EditorTabs.new()
+	assert(tabs.open_file(first_path) != null)
+	assert(tabs.open_file(second_path) != null)
+	tabs.close_all()
+	assert(tabs.files.is_empty())
+	assert(tabs.active_index == -1)
+	assert(tabs.active() == null)
+	pass
+
+
+static func editor_tabs_close_others_test() -> void:
+	var directory := FileUtils.normalize_path(ProjectSettings.globalize_path(FILES_DIR + "_close_others"))
+	var first_path := directory.path_join("first.md")
+	var second_path := directory.path_join("second.md")
+	var third_path := directory.path_join("third.md")
+	FileUtils.write_string_to_file(first_path, "first")
+	FileUtils.write_string_to_file(second_path, "second")
+	FileUtils.write_string_to_file(third_path, "third")
+	var tabs := EditorTabs.new()
+	assert(tabs.open_file(first_path) != null)
+	assert(tabs.open_file(second_path) != null)
+	assert(tabs.open_file(third_path) != null)
+	tabs.close_others(1)
+	assert(tabs.files.size() == 1)
+	assert(tabs.active_index == 0)
+	assert(tabs.active().path == second_path)
+	pass
+
+
+static func editor_file_operations_copy_and_validate_test() -> void:
+	var root := FileUtils.normalize_path(ProjectSettings.globalize_path(TREE_DIR + "_operations"))
+	var source := root.path_join("source")
+	var target := root.path_join("target")
+	DirAccess.make_dir_recursive_absolute(source.path_join("nested"))
+	FileUtils.write_string_to_file(source.path_join("one.txt"), "one")
+	FileUtils.write_string_to_file(source.path_join("nested/two.txt"), "two")
+	assert(EditorFileOperations.copy_entry(source, target) == OK)
+	assert(FileUtils.read_file_to_string(target.path_join("one.txt")) == "one")
+	assert(FileUtils.read_file_to_string(target.path_join("nested/two.txt")) == "two")
+	assert(EditorFileOperations.copy_entry(source, source.path_join("child")) == ERR_INVALID_PARAMETER)
+	assert(EditorFileOperations.valid_entry_name("note.md"))
+	assert(not EditorFileOperations.valid_entry_name("../note.md"))
+	assert(not EditorFileOperations.valid_entry_name("bad:name"))
+	var copy_path := EditorFileOperations.unique_copy_path(source.path_join("one.txt"), source)
+	assert(copy_path.ends_with("one copy.txt"))
 	pass
 
 
@@ -170,22 +232,23 @@ static func editor_file_tree_opens_on_double_click_test() -> void:
 	var tree := EditorFileTree.new()
 	gdf.gdf_node.add_child(tree)
 	tree.reload(root_path)
-	var opened: Array[String] = []
-	tree.file_selected.connect(func(path: String) -> void: opened.append(path))
+	var recorder := EventRecorder.new()
+	EditorEvents.events.file_selected.connect(recorder.record)
 
 	var folder := tree.get_root().get_first_child()
 	folder.select(0)
-	assert(opened.is_empty())
+	assert(recorder.paths.is_empty())
 	tree.on_item_activated()
-	assert(opened.is_empty())
+	assert(recorder.paths.is_empty())
 	assert(not folder.collapsed)
 
 	var note := folder.get_next()
 	note.select(0)
-	assert(opened.is_empty())
+	assert(recorder.paths.is_empty())
 	tree.on_item_activated()
-	assert(opened.size() == 1)
-	assert(FileUtils.normalize_path(opened[0]) == note_path)
+	assert(recorder.paths.size() == 1)
+	assert(FileUtils.normalize_path(recorder.paths[0]) == note_path)
+	EditorEvents.events.file_selected.disconnect(recorder.record)
 	tree.free()
 	pass
 
@@ -203,25 +266,26 @@ static func editor_file_tree_delete_removes_selected_file_and_folder_test() -> v
 	var tree := EditorFileTree.new()
 	gdf.gdf_node.add_child(tree)
 	tree.reload(root_path)
-	var deleted: Array[String] = []
-	tree.file_deleted.connect(func(path: String) -> void: deleted.append(path))
+	var recorder := EventRecorder.new()
+	EditorEvents.events.file_deleted.connect(recorder.record)
 
 	var folder := tree.get_root().get_first_child()
 	folder.select(0)
 	assert(tree.delete_selected())
-	assert(deleted.size() == 1)
-	assert(FileUtils.normalize_path(deleted[0]) == root_path.path_join("src"))
+	assert(recorder.paths.size() == 1)
+	assert(FileUtils.normalize_path(recorder.paths[0]) == root_path.path_join("src"))
 	assert(not DirAccess.dir_exists_absolute(root_path.path_join("src")))
 	assert(not FileAccess.file_exists(nested_path))
 
 	var note := tree.get_selected()
 	note.select(0)
 	assert(tree.delete_selected())
-	assert(deleted.size() == 2)
-	assert(FileUtils.normalize_path(deleted[1]) == note_path)
+	assert(recorder.paths.size() == 2)
+	assert(FileUtils.normalize_path(recorder.paths[1]) == note_path)
 	assert(not FileAccess.file_exists(note_path))
 	assert(FileAccess.file_exists(other_path))
 	assert(tree.get_selected().get_text(0) == "other.md")
+	EditorEvents.events.file_deleted.disconnect(recorder.record)
 	tree.free()
 	pass
 

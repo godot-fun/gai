@@ -5,12 +5,18 @@ extends Tree
 ## Entries follow [member GitIgnore.ignore_rules] ([GlobUtils.GitIgnoreMatcher], same as glob / grep / completion),
 ## and hide Godot `.uid` / `.import` sidecar files.
 
-## A file row was activated with a double-click or Enter. A single click only selects the row.
-signal file_selected(path: String)
-## The selected file or folder was deleted.
-signal file_deleted(path: String)
+enum MenuAction { NEW_FILE, NEW_FOLDER, COPY, PASTE, DELETE }
 
 var root_path: String = ""
+var copied_path: String = ""
+var context_path: String = ""
+var context_directory: String = ""
+var create_directory: String = ""
+var create_folder: bool = false
+var menu: PopupMenu
+var name_dialog: ConfirmationDialog
+var name_edit: LineEdit
+var delete_dialog: ConfirmationDialog
 
 
 func _ready() -> void:
@@ -21,6 +27,60 @@ func _ready() -> void:
 	select_mode = Tree.SELECT_ROW
 	item_collapsed.connect(on_item_collapsed)
 	item_activated.connect(on_item_activated)
+	gui_input.connect(on_gui_input)
+	pass
+
+
+func ensure_context_ui() -> void:
+	if menu != null:
+		return
+	build_menu()
+	build_dialogs()
+	pass
+
+
+func build_menu() -> void:
+	menu = PopupMenu.new()
+	menu.id_pressed.connect(on_menu_action)
+	add_child(menu)
+	pass
+
+
+func build_dialogs() -> void:
+	name_dialog = ConfirmationDialog.new()
+	name_dialog.exclusive = true
+	name_dialog.min_size = Vector2i(420, 150)
+	name_edit = LineEdit.new()
+	name_edit.custom_minimum_size.y = ControlSize.md
+	name_edit.text_submitted.connect(func(_text: String) -> void: name_dialog.get_ok_button().pressed.emit())
+	name_dialog.get_label().get_parent().add_child(name_edit)
+	name_dialog.confirmed.connect(on_name_confirmed)
+	add_child(name_dialog)
+	delete_dialog = ConfirmationDialog.new()
+	delete_dialog.exclusive = true
+	delete_dialog.min_size = Vector2i(420, 140)
+	delete_dialog.confirmed.connect(delete_context_entry)
+	add_child(delete_dialog)
+	apply_menu_theme()
+	pass
+
+
+func apply_menu_theme() -> void:
+	ensure_context_ui()
+	PopupMenuStyle.apply(menu)
+	LineEditStyle.apply(name_edit)
+	ConfirmationDialogStyle.apply(name_dialog)
+	ConfirmationDialogStyle.apply(delete_dialog)
+	pass
+
+
+func apply_locale() -> void:
+	ensure_context_ui()
+	name_dialog.ok_button_text = I18n.t("common.create")
+	name_dialog.cancel_button_text = I18n.t("common.cancel")
+	delete_dialog.title = I18n.t("editor.delete_title")
+	delete_dialog.ok_button_text = I18n.t("common.delete")
+	delete_dialog.cancel_button_text = I18n.t("common.cancel")
 	pass
 
 
@@ -59,7 +119,8 @@ func delete_selected() -> bool:
 	item.free()
 	if next != null and not bool(next.get_meta("placeholder", false)):
 		next.select(0)
-	file_deleted.emit(path)
+	EditorEvents.events.file_deleted.emit(path)
+	EditorEvents.events.files_changed.emit(path.get_base_dir())
 	Alert.alert(StringUtils.format(I18n.t("editor.delete_succeeded"), path.get_file()), Colors.success)
 	return true
 
@@ -74,7 +135,126 @@ func on_item_activated() -> void:
 	if DirAccess.dir_exists_absolute(path):
 		item.collapsed = not item.collapsed
 		return
-	file_selected.emit(path)
+	EditorEvents.events.file_selected.emit(path)
+	pass
+
+
+func on_gui_input(event: InputEvent) -> void:
+	var mouse := event as InputEventMouseButton
+	if mouse == null or not mouse.pressed or mouse.button_index != MOUSE_BUTTON_RIGHT:
+		return
+	ensure_context_ui()
+	var item := get_item_at_position(mouse.position)
+	if item != null and not bool(item.get_meta("placeholder", false)):
+		item.select(0)
+		context_path = FileUtils.normalize_path(str(item.get_metadata(0)))
+	else:
+		context_path = ""
+	context_directory = target_directory(context_path)
+	show_context_menu(Vector2i(mouse.position))
+	accept_event()
+	pass
+
+
+func target_directory(path: String) -> String:
+	if path.is_empty():
+		return root_path
+	if DirAccess.dir_exists_absolute(path):
+		return path
+	return path.get_base_dir()
+
+
+func show_context_menu(local_position: Vector2i) -> void:
+	menu.clear()
+	menu.add_item(I18n.t("editor.new_file"), MenuAction.NEW_FILE)
+	menu.add_item(I18n.t("editor.new_folder"), MenuAction.NEW_FOLDER)
+	menu.add_separator()
+	menu.add_item(I18n.t("common.copy"), MenuAction.COPY)
+	menu.set_item_disabled(menu.item_count - 1, context_path.is_empty())
+	menu.add_item(I18n.t("editor.paste"), MenuAction.PASTE)
+	menu.set_item_disabled(menu.item_count - 1, copied_path.is_empty() or not EditorFileOperations.entry_exists(copied_path))
+	menu.add_separator()
+	menu.add_item(I18n.t("common.delete"), MenuAction.DELETE)
+	menu.set_item_disabled(menu.item_count - 1, context_path.is_empty())
+	PopupMenuStyle.apply(menu)
+	var popup_position := Vector2i(global_position) + local_position
+	menu.popup(Rect2i(popup_position, Vector2i.ZERO))
+	pass
+
+
+func on_menu_action(action: int) -> void:
+	match action:
+		MenuAction.NEW_FILE:
+			prompt_create(false)
+		MenuAction.NEW_FOLDER:
+			prompt_create(true)
+		MenuAction.COPY:
+			copied_path = context_path
+		MenuAction.PASTE:
+			paste_copied()
+		MenuAction.DELETE:
+			prompt_delete()
+	pass
+
+
+func prompt_create(folder: bool) -> void:
+	create_folder = folder
+	create_directory = context_directory
+	name_dialog.title = I18n.t("editor.new_folder") if folder else I18n.t("editor.new_file")
+	name_dialog.dialog_text = I18n.t("editor.name_prompt")
+	name_edit.text = ""
+	name_dialog.popup_centered()
+	name_edit.grab_focus.call_deferred()
+	pass
+
+
+func on_name_confirmed() -> void:
+	var entry_name := name_edit.text.strip_edges()
+	if not EditorFileOperations.valid_entry_name(entry_name):
+		Alert.alert(I18n.t("editor.invalid_name"), Colors.error)
+		return
+	var path := FileUtils.normalize_path(create_directory.path_join(entry_name))
+	if EditorFileOperations.entry_exists(path):
+		Alert.alert(I18n.t("editor.name_exists"), Colors.error)
+		return
+	var error := DirAccess.make_dir_recursive_absolute(path) if create_folder else FileUtils.write_string_to_file(path, "")
+	if error != OK:
+		Alert.alert(I18n.t("editor.create_failed"), Colors.error)
+		return
+	EditorEvents.events.file_created.emit(path)
+	EditorEvents.events.files_changed.emit(create_directory)
+	reload(root_path)
+	Alert.alert(StringUtils.format(I18n.t("editor.created"), entry_name), Colors.success)
+	pass
+
+
+func paste_copied() -> void:
+	if copied_path.is_empty() or not EditorFileOperations.entry_exists(copied_path):
+		Alert.alert(I18n.t("editor.copy_source_missing"), Colors.error)
+		return
+	var target := EditorFileOperations.unique_copy_path(copied_path, context_directory)
+	var error := EditorFileOperations.copy_entry(copied_path, target)
+	if error != OK:
+		Alert.alert(I18n.t("editor.paste_failed"), Colors.error)
+		return
+	EditorEvents.events.file_created.emit(target)
+	EditorEvents.events.files_changed.emit(context_directory)
+	reload(root_path)
+	Alert.alert(StringUtils.format(I18n.t("editor.pasted"), target.get_file()), Colors.success)
+	pass
+
+
+func prompt_delete() -> void:
+	delete_dialog.dialog_text = StringUtils.format(I18n.t("editor.delete_confirm"), context_path.get_file())
+	delete_dialog.popup_centered()
+	pass
+
+
+func delete_context_entry() -> void:
+	var selected := get_selected()
+	if selected == null or FileUtils.normalize_path(str(selected.get_metadata(0))) != context_path:
+		return
+	delete_selected()
 	pass
 
 

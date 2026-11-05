@@ -49,6 +49,21 @@ func close_at(index: int) -> void:
 	pass
 
 
+func close_all() -> void:
+	files.clear()
+	active_index = -1
+	pass
+
+
+func close_others(index: int) -> void:
+	if index < 0 or index >= files.size():
+		return
+	var kept := files[index]
+	files.assign([kept])
+	active_index = 0
+	pass
+
+
 ## Closes a file or every open file below a deleted folder.
 func close_under(path: String) -> bool:
 	var removed := false

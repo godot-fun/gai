@@ -6,7 +6,9 @@ extends PanelContainer
 const WORDMARK := "GAI · Editor"
 const TAB_WIDTH := ControlSize.image_xs
 
-enum Pending { NONE, CLOSE, LEAVE }
+enum Pending { NONE, CLOSE, CLOSE_OTHERS, CLOSE_ALL, LEAVE }
+
+enum TabMenuAction { CLOSE, CLOSE_OTHERS, CLOSE_ALL }
 
 @onready var toolbar_panel: PanelContainer = $Root/Toolbar
 @onready var toolbar_margin: MarginContainer = $Root/Toolbar/ToolbarMargin
@@ -31,6 +33,8 @@ var pending_kind: Pending = Pending.NONE
 var pending_index: int = -1
 var assigning_text: bool = false
 var reveal_queued: bool = false
+var tab_menu: PopupMenu
+var context_tab_index: int = -1
 
 
 func _ready() -> void:
@@ -43,14 +47,15 @@ func _ready() -> void:
 	editor.text_changed.connect(on_editor_text_changed)
 	body_split.dragged.connect(on_split_dragged)
 	resized.connect(align_tabs)
-	file_tree.file_selected.connect(on_file_selected)
-	file_tree.file_deleted.connect(on_file_deleted)
+	EditorEvents.events.file_selected.connect(on_file_selected)
+	EditorEvents.events.file_deleted.connect(on_file_deleted)
 	AgentEvents.events.workspace_changed.connect(on_workspace_changed)
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(apply_locale)
 
 	build_confirm()
+	build_tab_menu()
 	shortcut_host = EditorShortcuts.bind_editor(self)
 	configure_layout()
 	apply_theme()
@@ -91,6 +96,13 @@ func build_confirm() -> void:
 	pass
 
 
+func build_tab_menu() -> void:
+	tab_menu = PopupMenu.new()
+	tab_menu.id_pressed.connect(on_tab_menu_action)
+	add_child(tab_menu)
+	pass
+
+
 func configure_layout() -> void:
 	toolbar_panel.custom_minimum_size.y = AgentLayout.TOOLBAR_HEIGHT
 	toolbar_margin.add_theme_constant_override("margin_left", Margin.ma_3)
@@ -114,6 +126,7 @@ func apply_locale() -> void:
 	confirm.ok_button_text = I18n.t("common.save")
 	confirm.cancel_button_text = I18n.t("common.cancel")
 	discard_button.text = I18n.t("editor.discard")
+	file_tree.apply_locale()
 	for card in tab_cards:
 		var close_button := card.get_meta("close_button") as Button
 		close_button.tooltip_text = I18n.t("editor.close")
@@ -130,6 +143,8 @@ func apply_theme() -> void:
 	style_logo()
 	style_file_tree()
 	ConfirmationDialogStyle.apply(confirm, [discard_button])
+	PopupMenuStyle.apply(tab_menu)
+	file_tree.apply_menu_theme()
 	for card in tab_cards:
 		style_card(card)
 	align_tabs.call_deferred()
@@ -239,6 +254,59 @@ func on_tab_close_pressed(index: int) -> void:
 		confirm_unsaved(Pending.CLOSE, index)
 		return
 	tabs.close_at(index)
+	show_active()
+	pass
+
+
+func on_tab_gui_input(event: InputEvent, index: int) -> void:
+	var mouse := event as InputEventMouseButton
+	if mouse == null or not mouse.pressed or mouse.button_index != MOUSE_BUTTON_RIGHT:
+		return
+	context_tab_index = index
+	tab_menu.clear()
+	tab_menu.add_item(I18n.t("editor.close"), TabMenuAction.CLOSE)
+	tab_menu.add_item(I18n.t("editor.close_others"), TabMenuAction.CLOSE_OTHERS)
+	tab_menu.set_item_disabled(tab_menu.item_count - 1, tabs.files.size() <= 1)
+	tab_menu.add_item(I18n.t("editor.close_all"), TabMenuAction.CLOSE_ALL)
+	PopupMenuStyle.apply(tab_menu)
+	var card := tab_cards[index]
+	var popup_position := Vector2i(card.global_position) + Vector2i(mouse.position)
+	tab_menu.popup(Rect2i(popup_position, Vector2i.ZERO))
+	card.accept_event()
+	pass
+
+
+func on_tab_menu_action(action: int) -> void:
+	match action:
+		TabMenuAction.CLOSE:
+			on_tab_close_pressed(context_tab_index)
+		TabMenuAction.CLOSE_OTHERS:
+			close_other_tabs(context_tab_index)
+		TabMenuAction.CLOSE_ALL:
+			close_all_tabs()
+	pass
+
+
+func close_other_tabs(index: int) -> void:
+	if index < 0 or index >= tabs.files.size() or tabs.files.size() <= 1:
+		return
+	sync_active()
+	if not dirty_files_except(index).is_empty():
+		confirm_unsaved(Pending.CLOSE_OTHERS, index)
+		return
+	tabs.close_others(index)
+	show_active()
+	pass
+
+
+func close_all_tabs() -> void:
+	if tabs.files.is_empty():
+		return
+	sync_active()
+	if not tabs.dirty_files().is_empty():
+		confirm_unsaved(Pending.CLOSE_ALL, -1)
+		return
+	tabs.close_all()
 	show_active()
 	pass
 
@@ -410,10 +478,27 @@ func save_all_dirty() -> bool:
 	return true
 
 
+func dirty_files_except(keep_index: int) -> Array[EditorDocument]:
+	var dirty: Array[EditorDocument] = []
+	for index in tabs.files.size():
+		if index != keep_index and tabs.files[index].is_dirty():
+			dirty.append(tabs.files[index])
+	return dirty
+
+
+func save_dirty_except(keep_index: int) -> bool:
+	for document in dirty_files_except(keep_index):
+		if document.save() != OK:
+			Alert.alert(I18n.t("editor.save_failed"), Colors.error)
+			return false
+	update_dirty_marks()
+	return true
+
+
 func confirm_unsaved(kind: Pending, index: int) -> void:
 	pending_kind = kind
 	pending_index = index
-	var dirty := tabs.dirty_files()
+	var dirty := dirty_files_except(index) if kind == Pending.CLOSE_OTHERS else tabs.dirty_files()
 	if kind == Pending.CLOSE:
 		confirm.dialog_text = StringUtils.format(I18n.t("editor.save_changes"), tabs.files[index].file_name())
 	elif dirty.size() == 1:
@@ -440,6 +525,18 @@ func on_confirm_saved() -> void:
 		tabs.close_at(index)
 		show_active()
 		return
+	if kind == Pending.CLOSE_OTHERS:
+		if not save_dirty_except(index):
+			return
+		tabs.close_others(index)
+		show_active()
+		return
+	if kind == Pending.CLOSE_ALL:
+		if not save_all_dirty():
+			return
+		tabs.close_all()
+		show_active()
+		return
 	if not save_all_dirty():
 		return
 	finish_pending(kind)
@@ -457,6 +554,14 @@ func on_confirm_custom(action: StringName) -> void:
 	confirm.hide()
 	if kind == Pending.CLOSE:
 		tabs.close_at(index)
+		show_active()
+		return
+	if kind == Pending.CLOSE_OTHERS:
+		tabs.close_others(index)
+		show_active()
+		return
+	if kind == Pending.CLOSE_ALL:
+		tabs.close_all()
 		show_active()
 		return
 	finish_pending(kind)
@@ -503,6 +608,7 @@ func make_tab(index: int) -> PanelContainer:
 	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	card.mouse_filter = Control.MOUSE_FILTER_STOP
+	card.gui_input.connect(on_tab_gui_input.bind(index))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", Margin.ma_1)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -522,6 +628,7 @@ func make_tab(index: int) -> PanelContainer:
 	name_button.add_theme_font_override("font", Fonts.regular())
 	name_button.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	name_button.pressed.connect(on_tab_pressed.bind(index))
+	name_button.gui_input.connect(on_tab_gui_input.bind(index))
 	row.add_child(name_button)
 
 	var dirty_label := Label.new()
@@ -542,6 +649,7 @@ func make_tab(index: int) -> PanelContainer:
 	close_button.custom_minimum_size = ControlSize.square(ControlSize.xs)
 	close_button.add_theme_font_size_override("font_size", Typography.label_medium_size)
 	close_button.pressed.connect(on_tab_close_pressed.bind(index))
+	close_button.gui_input.connect(on_tab_gui_input.bind(index))
 	row.add_child(close_button)
 
 	card.set_meta("active", index == tabs.active_index)
