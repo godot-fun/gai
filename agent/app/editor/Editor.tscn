@@ -53,6 +53,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 0
+dragger_visibility = 2
 
 [node name="Sidebar" type="PanelContainer" parent="Root/Body"]
 custom_minimum_size = Vector2(260, 0)

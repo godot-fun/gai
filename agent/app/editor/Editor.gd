@@ -20,7 +20,7 @@ enum Pending { NONE, CLOSE, LEAVE, QUIT }
 @onready var body_split: HSplitContainer = $Root/Body
 @onready var sidebar: PanelContainer = $Root/Body/Sidebar
 @onready var file_tree: EditorFileTree = $Root/Body/Sidebar/FileTree
-@onready var editor_host: Control = $Root/Body/EditorHost
+@onready var editor_host: MarginContainer = $Root/Body/EditorHost
 
 var tabs: EditorTabs = EditorTabs.new()
 var shortcut_host: EditorShortcuts.Host
@@ -139,9 +139,9 @@ func apply_theme() -> void:
 	var app_theme := Theme.new()
 	app_theme.default_font = Fonts.regular()
 	theme = app_theme
-	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.control_surface))
+	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
 	toolbar_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.deep_surface, 0, 0, 0, Colors.subtle_border, ControlSize.border_xs))
-	sidebar.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.chrome_surface, 0, 0, 0, Colors.muted_border, ControlSize.border_xs))
+	sidebar.add_theme_stylebox_override("panel", SessionSidebarTheme.sidebar_panel())
 	style_logo()
 	style_file_tree()
 	ConfirmationDialogStyle.apply(confirm, [discard_button])
