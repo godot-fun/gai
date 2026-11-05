@@ -9,7 +9,8 @@ extends Object
 ## Shared foundation for neutral colors used by framework palettes and application themes.
 ## Component and business-specific colors belong in their own palette.
 const DARK_BACKGROUND := Color(0.07, 0.08, 0.10)
-const DARK_DEEP_SURFACE := Color(0.06, 0.07, 0.09)
+## Recessed chrome (toolbars, etc.): noticeably darker than [constant DARK_BACKGROUND] so layers read on near-black UI.
+const DARK_DEEP_SURFACE := Color(0.04, 0.05, 0.07)
 const DARK_CHROME_SURFACE := Color(0.10, 0.11, 0.13)
 const DARK_CONTROL_SURFACE := Color(0.11, 0.12, 0.15)
 const DARK_SURFACE := Color(0.12, 0.13, 0.16)
