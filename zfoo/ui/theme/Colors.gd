@@ -18,8 +18,9 @@ const DARK_ELEVATED_SURFACE := Color(0.14, 0.15, 0.18)
 const DARK_BORDER := Color(0.22, 0.24, 0.28)
 const DARK_MUTED_BORDER := Color(0.18, 0.20, 0.24)
 const DARK_SUBTLE_BORDER := Color(0.16, 0.18, 0.22)
-const DARK_TEXT := Color(0.90, 0.91, 0.93)
-const DARK_MUTED := Color(0.55, 0.57, 0.62)
+## Vuetify emphasis model: white at 100% and its opaque 70%-on-black equivalent.
+const DARK_TEXT := Color(1.00, 1.00, 1.00)
+const DARK_MUTED := Color(0.70, 0.70, 0.70)
 
 const LIGHT_BACKGROUND := Color(0.98, 0.98, 0.98)
 const LIGHT_DEEP_SURFACE := Color(0.91, 0.92, 0.94)
@@ -31,8 +32,9 @@ const LIGHT_ELEVATED_SURFACE := LIGHT_SURFACE
 const LIGHT_BORDER := Color(0.84, 0.85, 0.87)
 const LIGHT_MUTED_BORDER := Color(0.86, 0.87, 0.89)
 const LIGHT_SUBTLE_BORDER := Color(0.87, 0.88, 0.90)
-const LIGHT_TEXT := Color(0.09, 0.09, 0.11)
-const LIGHT_MUTED := Color(0.42, 0.42, 0.46)
+## Vuetify emphasis model: opaque equivalents of black at 87% and 60% on white.
+const LIGHT_TEXT := Color(0.13, 0.13, 0.13)
+const LIGHT_MUTED := Color(0.40, 0.40, 0.40)
 
 ## Main application canvas behind panels and content.
 static var app_background: Color = DARK_BACKGROUND
