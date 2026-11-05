@@ -36,6 +36,9 @@ static func DisplayScale_set_ui_scale_snaps_to_preset_test() -> void:
 	var saved := DisplayScale.get_ui_scale()
 	DisplayScale.set_ui_scale(1.07)
 	assert(is_equal_approx(DisplayScale.get_ui_scale(), 1.05))
+	var tree := Engine.get_main_loop() as SceneTree
+	assert(is_equal_approx(tree.root.content_scale_factor, 1.05))
+	assert(is_equal_approx(tree.root.oversampling_override, 1.05))
 	DisplayScale.set_ui_scale(saved)
 	pass
 

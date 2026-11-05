@@ -30,7 +30,10 @@ static func apply_ui_scale() -> void:
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null:
 		return
-	tree.root.content_scale_factor = get_ui_scale()
+	var scale := get_ui_scale()
+	tree.root.content_scale_factor = scale
+	## Re-rasterize fonts at the scaled pixel density instead of stretching their glyph textures.
+	tree.root.oversampling_override = scale
 	pass
 
 
