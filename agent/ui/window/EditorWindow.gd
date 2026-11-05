@@ -18,6 +18,7 @@ func _init() -> void:
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(apply_locale)
+	gdf.events.ui_scale_changed.connect(on_ui_scale_changed)
 	add_to_group(GROUP_NAME)
 	editor = EDITOR_SCENE.instantiate()
 	editor.host_window = self
@@ -26,6 +27,11 @@ func _init() -> void:
 	editor.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(editor)
 	apply_locale()
+	pass
+
+
+func on_ui_scale_changed(scale: float) -> void:
+	content_scale_factor = scale
 	pass
 
 
@@ -63,7 +69,12 @@ func commit_focus_and_free() -> void:
 
 
 func present(width_percent: int = 92, height_percent: int = 88) -> void:
-	size = size_from_viewport_percent(width_percent, height_percent)
+	var initial_size := size_from_viewport_percent(width_percent, height_percent)
+	content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
+	content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
+	content_scale_size = initial_size
+	content_scale_factor = DisplayScale.get_ui_scale()
+	size = initial_size
 	popup_centered()
 	apply_theme()
 	editor.focus_active_editor.call_deferred()
