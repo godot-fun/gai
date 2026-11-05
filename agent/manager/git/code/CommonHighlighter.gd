@@ -39,6 +39,8 @@ static func create(path_or_suffix: String) -> SyntaxHighlighter:
 		extension = file_name.trim_prefix(".")
 	if extension in MarkdownHighlighter.EXTENSIONS:
 		return MarkdownHighlighter.create()
+	if extension == "gd":
+		return GdScriptHighlighter.create()
 	var highlighter := CodeHighlighterInstance.new()
 	highlighter.number_color = CodeColors.number
 	highlighter.symbol_color = CodeColors.symbol

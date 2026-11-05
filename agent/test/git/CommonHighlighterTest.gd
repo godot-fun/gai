@@ -1,10 +1,19 @@
 ## CodeEdit syntax highlighter tests.
 
+static func palette_matches_godot_editor_test() -> void:
+	assert(CodeColors.DARK_KEYWORD == Color(1.0, 0.44, 0.52))
+	assert(CodeColors.DARK_TYPE == Color(0.26, 1.0, 0.76))
+	assert(CodeColors.DARK_STRING == Color(1.0, 0.93, 0.63))
+	assert(CodeColors.DARK_FUNCTION == Color(0.34, 0.7, 1.0))
+	assert(CodeColors.LIGHT_KEYWORD == Color(0.9, 0.135, 0.51))
+	assert(CodeColors.LIGHT_TYPE == Color(0.0, 0.6, 0.2))
+	assert(CodeColors.LIGHT_STRING == Color(0.6, 0.42, 0.0))
+	assert(CodeColors.LIGHT_FUNCTION == Color(0.0, 0.225, 0.9))
+	pass
+
 static func recognizes_bare_suffix_test() -> void:
 	var script := CommonHighlighter.create("gd")
-	assert(script is CodeHighlighterInstance)
-	assert(script.get_keyword_color("class_name") == CodeColors.declaration)
-	assert(script.has_color_region("#"))
+	assert(script is GdScriptHighlighter)
 	assert(CommonHighlighter.create("md") is MarkdownHighlighter)
 	assert(CommonHighlighter.create(".md") is MarkdownHighlighter)
 	var docker := CommonHighlighter.create("Dockerfile")
@@ -14,10 +23,22 @@ static func recognizes_bare_suffix_test() -> void:
 
 static func recognizes_gdscript_test() -> void:
 	var highlighter := CommonHighlighter.create("scripts/player.gd")
-	assert(highlighter is CodeHighlighterInstance)
-	assert(highlighter.get_keyword_color("class_name") == CodeColors.declaration)
-	assert(highlighter.get_keyword_color("func") == CodeColors.declaration)
-	assert(highlighter.has_color_region("#"))
+	assert(highlighter is GdScriptHighlighter)
+	var edit := CodeEdit.new()
+	CodeEditStyle.apply_base(edit)
+	edit.syntax_highlighter = highlighter
+	edit.text = "class_name Player\nextends CharacterBody2D\n@export var speed: float = 220.0\nfunc _physics_process(delta: float) -> void:\n\tInput.get_vector(\"left\")\n\tpass # done\n"
+	var base_color := edit.get_theme_color("font_color")
+	assert(MarkdownHighlighter.color_at_column(highlighter.get_line_syntax_highlighting(0), 0, base_color) == CodeColors.keyword)
+	assert(MarkdownHighlighter.color_at_column(highlighter.get_line_syntax_highlighting(0), 11, base_color) == CodeColors.engine_type)
+	assert(MarkdownHighlighter.color_at_column(highlighter.get_line_syntax_highlighting(2), 0, base_color) == CodeColors.tag)
+	assert(MarkdownHighlighter.color_at_column(highlighter.get_line_syntax_highlighting(2), 8, base_color) == CodeColors.keyword)
+	assert(MarkdownHighlighter.color_at_column(highlighter.get_line_syntax_highlighting(3), 5, base_color) == CodeColors.function_definition)
+	assert(MarkdownHighlighter.color_at_column(highlighter.get_line_syntax_highlighting(4), 1, base_color) == CodeColors.engine_type)
+	assert(MarkdownHighlighter.color_at_column(highlighter.get_line_syntax_highlighting(4), 7, base_color) == CodeColors.function)
+	assert(MarkdownHighlighter.color_at_column(highlighter.get_line_syntax_highlighting(5), 1, base_color) == CodeColors.declaration)
+	assert(MarkdownHighlighter.color_at_column(highlighter.get_line_syntax_highlighting(5), 6, base_color) == CodeColors.comment)
+	edit.free()
 	pass
 
 

@@ -1,35 +1,43 @@
 class_name CodeColors
 extends Object
 
-## Syntax palette for repository source shown in CodeEdit. Like MarkdownColors, these are two
-## hand-tuned palettes rather than accent-derived colors: every token role keeps predictable
-## contrast while the user changes the application accent.
+## Syntax palette for repository source shown in CodeEdit. The values mirror Godot's default
+## text-editor highlighting palette so embedded code follows the editor in dark and light modes.
+## Roles without a direct CodeHighlighter equivalent use the closest GDScript-specific color.
 ## [method _static_init] connects [signal gdf.Events.theme_changed] to [method on_theme_changed].
 
 ## The dark palette also provides safe defaults before the class loads and [method on_theme_changed] runs.
-const DARK_KEYWORD := Color("ff7ab2")
-const DARK_TYPE := Color("82d2ce")
-const DARK_DECLARATION := Color("c6a0f6")
-const DARK_STRING := Color("a8cc8c")
-const DARK_COMMENT := Color("7f8c98")
-const DARK_NUMBER := Color("d5b778")
-const DARK_SYMBOL := Color("aeb7c2")
-const DARK_FUNCTION := Color("78b9f2")
-const DARK_MEMBER := Color("f2c97d")
-const DARK_TAG := Color("ff8f70")
-const DARK_LINK := Color("79c0ff")
+const DARK_KEYWORD := Color(1.0, 0.44, 0.52)
+const DARK_TYPE := Color(0.26, 1.0, 0.76)
+const DARK_DECLARATION := Color(1.0, 0.55, 0.8)
+const DARK_STRING := Color(1.0, 0.93, 0.63)
+const DARK_COMMENT := Color(0.8, 0.8, 0.8, 0.5)
+const DARK_NUMBER := Color(0.63, 1.0, 0.88)
+const DARK_SYMBOL := Color(0.67, 0.79, 1.0)
+const DARK_FUNCTION := Color(0.34, 0.7, 1.0)
+const DARK_MEMBER := Color(0.736, 0.88, 1.0)
+const DARK_TAG := Color(1.0, 0.7, 0.45)
+const DARK_LINK := Color(1.0, 0.76, 0.65)
+const DARK_FUNCTION_DEFINITION := Color(0.4, 0.9, 1.0)
+const DARK_GLOBAL_FUNCTION := Color(0.64, 0.64, 0.96)
+const DARK_ENGINE_TYPE := Color(0.56, 1.0, 0.86)
+const DARK_NODE_REFERENCE := Color(0.39, 0.76, 0.35)
 
-const LIGHT_KEYWORD := Color("ad3da4")
-const LIGHT_TYPE := Color("0b7f78")
-const LIGHT_DECLARATION := Color("6f42c1")
-const LIGHT_STRING := Color("467c18")
-const LIGHT_COMMENT := Color("6c7781")
-const LIGHT_NUMBER := Color("9a6700")
-const LIGHT_SYMBOL := Color("4b5563")
-const LIGHT_FUNCTION := Color("0969da")
-const LIGHT_MEMBER := Color("953800")
-const LIGHT_TAG := Color("cf222e")
-const LIGHT_LINK := Color("0550ae")
+const LIGHT_KEYWORD := Color(0.9, 0.135, 0.51)
+const LIGHT_TYPE := Color(0.0, 0.6, 0.2)
+const LIGHT_DECLARATION := Color(0.743, 0.12, 0.8)
+const LIGHT_STRING := Color(0.6, 0.42, 0.0)
+const LIGHT_COMMENT := Color(0.08, 0.08, 0.08, 0.5)
+const LIGHT_NUMBER := Color(0.0, 0.55, 0.28)
+const LIGHT_SYMBOL := Color(0.0, 0.0, 0.61)
+const LIGHT_FUNCTION := Color(0.0, 0.225, 0.9)
+const LIGHT_MEMBER := Color(0.0, 0.4, 0.68)
+const LIGHT_TAG := Color(0.8, 0.37, 0.0)
+const LIGHT_LINK := Color(0.8, 0.56, 0.45)
+const LIGHT_FUNCTION_DEFINITION := Color(0.0, 0.6, 0.6)
+const LIGHT_GLOBAL_FUNCTION := Color(0.36, 0.18, 0.72)
+const LIGHT_ENGINE_TYPE := Color(0.11, 0.55, 0.4)
+const LIGHT_NODE_REFERENCE := Color(0.0, 0.5, 0.0)
 
 static var keyword: Color = DARK_KEYWORD
 static var type: Color = DARK_TYPE
@@ -42,6 +50,10 @@ static var function: Color = DARK_FUNCTION
 static var member: Color = DARK_MEMBER
 static var tag: Color = DARK_TAG
 static var link: Color = DARK_LINK
+static var function_definition: Color = DARK_FUNCTION_DEFINITION
+static var global_function: Color = DARK_GLOBAL_FUNCTION
+static var engine_type: Color = DARK_ENGINE_TYPE
+static var node_reference: Color = DARK_NODE_REFERENCE
 
 
 static func _static_init() -> void:
@@ -71,6 +83,10 @@ static func apply_dark_palette() -> void:
 	member = DARK_MEMBER
 	tag = DARK_TAG
 	link = DARK_LINK
+	function_definition = DARK_FUNCTION_DEFINITION
+	global_function = DARK_GLOBAL_FUNCTION
+	engine_type = DARK_ENGINE_TYPE
+	node_reference = DARK_NODE_REFERENCE
 	pass
 
 
@@ -86,4 +102,8 @@ static func apply_light_palette() -> void:
 	member = LIGHT_MEMBER
 	tag = LIGHT_TAG
 	link = LIGHT_LINK
+	function_definition = LIGHT_FUNCTION_DEFINITION
+	global_function = LIGHT_GLOBAL_FUNCTION
+	engine_type = LIGHT_ENGINE_TYPE
+	node_reference = LIGHT_NODE_REFERENCE
 	pass
