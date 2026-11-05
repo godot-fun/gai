@@ -48,9 +48,11 @@ func build_menu() -> void:
 func build_dialogs() -> void:
 	name_dialog = ConfirmationDialog.new()
 	name_dialog.exclusive = true
-	name_dialog.min_size = Vector2i(420, 150)
+	name_dialog.min_size.x = ControlSize.image_lg
 	name_edit = LineEdit.new()
-	name_edit.custom_minimum_size.y = ControlSize.md
+	name_edit.custom_minimum_size.x = ControlSize.image_sm
+	name_edit.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	name_edit.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	name_edit.text_submitted.connect(func(_text: String) -> void: name_dialog.get_ok_button().pressed.emit())
 	name_dialog.get_label().get_parent().add_child(name_edit)
 	name_dialog.confirmed.connect(on_name_confirmed)
