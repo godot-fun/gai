@@ -32,7 +32,7 @@ static func apply_field(input_field: CodeEdit) -> void:
 	input_field.add_theme_stylebox_override("read_only", input_style.duplicate())
 	CodeEditStyle.apply_base(input_field)
 	input_field.add_theme_color_override("font_placeholder_color", Colors.secondary_text)
-	input_field.add_theme_color_override("font_readonly_color", Colors.secondary_text)
+	input_field.add_theme_color_override("font_readonly_color", Colors.disabled_text)
 	input_field.add_theme_color_override("font_selected_color", ThemeColor.title_color)
 	input_field.syntax_highlighter = MarkdownHighlighter.create()
 	input_field.caret_blink = true

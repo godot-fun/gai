@@ -56,6 +56,7 @@ func ColorBase_follow_theme_test() -> void:
 	assert(Colors.subtle_border == Colors.DARK_SUBTLE_BORDER)
 	assert(Colors.primary_text == Colors.DARK_TEXT)
 	assert(Colors.secondary_text == Colors.DARK_MUTED)
+	assert(Colors.disabled_text == Colors.DARK_DISABLED)
 	assert(Colors.info == Colors.DARK_INFO)
 	assert(Colors.success == Colors.DARK_SUCCESS)
 	assert(Colors.warning == Colors.DARK_WARNING)
@@ -85,6 +86,7 @@ func ColorBase_follow_theme_test() -> void:
 	assert(Colors.subtle_border == Colors.LIGHT_SUBTLE_BORDER)
 	assert(Colors.primary_text == Colors.LIGHT_TEXT)
 	assert(Colors.secondary_text == Colors.LIGHT_MUTED)
+	assert(Colors.disabled_text == Colors.LIGHT_DISABLED)
 	assert(Colors.info == Colors.LIGHT_INFO)
 	assert(Colors.success == Colors.LIGHT_SUCCESS)
 	assert(Colors.warning == Colors.LIGHT_WARNING)
@@ -286,6 +288,7 @@ func LineEditStyle_apply_test() -> void:
 	LineEditStyle.apply(edit, normal, Color.BLACK, Color.GRAY, Color.BLUE)
 	var focus: StyleBoxFlat = edit.get_theme_stylebox("focus") as StyleBoxFlat
 	assert(edit.get_theme_color("font_color") == Color.BLACK)
+	assert(edit.get_theme_color("font_uneditable_color") == Colors.disabled_text)
 	assert(edit.get_theme_color("font_placeholder_color") == Color.GRAY)
 	assert(edit.get_theme_color("selection_color") == Color.BLUE)
 	assert(focus.border_color == ThemeColor.accent_theme_color())
@@ -388,6 +391,7 @@ func FileDialogStyle_apply_test() -> void:
 	assert(file_list_panel.bg_color == ThemeColor.card_surface)
 	assert(file_list_panel.border_color == Colors.subtle_border)
 	assert(dialog.get_theme_color("folder_icon_color") == Colors.info.lerp(ThemeColor.accent_theme_color(), 0.35))
+	assert(dialog.get_theme_color("file_disabled_color") == Colors.disabled_text)
 	assert(dialog.get_theme_color("title_color") == ThemeColor.title_color)
 	assert(dialog.transient)
 	assert(dialog.popup_window)
@@ -490,6 +494,7 @@ func FileDialogStyle_popup_menu_test() -> void:
 	var panel: StyleBoxFlat = menu.get_theme_stylebox("panel") as StyleBoxFlat
 	assert(panel.bg_color == ThemeColor.inset_surface)
 	assert(menu.get_theme_color("font_color") == Colors.primary_text)
+	assert(menu.get_theme_color("font_disabled_color") == Colors.disabled_text)
 	dialog.free()
 	pass
 

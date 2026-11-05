@@ -79,7 +79,7 @@ static func apply_dialog_style(dialog: FileDialog) -> void:
 	var folder_color := Colors.info.lerp(ThemeColor.accent_theme_color(), 0.35)
 	dialog.add_theme_color_override("folder_icon_color", folder_color)
 	dialog.add_theme_color_override("file_icon_color", Color(Colors.secondary_text, 0.78))
-	dialog.add_theme_color_override("file_disabled_color", Color(Colors.secondary_text, Weights.w_8))
+	dialog.add_theme_color_override("file_disabled_color", Colors.disabled_text)
 	pass
 
 

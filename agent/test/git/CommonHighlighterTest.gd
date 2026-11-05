@@ -50,6 +50,7 @@ static func recognizes_extended_languages_test() -> void:
 	assert(markdown_regions.get_keyword_color("NOTE") == CodeColors.declaration)
 	var markdown_edit := CodeEdit.new()
 	CodeEditStyle.apply_base(markdown_edit)
+	assert(markdown_edit.get_theme_color("font_readonly_color") == Colors.disabled_text)
 	markdown_edit.syntax_highlighter = markdown
 	var long_form := "This long-form article exercises **MarkdownParser** inline."
 	markdown_edit.text = long_form + "\n"

@@ -21,6 +21,7 @@ static func apply(
 	focus_border_width: int = ControlSize.border_sm
 ) -> void:
 	edit.add_theme_color_override("font_color", font_color)
+	edit.add_theme_color_override("font_uneditable_color", Colors.disabled_text)
 	edit.add_theme_color_override("font_placeholder_color", placeholder_color)
 	edit.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
 	edit.add_theme_color_override("font_selected_color", font_color)

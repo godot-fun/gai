@@ -8,7 +8,7 @@ static func apply(popup: PopupMenu) -> void:
 	popup.add_theme_color_override("font_color", Colors.primary_text)
 	popup.add_theme_color_override("font_hover_color", Colors.primary_text)
 	popup.add_theme_color_override("font_accelerator_color", Colors.secondary_text)
-	popup.add_theme_color_override("font_disabled_color", Colors.secondary_text)
+	popup.add_theme_color_override("font_disabled_color", Colors.disabled_text)
 	popup.add_theme_color_override("font_separator_color", Colors.secondary_text)
 	popup.add_theme_font_size_override("font_size", Typography.label_large_size)
 	popup.add_theme_constant_override("v_separation", Margin.ma_2)
