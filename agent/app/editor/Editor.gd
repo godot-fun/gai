@@ -202,17 +202,8 @@ func on_workspace_changed(path: String) -> void:
 
 
 func on_file_deleted(path: String) -> void:
-	var index := tabs.find_index(path)
-	if index < 0:
-		return
-	var was_active := index == tabs.active_index
-	tabs.close_at(index)
-	if was_active:
+	if tabs.close_under(path):
 		show_active()
-		return
-	rebuild_tabs()
-	sync_active()
-	tabs.save()
 	pass
 
 

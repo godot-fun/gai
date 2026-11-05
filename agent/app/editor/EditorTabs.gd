@@ -49,6 +49,16 @@ func close_at(index: int) -> void:
 	pass
 
 
+## Closes a file or every open file below a deleted folder.
+func close_under(path: String) -> bool:
+	var removed := false
+	for index in range(files.size() - 1, -1, -1):
+		if FileUtils.is_relative_to(files[index].path, path):
+			close_at(index)
+			removed = true
+	return removed
+
+
 func dirty_files() -> Array[EditorDocument]:
 	var dirty: Array[EditorDocument] = []
 	for file in files:

@@ -7,7 +7,7 @@ extends Tree
 
 ## A file row was activated with a double-click or Enter. A single click only selects the row.
 signal file_selected(path: String)
-## The selected file was moved to the system trash. Folders are left in place.
+## The selected file or folder was deleted.
 signal file_deleted(path: String)
 
 var root_path: String = ""
@@ -40,15 +40,15 @@ func on_item_collapsed(item: TreeItem) -> void:
 	pass
 
 
-## Moves the selected file to the system trash and drops its row. Directories are not removed.
+## Deletes the selected file or folder and drops its row.
 func delete_selected() -> bool:
 	var item := get_selected()
 	if item == null or bool(item.get_meta("placeholder", false)):
 		return false
-	var path := str(item.get_metadata(0))
-	if path.is_empty() or DirAccess.dir_exists_absolute(path) or not FileAccess.file_exists(path):
+	var path := FileUtils.normalize_path(str(item.get_metadata(0)))
+	if path.is_empty() or not FileUtils.is_relative_to(path, root_path):
 		return false
-	var error := OS.move_to_trash(path)
+	var error := FileUtils.delete_file_or_directory(path)
 	if error != OK:
 		Log.error("editor delete failed path:[{}] err:[{}]", path, error_string(error))
 		Alert.alert(I18n.t("editor.delete_failed"), Colors.error)

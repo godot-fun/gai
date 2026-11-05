@@ -70,6 +70,22 @@ static func editor_tabs_open_and_save_test() -> void:
 	pass
 
 
+static func editor_tabs_close_under_folder_test() -> void:
+	var directory := FileUtils.normalize_path(ProjectSettings.globalize_path(FILES_DIR + "_close_under"))
+	var nested_path := directory.path_join("src/nested.md")
+	var other_path := directory.path_join("other.md")
+	FileUtils.write_string_to_file(nested_path, "nested")
+	FileUtils.write_string_to_file(other_path, "other")
+	var tabs := EditorTabs.new()
+	assert(tabs.open_file(nested_path) != null)
+	assert(tabs.open_file(other_path) != null)
+	assert(tabs.close_under(directory.path_join("src")))
+	assert(tabs.files.size() == 1)
+	assert(tabs.active().path == other_path)
+	assert(not tabs.close_under(directory.path_join("missing")))
+	pass
+
+
 static func editor_tabs_gai_json_test() -> void:
 	var root := FileUtils.normalize_path(ProjectSettings.globalize_path(GAI_DIR))
 	var prior_root := AgentWorkspace.get_root()
@@ -174,11 +190,13 @@ static func editor_file_tree_opens_on_double_click_test() -> void:
 	pass
 
 
-static func editor_file_tree_delete_removes_selected_file_test() -> void:
+static func editor_file_tree_delete_removes_selected_file_and_folder_test() -> void:
 	var root_path := FileUtils.normalize_path(ProjectSettings.globalize_path(TREE_DIR + "_delete"))
 	DirAccess.make_dir_recursive_absolute(root_path.path_join("src"))
+	var nested_path := FileUtils.normalize_path(root_path.path_join("src/nested.md"))
 	var note_path := FileUtils.normalize_path(root_path.path_join("note.md"))
 	var other_path := FileUtils.normalize_path(root_path.path_join("other.md"))
+	FileUtils.write_string_to_file(nested_path, "nested")
 	FileUtils.write_string_to_file(note_path, "n")
 	FileUtils.write_string_to_file(other_path, "o")
 
@@ -190,15 +208,17 @@ static func editor_file_tree_delete_removes_selected_file_test() -> void:
 
 	var folder := tree.get_root().get_first_child()
 	folder.select(0)
-	assert(not tree.delete_selected())
-	assert(deleted.is_empty())
-	assert(DirAccess.dir_exists_absolute(root_path.path_join("src")))
-
-	var note := folder.get_next()
-	note.select(0)
 	assert(tree.delete_selected())
 	assert(deleted.size() == 1)
-	assert(FileUtils.normalize_path(deleted[0]) == note_path)
+	assert(FileUtils.normalize_path(deleted[0]) == root_path.path_join("src"))
+	assert(not DirAccess.dir_exists_absolute(root_path.path_join("src")))
+	assert(not FileAccess.file_exists(nested_path))
+
+	var note := tree.get_selected()
+	note.select(0)
+	assert(tree.delete_selected())
+	assert(deleted.size() == 2)
+	assert(FileUtils.normalize_path(deleted[1]) == note_path)
 	assert(not FileAccess.file_exists(note_path))
 	assert(FileAccess.file_exists(other_path))
 	assert(tree.get_selected().get_text(0) == "other.md")
