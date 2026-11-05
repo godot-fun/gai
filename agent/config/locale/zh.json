@@ -95,6 +95,7 @@
   "editor": {
     "title": "编辑器",
     "tooltip": "打开编辑器",
+    "shortcuts_tooltip": "编辑器快捷键\n{modifier}+S  保存\n{modifier}+Shift+S  全部保存\n{modifier}+W  关闭标签页\n{modifier}+Tab  下一个标签页\n{modifier}+Shift+Tab  上一个标签页\n\n文件树\n{modifier}+C  复制文件或文件夹\n{modifier}+V  粘贴文件或文件夹\nDelete  删除文件或文件夹",
     "back": "返回 GAI",
     "close": "关闭",
     "discard": "不保存",

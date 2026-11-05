@@ -122,6 +122,8 @@ func configure_layout() -> void:
 
 
 func apply_locale() -> void:
+	var modifier := "Cmd" if OSUtils.is_mac() else "Ctrl"
+	logo_label.tooltip_text = I18n.t("editor.shortcuts_tooltip").replace("{modifier}", modifier)
 	confirm.title = I18n.t("editor.save_title")
 	confirm.ok_button_text = I18n.t("common.save")
 	confirm.cancel_button_text = I18n.t("common.cancel")
@@ -171,7 +173,7 @@ func align_tabs() -> void:
 func style_logo() -> void:
 	logo_label.text = WORDMARK
 	logo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	logo_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	logo_label.mouse_filter = Control.MOUSE_FILTER_PASS
 	var accent := ThemeColor.accent_theme_color()
 	var color := accent if ThemeColor.is_dark_theme() else accent.darkened(0.08)
 	var logo_font := FontVariation.new()
