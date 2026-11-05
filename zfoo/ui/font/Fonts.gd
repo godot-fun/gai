@@ -59,8 +59,18 @@ static func bold() -> Font:
 ## The same bundled JetBrains Mono Regular source font used by Godot's script editor.
 static func code() -> Font:
 	if code_font == null:
+		var base := load(CODE_PATH) as FontFile
+		base.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
+		base.hinting = TextServer.HINTING_LIGHT
+		base.force_autohinter = true
+		base.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
+		base.keep_rounding_remainders = false
+		base.disable_embedded_bitmaps = true
+		base.fallbacks = [regular()]
 		code_font = FontVariation.new()
-		code_font.base_font = load(CODE_PATH) as FontFile
+		code_font.base_font = base
+		code_font.set_spacing(TextServer.SPACING_TOP, -1)
+		code_font.set_spacing(TextServer.SPACING_BOTTOM, -1)
 		var text_server := TextServerManager.get_primary_interface()
 		code_font.opentype_features = {text_server.name_to_tag("calt"): 0}
 	return code_font
