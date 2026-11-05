@@ -181,7 +181,7 @@ These links verify that the parser adds distinct, colored characters for folders
 
 [Project configuration](res://project.godot)
 
-[PowerShell executable script](res://sync-godot-framework.ps1)
+[PowerShell executable script](res://shell/sync-godot-framework.ps1)
 
 ## 6. 中文排版测试
 

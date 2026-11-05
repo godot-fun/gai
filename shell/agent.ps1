@@ -1,4 +1,4 @@
-# Launch the agent desktop app. Usage: .\agent.ps1  |  .\agent.ps1 --data-dir .gai3
+﻿# Launch the agent desktop app. Usage: .\agent.bat  |  .\shell\agent.ps1  |  .\shell\agent.ps1 --data-dir .gai3
 # The data folder defaults to <workspace>\.gai2; pass --data-dir <workspace-relative path> to change it.
 # Every launch first pulls the latest code, then syncs the import cache (~4 s), then starts the app.
 
@@ -56,7 +56,7 @@ function Write-StepDone([string]$Status = "done", [string]$Detail = "") {
 # in the repo: .godot\Godot\app_userdata\<config/name>\ (see project.godot).
 # Opening Godot without this script uses the real OS %APPDATA% instead.
 
-$Root = $PSScriptRoot
+$Root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $env:APPDATA = Join-Path $Root ".godot"
 
 # ---------------------------------------------------------------------------
