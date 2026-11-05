@@ -51,7 +51,11 @@ static func recognizes_gdscript_test() -> void:
 	edit.text = "5 * TimeUtils.MILLIS_PER_MINUTE\n"
 	var millis_line := highlighter.get_line_syntax_highlighting(0)
 	assert(MarkdownHighlighter.color_at_column(millis_line, 4, base_color) == CodeColors.engine_type)
-	assert(MarkdownHighlighter.color_at_column(millis_line, "5 * TimeUtils.MILLIS_PER_MINUTE".find("MILLIS"), base_color) == base_color)
+	assert(MarkdownHighlighter.color_at_column(millis_line, "5 * TimeUtils.MILLIS_PER_MINUTE".find("MILLIS"), base_color) == CodeColors.member)
+	edit.text = "base.antialiasing = TextServer.FONT_ANTIALIASING_GRAY\n"
+	var assign_line := highlighter.get_line_syntax_highlighting(0)
+	assert(MarkdownHighlighter.color_at_column(assign_line, "base.antialiasing = TextServer.FONT_ANTIALIASING_GRAY".find("antialiasing"), base_color) == CodeColors.member)
+	assert(MarkdownHighlighter.color_at_column(assign_line, "base.antialiasing = TextServer.FONT_ANTIALIASING_GRAY".find("FONT_ANTIALIASING_GRAY"), base_color) == CodeColors.member)
 	edit.text = "[StringUtils.format(\"x\", api_key)]\n"
 	var format_line := highlighter.get_line_syntax_highlighting(0)
 	assert(MarkdownHighlighter.color_at_column(format_line, "[StringUtils.format(\"x\", api_key)]".find("format"), base_color) == CodeColors.function)

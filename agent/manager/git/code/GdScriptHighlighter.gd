@@ -129,8 +129,6 @@ static func identifier_color(source: String, start: int, end: int, word: String,
 		var next_after := next_non_space(source, end)
 		if next_after < source.length() and source[next_after] == "(":
 			return CodeColors.function
-		if word[0] == word[0].to_upper() and word[0] != word[0].to_lower():
-			return base_color
 		return CodeColors.member
 	if word[0] == word[0].to_upper() and word[0] != word[0].to_lower():
 		return CodeColors.engine_type
