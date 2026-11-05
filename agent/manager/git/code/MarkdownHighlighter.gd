@@ -36,6 +36,7 @@ func _get_line_syntax_highlighting(line: int) -> Dictionary:
 	var highlighting := region_highlighter.get_line_syntax_highlighting(0)
 	highlight_file_link_destinations(line_text, highlighting, base_color)
 	highlight_composer_tokens(line_text, highlighting)
+	highlighting.sort()
 	return highlighting
 	pass
 
@@ -89,7 +90,7 @@ static func configure(highlighter: CodeHighlighter) -> void:
 	highlighter.add_color_region("~~~", "~~~", CodeColors.string)
 	highlighter.add_color_region("`", "`", CodeColors.string)
 	highlighter.add_color_region("<!--", "-->", CodeColors.comment)
-	highlighter.add_color_region("[", "]", CodeColors.link)
+	highlighter.add_color_region("[", "]", Colors.info)
 	highlighter.add_color_region("<", ">", CodeColors.link)
 	highlighter.add_color_region("#", "", CodeColors.declaration, true)
 	highlighter.add_color_region("**", "**", CodeColors.keyword)
@@ -109,10 +110,13 @@ static func color_at_column(region: Dictionary, column: int, base_color: Color) 
 	pass
 
 
-## [code]null[/code] keeps [CodeColors.link] for http(s) / mailto; otherwise [FileColors.color_for_path].
+## HTTP(S) uses a theme-aware promoted [Colors.info], [code]null[/code] keeps [CodeColors.link] for mailto,
+## and local destinations use [FileColors.color_for_path].
 static func syntax_color_for_link_destination(raw_destination: String) -> Variant:
 	var path := MarkdownParser.parse_link_destination(raw_destination)
-	if HttpUtils.is_valid_http_url(path) or path.to_lower().begins_with("mailto:"):
+	if HttpUtils.is_valid_http_url(path):
+		return ThemeColor.promote(Colors.info, Weights.w_4)
+	if path.to_lower().begins_with("mailto:"):
 		return null
 	return FileColors.color_for_path(path)
 	pass
@@ -138,11 +142,10 @@ static func highlight_file_link_destinations(line: String, highlighting: Diction
 		var destination_color: Variant = syntax_color_for_link_destination(raw_destination)
 		if destination_color == null:
 			destination_color = CodeColors.link
-		var resume_color := color_at_column(highlighting, close + 1, base_color)
 		for column in range(paren, close + 1):
 			highlighting[column] = {"color": destination_color}
 		if close + 1 < line.length():
-			highlighting[close + 1] = {"color": resume_color}
+			highlighting[close + 1] = {"color": base_color}
 		search_from = close + 1
 	pass
 

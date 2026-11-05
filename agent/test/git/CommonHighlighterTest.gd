@@ -96,10 +96,28 @@ static func recognizes_extended_languages_test() -> void:
 	var link_sample := "see [docs](readme.md) end"
 	markdown_edit.text = link_sample + "\n"
 	var link_line := markdown.get_line_syntax_highlighting(0)
+	var link_open := link_sample.find("[")
+	var label_close := link_sample.find("]")
 	var link_close := link_sample.find(")")
+	assert(MarkdownHighlighter.color_at_column(link_line, link_open, prose_color) == Colors.info)
+	assert(MarkdownHighlighter.color_at_column(link_line, link_open + 1, prose_color) == Colors.info)
+	assert(MarkdownHighlighter.color_at_column(link_line, label_close, prose_color) == Colors.info)
 	assert(MarkdownHighlighter.color_at_column(link_line, link_close, prose_color) == FileColors.color_for_path("readme.md"))
 	assert(MarkdownHighlighter.color_at_column(link_line, link_close + 1, prose_color) == prose_color)
-	assert(MarkdownHighlighter.syntax_color_for_link_destination("https://godotengine.org") == null)
+	assert(MarkdownHighlighter.syntax_color_for_link_destination("https://godotengine.org") == ThemeColor.promote(Colors.info, Weights.w_4))
+	assert(MarkdownHighlighter.syntax_color_for_link_destination("mailto:user@example.com") == null)
+	var http_sample := "[Godot Engine](https://godotengine.org), trailing text"
+	markdown_edit.text = http_sample + "\n"
+	var http_line := markdown.get_line_syntax_highlighting(0)
+	assert(MarkdownHighlighter.color_at_column(http_line, http_sample.find("("), prose_color) == ThemeColor.promote(Colors.info, Weights.w_4))
+	assert(MarkdownHighlighter.color_at_column(http_line, http_sample.find("https://"), prose_color) == ThemeColor.promote(Colors.info, Weights.w_4))
+	assert(MarkdownHighlighter.color_at_column(http_line, http_sample.find(")"), prose_color) == ThemeColor.promote(Colors.info, Weights.w_4))
+	assert(MarkdownHighlighter.color_at_column(http_line, http_sample.find(")") + 1, prose_color) == prose_color)
+	assert(MarkdownHighlighter.color_at_column(http_line, http_sample.find("trailing"), prose_color) == prose_color)
+	var previous_column := -1
+	for column in http_line.keys():
+		assert(int(column) > previous_column)
+		previous_column = int(column)
 	assert(FileColors.color_for_path("C:/clips/voice.wav") == FileColors.audio_color)
 	var slash_sample := "/audio-trim @agent/readme.md"
 	markdown_edit.text = slash_sample + "\n"
