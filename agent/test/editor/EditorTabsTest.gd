@@ -204,6 +204,26 @@ static func editor_file_tree_lists_workspace_test() -> void:
 	pass
 
 
+static func editor_file_tree_refreshes_changed_folder_test() -> void:
+	var root_path := FileUtils.normalize_path(ProjectSettings.globalize_path(TREE_DIR + "_refresh"))
+	DirAccess.make_dir_recursive_absolute(root_path.path_join("src/nested"))
+	FileUtils.write_string_to_file(root_path.path_join("src/nested/file.txt"), "content")
+	var tree := EditorFileTree.new()
+	gdf.gdf_node.add_child(tree)
+	tree.reload(root_path)
+	var src := tree.get_root().get_first_child()
+	tree.ensure_loaded(src)
+	src.collapsed = false
+	var new_path := root_path.path_join("src/new.txt")
+	FileUtils.write_string_to_file(new_path, "new")
+	EditorEvents.events.file_created.emit(new_path)
+	assert(src == tree.get_root().get_first_child())
+	assert(not src.collapsed)
+	assert(child_names(src).has("new.txt"))
+	tree.free()
+	pass
+
+
 static func editor_file_tree_opens_on_double_click_test() -> void:
 	var root_path := FileUtils.normalize_path(ProjectSettings.globalize_path(TREE_DIR + "_open"))
 	DirAccess.make_dir_recursive_absolute(root_path.path_join("src"))
@@ -230,6 +250,22 @@ static func editor_file_tree_opens_on_double_click_test() -> void:
 	assert(recorder.paths.size() == 1)
 	assert(FileUtils.normalize_path(recorder.paths[0]) == note_path)
 	EditorEvents.events.file_selected.disconnect(recorder.record)
+	tree.free()
+	pass
+
+
+static func editor_file_tree_copies_selected_path_test() -> void:
+	var root_path := FileUtils.normalize_path(ProjectSettings.globalize_path(TREE_DIR + "_copy_selected"))
+	var note_path := root_path.path_join("note.md")
+	FileUtils.write_string_to_file(note_path, "note")
+	var tree := EditorFileTree.new()
+	gdf.gdf_node.add_child(tree)
+	tree.reload(root_path)
+	assert(not tree.copy_selected())
+	var note := tree.get_root().get_first_child()
+	note.select(0)
+	assert(tree.copy_selected())
+	assert(tree.copied_path == note_path)
 	tree.free()
 	pass
 

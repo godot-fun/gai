@@ -27,6 +27,8 @@ func _ready() -> void:
 	item_collapsed.connect(on_item_collapsed)
 	item_activated.connect(on_item_activated)
 	gui_input.connect(on_gui_input)
+	EditorEvents.events.file_created.connect(on_file_created)
+	EditorEvents.events.files_changed.connect(on_files_changed)
 	pass
 
 
@@ -92,6 +94,58 @@ func reload(path: String) -> void:
 	pass
 
 
+func on_file_created(path: String) -> void:
+	refresh_directory(path.get_base_dir())
+	pass
+
+
+func on_files_changed(parent_path: String) -> void:
+	refresh_directory(parent_path)
+	pass
+
+
+func refresh_directory(path: String) -> void:
+	var normalized := FileUtils.normalize_path(path)
+	var item := get_root() if normalized == root_path else find_item_by_path(get_root(), normalized)
+	if item == null:
+		return
+	if item != get_root() and not bool(item.get_meta("loaded", false)):
+		return
+	var collapsed := item.collapsed
+	var child := item.get_first_child()
+	while child != null:
+		var next := child.get_next()
+		child.free()
+		child = next
+	populate(item, normalized)
+	if item != get_root():
+		item.set_meta("loaded", true)
+		item.collapsed = collapsed
+	pass
+
+
+func find_item_by_path(parent: TreeItem, path: String) -> TreeItem:
+	if parent == null:
+		return null
+	var child := parent.get_first_child()
+	while child != null:
+		if not bool(child.get_meta("placeholder", false)):
+			if FileUtils.normalize_path(str(child.get_metadata(0))) == path:
+				return child
+			var found := find_item_by_path(child, path)
+			if found != null:
+				return found
+		child = child.get_next()
+	return null
+
+
+func select_path(path: String) -> void:
+	var item := find_item_by_path(get_root(), FileUtils.normalize_path(path))
+	if item != null:
+		item.select(0)
+	pass
+
+
 func on_item_collapsed(item: TreeItem) -> void:
 	# create_item() returns null while this signal is running, so load on the next frame.
 	if item == null or item.collapsed or bool(item.get_meta("loaded", false)):
@@ -113,13 +167,11 @@ func delete_selected() -> bool:
 		Log.error("editor delete failed path:[{}] err:[{}]", path, error_string(error))
 		Alert.alert(I18n.t("editor.delete_failed"), Colors.error)
 		return false
-	var next := item.get_next()
-	if next == null or bool(next.get_meta("placeholder", false)):
-		next = item.get_prev()
-	item.free()
-	if next != null and not bool(next.get_meta("placeholder", false)):
-		next.select(0)
 	EditorEvents.events.file_deleted.emit(path)
+	EditorEvents.events.files_changed.emit(path.get_base_dir())
+	var parent := get_root() if path.get_base_dir() == root_path else find_item_by_path(get_root(), path.get_base_dir())
+	if parent != null and parent.get_first_child() != null:
+		parent.get_first_child().select(0)
 	Alert.alert(StringUtils.format(I18n.t("editor.delete_succeeded"), path.get_file()), Colors.success)
 	return true
 
@@ -162,6 +214,17 @@ func target_directory(path: String) -> String:
 	return path.get_base_dir()
 
 
+func copy_selected() -> bool:
+	var item := get_selected()
+	if item == null or bool(item.get_meta("placeholder", false)):
+		return false
+	var path := FileUtils.normalize_path(str(item.get_metadata(0)))
+	if path.is_empty() or not FileUtils.is_relative_to(path, root_path) or not FileUtils.exists(path):
+		return false
+	copied_path = path
+	return true
+
+
 func show_context_menu(local_position: Vector2i) -> void:
 	menu.clear()
 	menu.add_item(I18n.t("editor.new_file"), MenuAction.NEW_FILE)
@@ -187,7 +250,7 @@ func on_menu_action(action: int) -> void:
 		MenuAction.NEW_FOLDER:
 			prompt_create(CreateKind.FOLDER)
 		MenuAction.COPY:
-			copied_path = context_path
+			copy_selected()
 		MenuAction.PASTE:
 			paste_copied()
 		MenuAction.DELETE:
@@ -219,7 +282,8 @@ func on_name_confirmed() -> void:
 	if error != OK:
 		Alert.alert(I18n.t("editor.create_failed"), Colors.error)
 		return
-	reload(root_path)
+	EditorEvents.events.file_created.emit(path)
+	select_path(path)
 	Alert.alert(StringUtils.format(I18n.t("editor.created"), entry_name), Colors.success)
 	pass
 
@@ -237,7 +301,8 @@ func paste_copied() -> void:
 	if error != OK:
 		Alert.alert(I18n.t("editor.paste_failed"), Colors.error)
 		return
-	reload(root_path)
+	EditorEvents.events.file_created.emit(target)
+	select_path(target)
 	Alert.alert(StringUtils.format(I18n.t("editor.pasted"), target.get_file()), Colors.success)
 	pass
 

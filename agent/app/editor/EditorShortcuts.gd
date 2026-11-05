@@ -11,6 +11,9 @@ class Host extends RefCounted:
 	func can_delete_selection() -> bool:
 		return false
 
+	func can_copy_selection() -> bool:
+		return false
+
 	func save_active() -> void:
 		pass
 
@@ -26,6 +29,9 @@ class Host extends RefCounted:
 	func delete_selection() -> void:
 		pass
 
+	func copy_selection() -> void:
+		pass
+
 
 class Binding extends Host:
 	var editor: Node
@@ -34,6 +40,9 @@ class Binding extends Host:
 		return editor.confirm != null and editor.confirm.visible
 
 	func can_delete_selection() -> bool:
+		return editor.file_tree.has_focus()
+
+	func can_copy_selection() -> bool:
 		return editor.file_tree.has_focus()
 
 	func save_active() -> void:
@@ -54,6 +63,10 @@ class Binding extends Host:
 
 	func delete_selection() -> void:
 		editor.file_tree.delete_selected()
+		pass
+
+	func copy_selection() -> void:
+		editor.file_tree.copy_selected()
 		pass
 
 
@@ -86,6 +99,9 @@ static func handle_input(event: InputEvent, host: Host) -> bool:
 		return true
 	if matches_delete(key) and host.can_delete_selection():
 		host.delete_selection()
+		return true
+	if matches_copy(key) and host.can_copy_selection():
+		host.copy_selection()
 		return true
 	return false
 
@@ -129,6 +145,13 @@ static func matches_delete(key: InputEventKey) -> bool:
 	if key.alt_pressed or key.ctrl_pressed or key.meta_pressed or key.shift_pressed:
 		return false
 	return primary_keycode(key) == KEY_DELETE
+
+
+## Copy the selected workspace file or directory when the file tree has focus.
+static func matches_copy(key: InputEventKey) -> bool:
+	if key.alt_pressed or key.shift_pressed or not chord_modifiers_ok(key):
+		return false
+	return primary_keycode(key) == KEY_C
 
 
 static func primary_keycode(key: InputEventKey) -> Key:

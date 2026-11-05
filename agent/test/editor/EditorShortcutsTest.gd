@@ -7,7 +7,9 @@ class ShortcutTestHost extends EditorShortcuts.Host:
 	var closes: Array[int] = [0]
 	var tab_direction: Array[int] = [0]
 	var deletes: Array[int] = [0]
+	var copies: Array[int] = [0]
 	var delete_enabled: bool = false
+	var copy_enabled: bool = false
 	var blocked: bool = false
 
 	func is_input_blocked() -> bool:
@@ -15,6 +17,9 @@ class ShortcutTestHost extends EditorShortcuts.Host:
 
 	func can_delete_selection() -> bool:
 		return delete_enabled
+
+	func can_copy_selection() -> bool:
+		return copy_enabled
 
 	func save_active() -> void:
 		saves[0] += 1
@@ -34,6 +39,10 @@ class ShortcutTestHost extends EditorShortcuts.Host:
 
 	func delete_selection() -> void:
 		deletes[0] += 1
+		pass
+
+	func copy_selection() -> void:
+		copies[0] += 1
 		pass
 
 
@@ -56,6 +65,11 @@ static func editor_shortcuts_chords_test() -> void:
 	var delete_key := key_event(KEY_DELETE, false, false, false, false)
 	assert(EditorShortcuts.matches_delete(delete_key))
 	assert(not EditorShortcuts.matches_delete(key_event(KEY_DELETE, true, false, false, false)))
+	var ctrl_c := key_event(KEY_C, true, false, false, false)
+	var meta_c := key_event(KEY_C, false, false, false, true)
+	assert(EditorShortcuts.matches_copy(ctrl_c))
+	assert(EditorShortcuts.matches_copy(meta_c))
+	assert(not EditorShortcuts.matches_copy(key_event(KEY_C, true, true, false, false)))
 	pass
 
 
@@ -65,6 +79,10 @@ static func editor_shortcuts_handle_input_test() -> void:
 	host.delete_enabled = true
 	assert(EditorShortcuts.handle_input(key_event(KEY_DELETE, false, false, false, false), host))
 	assert(host.deletes[0] == 1)
+	assert(not EditorShortcuts.handle_input(key_event(KEY_C, true, false, false, false), host))
+	host.copy_enabled = true
+	assert(EditorShortcuts.handle_input(key_event(KEY_C, true, false, false, false), host))
+	assert(host.copies[0] == 1)
 	assert(EditorShortcuts.handle_input(key_event(KEY_S, true, false, false, false), host))
 	assert(host.saves[0] == 1)
 	assert(EditorShortcuts.handle_input(key_event(KEY_S, true, true, false, false), host))
