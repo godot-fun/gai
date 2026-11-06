@@ -43,10 +43,7 @@ func on_button_pressed() -> void:
 	var executable := str(editor.executable)
 	var arguments: PackedStringArray = editor.arguments.duplicate()
 	var workspace := AgentWorkspace.get_root()
-	if editor.id == "git_bash":
-		arguments.append("--cd=" + workspace)
-	else:
-		arguments.append(workspace)
+	arguments.append(workspace)
 	if executable.get_extension().to_lower() == "cmd":
 		arguments = PackedStringArray(["/c", executable]) + arguments
 		executable = "cmd.exe"

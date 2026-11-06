@@ -30,9 +30,9 @@ static func editor_discovery_cache_test() -> void:
 static func editor_discovery_file_arguments_test() -> void:
 	var path := "C:/workspace/docs/readme.md"
 	var vscode := EditorApplication.new("vscode", "Visual Studio Code", "code.exe", "")
-	var git_bash := EditorApplication.new("git_bash", "Git Bash", "git-bash.exe", "")
+	var zed := EditorApplication.new("zed", "Zed", "zed.exe", "")
 	assert(EditorDiscovery.file_arguments(vscode, path) == PackedStringArray([path]))
-	assert(EditorDiscovery.file_arguments(git_bash, path) == PackedStringArray(["--cd=C:/workspace/docs"]))
-	assert(EditorDiscovery.find_editor([vscode, git_bash], "git_bash") == git_bash)
-	assert(EditorDiscovery.find_editor([vscode, git_bash], "missing") == null)
+	assert(EditorDiscovery.file_arguments(zed, path) == PackedStringArray([path]))
+	assert(EditorDiscovery.find_editor([vscode, zed], "zed") == zed)
+	assert(EditorDiscovery.find_editor([vscode, zed], "missing") == null)
 	pass

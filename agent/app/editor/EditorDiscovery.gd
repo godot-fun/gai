@@ -4,7 +4,6 @@ extends RefCounted
 ## Finds workspace editors from the host OS and the user-configured executable path.
 const BUILTIN_ID := "builtin"
 const CODE_ICON_PATH := "res://icon.svg"
-const GIT_ICON_PATH := "res://agent/asset/image/file/git.svg"
 
 static var cached_editors: Array[EditorApplication] = []
 
@@ -18,23 +17,53 @@ static func discover() -> Array[EditorApplication]:
 	if OSUtils.is_windows():
 		add_windows_editor(editors, "visual_studio", "Visual Studio", ["devenv.exe"], [], "res://agent/asset/image/file/visualstudio.svg")
 		add_windows_editor(editors, "vscode", "Visual Studio Code", ["code.exe", "code.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/Microsoft VS Code/Code.exe")], "res://agent/asset/image/file/vscode.svg")
+		add_windows_editor(editors, "vscode_insiders", "Visual Studio Code Insiders", ["code-insiders.exe", "code-insiders.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/Microsoft VS Code Insiders/Code - Insiders.exe")], "res://agent/asset/image/file/vscode.svg")
 		add_windows_editor(editors, "cursor", "Cursor", ["cursor.exe", "cursor.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/cursor/Cursor.exe")], "res://agent/asset/image/file/cursor.svg")
-		add_git_bash(editors)
+		add_windows_editor(editors, "windsurf", "Windsurf", ["windsurf.exe", "windsurf.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/Windsurf/Windsurf.exe")])
+		add_windows_editor(editors, "zed", "Zed", ["zed.exe"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/Zed/zed.exe"), OS.get_environment("LOCALAPPDATA").path_join("Programs/Zed/Zed.exe")])
+		add_windows_editor(editors, "vscodium", "VSCodium", ["codium.exe", "codium.cmd", "VSCodium.exe"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/VSCodium/VSCodium.exe")], "res://agent/asset/image/file/vscode.svg")
+		add_windows_editor(editors, "sublime", "Sublime Text", ["subl.exe", "sublime_text.exe"], [OS.get_environment("PROGRAMFILES").path_join("Sublime Text/subl.exe"), OS.get_environment("PROGRAMFILES(X86)").path_join("Sublime Text/subl.exe")], "res://agent/asset/image/file/sublime.svg")
+		add_windows_editor(editors, "notepad_plus_plus", "Notepad++", ["notepad++.exe"], [OS.get_environment("PROGRAMFILES").path_join("Notepad++/notepad++.exe"), OS.get_environment("PROGRAMFILES(X86)").path_join("Notepad++/notepad++.exe")])
+		add_windows_editor(editors, "pulsar", "Pulsar", ["pulsar.exe", "pulsar.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/Pulsar/Pulsar.exe")])
+		add_windows_editor(editors, "lapce", "Lapce", ["lapce.exe"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/Lapce/lapce.exe")])
+		add_windows_editor(editors, "gvim", "GVim", ["gvim.exe"], [], "res://agent/asset/image/file/vim.svg")
+		add_windows_editor(editors, "emacs", "Emacs", ["runemacs.exe", "emacs.exe"])
 		add_windows_editor(editors, "idea", "IntelliJ IDEA", ["idea64.exe", "idea.exe"],
-			jetbrains_paths("IntelliJ IDEA", ["idea64.exe", "idea.exe"]))
+			jetbrains_paths(["IntelliJ IDEA", "IntelliJ IDEA Ultimate", "IntelliJ IDEA Community Edition"], ["idea64.exe", "idea.exe"]))
 		add_windows_editor(editors, "rider", "Rider", ["rider64.exe", "rider.exe"],
-			jetbrains_paths("Rider", ["rider64.exe", "rider.exe"]))
+			jetbrains_paths(["Rider"], ["rider64.exe", "rider.exe"]))
 		add_windows_editor(editors, "pycharm", "PyCharm", ["pycharm64.exe", "pycharm.exe"],
-			jetbrains_paths("PyCharm", ["pycharm64.exe", "pycharm.exe"]))
+			jetbrains_paths(["PyCharm", "PyCharm Professional", "PyCharm Community Edition"], ["pycharm64.exe", "pycharm.exe"]))
 		add_windows_editor(editors, "clion", "CLion", ["clion64.exe", "clion.exe"],
-			jetbrains_paths("CLion", ["clion64.exe", "clion.exe"]))
+			jetbrains_paths(["CLion"], ["clion64.exe", "clion.exe"]))
+		add_windows_editor(editors, "webstorm", "WebStorm", ["webstorm64.exe", "webstorm.exe"], jetbrains_paths(["WebStorm"], ["webstorm64.exe", "webstorm.exe"]))
+		add_windows_editor(editors, "goland", "GoLand", ["goland64.exe", "goland.exe"], jetbrains_paths(["GoLand"], ["goland64.exe", "goland.exe"]), "res://agent/asset/image/file/go.svg")
+		add_windows_editor(editors, "phpstorm", "PhpStorm", ["phpstorm64.exe", "phpstorm.exe"], jetbrains_paths(["PhpStorm"], ["phpstorm64.exe", "phpstorm.exe"]), "res://agent/asset/image/file/php.svg")
+		add_windows_editor(editors, "rubymine", "RubyMine", ["rubymine64.exe", "rubymine.exe"], jetbrains_paths(["RubyMine"], ["rubymine64.exe", "rubymine.exe"]), "res://agent/asset/image/file/ruby.svg")
+		add_windows_editor(editors, "datagrip", "DataGrip", ["datagrip64.exe", "datagrip.exe"], jetbrains_paths(["DataGrip"], ["datagrip64.exe", "datagrip.exe"]), "res://agent/asset/image/file/database.svg")
+		add_windows_editor(editors, "android_studio", "Android Studio", ["studio64.exe", "studio.exe"], jetbrains_paths(["Android Studio"], ["studio64.exe", "studio.exe"]), "res://agent/asset/image/file/android.svg")
 	else:
 		add_path_editor(editors, "vscode", "Visual Studio Code", ["code"])
+		add_path_editor(editors, "vscode_insiders", "Visual Studio Code Insiders", ["code-insiders"])
 		add_path_editor(editors, "cursor", "Cursor", ["cursor"])
+		add_path_editor(editors, "windsurf", "Windsurf", ["windsurf"])
+		add_path_editor(editors, "zed", "Zed", ["zed", "zeditor"])
+		add_path_editor(editors, "vscodium", "VSCodium", ["codium"])
+		add_path_editor(editors, "sublime", "Sublime Text", ["subl"])
+		add_path_editor(editors, "pulsar", "Pulsar", ["pulsar"])
+		add_path_editor(editors, "lapce", "Lapce", ["lapce"])
+		add_path_editor(editors, "gvim", "GVim", ["gvim"])
+		add_path_editor(editors, "emacs", "Emacs", ["emacs"])
 		add_path_editor(editors, "idea", "IntelliJ IDEA", ["idea"])
 		add_path_editor(editors, "rider", "Rider", ["rider"])
 		add_path_editor(editors, "pycharm", "PyCharm", ["pycharm"])
 		add_path_editor(editors, "clion", "CLion", ["clion"])
+		add_path_editor(editors, "webstorm", "WebStorm", ["webstorm"])
+		add_path_editor(editors, "goland", "GoLand", ["goland"])
+		add_path_editor(editors, "phpstorm", "PhpStorm", ["phpstorm"])
+		add_path_editor(editors, "rubymine", "RubyMine", ["rubymine"])
+		add_path_editor(editors, "datagrip", "DataGrip", ["datagrip"])
+		add_path_editor(editors, "android_studio", "Android Studio", ["studio", "android-studio"])
 	add_custom_editor(editors, custom_path)
 	cached_editors = editors
 	return copy_cached_editors()
@@ -73,21 +102,8 @@ static func find_editor(editors: Array[EditorApplication], editor_id: String) ->
 
 static func file_arguments(editor: EditorApplication, path: String) -> PackedStringArray:
 	var arguments := editor.arguments.duplicate()
-	if editor.id == "git_bash":
-		arguments.append("--cd=" + path.get_base_dir())
-	else:
-		arguments.append(path)
+	arguments.append(path)
 	return arguments
-
-
-static func add_git_bash(editors: Array[EditorApplication]) -> void:
-	var executable := GitHelper.find_windows_git_bash_launcher()
-	if executable.is_empty():
-		return
-	var installed_icon := executable.get_base_dir().path_join("mingw64/share/git/git-for-windows.ico")
-	var icon_path := installed_icon if FileAccess.file_exists(installed_icon) else GIT_ICON_PATH
-	editors.append(EditorApplication.new("git_bash", "Git Bash", executable, icon_path))
-	pass
 
 
 static func copy_cached_editors() -> Array[EditorApplication]:
@@ -121,12 +137,24 @@ static func find_installed_icon(executable: String, fallback_path: String) -> St
 	return ico_path if FileAccess.file_exists(ico_path) else fallback_path
 
 
-static func jetbrains_paths(product_name: String, executable_names: Array[String]) -> Array[String]:
+static func jetbrains_paths(product_names: Array[String], executable_names: Array[String]) -> Array[String]:
 	var paths: Array[String] = []
-	var programs_directory := OS.get_environment("LOCALAPPDATA").path_join("Programs")
-	var bin_directory := programs_directory.path_join(product_name).path_join("bin")
-	for executable_name: String in executable_names:
-		paths.append(bin_directory.path_join(executable_name))
+	var roots: Array[String] = [OS.get_environment("LOCALAPPDATA").path_join("Programs"), OS.get_environment("PROGRAMFILES").path_join("JetBrains")]
+	for root in roots:
+		for product_name in product_names:
+			for executable_name in executable_names:
+				paths.append(root.path_join(product_name).path_join("bin").path_join(executable_name))
+		if DirAccess.dir_exists_absolute(root):
+			for installed_name in DirAccess.get_directories_at(root):
+				for product_name in product_names:
+					if not installed_name.to_lower().begins_with(product_name.to_lower()):
+						continue
+					for executable_name in executable_names:
+						paths.append(root.path_join(installed_name).path_join("bin").path_join(executable_name))
+	var toolbox_root := OS.get_environment("LOCALAPPDATA").path_join("JetBrains/Toolbox/apps")
+	if DirAccess.dir_exists_absolute(toolbox_root):
+		for executable_name in executable_names:
+			paths.append_array(GlobUtils.glob(toolbox_root, "**/bin/" + executable_name, true, 0, [], false, 64))
 	return paths
 
 

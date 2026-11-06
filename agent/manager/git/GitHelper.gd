@@ -123,7 +123,6 @@ static func get_download_url() -> String:
 
 # ----------------------------------------------------------------------------------------------------------------------
 static var windows_git_bash_path := ""
-static var windows_git_bash_launcher_path := ""
 
 static func find_windows_git_bash() -> String:
 	if StringUtils.is_not_blank(windows_git_bash_path):
@@ -154,19 +153,3 @@ static func find_windows_git_bash() -> String:
 			return windows_git_bash_path
 	windows_git_bash_path = "bash.exe"
 	return windows_git_bash_path
-
-
-## Finds the visible Git Bash terminal launcher beside the bash runtime discovered above.
-static func find_windows_git_bash_launcher() -> String:
-	if StringUtils.is_not_blank(windows_git_bash_launcher_path):
-		return windows_git_bash_launcher_path
-	var bash_path := FileUtils.normalize_path(find_windows_git_bash())
-	if bash_path.is_absolute_path():
-		var directory := bash_path.get_base_dir()
-		for _level in 3:
-			var candidate := directory.path_join("git-bash.exe")
-			if FileAccess.file_exists(candidate):
-				windows_git_bash_launcher_path = candidate
-				return windows_git_bash_launcher_path
-			directory = directory.get_base_dir()
-	return ""
