@@ -24,14 +24,14 @@ func setup(p_button: Button, p_select_button: Button, p_workspace_button: Button
 	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(on_locale_changed)
 	AgentEvents.events.workspace_editor_changed.connect(apply_theme)
-	apply_theme()
+	await apply_theme()
 	update_alignment.call_deferred()
 	pass
 
 
 func on_locale_changed() -> void:
 	EditorDiscovery.invalidate_cache()
-	apply_theme()
+	await apply_theme()
 	pass
 
 
@@ -57,7 +57,7 @@ func on_button_pressed() -> void:
 
 
 func apply_theme() -> void:
-	refresh_available_editors()
+	await refresh_available_editors()
 	var editor := selected_editor()
 	AgentToolbarButton.style_round(button, StringUtils.format(I18n.t("editor.open_with"), editor.label))
 	button.icon = editor_icon(editor)
@@ -104,7 +104,13 @@ func build_popup() -> void:
 
 
 func refresh_available_editors() -> void:
-	available_editors = EditorDiscovery.discover()
+	button.disabled = true
+	select_button.disabled = true
+	var discovered: Variant = await ExecutorHelper.async_execute_pooled(EditorDiscovery.discover)
+	var editors := discovered as Array[EditorApplication]
+	available_editors = editors if editors != null else []
+	button.disabled = false
+	select_button.disabled = false
 	var selected_id := AgentSetting.get_workspace_editor()
 	if not has_editor(selected_id):
 		AgentSetting.set_workspace_editor(EditorDiscovery.BUILTIN_ID)
@@ -163,7 +169,7 @@ func update_popup_items() -> void:
 
 
 func on_select_pressed() -> void:
-	refresh_available_editors()
+	await refresh_available_editors()
 	update_popup_items()
 	var content_size := popup.get_contents_minimum_size()
 	var popup_size := Vector2i(maxi(int(content_size.x), POPUP_MIN_WIDTH), int(content_size.y))

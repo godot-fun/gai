@@ -11,15 +11,18 @@ const TERMINAL_ICON_PATH := "res://agent/asset/image/ui/terminal.svg"
 static var cached_editors: Array[EditorApplication] = []
 
 
-static func discover(force_refresh: bool = false) -> Array[EditorApplication]:
-	if not force_refresh and not cached_editors.is_empty():
+static func discover() -> Array[EditorApplication]:
+	if not cached_editors.is_empty():
 		return copy_cached_editors()
-	var editors: Array[EditorApplication] = [EditorApplication.new(BUILTIN_ID, I18n.t("editor.builtin"), "", CODE_ICON_PATH)]
+	var builtin_label := I18n.t("editor.builtin")
+	var explorer_label := I18n.t("editor.file_explorer")
+	var custom_path := AgentSetting.get_custom_editor_path()
+	var editors: Array[EditorApplication] = [EditorApplication.new(BUILTIN_ID, builtin_label, "", CODE_ICON_PATH)]
 	if OSUtils.is_windows():
 		add_windows_editor(editors, "visual_studio", "Visual Studio", ["devenv.exe"], [], "res://agent/asset/image/file/visualstudio.svg")
 		add_windows_editor(editors, "vscode", "Visual Studio Code", ["code.exe", "code.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/Microsoft VS Code/Code.exe")], "res://agent/asset/image/file/vscode.svg")
 		add_windows_editor(editors, "cursor", "Cursor", ["cursor.exe", "cursor.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/cursor/Cursor.exe")], "res://agent/asset/image/file/cursor.svg")
-		editors.append(EditorApplication.new("explorer", I18n.t("editor.file_explorer"), "explorer.exe", FOLDER_ICON_PATH))
+		editors.append(EditorApplication.new("explorer", explorer_label, "explorer.exe", FOLDER_ICON_PATH))
 		add_windows_editor(editors, "git_bash", "Git Bash", ["git-bash.exe"], [OS.get_environment("PROGRAMFILES").path_join("Git/git-bash.exe")], TERMINAL_ICON_PATH)
 		add_windows_editor(editors, "idea", "IntelliJ IDEA", ["idea64.exe", "idea.exe"])
 		add_windows_editor(editors, "rider", "Rider", ["rider64.exe", "rider.exe"])
@@ -30,7 +33,7 @@ static func discover(force_refresh: bool = false) -> Array[EditorApplication]:
 		add_path_editor(editors, "idea", "IntelliJ IDEA", ["idea"])
 		add_path_editor(editors, "rider", "Rider", ["rider"])
 		add_path_editor(editors, "pycharm", "PyCharm", ["pycharm"])
-	add_custom_editor(editors)
+	add_custom_editor(editors, custom_path)
 	cached_editors = editors
 	return copy_cached_editors()
 
@@ -46,10 +49,9 @@ static func copy_cached_editors() -> Array[EditorApplication]:
 	return result
 
 
-static func add_custom_editor(editors: Array[EditorApplication]) -> void:
-	var path := AgentSetting.get_custom_editor_path()
-	if not path.is_empty() and FileAccess.file_exists(path):
-		editors.append(EditorApplication.new("custom", path.get_file().get_basename(), path, CODE_ICON_PATH))
+static func add_custom_editor(editors: Array[EditorApplication], custom_path: String) -> void:
+	if not custom_path.is_empty() and FileAccess.file_exists(custom_path):
+		editors.append(EditorApplication.new("custom", custom_path.get_file().get_basename(), custom_path, CODE_ICON_PATH))
 	pass
 
 

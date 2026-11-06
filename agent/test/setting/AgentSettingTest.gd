@@ -15,8 +15,11 @@ static func custom_editor_path_round_trip_test() -> void:
 
 
 static func editor_discovery_cache_test() -> void:
-	var first := EditorDiscovery.discover(true)
-	var second := EditorDiscovery.discover()
+	EditorDiscovery.invalidate_cache()
+	var first_result: Variant = await ExecutorHelper.async_execute_pooled(EditorDiscovery.discover)
+	var second_result: Variant = await ExecutorHelper.async_execute_pooled(EditorDiscovery.discover)
+	var first := first_result as Array[EditorApplication]
+	var second := second_result as Array[EditorApplication]
 	assert(not first.is_empty())
 	assert(first.size() == second.size())
 	assert(first[0] == second[0])
