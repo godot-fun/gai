@@ -2,9 +2,8 @@ class_name EditorDiscovery
 extends RefCounted
 
 ## Finds workspace editors from the host OS and the user-configured executable path.
-
 const BUILTIN_ID := "builtin"
-const CODE_ICON_PATH := "res://agent/asset/image/ui/code.svg"
+const CODE_ICON_PATH := "res://icon.svg"
 const FOLDER_ICON_PATH := "res://agent/asset/image/ui/folder_open.svg"
 const GIT_ICON_PATH := "res://agent/asset/image/file/git.svg"
 
