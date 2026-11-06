@@ -135,8 +135,8 @@ func selected_editor() -> EditorApplication:
 func editor_icon(editor: EditorApplication) -> Texture2D:
 	var icon_path := editor.icon_path
 	var texture: Texture2D
-	if icon_path.begins_with("res://agent/asset/image/file/"):
-		texture = load(icon_path) as Texture2D
+	if icon_path.get_extension().to_lower() == "ico":
+		texture = ImageHelper.load_ico(icon_path, ControlSize.icon_md)
 	else:
 		texture = ImageHelper.tint_svg(icon_path, Colors.secondary_text, 1.0)
 	return normalize_icon(texture, ControlSize.icon_md)

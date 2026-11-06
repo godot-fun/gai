@@ -47,6 +47,35 @@ static func tint_svg(path: String, color: Color, scale: float = 1.0) -> ImageTex
 	return ImageTexture.create_from_image(image)
 
 
+## Loads the PNG layer nearest to [param preferred_size] from an ICO container.
+## Returns an empty texture when the ICO is invalid or its selected layer is not PNG-encoded.
+static func load_ico(path: String, preferred_size: int) -> ImageTexture:
+	var bytes := FileAccess.get_file_as_bytes(path)
+	if bytes.size() < 6 or bytes.decode_u16(2) != 1:
+		return ImageTexture.new()
+	var entry_count := bytes.decode_u16(4)
+	var selected_offset := -1
+	var selected_length := 0
+	var selected_difference := 1 << 30
+	for index in entry_count:
+		var entry_offset := 6 + index * 16
+		if entry_offset + 16 > bytes.size():
+			break
+		var width := 256 if bytes[entry_offset] == 0 else int(bytes[entry_offset])
+		var height := 256 if bytes[entry_offset + 1] == 0 else int(bytes[entry_offset + 1])
+		var difference := absi(maxi(width, height) - preferred_size)
+		if difference < selected_difference:
+			selected_difference = difference
+			selected_length = bytes.decode_u32(entry_offset + 8)
+			selected_offset = bytes.decode_u32(entry_offset + 12)
+	if selected_offset < 0 or selected_length <= 0 or selected_offset + selected_length > bytes.size():
+		return ImageTexture.new()
+	var image := Image.new()
+	if image.load_png_from_buffer(bytes.slice(selected_offset, selected_offset + selected_length)) != OK:
+		return ImageTexture.new()
+	return ImageTexture.create_from_image(image)
+
+
 static func get_image_format(path: String, default_format: String = png) -> String:
 	var path_without_query := path.get_slice("?", 0).get_slice("#", 0)
 	var extension := StringUtils.substring_after_last(path_without_query.to_lower(), ".")

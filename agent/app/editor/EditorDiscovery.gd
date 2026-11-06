@@ -6,7 +6,7 @@ extends RefCounted
 const BUILTIN_ID := "builtin"
 const CODE_ICON_PATH := "res://agent/asset/image/ui/code.svg"
 const FOLDER_ICON_PATH := "res://agent/asset/image/ui/folder_open.svg"
-const TERMINAL_ICON_PATH := "res://agent/asset/image/ui/terminal.svg"
+const GIT_ICON_PATH := "res://agent/asset/image/file/git.svg"
 
 static var cached_editors: Array[EditorApplication] = []
 
@@ -23,7 +23,7 @@ static func discover() -> Array[EditorApplication]:
 		add_windows_editor(editors, "vscode", "Visual Studio Code", ["code.exe", "code.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/Microsoft VS Code/Code.exe")], "res://agent/asset/image/file/vscode.svg")
 		add_windows_editor(editors, "cursor", "Cursor", ["cursor.exe", "cursor.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/cursor/Cursor.exe")], "res://agent/asset/image/file/cursor.svg")
 		editors.append(EditorApplication.new("explorer", explorer_label, "explorer.exe", FOLDER_ICON_PATH))
-		add_windows_editor(editors, "git_bash", "Git Bash", ["git-bash.exe"], [OS.get_environment("PROGRAMFILES").path_join("Git/git-bash.exe")], TERMINAL_ICON_PATH)
+		add_git_bash(editors)
 		add_windows_editor(editors, "idea", "IntelliJ IDEA", ["idea64.exe", "idea.exe"])
 		add_windows_editor(editors, "rider", "Rider", ["rider64.exe", "rider.exe"])
 		add_windows_editor(editors, "pycharm", "PyCharm", ["pycharm64.exe", "pycharm.exe"])
@@ -40,6 +40,17 @@ static func discover() -> Array[EditorApplication]:
 
 static func invalidate_cache() -> void:
 	cached_editors.clear()
+	pass
+
+
+static func add_git_bash(editors: Array[EditorApplication]) -> void:
+	var common_paths: Array[String] = [OS.get_environment("PROGRAMFILES").path_join("Git/git-bash.exe")]
+	var executable := find_windows_executable(["git-bash.exe"], common_paths)
+	if executable.is_empty():
+		return
+	var installed_icon := executable.get_base_dir().path_join("mingw64/share/git/git-for-windows.ico")
+	var icon_path := installed_icon if FileAccess.file_exists(installed_icon) else GIT_ICON_PATH
+	editors.append(EditorApplication.new("git_bash", "Git Bash", executable, icon_path))
 	pass
 
 
