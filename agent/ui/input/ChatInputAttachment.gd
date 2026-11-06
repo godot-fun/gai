@@ -136,12 +136,15 @@ func decode_clipboard_paths(output: String) -> PackedStringArray:
 	return paths
 
 
-## Joins composer insert text from raw OS paths. Skips Godot `.uid` and `.import` sidecars; each path
-## uses [method MarkdownHelper.format_file_as_markdown] with surrounding spaces for paste/drop layout.
+## Joins composer insert text from raw OS paths. Skips Godot `.uid` and `.import` sidecars. An empty
+## composer needs spacing only after the attachments; existing text keeps spacing on both sides.
 func join_markdown_for_attachments(files: PackedStringArray) -> String:
+	var include_leading_spacing := input_field == null or not input_field.text.is_empty()
 	var build := StringBuilder.new()
 	for file in files:
 		if file.ends_with(".uid") or file.ends_with(".import"):
 			continue
-		build.append("    " + MarkdownHelper.format_file_as_markdown(file) + "    ")
+		if include_leading_spacing or not build.is_empty():
+			build.append("    ")
+		build.append(MarkdownHelper.format_file_as_markdown(file) + "    ")
 	return build.build_string()
