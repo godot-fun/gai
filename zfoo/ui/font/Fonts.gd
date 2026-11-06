@@ -58,11 +58,13 @@ static func bold() -> Font:
 
 static func create_font(path: String, weight: int) -> Font:
 	var bundled := load(path) as FontFile
+	bundled.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
 	if not OSUtils.is_windows():
 		return bundled
 	var system_font := SystemFont.new()
 	system_font.font_names = PackedStringArray(["Microsoft YaHei UI", "Microsoft YaHei"])
 	system_font.font_weight = weight
+	system_font.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
 	system_font.hinting = TextServer.HINTING_LIGHT
 	system_font.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_AUTO
 	system_font.fallbacks = [bundled]
@@ -73,6 +75,7 @@ static func create_font(path: String, weight: int) -> Font:
 static func code() -> Font:
 	if code_font == null:
 		var base := load(CODE_PATH) as FontFile
+		base.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
 		base.force_autohinter = true
 		base.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_AUTO
 		base.keep_rounding_remainders = true
