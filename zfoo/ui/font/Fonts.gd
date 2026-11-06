@@ -12,11 +12,11 @@ const SEMIBOLD_PATH := "res://zfoo/ui/font/NotoSansSC-SemiBold.woff2"
 const BOLD_PATH := "res://zfoo/ui/font/NotoSansSC-Bold.woff2"
 const CODE_PATH := "res://zfoo/ui/font/JetBrainsMono_Regular.woff2"
 
-static var light_font: FontFile
+static var light_font: Font
 static var regular_font: Font
-static var medium_font: FontFile
-static var semibold_font: FontFile
-static var bold_font: FontFile
+static var medium_font: Font
+static var semibold_font: Font
+static var bold_font: Font
 static var code_font: FontVariation
 
 
@@ -28,43 +28,45 @@ static func _static_init() -> void:
 
 static func light() -> Font:
 	if light_font == null:
-		light_font = load(LIGHT_PATH) as FontFile
+		light_font = create_font(LIGHT_PATH, 300)
 	return light_font
 
 
 static func regular() -> Font:
 	if regular_font == null:
-		var bundled := load(REGULAR_PATH) as FontFile
-		if OSUtils.is_windows():
-			var system_font := SystemFont.new()
-			system_font.font_names = PackedStringArray(["Microsoft YaHei UI", "Microsoft YaHei"])
-			system_font.font_weight = 400
-			system_font.hinting = TextServer.HINTING_LIGHT
-			system_font.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_AUTO
-			var fallbacks: Array[Font] = [bundled]
-			system_font.fallbacks = fallbacks
-			regular_font = system_font
-		else:
-			regular_font = bundled
+		regular_font = create_font(REGULAR_PATH, 400)
 	return regular_font
 
 
 static func medium() -> Font:
 	if medium_font == null:
-		medium_font = load(MEDIUM_PATH) as FontFile
+		medium_font = create_font(MEDIUM_PATH, 500)
 	return medium_font
 
 
 static func semibold() -> Font:
 	if semibold_font == null:
-		semibold_font = load(SEMIBOLD_PATH) as FontFile
+		semibold_font = create_font(SEMIBOLD_PATH, 600)
 	return semibold_font
 
 
 static func bold() -> Font:
 	if bold_font == null:
-		bold_font = load(BOLD_PATH) as FontFile
+		bold_font = create_font(BOLD_PATH, 700)
 	return bold_font
+
+
+static func create_font(path: String, weight: int) -> Font:
+	var bundled := load(path) as FontFile
+	if not OSUtils.is_windows():
+		return bundled
+	var system_font := SystemFont.new()
+	system_font.font_names = PackedStringArray(["Microsoft YaHei UI", "Microsoft YaHei"])
+	system_font.font_weight = weight
+	system_font.hinting = TextServer.HINTING_LIGHT
+	system_font.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_AUTO
+	system_font.fallbacks = [bundled]
+	return system_font
 
 
 ## The same bundled JetBrains Mono Regular source font used by Godot's script editor.
