@@ -6,7 +6,7 @@ var rich_text: RichTextLabel
 ## Git diff bubble appended after agent_end, listing files changed from the run checkpoint.
 
 func panel_color() -> Color:
-	return Colors.surface
+	return Colors.control_surface
 
 
 func apply(session_id: int, entry: ChatEntry) -> void:
