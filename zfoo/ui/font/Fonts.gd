@@ -73,12 +73,9 @@ static func create_font(path: String, weight: int) -> Font:
 static func code() -> Font:
 	if code_font == null:
 		var base := load(CODE_PATH) as FontFile
-		base.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
-		base.hinting = TextServer.HINTING_LIGHT
 		base.force_autohinter = true
 		base.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_AUTO
 		base.keep_rounding_remainders = true
-		base.disable_embedded_bitmaps = true
 		base.fallbacks = [regular()]
 		code_font = FontVariation.new()
 		code_font.base_font = base
