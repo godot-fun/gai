@@ -25,3 +25,14 @@ static func editor_discovery_cache_test() -> void:
 	assert(first[0] == second[0])
 	assert(first[0].id == EditorDiscovery.BUILTIN_ID)
 	pass
+
+
+static func editor_discovery_file_arguments_test() -> void:
+	var path := "C:/workspace/docs/readme.md"
+	var vscode := EditorApplication.new("vscode", "Visual Studio Code", "code.exe", "")
+	var git_bash := EditorApplication.new("git_bash", "Git Bash", "git-bash.exe", "")
+	assert(EditorDiscovery.file_arguments(vscode, path) == PackedStringArray([path]))
+	assert(EditorDiscovery.file_arguments(git_bash, path) == PackedStringArray(["--cd=C:/workspace/docs"]))
+	assert(EditorDiscovery.find_editor([vscode, git_bash], "git_bash") == git_bash)
+	assert(EditorDiscovery.find_editor([vscode, git_bash], "missing") == null)
+	pass

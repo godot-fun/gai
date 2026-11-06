@@ -45,7 +45,7 @@ static func open_file(path: String) -> void:
 	if StringUtils.is_not_blank(ImageHelper.get_image_format(path, StringUtils.EMPTY)):
 		await ImagePreviewWindow.show_window(path, I18n.t("common.image_preview"))
 		return
-	if EditorWindow.show_file(path):
+	if await EditorDiscovery.async_open_file(path):
 		return
 	if FileUtils.open_file(path) != OK:
 		Alert.alert(StringUtils.format(I18n.t("common.file_not_found"), path), Colors.error)

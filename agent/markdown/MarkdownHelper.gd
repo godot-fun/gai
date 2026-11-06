@@ -218,7 +218,7 @@ static func handle_meta_clicked(meta: Variant) -> void:
 			ImagePreviewWindow.show_window(url, I18n.t("common.image_preview"))
 			return
 		var local_path := ProjectSettings.globalize_path(url)
-		if EditorWindow.show_file(local_path):
+		if await EditorDiscovery.async_open_file(local_path):
 			return
 		var local_error := FileUtils.open_file(local_path)
 		if local_error != OK:

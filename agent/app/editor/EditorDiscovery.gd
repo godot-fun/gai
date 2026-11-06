@@ -4,7 +4,6 @@ extends RefCounted
 ## Finds workspace editors from the host OS and the user-configured executable path.
 const BUILTIN_ID := "builtin"
 const CODE_ICON_PATH := "res://icon.svg"
-const FOLDER_ICON_PATH := "res://agent/asset/image/ui/folder_open.svg"
 const GIT_ICON_PATH := "res://agent/asset/image/file/git.svg"
 
 static var cached_editors: Array[EditorApplication] = []
@@ -14,14 +13,12 @@ static func discover() -> Array[EditorApplication]:
 	if not cached_editors.is_empty():
 		return copy_cached_editors()
 	var builtin_label := I18n.t("editor.builtin")
-	var explorer_label := I18n.t("editor.file_explorer")
 	var custom_path := AgentSetting.get_custom_editor_path()
 	var editors: Array[EditorApplication] = [EditorApplication.new(BUILTIN_ID, builtin_label, "", CODE_ICON_PATH)]
 	if OSUtils.is_windows():
 		add_windows_editor(editors, "visual_studio", "Visual Studio", ["devenv.exe"], [], "res://agent/asset/image/file/visualstudio.svg")
 		add_windows_editor(editors, "vscode", "Visual Studio Code", ["code.exe", "code.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/Microsoft VS Code/Code.exe")], "res://agent/asset/image/file/vscode.svg")
 		add_windows_editor(editors, "cursor", "Cursor", ["cursor.exe", "cursor.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/cursor/Cursor.exe")], "res://agent/asset/image/file/cursor.svg")
-		editors.append(EditorApplication.new("explorer", explorer_label, "explorer.exe", FOLDER_ICON_PATH))
 		add_git_bash(editors)
 		add_windows_editor(editors, "idea", "IntelliJ IDEA", ["idea64.exe", "idea.exe"],
 			jetbrains_paths("IntelliJ IDEA", ["idea64.exe", "idea.exe"]))
@@ -48,9 +45,43 @@ static func invalidate_cache() -> void:
 	pass
 
 
+## Opens a file with the workspace editor selected in settings.
+## Returns false when no configured editor handled the path, allowing the caller to use the OS default.
+static func async_open_file(path: String) -> bool:
+	var normalized := FileUtils.normalize_path(ProjectSettings.globalize_path(path))
+	if normalized.is_empty() or not FileAccess.file_exists(normalized):
+		return false
+	var discovered: Variant = await ExecutorHelper.async_execute_pooled(discover)
+	var editors := discovered as Array[EditorApplication]
+	var selected := find_editor(editors, AgentSetting.get_workspace_editor())
+	if selected == null or selected.id == BUILTIN_ID:
+		return EditorWindow.show_file(normalized)
+	var executable := selected.executable
+	var arguments := file_arguments(selected, normalized)
+	if executable.get_extension().to_lower() == "cmd":
+		arguments = PackedStringArray(["/c", executable]) + arguments
+		executable = "cmd.exe"
+	return OS.create_process(executable, arguments, false) >= 0
+
+
+static func find_editor(editors: Array[EditorApplication], editor_id: String) -> EditorApplication:
+	for editor in editors:
+		if editor.id == editor_id:
+			return editor
+	return null
+
+
+static func file_arguments(editor: EditorApplication, path: String) -> PackedStringArray:
+	var arguments := editor.arguments.duplicate()
+	if editor.id == "git_bash":
+		arguments.append("--cd=" + path.get_base_dir())
+	else:
+		arguments.append(path)
+	return arguments
+
+
 static func add_git_bash(editors: Array[EditorApplication]) -> void:
-	var common_paths: Array[String] = [OS.get_environment("PROGRAMFILES").path_join("Git/git-bash.exe")]
-	var executable := find_windows_executable(["git-bash.exe"], common_paths)
+	var executable := GitHelper.find_windows_git_bash_launcher()
 	if executable.is_empty():
 		return
 	var installed_icon := executable.get_base_dir().path_join("mingw64/share/git/git-for-windows.ico")
