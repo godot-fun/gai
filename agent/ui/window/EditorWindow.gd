@@ -87,6 +87,19 @@ func present(width_percent: int = 92, height_percent: int = 88) -> void:
 	pass
 
 
+## Restores and raises this native window. `grab_focus()` alone only changes Godot's input focus
+## and does not reliably bring a covered or minimized native window to the front on Windows.
+func activate() -> void:
+	var window_id := get_window_id()
+	var mode := DisplayServer.window_get_mode(window_id)
+	if mode == DisplayServer.WINDOW_MODE_MINIMIZED:
+		var restored := DisplayServer.WINDOW_MODE_MAXIMIZED if covered_usable_screen(window_id) else DisplayServer.WINDOW_MODE_WINDOWED
+		DisplayServer.window_set_mode(restored, window_id)
+	DisplayServer.window_move_to_foreground(window_id)
+	editor.focus_active_editor.call_deferred()
+	pass
+
+
 static func size_from_viewport_percent(width_percent: int, height_percent: int) -> Vector2i:
 	var viewport := gdf.gdf_node.get_tree().root.get_visible_rect().size
 	return Vector2i(
@@ -105,12 +118,44 @@ static func is_open() -> bool:
 
 
 static func show_editor() -> void:
-	if is_open():
-		for node: Node in gdf.gdf_node.get_tree().get_nodes_in_group(GROUP_NAME):
-			if node is EditorWindow:
-				(node as EditorWindow).grab_focus()
+	var existing := find_open_window()
+	if existing != null:
+		existing.activate()
 		return
 	var window := EditorWindow.new()
 	gdf.gdf_node.add_child(window)
 	window.present()
 	pass
+
+
+## Opens a text file in the built-in editor and brings its native window to the front.
+## Returns false when the path should be handled by an image preview or the host OS.
+static func show_file(path: String) -> bool:
+	var normalized := FileUtils.normalize_path(ProjectSettings.globalize_path(path))
+	if not EditorTabs.can_open(normalized):
+		return false
+	var window := find_open_window()
+	if window == null:
+		window = EditorWindow.new()
+		gdf.gdf_node.add_child(window)
+		window.present()
+	else:
+		window.activate()
+	EditorEvents.events.file_selected.emit(normalized)
+	return true
+
+
+static func find_open_window() -> EditorWindow:
+	if not gdf.is_ready():
+		return null
+	for node: Node in gdf.gdf_node.get_tree().get_nodes_in_group(GROUP_NAME):
+		if node is EditorWindow:
+			return node as EditorWindow
+	return null
+
+
+static func covered_usable_screen(window_id: int) -> bool:
+	var window_size := Vector2(DisplayServer.window_get_size_with_decorations(window_id))
+	var screen := DisplayServer.window_get_current_screen(window_id)
+	var usable_size := Vector2(DisplayServer.screen_get_usable_rect(screen).size)
+	return window_size.x >= usable_size.x and window_size.y >= usable_size.y
