@@ -34,7 +34,8 @@ const SUBTITLE: String = "GAI Code Agent"
 @onready var workspace_button_node: Button = $Root/Toolbar/ToolbarRow/WorkspaceButton
 @onready var workflow_button_node: Button = $Root/Toolbar/ToolbarRow/WorkflowButton
 @onready var sense_button_node: Button = $Root/Toolbar/ToolbarRow/SenseButton
-@onready var editor_button_node: Button = $Root/Toolbar/ToolbarRow/EditorButton
+@onready var editor_button_node: Button = $Root/Toolbar/ToolbarRow/EditorButtonWrap/EditorButton
+@onready var editor_select_button_node: Button = $Root/Toolbar/ToolbarRow/EditorButtonWrap/EditorSelectButton
 @onready var note_button_node: Button = $Root/Toolbar/ToolbarRow/NoteButton
 @onready var search_button_node: Button = $Root/Toolbar/ToolbarRow/SearchButtonWrap/SearchButton
 @onready var log_button_node: Button = $Root/Toolbar/ToolbarRow/LogButtonWrap/LogButton
@@ -93,7 +94,7 @@ func _ready() -> void:
 	workspace_button.setup(workspace_button_node)
 	workflow_button.setup(workflow_button_node)
 	sense_button.setup(sense_button_node, sense_input)
-	editor_button.setup(editor_button_node, workspace_button_node)
+	editor_button.setup(editor_button_node, editor_select_button_node, workspace_button_node)
 	note_button.setup(note_button_node)
 	search_button.setup(search_button_node)
 	log_button.setup(log_button_node)

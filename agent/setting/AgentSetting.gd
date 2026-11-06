@@ -13,6 +13,36 @@ extends RefCounted
 # Toolbar toggles
 # ----------------------------------------------------------------------------------------------------------------------
 
+# ---------------------------------------------------- Editor ----------------------------------------------------------
+
+const WORKSPACE_EDITOR_KEY := "agent_workspace_editor"
+const CUSTOM_EDITOR_PATH_KEY := "agent_custom_editor_path"
+
+
+static func get_workspace_editor() -> String:
+	return Setting.get_string(WORKSPACE_EDITOR_KEY, "builtin")
+
+
+static func set_workspace_editor(editor_id: String) -> void:
+	Setting.set_string(WORKSPACE_EDITOR_KEY, editor_id)
+	Setting.save()
+	AgentEvents.events.workspace_editor_changed.emit()
+	pass
+
+
+static func get_custom_editor_path() -> String:
+	return Setting.get_string(CUSTOM_EDITOR_PATH_KEY, "").strip_edges()
+
+
+static func set_custom_editor_path(path: String) -> void:
+	var normalized := FileUtils.normalize_path(path.strip_edges())
+	if get_custom_editor_path() == normalized:
+		return
+	Setting.set_string(CUSTOM_EDITOR_PATH_KEY, normalized)
+	Setting.save()
+	AgentEvents.events.workspace_editor_changed.emit()
+	pass
+
 # ------------------------------------------------ Visual presentation ------------------------------------------------
 
 ## [VisualsButton] — visual presentation id persisted as int (default matches random).

@@ -74,6 +74,8 @@ class Events:
 	## Workspace root switched (see [method AgentWorkspace.set_root]) — sessions and file
 	## paths now resolve under the new root, so listeners reload their state.
 	signal workspace_changed(path: String)
+	## External editor discovery/configuration changed; toolbar selectors should refresh.
+	signal workspace_editor_changed
 
 	# ===========================================================================
 	# SETTINGS — common -> UI

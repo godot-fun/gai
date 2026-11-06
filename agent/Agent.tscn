@@ -41,13 +41,26 @@ mouse_default_cursor_shape = 2
 text = "project"
 flat = true
 
-[node name="EditorButton" type="Button" parent="Root/Toolbar/ToolbarRow"]
+[node name="EditorButtonWrap" type="HBoxContainer" parent="Root/Toolbar/ToolbarRow"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_constants/separation = 0
+
+[node name="EditorButton" type="Button" parent="Root/Toolbar/ToolbarRow/EditorButtonWrap"]
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 focus_mode = 0
 mouse_default_cursor_shape = 2
 text = "Editor"
+
+[node name="EditorSelectButton" type="Button" parent="Root/Toolbar/ToolbarRow/EditorButtonWrap"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+focus_mode = 0
+mouse_default_cursor_shape = 2
 
 [node name="SenseButton" type="Button" parent="Root/Toolbar/ToolbarRow"]
 layout_mode = 2
