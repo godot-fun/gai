@@ -32,6 +32,8 @@ static func apply_ui_scale() -> void:
 		return
 	var scale := get_ui_scale()
 	tree.root.content_scale_factor = scale
+	## Window resize updates canvas_items stretch asynchronously; wait for its viewport to settle.
+	await tree.process_frame
 	## Re-rasterize fonts at the final window-to-viewport pixel density. This includes both the
 	## user zoom above and the project's canvas_items stretch, which are otherwise applied twice.
 	tree.root.oversampling_override = compute_ui_scale()

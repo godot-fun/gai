@@ -100,6 +100,7 @@ func _ready() -> void:
 	sense_input.setup()
 	apply_locale()
 	get_window().window_input.connect(on_window_input)
+	get_window().size_changed.connect(on_window_size_changed)
 	gdf.callable_deferred(apply_theme)
 	# session
 	agent_session_sidebar.reload_sessions()
@@ -113,6 +114,11 @@ func _exit_tree() -> void:
 
 func on_window_input(event: InputEvent) -> void:
 	DisplayScale.handle_window_input(get_window(), event)
+	pass
+
+
+func on_window_size_changed() -> void:
+	DisplayScale.apply_ui_scale()
 	pass
 
 
