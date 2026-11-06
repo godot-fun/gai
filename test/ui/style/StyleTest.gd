@@ -480,11 +480,30 @@ func FileDialogStyle_file_list_selection_test() -> void:
 	var selected: StyleBoxFlat = list.get_theme_stylebox("selected") as StyleBoxFlat
 	var hovered_selected: StyleBoxFlat = list.get_theme_stylebox("hovered_selected") as StyleBoxFlat
 	assert(hovered.bg_color == ThemeColor.inset_surface.lerp(ThemeColor.accent_theme_color(), Weights.w_2))
+	assert(hovered.corner_radius_top_left == 0 and hovered.corner_radius_bottom_right == 0)
+	assert(hovered.border_width_top == 0 and hovered.border_width_bottom == 0)
 	assert(selected.bg_color == FileDialogStyle.file_list_selection_surface())
 	assert(hovered_selected.bg_color == FileDialogStyle.file_list_selection_surface())
+	assert(selected.corner_radius_top_left == 0 and selected.corner_radius_bottom_right == 0)
 	assert(list.get_theme_color("font_selected_color") == ThemeColor.title_color)
 	assert(list.get_theme_color("font_hovered_selected_color") == ThemeColor.title_color)
 	list.free()
+	pass
+
+
+func FileDialogStyle_full_width_tree_selection_test() -> void:
+	var tree := Tree.new()
+	FileDialogStyle.style_tree(tree)
+	var selected := tree.get_theme_stylebox("selected") as StyleBoxFlat
+	var selected_focus := tree.get_theme_stylebox("selected_focus") as StyleBoxFlat
+	var hovered := tree.get_theme_stylebox("hovered") as StyleBoxFlat
+	assert(selected.corner_radius_top_left == 0 and selected.corner_radius_bottom_right == 0)
+	assert(selected.expand_margin_left >= 4096 and selected.expand_margin_right >= 4096)
+	assert(selected_focus.expand_margin_left >= 4096 and selected_focus.expand_margin_right >= 4096)
+	assert(hovered.corner_radius_top_left == 0 and hovered.corner_radius_bottom_right == 0)
+	assert(hovered.expand_margin_left >= 4096 and hovered.expand_margin_right >= 4096)
+	assert(hovered.border_width_top == 0 and hovered.border_width_bottom == 0)
+	tree.free()
 	pass
 
 
