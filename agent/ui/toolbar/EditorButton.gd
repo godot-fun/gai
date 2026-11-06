@@ -23,20 +23,30 @@ func setup(p_button: Button, p_select_button: Button, p_workspace_button: Button
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(on_locale_changed)
-	AgentEvents.events.workspace_editor_changed.connect(apply_theme)
-	await apply_theme()
+	AgentEvents.events.workspace_editor_changed.connect(on_workspace_editor_changed)
+	apply_theme()
 	update_alignment.call_deferred()
+	await reload_editors()
 	pass
 
 
 func on_locale_changed() -> void:
-	EditorDiscovery.invalidate_cache()
-	await apply_theme()
+	await reload_editors(true)
+	pass
+
+
+func on_workspace_editor_changed() -> void:
+	if has_editor(AgentSetting.get_workspace_editor()):
+		apply_theme()
+		return
+	await reload_editors()
 	pass
 
 
 func on_button_pressed() -> void:
 	var editor := selected_editor()
+	if editor == null:
+		return
 	if editor.id == EditorDiscovery.BUILTIN_ID:
 		EditorWindow.show_editor()
 		return
@@ -54,10 +64,10 @@ func on_button_pressed() -> void:
 
 
 func apply_theme() -> void:
-	await refresh_available_editors()
 	var editor := selected_editor()
-	AgentToolbarButton.style_round(button, StringUtils.format(I18n.t("editor.open_with"), editor.label))
-	button.icon = editor_icon(editor)
+	var tooltip := I18n.t("editor.title") if editor == null else StringUtils.format(I18n.t("editor.open_with"), editor.label)
+	AgentToolbarButton.style_round(button, tooltip)
+	button.icon = null if editor == null else editor_icon(editor)
 	AgentToolbarButton.style(select_button, I18n.t("editor.select_tooltip"))
 	select_button.text = ""
 	select_button.custom_minimum_size.x = ControlSize.xs
@@ -112,33 +122,31 @@ func build_popup() -> void:
 	pass
 
 
-func refresh_available_editors() -> void:
+func reload_editors(invalidate_cache: bool = false) -> void:
 	button.disabled = true
 	select_button.disabled = true
+	if invalidate_cache:
+		EditorDiscovery.invalidate_cache()
 	var discovered: Variant = await ExecutorHelper.async_execute_pooled(EditorDiscovery.discover)
 	var editors := discovered as Array[EditorApplication]
 	available_editors = editors if editors != null else []
-	button.disabled = false
-	select_button.disabled = false
 	var selected_id := AgentSetting.get_workspace_editor()
 	if not has_editor(selected_id):
 		AgentSetting.set_workspace_editor(EditorDiscovery.BUILTIN_ID)
+	button.disabled = available_editors.is_empty()
+	select_button.disabled = available_editors.is_empty()
+	apply_theme()
+	update_alignment.call_deferred()
 	pass
 
 
 func has_editor(editor_id: String) -> bool:
-	for editor in available_editors:
-		if editor.id == editor_id:
-			return true
-	return false
+	return EditorDiscovery.find_editor(available_editors, editor_id) != null
 
 
 func selected_editor() -> EditorApplication:
-	var selected_id := AgentSetting.get_workspace_editor()
-	for editor in available_editors:
-		if editor.id == selected_id:
-			return editor
-	return available_editors[0]
+	var selected := EditorDiscovery.find_editor(available_editors, AgentSetting.get_workspace_editor())
+	return selected if selected != null else (available_editors[0] if not available_editors.is_empty() else null)
 
 
 func editor_icon(editor: EditorApplication) -> Texture2D:
@@ -178,7 +186,6 @@ func update_popup_items() -> void:
 
 
 func on_select_pressed() -> void:
-	await refresh_available_editors()
 	update_popup_items()
 	var content_size := popup.get_contents_minimum_size()
 	var popup_size := Vector2i(maxi(int(content_size.x), POPUP_MIN_WIDTH), int(content_size.y))
