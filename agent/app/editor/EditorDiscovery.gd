@@ -24,15 +24,21 @@ static func discover() -> Array[EditorApplication]:
 		add_windows_editor(editors, "cursor", "Cursor", ["cursor.exe", "cursor.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/cursor/Cursor.exe")], "res://agent/asset/image/file/cursor.svg")
 		editors.append(EditorApplication.new("explorer", explorer_label, "explorer.exe", FOLDER_ICON_PATH))
 		add_git_bash(editors)
-		add_windows_editor(editors, "idea", "IntelliJ IDEA", ["idea64.exe", "idea.exe"])
-		add_windows_editor(editors, "rider", "Rider", ["rider64.exe", "rider.exe"])
-		add_windows_editor(editors, "pycharm", "PyCharm", ["pycharm64.exe", "pycharm.exe"])
+		add_windows_editor(editors, "idea", "IntelliJ IDEA", ["idea64.exe", "idea.exe"],
+			jetbrains_paths("IntelliJ IDEA", ["idea64.exe", "idea.exe"]))
+		add_windows_editor(editors, "rider", "Rider", ["rider64.exe", "rider.exe"],
+			jetbrains_paths("Rider", ["rider64.exe", "rider.exe"]))
+		add_windows_editor(editors, "pycharm", "PyCharm", ["pycharm64.exe", "pycharm.exe"],
+			jetbrains_paths("PyCharm", ["pycharm64.exe", "pycharm.exe"]))
+		add_windows_editor(editors, "clion", "CLion", ["clion64.exe", "clion.exe"],
+			jetbrains_paths("CLion", ["clion64.exe", "clion.exe"]))
 	else:
 		add_path_editor(editors, "vscode", "Visual Studio Code", ["code"])
 		add_path_editor(editors, "cursor", "Cursor", ["cursor"])
 		add_path_editor(editors, "idea", "IntelliJ IDEA", ["idea"])
 		add_path_editor(editors, "rider", "Rider", ["rider"])
 		add_path_editor(editors, "pycharm", "PyCharm", ["pycharm"])
+		add_path_editor(editors, "clion", "CLion", ["clion"])
 	add_custom_editor(editors, custom_path)
 	cached_editors = editors
 	return copy_cached_editors()
@@ -70,8 +76,28 @@ static func add_windows_editor(editors: Array[EditorApplication], id: String, la
 		common_paths: Array[String] = [], icon_path: String = CODE_ICON_PATH) -> void:
 	var executable := find_windows_executable(executable_names, common_paths)
 	if not executable.is_empty():
-		editors.append(EditorApplication.new(id, label, executable, icon_path))
+		editors.append(EditorApplication.new(id, label, executable, find_installed_icon(executable, icon_path)))
 	pass
+
+
+static func find_installed_icon(executable: String, fallback_path: String) -> String:
+	if fallback_path != CODE_ICON_PATH:
+		return fallback_path
+	var executable_name := executable.get_file().get_basename().trim_suffix("64")
+	var svg_path := executable.get_base_dir().path_join(executable_name + ".svg")
+	if FileAccess.file_exists(svg_path):
+		return svg_path
+	var ico_path := executable.get_base_dir().path_join(executable_name + ".ico")
+	return ico_path if FileAccess.file_exists(ico_path) else fallback_path
+
+
+static func jetbrains_paths(product_name: String, executable_names: Array[String]) -> Array[String]:
+	var paths: Array[String] = []
+	var programs_directory := OS.get_environment("LOCALAPPDATA").path_join("Programs")
+	var bin_directory := programs_directory.path_join(product_name).path_join("bin")
+	for executable_name: String in executable_names:
+		paths.append(bin_directory.path_join(executable_name))
+	return paths
 
 
 static func add_path_editor(editors: Array[EditorApplication], id: String, label: String,

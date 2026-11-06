@@ -68,6 +68,7 @@ func apply_theme() -> void:
 	select_button.icon = ImageHelper.tint_svg(ARROW_ICON_PATH, Colors.secondary_text, 2.0)
 	style_split_buttons()
 	PopupMenuStyle.apply(popup)
+	style_popup_spacing()
 	update_popup_items()
 	pass
 
@@ -81,6 +82,17 @@ func style_split_buttons() -> void:
 		split_style(false, Colors.hover_surface), split_style(false, ThemeColor.selected_surface))
 	button.add_theme_stylebox_override("hover_pressed", split_style(true, ThemeColor.promote(ThemeColor.selected_surface, Weights.w_2)))
 	select_button.add_theme_stylebox_override("hover_pressed", split_style(false, ThemeColor.promote(ThemeColor.selected_surface, Weights.w_2)))
+	pass
+
+
+func style_popup_spacing() -> void:
+	popup.add_theme_constant_override("v_separation", Margin.ma_3)
+	popup.add_theme_constant_override("icon_separation", Margin.ma_3)
+	popup.add_theme_constant_override("item_start_padding", Margin.ma_4)
+	popup.add_theme_constant_override("item_end_padding", Margin.ma_4)
+	var panel := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, ControlSize.radius_lg,
+		Margin.ma_2, Margin.ma_2, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
+	popup.add_theme_stylebox_override("panel", panel)
 	pass
 
 
