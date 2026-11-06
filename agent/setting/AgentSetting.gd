@@ -40,6 +40,7 @@ static func set_custom_editor_path(path: String) -> void:
 		return
 	Setting.set_string(CUSTOM_EDITOR_PATH_KEY, normalized)
 	Setting.save()
+	EditorDiscovery.invalidate_cache()
 	AgentEvents.events.workspace_editor_changed.emit()
 	pass
 

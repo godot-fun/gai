@@ -22,10 +22,16 @@ func setup(p_button: Button, p_select_button: Button, p_workspace_button: Button
 	select_button.pressed.connect(on_select_pressed)
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
-	gdf.events.locale_changed.connect(apply_theme)
+	gdf.events.locale_changed.connect(on_locale_changed)
 	AgentEvents.events.workspace_editor_changed.connect(apply_theme)
 	apply_theme()
 	update_alignment.call_deferred()
+	pass
+
+
+func on_locale_changed() -> void:
+	EditorDiscovery.invalidate_cache()
+	apply_theme()
 	pass
 
 

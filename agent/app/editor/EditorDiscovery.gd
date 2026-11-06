@@ -8,8 +8,12 @@ const CODE_ICON_PATH := "res://agent/asset/image/ui/code.svg"
 const FOLDER_ICON_PATH := "res://agent/asset/image/ui/folder_open.svg"
 const TERMINAL_ICON_PATH := "res://agent/asset/image/ui/terminal.svg"
 
+static var cached_editors: Array[EditorApplication] = []
 
-static func discover() -> Array[EditorApplication]:
+
+static func discover(force_refresh: bool = false) -> Array[EditorApplication]:
+	if not force_refresh and not cached_editors.is_empty():
+		return copy_cached_editors()
 	var editors: Array[EditorApplication] = [EditorApplication.new(BUILTIN_ID, I18n.t("editor.builtin"), "", CODE_ICON_PATH)]
 	if OSUtils.is_windows():
 		add_windows_editor(editors, "visual_studio", "Visual Studio", ["devenv.exe"], [], "res://agent/asset/image/file/visualstudio.svg")
@@ -27,7 +31,19 @@ static func discover() -> Array[EditorApplication]:
 		add_path_editor(editors, "rider", "Rider", ["rider"])
 		add_path_editor(editors, "pycharm", "PyCharm", ["pycharm"])
 	add_custom_editor(editors)
-	return editors
+	cached_editors = editors
+	return copy_cached_editors()
+
+
+static func invalidate_cache() -> void:
+	cached_editors.clear()
+	pass
+
+
+static func copy_cached_editors() -> Array[EditorApplication]:
+	var result: Array[EditorApplication] = []
+	result.assign(cached_editors)
+	return result
 
 
 static func add_custom_editor(editors: Array[EditorApplication]) -> void:
