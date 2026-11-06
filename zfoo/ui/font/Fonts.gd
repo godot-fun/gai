@@ -13,7 +13,7 @@ const BOLD_PATH := "res://zfoo/ui/font/NotoSansSC-Bold.woff2"
 const CODE_PATH := "res://zfoo/ui/font/JetBrainsMono_Regular.woff2"
 
 static var light_font: FontFile
-static var regular_font: FontFile
+static var regular_font: Font
 static var medium_font: FontFile
 static var semibold_font: FontFile
 static var bold_font: FontFile
@@ -34,7 +34,18 @@ static func light() -> Font:
 
 static func regular() -> Font:
 	if regular_font == null:
-		regular_font = load(REGULAR_PATH) as FontFile
+		var bundled := load(REGULAR_PATH) as FontFile
+		if OSUtils.is_windows():
+			var system_font := SystemFont.new()
+			system_font.font_names = PackedStringArray(["Microsoft YaHei UI", "Microsoft YaHei"])
+			system_font.font_weight = 400
+			system_font.hinting = TextServer.HINTING_LIGHT
+			system_font.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_AUTO
+			var fallbacks: Array[Font] = [bundled]
+			system_font.fallbacks = fallbacks
+			regular_font = system_font
+		else:
+			regular_font = bundled
 	return regular_font
 
 
