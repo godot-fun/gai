@@ -49,7 +49,7 @@ static func row(selected: bool, hovered: bool) -> StyleBoxFlat:
 	if selected:
 		style.bg_color = ThemeColor.selected_surface
 	elif hovered:
-		style.bg_color = Colors.hover_surface
+		style.bg_color = ThemeColor.inset_surface.lerp(ThemeColor.accent_theme_color(), Weights.w_2)
 	return style
 
 
