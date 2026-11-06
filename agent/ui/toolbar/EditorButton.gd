@@ -36,7 +36,7 @@ func on_locale_changed() -> void:
 
 
 func on_workspace_editor_changed() -> void:
-	if has_editor(AgentSetting.get_workspace_editor()):
+	if EditorDiscovery.find_editor(available_editors, AgentSetting.get_workspace_editor()) != null:
 		apply_theme()
 		return
 	await reload_editors()
@@ -131,17 +131,13 @@ func reload_editors(invalidate_cache: bool = false) -> void:
 	var editors := discovered as Array[EditorApplication]
 	available_editors = editors if editors != null else []
 	var selected_id := AgentSetting.get_workspace_editor()
-	if not has_editor(selected_id):
+	if EditorDiscovery.find_editor(available_editors, selected_id) == null:
 		AgentSetting.set_workspace_editor(EditorDiscovery.BUILTIN_ID)
 	button.disabled = available_editors.is_empty()
 	select_button.disabled = available_editors.is_empty()
 	apply_theme()
 	update_alignment.call_deferred()
 	pass
-
-
-func has_editor(editor_id: String) -> bool:
-	return EditorDiscovery.find_editor(available_editors, editor_id) != null
 
 
 func selected_editor() -> EditorApplication:

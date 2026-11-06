@@ -27,12 +27,9 @@ static func editor_discovery_cache_test() -> void:
 	pass
 
 
-static func editor_discovery_file_arguments_test() -> void:
-	var path := "C:/workspace/docs/readme.md"
+static func editor_discovery_find_editor_test() -> void:
 	var vscode := EditorApplication.new("vscode", "Visual Studio Code", "code.exe", "")
 	var zed := EditorApplication.new("zed", "Zed", "zed.exe", "")
-	assert(EditorDiscovery.file_arguments(vscode, path) == PackedStringArray([path]))
-	assert(EditorDiscovery.file_arguments(zed, path) == PackedStringArray([path]))
 	assert(EditorDiscovery.find_editor([vscode, zed], "zed") == zed)
 	assert(EditorDiscovery.find_editor([vscode, zed], "missing") == null)
 	pass

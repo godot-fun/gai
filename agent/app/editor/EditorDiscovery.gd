@@ -2,11 +2,16 @@ class_name EditorDiscovery
 extends RefCounted
 
 ## Finds workspace editors from the host OS and the user-configured executable path.
+
 const BUILTIN_ID := "builtin"
 const CODE_ICON_PATH := "res://icon.svg"
 
 static var cached_editors: Array[EditorApplication] = []
 
+
+# ---------------------------------------------------------------------------
+# Builtin editor and discovery cache
+# ---------------------------------------------------------------------------
 
 static func discover() -> Array[EditorApplication]:
 	if not cached_editors.is_empty():
@@ -74,6 +79,16 @@ static func invalidate_cache() -> void:
 	pass
 
 
+static func copy_cached_editors() -> Array[EditorApplication]:
+	var result: Array[EditorApplication] = []
+	result.assign(cached_editors)
+	return result
+
+
+# ---------------------------------------------------------------------------
+# Open a workspace file
+# ---------------------------------------------------------------------------
+
 ## Opens a file with the workspace editor selected in settings.
 ## Returns false when no configured editor handled the path, allowing the caller to use the OS default.
 static func async_open_file(path: String) -> bool:
@@ -86,12 +101,17 @@ static func async_open_file(path: String) -> bool:
 	if selected == null or selected.id == BUILTIN_ID:
 		return EditorWindow.show_file(normalized)
 	var executable := selected.executable
-	var arguments := file_arguments(selected, normalized)
+	var arguments := selected.arguments.duplicate()
+	arguments.append(normalized)
 	if executable.get_extension().to_lower() == "cmd":
 		arguments = PackedStringArray(["/c", executable]) + arguments
 		executable = "cmd.exe"
 	return OS.create_process(executable, arguments, false) >= 0
 
+
+# ---------------------------------------------------------------------------
+# Editor lookup
+# ---------------------------------------------------------------------------
 
 static func find_editor(editors: Array[EditorApplication], editor_id: String) -> EditorApplication:
 	for editor in editors:
@@ -100,17 +120,9 @@ static func find_editor(editors: Array[EditorApplication], editor_id: String) ->
 	return null
 
 
-static func file_arguments(editor: EditorApplication, path: String) -> PackedStringArray:
-	var arguments := editor.arguments.duplicate()
-	arguments.append(path)
-	return arguments
-
-
-static func copy_cached_editors() -> Array[EditorApplication]:
-	var result: Array[EditorApplication] = []
-	result.assign(cached_editors)
-	return result
-
+# ---------------------------------------------------------------------------
+# Platform probe
+# ---------------------------------------------------------------------------
 
 static func add_custom_editor(editors: Array[EditorApplication], custom_path: String) -> void:
 	if not custom_path.is_empty() and FileAccess.file_exists(custom_path):
