@@ -65,6 +65,7 @@ var agent_session_sidebar: AgentSessionSidebar = AgentSessionSidebar.new()
 var agent_chat_view: AgentChatView = AgentChatView.new()
 var agent_notification: AgentNotification = AgentNotification.new()
 var sense_input: SenseInput = SenseInput.new()
+var window_state: WindowState = WindowState.new()
 
 
 func _ready() -> void:
@@ -72,6 +73,7 @@ func _ready() -> void:
 	DisplayScale.apply_ui_scale()
 	apply_layout()
 	apply_theme()
+	window_state.setup(get_window())
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(apply_locale)
