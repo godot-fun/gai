@@ -4,14 +4,14 @@ extends VisualEffect
 ## Starling murmuration (鸟群): a boids flock sweeps across the interface. Streamed tokens hatch new
 ## birds from the window edges, reasoning tightens the flock into slow rolling waves, and answers
 ## stretch it into fast aligned streams. Every running tool becomes a roost the flock swirls around;
-## a finished tool releases it with a burst, a failed one is a hawk that scatters the birds. At the
+## a finished tool releases it, while a failed one is a hawk that scatters the birds. At the
 ## end the whole flock leaves the window together.
 
 const MAX_BIRDS := 200
 const START_BIRDS := 70
 const NEIGHBOR_RADIUS := 80.0
-const SEPARATION_RADIUS := 20.0
-const FLOCK_CENTER_WEIGHT := 0.45
+const SEPARATION_RADIUS := 26.0
+const FLOCK_CENTER_WEIGHT := 0.32
 const FLOCK_CENTER_RANGE := 600.0
 const MIN_SPEED := 90.0
 const CRUISE_SPEED := 170.0
@@ -19,8 +19,8 @@ const STREAM_SPEED := 270.0
 const MAX_FORCE := 420.0
 const SEPARATION_WEIGHT := 1.7
 const ALIGNMENT_WEIGHT := 1.0
-const COHESION_WEIGHT := 0.8
-const REASONING_COHESION_WEIGHT := 1.5
+const COHESION_WEIGHT := 0.68
+const REASONING_COHESION_WEIGHT := 1.2
 const ROOST_WEIGHT := 1.2
 const ROOST_SWIRL := 0.9
 const HAWK_RADIUS := 220.0
@@ -32,18 +32,21 @@ const HATCH_COST := 0.012
 const STREAM_HEAT_GAIN := 8.0
 const STREAM_HEAT_DECAY_PER_SECOND := 0.5
 const BIRD_LENGTH := 10.0
+const BIRD_MESH_SIZE := Vector2(24.0, 22.0)
 const LEAVE_HEADING := Vector2(0.8, -0.6)
 const END_LEAVE_MSEC := 1500
+const BIRD_SHADER := preload("res://agent/ui/visuals/murmuration/MurmurationBird.gdshader")
 
 
 var positions: PackedVector2Array = PackedVector2Array()
 var velocities: PackedVector2Array = PackedVector2Array()
 var tags: PackedFloat32Array = PackedFloat32Array()
+var depths: PackedFloat32Array = PackedFloat32Array()
+var banks: PackedFloat32Array = PackedFloat32Array()
 ## tool_call_id -> Vector3(x, y, tag) in pixels.
 var roosts: Dictionary[String, Vector3] = {}
 ## (x, y, strength, 0)
 var hawks: Array[Vector4] = []
-var bursts: Array[Vector4] = []
 var running: bool = false
 var leaving: bool = false
 var reasoning: bool = false
@@ -55,11 +58,35 @@ var grid_columns: int = 1
 var grid_rows: int = 1
 var accent_color: Color = Color(0.5, 0.7, 1.0)
 var rng := RandomNumberGenerator.new()
+var bird_instances: MultiMeshInstance2D
+var bird_multimesh: MultiMesh
 
 
 func _ready() -> void:
 	super._ready()
+	create_bird_renderer()
 	sync_palette()
+	pass
+
+
+## Birds use their own canvas material so wing deformation and glow never affect event rings or trails.
+func create_bird_renderer() -> void:
+	var bird_mesh := QuadMesh.new()
+	bird_mesh.size = BIRD_MESH_SIZE
+	bird_multimesh = MultiMesh.new()
+	bird_multimesh.transform_format = MultiMesh.TRANSFORM_2D
+	bird_multimesh.use_colors = true
+	bird_multimesh.use_custom_data = true
+	bird_multimesh.mesh = bird_mesh
+	bird_multimesh.instance_count = MAX_BIRDS
+	bird_multimesh.visible_instance_count = 0
+	bird_instances = MultiMeshInstance2D.new()
+	bird_instances.name = "BirdInstances"
+	bird_instances.multimesh = bird_multimesh
+	var shader_material := ShaderMaterial.new()
+	shader_material.shader = BIRD_SHADER
+	bird_instances.material = shader_material
+	add_child(bird_instances)
 	pass
 
 
@@ -71,9 +98,10 @@ func on_agent_start(_session_id: int) -> void:
 	positions.clear()
 	velocities.clear()
 	tags.clear()
+	depths.clear()
+	banks.clear()
 	roosts.clear()
 	hawks.clear()
-	bursts.clear()
 	running = true
 	leaving = false
 	reasoning = false
@@ -82,7 +110,7 @@ func on_agent_start(_session_id: int) -> void:
 	var viewport := view_size()
 	var center := Vector2(viewport.x * 0.3, viewport.y * 0.5)
 	for _index in range(START_BIRDS):
-		hatch(center + Vector2(rng.randf_range(-90.0, 90.0), rng.randf_range(-60.0, 60.0)), Vector2.from_angle(rng.randf_range(-0.4, 0.4)) * CRUISE_SPEED, 0.5)
+		hatch(center + Vector2(rng.randf_range(-130.0, 130.0), rng.randf_range(-90.0, 90.0)), Vector2.from_angle(rng.randf_range(-0.5, 0.5)) * CRUISE_SPEED, 0.5)
 	pass
 
 
@@ -129,9 +157,8 @@ func on_tool_execution_end(_session_id: int, tool_call_id: String, tool_name: St
 	pass
 
 
-## A burst ring at [param point]; a failure also sends a hawk the flock flees from.
+## Sends a temporary disturbance from [param point]; failures scatter the flock more strongly.
 func scare(point: Vector2, failed: bool) -> void:
-	bursts.append(Vector4(point.x, point.y, 0.0, 1.0 if failed else 0.0))
 	hawks.append(Vector4(point.x, point.y, 1.0 if failed else 0.45, 0.0))
 	pass
 
@@ -142,6 +169,8 @@ func hatch(position: Vector2, velocity: Vector2, tag: float) -> bool:
 	positions.append(position)
 	velocities.append(velocity)
 	tags.append(tag)
+	depths.append(rng.randf())
+	banks.append(0.0)
 	return true
 
 
@@ -173,7 +202,29 @@ func _process(delta: float) -> void:
 	if not visible:
 		return
 	step_flock(minf(delta, 1.0 / 20.0))
+	update_bird_renderer()
 	queue_redraw()
+	pass
+
+
+func update_bird_renderer() -> void:
+	if bird_multimesh == null:
+		return
+	var bird_count := mini(positions.size(), MAX_BIRDS)
+	bird_multimesh.visible_instance_count = bird_count
+	for index in range(bird_count):
+		var velocity := velocities[index]
+		var speed_share := clampf((velocity.length() - MIN_SPEED) / (STREAM_SPEED * 1.6 - MIN_SPEED), 0.0, 1.0)
+		var heading := velocity.angle() if velocity.length_squared() > 0.0001 else 0.0
+		var depth := depths[index]
+		var depth_scale := lerpf(0.55, 1.25, depth)
+		var length_scale := lerpf(0.92, 1.18, speed_share)
+		bird_multimesh.set_instance_transform_2d(index, Transform2D(heading, Vector2(length_scale, 1.0) * depth_scale, 0.0, positions[index]))
+		var opacity := lerpf(0.38, 0.94, depth)
+		bird_multimesh.set_instance_color(index, VisualColor.stroke(bird_color(tags[index]), opacity))
+		var phase := fposmod(tags[index] * 3.71 + float(index) * 0.61803398875, 1.0)
+		var state_energy := clampf(stream_heat + (0.18 if reasoning else 0.0), 0.0, 1.0)
+		bird_multimesh.set_instance_custom_data(index, Color(phase, speed_share, state_energy, banks[index]))
 	pass
 
 
@@ -189,13 +240,6 @@ func step_flock(delta: float) -> void:
 			hawks.remove_at(index)
 		else:
 			hawks[index] = hawk
-	for index in range(bursts.size() - 1, -1, -1):
-		var burst := bursts[index]
-		burst.z += delta * 1.6
-		if burst.z >= 1.0:
-			bursts.remove_at(index)
-		else:
-			bursts[index] = burst
 	build_grid()
 	var target_speed := lerpf(CRUISE_SPEED, STREAM_SPEED, stream_heat) * (0.75 if reasoning else 1.0)
 	var cohesion_weight := REASONING_COHESION_WEIGHT if reasoning else COHESION_WEIGHT
@@ -210,9 +254,15 @@ func step_flock(delta: float) -> void:
 		steer = steer.limit_length(MAX_FORCE * (2.0 if leaving else 1.0))
 		var velocity := velocities[index] + steer * delta
 		var speed := velocity.length()
-		var wanted := STREAM_SPEED * 1.4 if leaving else target_speed
+		var depth_speed := lerpf(0.88, 1.08, depths[index])
+		var wanted := STREAM_SPEED * 1.4 if leaving else target_speed * depth_speed
 		speed = clampf(lerpf(speed, wanted, 0.6 * delta), MIN_SPEED, STREAM_SPEED * 1.6)
-		next_velocities[index] = velocity.normalized() * speed if velocity.length_squared() > 0.0001 else Vector2.RIGHT * speed
+		var next_velocity := velocity.normalized() * speed if velocity.length_squared() > 0.0001 else Vector2.RIGHT * speed
+		var old_heading := velocities[index].normalized()
+		var next_heading := next_velocity.normalized()
+		var turn := clampf(old_heading.cross(next_heading) * 12.0, -1.0, 1.0) if old_heading.length_squared() > 0.0001 else 0.0
+		banks[index] = lerpf(banks[index], turn, minf(delta * 8.0, 1.0))
+		next_velocities[index] = next_velocity
 	velocities = next_velocities
 	for index in range(positions.size()):
 		positions[index] += velocities[index] * delta
@@ -333,20 +383,15 @@ func _draw() -> void:
 	for index in range(positions.size()):
 		var position := positions[index]
 		var heading := velocities[index].normalized()
-		var side := heading.orthogonal()
-		var speed_share := clampf(velocities[index].length() / STREAM_SPEED, 0.4, 1.4)
+		var speed_share := clampf((velocities[index].length() - CRUISE_SPEED) / (STREAM_SPEED * 1.6 - CRUISE_SPEED), 0.0, 1.0)
+		if speed_share < 0.55:
+			continue
 		var color := bird_color(tags[index])
-		var nose := position + heading * BIRD_LENGTH
-		var tail := position - heading * BIRD_LENGTH * 0.6
-		var points := PackedVector2Array([nose, tail + side * 3.2, position - heading * BIRD_LENGTH * 0.2, tail - side * 3.2])
-		draw_line(tail, tail - heading * BIRD_LENGTH * 1.6 * speed_share, VisualColor.stroke(color, 0.18), 1.2, true)
-		draw_colored_polygon(points, VisualColor.stroke(color, 0.85))
-	for roost: Vector3 in roosts.values():
-		var center := Vector2(roost.x, roost.y)
-		draw_arc(center, 14.0, 0.0, TAU, 32, VisualColor.stroke(bird_color(roost.z), 0.4), 1.5, true)
-	for burst: Vector4 in bursts:
-		var burst_color := Colors.error if burst.w > 0.5 else accent_color
-		draw_arc(Vector2(burst.x, burst.y), 12.0 + burst.z * 90.0, 0.0, TAU, 48, VisualColor.stroke(burst_color, 0.5 * (1.0 - burst.z)), 2.0, true)
+		var depth := depths[index]
+		var tail := position - heading * BIRD_LENGTH * lerpf(0.25, 0.4, depth)
+		var trail_length := lerpf(4.0, 8.0, speed_share) * lerpf(0.65, 1.0, depth)
+		var opacity := lerpf(0.04, 0.14, speed_share) * lerpf(0.5, 1.0, depth)
+		draw_line(tail, tail - heading * trail_length, VisualColor.stroke(color, opacity), lerpf(0.65, 1.0, depth), true)
 	pass
 
 

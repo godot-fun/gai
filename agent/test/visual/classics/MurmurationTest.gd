@@ -1,6 +1,22 @@
 extends RefCounted
 
 
+func flock_birds_use_dedicated_shader_renderer_test() -> void:
+	var effect := Murmuration.new()
+	effect.size = Vector2(1280.0, 720.0)
+	effect.create_bird_renderer()
+	effect.on_agent_start(1)
+	effect.update_bird_renderer()
+	assert(effect.bird_instances != null)
+	assert(effect.bird_instances.material is ShaderMaterial)
+	assert(effect.bird_multimesh.visible_instance_count == Murmuration.START_BIRDS)
+	assert(effect.bird_multimesh.use_colors)
+	assert(effect.bird_multimesh.use_custom_data)
+	effect.bird_instances.free()
+	effect.free()
+	pass
+
+
 func flock_tokens_hatch_birds_up_to_cap_test() -> void:
 	var effect := Murmuration.new()
 	effect.size = Vector2(1280.0, 720.0)
@@ -12,6 +28,8 @@ func flock_tokens_hatch_birds_up_to_cap_test() -> void:
 	assert(effect.positions.size() == Murmuration.MAX_BIRDS)
 	assert(effect.velocities.size() == effect.positions.size())
 	assert(effect.tags.size() == effect.positions.size())
+	assert(effect.depths.size() == effect.positions.size())
+	assert(effect.banks.size() == effect.positions.size())
 	effect.free()
 	pass
 
