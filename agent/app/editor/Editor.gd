@@ -197,12 +197,7 @@ func style_file_tree() -> void:
 	file_tree.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	file_tree.add_theme_stylebox_override("cursor", StyleBoxEmpty.new())
 	file_tree.add_theme_stylebox_override("cursor_unfocused", StyleBoxEmpty.new())
-	var selected := FileDialogStyle.make_full_width_row_style(ThemeColor.selected_surface, Margin.ma_2, Margin.ma_1)
-	var hover := FileDialogStyle.make_full_width_hover_style(Margin.ma_2, Margin.ma_1)
-	for state in ["selected", "selected_focus", "hovered_selected", "hovered_selected_focus"]:
-		file_tree.add_theme_stylebox_override(state, selected.duplicate() as StyleBoxFlat)
-	for state in ["hovered", "hovered_dimmed"]:
-		file_tree.add_theme_stylebox_override(state, hover.duplicate() as StyleBoxFlat)
+	TreeStyle.apply_full_width_rows(file_tree, Margin.ma_2, Margin.ma_1)
 	style_internal_scroll_bars(file_tree)
 	pass
 

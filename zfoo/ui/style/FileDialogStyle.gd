@@ -205,15 +205,11 @@ static func style_button(button: Button) -> void:
 static func style_tree(tree: Tree) -> void:
 	apply_browser_font_colors(tree)
 	tree.add_theme_stylebox_override("panel", make_file_list_style())
-	var selected := make_full_width_row_style(ThemeColor.selected_surface)
-	var selected_focus := selected.duplicate() as StyleBoxFlat
+	TreeStyle.apply_full_width_rows(tree)
+	var selected_focus := TreeStyle.make_full_width_row(ThemeColor.selected_surface)
 	selected_focus.border_color = ThemeColor.accent_theme_color()
 	selected_focus.set_border_width_all(ControlSize.border_xs)
-	var hover := make_full_width_hover_style()
-	tree.add_theme_stylebox_override("selected", selected)
 	tree.add_theme_stylebox_override("selected_focus", selected_focus)
-	tree.add_theme_stylebox_override("hovered", hover)
-	tree.add_theme_stylebox_override("hovered_dimmed", hover.duplicate() as StyleBoxFlat)
 	pass
 
 
@@ -283,19 +279,6 @@ static func make_file_list_hover_style(radius: int = 0, margin_x: int = 0, margi
 static func make_file_list_selection_style(border_color: Color) -> StyleBoxFlat:
 	return StyleBoxHelper.create_style_box_flat(file_list_selection_surface(), 0, 0, 0,
 		border_color, ControlSize.border_xs)
-
-
-## Tree draws from its indentation point. Horizontal overscan is clipped to the control width.
-static func make_full_width_row_style(background: Color, margin_x: int = 0, margin_y: int = 0) -> StyleBoxFlat:
-	var style := StyleBoxHelper.create_style_box_flat(background, 0, margin_x, margin_y)
-	style.expand_margin_left = 4096
-	style.expand_margin_right = 4096
-	return style
-
-
-static func make_full_width_hover_style(margin_x: int = 0, margin_y: int = 0) -> StyleBoxFlat:
-	return make_full_width_row_style(ThemeColor.inset_surface.lerp(ThemeColor.accent_theme_color(), Weights.w_2),
-		margin_x, margin_y)
 
 
 static func make_dialog_body_style() -> StyleBoxFlat:
