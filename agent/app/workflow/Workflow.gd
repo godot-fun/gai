@@ -144,12 +144,12 @@ func style_palette_tree() -> void:
 	palette_tree.add_theme_color_override("font_hovered_selected_color", Colors.primary_text)
 	palette_tree.add_theme_color_override("guide_color", Colors.muted_border)
 	palette_tree.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT))
-	var selected := StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1)
-	palette_tree.add_theme_stylebox_override("selected", selected)
-	palette_tree.add_theme_stylebox_override("selected_focus", selected.duplicate() as StyleBoxFlat)
-	palette_tree.add_theme_stylebox_override("hovered_selected", selected.duplicate() as StyleBoxFlat)
-	palette_tree.add_theme_stylebox_override("hovered_selected_focus", selected.duplicate() as StyleBoxFlat)
-	palette_tree.add_theme_stylebox_override("hovered", StyleBoxHelper.create_style_box_flat(Colors.hover_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1))
+	var selected := FileDialogStyle.make_full_width_row_style(ThemeColor.selected_surface, Margin.ma_2, Margin.ma_1)
+	var hover := FileDialogStyle.make_full_width_hover_style(Margin.ma_2, Margin.ma_1)
+	for state in ["selected", "selected_focus", "hovered_selected", "hovered_selected_focus"]:
+		palette_tree.add_theme_stylebox_override(state, selected.duplicate() as StyleBoxFlat)
+	for state in ["hovered", "hovered_dimmed"]:
+		palette_tree.add_theme_stylebox_override(state, hover.duplicate() as StyleBoxFlat)
 	pass
 
 

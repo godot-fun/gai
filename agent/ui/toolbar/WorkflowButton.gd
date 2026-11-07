@@ -1,9 +1,7 @@
 class_name WorkflowButton
 extends RefCounted
 
-## Opens the workflow scene.
-
-const WORKFLOW_SCENE_PATH := "res://agent/app/workflow/Workflow.tscn"
+## Toolbar entry point for the standalone workflow window.
 
 var button: Button
 
@@ -23,5 +21,5 @@ func apply_theme() -> void:
 
 
 func on_button_pressed() -> void:
-	await SceneHelper.async_change_scene_to_file(WORKFLOW_SCENE_PATH)
+	WorkflowWindow.show_workflow()
 	pass
