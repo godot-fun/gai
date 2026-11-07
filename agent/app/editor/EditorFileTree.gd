@@ -30,7 +30,7 @@ func _ready() -> void:
 	gui_input.connect(on_gui_input)
 	set_drag_forwarding(_get_drag_data, can_drop_editor_data, drop_editor_data)
 	AgentEvents.events.editor_file_created.connect(on_file_created)
-	AgentEvents.events.editor_files_changed.connect(on_files_changed)
+	AgentEvents.events.editor_directory_changed.connect(on_directory_changed)
 	pass
 
 
@@ -131,7 +131,7 @@ func on_file_created(path: String) -> void:
 	pass
 
 
-func on_files_changed(parent_path: String) -> void:
+func on_directory_changed(parent_path: String) -> void:
 	refresh_directory(parent_path)
 	pass
 
@@ -204,7 +204,7 @@ func delete_selected() -> bool:
 			changed_directories.append(parent_path)
 		AgentEvents.events.editor_file_deleted.emit(path)
 	for directory in changed_directories:
-		AgentEvents.events.editor_files_changed.emit(directory)
+		AgentEvents.events.editor_directory_changed.emit(directory)
 	if deleted.is_empty():
 		Alert.alert(I18n.t("editor.delete_failed"), Colors.error)
 		return false

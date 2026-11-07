@@ -138,6 +138,6 @@ class Events:
 	## Workspace editor deleted a file.
 	signal editor_file_deleted(path: String)
 	## Workspace editor directory contents changed.
-	signal editor_files_changed(parent_path: String)
+	signal editor_directory_changed(parent_path: String)
 
 	pass
