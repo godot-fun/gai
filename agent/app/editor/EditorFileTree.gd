@@ -29,8 +29,8 @@ func _ready() -> void:
 	item_activated.connect(on_item_activated)
 	gui_input.connect(on_gui_input)
 	set_drag_forwarding(_get_drag_data, can_drop_editor_data, drop_editor_data)
-	EditorEvents.events.file_created.connect(on_file_created)
-	EditorEvents.events.files_changed.connect(on_files_changed)
+	AgentEvents.events.editor_file_created.connect(on_file_created)
+	AgentEvents.events.editor_files_changed.connect(on_files_changed)
 	pass
 
 
@@ -202,9 +202,9 @@ func delete_selected() -> bool:
 		var parent_path := path.get_base_dir()
 		if not changed_directories.has(parent_path):
 			changed_directories.append(parent_path)
-		EditorEvents.events.file_deleted.emit(path)
+		AgentEvents.events.editor_file_deleted.emit(path)
 	for directory in changed_directories:
-		EditorEvents.events.files_changed.emit(directory)
+		AgentEvents.events.editor_files_changed.emit(directory)
 	if deleted.is_empty():
 		Alert.alert(I18n.t("editor.delete_failed"), Colors.error)
 		return false
@@ -227,7 +227,7 @@ func on_item_activated() -> void:
 	if DirAccess.dir_exists_absolute(path):
 		item.collapsed = not item.collapsed
 		return
-	EditorEvents.events.file_selected.emit(path)
+	AgentEvents.events.editor_file_selected.emit(path)
 	pass
 
 
@@ -339,7 +339,7 @@ func on_name_confirmed() -> void:
 	if error != OK:
 		Alert.alert(I18n.t("editor.create_failed"), Colors.error)
 		return
-	EditorEvents.events.file_created.emit(path)
+	AgentEvents.events.editor_file_created.emit(path)
 	select_path(path)
 	Alert.alert(StringUtils.format(I18n.t("editor.created"), entry_name), Colors.success)
 	pass
@@ -367,7 +367,7 @@ func paste_copied() -> void:
 		if error != OK:
 			Alert.alert(I18n.t("editor.paste_failed"), Colors.error)
 			return
-		EditorEvents.events.file_created.emit(targets[index])
+		AgentEvents.events.editor_file_created.emit(targets[index])
 	deselect_all()
 	for target in targets:
 		select_path(target)

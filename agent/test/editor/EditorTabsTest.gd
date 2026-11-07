@@ -216,7 +216,7 @@ static func editor_file_tree_refreshes_changed_folder_test() -> void:
 	src.collapsed = false
 	var new_path := root_path.path_join("src/new.txt")
 	FileUtils.write_string_to_file(new_path, "new")
-	EditorEvents.events.file_created.emit(new_path)
+	AgentEvents.events.editor_file_created.emit(new_path)
 	assert(src == tree.get_root().get_first_child())
 	assert(not src.collapsed)
 	assert(child_names(src).has("new.txt"))
@@ -234,7 +234,7 @@ static func editor_file_tree_opens_on_double_click_test() -> void:
 	gdf.gdf_node.add_child(tree)
 	tree.reload(root_path)
 	var recorder := EventRecorder.new()
-	EditorEvents.events.file_selected.connect(recorder.record)
+	AgentEvents.events.editor_file_selected.connect(recorder.record)
 
 	var folder := tree.get_root().get_first_child()
 	folder.select(0)
@@ -249,7 +249,7 @@ static func editor_file_tree_opens_on_double_click_test() -> void:
 	tree.on_item_activated()
 	assert(recorder.paths.size() == 1)
 	assert(FileUtils.normalize_path(recorder.paths[0]) == note_path)
-	EditorEvents.events.file_selected.disconnect(recorder.record)
+	AgentEvents.events.editor_file_selected.disconnect(recorder.record)
 	tree.free()
 	pass
 
@@ -351,7 +351,7 @@ static func editor_file_tree_delete_removes_selected_file_and_folder_test() -> v
 	gdf.gdf_node.add_child(tree)
 	tree.reload(root_path)
 	var recorder := EventRecorder.new()
-	EditorEvents.events.file_deleted.connect(recorder.record)
+	AgentEvents.events.editor_file_deleted.connect(recorder.record)
 
 	var folder := tree.get_root().get_first_child()
 	folder.select(0)
@@ -369,7 +369,7 @@ static func editor_file_tree_delete_removes_selected_file_and_folder_test() -> v
 	assert(not FileAccess.file_exists(note_path))
 	assert(FileAccess.file_exists(other_path))
 	assert(tree.get_selected().get_text(0) == "other.md")
-	EditorEvents.events.file_deleted.disconnect(recorder.record)
+	AgentEvents.events.editor_file_deleted.disconnect(recorder.record)
 	tree.free()
 	pass
 

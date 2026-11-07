@@ -23,7 +23,6 @@ func setup(p_button: Button, p_select_button: Button, p_workspace_button: Button
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(on_locale_changed)
-	AgentEvents.events.workspace_editor_changed.connect(on_workspace_editor_changed)
 	apply_theme()
 	update_alignment.call_deferred()
 	await reload_editors()
@@ -32,14 +31,6 @@ func setup(p_button: Button, p_select_button: Button, p_workspace_button: Button
 
 func on_locale_changed() -> void:
 	await reload_editors(true)
-	pass
-
-
-func on_workspace_editor_changed() -> void:
-	if EditorDiscovery.find_editor(available_editors, AgentSetting.get_workspace_editor()) != null:
-		apply_theme()
-		return
-	await reload_editors()
 	pass
 
 
@@ -195,6 +186,7 @@ func on_editor_selected(index: int) -> void:
 	if index < 0 or index >= available_editors.size():
 		return
 	AgentSetting.set_workspace_editor(available_editors[index].id)
+	apply_theme()
 	pass
 
 

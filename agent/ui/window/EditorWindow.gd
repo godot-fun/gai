@@ -141,7 +141,7 @@ static func show_file(path: String) -> bool:
 		window.present()
 	else:
 		window.activate()
-	EditorEvents.events.file_selected.emit(normalized)
+	AgentEvents.events.editor_file_selected.emit(normalized)
 	return true
 
 

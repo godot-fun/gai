@@ -26,7 +26,6 @@ static func get_workspace_editor() -> String:
 static func set_workspace_editor(editor_id: String) -> void:
 	Setting.set_string(WORKSPACE_EDITOR_KEY, editor_id)
 	Setting.save()
-	AgentEvents.events.workspace_editor_changed.emit()
 	pass
 
 
@@ -41,7 +40,6 @@ static func set_custom_editor_path(path: String) -> void:
 	Setting.set_string(CUSTOM_EDITOR_PATH_KEY, normalized)
 	Setting.save()
 	EditorDiscovery.invalidate_cache()
-	AgentEvents.events.workspace_editor_changed.emit()
 	pass
 
 # ------------------------------------------------ Visual presentation ------------------------------------------------

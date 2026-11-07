@@ -74,8 +74,6 @@ class Events:
 	## Workspace root switched (see [method AgentWorkspace.set_root]) — sessions and file
 	## paths now resolve under the new root, so listeners reload their state.
 	signal workspace_changed(path: String)
-	## External editor discovery/configuration changed; toolbar selectors should refresh.
-	signal workspace_editor_changed
 
 	# ===========================================================================
 	# SETTINGS — common -> UI
@@ -128,5 +126,18 @@ class Events:
 	signal memory_context_changed(session_id: int)
 	## AGENTS.md project prompt added to / removed from a session (see AgentPromptToggle).
 	signal agent_context_changed(session_id: int)
+
+	# ===========================================================================
+	# EDITOR EVENTS
+	# ===========================================================================
+
+	## Workspace editor selected a file for display.
+	signal editor_file_selected(path: String)
+	## Workspace editor created a file.
+	signal editor_file_created(path: String)
+	## Workspace editor deleted a file.
+	signal editor_file_deleted(path: String)
+	## Workspace editor directory contents changed.
+	signal editor_files_changed(parent_path: String)
 
 	pass
