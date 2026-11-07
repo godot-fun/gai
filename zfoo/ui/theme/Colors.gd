@@ -21,7 +21,7 @@ const DARK_MUTED_BORDER := Color(0.18, 0.20, 0.24)
 const DARK_SUBTLE_BORDER := Color(0.16, 0.18, 0.22)
 ## Vuetify emphasis model: white at 100% and its opaque 70%-on-black equivalent.
 const DARK_TEXT := Color(1.00, 1.00, 1.00)
-const DARK_MUTED := Color(0.70, 0.70, 0.70)
+const DARK_SECONDARY_TEXT := Color(0.70, 0.70, 0.70)
 const DARK_DISABLED := Color(0.50, 0.50, 0.50)
 
 const LIGHT_BACKGROUND := Color(0.98, 0.98, 0.98)
@@ -34,9 +34,9 @@ const LIGHT_ELEVATED_SURFACE := LIGHT_SURFACE
 const LIGHT_BORDER := Color(0.84, 0.85, 0.87)
 const LIGHT_MUTED_BORDER := Color(0.86, 0.87, 0.89)
 const LIGHT_SUBTLE_BORDER := Color(0.87, 0.88, 0.90)
-## Vuetify emphasis model: opaque equivalents of black at 87% and 60% on white.
-const LIGHT_TEXT := Color(0.13, 0.13, 0.13)
-const LIGHT_MUTED := Color(0.40, 0.40, 0.40)
+## Pure black mirrors [constant DARK_TEXT] for maximum primary-text contrast on light surfaces.
+const LIGHT_TEXT := Color(0.00, 0.00, 0.00)
+const LIGHT_SECONDARY_TEXT := Color(0.30, 0.30, 0.30)
 const LIGHT_DISABLED := Color(0.62, 0.62, 0.62)
 
 # ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -83,7 +83,7 @@ static var muted_border: Color = DARK_MUTED_BORDER
 static var subtle_border: Color = DARK_SUBTLE_BORDER
 ## Primary, secondary, and disabled foreground text colors.
 static var primary_text: Color = DARK_TEXT
-static var secondary_text: Color = DARK_MUTED
+static var secondary_text: Color = DARK_SECONDARY_TEXT
 static var disabled_text: Color = DARK_DISABLED
 
 
@@ -169,7 +169,7 @@ static func refresh() -> void:
 	muted_border = DARK_MUTED_BORDER if dark else LIGHT_MUTED_BORDER
 	subtle_border = DARK_SUBTLE_BORDER if dark else LIGHT_SUBTLE_BORDER
 	primary_text = DARK_TEXT if dark else LIGHT_TEXT
-	secondary_text = DARK_MUTED if dark else LIGHT_MUTED
+	secondary_text = DARK_SECONDARY_TEXT if dark else LIGHT_SECONDARY_TEXT
 	disabled_text = DARK_DISABLED if dark else LIGHT_DISABLED
 	info = DARK_INFO if dark else LIGHT_INFO
 	success = DARK_SUCCESS if dark else LIGHT_SUCCESS

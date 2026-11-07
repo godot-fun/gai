@@ -92,7 +92,7 @@ static var selected_surface: Color = DARK_SELECTED_SURFACE_BASE
 ## High-contrast primary text color displayed on accent-derived card surfaces.
 static var title_color: Color = Colors.DARK_TEXT
 ## Lower-emphasis secondary text and resting control color on accent-derived surfaces.
-static var body_color: Color = Colors.DARK_MUTED
+static var body_color: Color = Colors.DARK_SECONDARY_TEXT
 ## Text-selection background color used by editable and selectable text controls.
 static var selection_color := Color(0.12, 0.29, 0.25)
 

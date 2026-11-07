@@ -47,7 +47,7 @@ static func apply_dark_palette() -> void:
 	inline_code_bg = Color(0.45, 0.47, 0.52, 0.18)
 	link_color = Color(0.35, 0.65, 0.95)
 	blockquote_bar_color = link_color
-	blockquote_text_color = Colors.DARK_MUTED
+	blockquote_text_color = Colors.DARK_SECONDARY_TEXT
 	pass
 
 
@@ -65,5 +65,5 @@ static func apply_light_palette() -> void:
 	inline_code_bg = Color(0.96, 0.965, 0.97)
 	link_color = Color(0.15, 0.39, 0.92)
 	blockquote_bar_color = link_color
-	blockquote_text_color = Colors.LIGHT_MUTED
+	blockquote_text_color = Colors.LIGHT_SECONDARY_TEXT
 	pass
