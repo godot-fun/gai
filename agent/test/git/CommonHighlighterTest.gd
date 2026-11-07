@@ -159,8 +159,8 @@ static func recognizes_extended_languages_test() -> void:
 
 static func recognizes_data_shell_diff_and_build_files_test() -> void:
 	var jsonc := CommonHighlighter.create("settings.JSONC")
-	assert(jsonc.get_keyword_color("true") == CodeColors.type)
-	assert(jsonc.has_color_region("//"))
+	assert(jsonc is JsonHighlighter)
+	assert((jsonc as JsonHighlighter).allow_comments)
 	var powershell := CommonHighlighter.create("build.ps1")
 	assert(powershell.get_keyword_color("param") == CodeColors.keyword)
 	assert(powershell.has_color_region("#"))
@@ -177,6 +177,30 @@ static func recognizes_data_shell_diff_and_build_files_test() -> void:
 	var cmake := CommonHighlighter.create("CMakeLists.txt")
 	assert(cmake.get_keyword_color("add_executable") == CodeColors.keyword)
 	assert(cmake.has_color_region("#"))
+	pass
+
+
+static func recognizes_json_test() -> void:
+	var highlighter := CommonHighlighter.create("config.json")
+	assert(highlighter is JsonHighlighter)
+	var edit := CodeEdit.new()
+	CodeEditStyle.apply_base(edit)
+	edit.syntax_highlighter = highlighter
+	var source := "{\"name\": \"Godot\", \"count\": -12.5e+2, \"enabled\": true, \"empty\": null}"
+	edit.text = source + "\n"
+	var base_color := edit.get_theme_color("font_color")
+	var highlighting := highlighter.get_line_syntax_highlighting(0)
+	assert(MarkdownHighlighter.color_at_column(highlighting, source.find("name"), base_color) == CodeColors.member)
+	assert(MarkdownHighlighter.color_at_column(highlighting, source.find("Godot"), base_color) == CodeColors.string)
+	assert(MarkdownHighlighter.color_at_column(highlighting, source.find("-12.5"), base_color) == CodeColors.number)
+	assert(MarkdownHighlighter.color_at_column(highlighting, source.find("true"), base_color) == CodeColors.type)
+	assert(MarkdownHighlighter.color_at_column(highlighting, source.find("null"), base_color) == CodeColors.type)
+	assert(MarkdownHighlighter.color_at_column(highlighting, 0, base_color) == CodeColors.symbol)
+	var jsonc := JsonHighlighter.create("jsonc")
+	edit.syntax_highlighter = jsonc
+	edit.text = "{\"enabled\": true} // optional comment\n"
+	assert(MarkdownHighlighter.color_at_column(jsonc.get_line_syntax_highlighting(0), edit.text.find("//"), base_color) == CodeColors.comment)
+	edit.free()
 	pass
 
 

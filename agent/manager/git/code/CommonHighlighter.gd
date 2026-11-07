@@ -41,6 +41,8 @@ static func create(path_or_suffix: String) -> SyntaxHighlighter:
 		return MarkdownHighlighter.create()
 	if extension == "gd":
 		return GdScriptHighlighter.create()
+	if extension in ["json", "jsonc", "json5"]:
+		return JsonHighlighter.create(extension)
 	var highlighter := CodeHighlighterInstance.new()
 	highlighter.number_color = CodeColors.number
 	highlighter.symbol_color = CodeColors.symbol
@@ -137,10 +139,7 @@ static func configure_shader(highlighter: CodeHighlighterInstance) -> void:
 static func configure_data(highlighter: CodeHighlighterInstance, extension: String, file_name: String) -> void:
 	add_keywords(highlighter, ["true", "false", "null", "yes", "no", "on", "off"], CodeColors.type)
 	add_quoted_strings(highlighter, CodeColors.string)
-	if extension in ["jsonc", "json5"]:
-		highlighter.add_color_region("//", "", CodeColors.comment, true)
-		highlighter.add_color_region("/*", "*/", CodeColors.comment)
-	elif extension in ["ini", "cfg", "conf", "properties", "godot", "tscn", "tres", "gdextension", "import"]:
+	if extension in ["ini", "cfg", "conf", "properties", "godot", "tscn", "tres", "gdextension", "import"]:
 		highlighter.add_color_region(";", "", CodeColors.comment, true)
 		highlighter.add_color_region("#", "", CodeColors.comment, true)
 	else:
