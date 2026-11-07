@@ -162,11 +162,11 @@ static func recognizes_data_shell_diff_and_build_files_test() -> void:
 	assert(jsonc is JsonHighlighter)
 	assert((jsonc as JsonHighlighter).allow_comments)
 	var powershell := CommonHighlighter.create("build.ps1")
-	assert(powershell.get_keyword_color("param") == CodeColors.keyword)
-	assert(powershell.has_color_region("#"))
+	assert(powershell is WindowsHighlighter)
+	assert((powershell as WindowsHighlighter).is_powershell)
 	var batch := CommonHighlighter.create("build.bat")
-	assert(batch.get_keyword_color("REM") == CodeColors.comment)
-	assert(batch.has_color_region("::"))
+	assert(batch is WindowsHighlighter)
+	assert(not (batch as WindowsHighlighter).is_powershell)
 	var latex := CommonHighlighter.create("notes.tex")
 	assert(latex.has_color_region("%"))
 	assert(latex.has_color_region("{"))
@@ -200,6 +200,34 @@ static func recognizes_json_test() -> void:
 	edit.syntax_highlighter = jsonc
 	edit.text = "{\"enabled\": true} // optional comment\n"
 	assert(MarkdownHighlighter.color_at_column(jsonc.get_line_syntax_highlighting(0), edit.text.find("//"), base_color) == CodeColors.comment)
+	edit.free()
+	pass
+
+
+static func recognizes_windows_scripts_test() -> void:
+	var powershell := CommonHighlighter.create("agent.ps1")
+	assert(powershell is WindowsHighlighter)
+	var edit := CodeEdit.new()
+	CodeEditStyle.apply_base(edit)
+	edit.syntax_highlighter = powershell
+	var base_color := edit.get_theme_color("font_color")
+	var powershell_source := "$env:APPDATA = Join-Path $Root \".godot\" # portable data"
+	edit.text = powershell_source + "\n"
+	var powershell_line := powershell.get_line_syntax_highlighting(0)
+	assert(MarkdownHighlighter.color_at_column(powershell_line, 0, base_color) == CodeColors.member)
+	assert(MarkdownHighlighter.color_at_column(powershell_line, powershell_source.find("Join-Path"), base_color) == CodeColors.function)
+	assert(MarkdownHighlighter.color_at_column(powershell_line, powershell_source.find(".godot"), base_color) == CodeColors.string)
+	assert(MarkdownHighlighter.color_at_column(powershell_line, powershell_source.find("#"), base_color) == CodeColors.comment)
+	var batch := CommonHighlighter.create("agent.bat")
+	assert(batch is WindowsHighlighter)
+	edit.syntax_highlighter = batch
+	var batch_source := "powershell -File %~dp0agent.ps1 %*"
+	edit.text = batch_source + "\n"
+	var batch_line := batch.get_line_syntax_highlighting(0)
+	assert(MarkdownHighlighter.color_at_column(batch_line, batch_source.find("%~dp0"), base_color) == CodeColors.member)
+	assert(MarkdownHighlighter.color_at_column(batch_line, batch_source.find("%*"), base_color) == CodeColors.member)
+	edit.text = "rem launcher comment\n"
+	assert(MarkdownHighlighter.color_at_column(batch.get_line_syntax_highlighting(0), 0, base_color) == CodeColors.comment)
 	edit.free()
 	pass
 

@@ -13,7 +13,8 @@ const CPP_EXTENSIONS := ["c", "cc", "cpp", "cxx", "h", "hh", "hpp", "hxx", "m", 
 const SHADER_EXTENSIONS := ["gdshader", "gdshaderinc", "glsl", "vert", "frag", "geom", "tesc", "tese", "comp", "hlsl", "fx", "wgsl"]
 const DATA_EXTENSIONS := ["json", "jsonc", "json5", "yaml", "yml", "toml", "ini", "cfg", "conf", "env", "properties", "tscn", "tres", "godot", "gdextension", "import", "lock"]
 const MARKUP_EXTENSIONS := ["html", "htm", "xhtml", "xml", "svg", "vue", "svelte", "css", "scss", "sass", "less"]
-const SHELL_EXTENSIONS := ["sh", "bash", "zsh", "fish", "ps1", "psm1", "bat", "cmd"]
+const SHELL_EXTENSIONS := ["sh", "bash", "zsh", "fish"]
+const WINDOWS_EXTENSIONS := ["ps1", "psm1", "bat", "cmd"]
 const SQL_EXTENSIONS := ["sql", "psql", "ddl", "dml"]
 const DIFF_EXTENSIONS := ["diff", "patch", "rej"]
 const LATEX_EXTENSIONS := ["tex", "sty", "cls", "bib"]
@@ -43,6 +44,8 @@ static func create(path_or_suffix: String) -> SyntaxHighlighter:
 		return GdScriptHighlighter.create()
 	if extension in ["json", "jsonc", "json5"]:
 		return JsonHighlighter.create(extension)
+	if extension in WINDOWS_EXTENSIONS:
+		return WindowsHighlighter.create(extension)
 	var highlighter := CodeHighlighterInstance.new()
 	highlighter.number_color = CodeColors.number
 	highlighter.symbol_color = CodeColors.symbol
@@ -59,7 +62,7 @@ static func create(path_or_suffix: String) -> SyntaxHighlighter:
 	elif extension in MARKUP_EXTENSIONS:
 		configure_markup(highlighter, extension)
 	elif extension in SHELL_EXTENSIONS:
-		configure_shell(highlighter, extension)
+		configure_shell(highlighter)
 	elif extension in SQL_EXTENSIONS:
 		configure_sql(highlighter)
 	elif extension in DIFF_EXTENSIONS:
@@ -160,15 +163,11 @@ static func configure_markup(highlighter: CodeHighlighterInstance, extension: St
 	pass
 
 
-static func configure_shell(highlighter: CodeHighlighterInstance, extension: String) -> void:
+static func configure_shell(highlighter: CodeHighlighterInstance) -> void:
 	add_keywords(highlighter, SHELL_KEYWORDS, CodeColors.keyword)
 	add_keywords(highlighter, ["true", "false", "null"], CodeColors.type)
 	add_quoted_strings(highlighter, CodeColors.string)
-	if extension in ["bat", "cmd"]:
-		add_keywords(highlighter, ["REM", "rem", "Rem"], CodeColors.comment)
-		highlighter.add_color_region("::", "", CodeColors.comment, true)
-	else:
-		highlighter.add_color_region("#", "", CodeColors.comment, true)
+	highlighter.add_color_region("#", "", CodeColors.comment, true)
 	pass
 
 
