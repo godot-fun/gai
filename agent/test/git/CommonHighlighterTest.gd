@@ -33,7 +33,7 @@ static func recognizes_gdscript_test() -> void:
 	assert(code_base.subpixel_positioning == TextServer.SUBPIXEL_POSITIONING_AUTO)
 	assert(code_base.keep_rounding_remainders)
 	assert(code_base.force_autohinter)
-	assert(edit.get_theme_constant("line_spacing") == 4)
+	assert(edit.get_theme_constant("line_spacing") == Margin.ma_1)
 	edit.syntax_highlighter = highlighter
 	edit.text = "class_name Player\nextends CharacterBody2D\n@export var speed: float = 220.0\nfunc _physics_process(delta: float) -> void:\n\tInput.get_vector(\"left\")\n\tpass # done\n"
 	var base_color := edit.get_theme_color("font_color")

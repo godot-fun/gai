@@ -19,9 +19,9 @@ static func sidebar_panel() -> StyleBoxFlat:
 static func pinned_separator() -> StyleBoxLine:
 	var line: StyleBoxLine = StyleBoxLine.new()
 	line.color = ThemeColor.alpha_theme_color(0.42 if ThemeColor.is_dark_theme() else 0.32)
-	line.grow_begin = 2
-	line.grow_end = 2
-	line.thickness = 1
+	line.grow_begin = ControlSize.radius_xs
+	line.grow_end = ControlSize.radius_xs
+	line.thickness = ControlSize.border_xs
 	return line
 
 
@@ -73,8 +73,8 @@ static func drag_ghost() -> StyleBoxFlat:
 	style.border_color = ThemeColor.alpha_theme_color(0.9 if ThemeColor.is_dark_theme() else 0.75)
 	style.set_border_width_all(ControlSize.border_xs)
 	style.shadow_color = Color(0, 0, 0, 0.35 if ThemeColor.is_dark_theme() else 0.18)
-	style.shadow_size = 6
-	style.shadow_offset = Vector2(0, 3)
+	style.shadow_size = Margin.ma_2
+	style.shadow_offset = Vector2(0, Margin.ma_1)
 	return style
 
 

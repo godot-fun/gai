@@ -565,7 +565,7 @@ func layout_queue_panel() -> void:
 		return
 	var wrap_width := get_wrap_width(true)
 	var width := wrap_width * QUEUE_WIDTH_RATIO
-	var content_height := minf(queue_scroll.get_combined_minimum_size().y + Margin.ma_2, 220.0)
+	var content_height := minf(queue_scroll.get_combined_minimum_size().y + Margin.ma_2, ControlSize.image_sm)
 	var right := input_bar.size.x - ControlSize.md * 5.0
 	queue_panel.position = Vector2(right - width, input_wrap.offset_top - content_height - Margin.ma_5)
 	queue_panel.size = Vector2(width, content_height)

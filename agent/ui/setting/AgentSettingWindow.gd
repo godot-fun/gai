@@ -333,7 +333,7 @@ func style_content() -> void:
 	container.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface))
 	var separator_style := StyleBoxLine.new()
 	separator_style.color = ThemeColor.accent_theme_color()
-	separator_style.thickness = 1
+	separator_style.thickness = ControlSize.border_xs
 	for separator in separators:
 		separator.add_theme_stylebox_override("separator", separator_style)
 	style_nav_rail()

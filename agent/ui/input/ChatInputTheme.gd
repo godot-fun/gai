@@ -11,16 +11,16 @@ static func apply_wrap(input_wrap: PanelContainer, expanded: bool) -> void:
 
 
 static func build_wrap_style(expanded: bool) -> StyleBoxFlat:
-	var radius := 16 if expanded else int(ControlSize.xl / 2)
+	var radius := ControlSize.radius_xxl if expanded else int(ControlSize.xl / 2)
 	var wrap_style := StyleBoxHelper.create_style_box_flat(ThemeColor.demote(Colors.surface, Weights.w_3), radius, Margin.ma_1, Margin.ma_1)
 	if ThemeColor.is_dark_theme():
 		wrap_style.shadow_color = Color(0, 0, 0, 0.40)
-		wrap_style.shadow_size = 16 if expanded else 10
-		wrap_style.shadow_offset = Vector2(0, 6 if expanded else 4)
+		wrap_style.shadow_size = Margin.ma_4 if expanded else Margin.ma_3
+		wrap_style.shadow_offset = Vector2(0, Margin.ma_2 if expanded else Margin.ma_1)
 	else:
 		wrap_style.shadow_color = Color(0, 0, 0, 0.08)
-		wrap_style.shadow_size = 12 if expanded else 8
-		wrap_style.shadow_offset = Vector2(0, 4 if expanded else 2)
+		wrap_style.shadow_size = Margin.ma_3 if expanded else Margin.ma_2
+		wrap_style.shadow_offset = Vector2(0, Margin.ma_1 if expanded else ControlSize.radius_xs)
 	return wrap_style
 
 
@@ -50,8 +50,8 @@ static func apply_completion(input_field: CodeEdit) -> void:
 	panel.set_border_width(SIDE_RIGHT, ControlSize.border_xs)
 	panel.set_border_width(SIDE_BOTTOM, ControlSize.border_xs)
 	panel.shadow_color = Color(0, 0, 0, 0.32 if ThemeColor.is_dark_theme() else 0.10)
-	panel.shadow_size = 10
-	panel.shadow_offset = Vector2(0, 3)
+	panel.shadow_size = Margin.ma_3
+	panel.shadow_offset = Vector2(0, Margin.ma_1)
 	input_field.add_theme_stylebox_override("completion", panel)
 	input_field.add_theme_color_override("completion_background_color", Color.TRANSPARENT)
 	input_field.add_theme_color_override("completion_existing_color", Color.TRANSPARENT)
@@ -100,7 +100,7 @@ static func apply_queue_badge(badge: Label, collapsed: bool, queue_count: int) -
 	badge.add_theme_color_override("font_color", Color.WHITE)
 	var badge_color := Colors.error.lerp(Colors.surface, 0.15)
 	badge.add_theme_stylebox_override("normal", StyleBoxHelper.create_style_box_flat(
-		badge_color, Margin.ma_2 + 1, 0, 0))
+		badge_color, Margin.ma_2 + ControlSize.border_xs, 0, 0))
 	pass
 
 

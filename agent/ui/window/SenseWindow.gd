@@ -261,7 +261,7 @@ func apply_theme() -> void:
 		label.add_theme_color_override("font_color", Colors.primary_text)
 	var separator_style := StyleBoxLine.new()
 	separator_style.color = ThemeColor.accent_theme_color()
-	separator_style.thickness = 1
+	separator_style.thickness = ControlSize.border_xs
 	for separator in separators:
 		separator.add_theme_stylebox_override("separator", separator_style)
 	ButtonStyle.apply_check_button(enabled_check)
