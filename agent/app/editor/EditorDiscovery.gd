@@ -89,24 +89,35 @@ static func copy_cached_editors() -> Array[EditorApplication]:
 # Open a workspace file
 # ---------------------------------------------------------------------------
 
-## Opens a file with the workspace editor selected in settings.
-## Returns false when no configured editor handled the path, allowing the caller to use the OS default.
+## Opens a file with the workspace editor selected in settings, falling back to the OS default
+## program when that editor cannot handle the path. The alerts live here so every caller reports
+## the same message instead of repeating the judgment and the fallback.
+## Returns true when the file was handed to an editor or the OS default program.
 static func async_open_file(path: String) -> bool:
 	var normalized := FileUtils.normalize_path(ProjectSettings.globalize_path(path))
-	if normalized.is_empty() or not FileAccess.file_exists(normalized):
+	if normalized.is_empty():
+		return false
+	if not FileAccess.file_exists(normalized):
+		Alert.alert(StringUtils.format(I18n.t("common.file_not_found"), path), Colors.error)
 		return false
 	var discovered: Variant = await ExecutorHelper.async_execute_pooled(discover)
 	var editors := discovered as Array[EditorApplication]
 	var selected := find_editor(editors, AgentSetting.get_workspace_editor())
-	if selected == null or selected.id == BUILTIN_ID:
-		return EditorWindow.show_file(normalized)
-	var executable := selected.executable
-	var arguments := selected.arguments.duplicate()
-	arguments.append(normalized)
-	if executable.get_extension().to_lower() == "cmd":
-		arguments = PackedStringArray(["/c", executable]) + arguments
-		executable = "cmd.exe"
-	return OS.create_process(executable, arguments, false) >= 0
+	if selected != null and selected.id != BUILTIN_ID:
+		var executable := selected.executable
+		var arguments := selected.arguments.duplicate()
+		arguments.append(normalized)
+		if executable.get_extension().to_lower() == "cmd":
+			arguments = PackedStringArray(["/c", executable]) + arguments
+			executable = "cmd.exe"
+		if OS.create_process(executable, arguments, false) >= 0:
+			return true
+	if EditorWindow.show_file(normalized):
+		return true
+	if FileUtils.open_file(normalized) == OK:
+		return true
+	Alert.alert(StringUtils.format(I18n.t("editor.launch_failed"), normalized), Colors.error)
+	return false
 
 
 # ---------------------------------------------------------------------------

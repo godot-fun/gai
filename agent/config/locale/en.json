@@ -71,6 +71,7 @@
     "next_difference": "Next difference",
     "revert_file": "Restore the right pane to the left pane's version",
     "revert_change": "Revert this change",
+    "open_in_editor": "Open the current file in the editor",
     "original_read_only": "Original · read only",
     "current_editable": "Current · editable",
     "status_added": "Added",

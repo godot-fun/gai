@@ -228,11 +228,7 @@ static func handle_meta_clicked(meta: Variant) -> void:
 			ImagePreviewWindow.show_window(url, I18n.t("common.image_preview"))
 			return
 		var local_path := ProjectSettings.globalize_path(url)
-		if await EditorDiscovery.async_open_file(local_path):
-			return
-		var local_error := FileUtils.open_file(local_path)
-		if local_error != OK:
-			Log.error("open local link failed path:[{}] err:[{}]", local_path, local_error)
+		await EditorDiscovery.async_open_file(local_path)
 		return
 	if not lower.begins_with("http://") and not lower.begins_with("https://") and not lower.begins_with("mailto:"):
 		if url.begins_with("//"):

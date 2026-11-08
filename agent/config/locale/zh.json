@@ -71,6 +71,7 @@
     "next_difference": "下一处差异",
     "revert_file": "将右侧内容恢复为左侧版本",
     "revert_change": "还原此处更改",
+    "open_in_editor": "在编辑器中打开当前文件",
     "original_read_only": "原始版本 · 只读",
     "current_editable": "当前版本 · 可编辑",
     "status_added": "已添加",

@@ -8,12 +8,17 @@ const SCREEN_SIZE_RATIO := 0.80
 ## Give the editable current-file pane slightly more room than the read-only original pane.
 const INITIAL_LEFT_PANE_RATIO := 0.45
 const CHANGED_LINE_ALPHA := 0.22
+const OPEN_IN_EDITOR_ICON_PATH := "res://agent/asset/image/ui/open_in_new.svg"
+## Rasterize UI SVGs oversized; icon_max_width trims them back to the icon token so they stay crisp.
+const ICON_RASTER_SCALE := 2.0
 
 var files: Array[GitDiffFile] = []
 var workspace_root: String = ""
 var selected_index := 0
 ## Exact workspace text loaded when the current file was selected.
 var baseline_text := ""
+## Absolute path of the right pane's file, or empty when it does not exist on disk.
+var current_file_path := ""
 ## Programmatic text replacement emits CodeEdit.text_changed too; suppress it while loading/reverting.
 var suppress_text_changed := false
 ## Both scrollbars emit when assigned, so this guard prevents left/right signal recursion.
@@ -29,6 +34,7 @@ var previous_change_button: Button
 var next_change_button: Button
 var change_position_label: Label
 var revert_button: Button
+var open_editor_button: Button
 var toolbar_panel: PanelContainer
 var heading_container: HBoxContainer
 var split_container: HSplitContainer
@@ -133,6 +139,12 @@ func build_ui() -> void:
 	revert_button.custom_minimum_size.y = ControlSize.sm
 	revert_button.pressed.connect(revert_current)
 	toolbar.add_child(revert_button)
+	open_editor_button = make_button(StringUtils.EMPTY, I18n.t("git.open_in_editor"))
+	style_navigation_button_size(open_editor_button)
+	open_editor_button.disabled = true
+	# The workspace editor selection, the OS fallback and the error alerts all live in EditorDiscovery.
+	open_editor_button.pressed.connect(func() -> void: await EditorDiscovery.async_open_file(current_file_path))
+	toolbar.add_child(open_editor_button)
 
 	# Headings must not be children of the editor SplitContainer. Otherwise its grabber extends up
 	# through the heading row; a plain HBox mirrors left edit | connector | right edit widths.
@@ -184,6 +196,7 @@ func apply_locale() -> void:
 	next_change_button.tooltip_text = I18n.t("git.next_difference")
 	revert_button.text = I18n.t("git.revert")
 	revert_button.tooltip_text = I18n.t("git.revert_file")
+	open_editor_button.tooltip_text = I18n.t("git.open_in_editor")
 	heading_labels[0].text = I18n.t("git.original_read_only")
 	heading_labels[1].text = I18n.t("git.current_editable")
 	if not files.is_empty():
@@ -273,6 +286,7 @@ func load_selected_file() -> void:
 		return
 	var file := files[selected_index]
 	apply_syntax_highlighting(file.display_path())
+	current_file_path = resolve_current_path(file)
 	# The left side remains the historical pre-run snapshot. For editable entries, the right
 	# side follows the live workspace so reopening an old chat diff never presents stale file content.
 	var current_text := file.new_text
@@ -311,6 +325,17 @@ func load_selected_file() -> void:
 	refresh_actions()
 	paint_changed_lines()
 	pass
+
+
+## Absolute workspace path of the right pane's file; empty when the diff has no such file on disk,
+## which happens for deleted entries so "open in editor" stays disabled.
+func resolve_current_path(file: GitDiffFile) -> String:
+	if file.new_path.is_empty():
+		return StringUtils.EMPTY
+	var target := FileUtils.normalize_path(workspace_root.path_join(file.new_path))
+	if not FileUtils.is_relative_to(target, workspace_root) or not FileAccess.file_exists(target):
+		return StringUtils.EMPTY
+	return target
 
 
 ## Both panes use independently-owned highlighters because a SyntaxHighlighter can belong to only
@@ -403,6 +428,7 @@ func is_dirty() -> bool:
 func refresh_actions() -> void:
 	var editable := files[selected_index].can_edit()
 	revert_button.disabled = not editable or right_edit.text == left_edit.text
+	open_editor_button.disabled = current_file_path.is_empty()
 	pass
 
 
@@ -491,6 +517,7 @@ func save_current() -> Error:
 	file.new_text = baseline_text
 	file.new_hash = baseline_text.sha256_text()
 	file.new_exists = true
+	current_file_path = resolve_current_path(file)
 	refresh_actions()
 	Alert.alert(I18n.t("git.saved"), Colors.success)
 	return OK
@@ -571,7 +598,12 @@ func apply_theme() -> void:
 		label.add_theme_font_override("font", Fonts.regular())
 	for label in heading_labels:
 		label.add_theme_color_override("font_color", Colors.secondary_text)
-	for button in [previous_button, next_button, previous_change_button, next_change_button, revert_button]:
+	open_editor_button.icon = ImageHelper.tint_svg(OPEN_IN_EDITOR_ICON_PATH, Colors.primary_text, ICON_RASTER_SCALE)
+	# The artwork fills ~70% of this SVG's 24px canvas, so icon_md lands between the too-thin
+	# icon_sm and the too-heavy icon_lg inside a sm button; the square texture means icon_max_width
+	# limits both edges.
+	open_editor_button.add_theme_constant_override("icon_max_width", ControlSize.icon_md)
+	for button in [previous_button, next_button, previous_change_button, next_change_button, revert_button, open_editor_button]:
 		style_compact_button(button)
 	for edit in [left_edit, right_edit]:
 		CodeEditStyle.apply_diff_editor(edit)
