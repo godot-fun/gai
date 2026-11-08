@@ -52,12 +52,12 @@ static var label_small: int = LABEL_SMALL
 
 
 static func apply_scale(scale: float) -> void:
-	letter_spacing_xs = DisplayScale.scale_int_min(LETTER_SPACING_XS, scale)
-	letter_spacing_sm = DisplayScale.scale_int_min(LETTER_SPACING_SM, scale)
-	letter_spacing_md = DisplayScale.scale_int_min(LETTER_SPACING_MD, scale)
-	letter_spacing_lg = DisplayScale.scale_int_min(LETTER_SPACING_LG, scale)
-	letter_spacing_xl = DisplayScale.scale_int_min(LETTER_SPACING_XL, scale)
-	letter_spacing_xxl = DisplayScale.scale_int_min(LETTER_SPACING_XXL, scale)
+	letter_spacing_xs = DisplayScale.scale_int_floor_min(LETTER_SPACING_XS, scale)
+	letter_spacing_sm = DisplayScale.scale_int_floor_min(LETTER_SPACING_SM, scale)
+	letter_spacing_md = DisplayScale.scale_int_floor_min(LETTER_SPACING_MD, scale)
+	letter_spacing_lg = DisplayScale.scale_int_floor_min(LETTER_SPACING_LG, scale)
+	letter_spacing_xl = DisplayScale.scale_int_floor_min(LETTER_SPACING_XL, scale)
+	letter_spacing_xxl = DisplayScale.scale_int_floor_min(LETTER_SPACING_XXL, scale)
 	display_large = DisplayScale.scale_int_min(DISPLAY_LARGE, scale)
 	display_medium = DisplayScale.scale_int_min(DISPLAY_MEDIUM, scale)
 	display_small = DisplayScale.scale_int_min(DISPLAY_SMALL, scale)
