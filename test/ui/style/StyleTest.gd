@@ -190,8 +190,8 @@ func Alert_card_shadow_test() -> void:
 	assert(is_equal_approx(dark.shadow_color.a, Alert.shadow_alpha_dark))
 	assert(is_equal_approx(light.shadow_color.a, Alert.shadow_alpha_light))
 	assert(dark.shadow_color.a > light.shadow_color.a)
-	assert(light.shadow_size == Alert.shadow_size)
-	assert(light.shadow_offset == Alert.shadow_offset)
+	assert(light.shadow_size == Margin.ma_1)
+	assert(light.shadow_offset == Vector2(0, ControlSize.radius_xs))
 
 	ThemeColor.current_theme = original
 	pass
@@ -203,7 +203,7 @@ func card_components_test() -> void:
 	var snackbar := Alert.make_card_style(Colors.success)
 	assert(snackbar.corner_radius_top_left == ControlSize.radius_md)
 	assert(snackbar.border_width_left == ControlSize.border_md)
-	assert(snackbar.shadow_size == Alert.shadow_size)
+	assert(snackbar.shadow_size == Margin.ma_1)
 
 	var scale := DisplayScale.compute_ui_scale()
 	var toast: DesktopToast = DesktopToast.new()

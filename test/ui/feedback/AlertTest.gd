@@ -18,7 +18,7 @@ func Alert_create_card_test() -> void:
 	assert(style.border_width_top == 0 and style.border_width_bottom == 0)
 	assert(style.corner_radius_top_left == ControlSize.radius_md)
 	assert(style.content_margin_left == Margin.ma_4)
-	assert(style.shadow_size == Alert.shadow_size)
+	assert(style.shadow_size == Margin.ma_1)
 	card.free()
 	pass
 
@@ -33,16 +33,16 @@ func Alert_i18n_text_test() -> void:
 	pass
 
 
-## [method Alert.resize_to_text] hugs short text and caps long text at [constant Alert.text_max_width].
+## [method Alert.resize_to_text] hugs short text and caps long text at [constant ControlSize.image_xl].
 func Alert_single_line_test() -> void:
 	var card := Alert.create_alert("feedback", Colors.info)
 	var style: StyleBox = card.get_theme_stylebox("panel")
 	var padding: float = style.get_margin(SIDE_LEFT) + style.get_margin(SIDE_RIGHT)
 	var text_height: float = style.get_margin(SIDE_TOP) + style.get_margin(SIDE_BOTTOM) + Alert.make_font().get_height(Typography.body_large)
 	assert(is_equal_approx(card.size.y, text_height))
-	assert(card.size.x > padding and card.size.x < Alert.text_max_width)
+	assert(card.size.x > padding and card.size.x < ControlSize.image_xl)
 	var long_card := Alert.create_alert("feedback ".repeat(40), Colors.info)
-	assert(is_equal_approx(long_card.size.x, Alert.text_max_width + padding))
+	assert(is_equal_approx(long_card.size.x, ControlSize.image_xl + padding))
 	pass
 
 

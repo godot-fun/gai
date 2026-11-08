@@ -93,7 +93,7 @@ func build_dialogs() -> void:
 	add_child(name_dialog)
 	delete_dialog = ConfirmationDialog.new()
 	delete_dialog.exclusive = true
-	delete_dialog.min_size = Vector2i(420, 140)
+	delete_dialog.min_size = Vector2i(ControlSize.image_lg, ControlSize.image_xs)
 	delete_dialog.confirmed.connect(delete_context_entry)
 	add_child(delete_dialog)
 	pass

@@ -87,7 +87,7 @@ func build_confirm() -> void:
 	confirm = ConfirmationDialog.new()
 	confirm.exclusive = true
 	confirm.dialog_autowrap = true
-	confirm.min_size = Vector2i(420, 140)
+	confirm.min_size = Vector2i(ControlSize.image_lg, ControlSize.image_xs)
 	add_child(confirm)
 	discard_button = confirm.add_button("", false, "discard")
 	confirm.confirmed.connect(on_confirm_saved)

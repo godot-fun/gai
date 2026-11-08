@@ -14,14 +14,10 @@ const move_seconds: float = 0.18
 ## Plain fade-out that ends the toast.
 const exit_seconds: float = 0.22
 const default_wait_time: int = 2700
-## A snackbar stays on one line: text wider than this is trimmed with an ellipsis instead of wrapped.
-const text_max_width: float = 720.0
 ## Drop shadow. The alpha has to follow the theme: one value either vanishes over the light card or
 ## smudges over the dark one.
 const shadow_alpha_dark: float = 0.35
 const shadow_alpha_light: float = 0.18
-const shadow_size: int = 4
-const shadow_offset: Vector2 = Vector2(0.0, 2.0)
 
 ## Live cards, oldest first — [method relayout] stacks them from the top edge downward.
 static var alerts: Array[Alert] = []
@@ -33,7 +29,7 @@ var move_tween: Tween
 var fade_tween: Tween
 
 
-## One line, [constant text_max_width] of text at most. Both axes come from the font metrics instead
+## One line, [constant ControlSize.image_xl] of text at most. Both axes come from the font metrics instead
 ## of [method Control.get_combined_minimum_size], whose theme cache is only filled once the card
 ## enters the tree: this way sizing, resting slot and entry start are fixed on the very first frame.
 func resize_to_text() -> void:
@@ -41,7 +37,7 @@ func resize_to_text() -> void:
 	var text_width: float = font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.body_large).x
 	var style: StyleBox = get_theme_stylebox("panel")
 	size = Vector2(
-		minf(text_width, text_max_width) + style.get_margin(SIDE_LEFT) + style.get_margin(SIDE_RIGHT),
+		minf(text_width, ControlSize.image_xl) + style.get_margin(SIDE_LEFT) + style.get_margin(SIDE_RIGHT),
 		font.get_height(Typography.body_large) + style.get_margin(SIDE_TOP) + style.get_margin(SIDE_BOTTOM)
 	)
 	pass
@@ -142,8 +138,8 @@ static func make_card_style(stripe_color: Color) -> StyleBoxFlat:
 	style.set_border_width(SIDE_LEFT, ControlSize.border_md)
 	style.set_border_width(SIDE_RIGHT, ControlSize.border_md)
 	style.shadow_color = Color(0.0, 0.0, 0.0, shadow_alpha_dark if ThemeColor.is_dark_theme() else shadow_alpha_light)
-	style.shadow_size = shadow_size
-	style.shadow_offset = shadow_offset
+	style.shadow_size = Margin.ma_1
+	style.shadow_offset = Vector2(0, ControlSize.radius_xs)
 	return style
 
 
