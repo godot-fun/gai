@@ -23,6 +23,7 @@ func setup(p_button: Button, p_select_button: Button, p_workspace_button: Button
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(on_locale_changed)
+	gdf.events.ui_scale_changed.connect(on_ui_scale_changed)
 	apply_theme()
 	update_alignment.call_deferred()
 	await reload_editors()
@@ -31,6 +32,13 @@ func setup(p_button: Button, p_select_button: Button, p_workspace_button: Button
 
 func on_locale_changed() -> void:
 	await reload_editors(true)
+	pass
+
+
+func on_ui_scale_changed(_scale: float) -> void:
+	# Agent refreshes its shared layout from the same signal. Defer until containers
+	# have applied the new scale so global_position and size describe the final row.
+	update_alignment.call_deferred()
 	pass
 
 
