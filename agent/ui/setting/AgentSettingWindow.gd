@@ -363,15 +363,6 @@ func style_help_label(label: Label) -> void:
 	pass
 
 
-func style_action_button(button: Button) -> void:
-	ButtonStyle.apply_font_colors(button, Colors.primary_text, Colors.primary_text, Colors.primary_text)
-	var normal := StyleBoxHelper.create_style_box_flat(Colors.surface_container_high, ControlSize.radius_lg, Margin.ma_3, Margin.ma_1)
-	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, Colors.hover(Colors.surface_container_high))
-	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(Colors.surface_container_high, Weights.w_2))
-	ButtonStyle.apply_style(button, normal, hover, pressed)
-	pass
-
-
 func style_spin_box(spin: SpinBox) -> void:
 	RangeStyle.apply_spin_box(spin)
 	pass

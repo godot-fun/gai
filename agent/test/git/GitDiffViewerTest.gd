@@ -9,12 +9,20 @@ func builds_test() -> void:
 	assert(viewer.previous_change_button.focus_mode == Control.FOCUS_NONE)
 	assert(viewer.next_change_button.focus_mode == Control.FOCUS_NONE)
 	assert(viewer.revert_button.custom_minimum_size.y == viewer.previous_change_button.custom_minimum_size.y)
-	assert((viewer.container.get_theme_stylebox("panel") as StyleBoxFlat).bg_color == Colors.surface)
+	assert((viewer.container.get_theme_stylebox("panel") as StyleBoxFlat).bg_color == Colors.chrome_surface)
 	assert((viewer.left_heading_panel.get_theme_stylebox("panel") as StyleBoxFlat).bg_color == Colors.chrome_surface)
-	assert((viewer.left_edit.get_theme_stylebox("normal") as StyleBoxFlat).bg_color == Colors.app_background)
-	assert((viewer.revert_button.get_theme_stylebox("normal") as StyleBoxFlat).bg_color == Colors.control_surface)
-	assert((viewer.revert_button.get_theme_stylebox("hover") as StyleBoxFlat).bg_color == ThemeColor.selected_surface)
-	assert((viewer.revert_button.get_theme_stylebox("hover") as StyleBoxFlat).border_color == ThemeColor.accent_theme_color())
+	assert((viewer.left_edit.get_theme_stylebox("normal") as StyleBoxFlat).bg_color == Colors.surface)
+	# Toolbar buttons share the settings action-button chrome: filled surface, no outline.
+	var button_normal := viewer.revert_button.get_theme_stylebox("normal") as StyleBoxFlat
+	assert(button_normal.bg_color == Colors.surface_container_high)
+	assert(button_normal.border_width_left == 0)
+	assert(button_normal.corner_radius_top_left == ControlSize.radius_lg)
+	assert((viewer.revert_button.get_theme_stylebox("hover") as StyleBoxFlat).bg_color == Colors.hover(Colors.surface_container_high))
+	# Glyph buttons keep their square footprint: wide text padding would stretch them sideways.
+	var nav_normal := viewer.previous_button.get_theme_stylebox("normal") as StyleBoxFlat
+	assert(nav_normal.content_margin_left == Margin.ma_1)
+	assert(nav_normal.content_margin_top == Margin.ma_1)
+	assert(button_normal.content_margin_left == Margin.ma_3)
 	assert(not viewer.left_edit.editable)
 	assert(viewer.right_edit.editable)
 	assert(GitDiffViewer.initial_split_offset(1000.0) == -50)

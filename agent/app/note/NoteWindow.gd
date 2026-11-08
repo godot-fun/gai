@@ -46,13 +46,13 @@ func apply_locale() -> void:
 
 func apply_theme() -> void:
 	super()
-	container.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.surface))
+	container.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.chrome_surface))
 	style_open_on_startup()
 	pass
 
 
 func window_background_color() -> Color:
-	return Colors.chrome_surface
+	return Colors.deep_surface
 
 
 func window_title_color() -> Color:

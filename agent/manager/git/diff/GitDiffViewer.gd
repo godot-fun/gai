@@ -603,8 +603,10 @@ func apply_theme() -> void:
 	# icon_sm and the too-heavy icon_lg inside a sm button; the square texture means icon_max_width
 	# limits both edges.
 	open_editor_button.add_theme_constant_override("icon_max_width", ControlSize.icon_md)
-	for button in [previous_button, next_button, previous_change_button, next_change_button, revert_button, open_editor_button]:
-		style_compact_button(button)
+	# Glyph buttons keep their square footprint; only the text action button takes wide padding.
+	for button in [previous_button, next_button, previous_change_button, next_change_button, open_editor_button]:
+		ButtonStyle.apply_action_button(button, true)
+	ButtonStyle.apply_action_button(revert_button)
 	for edit in [left_edit, right_edit]:
 		CodeEditStyle.apply_diff_editor(edit)
 	if not files.is_empty():
@@ -633,14 +635,3 @@ func window_title_color() -> Color:
 
 func window_border_color() -> Color:
 	return Colors.primary_text
-
-
-func style_compact_button(button: Button) -> void:
-	ButtonStyle.apply_font_colors(button, Colors.primary_text, Colors.primary_text, Colors.primary_text)
-	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_sm, Margin.ma_1, Margin.ma_0, Colors.outline, ControlSize.border_xs)
-	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface, ThemeColor.accent_theme_color())
-	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), Weights.w_2), ThemeColor.accent_theme_color())
-	var disabled := StyleBoxHelper.duplicate_with_bg_color(normal, Colors.control_surface, Colors.outline)
-	ButtonStyle.apply_style(button, normal, hover, pressed)
-	button.add_theme_stylebox_override("disabled", disabled)
-	pass

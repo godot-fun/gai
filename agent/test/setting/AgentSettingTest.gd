@@ -2,15 +2,13 @@ extends RefCounted
 
 
 static func setting_button_roles_test() -> void:
-	var window := AgentSettingWindow.new()
 	var action := Button.new()
-	window.style_action_button(action)
+	ButtonStyle.apply_action_button(action)
 	var action_normal := action.get_theme_stylebox("normal") as StyleBoxFlat
 	assert(action_normal.bg_color == Colors.surface_container_high)
 	assert(action_normal.border_width_left == 0)
 	assert(action_normal.corner_radius_top_left == ControlSize.radius_lg)
 	action.free()
-	window.free()
 	pass
 
 
