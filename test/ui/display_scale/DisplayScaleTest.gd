@@ -56,6 +56,15 @@ func common_window_chrome_scales_with_ui_test() -> void:
 	pass
 
 
+func common_window_uses_shared_typography_test() -> void:
+	var window := CommonWindow.new()
+	window.apply_theme()
+	assert(window.theme.default_font == Fonts.regular())
+	assert(window.theme.default_font_size == Typography.body_medium)
+	window.free()
+	pass
+
+
 func restore_configured_scale() -> void:
 	var scale := DisplayScale.get_ui_scale()
 	Typography.apply_scale(scale)

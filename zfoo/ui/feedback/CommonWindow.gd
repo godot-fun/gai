@@ -35,6 +35,10 @@ func _init() -> void:
 
 ## Paint the shared window frame; subclasses should call [code]super()[/code] before styling content.
 func apply_theme() -> void:
+	if theme == null:
+		theme = Theme.new()
+		theme.default_font = Fonts.regular()
+		theme.default_font_size = Typography.body_medium
 	apply_window_theme(self, window_background_color(), window_title_color(), window_border_color())
 	pass
 
