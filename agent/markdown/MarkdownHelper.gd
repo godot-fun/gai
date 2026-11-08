@@ -123,6 +123,17 @@ static func apply_selection_theme(label: RichTextLabel) -> void:
 	pass
 
 
+## Reapplies the live typography tokens after the user changes the interface scale.
+static func apply_typography(label: RichTextLabel) -> void:
+	label.add_theme_font_size_override("normal_font_size", Typography.body_medium)
+	label.add_theme_font_size_override("bold_font_size", Typography.body_medium)
+	label.add_theme_font_size_override("italics_font_size", Typography.body_medium)
+	label.add_theme_font_size_override("bold_italics_font_size", Typography.body_medium)
+	# One step under body (body_large 16 → body_medium 14); monospace reads heavy at full size.
+	label.add_theme_font_size_override("mono_font_size", Typography.body_medium)
+	pass
+
+
 static func create_rich_text_label(text_color: Color, raw_text: String, markdown_enabled: bool) -> RichTextLabel:
 	var label := SelectableRichTextLabel.new()
 	label.scroll_active = false
@@ -137,8 +148,7 @@ static func create_rich_text_label(text_color: Color, raw_text: String, markdown
 	label.add_theme_font_override("italics_font", Fonts.regular())
 	label.add_theme_font_override("bold_italics_font", Fonts.bold())
 	label.add_theme_font_override("mono_font", Fonts.code())
-	# One step under body (body_large 16 → body_medium 14); monospace reads heavy at full size.
-	label.add_theme_font_size_override("mono_font_size", Typography.body_medium)
+	apply_typography(label)
 	label.add_theme_constant_override("table_h_separation", TABLE_H_SEPARATION)
 	label.add_theme_constant_override("table_v_separation", TABLE_V_SEPARATION)
 	label.add_theme_constant_override("text_highlight_h_padding", HIGHLIGHT_H_PADDING)
@@ -170,6 +180,7 @@ static func create_plain_rich_text_label(text_color: Color) -> RichTextLabel:
 	label.add_theme_color_override("default_color", text_color)
 	apply_selection_theme(label)
 	label.add_theme_font_override("normal_font", Fonts.regular())
+	apply_typography(label)
 	return label
 
 

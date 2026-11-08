@@ -23,7 +23,7 @@ const DARK_CHROME_SURFACE := Color(0.10, 0.11, 0.13)
 const DARK_SURFACE := Color(0.13, 0.13, 0.14)
 ## Material-style content layers, ordered from subtle grouping to strongest nested emphasis.
 const DARK_SURFACE_CONTAINER := Color(1.0, 1.0, 1.0, 0.08)
-const DARK_SURFACE_CONTAINER_HIGH := Color(0.13, 0.14, 0.16)
+const DARK_SURFACE_CONTAINER_HIGH := Color(0.15, 0.16, 0.18)
 const DARK_SURFACE_CONTAINER_HIGHEST := Color(0.45, 0.47, 0.52, 0.18)
 const DARK_SURFACE_CONTAINER_OUTLINE_VARIANT := Color(0.35, 0.36, 0.41)
 
