@@ -36,6 +36,26 @@ func display_scale_updates_tokens_test() -> void:
 	pass
 
 
+func scrollbar_thickness_scales_with_ui_test() -> void:
+	var saved := DisplayScale.get_ui_scale()
+	DisplayScale.set_ui_scale(1.5)
+	var expected := 9
+
+	var vertical := VScrollBar.new()
+	ScrollBarStyle.apply(vertical, ScrollBarStyle.Thickness.XXL)
+	var vertical_grabber := vertical.get_theme_stylebox("grabber") as StyleBoxFlat
+	assert(is_equal_approx(vertical_grabber.content_margin_left + vertical_grabber.content_margin_right, expected))
+
+	var horizontal := HScrollBar.new()
+	ScrollBarStyle.apply(horizontal, ScrollBarStyle.Thickness.XXL)
+	var horizontal_grabber := horizontal.get_theme_stylebox("grabber") as StyleBoxFlat
+	assert(is_equal_approx(horizontal_grabber.content_margin_top + horizontal_grabber.content_margin_bottom, expected))
+	vertical.free()
+	horizontal.free()
+	DisplayScale.set_ui_scale(saved)
+	pass
+
+
 func common_window_chrome_scales_with_ui_test() -> void:
 	var window := Window.new()
 	CommonWindow.apply_window_theme(window, Color.BLACK, Color.WHITE, Color.WHITE)
