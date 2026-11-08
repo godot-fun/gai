@@ -332,7 +332,7 @@ func LineEditStyle_apply_default_style_test() -> void:
 	assert(normal.bg_color == ThemeColor.card_surface)
 	assert(normal.corner_radius_top_left == ControlSize.radius_md)
 	assert(normal.get_margin(SIDE_LEFT) == Margin.ma_3)
-	assert(normal.border_color == Color(ThemeColor.title_color, Weights.w_2))
+	assert(normal.border_color == Colors.subtle_border)
 	assert(normal.border_width_left == ControlSize.border_xs)
 	assert(edit.get_theme_stylebox("focus") is StyleBoxFlat)
 	edit.free()
@@ -344,7 +344,7 @@ func LineEditStyle_theme_normal_style_test() -> void:
 	assert(normal.bg_color == ThemeColor.card_surface)
 	assert(normal.corner_radius_top_left == ControlSize.radius_md)
 	assert(normal.get_margin(SIDE_LEFT) == Margin.ma_3)
-	assert(normal.border_color == Color(ThemeColor.title_color, Weights.w_2))
+	assert(normal.border_color == Colors.subtle_border)
 	pass
 
 

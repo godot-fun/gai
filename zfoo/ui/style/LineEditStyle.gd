@@ -8,7 +8,7 @@ extends Object
 static func theme_normal_style() -> StyleBoxFlat:
 	return StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface,
 		ControlSize.radius_md, Margin.ma_3, Margin.ma_0,
-		Color(ThemeColor.title_color, Weights.w_2), ControlSize.border_xs)
+		Colors.subtle_border, ControlSize.border_xs)
 
 
 ## Apply the shared editable field treatment while allowing callers to supply their own surface.
