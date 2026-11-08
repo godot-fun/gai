@@ -110,10 +110,10 @@ func code_fence_blank_lines_test() -> void:
 	pass
 
 
-## The fence fill follows the Markdown theme palette instead of a hex the caller passes in.
+## The fence fill follows the shared surface role instead of a hex the caller passes in.
 func code_block_bg_themed_test() -> void:
 	var bbcode := MarkdownParser.to_bbcode("```\nx\n```").bbcode
-	assert("bg=" + MarkdownParser.to_bbcode_color(MarkdownColors.code_block_bg) in bbcode)
+	assert("bg=" + MarkdownParser.to_bbcode_color(Colors.surface_container_high) in bbcode)
 	pass
 
 
@@ -128,7 +128,7 @@ func inline_code_tinted_test() -> void:
 	var bbcode := MarkdownParser.inline_to_bbcode("`x`")
 	assert(bbcode.begins_with(MarkdownParser.INLINE_CODE_MARGIN))
 	assert(bbcode.ends_with(MarkdownParser.INLINE_CODE_MARGIN))
-	assert("[bgcolor=" + MarkdownParser.to_bbcode_color(MarkdownColors.inline_code_bg) + "]" in bbcode)
+	assert("[bgcolor=" + MarkdownParser.to_bbcode_color(Colors.surface_container_highest) + "]" in bbcode)
 	assert("[code]x[/code]" in bbcode)
 	assert("[table=" not in bbcode)
 	pass

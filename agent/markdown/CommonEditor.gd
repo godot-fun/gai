@@ -545,7 +545,7 @@ func make_find_icon_button(icon_path: String) -> Button:
 
 
 func style_find_bar() -> void:
-	var panel := StyleBoxHelper.create_style_box_flat(Colors.elevated_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_2, Colors.border, ControlSize.border_xs)
+	var panel := StyleBoxHelper.create_style_box_flat(Colors.surface_container_high, ControlSize.radius_md, Margin.ma_2, Margin.ma_2, Colors.border, ControlSize.border_xs)
 	find_bar.add_theme_stylebox_override("panel", panel)
 	LineEditStyle.apply(find_edit)
 	LineEditStyle.apply(replace_edit)

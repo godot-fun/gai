@@ -75,9 +75,9 @@ func style_split_buttons() -> void:
 	var main_normal := split_style(true, Colors.control_surface)
 	var select_normal := split_style(false, Colors.control_surface)
 	ButtonStyle.apply_style(button, main_normal,
-		split_style(true, Colors.hover_surface), split_style(true, ThemeColor.selected_surface))
+		split_style(true, Colors.hover(Colors.control_surface)), split_style(true, ThemeColor.selected_surface))
 	ButtonStyle.apply_style(select_button, select_normal,
-		split_style(false, Colors.hover_surface), split_style(false, ThemeColor.selected_surface))
+		split_style(false, Colors.hover(Colors.control_surface)), split_style(false, ThemeColor.selected_surface))
 	button.add_theme_stylebox_override("hover_pressed", split_style(true, ThemeColor.promote(ThemeColor.selected_surface, Weights.w_2)))
 	select_button.add_theme_stylebox_override("hover_pressed", split_style(false, ThemeColor.promote(ThemeColor.selected_surface, Weights.w_2)))
 	pass

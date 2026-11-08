@@ -25,7 +25,7 @@ static func apply_nav_button(button: Button) -> void:
 	button.add_theme_font_size_override("font_size", Typography.label_large)
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, Colors.primary_text)
 	var normal := nav_button_style(Color.TRANSPARENT)
-	var hover := nav_button_style(Colors.hover_surface)
+	var hover := nav_button_style(Colors.hover(Color.TRANSPARENT))
 	var pressed := nav_button_style(ThemeColor.selected_surface, true)
 	ButtonStyle.apply_style(button, normal, hover, pressed)
 	pass

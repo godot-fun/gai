@@ -23,8 +23,8 @@ extends Object
 ## GFM `\| col \|` table  → `[table=N][cell border=…]…[/cell][/table]` (header row bold + bg)
 ## leftover `[` / `]`     → `[lb]` / `[rb]` (incl. literal `[b]`, `[url=…]`)
 ##
-## No color lives here: every fill, border and mark comes from [MarkdownColors], whose dark
-## and light sets are constants it switches between.
+## No color lives here: every fill, border and mark uses a semantic role from [Colors], whose
+## active palette follows the current theme.
 ##
 ## Block pass then inline pass. Block order is load-bearing: fences first so
 ## inner `---` / `#` stay literal; HR before lists so `---` is not `- --`.
@@ -130,7 +130,7 @@ static func compile_regex(pattern: String) -> RegEx:
 # ---------------------------------------------------------------------------
 
 ## Parses Markdown into RichTextLabel BBCode plus ordered image metadata.
-## Colors come from [MarkdownColors], so [member MarkdownParseResult.bbcode] follows the current theme.
+## Colors come from [Colors], so [member MarkdownParseResult.bbcode] follows the current theme.
 static func to_bbcode(markdown: String) -> MarkdownParseResult:
 	var result := MarkdownParseResult.new()
 	if StringUtils.is_blank(markdown):
@@ -332,7 +332,7 @@ static func format_code_fence_bbcode(code: String, language: String = StringUtil
 		)
 	var block := StringUtils.format(
 			"[table=1][cell shrink=false expand=1 bg={} padding={}]{}{}[/cell][/table]",
-			to_bbcode_color(MarkdownColors.code_block_bg),
+			to_bbcode_color(Colors.surface_container_high),
 			CODE_BLOCK_PADDING,
 			title,
 			wrap_code(code)
@@ -349,7 +349,7 @@ static func add_code_background(code: String) -> String:
 	return StringUtils.format(
 			"{}[bgcolor={}]{}[/bgcolor]{}",
 			INLINE_CODE_MARGIN,
-			to_bbcode_color(MarkdownColors.inline_code_bg),
+			to_bbcode_color(Colors.surface_container_highest),
 			wrap_code(code),
 			INLINE_CODE_MARGIN
 	)
@@ -388,7 +388,7 @@ static func is_horizontal_rule_line(line: String) -> bool:
 
 ## `---` → full-width rule in the table grid color, so rules and table lines match.
 static func format_horizontal_rule_line() -> String:
-	return StringUtils.format("[hr width=100% height=1 color={}]", to_bbcode_color(MarkdownColors.border_color))
+	return StringUtils.format("[hr width=100% height=1 color={}]", to_bbcode_color(Colors.surface_container_outline_variant))
 
 
 # ---------------------------------------------------------------------------
@@ -570,13 +570,13 @@ static func format_table_bbcode(
 
 static func format_table_cell(text: String, is_header: bool, result: MarkdownParseResult) -> String:
 	var content := inline_to_bbcode(text, result)
-	var border := to_bbcode_color(MarkdownColors.border_color)
+	var border := to_bbcode_color(Colors.surface_container_outline_variant)
 	if is_header:
 		content = StringUtils.format("[b]{}[/b]", content)
 		return StringUtils.format(
 				"[cell border={} bg={} padding={}]{}[/cell]",
 				border,
-				to_bbcode_color(MarkdownColors.table_header_bg),
+				to_bbcode_color(Colors.surface_container),
 				TABLE_CELL_PADDING,
 				content
 		)

@@ -128,8 +128,8 @@ static func mix_with_theme_color(base: Color, weight: float) -> Color:
 
 
 ## Refresh every palette derived from the active appearance. Cards follow the accent hue; semantic
-## and file colors select their hand-tuned dark or light variants. [CodeColors] and [MarkdownColors]
-## listen for [signal gdf.Events.theme_changed] instead of refreshing here.
+## and file colors select their hand-tuned dark or light variants. [CodeColors] listens for
+## [signal gdf.Events.theme_changed] instead of refreshing here.
 static func refresh_derived_colors() -> void:
 	refresh_theme_colors()
 	Colors.refresh()

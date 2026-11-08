@@ -188,7 +188,7 @@ func style_logo() -> void:
 
 func style_file_tree() -> void:
 	ScrollBarStyle.apply(tab_scroll.get_h_scroll_bar())
-	file_tree.add_theme_font_override("font", Fonts.light())
+	file_tree.add_theme_font_override("font", Fonts.regular())
 	file_tree.add_theme_font_size_override("font_size", Typography.body_medium)
 	for color_name in ["font_color", "font_hovered_color", "font_hovered_dimmed_color", "font_selected_color", "font_hovered_selected_color"]:
 		file_tree.add_theme_color_override(color_name, Colors.primary_text)
