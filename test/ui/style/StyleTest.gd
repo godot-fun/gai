@@ -212,7 +212,7 @@ func card_components_test() -> void:
 	var toast_card: StyleBoxFlat = toast.card.get_theme_stylebox("panel") as StyleBoxFlat
 	assert(toast_card.bg_color == snackbar.bg_color)
 	assert(toast_card.border_color == snackbar.border_color)
-	assert(toast_card.border_width_left == roundi(ControlSize.border_md * scale))
+	assert(toast_card.border_width_left == DisplayScale.scale_int_floor_min(ControlSize.border_md, scale))
 	assert(toast_card.border_width_right == 0)
 	# StyleBox stores margins as engine floats, so a non-integer display scale can round-trip with
 	# slightly different precision when this scene follows native-window integration tests.

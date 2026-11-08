@@ -60,7 +60,7 @@ static func apply_completion(input_field: CodeEdit) -> void:
 	# ScrollBarStyle.apply] to reach — so reuse its thickness preset and grabber colors instead.
 	input_field.add_theme_color_override("completion_scroll_color", ScrollBarStyle.grabber_color())
 	input_field.add_theme_color_override("completion_scroll_hovered_color", ScrollBarStyle.grabber_hover_color())
-	input_field.add_theme_constant_override("completion_scroll_width", DisplayScale.scale_int_min(ScrollBarStyle.Thickness.MD, DisplayScale.get_ui_scale()))
+	input_field.add_theme_constant_override("completion_scroll_width", DisplayScale.scale_int_floor_min(ScrollBarStyle.Thickness.MD, DisplayScale.get_ui_scale()))
 	input_field.add_theme_constant_override("completion_lines", ChatInputCompletion.POPUP_ROWS)
 	input_field.add_theme_constant_override("completion_max_width", ChatInputCompletion.POPUP_MAX_WIDTH)
 	pass

@@ -55,7 +55,7 @@ static func apply_custom(bar: ScrollBar, thickness: Thickness, normal: Color, ho
 	var grabber_pressed := bar.get_theme_stylebox("grabber_pressed").duplicate() as StyleBoxFlat
 	grabber_pressed.bg_color = pressed
 	bar.add_theme_stylebox_override("grabber_pressed", grabber_pressed)
-	var half_thickness := DisplayScale.scale_int_min(thickness, DisplayScale.get_ui_scale()) * 0.5
+	var half_thickness := DisplayScale.scale_int_floor_min(thickness, DisplayScale.get_ui_scale()) * 0.5
 	if rounded:
 		var radius := ceili(half_thickness)
 		for style: StyleBoxFlat in [grabber, grabber_highlight, grabber_pressed]:

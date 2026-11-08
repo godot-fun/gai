@@ -288,7 +288,7 @@ func build_card() -> void:
 	card_style.content_margin_top = pad
 	card_style.content_margin_bottom = pad
 	card_style.border_color = ThemeColor.accent_theme_color()
-	card_style.set_border_width(SIDE_LEFT, roundi(ControlSize.border_md * screen_scale))
+	card_style.set_border_width(SIDE_LEFT, DisplayScale.scale_int_floor_min(ControlSize.border_md, screen_scale))
 	card_style.set_corner_radius_all(roundi(ControlSize.radius_md * screen_scale))
 	card.add_theme_stylebox_override("panel", card_style)
 	card.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
