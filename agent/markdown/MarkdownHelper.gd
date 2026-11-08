@@ -29,7 +29,6 @@ extends Object
 # RichTextLabel body (markdown UI)
 # ---------------------------------------------------------------------------
 
-const BODY_LABEL_MIN_HEIGHT := 24
 const TABLE_H_SEPARATION := 0
 const TABLE_V_SEPARATION := 0
 # Inline chip box (`[bgcolor]`): RichTextLabel draws it `line_height + 2 * padding` tall
@@ -37,8 +36,6 @@ const TABLE_V_SEPARATION := 0
 # paints on their text. 0 already fits the line box; the negative value hugs the glyphs so
 # the box reads as a chip instead of a full-height row. Padding is plain arithmetic in the
 # draw code, and a future clamp to 0 would only make the box line-height again.
-const HIGHLIGHT_H_PADDING := 3
-const HIGHLIGHT_V_PADDING := -3
 
 
 ## Formats a local file path for display in Markdown. Images and video thumbnails render inline;
@@ -150,9 +147,9 @@ static func create_rich_text_label(text_color: Color, raw_text: String, markdown
 	apply_typography(label)
 	label.add_theme_constant_override("table_h_separation", TABLE_H_SEPARATION)
 	label.add_theme_constant_override("table_v_separation", TABLE_V_SEPARATION)
-	label.add_theme_constant_override("text_highlight_h_padding", HIGHLIGHT_H_PADDING)
-	label.add_theme_constant_override("text_highlight_v_padding", HIGHLIGHT_V_PADDING)
-	label.custom_minimum_size = Vector2(0, BODY_LABEL_MIN_HEIGHT)
+	label.add_theme_constant_override("text_highlight_h_padding", ControlSize.border_md)
+	label.add_theme_constant_override("text_highlight_v_padding", -ControlSize.border_md)
+	label.custom_minimum_size = Vector2(0, ControlSize.icon_lg)
 	# RichTextLabel copies what it draws, so a selection carries `[code]` NBSPs and
 	# inline-chip thin margins; restore the source characters before copying.
 	label.gui_input.connect(

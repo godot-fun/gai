@@ -128,10 +128,10 @@ func setup_queue_badge() -> void:
 	queue_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	queue_badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	queue_badge.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	queue_badge.offset_left = 2
+	queue_badge.offset_left = ControlSize.radius_xs
 	queue_badge.offset_top = -Margin.ma_5
 	queue_badge.offset_right = Margin.ma_5
-	queue_badge.offset_bottom = -2
+	queue_badge.offset_bottom = -ControlSize.radius_xs
 	send_button.add_child(queue_badge)
 	pass
 

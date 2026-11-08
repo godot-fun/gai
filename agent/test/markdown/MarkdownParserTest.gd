@@ -138,8 +138,8 @@ func inline_code_tinted_test() -> void:
 ## below it, so the box is pinned to the glyphs instead.
 func inline_code_box_padding_test() -> void:
 	var label := MarkdownHelper.create_rich_text_label(Color.WHITE, "`x`", true)
-	assert(label.get_theme_constant("text_highlight_v_padding") == MarkdownHelper.HIGHLIGHT_V_PADDING)
-	assert(label.get_theme_constant("text_highlight_h_padding") == MarkdownHelper.HIGHLIGHT_H_PADDING)
+	assert(label.get_theme_constant("text_highlight_v_padding") == -ControlSize.border_md)
+	assert(label.get_theme_constant("text_highlight_h_padding") == ControlSize.border_md)
 	assert(label.get_theme_constant("table_h_separation") == MarkdownHelper.TABLE_H_SEPARATION)
 	assert(label.get_theme_font_size("normal_font_size") == Typography.body_large)
 	assert(label.get_theme_font_size("bold_font_size") == Typography.body_large)

@@ -81,7 +81,7 @@ const BLOCKQUOTE_BODY_PADDING := "6,0,0,0"
 # the gutter reserves that spill so the fill ends on the label box.
 const CODE_BLOCK_RIGHT_GUTTER := "0,0,16,0"
 # Thin spaces either side of the chip, *outside* its box: the box reaches
-# [constant HIGHLIGHT_H_PADDING] past the glyphs, which eats the space markdown authors
+# [constant ControlSize.border_md] past the glyphs, which eats the space markdown authors
 # type around the backticks, so the code ends up glued to the prose. This is what gives the
 # chip its air; the padding inside the box stays tight. Two of them — one thin space still
 # left the box close to the neighbouring words.
