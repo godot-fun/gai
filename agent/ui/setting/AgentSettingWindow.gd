@@ -256,7 +256,7 @@ func add_help_label(parent: Container, help_text: String) -> Label:
 
 func make_line_edit(placeholder: String) -> LineEdit:
 	var edit := LineEdit.new()
-	edit.custom_minimum_size = Vector2(0, 38)
+	edit.custom_minimum_size = Vector2(0, ControlSize.md)
 	edit.placeholder_text = placeholder
 	edit.clear_button_enabled = true
 	edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL

@@ -129,6 +129,11 @@ static func apply_option_button(option: OptionButton, normal: StyleBoxFlat = Lin
 	var hover: StyleBoxFlat = normal.duplicate() as StyleBoxFlat
 	hover.border_color = ThemeColor.accent_theme_color()
 	apply_style(option, normal, hover, hover.duplicate())
+	var focus := hover.duplicate() as StyleBoxFlat
+	focus.set_border_width_all(ControlSize.border_sm)
+	option.add_theme_stylebox_override("focus", focus)
+	option.add_theme_constant_override("arrow_margin", Margin.ma_3)
+	option.add_theme_constant_override("modulate_arrow", 1)
 	apply_font_colors(option, text_color, text_color, text_color)
 	PopupMenuStyle.apply(option.get_popup())
 	pass

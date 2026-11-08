@@ -48,7 +48,7 @@ func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> 
 	sound_seconds_spin.max_value = AgentSetting.MAX_SOUND_SECONDS
 	sound_seconds_spin.step = 1
 	sound_seconds_spin.suffix = " s"
-	sound_seconds_spin.custom_minimum_size = Vector2(0, 34)
+	sound_seconds_spin.custom_minimum_size = Vector2(0, ControlSize.md)
 	sound_seconds_spin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sound_seconds_spin.value = AgentSetting.get_notification_sound_seconds()
 	sound_seconds_spin.value_changed.connect(on_sound_seconds_changed)
@@ -60,7 +60,7 @@ func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> 
 	folder_parts[0].add_child(sound_folder_label)
 	sound_folder_label.tooltip_text = I18n.t("agent.settings.sound_folder_help")
 	sound_folder_edit = LineEdit.new()
-	sound_folder_edit.custom_minimum_size = Vector2(0, 34)
+	sound_folder_edit.custom_minimum_size = Vector2(0, ControlSize.md)
 	sound_folder_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sound_folder_edit.placeholder_text = AgentSetting.DEFAULT_SOUND_FOLDER
 	sound_folder_edit.text = AgentSetting.get_notification_sound_folder()

@@ -25,7 +25,7 @@ func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> 
 	locale_scale_parts[0].add_child(language_label)
 	# Columns 2–3 — language selector (two control columns).
 	language_select = OptionButton.new()
-	language_select.custom_minimum_size = Vector2(0, 38)
+	language_select.custom_minimum_size = Vector2(0, ControlSize.md)
 	language_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for locale in I18nHelper.LOCALE_PATHS:
 		var config: I18nHelper.LocaleConfig = I18nHelper.LOCALE_PATHS[locale]
@@ -41,7 +41,7 @@ func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> 
 	# Columns 5–6 — UI scale selector (two control columns).
 	ui_scale_select = OptionButton.new()
 	ui_scale_select.tooltip_text = ui_scale_tooltip()
-	ui_scale_select.custom_minimum_size = Vector2(0, 38)
+	ui_scale_select.custom_minimum_size = Vector2(0, ControlSize.md)
 	ui_scale_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for scale in DisplayScale.UI_SCALE_PRESETS:
 		ui_scale_select.add_item(StringUtils.format("{}%", roundi(scale * 100.0)))

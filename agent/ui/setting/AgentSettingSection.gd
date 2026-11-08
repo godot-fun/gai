@@ -33,7 +33,7 @@ func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> 
 	max_turns_spin.min_value = AgentSetting.MIN_MAX_TURNS
 	max_turns_spin.max_value = AgentSetting.MAX_MAX_TURNS
 	max_turns_spin.step = 1
-	max_turns_spin.custom_minimum_size = Vector2(0, 34)
+	max_turns_spin.custom_minimum_size = Vector2(0, ControlSize.md)
 	max_turns_spin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	max_turns_spin.tooltip_text = I18n.t("agent.settings.max_turns_help")
 	max_turns_spin.value = AgentSetting.get_max_turns()

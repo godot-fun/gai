@@ -31,9 +31,10 @@ static func apply(
 	focus.border_color = ThemeColor.accent_theme_color()
 	if focus_border_width > 0:
 		focus.set_border_width_all(focus_border_width)
+	var read_only := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.demote(normal.bg_color), Colors.outline_variant)
 	edit.add_theme_stylebox_override("normal", normal)
 	edit.add_theme_stylebox_override("focus", focus)
-	edit.add_theme_stylebox_override("read_only", normal.duplicate())
+	edit.add_theme_stylebox_override("read_only", read_only)
 	if edit.clear_button_enabled:
 		edit.add_theme_color_override("clear_button_color", Colors.secondary_text)
 		edit.add_theme_color_override("clear_button_color_pressed", ThemeColor.accent_theme_color())
