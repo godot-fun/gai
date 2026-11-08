@@ -1,6 +1,19 @@
 extends RefCounted
 
 
+static func setting_button_roles_test() -> void:
+	var window := AgentSettingWindow.new()
+	var action := Button.new()
+	window.style_action_button(action)
+	var action_normal := action.get_theme_stylebox("normal") as StyleBoxFlat
+	assert(action_normal.bg_color == Colors.surface_container_high)
+	assert(action_normal.border_width_left == 0)
+	assert(action_normal.corner_radius_top_left == ControlSize.radius_lg)
+	action.free()
+	window.free()
+	pass
+
+
 static func custom_editor_path_round_trip_test() -> void:
 	var original_path := AgentSetting.get_custom_editor_path()
 	var original_editor := AgentSetting.get_workspace_editor()
