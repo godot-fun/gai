@@ -23,7 +23,7 @@ static func discover() -> Array[EditorApplication]:
 		add_windows_editor(editors, "visual_studio", "Visual Studio", ["devenv.exe"], [], "res://agent/asset/image/file/visualstudio.svg")
 		add_windows_editor(editors, "vscode", "Visual Studio Code", ["code.exe", "code.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/Microsoft VS Code/Code.exe")], "res://agent/asset/image/file/vscode.svg")
 		add_windows_editor(editors, "vscode_insiders", "Visual Studio Code Insiders", ["code-insiders.exe", "code-insiders.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/Microsoft VS Code Insiders/Code - Insiders.exe")], "res://agent/asset/image/file/vscode.svg")
-		add_windows_editor(editors, "cursor", "Cursor", ["cursor.exe", "cursor.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/cursor/Cursor.exe")], "res://agent/asset/image/file/cursor.svg")
+		add_windows_editor(editors, "cursor", "Cursor", ["cursor.exe", "cursor.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/cursor/Cursor.exe")])
 		add_windows_editor(editors, "windsurf", "Windsurf", ["windsurf.exe", "windsurf.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/Windsurf/Windsurf.exe")])
 		add_windows_editor(editors, "zed", "Zed", ["zed.exe"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/Zed/zed.exe"), OS.get_environment("LOCALAPPDATA").path_join("Programs/Zed/Zed.exe")])
 		add_windows_editor(editors, "vscodium", "VSCodium", ["codium.exe", "codium.cmd", "VSCodium.exe"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/VSCodium/VSCodium.exe")], "res://agent/asset/image/file/vscode.svg")
@@ -153,11 +153,17 @@ static func find_installed_icon(executable: String, fallback_path: String) -> St
 	if fallback_path != CODE_ICON_PATH:
 		return fallback_path
 	var executable_name := executable.get_file().get_basename().trim_suffix("64")
-	var svg_path := executable.get_base_dir().path_join(executable_name + ".svg")
-	if FileAccess.file_exists(svg_path):
-		return svg_path
-	var ico_path := executable.get_base_dir().path_join(executable_name + ".ico")
-	return ico_path if FileAccess.file_exists(ico_path) else fallback_path
+	var executable_dir := executable.get_base_dir()
+	var candidates: Array[String] = [
+		executable_dir.path_join(executable_name + ".svg"),
+		executable_dir.path_join("resources/app/resources/win32/code_70x70.png"),
+		executable_dir.path_join(executable_name + ".ico"),
+		executable_dir.path_join("resources/app/resources/win32/code.ico"),
+	]
+	for candidate in candidates:
+		if FileAccess.file_exists(candidate):
+			return candidate
+	return fallback_path
 
 
 static func jetbrains_paths(product_names: Array[String], executable_names: Array[String]) -> Array[String]:
