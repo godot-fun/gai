@@ -27,6 +27,7 @@ func _init() -> void:
 	add_child(container)
 	close_requested.connect(on_close_requested)
 	window_input.connect(on_window_input)
+	gdf.events.ui_cancel.connect(on_ui_cancel)
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
 	pass
@@ -98,10 +99,14 @@ func on_close_requested() -> void:
 
 func on_window_input(event: InputEvent) -> void:
 	if visible and event.is_action_pressed("ui_cancel"):
-		# Keep keyboard dismissal on the same path as the title-bar close button so
-		# subclass close handlers (for example, settings persistence) always run.
 		close_requested.emit()
 		set_input_as_handled()
+	pass
+
+
+## Close only the frontmost visible CommonWindow when the framework broadcasts ui_cancel.
+func on_ui_cancel() -> void:
+	close_requested.emit()
 	pass
 
 

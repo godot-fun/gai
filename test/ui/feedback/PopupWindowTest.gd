@@ -105,7 +105,10 @@ func PopupWindow_cancel_input_test() -> void:
 	assert(windows.size() == 1)
 	var window := windows[0]
 	var close_signal_count: Array[int] = [0]
+	var esc_signal_count: Array[int] = [0]
+	var count_esc := func() -> void: esc_signal_count[0] += 1
 	window.close_requested.connect(func() -> void: close_signal_count[0] += 1)
+	gdf.events.ui_cancel.connect(count_esc)
 	# Hold the window open so a run with a display shows the popup before Esc.
 	await ThreadUtils.async_sleep(1500)
 	var event := InputEventAction.new()
@@ -115,7 +118,9 @@ func PopupWindow_cancel_input_test() -> void:
 		window.on_window_input(event)
 	await gdf.gdf_node.get_tree().process_frame
 	assert(close_signal_count[0] == 1)
+	assert(esc_signal_count[0] == 1)
 	assert(!is_instance_valid(window))
+	gdf.events.ui_cancel.disconnect(count_esc)
 	pass
 
 
@@ -139,6 +144,30 @@ func CommonWindow_cancel_input_commits_spin_box_test() -> void:
 	assert(tracker.saved)
 	assert(tracker.saved_spin_value == 42.0)
 	assert(!is_instance_valid(window))
+	pass
+
+
+## Esc from the parent viewport still dismisses the frontmost CommonWindow after it loses focus.
+func CommonWindow_parent_cancel_input_test() -> void:
+	var back := SaveTrackingWindow.new()
+	var front := SaveTrackingWindow.new()
+	var back_tracker := back.tracker
+	var front_tracker := front.tracker
+	gdf.gdf_node.add_child(back)
+	gdf.gdf_node.add_child(front)
+	back.popup_centered()
+	front.popup_centered()
+	var event := InputEventAction.new()
+	event.action = "ui_cancel"
+	event.pressed = true
+	(gdf.gdf_node as gdf).on_window_input(event)
+	await gdf.gdf_node.get_tree().process_frame
+	assert(is_instance_valid(back))
+	assert(!back_tracker.saved)
+	assert(front_tracker.saved)
+	assert(!is_instance_valid(front))
+	back.on_close_requested()
+	await gdf.gdf_node.get_tree().process_frame
 	pass
 
 

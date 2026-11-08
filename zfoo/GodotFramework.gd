@@ -16,6 +16,7 @@ func _ready() -> void:
 		AudioRecorder.init()
 		LoggerHelper.init()
 		ExecutorHelper.init()
+		get_window().window_input.connect(on_window_input)
 		events.application_start.emit()
 	pass
 
@@ -27,6 +28,13 @@ func _process(_delta: float) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_CLOSE_REQUEST:
 		shutdown()
+	pass
+
+
+## Broadcast the root window's ui_cancel action; interested UI components own the response.
+func on_window_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		events.ui_cancel.emit()
 	pass
 
 
@@ -114,5 +122,7 @@ class Events:
 	signal locale_changed
 	## User interface scale preset changed (see [method DisplayScale.set_ui_scale]).
 	signal ui_scale_changed(scale: float)
+	## Emitted whenever the root window or a focused CommonWindow receives the ui_cancel action.
+	signal ui_cancel
 	pass
 ####################################################################################################
