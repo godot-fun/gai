@@ -5,7 +5,6 @@ extends CommonWindow
 
 const FIELD_LABEL_RATIO: float = 1.0
 const FIELD_CONTROL_RATIO: float = 5.0
-const NAV_COLUMN_WIDTH: int = 140
 const NAV_LOCALE_KEYS: Array[String] = [
 	"agent.settings.appearance",
 	"agent.settings.connection",
@@ -53,7 +52,7 @@ func build_window() -> void:
 
 	nav_button_group = ButtonGroup.new()
 	nav_panel = PanelContainer.new()
-	nav_panel.custom_minimum_size.x = NAV_COLUMN_WIDTH
+	nav_panel.custom_minimum_size.x = ControlSize.image_xs
 	nav_panel.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	nav_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body.add_child(nav_panel)
