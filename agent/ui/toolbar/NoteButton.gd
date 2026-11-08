@@ -14,6 +14,7 @@ func setup(p_button: Button) -> void:
 	gdf.events.locale_changed.connect(apply_theme)
 	apply_theme()
 	if NoteSetting.get_open_on_startup() and NoteSetting.has_note():
+		await ThreadUtils.async_sleep(TimeUtils.MILLIS_PER_SECOND)
 		on_button_pressed()
 	pass
 
