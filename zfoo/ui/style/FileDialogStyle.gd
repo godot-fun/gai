@@ -54,7 +54,7 @@ static func on_dialog_window_input(event: InputEvent, dialog: FileDialog) -> voi
 static func apply_control_theme(dialog: FileDialog) -> void:
 	var theme := Theme.new()
 	theme.default_font = Fonts.regular()
-	theme.default_font_size = Typography.body_large
+	theme.default_font_size = Typography.body_medium
 	var file_list := make_file_list_style()
 	var field := file_dialog_field_style()
 	var field_focus := field.duplicate() as StyleBoxFlat

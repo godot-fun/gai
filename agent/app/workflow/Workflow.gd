@@ -35,7 +35,7 @@ func _ready() -> void:
 	I18nHelper.init_i18n()
 	var app_theme := Theme.new()
 	app_theme.default_font = Fonts.regular()
-	app_theme.default_font_size = Typography.body_large
+	app_theme.default_font_size = Typography.body_medium
 	theme = app_theme
 	save_dialog.add_theme_font_override("title_font", Fonts.regular())
 	load_dialog.add_theme_font_override("title_font", Fonts.regular())
@@ -71,7 +71,7 @@ func _ready() -> void:
 
 
 func apply_theme() -> void:
-	theme.default_font_size = Typography.body_large
+	theme.default_font_size = Typography.body_medium
 	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
 	toolbar.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.deep_surface, 0, 0, 0, Colors.muted_border, ControlSize.border_xs))
 	sidebar.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.chrome_surface, 0, 0, 0, Colors.muted_border, ControlSize.border_xs))

@@ -156,7 +156,7 @@ func apply_locale() -> void:
 func apply_theme() -> void:
 	var app_theme := Theme.new()
 	app_theme.default_font = Fonts.regular()
-	app_theme.default_font_size = Typography.body_large
+	app_theme.default_font_size = Typography.body_medium
 	theme = app_theme
 	
 	chat_area_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))

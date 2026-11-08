@@ -39,7 +39,7 @@ var context_tab_index: int = -1
 func _ready() -> void:
 	var app_theme := Theme.new()
 	app_theme.default_font = Fonts.regular()
-	app_theme.default_font_size = Typography.body_large
+	app_theme.default_font_size = Typography.body_medium
 	theme = app_theme
 
 	editor = CommonEditor.new()
@@ -138,7 +138,7 @@ func apply_locale() -> void:
 func apply_theme() -> void:
 	var app_theme := Theme.new()
 	app_theme.default_font = Fonts.regular()
-	app_theme.default_font_size = Typography.body_large
+	app_theme.default_font_size = Typography.body_medium
 	theme = app_theme
 	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
 	toolbar_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.deep_surface, 0, 0, 0, Colors.subtle_border, ControlSize.border_xs))
