@@ -46,13 +46,13 @@ func flash_highlight() -> void:
 
 
 static func create_panel_style(bg_color: Color) -> StyleBoxFlat:
-	var style := StyleBoxHelper.create_style_box_flat(bg_color, 8, Margin.ma_3, Margin.ma_3)
+	var style := StyleBoxHelper.create_style_box_flat(bg_color, ControlSize.radius_lg, Margin.ma_3, Margin.ma_3)
 	if ThemeColor.is_light_theme():
 		style.border_color = Colors.outline_variant
 		style.set_border_width_all(ControlSize.border_xs)
 		style.shadow_color = Color(0, 0, 0, 0.04)
-		style.shadow_size = 6
-		style.shadow_offset = Vector2(0, 2)
+		style.shadow_size = ControlSize.radius_md
+		style.shadow_offset = Vector2(0, ControlSize.radius_xs)
 	return style
 
 
@@ -60,12 +60,12 @@ static func create_panel_style(bg_color: Color) -> StyleBoxFlat:
 static func style_header_button(button: Button, bubble_bg: Color, tooltip: String, min_width: float) -> void:
 	button.focus_mode = Control.FOCUS_NONE
 	button.tooltip_text = tooltip
-	button.custom_minimum_size = Vector2(min_width, 18)
+	button.custom_minimum_size = Vector2(min_width, ControlSize.xs)
 	button.add_theme_font_size_override("font_size", Typography.label_small)
 
 	var theme_color: Color = ThemeColor.accent_theme_color()
 	ButtonStyle.apply_font_colors(button, theme_color, ThemeColor.promote(theme_color, Weights.w_2), ThemeColor.demote(theme_color, Weights.w_2))
 
-	var normal := StyleBoxHelper.create_style_box_flat(bubble_bg, 4, Margin.ma_2, Margin.ma_0, ThemeColor.alpha_theme_color(0.45), ControlSize.border_xs)
+	var normal := StyleBoxHelper.create_style_box_flat(bubble_bg, ControlSize.radius_sm, Margin.ma_2, Margin.ma_0, ThemeColor.alpha_theme_color(0.45), ControlSize.border_xs)
 	ButtonStyle.apply_style(button, normal)
 	pass

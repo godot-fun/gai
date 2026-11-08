@@ -66,12 +66,12 @@ static func title_color_for(entry: ChatEntry) -> Color:
 
 static func style_view_button(button: Button) -> void:
 	button.tooltip_text = I18n.t("agent.chat.view_full_result")
-	button.custom_minimum_size = Vector2(22, 18)
+	button.custom_minimum_size = ControlSize.square(ControlSize.xs)
 	button.add_theme_font_size_override("font_size", Typography.label_small)
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, ThemeColor.promote(Colors.primary_text, Weights.w_2), ThemeColor.demote(Colors.secondary_text, Weights.w_2))
 
 	var border := ThemeColor.demote(Colors.secondary_text, Weights.w_2)
-	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.promote(Colors.blue_grey_surface, Weights.w_2), 4, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
+	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.promote(Colors.blue_grey_surface, Weights.w_2), ControlSize.radius_sm, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
 	ButtonStyle.apply_style(button, normal,
 		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(Colors.blue_grey_surface, Weights.w_3), Colors.secondary_text),
 		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.demote(Colors.blue_grey_surface, Weights.w_2), Colors.secondary_text))

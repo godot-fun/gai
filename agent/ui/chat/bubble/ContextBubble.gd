@@ -50,7 +50,7 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 	var delete_button: Button = Button.new()
 	delete_button.name = "DeleteButton"
 	delete_button.text = I18n.t("common.delete")
-	style_header_button(delete_button, Colors.info_surface, I18n.t("agent.chat.delete_context_tooltip"), 52.0)
+	style_header_button(delete_button, Colors.info_surface, I18n.t("agent.chat.delete_context_tooltip"), ControlSize.xl)
 	delete_button.pressed.connect(on_delete_pressed.bind(session_id, entry))
 	header.add_child(delete_button)
 
@@ -104,14 +104,14 @@ func refresh(entry: ChatEntry) -> void:
 
 static func style_expand_button(button: Button) -> void:
 	button.focus_mode = Control.FOCUS_NONE
-	button.custom_minimum_size = Vector2(0, 18)
+	button.custom_minimum_size = Vector2(0, ControlSize.xs)
 	button.add_theme_font_size_override("font_size", Typography.label_small)
 	var theme_color := ThemeColor.accent_theme_color()
 	ButtonStyle.apply_font_colors(button, theme_color, ThemeColor.promote(theme_color, Weights.w_2), ThemeColor.demote(theme_color, Weights.w_2))
 
 	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, 0, Margin.ma_1, Margin.ma_0)
 	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.alpha_theme_color(0.12))
-	hover.set_corner_radius_all(4)
+	hover.set_corner_radius_all(ControlSize.radius_sm)
 
 	# Pressed looks exactly like hover here, so the two states share one box.
 	ButtonStyle.apply_style(button, normal, hover, hover)

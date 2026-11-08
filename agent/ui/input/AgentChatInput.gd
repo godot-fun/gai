@@ -5,7 +5,6 @@ extends RefCounted
 ## collapse/expand, styling, and send button.
 
 ## Expanded panel height when empty or one line (wrap grows upward from bottom).
-const EXPANDED_HEIGHT_MIN: float = 88.0
 ## Cap auto-grow so long paste does not cover most of the chat area.
 const EXPANDED_HEIGHT_MAX_RATIO: float = 0.55
 ## Symmetric side inset: keep the input visually centered and clear of right-aligned actions.
@@ -819,10 +818,11 @@ func get_wrap_width(is_expanded: bool) -> float:
 
 
 func get_expanded_height_max() -> float:
+	var expanded_height_min := float(ControlSize.lg * 2)
 	var host: Control = input_bar.get_parent() as Control
 	if host == null:
-		return EXPANDED_HEIGHT_MIN * 3.0
-	return maxf(EXPANDED_HEIGHT_MIN, host.size.y * EXPANDED_HEIGHT_MAX_RATIO)
+		return expanded_height_min * 3.0
+	return maxf(expanded_height_min, host.size.y * EXPANDED_HEIGHT_MAX_RATIO)
 
 
 ## Fit-content height of the field. The TextEdit only reports its stylebox-only height while
@@ -841,6 +841,7 @@ func measure_field_content_height() -> float:
 ## Collapsed: fixed circle. Expanded: follow TextEdit min height, clamped; scroll inside when capped.
 ## Depends only on the text content, never on the previous fit flag, so repeated calls agree.
 func get_wrap_height(is_expanded: bool) -> float:
+	var expanded_height_min := float(ControlSize.lg * 2)
 	if not is_expanded:
 		return ControlSize.xl
 	# An empty editor is always the compact expanded height. Do not ask TextEdit for its minimum here:
@@ -848,9 +849,9 @@ func get_wrap_height(is_expanded: bool) -> float:
 	# text line, making the input flash at nearly full-screen height before the next layout pass.
 	if input_field.text.is_empty():
 		input_field.scroll_fit_content_height = true
-		return EXPANDED_HEIGHT_MIN
+		return expanded_height_min
 	# Margin.ma_1 top + bottom on the wrap stylebox is padding, so it is not usable field height.
-	var min_inner: float = maxf(0.0, EXPANDED_HEIGHT_MIN - Margin.ma_2)
+	var min_inner: float = maxf(0.0, expanded_height_min - Margin.ma_2)
 	var max_inner: float = get_expanded_height_max() - Margin.ma_2
 	var content_h: float = measure_field_content_height()
 	var at_cap: bool = content_h > max_inner
@@ -860,7 +861,7 @@ func get_wrap_height(is_expanded: bool) -> float:
 	if input_field.scroll_fit_content_height != want_fit:
 		input_field.scroll_fit_content_height = want_fit
 	var inner_h: float = minf(maxf(content_h, min_inner), max_inner)
-	return maxf(maxf(EXPANDED_HEIGHT_MIN, inner_h + Margin.ma_2), get_completion_popup_height())
+	return maxf(maxf(expanded_height_min, inner_h + Margin.ma_2), get_completion_popup_height())
 
 
 ## The `/skill` and `@file` list is drawn inside the field rect, so an open list needs a taller field.

@@ -10,9 +10,6 @@ var popup: PopupMenu
 var available_editors: Array[EditorApplication] = []
 
 const ARROW_ICON_PATH := "res://agent/asset/image/ui/keyboard_arrow_down.svg"
-const POPUP_MIN_WIDTH: int = 220
-
-
 func setup(p_button: Button, p_select_button: Button, p_workspace_button: Button) -> void:
 	button = p_button
 	select_button = p_select_button
@@ -188,7 +185,8 @@ func update_popup_items() -> void:
 func on_select_pressed() -> void:
 	update_popup_items()
 	var content_size := popup.get_contents_minimum_size()
-	var popup_size := Vector2i(maxi(int(content_size.x), POPUP_MIN_WIDTH), int(content_size.y))
+	var popup_min_width := ControlSize.image_sm - Margin.ma_5
+	var popup_size := Vector2i(maxi(int(content_size.x), popup_min_width), int(content_size.y))
 	var popup_position := Vector2i(int(button.global_position.x), int(select_button.global_position.y + select_button.size.y + Margin.ma_1))
 	popup.popup(Rect2i(popup_position, popup_size))
 	popup.oversampling_override = DisplayScale.compute_ui_scale()

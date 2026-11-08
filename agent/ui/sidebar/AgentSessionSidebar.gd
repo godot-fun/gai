@@ -48,6 +48,7 @@ func setup(
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(apply_locale)
+	gdf.events.ui_scale_changed.connect(on_ui_scale_changed)
 	AgentEvents.events.session_added.connect(on_session_added)
 	AgentEvents.events.session_removed.connect(remove_row)
 	AgentEvents.events.session_selected.connect(select_item)
@@ -135,6 +136,12 @@ func apply_locale() -> void:
 	pass
 
 
+func on_ui_scale_changed(_scale: float) -> void:
+	sync_sections()
+	apply_theme()
+	pass
+
+
 # ---------------------------------------------------------------------------
 # List rebuild & refresh
 # ---------------------------------------------------------------------------
@@ -202,7 +209,7 @@ func sync_sections() -> void:
 	var has_unpinned := unpinned_list.get_child_count() > 0
 	pinned_separator.visible = has_pinned and has_unpinned
 	# An empty Chats list has no row hit target — keep a small drop pad when unpinning is possible.
-	unpinned_list.custom_minimum_size = Vector2(0, 40) if has_pinned and not has_unpinned else Vector2.ZERO
+	unpinned_list.custom_minimum_size = Vector2(0, ControlSize.lg) if has_pinned and not has_unpinned else Vector2.ZERO
 	pass
 
 

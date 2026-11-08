@@ -30,8 +30,14 @@ func _init() -> void:
 	super()
 	add_to_group(GROUP_NAME)
 	gdf.events.locale_changed.connect(apply_locale)
+	gdf.events.ui_scale_changed.connect(on_ui_scale_changed)
 	build_window()
 	apply_locale()
+	pass
+
+
+func on_ui_scale_changed(_scale: float) -> void:
+	nav_panel.custom_minimum_size.x = ControlSize.image_xs
 	pass
 
 

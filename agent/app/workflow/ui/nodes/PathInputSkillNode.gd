@@ -40,12 +40,12 @@ func create_path_row(port_id: String, label_text: String, port_type: int) -> HBo
 
 	var label := Label.new()
 	label.text = label_text
-	label.custom_minimum_size.x = LABEL_WIDTH
+	label.custom_minimum_size.x = ControlSize.lg * 2
 	style_label(label, Colors.primary_text)
 	row.add_child(label)
 
 	var field := LineEdit.new()
-	field.custom_minimum_size.x = FIELD_MIN_WIDTH
+	field.custom_minimum_size.x = ControlSize.image_sm
 	field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var type_name := PortDef.type_to_string(port_type)
 	var translated_type := PortDef.type_label(type_name)

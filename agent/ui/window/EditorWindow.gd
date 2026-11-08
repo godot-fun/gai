@@ -33,6 +33,8 @@ func _init() -> void:
 
 func on_ui_scale_changed(_scale: float) -> void:
 	min_size = AgentLayout.window_min_size
+	editor.configure_layout()
+	editor.apply_theme()
 	pass
 
 

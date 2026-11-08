@@ -32,6 +32,7 @@ func on_ui_scale_changed(_scale: float) -> void:
 	min_size = AgentLayout.window_min_size
 	workflow.configure_sidebar_layout()
 	workflow.configure_dialog_layout()
+	workflow.apply_theme()
 	pass
 
 

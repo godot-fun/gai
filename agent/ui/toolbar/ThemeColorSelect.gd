@@ -20,6 +20,7 @@ func setup(p_button: Button) -> void:
 	gdf.events.theme_changed.connect(on_ui_theme_changed)
 	gdf.events.theme_color_changed.connect(on_ui_theme_changed)
 	gdf.events.locale_changed.connect(apply_theme)
+	gdf.events.ui_scale_changed.connect(on_ui_scale_changed)
 	on_ui_theme_changed()
 	pass
 
@@ -37,10 +38,16 @@ func build_popup() -> void:
 	color_picker = ColorPicker.new()
 	color_picker.edit_alpha = true
 	color_picker.color = ThemeColor.theme_color
-	color_picker.custom_minimum_size = Vector2(300, 320)
+	color_picker.custom_minimum_size = Vector2(ControlSize.image_md, ControlSize.image_md)
 	color_picker.color_changed.connect(on_picker_color_changed)
 	popup.add_child(color_picker)
 	button.add_child(popup)
+	pass
+
+
+func on_ui_scale_changed(_scale: float) -> void:
+	color_picker.custom_minimum_size = Vector2(ControlSize.image_md, ControlSize.image_md)
+	apply_theme()
 	pass
 
 
@@ -61,8 +68,8 @@ func update_icon(hovered: bool) -> void:
 
 func on_pressed() -> void:
 	color_picker.color = ThemeColor.theme_color
-	var anchor: Vector2 = button.global_position + Vector2(0.0, button.size.y + 6.0)
-	popup.position = Vector2i(int(anchor.x - 140.0), int(anchor.y))
+	var anchor: Vector2 = button.global_position + Vector2(0.0, button.size.y + Margin.ma_2)
+	popup.position = Vector2i(int(anchor.x - color_picker.custom_minimum_size.x * 0.5), int(anchor.y))
 	popup.popup()
 	popup.oversampling_override = DisplayScale.compute_ui_scale()
 	pass

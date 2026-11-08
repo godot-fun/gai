@@ -7,6 +7,8 @@ const MAX_RESULTS := 30
 ## Templates leading the library file are shown before the user searches; keep in sync with the library head size.
 const DEFAULT_TEMPLATE_COUNT := 124
 const GROUP_NAME: StringName = &"sense_window"
+const PROMPT_EDIT_HEIGHT := 210
+const RESULTS_HEIGHT := 260
 
 var sense_input: SenseInput
 var title_label: Label
@@ -27,6 +29,7 @@ func _init(p_sense_input: SenseInput) -> void:
 	sense_input = p_sense_input
 	add_to_group(GROUP_NAME)
 	gdf.events.locale_changed.connect(apply_locale)
+	gdf.events.ui_scale_changed.connect(on_ui_scale_changed)
 	build_window()
 	apply_locale()
 	pass
@@ -70,7 +73,7 @@ func build_window() -> void:
 	enabled_control.add_child(enabled_check)
 	var model_field := make_inline_field(left_settings, I18n.t("common.model"))
 	backend_select = OptionButton.new()
-	backend_select.custom_minimum_size = Vector2(0, 38)
+	backend_select.custom_minimum_size = Vector2(0, ControlSize.md)
 	backend_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	backend_select.add_item(I18n.t("agent.sense.local_model"))
 	backend_select.add_item(I18n.t("agent.sense.remote_model"))
@@ -87,7 +90,7 @@ func build_window() -> void:
 	add_separator(fields)
 	fields.add_child(make_label(I18n.t("agent.sense.system_prompt")))
 	prompt_edit = TextEdit.new()
-	prompt_edit.custom_minimum_size.y = 210
+	prompt_edit.custom_minimum_size.y = DisplayScale.scale_int(PROMPT_EDIT_HEIGHT, DisplayScale.get_ui_scale())
 	prompt_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	prompt_edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	prompt_edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
@@ -108,10 +111,19 @@ func build_window() -> void:
 	search_edit.text_changed.connect(refresh_results)
 	search_column.add_child(search_edit)
 	results = ItemList.new()
-	results.custom_minimum_size.y = 260
+	results.custom_minimum_size.y = DisplayScale.scale_int(RESULTS_HEIGHT, DisplayScale.get_ui_scale())
 	results.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	results.item_activated.connect(insert_prompt)
 	search_column.add_child(results)
+	pass
+
+
+func on_ui_scale_changed(_scale: float) -> void:
+	backend_select.custom_minimum_size.y = ControlSize.md
+	hotkey_button.custom_minimum_size.y = ControlSize.lg
+	prompt_edit.custom_minimum_size.y = DisplayScale.scale_int(PROMPT_EDIT_HEIGHT, DisplayScale.get_ui_scale())
+	results.custom_minimum_size.y = DisplayScale.scale_int(RESULTS_HEIGHT, DisplayScale.get_ui_scale())
+	apply_theme()
 	pass
 
 
@@ -325,11 +337,11 @@ func style_results() -> void:
 	results.add_theme_color_override("font_selected_color", ThemeColor.title_color)
 	results.add_theme_color_override("guide_color", Color(ThemeColor.body_color, 0.18))
 	results.add_theme_constant_override("line_separation", Margin.ma_2)
-	results.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 7, Margin.ma_2, Margin.ma_2, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs))
+	results.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_lg, Margin.ma_2, Margin.ma_2, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs))
 	results.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-	results.add_theme_stylebox_override("hovered", StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 6))
-	results.add_theme_stylebox_override("selected", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, 6))
-	results.add_theme_stylebox_override("selected_focus", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, 6, 0, 0, Color(ThemeColor.accent_theme_color(), 0.72), ControlSize.border_xs))
+	results.add_theme_stylebox_override("hovered", StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_md))
+	results.add_theme_stylebox_override("selected", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, ControlSize.radius_md))
+	results.add_theme_stylebox_override("selected_focus", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, ControlSize.radius_md, 0, 0, Color(ThemeColor.accent_theme_color(), 0.72), ControlSize.border_xs))
 	ScrollBarStyle.apply_custom(results.get_v_scroll_bar(), ScrollBarStyle.Thickness.MD, ThemeColor.body_color, ThemeColor.promote(ThemeColor.theme_color, Weights.w_7), ThemeColor.promote(ThemeColor.theme_color, Weights.w_4), true)
 	pass
 

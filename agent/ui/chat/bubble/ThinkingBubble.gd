@@ -59,12 +59,12 @@ func refresh(entry: ChatEntry) -> void:
 
 static func style_view_button(button: Button) -> void:
 	button.tooltip_text = I18n.t("agent.chat.view_full_thinking")
-	button.custom_minimum_size = Vector2(22, 18)
+	button.custom_minimum_size = ControlSize.square(ControlSize.xs)
 	button.add_theme_font_size_override("font_size", Typography.label_small)
 	ButtonStyle.apply_font_colors(button, Colors.info, ThemeColor.promote(Colors.info, Weights.w_2), ThemeColor.demote(Colors.info, Weights.w_2))
 
 	var border := ThemeColor.demote(Colors.info, Weights.w_2)
-	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.promote(Colors.purple_surface, Weights.w_2), 4, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
+	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.promote(Colors.purple_surface, Weights.w_2), ControlSize.radius_sm, Margin.ma_1, Margin.ma_0, border, ControlSize.border_xs)
 	ButtonStyle.apply_style(button, normal,
 		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(Colors.purple_surface, Weights.w_3), Colors.info),
 		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.demote(Colors.purple_surface, Weights.w_2), Colors.info))

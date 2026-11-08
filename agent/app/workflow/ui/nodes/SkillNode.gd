@@ -1,10 +1,6 @@
 class_name SkillNode
 extends GraphNode
 
-const NODE_MIN_WIDTH: int = 420
-const LABEL_WIDTH: int = 88
-const FIELD_MIN_WIDTH: int = 240
-
 var node_id: String = ""
 var node_def: GraphNodeDef
 var input_fields: Dictionary[String, LineEdit] = {}
@@ -18,8 +14,19 @@ func setup(p_node_id: String, p_node_def: GraphNodeDef) -> void:
 	title = node_def.display_label()
 	resizable = true
 	build_node()
-	custom_minimum_size.x = NODE_MIN_WIDTH
+	apply_layout()
 	apply_theme(false)
+	pass
+
+
+func apply_layout() -> void:
+	custom_minimum_size.x = ControlSize.image_lg
+	for child: Node in find_children("*", "Label", true, false):
+		var label := child as Label
+		if label.custom_minimum_size.x > 0.0:
+			label.custom_minimum_size.x = ControlSize.lg * 2
+	for field: LineEdit in input_fields.values():
+		field.custom_minimum_size.x = ControlSize.image_sm
 	pass
 
 
@@ -71,7 +78,7 @@ func create_connect_only_row(label_text: String) -> HBoxContainer:
 
 	var label: Label = Label.new()
 	label.text = label_text
-	label.custom_minimum_size.x = LABEL_WIDTH
+	label.custom_minimum_size.x = ControlSize.lg * 2
 	style_label(label, Colors.primary_text)
 	row.add_child(label)
 
@@ -90,12 +97,12 @@ func create_text_row(port_id: String, label_text: String, placeholder: String) -
 
 	var label: Label = Label.new()
 	label.text = label_text
-	label.custom_minimum_size.x = LABEL_WIDTH
+	label.custom_minimum_size.x = ControlSize.lg * 2
 	style_label(label, Colors.primary_text)
 	row.add_child(label)
 
 	var field: LineEdit = LineEdit.new()
-	field.custom_minimum_size.x = FIELD_MIN_WIDTH
+	field.custom_minimum_size.x = ControlSize.image_sm
 	field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	field.placeholder_text = placeholder
 	style_field(field)
@@ -222,6 +229,7 @@ func set_highlight(running: bool) -> void:
 
 
 func apply_theme(running: bool = false) -> void:
+	apply_layout()
 	var background := Colors.surface.lerp(Colors.success, 0.12) if running else Colors.surface
 	var border := Colors.success if running else Colors.outline_variant
 	var border_width := ControlSize.border_sm if running else ControlSize.border_xs
