@@ -12,7 +12,7 @@ static func apply_wrap(input_wrap: PanelContainer, expanded: bool) -> void:
 
 static func build_wrap_style(expanded: bool) -> StyleBoxFlat:
 	var radius := 16 if expanded else int(ControlSize.xl / 2)
-	var wrap_style := StyleBoxHelper.create_style_box_flat(ThemeColor.promote(Colors.control_surface), radius, Margin.ma_1, Margin.ma_1)
+	var wrap_style := StyleBoxHelper.create_style_box_flat(ThemeColor.demote(Colors.surface, Weights.w_3), radius, Margin.ma_1, Margin.ma_1)
 	if ThemeColor.is_dark_theme():
 		wrap_style.shadow_color = Color(0, 0, 0, 0.40)
 		wrap_style.shadow_size = 16 if expanded else 10
