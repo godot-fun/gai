@@ -42,10 +42,6 @@ func common_editor_text_and_view_mode_test() -> void:
 	editor.set_split_ratio(0.25)
 	assert(is_equal_approx(editor.split_ratio, 0.25))
 
-	var leading := CheckButton.new()
-	editor.add_toolbar_leading(leading)
-	assert(leading.get_index() < editor.toolbar_spacer.get_index())
-
 	editor.set_document("func ready() -> void:\n\tpass\n", "gd")
 	assert(not editor.mode_bar.visible)
 	assert(editor.text_edit.visible)

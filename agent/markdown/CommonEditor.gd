@@ -2,7 +2,7 @@
 ## Markdown suffixes keep the split editor and preview. Other suffixes are a single highlighted editor.
 ## Edit / split / preview float at the top-right of the content, and only for Markdown.
 ## Ctrl+F floats a find bar at the top-left; Ctrl+R adds replace. Both search the editor text.
-## Extra controls go in front of the content through [method add_toolbar_leading].
+## The editor owns every child it draws: window-level controls belong to the hosting window.
 class_name CommonEditor
 extends VBoxContainer
 
@@ -29,9 +29,6 @@ var view_mode: ViewMode = ViewMode.SPLIT
 var split_ratio: float = DEFAULT_SPLIT_RATIO
 ## Path or suffix last passed to [method set_suffix]. Empty until the first call.
 var source_path: String = ""
-var toolbar_panel: PanelContainer
-var toolbar: HBoxContainer
-var toolbar_spacer: Control
 var content: Control
 var mode_bar: HBoxContainer
 var split_container: HSplitContainer
@@ -120,21 +117,6 @@ func set_suffix(suffix: String) -> void:
 
 
 func build_layout() -> void:
-	toolbar_panel = PanelContainer.new()
-	toolbar_panel.visible = false
-	toolbar_panel.custom_minimum_size.y = ControlSize.sm
-	add_child(toolbar_panel)
-
-	toolbar = HBoxContainer.new()
-	toolbar.custom_minimum_size.y = ControlSize.sm
-	toolbar.alignment = BoxContainer.ALIGNMENT_CENTER
-	toolbar.add_theme_constant_override("separation", Margin.ma_1)
-	toolbar_panel.add_child(toolbar)
-
-	toolbar_spacer = Control.new()
-	toolbar_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	toolbar.add_child(toolbar_spacer)
-
 	content = Control.new()
 	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -199,14 +181,6 @@ func build_layout() -> void:
 	pass
 
 
-## Insert [param control] on the left side of the top bar, above the content.
-func add_toolbar_leading(control: Control) -> void:
-	toolbar_panel.visible = true
-	toolbar.add_child(control)
-	toolbar.move_child(control, toolbar_spacer.get_index())
-	pass
-
-
 func make_mode_button(mode: ViewMode, icon_path: String) -> Button:
 	var button := Button.new()
 	button.toggle_mode = true
@@ -242,7 +216,7 @@ func apply_theme() -> void:
 	split_container.add_theme_icon_override("grabber", make_transparent_grabber())
 	style_text_edit()
 	style_preview()
-	style_toolbar()
+	style_mode_buttons()
 	style_find_bar()
 	apply_highlighter()
 	position_mode_bar()
@@ -279,9 +253,7 @@ func style_preview() -> void:
 	pass
 
 
-func style_toolbar() -> void:
-	var toolbar_style := StyleBoxHelper.create_style_box_flat(Colors.surface, 0, Margin.ma_1, Margin.ma_0)
-	toolbar_panel.add_theme_stylebox_override("panel", toolbar_style)
+func style_mode_buttons() -> void:
 	style_mode_button(edit_mode_button)
 	style_mode_button(split_mode_button)
 	style_mode_button(preview_mode_button)

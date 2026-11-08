@@ -1,9 +1,15 @@
 ## Markdown note window. Editing and preview live in [CommonEditor]; this window loads the note,
 ## saves it on close, and keeps the open-on-startup preference.
+##
+## Window-level controls stay in the window: a toolbar band under the title band holds them, so the
+## editor is never asked to host controls that are not about the document.
 class_name NoteWindow
 extends CommonWindow
 
 var editor: CommonEditor
+## Band directly below the title band; same construct as [member GitDiffViewer.toolbar_panel].
+var toolbar_panel: PanelContainer
+var toolbar: HBoxContainer
 var open_on_startup_check: CheckButton
 
 
@@ -21,18 +27,34 @@ func _init() -> void:
 
 
 func build_layout() -> void:
-	# Keep the toolbar below the title band; other CommonWindow content covers all fractional edges.
+	# Keep the title band's bottom hairline visible; the toolbar starts directly below it.
 	container.offset_top = 0
-	editor = CommonEditor.new()
-	container.add_child(editor)
-	editor.set_suffix("md")
+	var root := VBoxContainer.new()
+	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_theme_constant_override("separation", 0)
+	container.add_child(root)
+
+	toolbar_panel = PanelContainer.new()
+	toolbar_panel.custom_minimum_size.y = ControlSize.md
+	root.add_child(toolbar_panel)
+	toolbar = HBoxContainer.new()
+	toolbar.custom_minimum_size.y = ControlSize.md
+	toolbar.add_theme_constant_override("separation", Margin.ma_2)
+	toolbar_panel.add_child(toolbar)
 
 	open_on_startup_check = CheckButton.new()
 	open_on_startup_check.focus_mode = Control.FOCUS_NONE
 	open_on_startup_check.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	open_on_startup_check.button_pressed = NoteSetting.get_open_on_startup()
 	open_on_startup_check.toggled.connect(on_open_on_startup_toggled)
-	editor.add_toolbar_leading(open_on_startup_check)
+	toolbar.add_child(open_on_startup_check)
+
+	editor = CommonEditor.new()
+	editor.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	editor.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(editor)
+	editor.set_suffix("md")
 	pass
 
 
@@ -47,6 +69,8 @@ func apply_locale() -> void:
 func apply_theme() -> void:
 	super()
 	container.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.chrome_surface))
+	# Same band as the git diff toolbar: chrome fill, no border, the editor below carries the content surface.
+	toolbar_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.chrome_surface, 0, Margin.ma_3, Margin.ma_0))
 	style_open_on_startup()
 	pass
 
