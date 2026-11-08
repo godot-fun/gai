@@ -52,7 +52,7 @@ func apply_theme() -> void:
 
 
 func window_background_color() -> Color:
-	return Colors.deep_surface
+	return Colors.chrome_surface
 
 
 func window_title_color() -> Color:
