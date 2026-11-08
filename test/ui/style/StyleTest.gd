@@ -110,6 +110,18 @@ func ColorBase_follow_theme_test() -> void:
 	pass
 
 
+func Colors_chrome_surface_roles_test() -> void:
+	assert(Colors.DARK_SURFACE == Color(0.13, 0.13, 0.14))
+	assert(Colors.DARK_TEXT == Color(0.91, 0.92, 0.93))
+	assert(Colors.DARK_SECONDARY_TEXT == Color(0.60, 0.63, 0.65))
+	assert(Colors.DARK_DISABLED == Color(0.37, 0.39, 0.41))
+	assert(Colors.LIGHT_SURFACE == Color(1.00, 1.00, 1.00))
+	assert(Colors.LIGHT_TEXT == Color(0.13, 0.13, 0.14))
+	assert(Colors.LIGHT_SECONDARY_TEXT == Color(0.37, 0.39, 0.41))
+	assert(Colors.LIGHT_DISABLED == Color(0.60, 0.63, 0.65))
+	pass
+
+
 func ThemeColor_promote_demote_test() -> void:
 	var original := ThemeColor.current_theme
 	ThemeColor.current_theme = ThemeColor.ThemeEnum.DARK

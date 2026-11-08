@@ -13,31 +13,31 @@ const DARK_BACKGROUND := Color(0.07, 0.08, 0.10)
 const DARK_DEEP_SURFACE := Color(0.04, 0.05, 0.07)
 const DARK_CHROME_SURFACE := Color(0.10, 0.11, 0.13)
 const DARK_CONTROL_SURFACE := Color(0.11, 0.12, 0.15)
-const DARK_SURFACE := Color(0.05, 0.06, 0.08)
+## Chrome dark content surface (#202124) and foreground hierarchy.
+const DARK_SURFACE := Color(0.13, 0.13, 0.14)
 const DARK_HOVER_SURFACE := Color(0.12, 0.13, 0.16)
 const DARK_ELEVATED_SURFACE := Color(0.14, 0.15, 0.18)
 const DARK_BORDER := Color(0.22, 0.24, 0.28)
 const DARK_MUTED_BORDER := Color(0.18, 0.20, 0.24)
 const DARK_SUBTLE_BORDER := Color(0.16, 0.18, 0.22)
-## Vuetify emphasis model: white at 100% and its opaque 70%-on-black equivalent.
-const DARK_TEXT := Color(1.00, 1.00, 1.00)
-const DARK_SECONDARY_TEXT := Color(0.70, 0.70, 0.70)
-const DARK_DISABLED := Color(0.50, 0.50, 0.50)
+const DARK_TEXT := Color(0.91, 0.92, 0.93) # #E8EAED
+const DARK_SECONDARY_TEXT := Color(0.60, 0.63, 0.65) # #9AA0A6
+const DARK_DISABLED := Color(0.37, 0.39, 0.41) # #5F6368
 
 const LIGHT_BACKGROUND := Color(0.98, 0.98, 0.98)
 const LIGHT_DEEP_SURFACE := Color(0.91, 0.92, 0.94)
 const LIGHT_CHROME_SURFACE := Color(0.95, 0.95, 0.96)
 const LIGHT_CONTROL_SURFACE := Color(0.96, 0.96, 0.96)
+## Chrome light content surface (#FFFFFF) and foreground hierarchy.
 const LIGHT_SURFACE := Color(1.00, 1.00, 1.00)
 const LIGHT_HOVER_SURFACE := Color(0.91, 0.92, 0.93)
 const LIGHT_ELEVATED_SURFACE := LIGHT_SURFACE
 const LIGHT_BORDER := Color(0.84, 0.85, 0.87)
 const LIGHT_MUTED_BORDER := Color(0.86, 0.87, 0.89)
 const LIGHT_SUBTLE_BORDER := Color(0.87, 0.88, 0.90)
-## Pure black mirrors [constant DARK_TEXT] for maximum primary-text contrast on light surfaces.
-const LIGHT_TEXT := Color(0.00, 0.00, 0.00)
-const LIGHT_SECONDARY_TEXT := Color(0.30, 0.30, 0.30)
-const LIGHT_DISABLED := Color(0.62, 0.62, 0.62)
+const LIGHT_TEXT := Color(0.13, 0.13, 0.14) # #202124
+const LIGHT_SECONDARY_TEXT := Color(0.37, 0.39, 0.41) # #5F6368
+const LIGHT_DISABLED := Color(0.60, 0.63, 0.65) # #9AA0A6
 
 # ┌─────────────────────────────────────────────────────────────────────────────┐
 # │  app_background  — main window canvas behind everything                     │
@@ -81,7 +81,7 @@ static var border: Color = DARK_BORDER
 static var muted_border: Color = DARK_MUTED_BORDER
 ## Lightest outline for compact controls and toolbar elements.
 static var subtle_border: Color = DARK_SUBTLE_BORDER
-## Primary, secondary, and disabled foreground text colors.
+## Chrome-style primary, secondary, and disabled foreground roles.
 static var primary_text: Color = DARK_TEXT
 static var secondary_text: Color = DARK_SECONDARY_TEXT
 static var disabled_text: Color = DARK_DISABLED
