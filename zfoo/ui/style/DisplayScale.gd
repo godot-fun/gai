@@ -39,6 +39,11 @@ static func scale_int_min(base_value: int, scale: float, minimum: int = 1) -> in
 	return maxi(minimum, scale_int(base_value, scale))
 
 
+## Scales an integer down to a whole pixel and keeps the result at or above [param minimum].
+static func scale_int_floor_min(base_value: int, scale: float, minimum: int = 1) -> int:
+	return maxi(minimum, floori(float(base_value) * scale))
+
+
 ## Scales a floating-point value and keeps the result at or above [param minimum].
 static func scale_float_min(base_value: float, scale: float, minimum: float = 0.0) -> float:
 	return maxf(minimum, scale_float(base_value, scale))

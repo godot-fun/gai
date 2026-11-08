@@ -6,6 +6,9 @@ func numeric_scale_helpers_test() -> void:
 	assert(is_equal_approx(DisplayScale.scale_float(2.5, 1.2), 3.0))
 	assert(DisplayScale.scale_int_min(1, 0.1) == 1)
 	assert(DisplayScale.scale_int_min(4, 0.5, 3) == 3)
+	assert(DisplayScale.scale_int_floor_min(1, 1.5) == 1)
+	assert(DisplayScale.scale_int_floor_min(3, 1.5) == 4)
+	assert(DisplayScale.scale_int_floor_min(1, 0.5) == 1)
 	assert(is_equal_approx(DisplayScale.scale_float_min(-2.0, 2.0), 0.0))
 	assert(is_equal_approx(DisplayScale.scale_float_min(2.0, 0.5, 0.25), 1.0))
 	pass
@@ -18,6 +21,8 @@ func shared_tokens_scale_from_immutable_constants_test() -> void:
 	assert(Typography.body_large == 20)
 	assert(Margin.ma_5 == 25)
 	assert(ControlSize.md == 45)
+	assert(ControlSize.border_xs == 1)
+	assert(ControlSize.border_sm == 2)
 
 	# Reapplying must use base values rather than multiplying the previous result.
 	Typography.apply_scale(1.5)
@@ -26,6 +31,8 @@ func shared_tokens_scale_from_immutable_constants_test() -> void:
 	assert(Typography.body_large == 24)
 	assert(Margin.ma_5 == 30)
 	assert(ControlSize.md == 54)
+	assert(ControlSize.border_xs == 1)
+	assert(ControlSize.border_sm == 3)
 	restore_configured_scale()
 	pass
 
