@@ -46,7 +46,8 @@ static func scale_float_min(base_value: float, scale: float, minimum: float = 0.
 
 ## Current preset multiplier (snapped to [constant UI_SCALE_PRESETS]).
 static func get_ui_scale() -> float:
-	var raw := clampf(Setting.get_float(UI_SCALE_SETTING_KEY, DEFAULT_UI_SCALE), UI_SCALE_PRESETS[0], UI_SCALE_PRESETS[-1])
+	var anchor := DisplayServer.window_get_position()
+	var raw := clampf(Setting.get_float(UI_SCALE_SETTING_KEY, compute_screen_scale(anchor)), UI_SCALE_PRESETS[0], UI_SCALE_PRESETS[-1])
 	return UI_SCALE_PRESETS[find_ui_scale_index(raw)]
 
 
