@@ -19,7 +19,7 @@ const DARK_CONTROL_SURFACE := Color(0.11, 0.12, 0.15)
 const DARK_CHROME_SURFACE := Color(0.10, 0.11, 0.13)
 
 # Dark content surfaces -----------------------------------------------------------------------------------------------
-## Chrome dark content surface (#202124) and foreground hierarchy.
+## Default dark content surface (#202124).
 const DARK_SURFACE := Color(0.13, 0.13, 0.14)
 ## Material-style content layers, ordered from subtle grouping to strongest nested emphasis.
 const DARK_SURFACE_CONTAINER := Color(1.0, 1.0, 1.0, 0.08)
@@ -46,7 +46,7 @@ const LIGHT_CONTROL_SURFACE := Color(0.96, 0.96, 0.96)
 const LIGHT_CHROME_SURFACE := Color(0.95, 0.95, 0.96)
 
 # Light content surfaces ----------------------------------------------------------------------------------------------
-## Chrome light content surface (#FFFFFF) and foreground hierarchy.
+## Default light content surface (#FFFFFF).
 const LIGHT_SURFACE := Color(1.00, 1.00, 1.00)
 const LIGHT_SURFACE_CONTAINER := Color(0.0, 0.0, 0.0, 0.05)
 const LIGHT_SURFACE_CONTAINER_HIGH := Color(0.45, 0.47, 0.52, 0.18)

@@ -56,7 +56,6 @@ func ColorBase_follow_theme_test() -> void:
 	assert(Colors.surface_container_high == Colors.DARK_SURFACE_CONTAINER_HIGH)
 	assert(Colors.surface_container_highest == Colors.DARK_SURFACE_CONTAINER_HIGHEST)
 	assert(Colors.surface_container_outline_variant == Colors.DARK_SURFACE_CONTAINER_OUTLINE_VARIANT)
-	assert(Colors.hover(Colors.surface) == Colors.surface.blend(Color(Colors.primary_text, Colors.HOVER_STATE_OPACITY)))
 	assert(Colors.border == Colors.DARK_BORDER)
 	assert(Colors.muted_border == Colors.DARK_MUTED_BORDER)
 	assert(Colors.subtle_border == Colors.DARK_SUBTLE_BORDER)
@@ -89,7 +88,6 @@ func ColorBase_follow_theme_test() -> void:
 	assert(Colors.surface_container_high == Colors.LIGHT_SURFACE_CONTAINER_HIGH)
 	assert(Colors.surface_container_highest == Colors.LIGHT_SURFACE_CONTAINER_HIGHEST)
 	assert(Colors.surface_container_outline_variant == Colors.LIGHT_SURFACE_CONTAINER_OUTLINE_VARIANT)
-	assert(Colors.hover(Colors.surface) == Colors.surface.blend(Color(Colors.primary_text, Colors.HOVER_STATE_OPACITY)))
 	assert(Colors.border == Colors.LIGHT_BORDER)
 	assert(Colors.muted_border == Colors.LIGHT_MUTED_BORDER)
 	assert(Colors.subtle_border == Colors.LIGHT_SUBTLE_BORDER)
@@ -113,6 +111,13 @@ func ColorBase_follow_theme_test() -> void:
 
 	ThemeColor.current_theme = original
 	ThemeColor.refresh_derived_colors()
+	pass
+
+
+func Colors_hover_state_layer_test() -> void:
+	var layer := Color(Colors.primary_text, Colors.HOVER_STATE_OPACITY)
+	assert(Colors.hover(Colors.surface).is_equal_approx(Colors.surface.blend(layer)))
+	assert(Colors.hover(Color.TRANSPARENT).is_equal_approx(layer))
 	pass
 
 
