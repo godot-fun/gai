@@ -586,9 +586,9 @@ func on_window_input(event: InputEvent) -> void:
 ## open, so no control should retain a color captured only during construction.
 func apply_theme() -> void:
 	super()
-	container.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.surface))
+	container.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.chrome_surface))
 	split_container.add_theme_icon_override("grabber", make_transparent_grabber())
-	var toolbar_style := StyleBoxHelper.create_style_box_flat(Colors.surface, 0, Margin.ma_1, Margin.ma_0)
+	var toolbar_style := StyleBoxHelper.create_style_box_flat(Colors.chrome_surface, 0, Margin.ma_1, Margin.ma_0)
 	toolbar_panel.add_theme_stylebox_override("panel", toolbar_style)
 	var heading_style := StyleBoxHelper.create_style_box_flat(Colors.chrome_surface, 0, Margin.ma_1, Margin.ma_0)
 	for panel in [left_heading_panel, heading_spacer, right_heading_panel]:
@@ -624,7 +624,7 @@ func make_transparent_grabber() -> ImageTexture:
 
 
 func window_background_color() -> Color:
-	return Colors.surface
+	return Colors.deep_surface
 
 
 func window_title_color() -> Color:
@@ -640,7 +640,7 @@ func style_compact_button(button: Button) -> void:
 	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_sm, Margin.ma_1, Margin.ma_0, Colors.outline, ControlSize.border_xs)
 	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface, ThemeColor.accent_theme_color())
 	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), Weights.w_2), ThemeColor.accent_theme_color())
-	var disabled := StyleBoxHelper.duplicate_with_bg_color(normal, Colors.surface, Colors.outline)
+	var disabled := StyleBoxHelper.duplicate_with_bg_color(normal, Colors.control_surface, Colors.outline)
 	ButtonStyle.apply_style(button, normal, hover, pressed)
 	button.add_theme_stylebox_override("disabled", disabled)
 	pass

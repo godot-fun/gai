@@ -16,12 +16,12 @@ static func apply_base(edit: CodeEdit) -> void:
 	pass
 
 
-## Side-by-side diff panes: app background, line numbers, and current-line tint.
+## Side-by-side diff panes: surface background, line numbers, and current-line tint.
 static func apply_diff_editor(edit: CodeEdit) -> void:
-	var editor_style := StyleBoxHelper.create_style_box_flat(Colors.app_background, 0, 0, Margin.ma_2)
+	var editor_style := StyleBoxHelper.create_style_box_flat(Colors.surface, 0, 0, Margin.ma_2)
 	for state in ["normal", "focus", "read_only"]:
 		edit.add_theme_stylebox_override(state, editor_style.duplicate())
-	edit.add_theme_color_override("background_color", Colors.app_background)
+	edit.add_theme_color_override("background_color", Colors.surface)
 	apply_base(edit)
 	edit.add_theme_color_override("line_number_color", Colors.secondary_text)
 	edit.add_theme_color_override("current_line_color", Color(ThemeColor.accent_theme_color(), 0.10))
