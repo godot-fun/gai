@@ -15,6 +15,12 @@ func common_editor_text_and_view_mode_test() -> void:
 	assert(editor.preview_panel.visible)
 	assert(editor.preview_label.clip_contents)
 	assert(editor.preview_panel.clip_contents)
+	assert(editor.text_edit.get_theme_font_size("font_size") == Typography.body_large)
+	assert(editor.text_edit.get_theme_font_size("font_size") == editor.preview_label.get_theme_font_size("normal_font_size"))
+	assert(editor.preview_label.get_theme_font_size("bold_font_size") == Typography.body_large)
+	assert(editor.preview_label.get_theme_font_size("italics_font_size") == Typography.body_large)
+	assert(editor.preview_label.get_theme_font_size("bold_italics_font_size") == Typography.body_large)
+	assert(editor.preview_label.get_theme_font_size("mono_font_size") == Typography.body_large)
 	assert(editor.split_mode_button.button_pressed)
 
 	var modes: Array[int] = []

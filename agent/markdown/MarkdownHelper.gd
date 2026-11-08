@@ -125,12 +125,11 @@ static func apply_selection_theme(label: RichTextLabel) -> void:
 
 ## Reapplies the live typography tokens after the user changes the interface scale.
 static func apply_typography(label: RichTextLabel) -> void:
-	label.add_theme_font_size_override("normal_font_size", Typography.body_medium)
-	label.add_theme_font_size_override("bold_font_size", Typography.body_medium)
-	label.add_theme_font_size_override("italics_font_size", Typography.body_medium)
-	label.add_theme_font_size_override("bold_italics_font_size", Typography.body_medium)
-	# One step under body (body_large 16 → body_medium 14); monospace reads heavy at full size.
-	label.add_theme_font_size_override("mono_font_size", Typography.body_medium)
+	label.add_theme_font_size_override("normal_font_size", Typography.body_large)
+	label.add_theme_font_size_override("bold_font_size", Typography.body_large)
+	label.add_theme_font_size_override("italics_font_size", Typography.body_large)
+	label.add_theme_font_size_override("bold_italics_font_size", Typography.body_large)
+	label.add_theme_font_size_override("mono_font_size", Typography.body_large)
 	pass
 
 

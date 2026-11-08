@@ -141,11 +141,11 @@ func inline_code_box_padding_test() -> void:
 	assert(label.get_theme_constant("text_highlight_v_padding") == MarkdownHelper.HIGHLIGHT_V_PADDING)
 	assert(label.get_theme_constant("text_highlight_h_padding") == MarkdownHelper.HIGHLIGHT_H_PADDING)
 	assert(label.get_theme_constant("table_h_separation") == MarkdownHelper.TABLE_H_SEPARATION)
-	assert(label.get_theme_font_size("normal_font_size") == Typography.body_medium)
-	assert(label.get_theme_font_size("bold_font_size") == Typography.body_medium)
-	assert(label.get_theme_font_size("italics_font_size") == Typography.body_medium)
-	assert(label.get_theme_font_size("bold_italics_font_size") == Typography.body_medium)
-	assert(label.get_theme_font_size("mono_font_size") == Typography.body_medium)
+	assert(label.get_theme_font_size("normal_font_size") == Typography.body_large)
+	assert(label.get_theme_font_size("bold_font_size") == Typography.body_large)
+	assert(label.get_theme_font_size("italics_font_size") == Typography.body_large)
+	assert(label.get_theme_font_size("bold_italics_font_size") == Typography.body_large)
+	assert(label.get_theme_font_size("mono_font_size") == Typography.body_large)
 	label.free()
 	pass
 
