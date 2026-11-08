@@ -10,7 +10,7 @@ var line_label: Label
 
 
 func panel_color() -> Color:
-	return Colors.grey_surface
+	return Colors.control_surface
 
 
 func apply(_session_id: int, entry: ChatEntry) -> void:
