@@ -276,7 +276,7 @@ func draw_live_telemetry(center: Vector2) -> void:
 		var angle := elapsed * -0.12 + float(index) * TAU / 4.0
 		var position := center + Vector2.from_angle(angle) * (radius + 37.0)
 		var label := "%02X:%03d" % [index * 19 + turn_index, int(fmod(elapsed * 37.0 + index * 113.0, 999.0))]
-		draw_string(Fonts.regular(), position, label, HORIZONTAL_ALIGNMENT_LEFT, 70.0, Typography.label_small_size, VisualColor.stroke(palette_cyan, 0.38))
+		draw_string(Fonts.regular(), position, label, HORIZONTAL_ALIGNMENT_LEFT, 70.0, Typography.label_small, VisualColor.stroke(palette_cyan, 0.38))
 	pass
 
 
@@ -325,11 +325,11 @@ func draw_edge_telemetry(center: Vector2) -> void:
 			if index % 2 == 0:
 				var code := "%02X" % int(fmod(index * 29.0 + elapsed * 7.0 + turn_index, 255.0))
 				var text_x := x + inward * (length + 7.0) - (28.0 if side < 0.0 else 0.0)
-				draw_string(Fonts.regular(), Vector2(text_x, y - 4.0), code, HORIZONTAL_ALIGNMENT_LEFT, 28.0, Typography.label_small_size, VisualColor.stroke(color, 0.34))
+				draw_string(Fonts.regular(), Vector2(text_x, y - 4.0), code, HORIZONTAL_ALIGNMENT_LEFT, 28.0, Typography.label_small, VisualColor.stroke(color, 0.34))
 	# Phase marker deliberately sits off-axis like a cockpit warning label.
 	var phase_text: String = String(DeckPhase.keys()[phase])
-	draw_string(Fonts.semibold(), Vector2(rail_inset + 13.0, center.y - 9.0), "[ %s ]" % phase_text, HORIZONTAL_ALIGNMENT_LEFT, 110.0, Typography.label_small_size, VisualColor.stroke(palette_magenta, 0.72))
-	draw_string(Fonts.regular(), Vector2(size.x - rail_inset - 132.0, center.y - 9.0), StringUtils.format(I18n.t("agent.visuals.activity"), "%03d" % int(activity * 100.0)), HORIZONTAL_ALIGNMENT_RIGHT, 118.0, Typography.label_small_size, VisualColor.stroke(palette_cyan, 0.68))
+	draw_string(Fonts.semibold(), Vector2(rail_inset + 13.0, center.y - 9.0), "[ %s ]" % phase_text, HORIZONTAL_ALIGNMENT_LEFT, 110.0, Typography.label_small, VisualColor.stroke(palette_magenta, 0.72))
+	draw_string(Fonts.regular(), Vector2(size.x - rail_inset - 132.0, center.y - 9.0), StringUtils.format(I18n.t("agent.visuals.activity"), "%03d" % int(activity * 100.0)), HORIZONTAL_ALIGNMENT_RIGHT, 118.0, Typography.label_small, VisualColor.stroke(palette_cyan, 0.68))
 	pass
 
 
@@ -457,8 +457,8 @@ func draw_core(center: Vector2) -> void:
 		# Flat-top hex left/right vertical edges end at ±radius*0.5; status baseline sits on that bottom line.
 		const CORE_LABEL_GAP := 30.0
 		var status_font := Fonts.medium()
-		var status_size := Typography.label_small_size
-		draw_centered_text(center - Vector2(0.0, CORE_LABEL_GAP), I18n.t("agent.visuals.core"), Fonts.bold(), Typography.title_small_size, VisualColor.stroke(palette_cyan, 0.98))
+		var status_size := Typography.label_small
+		draw_centered_text(center - Vector2(0.0, CORE_LABEL_GAP), I18n.t("agent.visuals.core"), Fonts.bold(), Typography.title_small, VisualColor.stroke(palette_cyan, 0.98))
 		draw_centered_text(center + Vector2(0.0, radius * 0.5), core_status(), status_font, status_size, VisualColor.stroke(palette_magenta, 0.9))
 	pass
 
@@ -546,15 +546,15 @@ func draw_tool_pod(pod: ToolPod, rect: Rect2, center: Vector2) -> void:
 	draw_line(shown.position + Vector2(cut + 8.0, 0.0), shown.position + Vector2(shown.size.x * 0.84, 0.0), VisualColor.stroke(color, 0.98), 3.0)
 	draw_rect(Rect2(shown.position + Vector2(15.0, 17.0), Vector2(34.0, 34.0)), VisualColor.stroke(color, 0.08), true)
 	draw_rect(Rect2(shown.position + Vector2(15.0, 17.0), Vector2(34.0, 34.0)), VisualColor.stroke(color, 0.58), false, 1.0)
-	draw_centered_text(shown.position + Vector2(32.0, 40.0), pod.glyph, Fonts.bold(), Typography.label_medium_size, color)
-	draw_string(Fonts.semibold(), shown.position + Vector2(59.0, 27.0), pod.title, HORIZONTAL_ALIGNMENT_LEFT, shown.size.x - 80.0, Typography.label_medium_size, Colors.primary_text)
-	draw_string(Fonts.medium(), shown.position + Vector2(59.0, 49.0), "// " + pod_status(state), HORIZONTAL_ALIGNMENT_LEFT, shown.size.x - 80.0, Typography.label_small_size, color)
-	draw_string(Fonts.regular(), shown.position + Vector2(shown.size.x - 62.0, 49.0), "%02d" % pod.slot, HORIZONTAL_ALIGNMENT_RIGHT, 45.0, Typography.label_small_size, VisualColor.stroke(color, 0.7))
+	draw_centered_text(shown.position + Vector2(32.0, 40.0), pod.glyph, Fonts.bold(), Typography.label_medium, color)
+	draw_string(Fonts.semibold(), shown.position + Vector2(59.0, 27.0), pod.title, HORIZONTAL_ALIGNMENT_LEFT, shown.size.x - 80.0, Typography.label_medium, Colors.primary_text)
+	draw_string(Fonts.medium(), shown.position + Vector2(59.0, 49.0), "// " + pod_status(state), HORIZONTAL_ALIGNMENT_LEFT, shown.size.x - 80.0, Typography.label_small, color)
+	draw_string(Fonts.regular(), shown.position + Vector2(shown.size.x - 62.0, 49.0), "%02d" % pod.slot, HORIZONTAL_ALIGNMENT_RIGHT, 45.0, Typography.label_small, VisualColor.stroke(color, 0.7))
 	if is_executing:
 		var live_rect := Rect2(shown.position + Vector2(shown.size.x - 62.0, 8.0), Vector2(46.0, 15.0))
 		draw_rect(live_rect, VisualColor.stroke(color, 0.12 + active_breath * 0.08), true)
 		draw_rect(live_rect, VisualColor.stroke(color, 0.8), false, 1.0)
-		draw_string(Fonts.bold(), live_rect.position + Vector2(8.0, 11.0), I18n.t("agent.visuals.live"), HORIZONTAL_ALIGNMENT_LEFT, 34.0, Typography.label_small_size, VisualColor.stroke(color, 0.95))
+		draw_string(Fonts.bold(), live_rect.position + Vector2(8.0, 11.0), I18n.t("agent.visuals.live"), HORIZONTAL_ALIGNMENT_LEFT, 34.0, Typography.label_small, VisualColor.stroke(color, 0.95))
 	# Upper-right energy columns — idle/complete pods only; EXECUTING uses LIVE badge instead.
 	if not is_executing:
 		for bar in range(5):

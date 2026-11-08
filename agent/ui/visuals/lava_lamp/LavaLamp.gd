@@ -210,7 +210,7 @@ func step_lamp(delta: float) -> void:
 	heat_boost = move_toward(heat_boost, 0.0, HEAT_BOOST_DECAY_PER_SECOND * delta)
 	presence = move_toward(presence, 1.0 if not blobs.is_empty() else 0.0, PRESENCE_PER_SECOND * delta)
 	var viewport := viewport_size()
-	var top := float(AgentLayout.TOOLBAR_HEIGHT)
+	var top := float(AgentLayout.toolbar_height)
 	var power := heater_power()
 	for blob: Blob in blobs:
 		var radius_px := blob.radius * viewport.y

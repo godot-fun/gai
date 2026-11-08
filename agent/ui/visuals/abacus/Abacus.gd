@@ -601,7 +601,7 @@ func draw_seal() -> void:
 ## The count rides on a riveted plate above the frame, like a maker's tag on the instrument.
 func draw_value() -> void:
 	var rect := frame_rect()
-	var size := clampi(int(bead_radius() * 0.95), Typography.label_medium_size, Typography.headline_small_size)
+	var size := clampi(int(bead_radius() * 0.95), Typography.label_medium, Typography.headline_small)
 	var text := str(value)
 	var font := Fonts.bold()
 	var text_width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x

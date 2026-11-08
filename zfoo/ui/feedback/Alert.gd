@@ -38,11 +38,11 @@ var fade_tween: Tween
 ## enters the tree: this way sizing, resting slot and entry start are fixed on the very first frame.
 func resize_to_text() -> void:
 	var font: Font = label.get_theme_font("font")
-	var text_width: float = font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.body_large_size).x
+	var text_width: float = font.get_string_size(label.text, HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.body_large).x
 	var style: StyleBox = get_theme_stylebox("panel")
 	size = Vector2(
 		minf(text_width, text_max_width) + style.get_margin(SIDE_LEFT) + style.get_margin(SIDE_RIGHT),
-		font.get_height(Typography.body_large_size) + style.get_margin(SIDE_TOP) + style.get_margin(SIDE_BOTTOM)
+		font.get_height(Typography.body_large) + style.get_margin(SIDE_TOP) + style.get_margin(SIDE_BOTTOM)
 	)
 	pass
 
@@ -119,7 +119,7 @@ static func create_alert(i18n_text: String, stripe_color: Color) -> Alert:
 	card.label.text = I18n.t(i18n_text)
 	card.label.vertical_alignment = VerticalAlignment.VERTICAL_ALIGNMENT_CENTER
 	card.label.add_theme_font_override("font", make_font())
-	card.label.add_theme_font_size_override("font_size", Typography.body_large_size)
+	card.label.add_theme_font_size_override("font_size", Typography.body_large)
 	# Near-white on the dark surface, dark on the light one — the accent-tinted card decides this.
 	card.label.add_theme_color_override("font_color", ThemeColor.title_color)
 	card.label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS

@@ -10,7 +10,7 @@ static func apply(popup: PopupMenu) -> void:
 	popup.add_theme_color_override("font_accelerator_color", Colors.secondary_text)
 	popup.add_theme_color_override("font_disabled_color", Colors.disabled_text)
 	popup.add_theme_color_override("font_separator_color", Colors.secondary_text)
-	popup.add_theme_font_size_override("font_size", Typography.label_large_size)
+	popup.add_theme_font_size_override("font_size", Typography.label_large)
 	popup.add_theme_constant_override("v_separation", Margin.ma_2)
 	popup.add_theme_constant_override("item_start_padding", Margin.ma_3)
 	popup.add_theme_constant_override("item_end_padding", Margin.ma_3)

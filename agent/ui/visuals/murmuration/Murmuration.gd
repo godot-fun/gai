@@ -176,7 +176,7 @@ func hatch(position: Vector2, velocity: Vector2, tag: float) -> bool:
 
 func hatch_from_edge() -> void:
 	var viewport := view_size()
-	var top := float(AgentLayout.TOOLBAR_HEIGHT)
+	var top := float(AgentLayout.toolbar_height)
 	var y := rng.randf_range(top + 40.0, viewport.y - 40.0)
 	var from_left := rng.randf() < 0.5
 	var position := Vector2(-8.0 if from_left else viewport.x + 8.0, y)
@@ -345,7 +345,7 @@ func edge_force(index: int) -> Vector2:
 	if leaving:
 		return Vector2.ZERO
 	var viewport := view_size()
-	var top := float(AgentLayout.TOOLBAR_HEIGHT)
+	var top := float(AgentLayout.toolbar_height)
 	var position := positions[index]
 	var force := Vector2.ZERO
 	if position.x < EDGE_MARGIN:

@@ -273,9 +273,9 @@ func build_card() -> void:
 	var card_width := float(SenseWave.WAVE_WIDTH) * screen_scale
 	var title_font := Fonts.semibold()
 	var body_font := Fonts.regular()
-	var title_size := roundi(Typography.title_medium_size * screen_scale)
-	var label_size := roundi(Typography.label_large_size * screen_scale)
-	var body_size := roundi(Typography.body_large_size * screen_scale)
+	var title_size := roundi(Typography.title_medium * screen_scale)
+	var label_size := roundi(Typography.label_large * screen_scale)
+	var body_size := roundi(Typography.body_large * screen_scale)
 	var gap := Margin.ma_3 * screen_scale
 	size = Vector2i(roundi(card_width), roundi(pad * 2.0 + title_font.get_height(title_size)))
 	position = clamp_to_usable(window_position_for_anchor(anchor, size, screen_scale), size)

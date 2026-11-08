@@ -56,7 +56,7 @@ static func row(selected: bool, hovered: bool) -> StyleBoxFlat:
 ## Title / close button colors for the current row state.
 static func apply_row_colors(title_button: Button, delete_button: Button, selected: bool, hovered: bool) -> void:
 	var text_color: Color = Colors.primary_text if selected or hovered else Colors.secondary_text
-	title_button.add_theme_font_size_override("font_size", Typography.title_medium_size)
+	title_button.add_theme_font_size_override("font_size", Typography.title_medium)
 	title_button.add_theme_color_override("font_color", text_color)
 	title_button.add_theme_color_override("font_hover_color", text_color)
 	title_button.add_theme_color_override("font_pressed_color", text_color)

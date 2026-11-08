@@ -225,10 +225,10 @@ func apply_theme() -> void:
 	page_margin.add_theme_constant_override("margin_right", Margin.ma_6)
 	page_margin.add_theme_constant_override("margin_bottom", Margin.ma_4)
 	title_label.add_theme_font_override("font", Fonts.semibold())
-	title_label.add_theme_font_size_override("font_size", Typography.title_medium_size)
+	title_label.add_theme_font_size_override("font_size", Typography.title_medium)
 	title_label.add_theme_color_override("font_color", Colors.primary_text)
 	path_label.add_theme_font_override("font", Fonts.regular())
-	path_label.add_theme_font_size_override("font_size", Typography.body_medium_size)
+	path_label.add_theme_font_size_override("font_size", Typography.body_medium)
 	path_label.add_theme_color_override("font_color", Colors.secondary_text)
 	for button: Button in sample_buttons:
 		style_sample_button(button)
@@ -237,7 +237,7 @@ func apply_theme() -> void:
 
 func style_sample_button(button: Button) -> void:
 	button.add_theme_font_override("font", Fonts.medium())
-	button.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	button.add_theme_font_size_override("font_size", Typography.label_medium)
 	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1, Colors.subtle_border, ControlSize.border_xs)
 	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(Colors.control_surface, Weights.w_2))
 	var selected := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(Colors.control_surface, Weights.w_2), ThemeColor.accent_theme_color())

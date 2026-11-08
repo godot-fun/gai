@@ -19,7 +19,7 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 	var title_label := Label.new()
 	title_label.text = entry.title
 	title_label.add_theme_color_override("font_color", Colors.warning)
-	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	title_label.add_theme_font_size_override("font_size", Typography.label_medium)
 	header.add_child(title_label)
 
 	header.add_child(create_body_label(entry.body.strip_edges()))
@@ -42,5 +42,5 @@ static func create_body_label(body: String) -> Label:
 	label.add_theme_color_override("font_color", Colors.secondary_text)
 	label.add_theme_color_override("font_outline_color", Color.TRANSPARENT)
 	label.add_theme_font_override("font", Fonts.regular())
-	label.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	label.add_theme_font_size_override("font_size", Typography.label_medium)
 	return label

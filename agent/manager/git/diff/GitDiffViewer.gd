@@ -217,7 +217,7 @@ func add_heading_panel(parent: Container, heading: String) -> PanelContainer:
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.add_theme_color_override("font_color", ThemeColor.body_color)
 	label.add_theme_font_override("font", Fonts.medium())
-	label.add_theme_font_size_override("font_size", Typography.label_large_size)
+	label.add_theme_font_size_override("font_size", Typography.label_large)
 	heading_labels.append(label)
 	heading_panel.add_child(label)
 	return heading_panel
@@ -256,7 +256,7 @@ func make_button(text: String, tooltip: String) -> Button:
 	button.custom_minimum_size.y = ControlSize.xs
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.add_theme_font_override("font", Fonts.medium())
-	button.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	button.add_theme_font_size_override("font_size", Typography.label_medium)
 	return button
 
 
@@ -264,7 +264,7 @@ func style_navigation_button_size(button: Button) -> void:
 	button.custom_minimum_size = ControlSize.square(ControlSize.sm)
 	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.focus_mode = Control.FOCUS_NONE
-	button.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	button.add_theme_font_size_override("font_size", Typography.label_medium)
 	pass
 
 

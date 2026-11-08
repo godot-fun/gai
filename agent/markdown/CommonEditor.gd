@@ -261,7 +261,7 @@ func style_text_edit() -> void:
 	text_edit.add_theme_color_override("current_line_color", Color(ThemeColor.accent_theme_color(), 0.10))
 	text_edit.add_theme_color_override("search_result_color", Color(ThemeColor.accent_theme_color(), 0.35))
 	text_edit.add_theme_color_override("search_result_border_color", ThemeColor.accent_theme_color())
-	text_edit.add_theme_font_size_override("font_size", Typography.body_large_size)
+	text_edit.add_theme_font_size_override("font_size", Typography.body_large)
 	if not is_markdown():
 		text_edit.add_theme_color_override("line_number_color", Colors.secondary_text)
 	pass
@@ -552,7 +552,7 @@ func style_find_bar() -> void:
 	style_find_line_edit(find_edit)
 	style_find_line_edit(replace_edit)
 	find_count_label.add_theme_font_override("font", Fonts.regular())
-	find_count_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	find_count_label.add_theme_font_size_override("font_size", Typography.label_medium)
 	find_count_label.add_theme_color_override("font_color", Colors.secondary_text)
 	style_find_icon_button(find_previous_button)
 	style_find_icon_button(find_next_button)
@@ -563,7 +563,7 @@ func style_find_bar() -> void:
 
 func style_find_line_edit(edit: LineEdit) -> void:
 	edit.add_theme_font_override("font", Fonts.regular())
-	edit.add_theme_font_size_override("font_size", Typography.label_large_size)
+	edit.add_theme_font_size_override("font_size", Typography.label_large)
 	pass
 
 

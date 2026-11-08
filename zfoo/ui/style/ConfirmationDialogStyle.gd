@@ -20,7 +20,7 @@ static func apply(dialog: ConfirmationDialog, secondary_buttons: Array[Button] =
 	dialog.add_theme_stylebox_override("panel", FileDialogStyle.make_dialog_body_style())
 	dialog.add_theme_color_override("font_color", ThemeColor.title_color)
 	dialog.add_theme_font_override("font", Fonts.regular())
-	dialog.add_theme_font_size_override("font_size", Typography.body_medium_size)
+	dialog.add_theme_font_size_override("font_size", Typography.body_medium)
 	var label := dialog.get_label()
 	label.add_theme_color_override("font_color", ThemeColor.title_color)
 	label.add_theme_font_override("font", Fonts.regular())

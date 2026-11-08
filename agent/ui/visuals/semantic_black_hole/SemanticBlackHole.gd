@@ -83,9 +83,9 @@ func _ready() -> void:
 	shader_material.set_shader_parameter("success_color", Colors.success)
 	shader_material.set_shader_parameter("error_color", Colors.error)
 	tool_name_label.add_theme_font_override("font", Fonts.semibold())
-	tool_name_label.add_theme_font_size_override("font_size", Typography.label_large_size)
+	tool_name_label.add_theme_font_size_override("font_size", Typography.label_large)
 	tool_status_label.add_theme_font_override("font", Fonts.medium())
-	tool_status_label.add_theme_font_size_override("font_size", Typography.label_small_size)
+	tool_status_label.add_theme_font_size_override("font_size", Typography.label_small)
 	apply_tool_badge_style()
 	pass
 

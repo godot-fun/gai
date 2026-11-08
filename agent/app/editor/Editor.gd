@@ -4,7 +4,6 @@ extends PanelContainer
 ## The body is a workspace file tree beside [CommonEditor]. Hosted by [EditorWindow].
 
 const WORDMARK := "GAI · Editor"
-const TAB_WIDTH := ControlSize.image_xs
 
 enum Pending { NONE, CLOSE, CLOSE_OTHERS, CLOSE_ALL, LEAVE }
 
@@ -40,6 +39,7 @@ var context_tab_index: int = -1
 func _ready() -> void:
 	var app_theme := Theme.new()
 	app_theme.default_font = Fonts.regular()
+	app_theme.default_font_size = Typography.body_large
 	theme = app_theme
 
 	editor = CommonEditor.new()
@@ -104,7 +104,7 @@ func build_tab_menu() -> void:
 
 
 func configure_layout() -> void:
-	toolbar_panel.custom_minimum_size.y = AgentLayout.TOOLBAR_HEIGHT
+	toolbar_panel.custom_minimum_size.y = AgentLayout.toolbar_height
 	toolbar_margin.add_theme_constant_override("margin_left", Margin.ma_3)
 	toolbar_margin.add_theme_constant_override("margin_right", Margin.ma_3)
 	toolbar_margin.add_theme_constant_override("margin_top", Margin.ma_2)
@@ -113,8 +113,8 @@ func configure_layout() -> void:
 	tab_row.add_theme_constant_override("separation", Margin.ma_2)
 	tab_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_SHOW_NEVER
 	tab_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	body_split.split_offset = AgentLayout.SIDEBAR_DEFAULT_WIDTH
-	sidebar.custom_minimum_size.x = AgentLayout.SIDEBAR_MIN_WIDTH
+	body_split.split_offset = AgentLayout.sidebar_default_width
+	sidebar.custom_minimum_size.x = AgentLayout.sidebar_min_width
 	file_tree.set_column_expand(0, true)
 	file_tree.set_column_clip_content(0, true)
 	align_tabs.call_deferred()
@@ -138,6 +138,7 @@ func apply_locale() -> void:
 func apply_theme() -> void:
 	var app_theme := Theme.new()
 	app_theme.default_font = Fonts.regular()
+	app_theme.default_font_size = Typography.body_large
 	theme = app_theme
 	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
 	toolbar_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.deep_surface, 0, 0, 0, Colors.subtle_border, ControlSize.border_xs))
@@ -180,7 +181,7 @@ func style_logo() -> void:
 	logo_font.base_font = Fonts.bold()
 	logo_font.spacing_glyph = Typography.letter_spacing_lg
 	logo_label.add_theme_font_override("font", logo_font)
-	logo_label.add_theme_font_size_override("font_size", Typography.title_medium_size)
+	logo_label.add_theme_font_size_override("font_size", Typography.title_medium)
 	logo_label.add_theme_color_override("font_color", color)
 	pass
 
@@ -188,7 +189,7 @@ func style_logo() -> void:
 func style_file_tree() -> void:
 	ScrollBarStyle.apply(tab_scroll.get_h_scroll_bar())
 	file_tree.add_theme_font_override("font", Fonts.light())
-	file_tree.add_theme_font_size_override("font_size", Typography.body_medium_size)
+	file_tree.add_theme_font_size_override("font_size", Typography.body_medium)
 	for color_name in ["font_color", "font_hovered_color", "font_hovered_dimmed_color", "font_selected_color", "font_hovered_selected_color"]:
 		file_tree.add_theme_color_override(color_name, Colors.primary_text)
 	file_tree.add_theme_constant_override("draw_guides", 0)
@@ -356,10 +357,10 @@ func scroll_tabs(event: InputEvent) -> bool:
 	var mouse := event as InputEventMouseButton
 	if mouse != null and mouse.pressed:
 		if mouse.button_index == MOUSE_BUTTON_WHEEL_UP or mouse.button_index == MOUSE_BUTTON_WHEEL_LEFT:
-			tab_scroll.scroll_horizontal -= TAB_WIDTH
+			tab_scroll.scroll_horizontal -= ControlSize.image_xs
 			return true
 		if mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN or mouse.button_index == MOUSE_BUTTON_WHEEL_RIGHT:
-			tab_scroll.scroll_horizontal += TAB_WIDTH
+			tab_scroll.scroll_horizontal += ControlSize.image_xs
 			return true
 	var pan := event as InputEventPanGesture
 	if pan != null:
@@ -595,7 +596,7 @@ func rebuild_tabs() -> void:
 		tab_cards.append(card)
 	var count := tab_cards.size()
 	var separation := tab_row.get_theme_constant("separation")
-	tab_row.custom_minimum_size.x = count * TAB_WIDTH + maxi(count - 1, 0) * separation
+	tab_row.custom_minimum_size.x = count * ControlSize.image_xs + maxi(count - 1, 0) * separation
 	queue_reveal()
 	pass
 
@@ -603,7 +604,7 @@ func rebuild_tabs() -> void:
 func make_tab(index: int) -> PanelContainer:
 	var document := tabs.files[index]
 	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(TAB_WIDTH, AgentLayout.TOOLBAR_HEIGHT - Margin.ma_2 * 2)
+	card.custom_minimum_size = Vector2(ControlSize.image_xs, AgentLayout.toolbar_height - Margin.ma_2 * 2)
 	card.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	card.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	card.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -625,7 +626,7 @@ func make_tab(index: int) -> PanelContainer:
 	name_button.custom_minimum_size.y = ControlSize.xs
 	name_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_button.add_theme_font_override("font", Fonts.regular())
-	name_button.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	name_button.add_theme_font_size_override("font_size", Typography.label_medium)
 	name_button.pressed.connect(on_tab_pressed.bind(index))
 	name_button.gui_input.connect(on_tab_gui_input.bind(index))
 	row.add_child(name_button)
@@ -635,7 +636,7 @@ func make_tab(index: int) -> PanelContainer:
 	dirty_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	dirty_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	dirty_label.modulate.a = 1.0 if document.is_dirty() else 0.0
-	dirty_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	dirty_label.add_theme_font_size_override("font_size", Typography.label_medium)
 	dirty_label.add_theme_color_override("font_color", ThemeColor.accent_theme_color())
 	row.add_child(dirty_label)
 
@@ -646,7 +647,7 @@ func make_tab(index: int) -> PanelContainer:
 	close_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	close_button.flat = true
 	close_button.custom_minimum_size = ControlSize.square(ControlSize.xs)
-	close_button.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	close_button.add_theme_font_size_override("font_size", Typography.label_medium)
 	close_button.pressed.connect(on_tab_close_pressed.bind(index))
 	close_button.gui_input.connect(on_tab_gui_input.bind(index))
 	row.add_child(close_button)

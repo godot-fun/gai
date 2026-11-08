@@ -83,8 +83,8 @@ func build_card() -> void:
 	var text_width: float = card_width - pad * 2.0
 	var title_font: Font = Fonts.semibold()
 	var body_font: Font = Fonts.regular()
-	var title_size: int = roundi(Typography.title_medium_size * unit)
-	var body_size: int = roundi(Typography.body_medium_size * unit)
+	var title_size: int = roundi(Typography.title_medium * unit)
+	var body_size: int = roundi(Typography.body_medium * unit)
 	var gap: float = Margin.ma_2 * unit
 	# First guess from font metrics; `fit_window_size` corrects it once the labels wrapped.
 	var body_height: float = 0.0

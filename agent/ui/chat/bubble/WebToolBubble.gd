@@ -18,7 +18,7 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 	var title_label := Label.new()
 	title_label.text = entry.title
 	title_label.add_theme_color_override("font_color", Colors.info)
-	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	title_label.add_theme_font_size_override("font_size", Typography.label_medium)
 	header.add_child(title_label)
 
 	var body := entry.body.strip_edges()
@@ -47,7 +47,7 @@ static func create_body_label(body: String) -> Label:
 	label.add_theme_color_override("font_color", Colors.secondary_text)
 	label.add_theme_color_override("font_outline_color", Color.TRANSPARENT)
 	label.add_theme_font_override("font", Fonts.regular())
-	label.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	label.add_theme_font_size_override("font_size", Typography.label_medium)
 	return label
 
 
@@ -60,7 +60,7 @@ static func create_url_button(url: String) -> LinkButton:
 	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, Colors.primary_text)
 	button.add_theme_font_override("font", Fonts.regular())
-	button.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	button.add_theme_font_size_override("font_size", Typography.label_medium)
 	button.pressed.connect(func() -> void: open_url(button.text))
 	return button
 

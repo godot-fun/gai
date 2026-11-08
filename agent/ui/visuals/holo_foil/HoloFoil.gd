@@ -63,7 +63,7 @@ func _ready() -> void:
 	screen_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	holo_material = ShaderMaterial.new()
 	holo_material.shader = HOLO_SHADER
-	holo_material.set_shader_parameter("toolbar_height_px", float(AgentLayout.TOOLBAR_HEIGHT))
+	holo_material.set_shader_parameter("toolbar_height_px", float(AgentLayout.toolbar_height))
 	screen_rect.material = holo_material
 	add_child(screen_rect)
 	update_theme_presentation()

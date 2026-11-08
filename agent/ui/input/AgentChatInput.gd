@@ -9,7 +9,6 @@ const EXPANDED_HEIGHT_MIN: float = 88.0
 ## Cap auto-grow so long paste does not cover most of the chat area.
 const EXPANDED_HEIGHT_MAX_RATIO: float = 0.55
 ## Symmetric side inset: keep the input visually centered and clear of right-aligned actions.
-const SIDE_INSET: float = ControlSize.md * 5.0
 ## Bottom-up reveal duration when the queue list appears after expand settles.
 const QUEUE_FADE_SECONDS: float = 0.25
 ## Keep the pending-message panel quieter and shorter than the composer below it.
@@ -568,7 +567,7 @@ func layout_queue_panel() -> void:
 	var wrap_width := get_wrap_width(true)
 	var width := wrap_width * QUEUE_WIDTH_RATIO
 	var content_height := minf(queue_scroll.get_combined_minimum_size().y + Margin.ma_2, 220.0)
-	var right := input_bar.size.x - SIDE_INSET
+	var right := input_bar.size.x - ControlSize.md * 5.0
 	queue_panel.position = Vector2(right - width, input_wrap.offset_top - content_height - Margin.ma_5)
 	queue_panel.size = Vector2(width, content_height)
 	pass
@@ -814,9 +813,9 @@ func get_wrap_width(is_expanded: bool) -> float:
 	var bar_width: float = maxf(input_bar.size.x, 1.0)
 	if not is_expanded:
 		# The collapsed control remains a fixed circle, only its right edge moves inward.
-		return minf(ControlSize.xl, maxf(1.0, bar_width - SIDE_INSET))
+		return minf(ControlSize.xl, maxf(1.0, bar_width - ControlSize.md * 5.0))
 	# Expanded input uses the same inset on both sides, so its horizontal margins stay symmetric.
-	return maxf(1.0, bar_width - SIDE_INSET * 2.0)
+	return maxf(1.0, bar_width - ControlSize.md * 10.0)
 
 
 func get_expanded_height_max() -> float:
@@ -875,7 +874,7 @@ func layout_bar() -> void:
 	var bar_size: Vector2 = input_bar.size
 	var wrap_w: float = get_wrap_width(expanded)
 	var wrap_h: float = get_wrap_height(expanded)
-	var wrap_right: float = bar_size.x - SIDE_INSET
+	var wrap_right: float = bar_size.x - ControlSize.md * 5.0
 	input_wrap.offset_left = wrap_right - wrap_w
 	input_wrap.offset_right = wrap_right
 	input_wrap.offset_top = bar_size.y - Margin.ma_4 - wrap_h
@@ -942,7 +941,7 @@ func set_expanded(is_expanded: bool, animate: bool) -> void:
 	tween_target_h = get_wrap_height(is_expanded)
 	tween_bar_size = input_bar.size
 	tween_start_left = input_wrap.offset_left
-	var wrap_right: float = tween_bar_size.x - SIDE_INSET
+	var wrap_right: float = tween_bar_size.x - ControlSize.md * 5.0
 	tween_target_left = wrap_right - get_wrap_width(is_expanded)
 	tween_expand_target = is_expanded
 
@@ -954,7 +953,7 @@ func set_expanded(is_expanded: bool, animate: bool) -> void:
 func apply_input_tween_step(value: float) -> void:
 	var height: float = lerpf(tween_start_h, tween_target_h, value)
 	# Keep the right edge fixed throughout the tween; only the left edge and height are animated.
-	var wrap_right: float = tween_bar_size.x - SIDE_INSET
+	var wrap_right: float = tween_bar_size.x - ControlSize.md * 5.0
 	input_wrap.offset_left = lerpf(tween_start_left, tween_target_left, value)
 	input_wrap.offset_right = wrap_right
 	input_wrap.offset_top = tween_bar_size.y - Margin.ma_4 - height

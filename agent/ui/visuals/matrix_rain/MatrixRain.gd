@@ -287,7 +287,7 @@ func draw_reply_glyph(reply_glyph: ReplyGlyph) -> void:
 	var edge_fade: float = smoothstep(-24.0, 48.0, y) * (1.0 - smoothstep(size.y - 100.0, size.y + 24.0, y))
 	var position := Vector2(reply_glyph.x, y)
 	var color := ThemeColor.accent_theme_color()
-	draw_centered_text(position, reply_glyph.text, Fonts.semibold(), Typography.label_medium_size, Color(color, edge_fade * 0.92))
+	draw_centered_text(position, reply_glyph.text, Fonts.semibold(), Typography.label_medium, Color(color, edge_fade * 0.92))
 	pass
 
 
@@ -315,10 +315,10 @@ func draw_column(column: RainColumn) -> void:
 		if row == 0:
 			draw_color = Color(1.0, 1.0, 1.0, 0.62 + highlight * 0.35)
 		var jitter := sin(elapsed * 36.0 + float(row)) * 2.5 * highlight if state == ToolState.FAILED else 0.0
-		draw_centered_text(Vector2(x + jitter, y), glyph, Fonts.medium(), Typography.label_small_size, draw_color)
+		draw_centered_text(Vector2(x + jitter, y), glyph, Fonts.medium(), Typography.label_small, draw_color)
 	if state != ToolState.NONE and not column.tool_label.is_empty():
 		var label_y := head_y - float(trail_length) * step_y - 5.0
-		draw_centered_text(Vector2(x, label_y), column.tool_label, Fonts.semibold(), Typography.label_small_size, Color(color, 0.45 + highlight * 0.5))
+		draw_centered_text(Vector2(x, label_y), column.tool_label, Fonts.semibold(), Typography.label_small, Color(color, 0.45 + highlight * 0.5))
 	pass
 
 

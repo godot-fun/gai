@@ -2,13 +2,18 @@ class_name DisplayScale
 extends Object
 
 ## Display-layer scale helpers: user interface presets plus layout ratios for overlays.
+##
+## Do not implement user UI scaling by changing the root [member Window.content_scale_factor] or by
+## scaling the root canvas. That can rasterize text at the original size and then stretch the result,
+## making glyphs look blurry. Keep the root canvas at 1:1 and use [method apply_ui_scale] to rebuild
+## typography, spacing, and control tokens so fonts are rasterized directly at their final pixel size.
 
 # ----------------------------------------------------------------------------------------------------------------------
 # User interface scale
 # ----------------------------------------------------------------------------------------------------------------------
 
-## Whole-app zoom stored in [Setting] and applied to [member Window.content_scale_factor].
-## Distinct from [method compute_ui_scale] (automatic stretch) — do not mix the two when sizing UI.
+## Whole-app design scale stored in [Setting]. The root canvas stays at 1:1; this class recalculates
+## typography, spacing, and control tokens so fonts are rasterized directly at their final size.
 ##
 ## Presets match the agent appearance setting and Ctrl / ⌘ + mouse wheel shortcuts.
 
@@ -19,24 +24,38 @@ const UI_SCALE_PRESETS: Array[float] = [
 ]
 
 
+## Scales an integer and rounds it to the nearest whole pixel.
+static func scale_int(base_value: int, scale: float) -> int:
+	return roundi(float(base_value) * scale)
+
+
+## Scales a floating-point value without rounding.
+static func scale_float(base_value: float, scale: float) -> float:
+	return base_value * scale
+
+
+## Scales an integer and keeps the result at or above [param minimum].
+static func scale_int_min(base_value: int, scale: float, minimum: int = 1) -> int:
+	return maxi(minimum, scale_int(base_value, scale))
+
+
+## Scales a floating-point value and keeps the result at or above [param minimum].
+static func scale_float_min(base_value: float, scale: float, minimum: float = 0.0) -> float:
+	return maxf(minimum, scale_float(base_value, scale))
+
+
 ## Current preset multiplier (snapped to [constant UI_SCALE_PRESETS]).
 static func get_ui_scale() -> float:
 	var raw := clampf(Setting.get_float(UI_SCALE_SETTING_KEY, DEFAULT_UI_SCALE), UI_SCALE_PRESETS[0], UI_SCALE_PRESETS[-1])
 	return UI_SCALE_PRESETS[find_ui_scale_index(raw)]
 
 
-## Applies [method get_ui_scale] to the root window (call once at startup and after each [method set_ui_scale]).
+## Recalculates every shared UI token (call once before building UI and after each scale change).
 static func apply_ui_scale() -> void:
-	var tree := Engine.get_main_loop() as SceneTree
-	if tree == null:
-		return
 	var scale := get_ui_scale()
-	tree.root.content_scale_factor = scale
-	## Window resize updates canvas_items stretch asynchronously; wait for its viewport to settle.
-	await tree.process_frame
-	## Re-rasterize fonts at the final window-to-viewport pixel density. This includes both the
-	## user zoom above and the project's canvas_items stretch, which are otherwise applied twice.
-	tree.root.oversampling_override = compute_ui_scale()
+	Typography.apply_scale(scale)
+	Margin.apply_scale(scale)
+	ControlSize.apply_scale(scale)
 	pass
 
 
@@ -51,6 +70,9 @@ static func set_ui_scale(scale: float) -> void:
 	Setting.save()
 	apply_ui_scale()
 	gdf.events.ui_scale_changed.emit(preset_scale)
+	# Existing controls have copied token values into theme overrides and StyleBoxes. Reapply those
+	# after the live tokens change; newly constructed controls read the scaled values directly.
+	gdf.events.theme_changed.emit()
 	pass
 
 

@@ -13,7 +13,7 @@ func _init() -> void:
 	force_native = true
 	exclusive = false
 	transient = false
-	min_size = Vector2i(720, 480)
+	min_size = AgentLayout.window_min_size
 	close_requested.connect(on_close_requested)
 	window_input.connect(on_window_input)
 	gdf.events.theme_changed.connect(apply_theme)
@@ -28,8 +28,10 @@ func _init() -> void:
 	pass
 
 
-func on_ui_scale_changed(scale: float) -> void:
-	content_scale_factor = scale
+func on_ui_scale_changed(_scale: float) -> void:
+	min_size = AgentLayout.window_min_size
+	workflow.configure_sidebar_layout()
+	workflow.configure_dialog_layout()
 	pass
 
 
@@ -52,10 +54,7 @@ func on_close_requested() -> void:
 
 func present(width_percent: int = 92, height_percent: int = 88) -> void:
 	var initial_size := EditorWindow.size_from_viewport_percent(width_percent, height_percent)
-	content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
-	content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
-	content_scale_size = initial_size
-	content_scale_factor = DisplayScale.get_ui_scale()
+	min_size = AgentLayout.window_min_size
 	size = initial_size
 	popup_centered()
 	apply_theme()

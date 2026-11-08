@@ -96,7 +96,7 @@ static func apply_queue_badge(badge: Label, collapsed: bool, queue_count: int) -
 		return
 	badge.text = "9+" if queue_count > 9 else str(queue_count)
 	badge.add_theme_font_override("font", Fonts.semibold())
-	badge.add_theme_font_size_override("font_size", Typography.label_small_size)
+	badge.add_theme_font_size_override("font_size", Typography.label_small)
 	badge.add_theme_color_override("font_color", Color.WHITE)
 	var badge_color := Colors.error.lerp(Colors.surface, 0.15)
 	badge.add_theme_stylebox_override("normal", StyleBoxHelper.create_style_box_flat(

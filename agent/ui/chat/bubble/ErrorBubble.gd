@@ -23,7 +23,7 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 	var title_label: Label = Label.new()
 	title_label.text = entry.title
 	title_label.add_theme_color_override("font_color", Colors.secondary_text)
-	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	title_label.add_theme_font_size_override("font_size", Typography.label_medium)
 	vbox.add_child(title_label)
 
 	rich_text = MarkdownHelper.create_rich_text_label(
@@ -79,7 +79,7 @@ static func on_resume_pressed(session_id: int, entry: ChatEntry) -> void:
 
 static func style_resume_button(button: Button) -> void:
 	button.custom_minimum_size = Vector2(0, ControlSize.md)
-	button.add_theme_font_size_override("font_size", Typography.label_large_size)
+	button.add_theme_font_size_override("font_size", Typography.label_large)
 
 	var theme_color := ThemeColor.accent_theme_color()
 	ButtonStyle.apply_font_colors(button, theme_color, ThemeColor.promote(theme_color, Weights.w_2), ThemeColor.demote(theme_color, Weights.w_2))

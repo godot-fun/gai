@@ -138,7 +138,7 @@ static func create_rich_text_label(text_color: Color, raw_text: String, markdown
 	label.add_theme_font_override("bold_italics_font", Fonts.bold())
 	label.add_theme_font_override("mono_font", Fonts.code())
 	# One step under body (body_large 16 → body_medium 14); monospace reads heavy at full size.
-	label.add_theme_font_size_override("mono_font_size", Typography.body_medium_size)
+	label.add_theme_font_size_override("mono_font_size", Typography.body_medium)
 	label.add_theme_constant_override("table_h_separation", TABLE_H_SEPARATION)
 	label.add_theme_constant_override("table_v_separation", TABLE_V_SEPARATION)
 	label.add_theme_constant_override("text_highlight_h_padding", HIGHLIGHT_H_PADDING)

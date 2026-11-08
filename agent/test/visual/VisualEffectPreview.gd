@@ -231,16 +231,16 @@ func selected_turn_count() -> int:
 func apply_theme() -> void:
 	background.color = Colors.app_background
 	title_label.add_theme_font_override("font", Fonts.semibold())
-	title_label.add_theme_font_size_override("font_size", Typography.title_large_size)
+	title_label.add_theme_font_size_override("font_size", Typography.title_large)
 	title_label.add_theme_color_override("font_color", Colors.primary_text)
 	for label: Label in [hint_label, status_label, payload_label, effects_label]:
 		label.add_theme_font_override("font", Fonts.regular())
-		label.add_theme_font_size_override("font_size", Typography.body_medium_size)
+		label.add_theme_font_size_override("font_size", Typography.body_medium)
 		label.add_theme_color_override("font_color", Colors.secondary_text)
 	payload_label.add_theme_color_override("font_color", Colors.primary_text)
 	for label: Label in section_labels:
 		label.add_theme_font_override("font", Fonts.medium())
-		label.add_theme_font_size_override("font_size", Typography.label_large_size)
+		label.add_theme_font_size_override("font_size", Typography.label_large)
 		label.add_theme_color_override("font_color", Colors.primary_text)
 	style_toolbar_button(stop_button)
 	for button: Button in play_buttons:
@@ -252,7 +252,7 @@ func apply_theme() -> void:
 
 func style_toolbar_button(button: Button) -> void:
 	button.add_theme_font_override("font", Fonts.medium())
-	button.add_theme_font_size_override("font_size", Typography.label_large_size)
+	button.add_theme_font_size_override("font_size", Typography.label_large)
 	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1, Colors.subtle_border, ControlSize.border_xs)
 	ButtonStyle.apply_style(button, normal,
 		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(Colors.control_surface, Weights.w_2)),
@@ -263,7 +263,7 @@ func style_toolbar_button(button: Button) -> void:
 
 func style_payload_button(button: Button) -> void:
 	button.add_theme_font_override("font", Fonts.medium())
-	button.add_theme_font_size_override("font_size", Typography.label_large_size)
+	button.add_theme_font_size_override("font_size", Typography.label_large)
 	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1, Colors.subtle_border, ControlSize.border_xs)
 	var selected := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(Colors.control_surface, Weights.w_2), ThemeColor.accent_theme_color())
 	if button.button_pressed:

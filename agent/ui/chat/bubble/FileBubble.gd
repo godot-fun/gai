@@ -19,7 +19,7 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 	var title_label := Label.new()
 	title_label.text = entry.title
 	title_label.add_theme_color_override("font_color", Colors.warning)
-	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	title_label.add_theme_font_size_override("font_size", Typography.label_medium)
 	header.add_child(title_label)
 
 	var file_path: String = entry.details.get(AgentToolResult.DETAIL_FILE_PATH, "")
@@ -56,7 +56,7 @@ static func create_file_detail_label(text: String, color: Color) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_font_size_override("font_size", Typography.label_small_size)
+	label.add_theme_font_size_override("font_size", Typography.label_small)
 	return label
 
 
@@ -69,6 +69,6 @@ static func create_file_path_button(file_path: String) -> LinkButton:
 	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, Colors.primary_text)
 	button.add_theme_font_override("font", Fonts.regular())
-	button.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	button.add_theme_font_size_override("font_size", Typography.label_medium)
 	button.pressed.connect(open_file.bind(file_path))
 	return button

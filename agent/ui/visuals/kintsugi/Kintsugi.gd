@@ -239,7 +239,7 @@ func crack_rng(key: String) -> RandomNumberGenerator:
 ## Picks the candidate farthest from existing cracks so seams spread over the body.
 func pick_center(rng: RandomNumberGenerator) -> Vector2:
 	var aspect := size.x / size.y if size.y > 0.0 else DEFAULT_ASPECT
-	var top := clampf(float(AgentLayout.TOOLBAR_HEIGHT) / size.y, 0.0, 0.3) if size.y > 0.0 else 0.06
+	var top := clampf(float(AgentLayout.toolbar_height) / size.y, 0.0, 0.3) if size.y > 0.0 else 0.06
 	var best := Vector2(0.5, 0.5)
 	var best_score := -1.0
 	for _index in range(PLACEMENT_CANDIDATES):

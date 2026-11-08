@@ -40,7 +40,7 @@ func apply_logo_theme() -> void:
 	logo_label.text = Agent.TITLE
 	logo_label.tooltip_text = Agent.SUBTITLE
 	logo_label.add_theme_font_override("font", logo_font)
-	logo_label.add_theme_font_size_override("font_size", Typography.title_medium_size)
+	logo_label.add_theme_font_size_override("font_size", Typography.title_medium)
 	logo_label.add_theme_color_override("font_color", theme_color if ThemeColor.is_dark_theme() else theme_color.darkened(0.08))
 	pass
 

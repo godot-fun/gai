@@ -225,7 +225,7 @@ func hatch(position: Vector2, phase: float) -> bool:
 
 func hatch_random() -> void:
 	var viewport := view_size()
-	var top := float(AgentLayout.TOOLBAR_HEIGHT) + EDGE_MARGIN
+	var top := float(AgentLayout.toolbar_height) + EDGE_MARGIN
 	hatch(Vector2(rng.randf_range(EDGE_MARGIN, viewport.x - EDGE_MARGIN), rng.randf_range(top, viewport.y - EDGE_MARGIN)), rng.randf() * TAU)
 	pass
 
@@ -331,7 +331,7 @@ func lantern_force(index: int) -> Vector2:
 
 func edge_force(index: int) -> Vector2:
 	var viewport := view_size()
-	var top := float(AgentLayout.TOOLBAR_HEIGHT)
+	var top := float(AgentLayout.toolbar_height)
 	var position := positions[index]
 	var force := Vector2.ZERO
 	if position.x < EDGE_MARGIN:

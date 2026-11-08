@@ -105,7 +105,7 @@ func build_ui() -> void:
 	id_label.offset_bottom = 0.0
 	id_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	id_label.add_theme_font_override("font", Fonts.regular())
-	id_label.add_theme_font_size_override("font_size", Typography.label_small_size)
+	id_label.add_theme_font_size_override("font_size", Typography.label_small)
 	id_label.modulate.a = 0.0
 	add_child(id_label)
 	pass

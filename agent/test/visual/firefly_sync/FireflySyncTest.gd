@@ -35,7 +35,7 @@ func start_hatches_scattered_swarm_below_toolbar_test() -> void:
 		has_large = has_large or size_scale > 1.15
 	assert(has_small and has_large)
 	for position: Vector2 in effect.positions:
-		assert(position.y > float(AgentLayout.TOOLBAR_HEIGHT))
+		assert(position.y > float(AgentLayout.toolbar_height))
 	assert(effect.coherence() < 0.5)
 	effect.free()
 	pass

@@ -51,7 +51,7 @@ class FloatingLine extends RefCounted:
 	var text: String = ""
 	var position: Vector2 = Vector2.ZERO
 	var color: Color = Color.WHITE
-	var font_size: int = Typography.label_small_size
+	var font_size: int = Typography.label_small
 	var age: float = 0.0
 	var life: float = FLOAT_LINE_LIFE
 
@@ -151,7 +151,7 @@ func spawn_floating_line_on_impact(note: PianoNote) -> void:
 	pass
 
 
-func spawn_floating_line(text: String, origin: Vector2, color: Color, font_size: int = Typography.label_small_size) -> void:
+func spawn_floating_line(text: String, origin: Vector2, color: Color, font_size: int = Typography.label_small) -> void:
 	if floating_lines.size() >= MAX_FLOATING_LINES:
 		floating_lines.pop_front()
 	var line := FloatingLine.new()
@@ -177,7 +177,7 @@ func floating_font_band_for_note(note: PianoNote) -> Vector2i:
 	return Vector2i(ceili(band_min), floori(band_max))
 
 
-func trim_line_text(text: String, font_size: int = Typography.label_small_size) -> String:
+func trim_line_text(text: String, font_size: int = Typography.label_small) -> String:
 	var font := Fonts.medium()
 	if font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x <= FLOAT_LINE_MAX_WIDTH:
 		return text
@@ -374,7 +374,7 @@ func draw_keyboard() -> void:
 			draw_rect(Rect2(key_rect.position.x + 2.0, key_rect.end.y - 7.0, maxf(1.0, key_rect.size.x - 4.0), 4.0), Color(color_for_white_key(key_index), glow * 0.66), true)
 		if key_index % 7 == 0:
 			var octave_label := "C%d" % (key_index / 7 + 1)
-			draw_centered_text(Vector2(key_rect.get_center().x, key_rect.end.y - 15.0), octave_label, label_font, Typography.label_small_size, octave_label_color)
+			draw_centered_text(Vector2(key_rect.get_center().x, key_rect.end.y - 15.0), octave_label, label_font, Typography.label_small, octave_label_color)
 	# White key dividers start below the black keys, so a divider never splits a black key in two.
 	var black_bottom := keyboard.position.y + keyboard.size.y * BLACK_KEY_HEIGHT_RATIO
 	for key_index in range(WHITE_KEY_COUNT + 1):

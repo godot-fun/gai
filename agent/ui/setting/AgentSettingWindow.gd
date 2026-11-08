@@ -164,7 +164,7 @@ func apply_scroll_to_section(index: int) -> void:
 func add_heading(parent: Container, text: String) -> Label:
 	var label := Label.new()
 	label.text = text
-	label.add_theme_font_size_override("font_size", Typography.title_large_size)
+	label.add_theme_font_size_override("font_size", Typography.title_large)
 	parent.add_child(label)
 	return label
 
@@ -189,7 +189,7 @@ func make_label(label_text: String) -> Label:
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label.add_theme_font_size_override("font_size", Typography.label_large_size)
+	label.add_theme_font_size_override("font_size", Typography.label_large)
 	return label
 
 
@@ -249,7 +249,7 @@ func add_help_label(parent: Container, help_text: String) -> Label:
 	help.text = help_text
 	help.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	help.size_flags_stretch_ratio = FIELD_CONTROL_RATIO
-	help.add_theme_font_size_override("font_size", Typography.label_small_size)
+	help.add_theme_font_size_override("font_size", Typography.label_small)
 	row.add_child(help)
 	return help
 
@@ -269,7 +269,7 @@ func add_check_button(parent: Container, label_text: String, enabled: bool) -> C
 	check.text = label_text
 	check.button_pressed = enabled
 	check.focus_mode = Control.FOCUS_NONE
-	check.add_theme_font_size_override("font_size", Typography.label_large_size)
+	check.add_theme_font_size_override("font_size", Typography.label_large)
 	parent.add_child(check)
 	return check
 

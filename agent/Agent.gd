@@ -71,12 +71,14 @@ var window_state: WindowState = WindowState.new()
 func _ready() -> void:
 	I18nHelper.init_i18n()
 	DisplayScale.apply_ui_scale()
+	AgentLayout.refresh()
 	apply_layout()
 	apply_theme()
 	window_state.setup(get_window())
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(apply_locale)
+	gdf.events.ui_scale_changed.connect(on_ui_scale_changed)
 	
 	agent_toolbar.setup(toolbar_panel, toolbar_logo, workspace_button_node)
 	agent_notification.setup()
@@ -103,7 +105,6 @@ func _ready() -> void:
 	sense_input.setup()
 	apply_locale()
 	get_window().window_input.connect(on_window_input)
-	get_window().size_changed.connect(on_window_size_changed)
 	gdf.callable_deferred(apply_theme)
 	# session
 	agent_session_sidebar.reload_sessions()
@@ -120,15 +121,17 @@ func on_window_input(event: InputEvent) -> void:
 	pass
 
 
-func on_window_size_changed() -> void:
-	DisplayScale.apply_ui_scale()
+func on_ui_scale_changed(_scale: float) -> void:
+	AgentLayout.refresh()
+	apply_layout()
+	apply_theme()
 	pass
 
 
 func apply_layout() -> void:
-	toolbar_panel.custom_minimum_size.y = AgentLayout.TOOLBAR_HEIGHT
-	body_split.split_offset = AgentLayout.SIDEBAR_DEFAULT_WIDTH
-	sidebar_panel.custom_minimum_size.x = AgentLayout.SIDEBAR_MIN_WIDTH
+	toolbar_panel.custom_minimum_size.y = AgentLayout.toolbar_height
+	body_split.split_offset = AgentLayout.sidebar_default_width
+	sidebar_panel.custom_minimum_size.x = AgentLayout.sidebar_min_width
 	toolbar_row.add_theme_constant_override("separation", Margin.ma_4)
 	agent_setting_wrap.add_theme_constant_override("margin_right", Margin.ma_3)
 	chat_lists_container.add_theme_constant_override("margin_left", Margin.ma_5)
@@ -153,6 +156,7 @@ func apply_locale() -> void:
 func apply_theme() -> void:
 	var app_theme := Theme.new()
 	app_theme.default_font = Fonts.regular()
+	app_theme.default_font_size = Typography.body_large
 	theme = app_theme
 	
 	chat_area_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))

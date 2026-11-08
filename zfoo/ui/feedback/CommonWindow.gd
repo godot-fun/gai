@@ -117,7 +117,10 @@ static func apply_window_theme(window: Window, background: Color, title_color: C
 	window.add_theme_stylebox_override("embedded_unfocused_border", make_embedded_border(window, background, border_color, BORDER_ALPHA_UNFOCUSED))
 	window.add_theme_color_override("title_color", title_color)
 	window.add_theme_font_override("title_font", Fonts.semibold())
-	window.add_theme_font_size_override("title_font_size", Typography.title_medium_size)
+	window.add_theme_font_size_override("title_font_size", Typography.title_medium)
+	window.add_theme_constant_override("title_height", ControlSize.md)
+	window.add_theme_constant_override("close_h_offset", ControlSize.icon_sm + ControlSize.border_sm)
+	window.add_theme_constant_override("close_v_offset", roundi((ControlSize.md + ControlSize.icon_sm) * 0.5))
 	window.add_theme_icon_override("close", tint_theme_icon(window, "close", title_color))
 	window.add_theme_icon_override("close_pressed", tint_theme_icon(window, "close_pressed", Colors.error))
 	pass
@@ -130,12 +133,21 @@ static func make_embedded_border(window: Window, background: Color, border_color
 	style.set_corner_radius_all(ControlSize.radius_md)
 	style.border_color = Color(border_color, border_alpha)
 	style.set_border_width_all(ControlSize.border_xs)
+	style.content_margin_left = Margin.ma_5 * 0.5
+	style.content_margin_top = Margin.ma_7
+	style.content_margin_right = Margin.ma_5 * 0.5
+	style.content_margin_bottom = Margin.ma_2
+	style.expand_margin_left = Margin.ma_2
+	style.expand_margin_top = ControlSize.md
+	style.expand_margin_right = Margin.ma_2
+	style.expand_margin_bottom = Margin.ma_3 * 0.5
 	return style
 
 
 
 static func tint_theme_icon(window: Window, icon_name: String, color: Color) -> ImageTexture:
 	var image := window.get_theme_icon(icon_name).get_image()
+	image.resize(ControlSize.icon_sm, ControlSize.icon_sm, Image.INTERPOLATE_LANCZOS)
 	for y: int in image.get_height():
 		for x: int in image.get_width():
 			var alpha := image.get_pixel(x, y).a

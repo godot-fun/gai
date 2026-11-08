@@ -454,10 +454,10 @@ func draw_tool_button(loading: bool) -> void:
 	var center := Vector2(88.0, 173.0)
 	draw_paw_print(center + Vector2(2.0, 4.0), 1.05, Color(0.0, 0.0, 0.0, 0.2), Color.TRANSPARENT)
 	draw_paw_print(center, 1.0, Color(Colors.control_surface, 0.96), Color(accent, 0.86))
-	draw_centered_text(center + Vector2(0.0, 12.0), ToolVisualDisplay.glyph(active_tool_name), Fonts.semibold(), Typography.title_medium_size, Colors.primary_text)
+	draw_centered_text(center + Vector2(0.0, 12.0), ToolVisualDisplay.glyph(active_tool_name), Fonts.semibold(), Typography.title_medium, Colors.primary_text)
 	if loading:
 		draw_yarn_loader(center, accent)
-	draw_centered_text(center + Vector2(0.0, 56.0), compact_label(ToolVisualDisplay.title_name(active_tool_name), 15), Fonts.medium(), Typography.label_small_size, Colors.secondary_text)
+	draw_centered_text(center + Vector2(0.0, 56.0), compact_label(ToolVisualDisplay.title_name(active_tool_name), 15), Fonts.medium(), Typography.label_small, Colors.secondary_text)
 	pass
 
 
@@ -478,7 +478,7 @@ func draw_status_burst(color: Color, label: String) -> void:
 	var center := Vector2(104.0, 154.0)
 	var appear := ease(state_blend, -1.6) * (1.0 + impact_pulse * 0.08)
 	draw_paw_print(center, appear, Color(color, 0.92 * appear), LINE_BROWN)
-	draw_centered_text(center + Vector2(0.0, 12.0), label, Fonts.bold(), Typography.title_medium_size, Color.WHITE)
+	draw_centered_text(center + Vector2(0.0, 12.0), label, Fonts.bold(), Typography.title_medium, Color.WHITE)
 	pass
 
 
@@ -488,7 +488,7 @@ func draw_paw_alert(color: Color) -> void:
 	var center := Vector2(104.0, 154.0) + Vector2(sin(state_seconds * 31.0), 0.0) * impact_pulse * 2.5
 	var paw_color := Color(color).lerp(Color(1.0, 0.34, 0.3), 0.28)
 	draw_paw_print(center, appear, paw_color, LINE_BROWN, wobble)
-	draw_centered_text(center + Vector2(0.0, 12.0).rotated(wobble) * appear, "!", Fonts.bold(), Typography.title_large_size, Color.WHITE)
+	draw_centered_text(center + Vector2(0.0, 12.0).rotated(wobble) * appear, "!", Fonts.bold(), Typography.title_large, Color.WHITE)
 	pass
 
 
@@ -496,9 +496,9 @@ func draw_result_card(color: Color, title: String, succeeded: bool) -> void:
 	var progress := minf(1.0, state_seconds / 0.48)
 	var center := Vector2(108.0, 151.0).lerp(Vector2(77.0, 123.0), 1.0 - progress)
 	draw_paw_print(center, 1.18 * progress, Color(Colors.control_surface, 0.98), Color(color, 0.9))
-	draw_centered_text(center + Vector2(0.0, 10.0), "✓" if succeeded else "!", Fonts.bold(), Typography.title_medium_size, color)
-	draw_centered_text(center + Vector2(0.0, 57.0), title, Fonts.semibold(), Typography.label_medium_size, Colors.primary_text)
-	draw_centered_text(center + Vector2(0.0, 76.0), compact_label(card_text, 17), Fonts.regular(), Typography.label_small_size, Colors.secondary_text)
+	draw_centered_text(center + Vector2(0.0, 10.0), "✓" if succeeded else "!", Fonts.bold(), Typography.title_medium, color)
+	draw_centered_text(center + Vector2(0.0, 57.0), title, Fonts.semibold(), Typography.label_medium, Colors.primary_text)
+	draw_centered_text(center + Vector2(0.0, 76.0), compact_label(card_text, 17), Fonts.regular(), Typography.label_small, Colors.secondary_text)
 	pass
 
 
@@ -508,7 +508,7 @@ func draw_cancel_sweep() -> void:
 		var start := Vector2(50.0 + index * 27.0, 178.0 - float(index % 2) * 16.0)
 		var position := start + Vector2(-190.0 * progress, -45.0 * progress * progress + sin(float(index)) * 12.0)
 		draw_paw_print(position, 0.28, Color(Colors.control_surface, 0.88), Color(Colors.subtle_border, 0.7), -0.5 - progress)
-	draw_text(Vector2(42.0, 68.0), I18n.t("agent.visuals.clean_slate"), Fonts.semibold(), Typography.label_medium_size, Color(Colors.secondary_text, 1.0 - progress * 0.7))
+	draw_text(Vector2(42.0, 68.0), I18n.t("agent.visuals.clean_slate"), Fonts.semibold(), Typography.label_medium, Color(Colors.secondary_text, 1.0 - progress * 0.7))
 	pass
 
 

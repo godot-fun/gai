@@ -68,7 +68,7 @@ func _ready() -> void:
 	screen_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	bubble_material = ShaderMaterial.new()
 	bubble_material.shader = BUBBLE_SHADER
-	bubble_material.set_shader_parameter("toolbar_height_px", float(AgentLayout.TOOLBAR_HEIGHT))
+	bubble_material.set_shader_parameter("toolbar_height_px", float(AgentLayout.toolbar_height))
 	screen_rect.material = bubble_material
 	add_child(screen_rect)
 	update_theme_presentation()
@@ -207,7 +207,7 @@ func current_aspect() -> float:
 
 
 func current_top() -> float:
-	return clampf(float(AgentLayout.TOOLBAR_HEIGHT) / size.y, 0.0, 0.3) if size.y > 0.0 else 0.06
+	return clampf(float(AgentLayout.toolbar_height) / size.y, 0.0, 0.3) if size.y > 0.0 else 0.06
 
 
 func _process(delta: float) -> void:

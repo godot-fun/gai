@@ -442,7 +442,7 @@ func draw_pulse_light(point: Vector2, color: Color) -> void:
 
 func draw_branch_label(tip: Vector2, direction: float, label: String, color: Color) -> void:
 	var font := Fonts.medium()
-	var font_size := Typography.label_medium_size
+	var font_size := Typography.label_medium
 	var text_width := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 	var position := tip + Vector2(12.0 if direction > 0.0 else -text_width - 12.0, 5.0)
 	draw_string(font, position, label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Colors.primary_text if ThemeColor.is_light_theme() else color)

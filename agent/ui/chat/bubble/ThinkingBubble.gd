@@ -28,7 +28,7 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 	var title_label: Label = Label.new()
 	title_label.text = entry.title
 	title_label.add_theme_color_override("font_color", Colors.purple)
-	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	title_label.add_theme_font_size_override("font_size", Typography.label_medium)
 	header.add_child(title_label)
 
 	view_button = Button.new()
@@ -39,7 +39,7 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 
 	line_label = Label.new()
 	line_label.add_theme_color_override("font_color", Colors.secondary_text)
-	line_label.add_theme_font_size_override("font_size", Typography.label_small_size)
+	line_label.add_theme_font_size_override("font_size", Typography.label_small)
 	header.add_child(line_label)
 
 	vbox.add_child(header)
@@ -60,7 +60,7 @@ func refresh(entry: ChatEntry) -> void:
 static func style_view_button(button: Button) -> void:
 	button.tooltip_text = I18n.t("agent.chat.view_full_thinking")
 	button.custom_minimum_size = Vector2(22, 18)
-	button.add_theme_font_size_override("font_size", Typography.label_small_size)
+	button.add_theme_font_size_override("font_size", Typography.label_small)
 	ButtonStyle.apply_font_colors(button, Colors.info, ThemeColor.promote(Colors.info, Weights.w_2), ThemeColor.demote(Colors.info, Weights.w_2))
 
 	var border := ThemeColor.demote(Colors.info, Weights.w_2)

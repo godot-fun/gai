@@ -411,7 +411,7 @@ func draw_core(center: Vector2, fade: float) -> void:
 	var title_rect := Rect2(terminal_rect.position, Vector2(terminal_rect.size.x, 25.0))
 	draw_rect(title_rect, VisualColor.stroke(accent, 0.1 * fade))
 	draw_line(title_rect.position + Vector2(0.0, title_rect.size.y), title_rect.end, VisualColor.stroke(accent, 0.38 * fade), 1.0)
-	draw_string(Fonts.semibold(), title_rect.position + Vector2(10.0, 17.0), "AGENT://CORE  T%02d" % maxi(turn_index, 1), HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.label_small_size, VisualColor.stroke(accent, 0.9 * fade))
+	draw_string(Fonts.semibold(), title_rect.position + Vector2(10.0, 17.0), "AGENT://CORE  T%02d" % maxi(turn_index, 1), HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.label_small, VisualColor.stroke(accent, 0.9 * fade))
 	for light_index in range(3):
 		draw_circle(title_rect.position + Vector2(title_rect.size.x - 13.0 - light_index * 10.0, 12.0), 2.2, VisualColor.stroke(accent, (0.28 + light_index * 0.16) * fade))
 	draw_terminal_content(terminal_rect, accent, fade, glitch_strength)
@@ -424,7 +424,7 @@ func draw_terminal_content(rect: Rect2, accent: Color, fade: float, glitch_stren
 	# The top half belongs to streamed reasoning/answer text. The lower command card mirrors
 	# playing_call, which remains populated during RESULT_HOLD_SECONDS so OK/ERR is readable.
 	var font := Fonts.regular()
-	var font_size := Typography.body_small_size
+	var font_size := Typography.body_small
 	var text_origin := rect.position + Vector2(12.0, 45.0)
 	var status := "THINK" if stream_kind == OpenAiClient.STREAM_KIND_REASONING else "STREAM"
 	# Twenty-four glyphs keeps CJK streams readable instead of relying on Latin-width clipping.
@@ -625,15 +625,15 @@ func draw_tool_node(node: ConstellationNode, position: Vector2, center: Vector2,
 		for satellite in range(3):
 			var satellite_angle := elapsed * 1.35 + float(satellite) * TAU / 3.0 + node.sequence
 			draw_circle(position + Vector2.from_angle(satellite_angle) * (node_radius + 15.0), 2.6, VisualColor.stroke(state_color, 0.85 * alpha))
-	draw_centered_text(position + Vector2(0.0, -node_radius - Margin.ma_2), ToolVisualDisplay.glyph(node.name), Fonts.semibold(), Typography.label_small_size, VisualColor.stroke(state_color, 0.85 * alpha))
+	draw_centered_text(position + Vector2(0.0, -node_radius - Margin.ma_2), ToolVisualDisplay.glyph(node.name), Fonts.semibold(), Typography.label_small, VisualColor.stroke(state_color, 0.85 * alpha))
 	var label_position := position + Vector2(0.0, node_radius + Margin.ma_5)
-	draw_centered_text(label_position, ToolVisualDisplay.title_name(node.name), Fonts.semibold(), Typography.label_medium_size, Color(Colors.primary_text, alpha))
+	draw_centered_text(label_position, ToolVisualDisplay.title_name(node.name), Fonts.semibold(), Typography.label_medium, Color(Colors.primary_text, alpha))
 	if state == ExecutionState.RUNNING:
-		draw_centered_text(label_position + Vector2(0.0, Margin.ma_4), I18n.t("agent.visuals.running"), Fonts.medium(), Typography.label_small_size, VisualColor.stroke(state_color, 0.9 * alpha))
+		draw_centered_text(label_position + Vector2(0.0, Margin.ma_4), I18n.t("agent.visuals.running"), Fonts.medium(), Typography.label_small, VisualColor.stroke(state_color, 0.9 * alpha))
 		if node.arg_count > 0:
-			draw_centered_text(label_position + Vector2(0.0, Margin.ma_8), StringUtils.format(I18n.t("agent.visuals.args"), node.arg_count), Fonts.regular(), Typography.label_small_size, Color(Colors.secondary_text, alpha))
+			draw_centered_text(label_position + Vector2(0.0, Margin.ma_8), StringUtils.format(I18n.t("agent.visuals.args"), node.arg_count), Fonts.regular(), Typography.label_small, Color(Colors.secondary_text, alpha))
 	elif state == ExecutionState.FAILED:
-		draw_centered_text(label_position + Vector2(0.0, Margin.ma_4), I18n.t("agent.visuals.failed"), Fonts.medium(), Typography.label_small_size, VisualColor.stroke(state_color, 0.9 * alpha))
+		draw_centered_text(label_position + Vector2(0.0, Margin.ma_4), I18n.t("agent.visuals.failed"), Fonts.medium(), Typography.label_small, VisualColor.stroke(state_color, 0.9 * alpha))
 	pass
 
 

@@ -192,6 +192,6 @@ func on_editor_selected(index: int) -> void:
 
 ## Places this button at the shared chat-content boundary after toolbar layout settles.
 func update_alignment() -> void:
-	var offset := AgentLayout.CHAT_CONTENT_LEFT - button.global_position.x
+	var offset := AgentLayout.chat_content_left - button.global_position.x
 	workspace_button.custom_minimum_size.x = maxf(0.0, workspace_button.size.x + offset)
 	pass

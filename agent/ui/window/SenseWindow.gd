@@ -47,7 +47,7 @@ func build_window() -> void:
 	fields.add_theme_constant_override("separation", Margin.ma_3)
 	card_margin.add_child(fields)
 	title_label = Label.new()
-	title_label.add_theme_font_size_override("font_size", Typography.title_large_size)
+	title_label.add_theme_font_size_override("font_size", Typography.title_large)
 	fields.add_child(title_label)
 	var quick_settings := HBoxContainer.new()
 	quick_settings.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -125,7 +125,7 @@ func add_separator(parent: Container) -> void:
 func make_label(text: String) -> Label:
 	var label := Label.new()
 	label.text = text
-	label.add_theme_font_size_override("font_size", Typography.label_large_size)
+	label.add_theme_font_size_override("font_size", Typography.label_large)
 	field_labels.append(label)
 	return label
 

@@ -461,7 +461,7 @@ func draw_item(item: StreamItem, center: Vector2) -> void:
 ## phrase still reads left-to-right, and the tail continues behind its first glyph.
 func draw_text_on_path(item: StreamItem, current: Vector2, text: String, color: Color, tail_color: Color, center_x: float) -> void:
 	var font := Fonts.medium()
-	var font_size := Typography.label_small_size
+	var font_size := Typography.label_small
 	if item.path_history.size() < 2:
 		return
 	var current_distance := cached_current_distance(item, current)
@@ -504,7 +504,7 @@ static func center_fade_alpha(x: float, center_x: float) -> float:
 
 func cache_text_metrics(item: StreamItem) -> void:
 	var font := Fonts.medium()
-	var font_size := Typography.label_small_size
+	var font_size := Typography.label_small
 	item.glyph_advances.clear()
 	item.label_width = 0.0
 	for glyph: String in item.label:

@@ -34,7 +34,7 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 	var title_label: Label = Label.new()
 	title_label.text = entry.title
 	title_label.add_theme_color_override("font_color", Colors.secondary_text)
-	title_label.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	title_label.add_theme_font_size_override("font_size", Typography.label_medium)
 	header.add_child(title_label)
 
 	expand_button = Button.new()
@@ -105,7 +105,7 @@ func refresh(entry: ChatEntry) -> void:
 static func style_expand_button(button: Button) -> void:
 	button.focus_mode = Control.FOCUS_NONE
 	button.custom_minimum_size = Vector2(0, 18)
-	button.add_theme_font_size_override("font_size", Typography.label_small_size)
+	button.add_theme_font_size_override("font_size", Typography.label_small)
 	var theme_color := ThemeColor.accent_theme_color()
 	ButtonStyle.apply_font_colors(button, theme_color, ThemeColor.promote(theme_color, Weights.w_2), ThemeColor.demote(theme_color, Weights.w_2))
 

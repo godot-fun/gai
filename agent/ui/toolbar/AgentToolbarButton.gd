@@ -8,7 +8,7 @@ static func style(button: Button, tooltip: String) -> void:
 	button.tooltip_text = tooltip
 	button.custom_minimum_size = ControlSize.square(ControlSize.sm)
 	button.flat = false
-	button.add_theme_font_size_override("font_size", Typography.label_small_size)
+	button.add_theme_font_size_override("font_size", Typography.label_small)
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, ThemeColor.accent_theme_color())
 
 	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1, Colors.subtle_border, ControlSize.border_xs)
@@ -27,7 +27,7 @@ static func style_round(button: Button, tooltip: String) -> void:
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.flat = false
 	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.add_theme_font_size_override("font_size", Typography.label_small_size)
+	button.add_theme_font_size_override("font_size", Typography.label_small)
 	button.add_theme_constant_override("icon_max_width", ControlSize.icon_md)
 	button.add_theme_constant_override("icon_max_height", ControlSize.icon_md)
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, ThemeColor.accent_theme_color())

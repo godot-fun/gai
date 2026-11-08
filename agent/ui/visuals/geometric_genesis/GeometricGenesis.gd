@@ -307,9 +307,9 @@ func draw_coordinate_plane(origin: Vector2) -> void:
 		draw_line(right, right + Vector2(-10.0, 5.0), Color(accent, 0.30 * finish_reveal), 1.4, true)
 		draw_line(top, top + Vector2(-5.0, 10.0), Color(accent, 0.30 * finish_reveal), 1.4, true)
 		draw_line(top, top + Vector2(5.0, 10.0), Color(accent, 0.30 * finish_reveal), 1.4, true)
-		draw_string(Fonts.medium(), Vector2(size.x - 39.0, origin.y - 10.0), "X", HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.label_small_size, Color(accent, 0.48 * finish_reveal))
-		draw_string(Fonts.medium(), Vector2(origin.x + 10.0, 34.0), "Y", HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.label_small_size, Color(accent, 0.48 * finish_reveal))
-		draw_string(Fonts.regular(), origin + Vector2(7.0, 17.0), "0", HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.label_small_size, Color(accent, 0.34 * finish_reveal))
+		draw_string(Fonts.medium(), Vector2(size.x - 39.0, origin.y - 10.0), "X", HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.label_small, Color(accent, 0.48 * finish_reveal))
+		draw_string(Fonts.medium(), Vector2(origin.x + 10.0, 34.0), "Y", HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.label_small, Color(accent, 0.48 * finish_reveal))
+		draw_string(Fonts.regular(), origin + Vector2(7.0, 17.0), "0", HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.label_small, Color(accent, 0.34 * finish_reveal))
 	pass
 
 
@@ -328,7 +328,7 @@ func draw_coordinate_projection(index: int, position: Vector2, origin: Vector2) 
 	if is_active or index < 4:
 		var unit := coordinate_spacing()
 		var coordinate := "P%d  (%+.1f, %+.1f)" % [index + 1, (position.x - origin.x) / unit, (origin.y - position.y) / unit]
-		draw_string(Fonts.regular(), position + Vector2(8.0, -8.0), coordinate, HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.label_small_size, Color(accent, 0.48 if is_active else 0.28))
+		draw_string(Fonts.regular(), position + Vector2(8.0, -8.0), coordinate, HORIZONTAL_ALIGNMENT_LEFT, -1, Typography.label_small, Color(accent, 0.48 if is_active else 0.28))
 	pass
 
 
@@ -496,7 +496,7 @@ func draw_construction_formula(seal: GeometrySeal, center: Vector2, radius: floa
 		draw_circle(label_anchor, 1.5, Color(accent, 0.30 * fade))
 	draw_line(Vector2(x - 7.0, y - 17.0), Vector2(x - 7.0, y + 8.0), Color(accent, 0.42 * fade), 1.0)
 	if not shape_text.is_empty():
-		draw_string(Fonts.medium(), Vector2(x, y), shape_text, HORIZONTAL_ALIGNMENT_LEFT, formula_width, Typography.label_small_size, Color(accent, 0.82 * fade))
+		draw_string(Fonts.medium(), Vector2(x, y), shape_text, HORIZONTAL_ALIGNMENT_LEFT, formula_width, Typography.label_small, Color(accent, 0.82 * fade))
 	pass
 
 

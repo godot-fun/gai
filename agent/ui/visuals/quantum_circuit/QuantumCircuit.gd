@@ -284,7 +284,7 @@ func draw_qpu_core() -> void:
 	var heartbeat := 0.72 + 0.28 * sin(elapsed * 4.0)
 	draw_circle(center, base_radius * 0.19 * heartbeat, VisualColor.stroke(core_color, 0.055))
 	draw_arc(center, base_radius * 0.19 * heartbeat, 0.0, TAU, 40, VisualColor.stroke(core_color, 0.86), 1.5, true)
-	draw_centered_text(center + Vector2(0.0, 5.0), "QPU", Fonts.semibold(), Typography.label_large_size, VisualColor.stroke(core_color, 0.92))
+	draw_centered_text(center + Vector2(0.0, 5.0), "QPU", Fonts.semibold(), Typography.label_large, VisualColor.stroke(core_color, 0.92))
 	# Radial telemetry makes the core feel connected to the desktop runtime.
 	for ray in range(16):
 		var angle := ray * TAU / 16.0 + elapsed * 0.04
@@ -349,14 +349,14 @@ func draw_quantum_readout(center_y: float) -> void:
 		var length := (4.0 + probability * 20.0) * lerpf(0.35, 1.0, edge_fade)
 		var alpha := (0.18 + probability * 0.32) * lerpf(0.25, 1.0, edge_fade)
 		draw_line(Vector2(x - length, y), Vector2(x, y), VisualColor.stroke(circuit_tint if offset % 4 else tool_tint, alpha * 0.82), 0.8)
-	draw_string(Fonts.regular(), Vector2(x - 44.0, top - 10.0), "P(q)", HORIZONTAL_ALIGNMENT_CENTER, 40.0, Typography.label_small_size, VisualColor.stroke(phase_tint, 0.48))
+	draw_string(Fonts.regular(), Vector2(x - 44.0, top - 10.0), "P(q)", HORIZONTAL_ALIGNMENT_CENTER, 40.0, Typography.label_small, VisualColor.stroke(phase_tint, 0.48))
 	pass
 
 
 func draw_header() -> void:
 	# Top bar (rule + live / superposition labels) removed — it competed with the
 	# register. Keep only the footer cue.
-	draw_string(Fonts.regular(), Vector2(38.0, size.y - 27.0), I18n.t("agent.visuals.reasoning_bus"), HORIZONTAL_ALIGNMENT_LEFT, 260.0, Typography.label_small_size, VisualColor.stroke(Colors.secondary_text, 0.62))
+	draw_string(Fonts.regular(), Vector2(38.0, size.y - 27.0), I18n.t("agent.visuals.reasoning_bus"), HORIZONTAL_ALIGNMENT_LEFT, 260.0, Typography.label_small, VisualColor.stroke(Colors.secondary_text, 0.62))
 	pass
 
 
@@ -380,7 +380,7 @@ func draw_wire(wire: Dictionary, wire_index: int, y: float) -> void:
 			var packet_phase := fmod(float(wire["phase"]) - packet * 0.07 + 1.0, 1.0)
 			var packet_x := lerpf(left, right, packet_phase)
 			draw_circle(Vector2(packet_x, y), 1.3 + packet * 0.65, VisualColor.stroke(circuit_tint, 0.7 - packet * 0.18))
-	draw_string(Fonts.medium(), Vector2(34.0, y + 5.0), "q%02d" % int(wire["turn"]), HORIZONTAL_ALIGNMENT_LEFT, 48.0, Typography.label_small_size, VisualColor.stroke(circuit_tint, 0.58))
+	draw_string(Fonts.medium(), Vector2(34.0, y + 5.0), "q%02d" % int(wire["turn"]), HORIZONTAL_ALIGNMENT_LEFT, 48.0, Typography.label_small, VisualColor.stroke(circuit_tint, 0.58))
 	draw_ket(Vector2(right + 24.0, y), "|1>" if collapse > 0.68 and not ended_with_error else "|?>", Colors.success if collapse > 0.68 else phase_tint)
 	var gates: Array = wire["gates"]
 	for gate_index in range(gates.size()):
@@ -423,7 +423,7 @@ func draw_active_wire_effect(left: float, right: float, y: float, wire_index: in
 		draw_line(corner, corner + Vector2(horizontal * bracket, 0.0), VisualColor.stroke(circuit_tint, 0.48 + breathe * 0.26), 1.0)
 		draw_line(corner, corner + Vector2(0.0, vertical * bracket), VisualColor.stroke(circuit_tint, 0.48 + breathe * 0.26), 1.0)
 	var label_position := Vector2(left + 8.0, y - band_height * 0.5 - 7.0)
-	draw_string(Fonts.semibold(), label_position, I18n.t("agent.visuals.quantum_executing"), HORIZONTAL_ALIGNMENT_LEFT, 310.0, Typography.label_small_size, VisualColor.stroke(circuit_tint, 0.64 + breathe * 0.22))
+	draw_string(Fonts.semibold(), label_position, I18n.t("agent.visuals.quantum_executing"), HORIZONTAL_ALIGNMENT_LEFT, 310.0, Typography.label_small, VisualColor.stroke(circuit_tint, 0.64 + breathe * 0.22))
 	pass
 
 
@@ -516,7 +516,7 @@ func draw_gate(gate: Dictionary, position: Vector2, decoherence: float) -> void:
 		var satellite_position := position + Vector2.from_angle(satellite_angle) * (radius + 11.0)
 		draw_circle(satellite_position, 1.6, VisualColor.stroke(color, 0.66))
 	var label := String(gate["label"]) if kind == GateKind.TOOL else gate_label(kind)
-	draw_centered_text(position + Vector2(0.0, 5.0), label, Fonts.semibold(), Typography.label_small_size, VisualColor.stroke(color, 0.92))
+	draw_centered_text(position + Vector2(0.0, 5.0), label, Fonts.semibold(), Typography.label_small, VisualColor.stroke(color, 0.92))
 	pass
 
 
@@ -583,12 +583,12 @@ func draw_collapse(center_y: float) -> void:
 	draw_circle(measure, radius + progress * 36.0, VisualColor.stroke(color, 0.035 * progress))
 	draw_arc(measure, radius, 0.0, TAU, 48, VisualColor.stroke(color, progress), 1.75, true)
 	if collapse > 0.7:
-		draw_centered_text(Vector2(size.x * 0.5, 86.0), I18n.t("agent.visuals.state_error") if ended_with_error else I18n.t("agent.visuals.determinate_state"), Fonts.semibold(), Typography.title_medium_size, VisualColor.stroke(color, progress))
+		draw_centered_text(Vector2(size.x * 0.5, 86.0), I18n.t("agent.visuals.state_error") if ended_with_error else I18n.t("agent.visuals.determinate_state"), Fonts.semibold(), Typography.title_medium, VisualColor.stroke(color, progress))
 	pass
 
 
 func draw_ket(position: Vector2, text: String, color: Color) -> void:
-	draw_centered_text(position + Vector2(0.0, 5.0), text, Fonts.medium(), Typography.label_small_size, VisualColor.stroke(color, 0.72))
+	draw_centered_text(position + Vector2(0.0, 5.0), text, Fonts.medium(), Typography.label_small, VisualColor.stroke(color, 0.72))
 	pass
 
 

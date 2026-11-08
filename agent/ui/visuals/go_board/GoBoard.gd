@@ -746,14 +746,14 @@ func draw_territory() -> void:
 					VisualColor.stroke(color, edge_alpha * local), maxf(1.0, half * 0.16), true)
 		if region.cells.size() >= 4:
 			var label := str(region.cells.size())
-			draw_centered_text(cell_center(region.center), label, Fonts.medium(), Typography.label_small_size,
+			draw_centered_text(cell_center(region.center), label, Fonts.medium(), Typography.label_small,
 				VisualColor.stroke(color, 0.62 * local))
 	pass
 
 
 func draw_hud(rect: Rect2) -> void:
 	var font := Fonts.medium()
-	var font_size := Typography.label_large_size
+	var font_size := Typography.label_large
 	var baseline := rect.position.y + rect.size.y + SCORE_LINE_GAP
 	var center_x := rect.position.x + rect.size.x * 0.5
 	if scoring:

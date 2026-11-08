@@ -61,7 +61,7 @@ static func style_header_button(button: Button, bubble_bg: Color, tooltip: Strin
 	button.focus_mode = Control.FOCUS_NONE
 	button.tooltip_text = tooltip
 	button.custom_minimum_size = Vector2(min_width, 18)
-	button.add_theme_font_size_override("font_size", Typography.label_small_size)
+	button.add_theme_font_size_override("font_size", Typography.label_small)
 
 	var theme_color: Color = ThemeColor.accent_theme_color()
 	ButtonStyle.apply_font_colors(button, theme_color, ThemeColor.promote(theme_color, Weights.w_2), ThemeColor.demote(theme_color, Weights.w_2))

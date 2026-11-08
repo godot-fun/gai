@@ -48,7 +48,7 @@ func style_text_edit() -> void:
 	text_edit.add_theme_color_override("selection_color", ThemeColor.selection_color)
 	text_edit.add_theme_color_override("current_line_color", Color(ThemeColor.accent_theme_color(), 0.10))
 	text_edit.add_theme_font_override("font", Fonts.regular())
-	text_edit.add_theme_font_size_override("font_size", Typography.body_large_size)
+	text_edit.add_theme_font_size_override("font_size", Typography.body_large)
 	ScrollBarStyle.apply(text_edit.get_v_scroll_bar())
 	ScrollBarStyle.apply(text_edit.get_h_scroll_bar())
 	pass

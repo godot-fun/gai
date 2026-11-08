@@ -48,7 +48,7 @@ func build_window() -> void:
 	query_input.line_edit.text_submitted.connect(on_query_submitted)
 	content.add_child(query_input)
 	status_label = Label.new()
-	status_label.add_theme_font_size_override("font_size", Typography.label_small_size)
+	status_label.add_theme_font_size_override("font_size", Typography.label_small)
 	content.add_child(status_label)
 	results_scroll = ScrollContainer.new()
 	results_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -118,11 +118,11 @@ func style_result_labels(result: Button) -> void:
 	var snippet_label := result.get_node_or_null("ResultText/Snippet") as Label
 	if title_label != null:
 		title_label.add_theme_font_override("font", Fonts.regular())
-		title_label.add_theme_font_size_override("font_size", Typography.title_medium_size)
+		title_label.add_theme_font_size_override("font_size", Typography.title_medium)
 		title_label.add_theme_color_override("font_color", Colors.primary_text)
 	if snippet_label != null:
 		snippet_label.add_theme_font_override("font", Fonts.light())
-		snippet_label.add_theme_font_size_override("font_size", Typography.label_large_size)
+		snippet_label.add_theme_font_size_override("font_size", Typography.label_large)
 		snippet_label.add_theme_color_override("font_color", Colors.secondary_text)
 	pass
 

@@ -35,6 +35,7 @@ func _ready() -> void:
 	I18nHelper.init_i18n()
 	var app_theme := Theme.new()
 	app_theme.default_font = Fonts.regular()
+	app_theme.default_font_size = Typography.body_large
 	theme = app_theme
 	save_dialog.add_theme_font_override("title_font", Fonts.regular())
 	load_dialog.add_theme_font_override("title_font", Fonts.regular())
@@ -70,6 +71,7 @@ func _ready() -> void:
 
 
 func apply_theme() -> void:
+	theme.default_font_size = Typography.body_large
 	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
 	toolbar.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.deep_surface, 0, 0, 0, Colors.muted_border, ControlSize.border_xs))
 	sidebar.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.chrome_surface, 0, 0, 0, Colors.muted_border, ControlSize.border_xs))
@@ -106,14 +108,14 @@ func apply_text_tokens() -> void:
 	logo_font.base_font = Fonts.bold()
 	logo_font.spacing_glyph = Typography.letter_spacing_md
 	logo_label.add_theme_font_override("font", logo_font)
-	logo_label.add_theme_font_size_override("font_size", Typography.title_medium_size)
+	logo_label.add_theme_font_size_override("font_size", Typography.title_medium)
 	var logo_color := ThemeColor.accent_theme_color()
 	logo_label.add_theme_color_override("font_color", logo_color if ThemeColor.is_dark_theme() else logo_color.darkened(0.08))
-	title_label.add_theme_font_size_override("font_size", Typography.title_medium_size)
+	title_label.add_theme_font_size_override("font_size", Typography.title_medium)
 	title_label.add_theme_color_override("font_color", Colors.primary_text)
-	palette_title.add_theme_font_size_override("font_size", Typography.title_medium_size)
+	palette_title.add_theme_font_size_override("font_size", Typography.title_medium)
 	palette_title.add_theme_color_override("font_color", Colors.primary_text)
-	palette_hint.add_theme_font_size_override("font_size", Typography.body_small_size)
+	palette_hint.add_theme_font_size_override("font_size", Typography.body_small)
 	palette_hint.add_theme_color_override("font_color", Colors.secondary_text)
 	pass
 
@@ -137,7 +139,7 @@ func style_toolbar_button(button: Button, tooltip: String) -> void:
 func style_palette_tree() -> void:
 	ScrollBarStyle.apply(palette_scroll.get_v_scroll_bar())
 	style_internal_scroll_bars(palette_tree)
-	palette_tree.add_theme_font_size_override("font_size", Typography.title_medium_size)
+	palette_tree.add_theme_font_size_override("font_size", Typography.title_medium)
 	palette_tree.add_theme_color_override("font_color", Colors.primary_text)
 	palette_tree.add_theme_color_override("font_hovered_color", Colors.primary_text)
 	palette_tree.add_theme_color_override("font_selected_color", Colors.primary_text)
@@ -158,19 +160,19 @@ func style_internal_scroll_bars(node: Node) -> void:
 
 
 func configure_sidebar_layout() -> void:
-	body_split.split_offset = AgentLayout.SIDEBAR_DEFAULT_WIDTH
-	sidebar.custom_minimum_size.x = AgentLayout.SIDEBAR_MIN_WIDTH
+	body_split.split_offset = AgentLayout.sidebar_default_width
+	sidebar.custom_minimum_size.x = AgentLayout.sidebar_min_width
 	sidebar.clip_contents = true
-	palette_tree.custom_minimum_size.x = AgentLayout.SIDEBAR_MIN_WIDTH - Margin.ma_8
+	palette_tree.custom_minimum_size.x = AgentLayout.sidebar_min_width - Margin.ma_8
 	palette_tree.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	palette_tree.set_column_expand(0, true)
-	palette_tree.set_column_custom_minimum_width(0, AgentLayout.SIDEBAR_MIN_WIDTH - Margin.ma_8)
+	palette_tree.set_column_custom_minimum_width(0, AgentLayout.sidebar_min_width - Margin.ma_8)
 	pass
 
 
 func configure_dialog_layout() -> void:
-	save_dialog.size = AgentLayout.FILE_DIALOG_SIZE
-	load_dialog.size = AgentLayout.FILE_DIALOG_SIZE
+	save_dialog.size = AgentLayout.file_dialog_size
+	load_dialog.size = AgentLayout.file_dialog_size
 	pass
 
 
@@ -409,7 +411,7 @@ func set_run_button_running(running: bool) -> void:
 func style_run_button() -> void:
 	apply_run_button_style(Colors.success)
 	run_button.custom_minimum_size = ControlSize.square(ControlSize.sm)
-	run_button.add_theme_font_size_override("font_size", Typography.label_small_size)
+	run_button.add_theme_font_size_override("font_size", Typography.label_small)
 	ButtonStyle.apply_font_colors(run_button, Color.WHITE, Color.WHITE, Color.WHITE)
 	run_button.focus_mode = Control.FOCUS_NONE
 	run_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND

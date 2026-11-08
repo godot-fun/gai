@@ -42,14 +42,15 @@ extends Object
 
 # h1–h6; body uses RichTextLabel default size. Headline/Title steps of [Typography]: h4 and h5
 # both land on title_large because the 20px step has no counterpart in the scale.
-const HEADING_FONT_SIZES: PackedInt32Array = [
-	Typography.headline_large_size,
-	Typography.headline_medium_size,
-	Typography.headline_small_size,
-	Typography.title_large_size,
-	Typography.title_large_size,
-	Typography.title_medium_size,
-]
+static func heading_font_sizes() -> PackedInt32Array:
+	return PackedInt32Array([
+		Typography.headline_large,
+		Typography.headline_medium,
+		Typography.headline_small,
+		Typography.title_large,
+		Typography.title_large,
+		Typography.title_medium,
+	])
 
 # Private-use tokens; must not appear in source markdown.
 # ESCAPE_SENTINEL: `[lb]` itself contains `]`, so `[`/`]` cannot be replaced in place.
@@ -165,7 +166,7 @@ static func to_bbcode(markdown: String) -> MarkdownParseResult:
 		# # Title  →  [font_size=32]Title[/font_size]
 		var heading_level := parse_heading_level(line)
 		if heading_level > 0:
-			var size := HEADING_FONT_SIZES[heading_level - 1]
+			var size := heading_font_sizes()[heading_level - 1]
 			out.append(
 					StringUtils.format(
 							"[font_size={}]{}[/font_size]",

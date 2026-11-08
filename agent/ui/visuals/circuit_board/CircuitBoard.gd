@@ -462,7 +462,7 @@ func draw_chip() -> void:
 	draw_rect(rect.grow(-5.0), Color(GREEN, 0.23 + glow * 0.55), false, 1.0)
 	draw_circle(rect.position + Vector2(14.0, 14.0), 3.5, Color(GREEN, 0.45))
 	var display_text := chip_text if not chip_text.is_empty() else "? Q $ 4 1 V Q 9 % Z ? #"
-	draw_centered_text(rect.get_center() + Vector2(0.0, 7.0), display_text, Fonts.semibold(), Typography.title_medium_size, Color(color, 0.72 + beat * 0.23))
+	draw_centered_text(rect.get_center() + Vector2(0.0, 7.0), display_text, Fonts.semibold(), Typography.title_medium, Color(color, 0.72 + beat * 0.23))
 	pass
 
 
@@ -509,5 +509,5 @@ func trace_position(trace: Dictionary, distance: float) -> Vector2:
 
 
 func draw_hud(view: Vector2) -> void:
-	draw_string(Fonts.regular(), Vector2(43.0, view.y - 30.0), "> run system diagnostics", HORIZONTAL_ALIGNMENT_LEFT, -1.0, Typography.label_small_size, Color("8fc4a8", 0.58))
+	draw_string(Fonts.regular(), Vector2(43.0, view.y - 30.0), "> run system diagnostics", HORIZONTAL_ALIGNMENT_LEFT, -1.0, Typography.label_small, Color("8fc4a8", 0.58))
 	pass

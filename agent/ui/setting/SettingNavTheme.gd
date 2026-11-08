@@ -22,7 +22,7 @@ static func nav_divider() -> StyleBoxLine:
 
 static func apply_nav_button(button: Button) -> void:
 	button.focus_mode = Control.FOCUS_NONE
-	button.add_theme_font_size_override("font_size", Typography.label_large_size)
+	button.add_theme_font_size_override("font_size", Typography.label_large)
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, Colors.primary_text)
 	var normal := nav_button_style(Color.TRANSPARENT)
 	var hover := nav_button_style(Colors.hover_surface)

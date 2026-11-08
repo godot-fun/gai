@@ -65,7 +65,7 @@ func window_border_color() -> Color:
 
 func style_open_on_startup() -> void:
 	open_on_startup_check.add_theme_font_override("font", Fonts.regular())
-	open_on_startup_check.add_theme_font_size_override("font_size", Typography.label_medium_size)
+	open_on_startup_check.add_theme_font_size_override("font_size", Typography.label_medium)
 	ButtonStyle.apply_check_button(open_on_startup_check)
 	pass
 
