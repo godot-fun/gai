@@ -16,8 +16,6 @@ const MAX_CONTEXT_TOKENS: int = 1_000_000
 const THRESHOLD_WARN: float = 0.50
 const THRESHOLD_CAUTION: float = 0.75
 const THRESHOLD_CRITICAL: float = 0.90
-const RING_WIDTH: float = 2.0
-const RING_INSET: float = 3.0
 const SPINNER_ARC: float = PI * 1.35
 
 var wrap: PanelContainer
@@ -166,6 +164,7 @@ func apply_theme() -> void:
 	var panel := StyleBoxEmpty.new()
 	panel.content_margin_right = Margin.ma_2
 	wrap.add_theme_stylebox_override("panel", panel)
+	label.add_theme_font_size_override("font_size", Typography.label_small)
 	refresh()
 	label.queue_redraw()
 	pass
@@ -173,18 +172,19 @@ func apply_theme() -> void:
 
 func draw_ring() -> void:
 	var center := label.size * 0.5
-	var radius: float = minf(label.size.x, label.size.y) * 0.5 - RING_INSET
-	label.draw_arc(center, radius, 0.0, TAU, 48, Colors.control_surface, RING_WIDTH, true)
+	var ring_width := float(ControlSize.border_sm)
+	var radius: float = minf(label.size.x, label.size.y) * 0.5 - float(ControlSize.border_md)
+	label.draw_arc(center, radius, 0.0, TAU, 48, Colors.control_surface, ring_width, true)
 	if compacting:
 		var spinner_color := ThemeColor.accent_theme_color()
-		label.draw_arc(center, radius, spinner_angle, spinner_angle + SPINNER_ARC, 32, spinner_color, RING_WIDTH, true)
+		label.draw_arc(center, radius, spinner_angle, spinner_angle + SPINNER_ARC, 32, spinner_color, ring_width, true)
 		return
 	if usage_ratio <= 0.0:
 		return
 	var start_angle: float = -PI * 0.5
 	var end_angle: float = start_angle + TAU * usage_ratio
-	label.draw_arc(center, radius, start_angle, end_angle, maxi(2, int(48.0 * usage_ratio)), usage_color, RING_WIDTH, true)
-	var cap_radius: float = RING_WIDTH * 0.5
+	label.draw_arc(center, radius, start_angle, end_angle, maxi(2, int(48.0 * usage_ratio)), usage_color, ring_width, true)
+	var cap_radius: float = ring_width * 0.5
 	label.draw_circle(center + Vector2.UP * radius, cap_radius, usage_color)
 	label.draw_circle(center + Vector2(cos(end_angle), sin(end_angle)) * radius, cap_radius, usage_color)
 	pass

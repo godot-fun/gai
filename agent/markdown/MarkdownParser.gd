@@ -388,7 +388,8 @@ static func is_horizontal_rule_line(line: String) -> bool:
 
 ## `---` → full-width rule in the table grid color, so rules and table lines match.
 static func format_horizontal_rule_line() -> String:
-	return StringUtils.format("[hr width=100% height=1 color={}]", to_bbcode_color(Colors.outline_variant))
+	return StringUtils.format("[hr width=100% height={} color={}]", ControlSize.border_xs,
+		to_bbcode_color(Colors.outline_variant))
 
 
 # ---------------------------------------------------------------------------
