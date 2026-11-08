@@ -388,7 +388,7 @@ static func is_horizontal_rule_line(line: String) -> bool:
 
 ## `---` → full-width rule in the table grid color, so rules and table lines match.
 static func format_horizontal_rule_line() -> String:
-	return StringUtils.format("[hr width=100% height=1 color={}]", to_bbcode_color(MarkdownColors.table_grid_color))
+	return StringUtils.format("[hr width=100% height=1 color={}]", to_bbcode_color(MarkdownColors.border_color))
 
 
 # ---------------------------------------------------------------------------
@@ -420,7 +420,7 @@ static func format_blockquote_bbcode(text: String, result: MarkdownParseResult) 
 		chunks.append(
 				StringUtils.format(
 						"[cell bg={} padding={}][/cell]",
-						to_bbcode_color(MarkdownColors.blockquote_bar_color),
+						to_bbcode_color(Colors.info),
 						BLOCKQUOTE_BAR_PADDING
 				)
 		)
@@ -570,7 +570,7 @@ static func format_table_bbcode(
 
 static func format_table_cell(text: String, is_header: bool, result: MarkdownParseResult) -> String:
 	var content := inline_to_bbcode(text, result)
-	var border := to_bbcode_color(MarkdownColors.table_grid_color)
+	var border := to_bbcode_color(MarkdownColors.border_color)
 	if is_header:
 		content = StringUtils.format("[b]{}[/b]", content)
 		return StringUtils.format(
@@ -740,7 +740,7 @@ static func replace_inline_match(
 			return protect(parts, StringUtils.format(
 					"[url={}][color={}]{}[/color][/url]",
 					url,
-					to_bbcode_color(MarkdownColors.link_color),
+					to_bbcode_color(Colors.info),
 					label
 			))
 		InlineReplacement.DUNDER_LITERAL:
