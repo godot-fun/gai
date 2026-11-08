@@ -7,6 +7,17 @@ func external_image_test() -> void:
 	pass
 
 
+func load_logo_test() -> void:
+	var original_theme := ThemeColor.current_theme
+	ThemeColor.current_theme = ThemeColor.ThemeEnum.LIGHT
+	assert_logo_ai_color(ImageHelper.load_logo(), Color.BLACK)
+	ThemeColor.current_theme = ThemeColor.ThemeEnum.DARK
+	assert_logo_ai_color(ImageHelper.load_logo(), Color.WHITE)
+	assert_logo_ai_color(ImageHelper.load_logo(Color.RED), Color.RED)
+	ThemeColor.current_theme = original_theme
+	pass
+
+
 func create_placeholder_texture_test() -> void:
 	var texture := ImageHelper.create_placeholder_texture()
 	assert(texture != null)
@@ -151,3 +162,11 @@ func texture_has_red_pixel(texture: ImageTexture) -> bool:
 			if pixel.a > 0.8 and pixel.r > 0.8 and pixel.g < 0.2 and pixel.b < 0.2:
 				return true
 	return false
+
+
+func assert_logo_ai_color(texture: ImageTexture, expected: Color) -> void:
+	assert(texture != null)
+	assert(texture.get_size() == Vector2(1280, 1280))
+	var pixel := texture.get_image().get_pixel(300, 600)
+	assert(pixel.is_equal_approx(expected))
+	pass

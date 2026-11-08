@@ -148,7 +148,9 @@ func editor_icon(editor: EditorApplication) -> Texture2D:
 	var icon_path := editor.icon_path
 	var texture: Texture2D
 	var extension := icon_path.get_extension().to_lower()
-	if extension == "ico":
+	if icon_path == EditorDiscovery.CODE_ICON_PATH:
+		texture = ImageHelper.load_logo()
+	elif extension == "ico":
 		texture = ImageHelper.load_ico(icon_path, ControlSize.icon_md)
 	elif extension == "png":
 		texture = ImageHelper.load_external_image(icon_path)

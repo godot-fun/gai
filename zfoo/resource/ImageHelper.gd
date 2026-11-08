@@ -241,3 +241,16 @@ static func create_placeholder_texture(width: int = 160, height: int = 90) -> Im
 		image = Image.create(width, height, false, Image.FORMAT_RGBA8)
 		image.fill(Colors.control_surface)
 	return ImageTexture.create_from_image(image)
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+## Loads the app logo with theme-aware AI lettering. Pass [param ai_color] to override the theme default.
+static func load_logo(ai_color: Color = Color.WHITE if ThemeColor.is_dark_theme() else Color.BLACK) -> ImageTexture:
+	var svg_source := FileAccess.get_file_as_string("res://icon.svg")
+	if svg_source.is_empty():
+		return ImageTexture.new()
+	var colored_svg := svg_source.replace("#000000", "#" + ai_color.to_html(false))
+	var image := Image.new()
+	if image.load_svg_from_string(colored_svg) != OK:
+		return ImageTexture.new()
+	return ImageTexture.create_from_image(image)

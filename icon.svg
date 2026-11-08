@@ -14,8 +14,8 @@
       <stop offset="1" stop-color="#186eb2" stop-opacity=".18"/>
     </radialGradient>
     <linearGradient id="ink" x1="330" y1="410" x2="892" y2="790" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#fff"/>
-      <stop offset="1" stop-color="#fff"/>
+      <stop stop-color="#000000"/>
+      <stop offset="1" stop-color="#000000"/>
     </linearGradient>
     <linearGradient id="cyan" x1="286" y1="430" x2="398" y2="552" gradientUnits="userSpaceOnUse">
       <stop stop-color="#23ffff"/>
