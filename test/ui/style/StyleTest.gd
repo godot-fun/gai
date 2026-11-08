@@ -73,6 +73,7 @@ func ColorBase_follow_theme_test() -> void:
 	assert(Colors.grey_surface == Colors.DARK_GREY_SURFACE)
 	assert(Colors.purple_surface == Colors.DARK_PURPLE_SURFACE)
 	assert(Colors.lime_surface == Colors.DARK_LIME_SURFACE)
+	assert(ThemeColor.field_surface == ThemeColor.derive_theme_color(ThemeColor.FIELD_SATURATION_DARK, ThemeColor.FIELD_VALUE_DARK))
 	assert(ThemeColor.selected_surface == ThemeColor.DARK_SELECTED_SURFACE_BASE.lerp(ThemeColor.accent_theme_color(), ThemeColor.DARK_SELECTED_SURFACE_MIX))
 
 	ThemeColor.current_theme = ThemeColor.ThemeEnum.LIGHT
@@ -103,6 +104,7 @@ func ColorBase_follow_theme_test() -> void:
 	assert(Colors.grey_surface == Colors.LIGHT_GREY_SURFACE)
 	assert(Colors.purple_surface == Colors.LIGHT_PURPLE_SURFACE)
 	assert(Colors.lime_surface == Colors.LIGHT_LIME_SURFACE)
+	assert(ThemeColor.field_surface == ThemeColor.derive_theme_color(ThemeColor.FIELD_SATURATION_LIGHT, ThemeColor.FIELD_VALUE_LIGHT))
 	assert(ThemeColor.selected_surface == ThemeColor.LIGHT_SELECTED_SURFACE_BASE.lerp(ThemeColor.accent_theme_color(), ThemeColor.LIGHT_SELECTED_SURFACE_MIX))
 
 	ThemeColor.current_theme = original
@@ -279,7 +281,7 @@ func ButtonStyle_theme_style_test() -> void:
 func RangeStyle_apply_spin_box_test() -> void:
 	var spin := SpinBox.new()
 	RangeStyle.apply_spin_box(spin)
-	assert((spin.get_line_edit().get_theme_stylebox("normal") as StyleBoxFlat).bg_color == ThemeColor.card_surface)
+	assert((spin.get_line_edit().get_theme_stylebox("normal") as StyleBoxFlat).bg_color == ThemeColor.field_surface)
 	assert(spin.get_theme_color("up_icon_modulate") == Colors.primary_text)
 	var theme_color := ThemeColor.accent_theme_color()
 	assert((spin.get_theme_stylebox("up_background_hovered") as StyleBoxFlat).bg_color == ThemeColor.promote(theme_color, Weights.w_2))
@@ -325,7 +327,7 @@ func LineEditStyle_apply_default_style_test() -> void:
 	var edit := LineEdit.new()
 	LineEditStyle.apply(edit)
 	var normal: StyleBoxFlat = edit.get_theme_stylebox("normal") as StyleBoxFlat
-	assert(normal.bg_color == ThemeColor.card_surface)
+	assert(normal.bg_color == ThemeColor.field_surface)
 	assert(normal.corner_radius_top_left == ControlSize.radius_md)
 	assert(normal.get_margin(SIDE_LEFT) == Margin.ma_3)
 	assert(normal.border_color == Colors.outline)
@@ -337,7 +339,7 @@ func LineEditStyle_apply_default_style_test() -> void:
 
 func LineEditStyle_theme_normal_style_test() -> void:
 	var normal := LineEditStyle.theme_normal_style()
-	assert(normal.bg_color == ThemeColor.card_surface)
+	assert(normal.bg_color == ThemeColor.field_surface)
 	assert(normal.corner_radius_top_left == ControlSize.radius_md)
 	assert(normal.get_margin(SIDE_LEFT) == Margin.ma_3)
 	assert(normal.border_color == Colors.outline)
@@ -459,7 +461,7 @@ func FileDialogStyle_internal_controls_test() -> void:
 	var drive_selector := find_internal_option_button(dialog)
 	assert(drive_selector != null)
 	var normal: StyleBoxFlat = drive_selector.get_theme_stylebox("normal") as StyleBoxFlat
-	assert(normal.bg_color == ThemeColor.card_surface)
+	assert(normal.bg_color == ThemeColor.field_surface)
 	dialog.free()
 	pass
 
