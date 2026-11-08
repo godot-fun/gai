@@ -238,7 +238,7 @@ func apply_theme() -> void:
 func style_sample_button(button: Button) -> void:
 	button.add_theme_font_override("font", Fonts.medium())
 	button.add_theme_font_size_override("font_size", Typography.label_medium)
-	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1, Colors.subtle_border, ControlSize.border_xs)
+	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1, Colors.control_outline, ControlSize.border_xs)
 	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(Colors.control_surface, Weights.w_2))
 	var selected := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(Colors.control_surface, Weights.w_2), ThemeColor.accent_theme_color())
 	ButtonStyle.apply_style(button, normal, hover, selected)

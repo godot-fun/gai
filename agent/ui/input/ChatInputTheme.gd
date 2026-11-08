@@ -44,7 +44,7 @@ static func apply_field(input_field: CodeEdit) -> void:
 static func apply_completion(input_field: CodeEdit) -> void:
 	var panel := StyleBoxHelper.create_style_box_flat(Colors.surface_container_high, ControlSize.radius_md,
 		Margin.ma_2, Margin.ma_2)
-	panel.border_color = Colors.border
+	panel.border_color = Colors.outline
 	panel.set_border_width(SIDE_LEFT, ControlSize.border_xs)
 	panel.set_border_width(SIDE_TOP, ControlSize.border_xs)
 	panel.set_border_width(SIDE_RIGHT, ControlSize.border_xs)
@@ -112,7 +112,7 @@ static func apply_queue_scroll(scroll: ScrollContainer) -> void:
 
 
 static func apply_queue_row(row: PanelContainer, title: Label, header: bool, hovered: bool) -> void:
-	var guide_color := Color(Colors.border, 0.65)
+	var guide_color := Color(Colors.outline, 0.65)
 	var fill := Colors.hover(Color.TRANSPARENT) if hovered else Color.TRANSPARENT
 	var row_style := StyleBoxHelper.create_style_box_flat(fill, ControlSize.radius_md, Margin.ma_3, Margin.ma_1)
 	row_style.border_color = guide_color

@@ -6,7 +6,7 @@ extends Object
 
 static func nav_panel() -> StyleBoxFlat:
 	var style := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 0)
-	style.border_color = Colors.muted_border
+	style.border_color = Colors.outline_variant
 	style.set_border_width(SIDE_RIGHT, ControlSize.border_xs)
 	return style
 

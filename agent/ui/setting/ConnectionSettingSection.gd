@@ -222,7 +222,7 @@ func apply_theme() -> void:
 		ui.style_help_label(help)
 	for edit in [api_url_edit, model_edit, api_token_edit, proxy_address_edit]:
 		LineEditStyle.apply(edit)
-	var panel_style := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 7, Margin.ma_1, Margin.ma_1, Colors.subtle_border, ControlSize.border_xs)
+	var panel_style := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 7, Margin.ma_1, Margin.ma_1, Colors.control_outline, ControlSize.border_xs)
 	history_panel.add_theme_stylebox_override("panel", panel_style)
 	for row: PanelContainer in history_list.get_children():
 		var content := row.get_child(0) as HBoxContainer

@@ -27,10 +27,10 @@ const DARK_SURFACE_CONTAINER_HIGH := Color(0.15, 0.16, 0.18)
 const DARK_SURFACE_CONTAINER_HIGHEST := Color(0.45, 0.47, 0.52, 0.18)
 const DARK_SURFACE_CONTAINER_OUTLINE_VARIANT := Color(0.35, 0.36, 0.41)
 
-# Dark borders --------------------------------------------------------------------------------------------------------
-const DARK_BORDER := Color(0.22, 0.24, 0.28)
-const DARK_MUTED_BORDER := Color(0.18, 0.20, 0.24)
-const DARK_SUBTLE_BORDER := Color(0.16, 0.18, 0.22)
+# Dark outlines -------------------------------------------------------------------------------------------------------
+const DARK_OUTLINE := Color(0.22, 0.24, 0.28)
+const DARK_OUTLINE_VARIANT := Color(0.18, 0.20, 0.24)
+const DARK_CONTROL_OUTLINE := Color(0.16, 0.18, 0.22)
 
 # Dark text -----------------------------------------------------------------------------------------------------------
 const DARK_TEXT := Color(0.91, 0.92, 0.93) # #E8EAED
@@ -53,10 +53,10 @@ const LIGHT_SURFACE_CONTAINER_HIGH := Color(0.45, 0.47, 0.52, 0.18)
 const LIGHT_SURFACE_CONTAINER_HIGHEST := Color(0.96, 0.965, 0.97)
 const LIGHT_SURFACE_CONTAINER_OUTLINE_VARIANT := Color(0.78, 0.79, 0.82)
 
-# Light borders -------------------------------------------------------------------------------------------------------
-const LIGHT_BORDER := Color(0.84, 0.85, 0.87)
-const LIGHT_MUTED_BORDER := Color(0.86, 0.87, 0.89)
-const LIGHT_SUBTLE_BORDER := Color(0.87, 0.88, 0.90)
+# Light outlines ------------------------------------------------------------------------------------------------------
+const LIGHT_OUTLINE := Color(0.84, 0.85, 0.87)
+const LIGHT_OUTLINE_VARIANT := Color(0.86, 0.87, 0.89)
+const LIGHT_CONTROL_OUTLINE := Color(0.87, 0.88, 0.90)
 
 # Light text ----------------------------------------------------------------------------------------------------------
 const LIGHT_TEXT := Color(0.13, 0.13, 0.14) # #202124
@@ -67,12 +67,12 @@ const LIGHT_DISABLED := Color(0.60, 0.63, 0.65) # #9AA0A6
 # │  app_background  — main window canvas behind everything                     │
 # │  ┌───────────────────────────────────────────────────────────────────────┐  │
 # │  │ deep_surface  — recessed strip “behind” neighbors (toolbars)          │  │
-# │  │ (subtle_border)                                                       │  │
+# │  │ (control_outline)                                                     │  │
 # │  │  [control_surface]  buttons · fields · icon toggles on the toolbar    │  │
 # │  └───────────────────────────────────────────────────────────────────────┘  │
 # │  ┌────────────────┬──────────────────────────────────────────────────────┐  │
 # │  │ chrome_surface │  surface  — main content panel / editor / chat area  │  │
-# │  │ (muted_border) │                                                      │  │
+# │  │ (outline_variant)│                                                      │  │
 # │  │                │  surface_container → high → highest                  │  │
 # │  │                │  (surface_container_outline_variant)                 │  │
 # │  │                │  ┌──────────────────────────────────────────────────┐│  │
@@ -109,13 +109,13 @@ static var surface_container_highest: Color = DARK_SURFACE_CONTAINER_HIGHEST
 ## Decorative boundaries and dividers paired with surface containers.
 static var surface_container_outline_variant: Color = DARK_SURFACE_CONTAINER_OUTLINE_VARIANT
 
-# Borders -------------------------------------------------------------------------------------------------------------
-## Strong outline for panels and chat bubbles.
-static var border: Color = DARK_BORDER
-## Quieter outline for application chrome such as sidebars.
-static var muted_border: Color = DARK_MUTED_BORDER
-## Lightest outline for compact controls and toolbar elements.
-static var subtle_border: Color = DARK_SUBTLE_BORDER
+# Outlines ------------------------------------------------------------------------------------------------------------
+## Prominent outline for panels, dialogs and chat bubbles.
+static var outline: Color = DARK_OUTLINE
+## Low-emphasis outline for application chrome such as sidebars.
+static var outline_variant: Color = DARK_OUTLINE_VARIANT
+## Outline for buttons, input fields and other interactive controls.
+static var control_outline: Color = DARK_CONTROL_OUTLINE
 
 # Text ----------------------------------------------------------------------------------------------------------------
 ## Chrome-style primary, secondary, and disabled foreground roles.
@@ -211,9 +211,9 @@ static func refresh() -> void:
 	surface_container_high = DARK_SURFACE_CONTAINER_HIGH if dark else LIGHT_SURFACE_CONTAINER_HIGH
 	surface_container_highest = DARK_SURFACE_CONTAINER_HIGHEST if dark else LIGHT_SURFACE_CONTAINER_HIGHEST
 	surface_container_outline_variant = DARK_SURFACE_CONTAINER_OUTLINE_VARIANT if dark else LIGHT_SURFACE_CONTAINER_OUTLINE_VARIANT
-	border = DARK_BORDER if dark else LIGHT_BORDER
-	muted_border = DARK_MUTED_BORDER if dark else LIGHT_MUTED_BORDER
-	subtle_border = DARK_SUBTLE_BORDER if dark else LIGHT_SUBTLE_BORDER
+	outline = DARK_OUTLINE if dark else LIGHT_OUTLINE
+	outline_variant = DARK_OUTLINE_VARIANT if dark else LIGHT_OUTLINE_VARIANT
+	control_outline = DARK_CONTROL_OUTLINE if dark else LIGHT_CONTROL_OUTLINE
 	primary_text = DARK_TEXT if dark else LIGHT_TEXT
 	secondary_text = DARK_SECONDARY_TEXT if dark else LIGHT_SECONDARY_TEXT
 	disabled_text = DARK_DISABLED if dark else LIGHT_DISABLED

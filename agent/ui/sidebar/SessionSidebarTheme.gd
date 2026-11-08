@@ -11,7 +11,7 @@ extends Object
 ## Sidebar background plus the hairline against the chat area.
 static func sidebar_panel() -> StyleBoxFlat:
 	var style := StyleBoxHelper.create_style_box_flat(Colors.chrome_surface)
-	style.border_color = Colors.muted_border
+	style.border_color = Colors.outline_variant
 	style.set_border_width(SIDE_RIGHT, ControlSize.border_xs)
 	return style
 

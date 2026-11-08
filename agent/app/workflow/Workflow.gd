@@ -73,8 +73,8 @@ func _ready() -> void:
 func apply_theme() -> void:
 	theme.default_font_size = Typography.body_medium
 	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
-	toolbar.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.deep_surface, 0, 0, 0, Colors.muted_border, ControlSize.border_xs))
-	sidebar.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.chrome_surface, 0, 0, 0, Colors.muted_border, ControlSize.border_xs))
+	toolbar.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.deep_surface, 0, 0, 0, Colors.outline_variant, ControlSize.border_xs))
+	sidebar.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.chrome_surface, 0, 0, 0, Colors.outline_variant, ControlSize.border_xs))
 	apply_layout_tokens()
 	apply_text_tokens()
 	style_toolbar_buttons()
@@ -144,7 +144,7 @@ func style_palette_tree() -> void:
 	palette_tree.add_theme_color_override("font_hovered_color", Colors.primary_text)
 	palette_tree.add_theme_color_override("font_selected_color", Colors.primary_text)
 	palette_tree.add_theme_color_override("font_hovered_selected_color", Colors.primary_text)
-	palette_tree.add_theme_color_override("guide_color", Colors.muted_border)
+	palette_tree.add_theme_color_override("guide_color", Colors.outline_variant)
 	palette_tree.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT))
 	TreeStyle.apply_full_width_rows(palette_tree, Margin.ma_2, Margin.ma_1)
 	pass

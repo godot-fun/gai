@@ -332,7 +332,7 @@ func make_entry_row(index: int, label_size: int, body_size: int, body_font: Font
 	var row := PanelContainer.new()
 	var radius := roundi(ControlSize.radius_sm * screen_scale)
 	var row_bg := Color(ThemeColor.card_surface, ROW_ALPHA)
-	var normal := StyleBoxHelper.create_style_box_flat(row_bg, radius, Margin.ma_4, Margin.ma_3, Colors.subtle_border, ControlSize.border_xs)
+	var normal := StyleBoxHelper.create_style_box_flat(row_bg, radius, Margin.ma_4, Margin.ma_3, Colors.control_outline, ControlSize.border_xs)
 	var hover := StyleBoxHelper.create_style_box_flat(ThemeColor.promote(row_bg, Weights.w_2), radius, Margin.ma_4, Margin.ma_3, ThemeColor.accent_theme_color(), ControlSize.border_xs)
 	var selected := StyleBoxHelper.create_style_box_flat(ThemeColor.promote(row_bg, Weights.w_3), radius, Margin.ma_4, Margin.ma_3, ThemeColor.accent_theme_color(), ControlSize.border_sm)
 	row_normal_styles.append(normal)

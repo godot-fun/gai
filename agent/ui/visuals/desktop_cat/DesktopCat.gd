@@ -217,7 +217,7 @@ func _draw() -> void:
 func draw_stage() -> void:
 	var accent := ThemeColor.accent_theme_color()
 	draw_oval(Vector2(220.0, 205.0), Vector2(88.0, 16.0), Color(0.0, 0.0, 0.0, 0.16))
-	draw_line(Vector2(22.0, 211.0), Vector2(318.0, 211.0), Color(Colors.subtle_border, 0.55), 2.0, true)
+	draw_line(Vector2(22.0, 211.0), Vector2(318.0, 211.0), Color(Colors.control_outline, 0.55), 2.0, true)
 	draw_line(Vector2(46.0, 215.0), Vector2(307.0, 215.0), Color(accent, 0.08), 5.0, true)
 	pass
 
@@ -507,7 +507,7 @@ func draw_cancel_sweep() -> void:
 	for index in range(5):
 		var start := Vector2(50.0 + index * 27.0, 178.0 - float(index % 2) * 16.0)
 		var position := start + Vector2(-190.0 * progress, -45.0 * progress * progress + sin(float(index)) * 12.0)
-		draw_paw_print(position, 0.28, Color(Colors.control_surface, 0.88), Color(Colors.subtle_border, 0.7), -0.5 - progress)
+		draw_paw_print(position, 0.28, Color(Colors.control_surface, 0.88), Color(Colors.control_outline, 0.7), -0.5 - progress)
 	draw_text(Vector2(42.0, 68.0), I18n.t("agent.visuals.clean_slate"), Fonts.semibold(), Typography.label_medium, Color(Colors.secondary_text, 1.0 - progress * 0.7))
 	pass
 

@@ -224,7 +224,7 @@ static func resize_image_to_max_size(image: Image, max_size: Vector2i) -> bool:
 ## Creates a theme-aware image card shown while remote content is loading.
 static func create_placeholder_texture(width: int = 160, height: int = 90) -> ImageTexture:
 	var background := Colors.control_surface.to_html(false)
-	var border := Colors.subtle_border.to_html(false)
+	var border := Colors.control_outline.to_html(false)
 	var icon := Colors.secondary_text.to_html(false)
 	var svg_template := """
 	<svg xmlns="http://www.w3.org/2000/svg" width="{}" height="{}" viewBox="0 0 160 90">

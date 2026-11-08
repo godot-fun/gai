@@ -21,7 +21,7 @@ static func is_video_path(path: String) -> bool:
 ## Creates a theme-aware video card with a centered play symbol.
 static func create_placeholder_texture(width: int = 160, height: int = 90) -> ImageTexture:
 	var background := Colors.control_surface.to_html(false)
-	var border := Colors.subtle_border.to_html(false)
+	var border := Colors.control_outline.to_html(false)
 	var icon := Colors.secondary_text.to_html(false)
 	var svg_template := """
 	<svg xmlns="http://www.w3.org/2000/svg" width="{}" height="{}" viewBox="0 0 160 90">

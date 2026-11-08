@@ -223,7 +223,7 @@ func set_highlight(running: bool) -> void:
 
 func apply_theme(running: bool = false) -> void:
 	var background := Colors.surface.lerp(Colors.success, 0.12) if running else Colors.surface
-	var border := Colors.success if running else Colors.border
+	var border := Colors.success if running else Colors.outline
 	var border_width := ControlSize.border_sm if running else ControlSize.border_xs
 	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(background, ControlSize.radius_lg, Margin.ma_3, Margin.ma_2, border, border_width))
 	add_theme_color_override(
@@ -251,7 +251,7 @@ func style_field(field: LineEdit) -> void:
 	field.add_theme_color_override("font_placeholder_color", Colors.secondary_text)
 	field.add_theme_color_override("caret_color", ThemeColor.accent_theme_color())
 	field.caret_blink = true
-	field.add_theme_stylebox_override("normal", StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_3, Margin.ma_2, Colors.subtle_border, ControlSize.border_xs))
+	field.add_theme_stylebox_override("normal", StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_3, Margin.ma_2, Colors.control_outline, ControlSize.border_xs))
 	field.add_theme_stylebox_override("focus", StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_3, Margin.ma_2, ThemeColor.accent_theme_color(), ControlSize.border_xs))
 	pass
 
@@ -260,7 +260,7 @@ func style_node_button(button: Button) -> void:
 	button.custom_minimum_size.y = ControlSize.md
 	button.add_theme_font_size_override("font_size", Typography.body_medium)
 	ButtonStyle.apply_font_colors(button, Colors.secondary_text, Colors.primary_text, Colors.primary_text)
-	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_2, Colors.subtle_border, ControlSize.border_xs)
+	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_2, Colors.control_outline, ControlSize.border_xs)
 	ButtonStyle.apply_style(button, normal,
 		StyleBoxHelper.duplicate_with_bg_color(normal, Colors.hover(Colors.control_surface)),
 		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface))

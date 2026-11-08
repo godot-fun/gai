@@ -48,7 +48,7 @@ func apply_logo_theme() -> void:
 func build_toolbar_style() -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = Colors.deep_surface
-	style.border_color = Colors.subtle_border
+	style.border_color = Colors.control_outline
 	style.content_margin_left = Margin.ma_3
 	style.set_border_width(SIDE_BOTTOM, ControlSize.border_xs)
 	if ThemeColor.is_light_theme():
