@@ -30,7 +30,7 @@ func blockquote_multiline_test() -> void:
 	assert("[table=2]" in bbcode)
 	assert(bbcode.count("bg=" + MarkdownParser.to_bbcode_color(MarkdownColors.blockquote_bar_color)) == 2)
 	assert(bbcode.count("[/cell]") == 4)
-	assert("[color=" + MarkdownParser.to_bbcode_color(MarkdownColors.blockquote_text_color) + "]" in bbcode)
+	assert("[color=" + MarkdownParser.to_bbcode_color(Colors.secondary_text) + "]" in bbcode)
 	assert("[/table][/indent]" in bbcode)
 	assert("[bgcolor=" not in bbcode)
 	assert("line one" in bbcode and "line two" in bbcode)

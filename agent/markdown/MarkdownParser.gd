@@ -428,7 +428,7 @@ static func format_blockquote_bbcode(text: String, result: MarkdownParseResult) 
 				StringUtils.format(
 						"[cell shrink=false expand=1 padding={}][color={}]{}[/color][/cell]",
 						BLOCKQUOTE_BODY_PADDING,
-						to_bbcode_color(MarkdownColors.blockquote_text_color),
+						to_bbcode_color(Colors.secondary_text),
 						inline_to_bbcode(line, result)
 				)
 		)
