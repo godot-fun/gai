@@ -141,7 +141,7 @@ func apply_theme() -> void:
 	app_theme.default_font_size = Typography.body_medium
 	theme = app_theme
 	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
-	toolbar_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.deep_surface, 0, 0, 0, Colors.control_outline, ControlSize.border_xs))
+	toolbar_panel.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.deep_surface, 0, 0, 0, Colors.outline_variant, ControlSize.border_xs))
 	sidebar.add_theme_stylebox_override("panel", SessionSidebarTheme.sidebar_panel())
 	style_logo()
 	style_file_tree()

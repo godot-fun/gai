@@ -388,7 +388,7 @@ static func is_horizontal_rule_line(line: String) -> bool:
 
 ## `---` → full-width rule in the table grid color, so rules and table lines match.
 static func format_horizontal_rule_line() -> String:
-	return StringUtils.format("[hr width=100% height=1 color={}]", to_bbcode_color(Colors.surface_container_outline_variant))
+	return StringUtils.format("[hr width=100% height=1 color={}]", to_bbcode_color(Colors.outline_variant))
 
 
 # ---------------------------------------------------------------------------
@@ -570,7 +570,7 @@ static func format_table_bbcode(
 
 static func format_table_cell(text: String, is_header: bool, result: MarkdownParseResult) -> String:
 	var content := inline_to_bbcode(text, result)
-	var border := to_bbcode_color(Colors.surface_container_outline_variant)
+	var border := to_bbcode_color(Colors.outline_variant)
 	if is_header:
 		content = StringUtils.format("[b]{}[/b]", content)
 		return StringUtils.format(

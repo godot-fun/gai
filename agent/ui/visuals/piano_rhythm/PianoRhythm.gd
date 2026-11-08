@@ -399,7 +399,7 @@ func draw_keyboard() -> void:
 		draw_rect(black_key, black_key_color.lerp(Color(impact_color.darkened(0.34), 0.60), glow * 0.82), true)
 		draw_rect(Rect2(black_key.position + Vector2(1.0, 1.0), Vector2(maxf(1.0, black_key.size.x - 2.0), 3.0)), Color(impact_color, 0.12 + glow * 0.42), true)
 		draw_line(Vector2(black_key.position.x + 1.0, black_key.end.y - 2.0), Vector2(black_key.end.x - 1.0, black_key.end.y - 2.0), Color(Color.BLACK, 0.34), 1.0)
-		draw_rect(black_key, Color(Colors.DARK_OUTLINE, 0.42), false, 1.0, true)
+		draw_rect(black_key, Color(Colors.DARK_OUTLINE_VARIANT, 0.42), false, 1.0, true)
 	pass
 
 

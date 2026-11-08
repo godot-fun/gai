@@ -104,7 +104,7 @@ func style_popup_spacing() -> void:
 
 static func split_style(is_main: bool, background: Color) -> StyleBoxFlat:
 	var style := StyleBoxHelper.create_style_box_flat(background, 0, Margin.ma_1, Margin.ma_1,
-		Colors.control_outline, ControlSize.border_xs)
+		Colors.outline_variant, ControlSize.border_xs)
 	style.corner_radius_top_left = ControlSize.radius_md if is_main else 0
 	style.corner_radius_bottom_left = ControlSize.radius_md if is_main else 0
 	style.corner_radius_top_right = 0 if is_main else ControlSize.radius_md

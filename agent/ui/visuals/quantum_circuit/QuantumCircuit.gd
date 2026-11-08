@@ -310,7 +310,7 @@ func draw_entanglements(center_y: float) -> void:
 		var color := phase_tint if index % 2 else circuit_tint
 		draw_line(Vector2(x, upper_y), Vector2(x, lower_y), VisualColor.stroke(color, 0.16), 1.0, true)
 		draw_circle(Vector2(x, upper_y), 3.2, VisualColor.stroke(color, 0.78))
-		draw_circle(Vector2(x, lower_y), 6.5, Color(Colors.control_outline, 0.9))
+		draw_circle(Vector2(x, lower_y), 6.5, Color(Colors.outline_variant, 0.9))
 		draw_arc(Vector2(x, lower_y), 6.0, 0.0, TAU, 24, VisualColor.stroke(color, 0.72), 1.0, true)
 		var packet_y := lerpf(upper_y, lower_y, 0.5 + 0.5 * sin(elapsed * 2.4 + index))
 		draw_circle(Vector2(x, packet_y), 1.8, VisualColor.stroke(color, 0.9))

@@ -112,7 +112,7 @@ static func apply_queue_scroll(scroll: ScrollContainer) -> void:
 
 
 static func apply_queue_row(row: PanelContainer, title: Label, header: bool, hovered: bool) -> void:
-	var guide_color := Color(Colors.outline, 0.65)
+	var guide_color := Colors.outline_variant
 	var fill := Colors.hover(Color.TRANSPARENT) if hovered else Color.TRANSPARENT
 	var row_style := StyleBoxHelper.create_style_box_flat(fill, ControlSize.radius_md, Margin.ma_3, Margin.ma_1)
 	row_style.border_color = guide_color

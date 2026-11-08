@@ -197,7 +197,7 @@ static func style_cancel_button(button: Button) -> void:
 
 static func style_button(button: Button) -> void:
 	var normal := StyleBoxHelper.create_style_box_flat(Colors.control_surface, ControlSize.radius_sm, Margin.ma_2, Margin.ma_1,
-		Colors.control_outline, ControlSize.border_xs)
+		Colors.outline, ControlSize.border_xs)
 	ButtonStyle.apply_style(button, normal)
 	ButtonStyle.apply_font_colors(button, ThemeColor.title_color, ThemeColor.title_color, ThemeColor.title_color)
 	pass
@@ -261,7 +261,7 @@ static func style_path_option(option: OptionButton) -> void:
 ## pure-white card effect, while retaining the active theme hue.
 static func make_file_list_style() -> StyleBoxFlat:
 	return StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_sm, Margin.ma_1, Margin.ma_1,
-		Colors.control_outline, ControlSize.border_xs)
+		Colors.outline_variant, ControlSize.border_xs)
 
 
 

@@ -22,7 +22,7 @@ func _ready() -> void:
 func apply_theme() -> void:
 	add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(Colors.app_background))
 	add_theme_color_override("grid_major", Colors.outline_variant)
-	add_theme_color_override("grid_minor", Colors.control_outline)
+	add_theme_color_override("grid_minor", Color(Colors.outline_variant, 0.55))
 	add_theme_color_override("activity", ThemeColor.accent_theme_color())
 	for node: SkillNode in skill_nodes.values():
 		node.apply_theme(node.node_id == highlighted_node_id)

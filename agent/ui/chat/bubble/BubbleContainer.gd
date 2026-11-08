@@ -48,7 +48,7 @@ func flash_highlight() -> void:
 static func create_panel_style(bg_color: Color) -> StyleBoxFlat:
 	var style := StyleBoxHelper.create_style_box_flat(bg_color, 8, Margin.ma_3, Margin.ma_3)
 	if ThemeColor.is_light_theme():
-		style.border_color = Colors.outline
+		style.border_color = Colors.outline_variant
 		style.set_border_width_all(ControlSize.border_xs)
 		style.shadow_color = Color(0, 0, 0, 0.04)
 		style.shadow_size = 6
