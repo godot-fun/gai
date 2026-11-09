@@ -49,6 +49,16 @@ class Parameters:
 		return self
 
 
+	func number_prop(field_name: String, description: String, required_field: bool = false) -> Parameters:
+		var prop := PropertyDef.new()
+		prop.type = "number"
+		prop.description = description
+		properties[field_name] = prop
+		if required_field:
+			required.append(field_name)
+		return self
+
+
 class FunctionDef:
 	var name: String = ""
 	var description: String = ""
