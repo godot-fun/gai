@@ -23,14 +23,14 @@ static func object_to_json(obj: Variant) -> String:
 			return "{" + builder.build_joined(", ") + "}"
 		TYPE_OBJECT:
 			if obj is IJsonSerializable:
-				return obj.to_json()
+				return obj.serialize()
 			return serialize_object(obj)
 		_:
 			Log.error("unknow type:[{}]", type)
 	return ""
 
 
-## Applies the default object serialization without invoking [method IJsonSerializable.to_json].
+## Applies the default object serialization without invoking [method IJsonSerializable.serialize].
 static func serialize_object(obj: Object) -> String:
 	var builder := StringBuilder.new()
 	for property in ReflectionUtils.get_script_property_map(obj).values():

@@ -14,12 +14,12 @@ class RequiredConstructor:
 class CustomJsonObject extends IJsonSerializable:
 	var value: String
 
-	func to_json() -> String:
+	func serialize() -> String:
 		return JSON.stringify({"customValue": value})
 
-	func from_json(data: Dictionary) -> void:
+	func deserialize(data: Dictionary) -> Variant:
 		value = str(data.get("customValue", ""))
-		pass
+		return self
 
 class DefaultJsonObject extends IJsonSerializable:
 	var name := "default"
