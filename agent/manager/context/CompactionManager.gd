@@ -138,7 +138,7 @@ static func update_estimated_usage(session: AgentSession) -> void:
 		elif message is AssistantChatMessage:
 			var assistant := message as AssistantChatMessage
 			character_count += assistant.text.length() + assistant.reasoning_content.length()
-			for tool_call: OpenAiToolCall in assistant.tool_calls:
+			for tool_call: ToolCall in assistant.tool_calls:
 				if tool_call != null:
 					character_count += JsonUtils.object_to_json(tool_call).length()
 		elif message is ToolResultChatMessage:

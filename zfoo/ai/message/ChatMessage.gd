@@ -38,7 +38,7 @@ static func assistant(text: String, reasoning: String = "") -> AssistantChatMess
 	return AssistantChatMessage.new(text, reasoning)
 
 
-static func assistant_tool_calls(calls: Array[OpenAiToolCall], text: String = "", reasoning: String = "") -> AssistantChatMessage:
+static func assistant_tool_calls(calls: Array[ToolCall], text: String = "", reasoning: String = "") -> AssistantChatMessage:
 	var msg := AssistantChatMessage.new(text, reasoning)
 	msg.tool_calls = calls
 	return msg

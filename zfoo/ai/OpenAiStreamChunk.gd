@@ -6,7 +6,7 @@ class StreamDelta:
 	var role: String = ""
 	var content: String = ""
 	var reasoning_content: String = ""
-	var tool_calls: Array[OpenAiToolCall.StreamDelta] = []
+	var tool_calls: Array[ToolCall.StreamDelta] = []
 	pass
 
 

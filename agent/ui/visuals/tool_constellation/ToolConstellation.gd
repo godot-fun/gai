@@ -29,7 +29,7 @@ enum ExecutionState { RUNNING, SUCCESS, FAILED }
 enum ToolFamily { GENERIC, READ, WRITE, SEARCH, SHELL, WEB, IMAGE, AUDIO }
 
 
-class ToolCall extends RefCounted:
+class QueuedToolCall extends RefCounted:
 	var id: String
 	var name: String
 	var args: Dictionary[String, Variant]
@@ -67,9 +67,9 @@ class ConstellationNode extends RefCounted:
 
 var nodes: Array[ConstellationNode] = []
 var active_calls: Dictionary[String, int] = {}
-var pending_calls: Array[ToolCall] = []
+var pending_calls: Array[QueuedToolCall] = []
 var pending_results: Dictionary[String, AgentToolResult] = {}
-var playing_call: ToolCall
+var playing_call: QueuedToolCall
 var playing_seconds: float = 0.0
 var result_hold_seconds: float = 0.0
 var turn_index: int = 0
@@ -108,7 +108,7 @@ func on_agent_end(_session_id: int, error_message: String) -> void:
 		var playing_id := playing_call.id
 		if not pending_results.has(playing_id):
 			pending_results[playing_id] = fallback_result
-	for call: ToolCall in pending_calls:
+	for call: QueuedToolCall in pending_calls:
 		var pending_id := call.id
 		if not pending_results.has(pending_id):
 			pending_results[pending_id] = fallback_result
@@ -153,7 +153,7 @@ func on_message_update(_session_id: int, chunk: String, next_stream_kind: String
 
 
 func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: String, args: Dictionary[String, Variant]) -> void:
-	pending_calls.append(ToolCall.new(tool_call_id, tool_name, args, turn_index))
+	pending_calls.append(QueuedToolCall.new(tool_call_id, tool_name, args, turn_index))
 	start_next_queued_call()
 	pass
 

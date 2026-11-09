@@ -33,7 +33,7 @@ static func run(ai_client: OpenAiClient, session: AgentSession) -> void:
 
 		session.messages.append(ChatMessage.assistant_tool_calls(tool_calls, content, completion.reasoning_content))
 		var deferred_messages: Array[ChatMessage] = []
-		for tool_call: OpenAiToolCall in tool_calls:
+		for tool_call: ToolCall in tool_calls:
 			if RuntimeManager.should_stop(session.id):
 				AgentEvents.events.agent_end.emit(session.id, "Stop...")
 				return

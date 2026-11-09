@@ -223,17 +223,17 @@ func extract_stream_reasoning_content(chunks: Array[OpenAiStreamChunk]) -> Strin
 	return build.build_string()
 
 
-func extract_stream_tool_calls(chunks: Array[OpenAiStreamChunk]) -> Array[OpenAiToolCall]:
-	var merged_calls: Array[OpenAiToolCall] = []
+func extract_stream_tool_calls(chunks: Array[OpenAiStreamChunk]) -> Array[ToolCall]:
+	var merged_calls: Array[ToolCall] = []
 	for chunk: OpenAiStreamChunk in chunks:
 		if chunk.choices.is_empty():
 			continue
 		var delta := chunk.choices[0].delta
 		if delta == null:
 			continue
-		OpenAiToolCall.merge_stream_deltas(merged_calls, delta.tool_calls)
-	var tool_calls: Array[OpenAiToolCall] = []
-	for call: OpenAiToolCall in merged_calls:
+		ToolCall.merge_stream_deltas(merged_calls, delta.tool_calls)
+	var tool_calls: Array[ToolCall] = []
+	for call: ToolCall in merged_calls:
 		if StringUtils.is_not_blank(call.function.name):
 			tool_calls.append(call)
 	return tool_calls

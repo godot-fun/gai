@@ -291,7 +291,7 @@ func chat_message_from_dict_dispatches_by_role_test() -> void:
 
 
 func chat_message_tool_calls_reasoning_omits_empty_reasoning_test() -> void:
-	var tool_call := OpenAiToolCall.new()
+	var tool_call := ToolCall.new()
 	tool_call.id = "call_1"
 	var message := ChatMessage.assistant_tool_calls([tool_call])
 	assert(not message.to_api_dict().has("reasoning_content"))
@@ -299,7 +299,7 @@ func chat_message_tool_calls_reasoning_omits_empty_reasoning_test() -> void:
 
 
 func chat_message_tool_calls_reasoning_roundtrip_test() -> void:
-	var tool_call := OpenAiToolCall.new()
+	var tool_call := ToolCall.new()
 	tool_call.id = "call_1"
 	tool_call.function.name = "read"
 	var message := ChatMessage.assistant_tool_calls([tool_call], "", "thinking") as AssistantChatMessage
@@ -360,7 +360,7 @@ func chat_message_user_image_missing_file_has_no_data_url_test() -> void:
 
 
 func open_ai_request_to_json_tool_calls_reasoning_test() -> void:
-	var tool_call := OpenAiToolCall.new()
+	var tool_call := ToolCall.new()
 	tool_call.id = "call_1"
 	tool_call.function.name = "read"
 	var messages: Array[ChatMessage] = []

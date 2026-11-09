@@ -16,7 +16,7 @@ static func run(ai_client: OpenAiClient, messages: Array[ChatMessage]) -> OpenAi
 
 		# Preserve the full turn because some providers validate tool-result messages against it.
 		messages.append(ChatMessage.assistant_tool_calls(completion.tool_calls, completion.content, completion.reasoning_content))
-		for tool_call: OpenAiToolCall in completion.tool_calls:
+		for tool_call: ToolCall in completion.tool_calls:
 			var tool_name := tool_call.function.name
 			var tool: AgentTool = AgentToolRegistry.tools.get(tool_name)
 			var result: AgentToolResult

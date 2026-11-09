@@ -16,7 +16,7 @@ static func update_estimated_usage_includes_assistant_text_test() -> void:
 
 
 static func update_estimated_usage_includes_tool_call_json_test() -> void:
-	var tool_call := OpenAiToolCall.new()
+	var tool_call := ToolCall.new()
 	tool_call.id = "call-1"
 	tool_call.function.name = "read"
 	tool_call.function.arguments = "{}"

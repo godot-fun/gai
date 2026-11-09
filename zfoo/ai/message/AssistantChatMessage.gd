@@ -3,7 +3,7 @@ extends ChatMessage
 
 var text: String = ""
 var reasoning_content: String = ""
-var tool_calls: Array[OpenAiToolCall] = []
+var tool_calls: Array[ToolCall] = []
 
 
 func _init(_text: String = "", _reasoning: String = "") -> void:
@@ -33,5 +33,5 @@ func deep_clone() -> ChatMessage:
 
 static func from_dict(data: Dictionary) -> AssistantChatMessage:
 	var msg := AssistantChatMessage.new(str(data.get("text", "")), str(data.get("reasoning_content", "")))
-	msg.tool_calls = OpenAiToolCall.parse_list(data.get("tool_calls", []))
+	msg.tool_calls = ToolCall.parse_list(data.get("tool_calls", []))
 	return msg

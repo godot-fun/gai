@@ -1,4 +1,4 @@
-class_name OpenAiToolCall
+class_name ToolCall
 extends RefCounted
 
 ## Tool call on an assistant message (request history or completion result).
@@ -28,20 +28,20 @@ var function: Function = Function.new()
 # Parsing
 # ---------------------------------------------------------------------------
 
-static func parse_json(json: String) -> OpenAiToolCall:
-	return JsonUtils.json_to_object(json, OpenAiToolCall)
+static func parse_json(json: String) -> ToolCall:
+	return JsonUtils.json_to_object(json, ToolCall)
 
 
-static func parse(raw: Variant) -> OpenAiToolCall:
-	if raw is OpenAiToolCall:
+static func parse(raw: Variant) -> ToolCall:
+	if raw is ToolCall:
 		return raw
 	if typeof(raw) == TYPE_DICTIONARY:
-		return JsonUtils.dict_to_object(raw, OpenAiToolCall)
+		return JsonUtils.dict_to_object(raw, ToolCall)
 	return null
 
 
-static func parse_list(raw: Variant) -> Array[OpenAiToolCall]:
-	var result: Array[OpenAiToolCall] = []
+static func parse_list(raw: Variant) -> Array[ToolCall]:
+	var result: Array[ToolCall] = []
 	if typeof(raw) != TYPE_ARRAY:
 		return result
 	for item: Variant in raw:
@@ -51,7 +51,7 @@ static func parse_list(raw: Variant) -> Array[OpenAiToolCall]:
 	return result
 
 
-static func merge_stream_deltas(acc: Array[OpenAiToolCall], deltas: Variant) -> void:
+static func merge_stream_deltas(acc: Array[ToolCall], deltas: Variant) -> void:
 	if typeof(deltas) != TYPE_ARRAY:
 		return
 	for raw: Variant in deltas:
@@ -65,10 +65,10 @@ static func merge_stream_deltas(acc: Array[OpenAiToolCall], deltas: Variant) -> 
 		merge_stream_delta(acc, delta)
 
 
-static func merge_stream_delta(acc: Array[OpenAiToolCall], delta: StreamDelta) -> void:
+static func merge_stream_delta(acc: Array[ToolCall], delta: StreamDelta) -> void:
 	var index := delta.index
 	while acc.size() <= index:
-		acc.append(OpenAiToolCall.new())
+		acc.append(ToolCall.new())
 	var entry := acc[index]
 	if StringUtils.is_not_empty(delta.id):
 		entry.id = delta.id
@@ -84,8 +84,8 @@ static func merge_stream_delta(acc: Array[OpenAiToolCall], delta: StreamDelta) -
 # Deep clone
 # ---------------------------------------------------------------------------
 
-func deep_clone() -> OpenAiToolCall:
-	var cloned := OpenAiToolCall.new()
+func deep_clone() -> ToolCall:
+	var cloned := ToolCall.new()
 	cloned.id = id
 	cloned.type = type
 	cloned.function.name = function.name

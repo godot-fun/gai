@@ -2,7 +2,7 @@
 
 
 static func agent_session_deep_clone_is_independent_test() -> void:
-	var tool_call := OpenAiToolCall.new()
+	var tool_call := ToolCall.new()
 	tool_call.id = "call-1"
 	tool_call.function.name = "read_file"
 	tool_call.function.arguments = "{\"path\":\"before\"}"
