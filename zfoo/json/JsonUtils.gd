@@ -39,6 +39,9 @@ static func dict_to_object(data: Dictionary, type: Variant) -> Variant:
 	if !ReflectionUtils.has_empty_constructor(type):
 		return null
 	var obj: Variant = type.new()
+	if obj is JsonSerializable:
+		obj.from_json(JSON.stringify(data))
+		return obj
 	var property_map := ReflectionUtils.get_script_property_map(obj)
 	for key in data.keys():
 		var value: Variant = data[key]
@@ -75,6 +78,8 @@ static func object_to_json(obj: Variant) -> String:
 				builder.append(object_to_json(str(key)) + ": " + object_to_json(value))
 			return "{" + builder.build_joined(", ") + "}"
 		TYPE_OBJECT:
+			if obj is JsonSerializable:
+				return obj.to_json()
 			var builder := StringBuilder.new()
 			for property in ReflectionUtils.get_script_property_map(obj).values():
 				var property_name := property.name as String

@@ -11,6 +11,17 @@ class RequiredConstructor:
 		value = initial_value
 		pass
 
+class CustomJsonObject extends JsonSerializable:
+	var value: String
+
+	func to_json() -> String:
+		return JSON.stringify({"customValue": value})
+
+	func from_json(json: String) -> void:
+		var data: Dictionary = JSON.parse_string(json)
+		value = str(data.get("customValue", ""))
+		pass
+
 static var teacher1 := Teacher.new()
 static var teacher2 := Teacher.new()
 
@@ -33,6 +44,16 @@ func json_to_object_failure_returns_null_test() -> void:
 	assert(JsonUtils.json_to_object("", Teacher) == null)
 	assert(JsonUtils.json_to_object("   ", Teacher) == null)
 	assert(JsonUtils.dict_to_object({"value": "test"}, RequiredConstructor) == null)
+	pass
+
+
+func custom_json_serializable_test() -> void:
+	var source := CustomJsonObject.new()
+	source.value = "custom"
+	var json := JsonUtils.object_to_json(source)
+	assert(json == '{"customValue":"custom"}')
+	var restored: CustomJsonObject = JsonUtils.json_to_object(json, CustomJsonObject)
+	assert(restored.value == "custom")
 	pass
 
 
