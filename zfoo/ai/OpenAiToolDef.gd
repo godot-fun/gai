@@ -3,6 +3,21 @@ extends RefCounted
 
 ## OpenAI function tool definition (`tools[]` entry in chat requests).
 
+var type: String = "function"
+var function: FunctionDef = FunctionDef.new()
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Function definition
+
+class FunctionDef:
+	var name: String = ""
+	var description: String = ""
+	var parameters: Parameters = Parameters.new()
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Property definitions
 
 class PropertyDef extends IJsonSerializable:
 	var type: String = "string"
@@ -21,6 +36,15 @@ class ArrayPropertyDef extends PropertyDef:
 	var items: PropertyDef = PropertyDef.new()
 	pass
 
+
+class ObjectPropertyDef extends PropertyDef:
+	var properties: Dictionary[String, PropertyDef] = {}
+	var required: Array[String] = []
+	pass
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Parameters builder
 
 class Parameters:
 	var type: String = "object"
@@ -82,6 +106,18 @@ class Parameters:
 		return self
 
 
+	func object_prop(field_name: String, object_parameters: Parameters, description: String, required_field: bool = false) -> Parameters:
+		var prop := ObjectPropertyDef.new()
+		prop.type = "object"
+		prop.description = description
+		prop.properties = object_parameters.properties
+		prop.required = object_parameters.required
+		properties[field_name] = prop
+		if required_field:
+			required.append(field_name)
+		return self
+
+
 	func enum_prop(field_name: String, enum_values: Array[String], description: String, required_field: bool = false) -> Parameters:
 		var prop := EnumPropertyDef.new()
 		prop.enum_values = enum_values
@@ -90,13 +126,3 @@ class Parameters:
 		if required_field:
 			required.append(field_name)
 		return self
-
-
-class FunctionDef:
-	var name: String = ""
-	var description: String = ""
-	var parameters: Parameters = Parameters.new()
-
-
-var type: String = "function"
-var function: FunctionDef = FunctionDef.new()

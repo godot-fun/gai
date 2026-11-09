@@ -186,6 +186,27 @@ func open_ai_request_array_tool_parameter_to_json_test() -> void:
 	pass
 
 
+func open_ai_request_object_tool_parameter_to_json_test() -> void:
+	var request := OpenAiRequest.new("test-model", [ChatMessage.user("hello")], false)
+	var tool := OpenAiToolDef.new()
+	tool.function.name = "create_user"
+	var profile := OpenAiToolDef.Parameters.object()
+	profile.string_prop("name", "Display name", true)
+	profile.enum_prop("role", ["admin", "member"], "User role", true)
+	tool.function.parameters.object_prop("profile", profile, "User profile", true)
+	request.tools.append(tool)
+	var body: Dictionary = JSON.parse_string(request.to_json())
+	var parameters: Dictionary = body.tools[0].function.parameters
+	var profile_json: Dictionary = parameters.properties.profile
+	assert(profile_json.type == "object")
+	assert(profile_json.description == "User profile")
+	assert(profile_json.properties.name.type == "string")
+	assert(profile_json.properties.role["enum"] == ["admin", "member"])
+	assert(profile_json.required == ["name", "role"])
+	assert(parameters.required == ["profile"])
+	pass
+
+
 func open_ai_request_to_json_async_test() -> void:
 	var messages: Array[ChatMessage] = []
 	messages.append(ChatMessage.user("hello"))
