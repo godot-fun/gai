@@ -154,6 +154,23 @@ func open_ai_request_number_tool_parameter_to_json_test() -> void:
 	pass
 
 
+func open_ai_request_array_tool_parameter_to_json_test() -> void:
+	var request := OpenAiRequest.new("test-model", [ChatMessage.user("hello")], false)
+	var tool := OpenAiToolDef.new()
+	tool.function.name = "read_files"
+	tool.function.parameters.array_prop("paths", "string", "File paths", true)
+	request.tools.append(tool)
+	var json := request.to_json()
+	var body: Dictionary = JSON.parse_string(json)
+	var parameters: Dictionary = body.tools[0].function.parameters
+	var paths: Dictionary = parameters.properties.paths
+	assert(paths.type == "array")
+	assert(paths.description == "File paths")
+	assert(paths.items.type == "string")
+	assert(parameters.required == ["paths"])
+	pass
+
+
 func open_ai_request_to_json_async_test() -> void:
 	var messages: Array[ChatMessage] = []
 	messages.append(ChatMessage.user("hello"))

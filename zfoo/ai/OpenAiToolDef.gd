@@ -10,6 +10,11 @@ class PropertyDef:
 	pass
 
 
+class ArrayPropertyDef extends PropertyDef:
+	var items: PropertyDef = PropertyDef.new()
+	pass
+
+
 class Parameters:
 	var type: String = "object"
 	var properties: Dictionary[String, PropertyDef] = {}
@@ -53,6 +58,17 @@ class Parameters:
 		var prop := PropertyDef.new()
 		prop.type = "number"
 		prop.description = description
+		properties[field_name] = prop
+		if required_field:
+			required.append(field_name)
+		return self
+
+
+	func array_prop(field_name: String, item_type: String, description: String, required_field: bool = false) -> Parameters:
+		var prop := ArrayPropertyDef.new()
+		prop.type = "array"
+		prop.description = description
+		prop.items.type = item_type
 		properties[field_name] = prop
 		if required_field:
 			required.append(field_name)
