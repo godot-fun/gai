@@ -1,10 +1,11 @@
 class_name ToolCall
 extends RefCounted
 
-## Tool call on an assistant message (request history or completion result).
+## Assistant `tool_calls[]` entry (history, completion, or streaming deltas).
 
 
-class Function:
+## `tool_calls[].function` payload (`name` + JSON `arguments` string).
+class CallFunction:
 	var name: String = ""
 	var arguments: String = ""
 	pass
@@ -15,13 +16,13 @@ class StreamDelta:
 	var index: int = 0
 	var id: String = ""
 	var type: String = ToolDef.TYPE_FUNCTION
-	var function: Function = Function.new()
+	var function: CallFunction = CallFunction.new()
 	pass
 
 
 var id: String = ""
 var type: String = ToolDef.TYPE_FUNCTION
-var function: Function = Function.new()
+var function: CallFunction = CallFunction.new()
 
 
 # ---------------------------------------------------------------------------

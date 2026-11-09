@@ -1,7 +1,7 @@
 class_name AgentTool
 extends RefCounted
 
-## Base tool definition. Each tool exposes an OpenAI function schema and async_execute() returning AgentToolResult.
+## Base runtime tool. Each implementation exposes a chat `tools[]` schema via [method get_schema] and [method async_execute].
 
 const MAX_OUTPUT := 32_000
 const MAX_FILE_RESULTS := 512

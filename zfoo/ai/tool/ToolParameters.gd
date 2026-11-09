@@ -1,7 +1,7 @@
 class_name ToolParameters
 extends RefCounted
 
-## JSON Schema builder for [FunctionToolDef] `function.parameters`.
+## JSON Schema builder for `FunctionToolDef.function.parameters`.
 
 
 class PropertyDef extends IJsonSerializable:

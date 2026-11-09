@@ -1,6 +1,6 @@
 # Repository Map
 
-- `zfoo/`: Reusable Godot framework (`zfoo/ai/message/` — OpenAI-style `ChatMessage` hierarchy and user multimodal parts).
+- `zfoo/`: Reusable Godot framework (`zfoo/ai/message/` — Chat Completions-style `ChatMessage` hierarchy; `zfoo/ai/tool/` — `ToolDef`, `FunctionToolDef`, `ToolParameters`, `ToolCall`).
 - `agent/`: Desktop agent application.
 - `cli/`: Command-line application.
 - `cpp/`: godot-cpp GDExtension (C++ bindings for the Godot script API).
@@ -83,6 +83,14 @@ gdf.shutdown()
 ## AI — OpenAI-compatible chat
 
 Chat roles and factories live on `ChatMessage` under `zfoo/ai/message/` (`SystemChatMessage`, `UserChatMessage`, `AssistantChatMessage`, `ToolResultChatMessage`).
+
+Tool wire types live under `zfoo/ai/tool/`:
+
+- `ToolDef` — base `tools[]` entry (`type`, shared constants).
+- `FunctionToolDef` + `ToolParameters` — builtin tools: JSON Schema for `function.parameters`.
+- `ToolCall` — assistant `tool_calls[]` (`CallFunction` holds `name` / `arguments`).
+
+MCP tools use `McpFunctionToolDef` in `agent/mcp/` and register through `AgentToolRegistry`.
 
 ```gdscript
 var client := OpenAiClient.new(OS.get_environment("OPENAI_API_KEY"), "https://api.deepseek.com/chat/completions", "deepseek-v4-flash")

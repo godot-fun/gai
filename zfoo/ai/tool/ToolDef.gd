@@ -2,7 +2,7 @@
 class_name ToolDef
 extends RefCounted
 
-## Chat API `tools[]` schema entry (OpenAI function tools and MCP-backed tools).
+## Chat Completions-compatible `tools[]` schema entry ([FunctionToolDef] or MCP-backed definitions).
 
 ## User-defined tools (`function` JSON schema or `custom` free-form input).
 const TYPE_FUNCTION := "function"

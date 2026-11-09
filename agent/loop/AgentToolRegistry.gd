@@ -1,7 +1,7 @@
 class_name AgentToolRegistry
 extends RefCounted
 
-## Maps tool names to AgentTool instances and builds OpenAI tool schemas.
+## Maps tool names to [AgentTool] instances and builds chat API [ToolDef] schemas for the model.
 
 static var tools: Dictionary[String, AgentTool] = {}
 static var schemas: Array[ToolDef] = []

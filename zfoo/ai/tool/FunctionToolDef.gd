@@ -1,7 +1,7 @@
 class_name FunctionToolDef
 extends ToolDef
 
-## Function-type chat tool schema (`type: "function"`).
+## Builtin agent tool schema (`tools[].type: function`).
 
 var function: FunctionDef = FunctionDef.new()
 
