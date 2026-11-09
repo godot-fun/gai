@@ -11,17 +11,13 @@ static func session_messages_save_shape_roundtrip_test() -> void:
 	session.messages.append(ChatMessage.assistant_tool_calls([tool_call], "hi", "think"))
 	session.messages.append(ChatMessage.tool_result("call-1", "ok"))
 	var json := JsonUtils.object_to_json(session)
-	var parser := JSON.new()
-	assert(parser.parse(json) == OK)
-	var messages_raw: Array = parser.data["messages"]
-	assert(messages_raw.size() == session.messages.size())
-	var restored: Array[ChatMessage] = []
-	for item: Variant in messages_raw:
-		restored.append(ChatMessage.from_dict(item))
-	assert((restored[0] as SystemChatMessage).text == "system")
-	assert((restored[1] as UserChatMessage).first_image_data_url().begins_with("data:image/png;base64,"))
-	assert((restored[2] as AssistantChatMessage).tool_calls.size() == 1)
-	assert((restored[3] as ToolResultChatMessage).text == "ok")
+	var restored: AgentSession = JsonUtils.json_to_object(json, AgentSession)
+	assert(restored != null)
+	assert(restored.messages.size() == session.messages.size())
+	assert((restored.messages[0] as SystemChatMessage).text == "system")
+	assert((restored.messages[1] as UserChatMessage).first_image_data_url().begins_with("data:image/png;base64,"))
+	assert((restored.messages[2] as AssistantChatMessage).tool_calls.size() == 1)
+	assert((restored.messages[3] as ToolResultChatMessage).text == "ok")
 	pass
 
 

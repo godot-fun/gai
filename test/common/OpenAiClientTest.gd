@@ -246,11 +246,11 @@ func open_ai_request_to_json_escapes_control_characters_test() -> void:
 
 
 func chat_message_from_dict_dispatches_by_role_test() -> void:
-	var system := ChatMessage.from_dict({"role": ChatMessage.ROLE_SYSTEM, "text": "sys"}) as SystemChatMessage
+	var system := JsonUtils.dict_to_object({"role": ChatMessage.ROLE_SYSTEM, "text": "sys"}, ChatMessage) as SystemChatMessage
 	assert(system != null and system.text == "sys")
-	var user := ChatMessage.from_dict({"role": ChatMessage.ROLE_USER, "parts": [{"part_type": "text", "text": "hi"}]}) as UserChatMessage
+	var user := JsonUtils.dict_to_object({"role": ChatMessage.ROLE_USER, "parts": [{"part_type": "text", "text": "hi"}]}, ChatMessage) as UserChatMessage
 	assert(user != null and (user.parts[0] as UserTextPart).text == "hi")
-	assert(ChatMessage.from_dict({"role": "unknown"}) == null)
+	assert(JsonUtils.dict_to_object({"role": "unknown"}, ChatMessage) == null)
 	pass
 
 

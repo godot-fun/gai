@@ -1,5 +1,5 @@
 class_name ChatMessage
-extends RefCounted
+extends IJsonSerializable
 
 const ROLE_SYSTEM := "system"
 const ROLE_USER := "user"
@@ -52,8 +52,8 @@ static func tool_result(call_id: String, text: String) -> ToolResultChatMessage:
 # Persistence (JsonUtils.object_to_json shape — not Chat Completions wire)
 # ---------------------------------------------------------------------------
 
-## Dispatches on [member role] to the matching subclass [code]from_dict[/code].
-static func from_dict(data: Dictionary) -> ChatMessage:
+## Deserializes the persisted message into the subclass selected by [member role].
+func deserialize(data: Dictionary) -> Variant:
 	match str(data.get("role", "")):
 		ROLE_SYSTEM:
 			return SystemChatMessage.from_dict(data)
@@ -65,4 +65,3 @@ static func from_dict(data: Dictionary) -> ChatMessage:
 			return ToolResultChatMessage.from_dict(data)
 		_:
 			return null
-

@@ -105,25 +105,9 @@ static func load_session_file(file_path: String) -> AgentSession:
 	var text := FileUtils.read_file_to_string(file_path)
 	if StringUtils.is_blank(text):
 		return null
-	var parser := JSON.new()
-	if parser.parse(text) != OK or typeof(parser.data) != TYPE_DICTIONARY:
-		Log.error("agent chat load failed, invalid json:[{}]", file_path)
-		return null
-	var data: Dictionary = parser.data
-	var messages_raw: Variant = data.get("messages", [])
-	data.erase("messages")
-	var session: AgentSession = JsonUtils.dict_to_object(data, AgentSession)
+	var session: AgentSession = JsonUtils.json_to_object(text, AgentSession)
 	if session == null:
 		Log.error("agent chat load failed, invalid session:[{}]", file_path)
 		return null
-	var messages: Array[ChatMessage] = []
-	if typeof(messages_raw) == TYPE_ARRAY:
-		for item: Variant in messages_raw:
-			if typeof(item) != TYPE_DICTIONARY:
-				continue
-			var message := ChatMessage.from_dict(item)
-			if message != null:
-				messages.append(message)
-	session.messages = messages
 	session.id = int(file_path.get_file().trim_suffix(FILE_SUFFIX))
 	return session
