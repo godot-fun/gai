@@ -28,11 +28,6 @@ func _init(_model: String = "", _messages: Array[ChatMessage] = [], _stream: boo
 
 
 func to_json() -> String:
-	return JsonUtils.object_to_json(to_api_dict())
-
-
-## OpenAI wire shape — only include optional fields when they are used.
-func to_api_dict() -> Dictionary:
 	var wire_messages: Array = []
 	for message: ChatMessage in messages:
 		wire_messages.append(message.to_api_dict())
@@ -50,4 +45,4 @@ func to_api_dict() -> Dictionary:
 		body["thinking"] = {"type": thinking}
 	if StringUtils.is_not_blank(response_format):
 		body["response_format"] = {"type": response_format}
-	return body
+	return JsonUtils.object_to_json(body)
