@@ -17,10 +17,14 @@ class CustomJsonObject extends IJsonSerializable:
 	func to_json() -> String:
 		return JSON.stringify({"customValue": value})
 
-	func from_json(json: String) -> void:
-		var data: Dictionary = JSON.parse_string(json)
+	func from_json(data: Dictionary) -> void:
 		value = str(data.get("customValue", ""))
 		pass
+
+class DefaultJsonObject extends IJsonSerializable:
+	var name := "default"
+	var count := 2
+	pass
 
 static var teacher1 := Teacher.new()
 static var teacher2 := Teacher.new()
@@ -54,6 +58,14 @@ func custom_json_serializable_test() -> void:
 	assert(json == '{"customValue":"custom"}')
 	var restored: CustomJsonObject = JsonUtils.json_to_object(json, CustomJsonObject)
 	assert(restored.value == "custom")
+	pass
+
+
+func default_json_serializable_test() -> void:
+	var json := JsonUtils.object_to_json(DefaultJsonObject.new())
+	var data: Dictionary = JSON.parse_string(json)
+	assert(data.name == "default")
+	assert(data.count == 2)
 	pass
 
 

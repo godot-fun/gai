@@ -24,15 +24,20 @@ static func object_to_json(obj: Variant) -> String:
 		TYPE_OBJECT:
 			if obj is IJsonSerializable:
 				return obj.to_json()
-			var builder := StringBuilder.new()
-			for property in ReflectionUtils.get_script_property_map(obj).values():
-				var property_name := property.name as String
-				var value: Variant = obj.get(property_name)
-				builder.append("\"" + property_name + "\": " + object_to_json(value))
-			return "{" + builder.build_joined(", ") + "}"
+			return serialize_object(obj)
 		_:
 			Log.error("unknow type:[{}]", type)
 	return ""
+
+
+## Applies the default object serialization without invoking [method IJsonSerializable.to_json].
+static func serialize_object(obj: Object) -> String:
+	var builder := StringBuilder.new()
+	for property in ReflectionUtils.get_script_property_map(obj).values():
+		var property_name := property.name as String
+		var value: Variant = obj.get(property_name)
+		builder.append("\"" + property_name + "\": " + object_to_json(value))
+	return "{" + builder.build_joined(", ") + "}"
 
 
 ## JSON string literal. Godot [method JSON.stringify] / [method String.json_escape] leave raw C0

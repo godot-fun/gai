@@ -39,7 +39,7 @@ static func dict_to_object(data: Dictionary, type: Variant) -> Variant:
 		return null
 	var obj: Variant = type.new()
 	if obj is IJsonSerializable:
-		obj.from_json(JSON.stringify(data))
+		obj.from_json(data)
 		return obj
 	var property_map := ReflectionUtils.get_script_property_map(obj)
 	for key in data.keys():
