@@ -12,8 +12,8 @@ func _init() -> void:
 	pass
 
 # AgentTool-Interface-Implement-Start
-func get_parameters() -> OpenAiToolDef.Parameters:
-	var params := OpenAiToolDef.Parameters.new()
+func get_parameters() -> ToolParameters.Parameters:
+	var params := ToolParameters.Parameters.new()
 	params.string_prop(ARG_PATTERN, "Glob pattern (*, ?, ** supported)", true)
 	params.string_prop(ARG_PATH, "Directory to search from (default: workspace root)", false)
 	return params

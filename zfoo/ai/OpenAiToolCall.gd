@@ -14,13 +14,13 @@ class Function:
 class StreamDelta:
 	var index: int = 0
 	var id: String = ""
-	var type: String = "function"
+	var type: String = ToolDef.TYPE_FUNCTION
 	var function: Function = Function.new()
 	pass
 
 
 var id: String = ""
-var type: String = "function"
+var type: String = ToolDef.TYPE_FUNCTION
 var function: Function = Function.new()
 
 

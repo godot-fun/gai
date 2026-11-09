@@ -1,4 +1,4 @@
-class_name McpToolDef
+class_name McpFunctionToolDef
 extends ToolDef
 
 var function: FunctionDef = FunctionDef.new()

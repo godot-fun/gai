@@ -7,7 +7,7 @@ var parameters: Dictionary = {}
 
 
 func get_schema() -> ToolDef:
-	var definition := McpToolDef.new()
+	var definition := McpFunctionToolDef.new()
 	definition.function.name = name
 	definition.function.description = description
 	definition.function.parameters = parameters

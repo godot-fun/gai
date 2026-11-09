@@ -12,8 +12,8 @@ func _init() -> void:
 
 
 # AgentTool-Interface-Implement-Start
-func get_parameters() -> OpenAiToolDef.Parameters:
-	var params := OpenAiToolDef.Parameters.new()
+func get_parameters() -> ToolParameters.Parameters:
+	var params := ToolParameters.Parameters.new()
 	params.string_prop(ARG_PATH, "Absolute or project-relative image path", true)
 	params.string_prop(ARG_PROMPT, "Image instruction, such as OCR, description, or structured extraction", true)
 	return params

@@ -1,22 +1,8 @@
-class_name OpenAiToolDef
-extends ToolDef
+class_name ToolParameters
+extends RefCounted
 
-## OpenAI function tool definition (`tools[]` entry in chat requests).
+## JSON Schema builder for [FunctionToolDef] `function.parameters`.
 
-var function: FunctionDef = FunctionDef.new()
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-# Function definition
-
-class FunctionDef:
-	var name: String = ""
-	var description: String = ""
-	var parameters: Parameters = Parameters.new()
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-# Property definitions
 
 class PropertyDef extends IJsonSerializable:
 	var type: String = "string"
@@ -42,9 +28,6 @@ class ObjectPropertyDef extends PropertyDef:
 	pass
 
 
-# ----------------------------------------------------------------------------------------------------------------------
-# Parameters builder
-
 class Parameters:
 	var type: String = "object"
 	var properties: Dictionary[String, PropertyDef] = {}
@@ -63,14 +46,12 @@ class Parameters:
 		add_property(field_name, prop, required_field)
 		return self
 
-
 	func boolean_prop(field_name: String, description: String, required_field: bool = false) -> Parameters:
 		var prop := PropertyDef.new()
 		prop.type = "boolean"
 		prop.description = description
 		add_property(field_name, prop, required_field)
 		return self
-
 
 	func integer_prop(field_name: String, description: String, required_field: bool = false) -> Parameters:
 		var prop := PropertyDef.new()
@@ -79,14 +60,12 @@ class Parameters:
 		add_property(field_name, prop, required_field)
 		return self
 
-
 	func number_prop(field_name: String, description: String, required_field: bool = false) -> Parameters:
 		var prop := PropertyDef.new()
 		prop.type = "number"
 		prop.description = description
 		add_property(field_name, prop, required_field)
 		return self
-
 
 	func array_prop(field_name: String, item_type: String, description: String, required_field: bool = false) -> Parameters:
 		var prop := ArrayPropertyDef.new()
@@ -96,7 +75,6 @@ class Parameters:
 		add_property(field_name, prop, required_field)
 		return self
 
-
 	func object_prop(field_name: String, object_parameters: Parameters, description: String, required_field: bool = false) -> Parameters:
 		var prop := ObjectPropertyDef.new()
 		prop.type = "object"
@@ -105,7 +83,6 @@ class Parameters:
 		prop.required = object_parameters.required
 		add_property(field_name, prop, required_field)
 		return self
-
 
 	func enum_prop(field_name: String, enum_values: Array[String], description: String, required_field: bool = false) -> Parameters:
 		var prop := EnumPropertyDef.new()

@@ -15,15 +15,15 @@ var description: String = ""
 
 
 func get_schema() -> ToolDef:
-	var def := OpenAiToolDef.new()
+	var def := FunctionToolDef.new()
 	def.function.name = name
 	def.function.description = description
 	def.function.parameters = get_parameters()
 	return def
 
 
-func get_parameters() -> OpenAiToolDef.Parameters:
-	return OpenAiToolDef.Parameters.new()
+func get_parameters() -> ToolParameters.Parameters:
+	return ToolParameters.Parameters.new()
 
 
 func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:

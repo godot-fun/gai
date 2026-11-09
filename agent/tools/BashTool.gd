@@ -14,8 +14,8 @@ func _init() -> void:
 	pass
 
 # AgentTool-Interface-Implement-Start
-func get_parameters() -> OpenAiToolDef.Parameters:
-	return OpenAiToolDef.Parameters.new().string_prop(ARG_COMMAND, "Shell command to execute", true)
+func get_parameters() -> ToolParameters.Parameters:
+	return ToolParameters.Parameters.new().string_prop(ARG_COMMAND, "Shell command to execute", true)
 
 
 func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:

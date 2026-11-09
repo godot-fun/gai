@@ -12,8 +12,8 @@ func _init() -> void:
 	pass
 
 # AgentTool-Interface-Implement-Start
-func get_parameters() -> OpenAiToolDef.Parameters:
-	var params := OpenAiToolDef.Parameters.new()
+func get_parameters() -> ToolParameters.Parameters:
+	var params := ToolParameters.Parameters.new()
 	params.string_prop(ARG_PATH, "Absolute or project-relative file path", true)
 	params.string_prop(ARG_CONTENT, "Full file content to write", true)
 	return params
