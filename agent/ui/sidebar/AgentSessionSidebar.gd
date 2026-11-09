@@ -138,7 +138,6 @@ func apply_locale() -> void:
 
 func on_ui_scale_changed(_scale: float) -> void:
 	sync_sections()
-	apply_theme()
 	pass
 
 

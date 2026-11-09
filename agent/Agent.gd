@@ -124,7 +124,6 @@ func on_window_input(event: InputEvent) -> void:
 func on_ui_scale_changed(_scale: float) -> void:
 	AgentLayout.refresh()
 	apply_layout()
-	apply_theme()
 	pass
 
 

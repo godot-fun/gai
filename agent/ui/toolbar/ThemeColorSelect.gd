@@ -47,7 +47,6 @@ func build_popup() -> void:
 
 func on_ui_scale_changed(_scale: float) -> void:
 	color_picker.custom_minimum_size = Vector2(ControlSize.image_md, ControlSize.image_md)
-	apply_theme()
 	pass
 
 
