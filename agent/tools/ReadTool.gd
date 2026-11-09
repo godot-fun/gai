@@ -12,7 +12,7 @@ func _init() -> void:
 
 # AgentTool-Interface-Implement-Start
 func get_parameters() -> OpenAiToolDef.Parameters:
-	return OpenAiToolDef.Parameters.object().string_prop(ARG_PATH, "Absolute or project-relative file path", true)
+	return OpenAiToolDef.Parameters.new().string_prop(ARG_PATH, "Absolute or project-relative file path", true)
 
 
 func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:

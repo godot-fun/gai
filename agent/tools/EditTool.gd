@@ -15,7 +15,7 @@ func _init() -> void:
 
 # AgentTool-Interface-Implement-Start
 func get_parameters() -> OpenAiToolDef.Parameters:
-	var params := OpenAiToolDef.Parameters.object()
+	var params := OpenAiToolDef.Parameters.new()
 	params.string_prop(ARG_PATH, "Path to the file to edit (relative or absolute).", true)
 	params.string_prop(ARG_OLD_STRING, "Exact text to replace. Must appear exactly once unless replace_all is true.", true)
 	params.string_prop(ARG_NEW_STRING, "Text to replace old_string with. Use an empty string to delete it.", true)

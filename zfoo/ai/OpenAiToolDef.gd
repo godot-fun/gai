@@ -51,17 +51,16 @@ class Parameters:
 	var properties: Dictionary[String, PropertyDef] = {}
 	var required: Array[String] = []
 
-	static func object(required_fields: Array[String] = []) -> Parameters:
-		var params := Parameters.new()
-		params.required = required_fields
-		return params
+	func add_property(field_name: String, prop: PropertyDef, required_field: bool) -> void:
+		properties[field_name] = prop
+		if required_field and not required.has(field_name):
+			required.append(field_name)
+		pass
 
 	func string_prop(field_name: String, description: String, required_field: bool = false) -> Parameters:
 		var prop := PropertyDef.new()
 		prop.description = description
-		properties[field_name] = prop
-		if required_field:
-			required.append(field_name)
+		add_property(field_name, prop, required_field)
 		return self
 
 
@@ -69,9 +68,7 @@ class Parameters:
 		var prop := PropertyDef.new()
 		prop.type = "boolean"
 		prop.description = description
-		properties[field_name] = prop
-		if required_field:
-			required.append(field_name)
+		add_property(field_name, prop, required_field)
 		return self
 
 
@@ -79,9 +76,7 @@ class Parameters:
 		var prop := PropertyDef.new()
 		prop.type = "integer"
 		prop.description = description
-		properties[field_name] = prop
-		if required_field:
-			required.append(field_name)
+		add_property(field_name, prop, required_field)
 		return self
 
 
@@ -89,9 +84,7 @@ class Parameters:
 		var prop := PropertyDef.new()
 		prop.type = "number"
 		prop.description = description
-		properties[field_name] = prop
-		if required_field:
-			required.append(field_name)
+		add_property(field_name, prop, required_field)
 		return self
 
 
@@ -100,9 +93,7 @@ class Parameters:
 		prop.type = "array"
 		prop.description = description
 		prop.items.type = item_type
-		properties[field_name] = prop
-		if required_field:
-			required.append(field_name)
+		add_property(field_name, prop, required_field)
 		return self
 
 
@@ -112,9 +103,7 @@ class Parameters:
 		prop.description = description
 		prop.properties = object_parameters.properties
 		prop.required = object_parameters.required
-		properties[field_name] = prop
-		if required_field:
-			required.append(field_name)
+		add_property(field_name, prop, required_field)
 		return self
 
 
@@ -122,7 +111,5 @@ class Parameters:
 		var prop := EnumPropertyDef.new()
 		prop.enum_values = enum_values
 		prop.description = description
-		properties[field_name] = prop
-		if required_field:
-			required.append(field_name)
+		add_property(field_name, prop, required_field)
 		return self

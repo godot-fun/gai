@@ -16,7 +16,7 @@ func _init() -> void:
 
 # AgentTool-Interface-Implement-Start
 func get_parameters() -> OpenAiToolDef.Parameters:
-	var params := OpenAiToolDef.Parameters.object()
+	var params := OpenAiToolDef.Parameters.new()
 	params.string_prop(ARG_PATH, "Absolute or project-relative path to a PCM16 WAV audio file", true)
 	return params
 

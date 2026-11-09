@@ -17,7 +17,7 @@ func _init() -> void:
 
 # AgentTool-Interface-Implement-Start
 func get_parameters() -> OpenAiToolDef.Parameters:
-	var params := OpenAiToolDef.Parameters.object()
+	var params := OpenAiToolDef.Parameters.new()
 	params.string_prop(ARG_QUERY, "Search query", true)
 	params.integer_prop(ARG_MAX_RESULTS, "Maximum number of results (1-10, default 5)", false)
 	return params

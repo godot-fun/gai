@@ -15,7 +15,7 @@ func _init() -> void:
 
 # AgentTool-Interface-Implement-Start
 func get_parameters() -> OpenAiToolDef.Parameters:
-	var params := OpenAiToolDef.Parameters.object()
+	var params := OpenAiToolDef.Parameters.new()
 	params.string_prop(ARG_PATH, "Directory path (default: workspace root)", false)
 	params.boolean_prop(ARG_RECURSIVE, "Whether to list subdirectories recursively (default false)", false)
 	return params

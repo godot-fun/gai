@@ -18,7 +18,7 @@ func _init() -> void:
 
 # AgentTool-Interface-Implement-Start
 func get_parameters() -> OpenAiToolDef.Parameters:
-	var params := OpenAiToolDef.Parameters.object()
+	var params := OpenAiToolDef.Parameters.new()
 	params.string_prop(ARG_URL, "HTTP or HTTPS URL to fetch", true)
 	params.integer_prop(ARG_MAX_CHARS, "Maximum characters to return (default 80000, max 200000)", false)
 	return params

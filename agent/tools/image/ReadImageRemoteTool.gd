@@ -10,7 +10,7 @@ func _init() -> void:
 
 # AgentTool-Interface-Implement-Start
 func get_parameters() -> OpenAiToolDef.Parameters:
-	return OpenAiToolDef.Parameters.object().string_prop(ARG_PATH, "Path to the image file, resolved by the filesystem backend.", true)
+	return OpenAiToolDef.Parameters.new().string_prop(ARG_PATH, "Path to the image file, resolved by the filesystem backend.", true)
 
 
 func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:

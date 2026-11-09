@@ -15,7 +15,7 @@ func _init() -> void:
 
 # AgentTool-Interface-Implement-Start
 func get_parameters() -> OpenAiToolDef.Parameters:
-	return OpenAiToolDef.Parameters.object().string_prop(ARG_COMMAND, "Shell command to execute", true)
+	return OpenAiToolDef.Parameters.new().string_prop(ARG_COMMAND, "Shell command to execute", true)
 
 
 func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
@@ -51,4 +51,3 @@ static func build_argv_from_command(command: String) -> PackedStringArray:
 		var encoded_command := Marshalls.raw_to_base64(command.to_utf8_buffer())
 		bash_command = StringUtils.format("cd -- '{}' && /bin/bash --noprofile --norc <(printf %s {} | /usr/bin/base64 --decode)", working_directory, encoded_command)
 	return PackedStringArray([bash, "--noprofile", "--norc", "-c", bash_command])
-

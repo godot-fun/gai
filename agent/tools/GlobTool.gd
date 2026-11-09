@@ -13,7 +13,7 @@ func _init() -> void:
 
 # AgentTool-Interface-Implement-Start
 func get_parameters() -> OpenAiToolDef.Parameters:
-	var params := OpenAiToolDef.Parameters.object()
+	var params := OpenAiToolDef.Parameters.new()
 	params.string_prop(ARG_PATTERN, "Glob pattern (*, ?, ** supported)", true)
 	params.string_prop(ARG_PATH, "Directory to search from (default: workspace root)", false)
 	return params
@@ -40,4 +40,3 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 	var text := build.build_joined(FileUtils.NEWLINE_LF)
 	return AgentToolResult.ok(text, AgentToolResult.ui_details(NAME, text))
 # AgentTool-Interface-Implement-End
-
