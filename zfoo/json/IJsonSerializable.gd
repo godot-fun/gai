@@ -1,5 +1,5 @@
 @abstract
-class_name JsonSerializable
+class_name IJsonSerializable
 extends RefCounted
 
 ## Serializes this object to a JSON string.

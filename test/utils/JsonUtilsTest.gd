@@ -11,7 +11,7 @@ class RequiredConstructor:
 		value = initial_value
 		pass
 
-class CustomJsonObject extends JsonSerializable:
+class CustomJsonObject extends IJsonSerializable:
 	var value: String
 
 	func to_json() -> String:
