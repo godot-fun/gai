@@ -40,6 +40,11 @@ static func dict_to_object(data: Dictionary, type: Variant) -> Variant:
 	var obj: Variant = type.new()
 	if obj is IJsonSerializable:
 		return obj.deserialize(data)
+	return deserialize_object(obj, data)
+
+
+## Applies the default object deserialization without invoking [method IJsonSerializable.deserialize].
+static func deserialize_object(obj: Object, data: Dictionary) -> Variant:
 	var property_map := ReflectionUtils.get_script_property_map(obj)
 	for key in data.keys():
 		var value: Variant = data[key]

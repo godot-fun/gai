@@ -62,10 +62,16 @@ func custom_json_serializable_test() -> void:
 
 
 func default_json_serializable_test() -> void:
-	var json := JsonUtils.object_to_json(DefaultJsonObject.new())
+	var source := DefaultJsonObject.new()
+	source.name = "changed"
+	source.count = 7
+	var json := JsonUtils.object_to_json(source)
 	var data: Dictionary = JSON.parse_string(json)
-	assert(data.name == "default")
-	assert(data.count == 2)
+	assert(data.name == "changed")
+	assert(data.count == 7)
+	var restored: DefaultJsonObject = JsonUtils.json_to_object(json, DefaultJsonObject)
+	assert(restored.name == "changed")
+	assert(restored.count == 7)
 	pass
 
 
