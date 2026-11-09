@@ -12,7 +12,7 @@ const RESPONSE_FORMAT_JSON_OBJECT := "json_object"
 var model: String = ""
 var messages: Array[ChatMessage] = []
 var stream: bool = false
-var tools: Array[OpenAiToolDef] = []
+var tools: Array[ToolDef] = []
 var max_tokens: int = 0
 ## `enabled` / `disabled`, or empty to omit (provider default).
 var thinking: String = ""

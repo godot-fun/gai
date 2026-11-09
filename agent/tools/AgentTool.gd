@@ -14,7 +14,7 @@ var name: String = ""
 var description: String = ""
 
 
-func get_schema() -> OpenAiToolDef:
+func get_schema() -> ToolDef:
 	var def := OpenAiToolDef.new()
 	def.function.name = name
 	def.function.description = description

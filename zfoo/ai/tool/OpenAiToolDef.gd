@@ -1,9 +1,8 @@
 class_name OpenAiToolDef
-extends RefCounted
+extends ToolDef
 
 ## OpenAI function tool definition (`tools[]` entry in chat requests).
 
-var type: String = "function"
 var function: FunctionDef = FunctionDef.new()
 
 

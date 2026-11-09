@@ -75,7 +75,9 @@ static func async_restart() -> int:
 	var error := await async_ensure_server_running()
 	if error != OK:
 		Log.error("web server restart failed error:[{}]", error)
-	return error
+		return error
+	AgentEvents.events.web_server_started.emit()
+	return OK
 
 
 static func on_proxy_address_changed() -> void:

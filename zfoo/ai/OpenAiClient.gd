@@ -103,7 +103,7 @@ func async_chat_messages_text(messages: Array[ChatMessage], proxy: String = "", 
 
 ## Full chat completion (content, reasoning, tool_calls, usage, finish_reason). Prefer this for agent loops.
 ## on_delta(delta, stream_kind) — stream_kind is STREAM_KIND_CONTENT or STREAM_KIND_REASONING.
-func async_chat_messages_stream(messages: Array[ChatMessage], tools: Array[OpenAiToolDef] = [], proxy: String = "", on_delta: Callable = Callable()) -> OpenAiCompletion:
+func async_chat_messages_stream(messages: Array[ChatMessage], tools: Array[ToolDef] = [], proxy: String = "", on_delta: Callable = Callable()) -> OpenAiCompletion:
 	var request_error := check_request(messages)
 	if StringUtils.is_not_blank(request_error):
 		return OpenAiCompletion.failure(request_error)

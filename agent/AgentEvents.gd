@@ -74,6 +74,10 @@ class Events:
 	## Workspace root switched (see [method AgentWorkspace.set_root]) — sessions and file
 	## paths now resolve under the new root, so listeners reload their state.
 	signal workspace_changed(path: String)
+	## Local TypeScript service started and is ready to accept requests.
+	signal web_server_started
+	## MCP tool discovery completed and the aggregate tool registry should refresh.
+	signal mcp_tools_changed
 
 	# ===========================================================================
 	# SETTINGS — common -> UI

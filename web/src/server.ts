@@ -4,6 +4,7 @@ import { createApiServer } from "./api/index";
 import { getApiRoutes } from "./api/route";
 import { config } from "./config";
 import { browserService } from "./services/browser-service";
+import { mcpService } from "./services/mcp-service";
 
 async function listen(server: Server): Promise<void> {
   server.listen(config.port, config.host);
@@ -29,7 +30,7 @@ async function main(): Promise<void> {
     shuttingDown = true;
     console.log(`Received ${signal}; shutting down...`);
     try {
-      await Promise.all([closeServer(server), browserService.close()]);
+      await Promise.all([closeServer(server), browserService.close(), mcpService.close()]);
       process.exitCode = 0;
     } catch (error) {
       console.error("Shutdown failed", error);

@@ -4,15 +4,21 @@ extends RefCounted
 ## Maps tool names to AgentTool instances and builds OpenAI tool schemas.
 
 static var tools: Dictionary[String, AgentTool] = {}
-static var schemas: Array[OpenAiToolDef] = []
+static var schemas: Array[ToolDef] = []
 
 static func _static_init() -> void:
 	reload_tools()
 	AgentEvents.events.proxy_address_changed.connect(on_proxy_address_changed)
+	AgentEvents.events.mcp_tools_changed.connect(on_mcp_tools_changed)
 	pass
 
 
 static func on_proxy_address_changed() -> void:
+	reload_tools()
+	pass
+
+
+static func on_mcp_tools_changed() -> void:
 	reload_tools()
 	pass
 
@@ -42,6 +48,8 @@ static func reload_tools() -> void:
 	# web tools
 	register(WebFetchTool.new())
 	register(WebSearchTool.new())
+	for tool: McpTool in McpToolRegistry.tools:
+		register(tool)
 	pass
 
 

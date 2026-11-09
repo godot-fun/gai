@@ -3,6 +3,7 @@ import { config } from "../config";
 import { HttpError, HttpStatus, sendError, sendJson } from "../http";
 import "./fetch";
 import "./healthy";
+import "./mcp";
 import "./search";
 import "./stop";
 import { getApiRoutes, type ApiRoute } from "./route";
