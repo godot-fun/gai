@@ -169,15 +169,6 @@ func open_ai_request_enum_tool_parameter_to_json_test() -> void:
 	pass
 
 
-func open_ai_tool_parameter_required_field_is_unique_test() -> void:
-	var parameters := OpenAiToolDef.Parameters.new()
-	parameters.string_prop("name", "Display name", true)
-	parameters.string_prop("name", "Updated display name", true)
-	assert(parameters.required == ["name"])
-	assert(parameters.properties.name.description == "Updated display name")
-	pass
-
-
 func open_ai_request_array_tool_parameter_to_json_test() -> void:
 	var request := OpenAiRequest.new("test-model", [ChatMessage.user("hello")], false)
 	var tool := OpenAiToolDef.new()

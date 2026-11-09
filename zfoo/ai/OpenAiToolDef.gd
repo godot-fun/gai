@@ -52,8 +52,9 @@ class Parameters:
 	var required: Array[String] = []
 
 	func add_property(field_name: String, prop: PropertyDef, required_field: bool) -> void:
+		assert(not properties.has(field_name), StringUtils.format("Tool parameter already exists: {}", field_name))
 		properties[field_name] = prop
-		if required_field and not required.has(field_name):
+		if required_field:
 			required.append(field_name)
 		pass
 
