@@ -154,6 +154,21 @@ func open_ai_request_number_tool_parameter_to_json_test() -> void:
 	pass
 
 
+func open_ai_request_enum_tool_parameter_to_json_test() -> void:
+	var request := OpenAiRequest.new("test-model", [ChatMessage.user("hello")], false)
+	var tool := OpenAiToolDef.new()
+	tool.function.name = "set_unit"
+	tool.function.parameters.enum_prop("unit", ["celsius", "fahrenheit"], "Temperature unit", true)
+	request.tools.append(tool)
+	var body: Dictionary = JSON.parse_string(request.to_json())
+	var unit: Dictionary = body.tools[0].function.parameters.properties.unit
+	assert(unit.type == "string")
+	assert(unit["enum"] == ["celsius", "fahrenheit"])
+	assert(unit.description == "Temperature unit")
+	assert(body.tools[0].function.parameters.required == ["unit"])
+	pass
+
+
 func open_ai_request_array_tool_parameter_to_json_test() -> void:
 	var request := OpenAiRequest.new("test-model", [ChatMessage.user("hello")], false)
 	var tool := OpenAiToolDef.new()
