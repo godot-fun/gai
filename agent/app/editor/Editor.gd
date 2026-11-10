@@ -25,6 +25,7 @@ var host_window: Window
 var tabs: EditorTabs = EditorTabs.new()
 var shortcut_host: EditorShortcuts.Host
 var active_view: EditorView
+var view_cache: Dictionary[String, EditorView] = {}
 var confirm: ConfirmationDialog
 var discard_button: Button
 var tab_cards: Array[PanelContainer] = []
@@ -58,7 +59,7 @@ func _ready() -> void:
 	apply_locale()
 	file_tree.reload(AgentWorkspace.get_root())
 	tabs = EditorTabs.load()
-	show_active()
+	show_active(true)
 	align_tabs.call_deferred()
 	pass
 
@@ -66,6 +67,7 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	sync_active()
 	tabs.save()
+	clear_view_cache()
 	pass
 
 
@@ -214,7 +216,7 @@ func on_workspace_changed(path: String) -> void:
 
 func on_file_deleted(path: String) -> void:
 	if tabs.close_under(path):
-		show_active()
+		show_active(true)
 	pass
 
 
@@ -225,11 +227,12 @@ func on_file_selected(path: String) -> void:
 	if not EditorDocument.can_open(path):
 		FileUtils.open_file(path)
 		return
+	var previous_index := tabs.active_index
 	sync_active()
 	if tabs.open_file(path) == null:
 		FileUtils.open_file(path)
 		return
-	show_active()
+	show_active(existing < 0, previous_index)
 	pass
 
 
@@ -248,7 +251,7 @@ func on_tab_close_pressed(index: int) -> void:
 		confirm_unsaved(Pending.CLOSE, index)
 		return
 	tabs.close_at(index)
-	show_active()
+	show_active(true)
 	pass
 
 
@@ -289,7 +292,7 @@ func close_other_tabs(index: int) -> void:
 		confirm_unsaved(Pending.CLOSE_OTHERS, index)
 		return
 	tabs.close_others(index)
-	show_active()
+	show_active(true)
 	pass
 
 
@@ -301,7 +304,7 @@ func close_all_tabs() -> void:
 		confirm_unsaved(Pending.CLOSE_ALL, -1)
 		return
 	tabs.close_all()
-	show_active()
+	show_active(true)
 	pass
 
 
@@ -318,12 +321,6 @@ func defer_leave_for_unsaved() -> bool:
 		return false
 	confirm_unsaved(Pending.LEAVE, -1)
 	return true
-
-
-func dismiss_host_window() -> void:
-	if host_window != null and is_instance_valid(host_window):
-		host_window.queue_free()
-	pass
 
 
 func focus_active_editor() -> void:
@@ -387,26 +384,54 @@ func reveal_active_tab() -> void:
 	pass
 
 
-func show_active() -> void:
+func show_active(rebuild_tab_cards: bool = false, previous_index: int = -1) -> void:
 	var document := tabs.active()
-	clear_active_view()
+	if active_view != null:
+		if active_view.get_parent() == editor_host:
+			editor_host.remove_child(active_view)
+		active_view = null
+	prune_view_cache()
 	if document != null:
-		active_view = EditorViewFactory.create(document)
+		active_view = view_cache.get(document.path)
+		if active_view == null:
+			active_view = EditorViewFactory.create(document)
+			if active_view != null:
+				view_cache[document.path] = active_view
+				active_view.content_changed.connect(on_active_view_content_changed)
+				active_view.open_document(document)
 		if active_view != null:
-			active_view.content_changed.connect(on_active_view_content_changed)
 			editor_host.add_child(active_view)
-			active_view.open_document(document)
-	rebuild_tabs()
+	if rebuild_tab_cards:
+		rebuild_tabs()
+	else:
+		refresh_active_tab(previous_index, tabs.active_index)
 	focus_active_editor()
-	tabs.save()
+	SchedulerBus.schedule(tabs.save, 1000)
 	pass
 
 
-func clear_active_view() -> void:
-	if active_view != null:
-		editor_host.remove_child(active_view)
-		active_view.queue_free()
-		active_view = null
+func prune_view_cache() -> void:
+	var open_paths: Dictionary[String, bool] = {}
+	for document in tabs.files:
+		open_paths[document.path] = true
+	for path in view_cache.keys():
+		if open_paths.has(path):
+			continue
+		var view: EditorView = view_cache[path]
+		if view.get_parent() != null:
+			view.get_parent().remove_child(view)
+		view.free()
+		view_cache.erase(path)
+	pass
+
+
+func clear_view_cache() -> void:
+	active_view = null
+	for path in view_cache:
+		var view: EditorView = view_cache[path]
+		if is_instance_valid(view) and view.get_parent() == null:
+			view.free()
+	view_cache.clear()
 	pass
 
 
@@ -414,8 +439,9 @@ func activate_tab(index: int) -> void:
 	if index < 0 or index >= tabs.files.size() or index == tabs.active_index:
 		return
 	sync_active()
+	var previous_index := tabs.active_index
 	tabs.active_index = index
-	show_active()
+	show_active(false, previous_index)
 	pass
 
 
@@ -531,19 +557,19 @@ func on_confirm_saved() -> void:
 			Alert.alert(I18n.t("editor.save_failed"), Colors.error)
 			return
 		tabs.close_at(index)
-		show_active()
+		show_active(true)
 		return
 	if kind == Pending.CLOSE_OTHERS:
 		if not save_dirty_except(index):
 			return
 		tabs.close_others(index)
-		show_active()
+		show_active(true)
 		return
 	if kind == Pending.CLOSE_ALL:
 		if not save_all_dirty():
 			return
 		tabs.close_all()
-		show_active()
+		show_active(true)
 		return
 	if not save_all_dirty():
 		return
@@ -562,15 +588,15 @@ func on_confirm_custom(action: StringName) -> void:
 	confirm.hide()
 	if kind == Pending.CLOSE:
 		tabs.close_at(index)
-		show_active()
+		show_active(true)
 		return
 	if kind == Pending.CLOSE_OTHERS:
 		tabs.close_others(index)
-		show_active()
+		show_active(true)
 		return
 	if kind == Pending.CLOSE_ALL:
 		tabs.close_all()
-		show_active()
+		show_active(true)
 		return
 	finish_pending(kind)
 	pass
@@ -582,8 +608,8 @@ func on_confirm_canceled() -> void:
 
 
 func finish_pending(kind: Pending) -> void:
-	if kind == Pending.LEAVE:
-		dismiss_host_window()
+	if kind == Pending.LEAVE and host_window != null and is_instance_valid(host_window):
+		host_window.queue_free()
 	pass
 
 
@@ -605,6 +631,17 @@ func rebuild_tabs() -> void:
 	var count := tab_cards.size()
 	var separation := tab_row.get_theme_constant("separation")
 	tab_row.custom_minimum_size.x = count * ControlSize.image_xs + maxi(count - 1, 0) * separation
+	queue_reveal()
+	pass
+
+
+func refresh_active_tab(previous_index: int, current_index: int) -> void:
+	for index in [previous_index, current_index]:
+		if index < 0 or index >= tab_cards.size():
+			continue
+		var card := tab_cards[index]
+		card.set_meta("active", index == current_index)
+		style_card(card)
 	queue_reveal()
 	pass
 

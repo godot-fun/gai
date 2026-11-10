@@ -1,6 +1,6 @@
 func external_image_test() -> void:
 	var path: String = ProjectSettings.globalize_path("res://icon.svg")
-	var texture := ResourceHelper.load_external_file(path) as ImageTexture
+	var texture := await ResourceHelper.async_load_external_file(path) as ImageTexture
 	assert(texture != null)
 	assert(texture.get_width() > 0)
 	assert(texture.get_height() > 0)

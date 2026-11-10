@@ -15,7 +15,7 @@ func _init() -> void:
 
 
 func open_document(document: EditorDocument) -> void:
-	var texture := ImageHelper.load_external_image(document.path)
+	var texture := await ResourceHelper.async_load(document.path) as Texture2D
 	if texture == null:
 		Log.error("failed to display editor image path:[{}]", document.path)
 		Alert.alert(I18n.t("Unable to load image"), Colors.error)
