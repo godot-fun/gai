@@ -291,6 +291,23 @@ func RangeStyle_apply_spin_box_test() -> void:
 	pass
 
 
+func RangeStyle_apply_slider_test() -> void:
+	var slider := HSlider.new()
+	RangeStyle.apply_slider(slider)
+	var track := slider.get_theme_stylebox("slider") as StyleBoxFlat
+	assert(track.bg_color == ThemeColor.demote(ThemeColor.field_surface, Weights.w_4))
+	assert(track.border_color == Colors.outline_variant)
+	# The track height comes from the box margins, so a zero minimum size would draw nothing.
+	assert(track.get_minimum_size().y > 0)
+	var filled := slider.get_theme_stylebox("grabber_area") as StyleBoxFlat
+	assert(filled.bg_color == ThemeColor.accent_theme_color())
+	assert(filled.get_minimum_size().y == track.get_minimum_size().y)
+	assert((slider.get_theme_stylebox("grabber_area_highlight") as StyleBoxFlat).bg_color == ThemeColor.promote(ThemeColor.accent_theme_color(), Weights.w_2))
+	assert(slider.get_theme_constant("center_grabber") == 0)
+	slider.free()
+	pass
+
+
 func ButtonStyle_apply_option_button_test() -> void:
 	var option := OptionButton.new()
 	var normal := StyleBoxHelper.create_style_box_flat(Color(0.2, 0.2, 0.2), 6, Margin.ma_2, Margin.ma_1, Color.WHITE, 1)

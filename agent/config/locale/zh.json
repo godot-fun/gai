@@ -415,6 +415,8 @@
       "sound_folder": "声音文件夹",
       "sound_folder_help": "选择包含通知音乐的文件夹，音乐会随机排序并按设定时长播放。",
       "sound_duration": "声音时长",
+      "sound_volume": "声音大小",
+      "sound_volume_help": "调整通知音乐的播放音量，拖动滑块时正在播放的音乐会立即跟随。",
       "sound_folder_title": "选择通知声音文件夹",
       "api_token": "API 令牌",
       "token_help": "保存在本地 user://setting.config",

@@ -215,16 +215,18 @@ static func pause_musics(duration: float = 1.0) -> void:
 	end_stream_fade(AudioBusType.Music)
 	pass
 
-static func resume_musics(duration: float = 1.0) -> void:
+static func resume_musics(duration: float = 1.0, volume_linear: float = 1.0) -> void:
 	var player: AudioStreamPlayer = audio_map[AudioBusType.Music]
 	if !player.stream_paused:
 		return
 	if !begin_stream_fade(AudioBusType.Music, "resume_music"):
 		return
+	var target_volume := clampf(volume_linear, 0.0, 1.0)
+	musics_volume_linear = target_volume
 	player.volume_linear = 0
 	player.stream_paused = false
 	var tween := player.create_tween()
-	tween.tween_property(player, "volume_linear", 1, duration)
+	tween.tween_property(player, "volume_linear", target_volume, duration)
 	await tween.finished
 	end_stream_fade(AudioBusType.Music)
 	pass

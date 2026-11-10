@@ -415,6 +415,8 @@
       "sound_folder": "Sound folder",
       "sound_folder_help": "Select a folder containing notification music. Tracks play in shuffled order for the configured duration.",
       "sound_duration": "Sound duration",
+      "sound_volume": "Sound volume",
+      "sound_volume_help": "Adjust the notification music volume; a clip that is already playing follows the slider immediately.",
       "sound_folder_title": "Select the notification sound folder",
       "api_token": "API token",
       "token_help": "Stored locally in user://setting.config",

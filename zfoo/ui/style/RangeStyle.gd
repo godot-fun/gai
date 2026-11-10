@@ -46,3 +46,23 @@ static func apply_spin_box(spin: SpinBox) -> void:
 	spin.add_theme_stylebox_override("down_background_pressed", pressed)
 	spin.add_theme_stylebox_override("down_background_disabled", disabled)
 	pass
+
+
+## Apply the shared [Slider] treatment: a recessed field-surface track with an accent-filled
+## progress area. The grabber keeps the engine icon, which already follows the active theme.
+static func apply_slider(slider: Slider) -> void:
+	var radius := ControlSize.radius_xs
+	slider.custom_minimum_size.y = ControlSize.md
+	slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	slider.add_theme_constant_override("center_grabber", 0)
+	slider.add_theme_constant_override("grabber_offset", 0)
+	# Track thickness comes from the boxes' content margins — the slider draws each box at its
+	# minimum height, so a box without vertical padding would collapse to nothing.
+	var padding := Margin.ma_2 / 2
+	var track := StyleBoxHelper.create_style_box_flat(ThemeColor.demote(ThemeColor.field_surface, Weights.w_4),
+		radius, Margin.ma_0, padding, Colors.outline_variant, ControlSize.border_xs)
+	slider.add_theme_stylebox_override("slider", track)
+	var accent := ThemeColor.accent_theme_color()
+	slider.add_theme_stylebox_override("grabber_area", StyleBoxHelper.create_style_box_flat(accent, radius, Margin.ma_0, padding))
+	slider.add_theme_stylebox_override("grabber_area_highlight", StyleBoxHelper.create_style_box_flat(ThemeColor.promote(accent, Weights.w_2), radius, Margin.ma_0, padding))
+	pass

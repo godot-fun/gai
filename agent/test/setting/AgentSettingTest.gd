@@ -44,3 +44,14 @@ static func editor_discovery_find_editor_test() -> void:
 	assert(EditorDiscovery.find_editor([vscode, zed], "zed") == zed)
 	assert(EditorDiscovery.find_editor([vscode, zed], "missing") == null)
 	pass
+
+
+static func notification_sound_volume_round_trip_test() -> void:
+	var original := AgentSetting.get_notification_sound_volume()
+	AgentSetting.set_notification_sound_volume(35)
+	assert(AgentSetting.get_notification_sound_volume() == 35)
+	assert(is_equal_approx(AgentSetting.get_notification_sound_volume_linear(), 0.35))
+	AgentSetting.set_notification_sound_volume(AgentSetting.MAX_SOUND_VOLUME + 20)
+	assert(AgentSetting.get_notification_sound_volume() == AgentSetting.MAX_SOUND_VOLUME)
+	AgentSetting.set_notification_sound_volume(original)
+	pass

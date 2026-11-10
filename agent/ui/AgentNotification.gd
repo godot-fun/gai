@@ -52,10 +52,11 @@ func play_sound_notifications() -> void:
 	if audios.is_empty():
 		return
 	audios.shuffle()
+	var volume_linear := AgentSetting.get_notification_sound_volume_linear()
 	if has_playlist(audios):
-		Audio.resume_musics(START_FADE_SECONDS)
+		Audio.resume_musics(START_FADE_SECONDS, volume_linear)
 	else:
-		Audio.play_musics(audios, 1.0, START_FADE_SECONDS)
+		Audio.play_musics(audios, volume_linear, START_FADE_SECONDS)
 	# The countdown is shared: a run landing while the sound still plays adds its seconds to the
 	# remaining ones, so the clip an earlier run asked for is never cut short by a later run.
 	remaining_seconds = maxf(remaining_seconds, 0.0) + AgentSetting.get_notification_sound_seconds()

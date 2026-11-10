@@ -232,6 +232,30 @@ static func set_notification_sound_seconds(seconds: int) -> void:
 	pass
 
 
+# --------------------------------------------- Notification sound volume ---------------------------------------------
+
+const NOTIFICATION_SOUND_VOLUME_KEY := "agent_notification_sound_volume"
+const DEFAULT_SOUND_VOLUME := 100
+const MIN_SOUND_VOLUME := 0
+const MAX_SOUND_VOLUME := 100
+
+
+## Playback volume of the notification music as a percentage — 100 keeps the clip at full loudness.
+static func get_notification_sound_volume() -> int:
+	return clampi(Setting.get_int(NOTIFICATION_SOUND_VOLUME_KEY, DEFAULT_SOUND_VOLUME), MIN_SOUND_VOLUME, MAX_SOUND_VOLUME)
+
+
+static func set_notification_sound_volume(volume: int) -> void:
+	Setting.set_int(NOTIFICATION_SOUND_VOLUME_KEY, clampi(volume, MIN_SOUND_VOLUME, MAX_SOUND_VOLUME))
+	Setting.save()
+	pass
+
+
+## [method get_notification_sound_volume] as the 0–1 linear gain [Audio] players expect.
+static func get_notification_sound_volume_linear() -> float:
+	return get_notification_sound_volume() / 100.0
+
+
 # --------------------------------------------- Notification sound folder ---------------------------------------------
 
 const NOTIFICATION_SOUND_FOLDER_KEY := "agent_notification_sound_folder"
