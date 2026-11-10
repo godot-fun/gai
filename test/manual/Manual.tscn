@@ -3,7 +3,6 @@
 [ext_resource type="Script" uid="uid://cmruqediscjxf" path="res://test/manual/SceneTest.gd" id="2_4dfa1"]
 [ext_resource type="Script" uid="uid://bosk23klfwanp" path="res://test/manual/AudioTest.gd" id="3_suq2o"]
 [ext_resource type="Script" uid="uid://dhwft2mh0eyu1" path="res://test/manual/HttpTest.gd" id="4_bs2af"]
-[ext_resource type="Script" path="res://test/manual/OpenAiTest.gd" id="5_openai"]
 [ext_resource type="Script" path="res://test/manual/LogTest.gd" id="6_log"]
 [ext_resource type="Script" path="res://test/manual/DesktopToastTest.gd" id="7_toast"]
 
@@ -94,25 +93,6 @@ offset_top = 320.0
 offset_right = 289.0
 offset_bottom = 351.0
 text = "PostRequest"
-metadata/_edit_use_anchors_ = true
-
-[node name="OpenAiTest" type="Node" parent="."]
-script = ExtResource("5_openai")
-
-[node name="ChatRequest" type="Button" parent="OpenAiTest"]
-offset_left = 54.0
-offset_top = 401.0
-offset_right = 289.0
-offset_bottom = 432.0
-text = "OpenAI Chat"
-metadata/_edit_use_anchors_ = true
-
-[node name="ChatStreamRequest" type="Button" parent="OpenAiTest"]
-offset_left = 365.0
-offset_top = 401.0
-offset_right = 600.0
-offset_bottom = 432.0
-text = "OpenAI Stream"
 metadata/_edit_use_anchors_ = true
 
 [node name="LogTest" type="Node" parent="."]

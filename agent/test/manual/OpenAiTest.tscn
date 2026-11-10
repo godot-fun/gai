@@ -1,0 +1,20 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" uid="uid://da1dlakab5yff" path="res://agent/test/manual/OpenAiTest.gd" id="1_openai"]
+
+[node name="OpenAiTest" type="Node"]
+script = ExtResource("1_openai")
+
+[node name="ChatRequest" type="Button" parent="."]
+offset_left = 54.0
+offset_top = 27.0
+offset_right = 289.0
+offset_bottom = 58.0
+text = "OpenAI Chat"
+
+[node name="ChatStreamRequest" type="Button" parent="."]
+offset_left = 365.0
+offset_top = 27.0
+offset_right = 600.0
+offset_bottom = 58.0
+text = "OpenAI Stream"
