@@ -35,12 +35,10 @@ func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> 
 	locale_scale_parts[1].add_child(language_select)
 	# Column 4 — UI scale label (one control column).
 	ui_scale_label = ui.make_label(I18n.t("agent.settings.ui_scale"))
-	ui_scale_label.tooltip_text = ui_scale_tooltip()
 	style_appearance_grid_label(ui_scale_label)
 	locale_scale_parts[3].add_child(ui_scale_label)
 	# Columns 5–6 — UI scale selector (two control columns).
 	ui_scale_select = OptionButton.new()
-	ui_scale_select.tooltip_text = ui_scale_tooltip()
 	ui_scale_select.custom_minimum_size = Vector2(0, ControlSize.md)
 	ui_scale_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	for scale in DisplayScale.UI_SCALE_PRESETS:
@@ -122,16 +120,7 @@ func apply_locale() -> void:
 	markdown_label.tooltip_text = I18n.t("markdown.render_help")
 	markdown_toggle_button.tooltip_text = I18n.t("markdown.render_help")
 	ui_scale_label.text = I18n.t("agent.settings.ui_scale")
-	ui_scale_label.tooltip_text = ui_scale_tooltip()
-	ui_scale_select.tooltip_text = ui_scale_tooltip()
 	select_current_language()
-	pass
-
-
-func ui_scale_tooltip() -> String:
-	if OSUtils.is_mac():
-		return I18n.t("agent.settings.ui_scale_help_mac")
-	return I18n.t("agent.settings.ui_scale_help")
 	pass
 
 

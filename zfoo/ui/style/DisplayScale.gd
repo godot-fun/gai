@@ -15,7 +15,7 @@ extends Object
 ## Whole-app design scale stored in [Setting]. The root canvas stays at 1:1; this class recalculates
 ## typography, spacing, and control tokens so fonts are rasterized directly at their final size.
 ##
-## Presets match the agent appearance setting and Ctrl / ⌘ + mouse wheel shortcuts.
+## Presets match the agent appearance setting.
 
 const UI_SCALE_SETTING_KEY := "ui_scale"
 const DEFAULT_UI_SCALE := 1.0
@@ -79,36 +79,6 @@ static func set_ui_scale(scale: float) -> void:
 	# Existing controls have copied token values into theme overrides and StyleBoxes. Reapply those
 	# after the live tokens change; newly constructed controls read the scaled values directly.
 	gdf.events.theme_changed.emit()
-	pass
-
-
-## Moves one entry in [constant UI_SCALE_PRESETS] (positive = larger UI).
-static func adjust_ui_scale(direction: int) -> void:
-	if direction == 0:
-		return
-	var index := find_ui_scale_index(get_ui_scale())
-	index = clampi(index + direction, 0, UI_SCALE_PRESETS.size() - 1)
-	set_ui_scale(UI_SCALE_PRESETS[index])
-	pass
-
-
-## Applies Ctrl/Cmd + mouse-wheel UI zoom for a focused window. Ctrl/Cmd + Shift + wheel is
-## intentionally left available to feature-specific navigation such as chat reply history.
-static func handle_window_input(window: Window, event: InputEvent) -> void:
-	if window == null or not window.is_inside_tree() or not window.has_focus():
-		return
-	if not event is InputEventMouseButton:
-		return
-	var mouse := event as InputEventMouseButton
-	if not mouse.pressed or mouse.shift_pressed or (not mouse.ctrl_pressed and not mouse.meta_pressed):
-		return
-	if mouse.button_index == MOUSE_BUTTON_WHEEL_UP:
-		adjust_ui_scale(1)
-	elif mouse.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-		adjust_ui_scale(-1)
-	else:
-		return
-	window.set_input_as_handled()
 	pass
 
 

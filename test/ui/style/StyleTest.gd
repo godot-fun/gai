@@ -20,18 +20,6 @@ func DisplayScale_compute_screen_scale_test() -> void:
 	pass
 
 
-static func DisplayScale_adjust_ui_scale_uses_presets_test() -> void:
-	var saved := DisplayScale.get_ui_scale()
-	DisplayScale.set_ui_scale(1.0)
-	var index := DisplayScale.find_ui_scale_index(1.0)
-	DisplayScale.adjust_ui_scale(1)
-	assert(is_equal_approx(DisplayScale.get_ui_scale(), DisplayScale.UI_SCALE_PRESETS[index + 1]))
-	DisplayScale.adjust_ui_scale(-1)
-	assert(is_equal_approx(DisplayScale.get_ui_scale(), 1.0))
-	DisplayScale.set_ui_scale(saved)
-	pass
-
-
 static func DisplayScale_set_ui_scale_snaps_to_preset_test() -> void:
 	var saved := DisplayScale.get_ui_scale()
 	DisplayScale.set_ui_scale(1.07)

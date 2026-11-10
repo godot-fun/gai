@@ -104,7 +104,6 @@ func _ready() -> void:
 	log_button.setup(log_button_node)
 	sense_input.setup()
 	apply_locale()
-	get_window().window_input.connect(on_window_input)
 	gdf.callable_deferred(apply_theme)
 	# session
 	agent_session_sidebar.reload_sessions()
@@ -113,11 +112,6 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	sense_input.shutdown()
-	pass
-
-
-func on_window_input(event: InputEvent) -> void:
-	DisplayScale.handle_window_input(get_window(), event)
 	pass
 
 

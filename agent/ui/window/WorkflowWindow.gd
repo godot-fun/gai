@@ -15,7 +15,6 @@ func _init() -> void:
 	transient = false
 	min_size = AgentLayout.window_min_size
 	close_requested.connect(on_close_requested)
-	window_input.connect(on_window_input)
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.ui_scale_changed.connect(on_ui_scale_changed)
@@ -33,11 +32,6 @@ func on_ui_scale_changed(_scale: float) -> void:
 	workflow.configure_sidebar_layout()
 	workflow.configure_dialog_layout()
 	workflow.apply_theme()
-	pass
-
-
-func on_window_input(event: InputEvent) -> void:
-	DisplayScale.handle_window_input(self, event)
 	pass
 
 

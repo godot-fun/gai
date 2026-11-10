@@ -380,8 +380,6 @@
       "appearance": "外观",
       "language": "语言",
       "ui_scale": "界面缩放",
-      "ui_scale_help": "按住 Ctrl 并滚动鼠标滚轮可切换界面缩放档位。",
-      "ui_scale_help_mac": "按住 ⌘ 并滚动鼠标滚轮可切换界面缩放档位。",
       "connection": "AI 连接",
       "api_url": "API 地址",
       "api_url_help": "完整的聊天补全接口地址",
