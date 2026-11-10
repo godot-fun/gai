@@ -1,6 +1,6 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://da1dlakab5yff" path="res://agent/test/manual/OpenAiTest.gd" id="1_openai"]
+[ext_resource type="Script" path="res://agent/test/OpenAI/OpenAiTest.gd" id="1_openai"]
 
 [node name="OpenAiTest" type="Node"]
 script = ExtResource("1_openai")

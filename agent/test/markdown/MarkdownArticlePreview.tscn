@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dq6n3w8p2y5kr"]
 
-[ext_resource type="Script" uid="uid://b7v2m5q9x4k8n" path="res://test/markdown/MarkdownArticlePreview.gd" id="1_article"]
+[ext_resource type="Script" uid="uid://b7v2m5q9x4k8n" path="res://agent/test/markdown/MarkdownArticlePreview.gd" id="1_article"]
 
 [node name="MarkdownArticlePreview" type="Control"]
 custom_minimum_size = Vector2(1100, 800)
