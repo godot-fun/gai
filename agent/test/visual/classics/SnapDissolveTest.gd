@@ -13,12 +13,28 @@ func snap_tool_bites_then_reforms_test() -> void:
 		effect.step_snap(1.0 / 60.0)
 	assert(zone.progress > 0.4)
 	effect.on_tool_execution_end(1, "t1", "grep", AgentToolResult.ok("done"))
-	assert(zone.target == 0.0)
+	assert(zone.completed)
+	assert(zone.target == 1.0)
 	assert(zone.red == 0.0)
 	for _index in range(120):
 		effect.step_snap(1.0 / 60.0)
 	assert(effect.zones.is_empty())
 	assert(not effect.has_work())
+	effect.free()
+	pass
+
+
+func snap_fast_tool_remains_visible_long_enough_test() -> void:
+	var effect := SnapDissolve.new()
+	effect.on_tool_execution_start(1, "fast", "grep", {} as Dictionary[String, Variant])
+	var zone := effect.zones[0]
+	effect.on_tool_execution_end(1, "fast", "grep", AgentToolResult.ok("done"))
+	for _index in range(int(SnapDissolve.MIN_TOOL_DISPLAY_SECONDS * 60.0) - 1):
+		effect.step_snap(1.0 / 60.0)
+	assert(zone.target == 1.0)
+	assert(zone.progress > 0.8)
+	effect.step_snap(1.0 / 60.0)
+	assert(zone.target == 0.0)
 	effect.free()
 	pass
 
@@ -37,6 +53,8 @@ func snap_zone_cap_evicts_a_healing_bite_test() -> void:
 	for index in range(SnapDissolve.MAX_ZONES):
 		effect.on_tool_execution_start(1, "t%d" % index, "grep", {} as Dictionary[String, Variant])
 	effect.on_tool_execution_end(1, "t3", "grep", AgentToolResult.ok("done"))
+	for _index in range(int(SnapDissolve.MIN_TOOL_DISPLAY_SECONDS * 60.0) + 1):
+		effect.step_snap(1.0 / 60.0)
 	effect.on_tool_execution_start(1, "extra", "grep", {} as Dictionary[String, Variant])
 	assert(effect.zones.size() == SnapDissolve.MAX_ZONES)
 	assert(effect.find_zone("t3") == null)

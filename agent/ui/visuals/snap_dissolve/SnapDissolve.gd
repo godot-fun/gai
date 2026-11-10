@@ -13,6 +13,8 @@ const ZONE_RADIUS := 0.12
 const ZONE_JITTER := 0.05
 const DISSOLVE_PER_SECOND := 1.1
 const REFORM_PER_SECOND := 0.85
+## Fast tools still get enough time to form a recognizable bite before it heals.
+const MIN_TOOL_DISPLAY_SECONDS := 0.9
 const RED_DECAY_PER_SECOND := 0.25
 const FLAKE_GAIN := 8.0
 const FLAKE_DECAY_PER_SECOND := 0.6
@@ -29,6 +31,8 @@ class Zone extends RefCounted:
 	var radius: float
 	var progress: float = 0.0
 	var target: float = 1.0
+	var display_seconds: float = 0.0
+	var completed: bool = false
 	var red: float = 0.0
 	var noise_seed: float = 0.0
 
@@ -53,6 +57,8 @@ func _ready() -> void:
 	snap_material.shader = SNAP_SHADER
 	screen_rect.material = snap_material
 	add_child(screen_rect)
+	gdf.events.theme_changed.connect(update_theme_presentation)
+	gdf.events.theme_color_changed.connect(update_theme_presentation)
 	update_theme_presentation()
 	apply_shader_state()
 	pass
@@ -117,7 +123,7 @@ func on_tool_execution_end(_session_id: int, tool_call_id: String, _tool_name: S
 	var zone := find_zone(tool_call_id)
 	if zone == null:
 		return
-	zone.target = 0.0
+	zone.completed = true
 	if result.is_error:
 		zone.red = 1.0
 	pass
@@ -154,6 +160,9 @@ func step_snap(delta: float) -> void:
 	shader_time += delta
 	for index in range(zones.size() - 1, -1, -1):
 		var zone := zones[index]
+		zone.display_seconds += delta
+		if zone.completed and zone.display_seconds >= MIN_TOOL_DISPLAY_SECONDS:
+			zone.target = 0.0
 		var rate := DISSOLVE_PER_SECOND if zone.target > zone.progress else REFORM_PER_SECOND
 		zone.progress = move_toward(zone.progress, zone.target, rate * delta)
 		if zone.target <= 0.0:
@@ -197,9 +206,13 @@ func update_theme_presentation() -> void:
 	if snap_material == null:
 		return
 	var dark := ThemeColor.is_dark_theme()
+	var accent := ThemeColor.accent_theme_color()
+	var ember := VisualColor.appearance_color(accent, 0.0, 1.0, 1.12)
+	var ash := VisualColor.appearance_color(accent, 0.0, 0.48, 0.62)
+	ash = ash.lerp(Colors.secondary_text, 0.38 if dark else 0.22)
 	snap_material.set_shader_parameter("bg_color", Colors.app_background)
 	snap_material.set_shader_parameter("light_mode", 0.0 if dark else 1.0)
-	snap_material.set_shader_parameter("ash_color", Color(0.62, 0.57, 0.52) if dark else Color(0.30, 0.27, 0.24))
-	snap_material.set_shader_parameter("ember_color", Color(1.0, 0.58, 0.22) if dark else Color(0.86, 0.42, 0.12))
+	snap_material.set_shader_parameter("ash_color", ash)
+	snap_material.set_shader_parameter("ember_color", ember)
 	snap_material.set_shader_parameter("error_color", Colors.error)
 	pass
