@@ -41,7 +41,7 @@ static func editor_tabs_open_and_save_test() -> void:
 	FileUtils.write_byte_array_to_file(binary_path, PackedByteArray([1, 0, 2]))
 
 	assert(EditorTabs.can_open(note_path))
-	assert(not EditorTabs.can_open(image_path))
+	assert(EditorTabs.can_open(image_path))
 	assert(not EditorTabs.can_open(binary_path))
 	assert(not EditorTabs.can_open(directory.path_join("missing.md")))
 
@@ -66,15 +66,35 @@ static func editor_tabs_open_and_save_test() -> void:
 	assert(note.save() == OK)
 	assert(not note.is_dirty())
 	assert(FileUtils.read_file_to_string(note_path) == "one!")
-	assert(tabs.open_file(image_path) == null)
-	assert(tabs.active_index == 0)
+	var image := tabs.open_file(image_path)
+	assert(image != null)
+	assert(image.is_image())
+	assert(image.kind == EditorDocument.Kind.IMAGE)
+	assert(not image.is_dirty())
+	assert(tabs.active_index == 2)
 
+	tabs.close_at(2)
+	assert(tabs.files.size() == 2)
 	tabs.close_at(0)
 	assert(tabs.files.size() == 1)
 	assert(tabs.active() == other)
 	tabs.close_at(0)
 	assert(tabs.active() == null)
 	assert(tabs.dirty_files().is_empty())
+	pass
+
+
+static func editor_view_factory_matches_document_kind_test() -> void:
+	var text_document := EditorDocument.new()
+	text_document.kind = EditorDocument.Kind.TEXT
+	var image_document := EditorDocument.new()
+	image_document.kind = EditorDocument.Kind.IMAGE
+	var text_view := EditorViewFactory.create(text_document)
+	var image_view := EditorViewFactory.create(image_document)
+	assert(text_view is EditorTextView)
+	assert(image_view is EditorImageView)
+	text_view.free()
+	image_view.free()
 	pass
 
 

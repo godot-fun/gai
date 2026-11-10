@@ -1,7 +1,7 @@
 extends PanelContainer
 
-## Text editor panel. The toolbar is the wordmark and the open-file cards.
-## The body is a workspace file tree beside [CommonEditor]. Hosted by [EditorWindow].
+## Workspace editor panel. The toolbar is the wordmark and the open-file cards.
+## The body is a workspace file tree beside a display selected for the active file. Hosted by [EditorWindow].
 
 const WORDMARK := "GAI · Editor"
 
@@ -24,13 +24,12 @@ enum TabMenuAction { CLOSE, CLOSE_OTHERS, CLOSE_ALL }
 var host_window: Window
 var tabs: EditorTabs = EditorTabs.new()
 var shortcut_host: EditorShortcuts.Host
-var editor: CommonEditor
+var active_view: EditorView
 var confirm: ConfirmationDialog
 var discard_button: Button
 var tab_cards: Array[PanelContainer] = []
 var pending_kind: Pending = Pending.NONE
 var pending_index: int = -1
-var assigning_text: bool = false
 var reveal_queued: bool = false
 var tab_menu: PopupMenu
 var context_tab_index: int = -1
@@ -42,9 +41,6 @@ func _ready() -> void:
 	app_theme.default_font_size = Typography.body_medium
 	theme = app_theme
 
-	editor = CommonEditor.new()
-	editor_host.add_child(editor)
-	editor.text_changed.connect(on_editor_text_changed)
 	body_split.dragged.connect(on_split_dragged)
 	resized.connect(align_tabs)
 	AgentEvents.events.editor_file_selected.connect(on_file_selected)
@@ -240,9 +236,7 @@ func on_file_selected(path: String) -> void:
 func on_tab_pressed(index: int) -> void:
 	if index == tabs.active_index:
 		return
-	sync_active()
-	tabs.active_index = index
-	show_active()
+	activate_tab(index)
 	pass
 
 
@@ -333,17 +327,16 @@ func dismiss_host_window() -> void:
 
 
 func focus_active_editor() -> void:
-	editor.focus_editor()
+	if active_view != null:
+		active_view.focus_view()
 	pass
 
 
 func on_editor_text_changed() -> void:
-	if assigning_text:
-		return
 	var document := tabs.active()
-	if document == null:
+	if document == null or not document.is_text():
 		return
-	document.text = editor.text
+	active_view.sync_document(document)
 	update_dirty_marks()
 	pass
 
@@ -396,24 +389,41 @@ func reveal_active_tab() -> void:
 
 func show_active() -> void:
 	var document := tabs.active()
-	assigning_text = true
-	var suffix := "" if document == null else document.path
-	var body := "" if document == null else document.text
-	editor.editable = document != null
-	editor.set_document(body, suffix)
-	assigning_text = false
+	clear_active_view()
+	if document != null:
+		active_view = EditorViewFactory.create(document)
+		if active_view != null:
+			active_view.content_changed.connect(on_editor_text_changed)
+			editor_host.add_child(active_view)
+			active_view.open_document(document)
 	rebuild_tabs()
-	editor.focus_editor()
-	sync_active()
+	focus_active_editor()
 	tabs.save()
+	pass
+
+
+func clear_active_view() -> void:
+	if active_view != null:
+		editor_host.remove_child(active_view)
+		active_view.queue_free()
+		active_view = null
+	pass
+
+
+func activate_tab(index: int) -> void:
+	if index < 0 or index >= tabs.files.size() or index == tabs.active_index:
+		return
+	sync_active()
+	tabs.active_index = index
+	show_active()
 	pass
 
 
 func sync_active() -> void:
 	var document := tabs.active()
-	if document == null or editor == null:
+	if document == null or active_view == null:
 		return
-	document.text = editor.text
+	active_view.sync_document(document)
 	pass
 
 
@@ -453,7 +463,6 @@ func close_active_from_shortcut() -> void:
 func switch_tab(direction: int) -> void:
 	if tabs.files.is_empty() or direction == 0:
 		return
-	sync_active()
 	var count := tabs.files.size()
 	var index := tabs.active_index
 	if index < 0:
@@ -463,8 +472,7 @@ func switch_tab(direction: int) -> void:
 		index += count
 	if index == tabs.active_index:
 		return
-	tabs.active_index = index
-	show_active()
+	activate_tab(index)
 	pass
 
 

@@ -82,7 +82,7 @@ func dirty_files() -> Array[EditorDocument]:
 	return dirty
 
 
-## Text and config files open. Audio, image, and video do not. Other files open when the sample has no NUL bytes.
+## Text, config, and image files open. Audio and video do not. Other files open when the sample has no NUL bytes.
 static func can_open(path: String) -> bool:
 	var normalized := FileUtils.normalize_path(path)
 	if normalized.is_empty() or not FileAccess.file_exists(normalized):
@@ -90,7 +90,9 @@ static func can_open(path: String) -> bool:
 	if DirAccess.dir_exists_absolute(normalized):
 		return false
 	var category := FileColors.category_for_path(normalized)
-	if category == FileColors.Category.AUDIO or category == FileColors.Category.IMAGE or category == FileColors.Category.VIDEO:
+	if category == FileColors.Category.IMAGE:
+		return true
+	if category == FileColors.Category.AUDIO or category == FileColors.Category.VIDEO:
 		return false
 	return not contains_nul(normalized)
 
@@ -120,6 +122,8 @@ static func load() -> EditorTabs:
 	if tabs is not EditorTabs:
 		return EditorTabs.new()
 	var loaded := tabs as EditorTabs
+	for file in loaded.files:
+		file.refresh_kind()
 	if loaded.files.is_empty():
 		loaded.active_index = -1
 	elif loaded.active_index < 0 or loaded.active_index >= loaded.files.size():
