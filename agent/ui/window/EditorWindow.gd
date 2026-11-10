@@ -127,11 +127,11 @@ static func show_editor() -> void:
 	pass
 
 
-## Opens a text file in the built-in editor and brings its native window to the front.
-## Returns false when the path should be handled by an image preview or the host OS.
+## Opens a supported file in the built-in editor and brings its native window to the front.
+## Returns false when the path should be handled by the host OS.
 static func show_file(path: String) -> bool:
 	var normalized := FileUtils.normalize_path(ProjectSettings.globalize_path(path))
-	if not EditorTabs.can_open(normalized):
+	if not EditorDocument.can_open(normalized):
 		return false
 	var window := find_open_window()
 	if window == null:

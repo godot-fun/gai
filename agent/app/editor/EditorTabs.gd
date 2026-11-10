@@ -3,8 +3,6 @@ extends RefCounted
 
 ## Open files in the editor. [method active] is the file shown in the editor pane.
 
-const SAMPLE_BYTES: int = 8192
-
 var files: Array[EditorDocument] = []
 var active_index: int = -1
 
@@ -80,33 +78,6 @@ func dirty_files() -> Array[EditorDocument]:
 		if file.is_dirty():
 			dirty.append(file)
 	return dirty
-
-
-## Text, config, and image files open. Audio and video do not. Other files open when the sample has no NUL bytes.
-static func can_open(path: String) -> bool:
-	var normalized := FileUtils.normalize_path(path)
-	if normalized.is_empty() or not FileAccess.file_exists(normalized):
-		return false
-	if DirAccess.dir_exists_absolute(normalized):
-		return false
-	var category := FileColors.category_for_path(normalized)
-	if category == FileColors.Category.IMAGE:
-		return true
-	if category == FileColors.Category.AUDIO or category == FileColors.Category.VIDEO:
-		return false
-	return not contains_nul(normalized)
-
-
-static func contains_nul(path: String) -> bool:
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return true
-	var length := mini(file.get_length(), SAMPLE_BYTES)
-	if length <= 0:
-		return false
-	return file.get_buffer(length).find(0) >= 0
-
-
 # ---------------------------------------------------------------------------
 # Persist open tabs to `.gai/app/editor.gai`
 # ---------------------------------------------------------------------------

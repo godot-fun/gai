@@ -222,7 +222,7 @@ func on_file_selected(path: String) -> void:
 	var existing := tabs.find_index(path)
 	if existing >= 0 and existing == tabs.active_index:
 		return
-	if not EditorTabs.can_open(path):
+	if not EditorDocument.can_open(path):
 		FileUtils.open_file(path)
 		return
 	sync_active()
@@ -332,9 +332,9 @@ func focus_active_editor() -> void:
 	pass
 
 
-func on_editor_text_changed() -> void:
+func on_active_view_content_changed() -> void:
 	var document := tabs.active()
-	if document == null or not document.is_text():
+	if document == null or active_view == null:
 		return
 	active_view.sync_document(document)
 	update_dirty_marks()
@@ -393,7 +393,7 @@ func show_active() -> void:
 	if document != null:
 		active_view = EditorViewFactory.create(document)
 		if active_view != null:
-			active_view.content_changed.connect(on_editor_text_changed)
+			active_view.content_changed.connect(on_active_view_content_changed)
 			editor_host.add_child(active_view)
 			active_view.open_document(document)
 	rebuild_tabs()

@@ -40,10 +40,10 @@ static func editor_tabs_open_and_save_test() -> void:
 	FileUtils.write_string_to_file(image_path, "not-an-image")
 	FileUtils.write_byte_array_to_file(binary_path, PackedByteArray([1, 0, 2]))
 
-	assert(EditorTabs.can_open(note_path))
-	assert(EditorTabs.can_open(image_path))
-	assert(not EditorTabs.can_open(binary_path))
-	assert(not EditorTabs.can_open(directory.path_join("missing.md")))
+	assert(EditorDocument.can_open(note_path))
+	assert(EditorDocument.can_open(image_path))
+	assert(not EditorDocument.can_open(binary_path))
+	assert(not EditorDocument.can_open(directory.path_join("missing.md")))
 
 	var tabs := EditorTabs.new()
 	var note := tabs.open_file(note_path)
