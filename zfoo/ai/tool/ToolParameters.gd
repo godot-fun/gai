@@ -11,6 +11,7 @@ class PropertyDef extends IJsonSerializable:
 
 
 class EnumPropertyDef extends PropertyDef:
+	## Used only for API serialization.
 	var enum_values: Array[String] = []
 
 	func serialize() -> String:

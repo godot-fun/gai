@@ -1,0 +1,177 @@
+var client := OpenAiClient.new("test-key", "https://api.example.com/v1/chat/completions", "test-model")
+
+
+func consume_sse_buffer_test() -> void:
+	var deltas: Array[String] = []
+	var on_delta := func(delta: String, stream_kind: String) -> void:
+		deltas.append(delta)
+		pass
+	var remainder := client.consume_sse_buffer(
+		"data: {\"choices\":[{\"delta\":{\"content\":\"Hel\"}}]}\n\ndata: {\"choices\":[{\"delta\":{\"content\":\"lo\"}}]}\n",
+		on_delta
+	)
+	assert(deltas == ["Hel", "lo"])
+	assert(remainder == StringUtils.EMPTY)
+	pass
+
+
+func consume_sse_buffer_without_callback_test() -> void:
+	var remainder := client.consume_sse_buffer("data: {\"choices\":[{\"delta\":{\"content\":\"compact summary\"}}]}\n")
+	assert(remainder == StringUtils.EMPTY)
+	pass
+
+
+func consume_sse_buffer_partial_line_test() -> void:
+	var deltas: Array[String] = []
+	var on_delta := func(delta: String, stream_kind: String) -> void:
+		deltas.append(delta)
+		pass
+	var remainder := client.consume_sse_buffer("data: {\"choices\":[{\"delta\":{\"content\":\"Hi\"}}]}", on_delta)
+	assert(deltas.is_empty())
+	assert(remainder.begins_with("data:"))
+	var remainder2 := client.consume_sse_buffer(remainder + "\n", on_delta)
+	assert(deltas == ["Hi"])
+	assert(remainder2 == StringUtils.EMPTY)
+	pass
+
+
+func consume_sse_buffer_on_delta_test() -> void:
+	var deltas := StringBuilder.new()
+	var on_delta := func(delta: String, stream_kind: String) -> void:
+		deltas.append_if_not_empty(delta)
+		pass
+	client.consume_sse_buffer(
+		"data: {\"choices\":[{\"delta\":{\"content\":\"Hel\"}}]}\n\ndata: {\"choices\":[{\"delta\":{\"content\":\"lo\"}}]}\n",
+		on_delta
+	)
+	assert(deltas.build_string() == "Hello")
+	pass
+
+
+func consume_sse_buffer_reasoning_one_arg_on_delta_test() -> void:
+	var deltas: Array[String] = []
+	var on_delta := func(delta: String, stream_kind: String) -> void:
+		deltas.append(delta)
+		pass
+	client.consume_sse_buffer(
+		"data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"think\"}}]}\n"
+		+ "data: {\"choices\":[{\"delta\":{\"content\":\"OK\"}}]}\n",
+		on_delta
+	)
+	assert(deltas.size() == 2)
+	assert(deltas[1] == "OK")
+	pass
+
+
+func consume_sse_buffer_reasoning_on_delta_test() -> void:
+	var kinds: Array[String] = []
+	var on_delta := func(delta: String, stream_kind: String) -> void:
+		kinds.append(stream_kind)
+		pass
+	client.consume_sse_buffer(
+		"data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"think\"}}]}\n"
+		+ "data: {\"choices\":[{\"delta\":{\"content\":\"OK\"}}]}\n",
+		on_delta
+	)
+	assert(kinds.size() == 2)
+	assert(kinds[0] == OpenAiClient.STREAM_KIND_REASONING)
+	assert(kinds[1] == OpenAiClient.STREAM_KIND_CONTENT)
+	pass
+
+
+func extract_finish_reason_test() -> void:
+	var body := "data: {\"choices\":[{\"delta\":{\"content\":\"OK\"}}]}\n\ndata: {\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n"
+	assert(client.extract_finish_reason(client.parse_stream_chunks(body)) == "stop")
+	pass
+
+
+func consume_sse_buffer_multichunk_test() -> void:
+	var pending_build := StringBuilder.new()
+	var deltas: Array[String] = []
+	var on_delta := func(delta: String, stream_kind: String) -> void:
+		deltas.append(delta)
+		pass
+	var append_chunk := func(chunk_text: String) -> void:
+		var buffer := pending_build.build_string() + chunk_text
+		pending_build.clear()
+		var remaining := client.consume_sse_buffer(buffer, on_delta)
+		if StringUtils.is_not_empty(remaining):
+			pending_build.append_if_not_empty(remaining)
+		pass
+	append_chunk.call("data: {\"choices\":[{\"delta\":{\"content\":\"Hel")
+	append_chunk.call("lo\"}}]}\n\ndata: {\"choices\":[{\"delta\":{\"content\":\"!\"}}]}\n")
+	assert(deltas == ["Hello", "!"])
+	pass
+
+
+func extract_stream_tool_calls_test() -> void:
+	var body := (
+		"data: {\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"read\",\"arguments\":\"\"}}]}}]}\n"
+		+ "data: {\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"path\\\":\\\"a.txt\\\"}\"}}]}}]}\n"
+	)
+	var tool_calls := client.extract_stream_tool_calls(client.parse_stream_chunks(body))
+	assert(tool_calls.size() == 1)
+	assert(tool_calls[0].id == "call_1")
+	assert(tool_calls[0].function.name == "read")
+	assert(tool_calls[0].function.arguments == "{\"path\":\"a.txt\"}")
+	pass
+
+
+func extract_stream_usage_test() -> void:
+	var body := (
+		"data: {\"choices\":[{\"delta\":{\"content\":\"OK\"}}]}\n\n"
+		+ "data: {\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],"
+		+ "\"usage\":{\"prompt_tokens\":12,\"completion_tokens\":5,\"total_tokens\":17}}\n"
+	)
+	var usage := client.extract_stream_usage(client.parse_stream_chunks(body))
+	assert(usage.total_tokens == 17)
+	assert(usage.prompt_tokens == 12)
+	assert(usage.completion_tokens == 5)
+	pass
+
+
+func collect_stream_text_test() -> void:
+	var body := (
+		"data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"thin\"}}]}\n\n"
+		+ "data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"king\"}}]}\n\n"
+		+ "data: {\"choices\":[{\"delta\":{\"content\":\"Hel\"}}]}\n\n"
+		+ "data: {\"choices\":[{\"delta\":{\"content\":\"lo\"}}]}\n\n"
+		+ "data: [DONE]\n"
+	)
+	var chunks := client.parse_stream_chunks(body)
+	assert(chunks.size() == 4)
+	assert(client.extract_stream_content(chunks) == "Hello")
+	assert(client.extract_stream_reasoning_content(chunks) == "thinking")
+	pass
+
+
+func parse_stream_chunks_skips_blank_body_test() -> void:
+	assert(client.parse_stream_chunks(StringUtils.EMPTY).is_empty())
+	pass
+
+
+func parse_stream_chunks_skips_done_event_test() -> void:
+	var body := "data: {\"choices\":[{\"delta\":{\"content\":\"OK\"}}]}\n\ndata: [DONE]\n\n"
+	var chunks := client.parse_stream_chunks(body)
+	assert(chunks.size() == 1)
+	assert(client.extract_stream_content(chunks) == "OK")
+	pass
+
+
+func consume_sse_buffer_skips_non_data_lines_test() -> void:
+	var deltas: Array[String] = []
+	var on_delta := func(delta: String, stream_kind: String) -> void:
+		deltas.append(delta)
+		pass
+	var remainder := client.consume_sse_buffer(
+		": keep-alive\nevent: message\ndata: {\"choices\":[{\"delta\":{\"content\":\"OK\"}}]}\n",
+		on_delta
+	)
+	assert(deltas == ["OK"])
+	assert(remainder == StringUtils.EMPTY)
+	pass
+
+
+func extract_finish_error_length_test() -> void:
+	assert(client.extract_finish_error("length") == "response truncated by the output token limit")
+	pass
