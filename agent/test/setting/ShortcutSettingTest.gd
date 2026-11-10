@@ -5,10 +5,10 @@ static func default_search_shortcut_test() -> void:
 	var ctrl_f: Key = KEY_F | KEY_MASK_CTRL
 	assert(ShortcutSetting.DEFAULT_SEARCH_SHORTCUT == ctrl_f)
 	assert(OS.get_keycode_string(ctrl_f) == "Ctrl+F")
-	var shift_page_up: Key = KEY_PAGEUP | KEY_MASK_SHIFT
-	var shift_page_down: Key = KEY_PAGEDOWN | KEY_MASK_SHIFT
-	assert(ShortcutSetting.DEFAULT_PREV_USER_MESSAGE_SHORTCUT == shift_page_up)
-	assert(ShortcutSetting.DEFAULT_NEXT_USER_MESSAGE_SHORTCUT == shift_page_down)
+	var ctrl_page_up: Key = KEY_PAGEUP | KEY_MASK_CTRL
+	var ctrl_page_down: Key = KEY_PAGEDOWN | KEY_MASK_CTRL
+	assert(ShortcutSetting.DEFAULT_PREV_USER_MESSAGE_SHORTCUT == ctrl_page_up)
+	assert(ShortcutSetting.DEFAULT_NEXT_USER_MESSAGE_SHORTCUT == ctrl_page_down)
 	var ctrl_shift_page_up: Key = KEY_PAGEUP | KEY_MASK_SHIFT | KEY_MASK_CTRL
 	var ctrl_shift_page_down: Key = KEY_PAGEDOWN | KEY_MASK_SHIFT | KEY_MASK_CTRL
 	assert(ShortcutSetting.DEFAULT_PREV_REPLY_SHORTCUT == ctrl_shift_page_up)

@@ -422,7 +422,7 @@
       "open_search": "Open search",
       "prev_user_message": "Previous user message",
       "next_user_message": "Next user message",
-      "user_nav_shortcut_help": "Click, then press a new shortcut. Include Ctrl, Alt, Shift, or Meta. Hold Shift and scroll the mouse wheel to move between user messages the same way.",
+      "user_nav_shortcut_help": "Click, then press a new shortcut. Include Ctrl, Alt, Shift, or Meta. Hold Ctrl and scroll the mouse wheel to move between user messages the same way.",
       "prev_reply": "Previous reply",
       "next_reply": "Next reply",
       "reply_nav_shortcut_help": "Click, then press a new shortcut. Include Ctrl, Alt, Shift, or Meta. Hold Ctrl+Shift and scroll the mouse wheel to move between agent replies the same way.",

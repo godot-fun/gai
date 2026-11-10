@@ -207,12 +207,12 @@ func on_chat_scroll_gui_input(event: InputEvent) -> void:
 
 
 func try_wheel_entry_navigate(mouse: InputEventMouseButton) -> bool:
-	if not mouse.pressed or not mouse.shift_pressed:
+	if not mouse.pressed or (not mouse.ctrl_pressed and not mouse.meta_pressed):
 		return false
 	var direction := wheel_direction(mouse)
 	if direction == 0:
 		return false
-	if mouse.ctrl_pressed or mouse.meta_pressed:
+	if mouse.shift_pressed:
 		return navigate_reply(direction)
 	return navigate_user_message(direction)
 	pass
