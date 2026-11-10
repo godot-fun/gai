@@ -99,11 +99,13 @@ func style_results_scroll() -> void:
 	pass
 
 
+## Outline uses the shared opaque token, like the settings cards: a translucent border color stacks on
+## itself where the corner arcs meet, so only the four corners stayed visible.
 func style_result_button(result: Button) -> void:
 	result.text = ""
 	ButtonStyle.apply_font_colors(result, Colors.primary_text, Colors.primary_text, Colors.primary_text)
 	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1,
-		Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
+		Colors.outline_variant, ControlSize.border_xs)
 	var hover := normal.duplicate() as StyleBoxFlat
 	hover.bg_color = ThemeColor.selected_surface
 	hover.border_color = ThemeColor.accent_theme_color()
