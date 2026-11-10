@@ -573,7 +573,8 @@ func on_confirm_saved() -> void:
 		return
 	if not save_all_dirty():
 		return
-	finish_pending(kind)
+	if kind == Pending.LEAVE and host_window != null and is_instance_valid(host_window):
+		host_window.queue_free()
 	pass
 
 
@@ -598,18 +599,13 @@ func on_confirm_custom(action: StringName) -> void:
 		tabs.close_all()
 		show_active(true)
 		return
-	finish_pending(kind)
+	if kind == Pending.LEAVE and host_window != null and is_instance_valid(host_window):
+		host_window.queue_free()
 	pass
 
 
 func on_confirm_canceled() -> void:
 	clear_pending()
-	pass
-
-
-func finish_pending(kind: Pending) -> void:
-	if kind == Pending.LEAVE and host_window != null and is_instance_valid(host_window):
-		host_window.queue_free()
 	pass
 
 

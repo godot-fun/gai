@@ -68,7 +68,6 @@ static func editor_tabs_open_and_save_test() -> void:
 	assert(FileUtils.read_file_to_string(note_path) == "one!")
 	var image := tabs.open_file(image_path)
 	assert(image != null)
-	assert(image.is_image())
 	assert(image.kind == EditorDocument.Kind.IMAGE)
 	assert(not image.is_dirty())
 	assert(tabs.active_index == 2)

@@ -17,16 +17,12 @@ func is_dirty() -> bool:
 	return is_text() and text != saved_text
 
 
-func is_image() -> bool:
-	return kind == Kind.IMAGE
-
-
 func is_text() -> bool:
 	return kind == Kind.TEXT
 
 
 func refresh_kind() -> void:
-	kind = kind_for_path(path)
+	kind = Kind.IMAGE if FileColors.category_for_path(path) == FileColors.Category.IMAGE else Kind.TEXT
 	if not is_text():
 		text = ""
 		saved_text = ""
@@ -79,14 +75,6 @@ static func can_open(path: String) -> bool:
 	if category == FileColors.Category.AUDIO or category == FileColors.Category.VIDEO:
 		return false
 	return not contains_nul(normalized)
-
-
-static func kind_for_path(path: String) -> Kind:
-	if FileColors.category_for_path(path) == FileColors.Category.IMAGE:
-		return Kind.IMAGE
-	return Kind.TEXT
-
-
 static func contains_nul(path: String) -> bool:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
