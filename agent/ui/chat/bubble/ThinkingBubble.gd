@@ -5,6 +5,8 @@ var rich_text: RichTextLabel
 var view_button: Button
 var line_label: Label
 
+const PREVIEW_LINES := 3
+
 ## Thinking / reasoning bubble — plain text preview in chat.
 ## Full text lives on ChatEntry.body; the header ··· button opens it in PopupWindow.
 
@@ -53,7 +55,7 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 func refresh(entry: ChatEntry) -> void:
 	if not is_instance_valid(rich_text) or entry == null:
 		return
-	BubblePreview.apply(rich_text, view_button, line_label, entry.body, true)
+	BubblePreview.apply(rich_text, view_button, line_label, entry.body, true, PREVIEW_LINES)
 	pass
 
 

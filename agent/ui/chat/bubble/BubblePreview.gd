@@ -8,31 +8,20 @@ const PREVIEW_LINES := 6
 const PREVIEW_CHARS := 600
 
 
-static func preview(s: String) -> String:
-	var text := StringUtils.last_lines(s, PREVIEW_LINES)
-	if text.length() <= PREVIEW_CHARS:
-		return text
-	return text.substr(text.length() - PREVIEW_CHARS)
-
-
-static func extra_line_count(s: String) -> int:
-	if StringUtils.is_empty(s):
-		return 0
-	return maxi(0, s.count(FileUtils.NEWLINE_LF) + 1 - PREVIEW_LINES)
-
-
 static func hidden_line_count(body: String, visible_line_count: int) -> int:
 	if StringUtils.is_blank(body):
 		return 0
 	return maxi(0, body.count(FileUtils.NEWLINE_LF) + 1 - visible_line_count)
 
 
-static func apply(rich_text: RichTextLabel, view_button: Button, line_label: Label, body: String, fixed_height_at_limit: bool = false) -> void:
+static func apply(rich_text: RichTextLabel, view_button: Button, line_label: Label, body: String, fixed_height_at_limit: bool = false, preview_lines: int = PREVIEW_LINES) -> void:
 	if not is_instance_valid(rich_text):
 		return
-	var text := preview(body)
+	var text := StringUtils.last_lines(body, preview_lines)
+	if text.length() > PREVIEW_CHARS:
+		text = text.substr(text.length() - PREVIEW_CHARS)
 	view_button.visible = text != body
-	var extra_lines := extra_line_count(body)
+	var extra_lines := 0 if StringUtils.is_empty(body) else maxi(0, body.count(FileUtils.NEWLINE_LF) + 1 - preview_lines)
 	line_label.visible = extra_lines > 0
 	if extra_lines > 0:
 		var line_key := "agent.chat.more_line" if extra_lines == 1 else "agent.chat.more_lines"
@@ -40,12 +29,12 @@ static func apply(rich_text: RichTextLabel, view_button: Button, line_label: Lab
 	rich_text.text = text
 	rich_text.visible = StringUtils.is_not_blank(body)
 	if fixed_height_at_limit:
-		apply_height_limit(rich_text, extra_lines > 0)
+		apply_height_limit(rich_text, extra_lines > 0, preview_lines)
 	pass
 
 
 ## Stay compact for short content; lock the viewport only once preview truncation starts.
-static func apply_height_limit(rich_text: RichTextLabel, limit_reached: bool) -> void:
+static func apply_height_limit(rich_text: RichTextLabel, limit_reached: bool, preview_lines: int = PREVIEW_LINES) -> void:
 	if not limit_reached:
 		rich_text.fit_content = true
 		rich_text.scroll_active = false
@@ -54,7 +43,7 @@ static func apply_height_limit(rich_text: RichTextLabel, limit_reached: bool) ->
 	var font := rich_text.get_theme_font("normal_font")
 	var font_size := rich_text.get_theme_font_size("normal_font_size")
 	var line_separation := rich_text.get_theme_constant("line_separation")
-	var preview_height := ceilf(font.get_height(font_size) * PREVIEW_LINES + line_separation * (PREVIEW_LINES - 1))
+	var preview_height := ceilf(font.get_height(font_size) * preview_lines + line_separation * (preview_lines - 1))
 	rich_text.fit_content = false
 	rich_text.scroll_active = true
 	rich_text.scroll_following = true
