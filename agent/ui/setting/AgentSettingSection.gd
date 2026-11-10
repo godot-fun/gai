@@ -7,8 +7,8 @@ var max_turns_label: Label
 var max_turns_spin: SpinBox
 var external_editor_label: Label
 var external_editor_edit: LineEdit
-var external_editor_button: Button
 var external_editor_dialog: FileDialog
+var editor_field_typing: bool = false
 var read_image_with_api_label: Label
 var read_image_with_api_toggle_button: CheckButton
 var browser_headless_label: Label
@@ -39,27 +39,6 @@ func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> 
 	max_turns_spin.value = AgentSetting.get_max_turns()
 	max_turns_spin.value_changed.connect(on_max_turns_changed)
 	sandbox_parts[3].add_child(max_turns_spin)
-	var editor_parts := ui.make_setting_row(parent)
-	external_editor_label = ui.make_label(I18n.t("agent.settings.external_editor"))
-	external_editor_label.tooltip_text = I18n.t("agent.settings.external_editor_help")
-	editor_parts[0].add_child(external_editor_label)
-	var editor_row := HBoxContainer.new()
-	editor_row.add_theme_constant_override("separation", Margin.ma_2)
-	editor_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	editor_parts[1].add_child(editor_row)
-	external_editor_edit = ui.make_line_edit(I18n.t("agent.settings.external_editor_placeholder"))
-	external_editor_edit.text = AgentSetting.get_custom_editor_path()
-	external_editor_edit.tooltip_text = I18n.t("agent.settings.external_editor_help")
-	external_editor_edit.text_submitted.connect(on_external_editor_submitted)
-	external_editor_edit.focus_exited.connect(save_external_editor)
-	editor_row.add_child(external_editor_edit)
-	external_editor_button = Button.new()
-	external_editor_button.text = I18n.t("agent.settings.browse")
-	external_editor_button.focus_mode = Control.FOCUS_NONE
-	external_editor_button.custom_minimum_size.y = ControlSize.md
-	external_editor_button.pressed.connect(open_external_editor_dialog)
-	editor_row.add_child(external_editor_button)
-	build_external_editor_dialog(window)
 	var read_image_parts := ui.make_setting_row(parent)
 	read_image_with_api_label = ui.make_label(I18n.t("agent.settings.read_image_remotely"))
 	read_image_with_api_label.tooltip_text = I18n.t("agent.settings.read_image_remotely_help")
@@ -92,7 +71,21 @@ func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> 
 	restart_web_server_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	restart_web_server_button.pressed.connect(on_restart_web_server_pressed)
 	browser_parts[3].add_child(restart_web_server_button)
-	# Columns 5–6 — unused; keeps alignment with the 6-column notification row.
+	# Columns 5–6 stay empty so the row keeps the 6-column shape used around it.
+	# Last row — external editor path: the fallback for editors automatic discovery misses.
+	var editor_parts := ui.make_setting_row(parent)
+	external_editor_label = ui.make_label(I18n.t("agent.settings.external_editor"))
+	external_editor_label.tooltip_text = I18n.t("agent.settings.external_editor_help")
+	editor_parts[0].add_child(external_editor_label)
+	external_editor_edit = ui.make_line_edit(I18n.t("agent.settings.external_editor_placeholder"))
+	external_editor_edit.text = AgentSetting.get_custom_editor_path()
+	external_editor_edit.tooltip_text = I18n.t("agent.settings.external_editor_help")
+	external_editor_edit.text_submitted.connect(on_external_editor_submitted)
+	external_editor_edit.gui_input.connect(on_external_editor_input)
+	external_editor_edit.text_changed.connect(on_external_editor_text_changed)
+	external_editor_edit.focus_exited.connect(save_external_editor)
+	editor_parts[1].add_child(external_editor_edit)
+	build_external_editor_dialog(window)
 	pass
 
 
@@ -121,6 +114,7 @@ func refresh() -> void:
 	ui.refresh_check_button(sandbox_toggle_button, SandboxPolicy.is_enabled())
 	max_turns_spin.set_value_no_signal(AgentSetting.get_max_turns())
 	external_editor_edit.text = AgentSetting.get_custom_editor_path()
+	editor_field_typing = false
 	ui.refresh_check_button(read_image_with_api_toggle_button, AgentSetting.get_read_image_with_api())
 	ui.refresh_check_button(browser_headless_toggle_button, AgentSetting.get_browser_headless())
 	pass
@@ -143,6 +137,21 @@ func on_max_turns_changed(turns: float) -> void:
 
 func on_external_editor_submitted(_path: String) -> void:
 	save_external_editor()
+	pass
+
+
+## Clicking the field opens the picker, the same way the sound folder field behaves; once the
+## user starts typing, clicks place the caret instead so a hand-typed path stays editable.
+func on_external_editor_input(event: InputEvent) -> void:
+	var click := event as InputEventMouseButton
+	if click == null or not click.pressed or click.button_index != MOUSE_BUTTON_LEFT or editor_field_typing:
+		return
+	open_external_editor_dialog()
+	pass
+
+
+func on_external_editor_text_changed(_text: String) -> void:
+	editor_field_typing = true
 	pass
 
 
@@ -213,7 +222,6 @@ func apply_locale() -> void:
 	external_editor_label.tooltip_text = I18n.t("agent.settings.external_editor_help")
 	external_editor_edit.placeholder_text = I18n.t("agent.settings.external_editor_placeholder")
 	external_editor_edit.tooltip_text = I18n.t("agent.settings.external_editor_help")
-	external_editor_button.text = I18n.t("agent.settings.browse")
 	external_editor_dialog.title = I18n.t("agent.settings.external_editor_title")
 	external_editor_dialog.ok_button_text = I18n.t("common.select")
 	external_editor_dialog.get_cancel_button().text = I18n.t("common.cancel")
@@ -242,7 +250,6 @@ func apply_theme() -> void:
 	ui.style_spin_box(max_turns_spin)
 	ui.style_field_label(external_editor_label)
 	LineEditStyle.apply(external_editor_edit)
-	ButtonStyle.apply_action_button(external_editor_button)
 	FileDialogStyle.apply(external_editor_dialog, I18nHelper.file_dialog_label_texts())
 	ui.style_field_label(read_image_with_api_label)
 	ButtonStyle.apply_check_button(read_image_with_api_toggle_button)

@@ -403,7 +403,7 @@
       "browser_service_restarted": "浏览器服务已重新启动",
       "browser_service_restart_failed": "浏览器服务重启失败",
       "external_editor": "外部编辑器",
-      "external_editor_help": "可选的编辑器可执行文件，用于自动检测不到的便携版或自定义安装。",
+      "external_editor_help": "可选的编辑器可执行文件，点击输入框即可选择；只在自动检测不到的便携版或自定义安装时才需要填写。",
       "external_editor_placeholder": "选择编辑器可执行文件",
       "external_editor_title": "选择外部编辑器",
       "browse": "浏览",

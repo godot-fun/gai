@@ -403,7 +403,7 @@
       "browser_service_restarted": "Browser service restarted",
       "browser_service_restart_failed": "Failed to restart browser service",
       "external_editor": "External editor",
-      "external_editor_help": "Optional editor executable used when automatic detection misses a portable or custom installation.",
+      "external_editor_help": "Optional editor executable — click the field to pick one. Only needed for portable or custom installs that automatic detection misses.",
       "external_editor_placeholder": "Select an editor executable",
       "external_editor_title": "Select an External Editor",
       "browse": "Browse",
