@@ -337,7 +337,7 @@ func style_results() -> void:
 	results.add_theme_color_override("font_selected_color", ThemeColor.title_color)
 	results.add_theme_color_override("guide_color", Color(ThemeColor.body_color, 0.18))
 	results.add_theme_constant_override("line_separation", Margin.ma_2)
-	results.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_lg, Margin.ma_2, Margin.ma_2, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs))
+	results.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_lg, Margin.ma_2, Margin.ma_2, Colors.outline_variant, ControlSize.border_xs))
 	results.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	results.add_theme_stylebox_override("hovered", StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_md))
 	results.add_theme_stylebox_override("selected", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, ControlSize.radius_md))

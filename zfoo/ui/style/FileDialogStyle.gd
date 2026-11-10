@@ -243,7 +243,7 @@ static func make_outline_action_normal(border_color: Color) -> StyleBoxFlat:
 ## Path bar fields use vertical padding; shared [method LineEditStyle.theme_normal_style] uses [member Margin.ma_0] and reads too flat in FileDialog rows.
 static func file_dialog_field_style() -> StyleBoxFlat:
 	return StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_md, Margin.ma_3, Margin.ma_1,
-		Color(ThemeColor.title_color, Weights.w_2), ControlSize.border_xs)
+		Colors.outline, ControlSize.border_xs)
 
 
 ## Drive selector matches the path [LineEdit] so the location row reads as one control.

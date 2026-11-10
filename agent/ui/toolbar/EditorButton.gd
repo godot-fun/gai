@@ -94,7 +94,7 @@ func style_popup_spacing() -> void:
 	popup.add_theme_constant_override("item_start_padding", Margin.ma_2)
 	popup.add_theme_constant_override("item_end_padding", Margin.ma_2)
 	var panel := StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, ControlSize.radius_lg,
-		Margin.ma_2, Margin.ma_2, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
+		Margin.ma_2, Margin.ma_2, Colors.outline_variant, ControlSize.border_xs)
 	popup.add_theme_stylebox_override("panel", panel)
 	pass
 

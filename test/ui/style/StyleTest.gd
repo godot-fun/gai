@@ -453,7 +453,7 @@ func FileDialogStyle_path_option_test() -> void:
 	var normal: StyleBoxFlat = option.get_theme_stylebox("normal") as StyleBoxFlat
 	var hover: StyleBoxFlat = option.get_theme_stylebox("hover") as StyleBoxFlat
 	assert(normal.bg_color == ThemeColor.card_surface)
-	assert(normal.border_color == Color(ThemeColor.title_color, Weights.w_2))
+	assert(normal.border_color == Colors.outline)
 	assert(normal.border_width_left == ControlSize.border_xs)
 	assert(hover.bg_color == ThemeColor.card_surface)
 	assert(hover.border_color == ThemeColor.accent_theme_color())

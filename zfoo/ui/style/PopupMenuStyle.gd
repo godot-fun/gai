@@ -14,7 +14,7 @@ static func apply(popup: PopupMenu) -> void:
 	popup.add_theme_constant_override("v_separation", Margin.ma_2)
 	popup.add_theme_constant_override("item_start_padding", Margin.ma_3)
 	popup.add_theme_constant_override("item_end_padding", Margin.ma_3)
-	popup.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, ControlSize.radius_lg, Margin.ma_1, Margin.ma_1, Color(ThemeColor.title_color, 0.10), ControlSize.border_xs))
+	popup.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(ThemeColor.inset_surface, ControlSize.radius_lg, Margin.ma_1, Margin.ma_1, Colors.outline_variant, ControlSize.border_xs))
 	popup.add_theme_stylebox_override("hover", StyleBoxHelper.create_style_box_flat(ThemeColor.selected_surface, ControlSize.radius_md, Margin.ma_2, 0))
 	popup.add_theme_icon_override("radio_checked", make_radio_icon(true, ThemeColor.accent_theme_color()))
 	popup.add_theme_icon_override("radio_unchecked", make_radio_icon(false, Colors.secondary_text))

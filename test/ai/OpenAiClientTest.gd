@@ -1,0 +1,379 @@
+var client := OpenAiClient.new("test-key", "https://api.example.com/v1/chat/completions", "test-model")
+
+
+func consume_sse_buffer_test() -> void:
+	var deltas: Array[String] = []
+	var on_delta := func(delta: String, stream_kind: String) -> void:
+		deltas.append(delta)
+		pass
+	var remainder := client.consume_sse_buffer(
+		"data: {\"choices\":[{\"delta\":{\"content\":\"Hel\"}}]}\n\ndata: {\"choices\":[{\"delta\":{\"content\":\"lo\"}}]}\n",
+		on_delta
+	)
+	assert(deltas == ["Hel", "lo"])
+	assert(remainder == StringUtils.EMPTY)
+	pass
+
+
+func consume_sse_buffer_without_callback_test() -> void:
+	var remainder := client.consume_sse_buffer(
+		"data: {\"choices\":[{\"delta\":{\"content\":\"compact summary\"}}]}\n"
+	)
+	assert(remainder == StringUtils.EMPTY)
+	pass
+
+
+func consume_sse_buffer_partial_line_test() -> void:
+	var deltas: Array[String] = []
+	var on_delta := func(delta: String, stream_kind: String) -> void:
+		deltas.append(delta)
+		pass
+	var remainder := client.consume_sse_buffer(
+		"data: {\"choices\":[{\"delta\":{\"content\":\"Hi\"}}]}",
+		on_delta
+	)
+	assert(deltas.is_empty())
+	assert(remainder.begins_with("data:"))
+	var remainder2 := client.consume_sse_buffer(remainder + "\n", on_delta)
+	assert(deltas == ["Hi"])
+	assert(remainder2 == StringUtils.EMPTY)
+	pass
+
+
+func consume_sse_buffer_on_delta_test() -> void:
+	var deltas := StringBuilder.new()
+	var on_delta := func(delta: String, stream_kind: String) -> void:
+		deltas.append_if_not_empty(delta)
+		pass
+	client.consume_sse_buffer(
+		"data: {\"choices\":[{\"delta\":{\"content\":\"Hel\"}}]}\n\ndata: {\"choices\":[{\"delta\":{\"content\":\"lo\"}}]}\n",
+		on_delta
+	)
+	assert(deltas.build_string() == "Hello")
+	pass
+
+
+func consume_sse_buffer_reasoning_one_arg_on_delta_test() -> void:
+	var deltas: Array[String] = []
+	var on_delta := func(delta: String, stream_kind: String) -> void:
+		deltas.append(delta)
+		pass
+	client.consume_sse_buffer(
+		"data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"think\"}}]}\n"
+		+ "data: {\"choices\":[{\"delta\":{\"content\":\"OK\"}}]}\n",
+		on_delta
+	)
+	assert(deltas.size() == 2)
+	assert(deltas[1] == "OK")
+	pass
+
+
+func consume_sse_buffer_reasoning_on_delta_test() -> void:
+	var kinds: Array[String] = []
+	var on_delta := func(delta: String, stream_kind: String) -> void:
+		kinds.append(stream_kind)
+		pass
+	client.consume_sse_buffer(
+		"data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"think\"}}]}\n"
+		+ "data: {\"choices\":[{\"delta\":{\"content\":\"OK\"}}]}\n",
+		on_delta
+	)
+	assert(kinds.size() == 2)
+	assert(kinds[0] == OpenAiClient.STREAM_KIND_REASONING)
+	assert(kinds[1] == OpenAiClient.STREAM_KIND_CONTENT)
+	pass
+
+
+func extract_finish_reason_test() -> void:
+	var body := "data: {\"choices\":[{\"delta\":{\"content\":\"OK\"}}]}\n\ndata: {\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n"
+	assert(client.extract_finish_reason(client.parse_stream_chunks(body)) == "stop")
+	pass
+
+
+func consume_sse_buffer_multichunk_test() -> void:
+	var pending_build := StringBuilder.new()
+	var deltas: Array[String] = []
+	var on_delta := func(delta: String, stream_kind: String) -> void:
+		deltas.append(delta)
+		pass
+	var append_chunk := func(chunk_text: String) -> void:
+		var buffer := pending_build.build_string() + chunk_text
+		pending_build.clear()
+		var remaining := client.consume_sse_buffer(buffer, on_delta)
+		if StringUtils.is_not_empty(remaining):
+			pending_build.append_if_not_empty(remaining)
+		pass
+	append_chunk.call("data: {\"choices\":[{\"delta\":{\"content\":\"Hel")
+	append_chunk.call("lo\"}}]}\n\ndata: {\"choices\":[{\"delta\":{\"content\":\"!\"}}]}\n")
+	assert(deltas == ["Hello", "!"])
+	pass
+
+
+func extract_stream_tool_calls_test() -> void:
+	var body := (
+		"data: {\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"id\":\"call_1\",\"type\":\"function\",\"function\":{\"name\":\"read\",\"arguments\":\"\"}}]}}]}\n"
+		+ "data: {\"choices\":[{\"delta\":{\"tool_calls\":[{\"index\":0,\"function\":{\"arguments\":\"{\\\"path\\\":\\\"a.txt\\\"}\"}}]}}]}\n"
+	)
+	var tool_calls := client.extract_stream_tool_calls(client.parse_stream_chunks(body))
+	assert(tool_calls.size() == 1)
+	assert(tool_calls[0].id == "call_1")
+	assert(tool_calls[0].function.name == "read")
+	assert(tool_calls[0].function.arguments == "{\"path\":\"a.txt\"}")
+	pass
+
+
+func open_ai_request_to_json_test() -> void:
+	var messages: Array[ChatMessage] = []
+	messages.append(ChatMessage.user("hello"))
+	var request := OpenAiRequest.new("test-model", messages, true)
+	request.max_tokens = 8192
+	var tool := FunctionToolDef.new()
+	tool.function.name = "read"
+	tool.function.description = "Read a file"
+	tool.function.parameters.string_prop("path", "File path", true)
+	request.tools.append(tool)
+	var json := request.to_json()
+	assert(json.contains("\"model\": \"test-model\""))
+	assert(json.contains("\"stream\": true"))
+	assert(json.contains("\"max_tokens\": 8192"))
+	assert(json.contains("\"content\": \"hello\""))
+	assert(json.contains("\"name\": \"read\""))
+	assert(not json.contains("\"thinking\""))
+	pass
+
+
+func open_ai_request_number_tool_parameter_to_json_test() -> void:
+	var request := OpenAiRequest.new("test-model", [ChatMessage.user("hello")], false)
+	var tool := FunctionToolDef.new()
+	tool.function.name = "set_volume"
+	tool.function.parameters.number_prop("volume", "Volume multiplier", true)
+	request.tools.append(tool)
+	var json := request.to_json()
+	assert(json.contains("\"volume\": {\"type\": \"number\", \"description\": \"Volume multiplier\"}"))
+	assert(json.contains("\"required\": [\"volume\"]"))
+	pass
+
+
+func open_ai_request_enum_tool_parameter_to_json_test() -> void:
+	var request := OpenAiRequest.new("test-model", [ChatMessage.user("hello")], false)
+	var tool := FunctionToolDef.new()
+	tool.function.name = "set_unit"
+	tool.function.parameters.enum_prop("unit", ["celsius", "fahrenheit"], "Temperature unit", true)
+	request.tools.append(tool)
+	var body: Dictionary = JSON.parse_string(request.to_json())
+	var unit: Dictionary = body.tools[0].function.parameters.properties.unit
+	assert(unit.type == "string")
+	assert(unit["enum"] == ["celsius", "fahrenheit"])
+	assert(unit.description == "Temperature unit")
+	assert(body.tools[0].function.parameters.required == ["unit"])
+	pass
+
+
+func open_ai_request_array_tool_parameter_to_json_test() -> void:
+	var request := OpenAiRequest.new("test-model", [ChatMessage.user("hello")], false)
+	var tool := FunctionToolDef.new()
+	tool.function.name = "read_files"
+	tool.function.parameters.array_prop("paths", "string", "File paths", true)
+	request.tools.append(tool)
+	var json := request.to_json()
+	var body: Dictionary = JSON.parse_string(json)
+	var parameters: Dictionary = body.tools[0].function.parameters
+	var paths: Dictionary = parameters.properties.paths
+	assert(paths.type == "array")
+	assert(paths.description == "File paths")
+	assert(paths.items.type == "string")
+	assert(parameters.required == ["paths"])
+	pass
+
+
+func open_ai_request_object_tool_parameter_to_json_test() -> void:
+	var request := OpenAiRequest.new("test-model", [ChatMessage.user("hello")], false)
+	var tool := FunctionToolDef.new()
+	tool.function.name = "create_user"
+	var profile := ToolParameters.Parameters.new()
+	profile.string_prop("name", "Display name", true)
+	profile.enum_prop("role", ["admin", "member"], "User role", true)
+	tool.function.parameters.object_prop("profile", profile, "User profile", true)
+	request.tools.append(tool)
+	var body: Dictionary = JSON.parse_string(request.to_json())
+	var parameters: Dictionary = body.tools[0].function.parameters
+	var profile_json: Dictionary = parameters.properties.profile
+	assert(profile_json.type == "object")
+	assert(profile_json.description == "User profile")
+	assert(profile_json.properties.name.type == "string")
+	assert(profile_json.properties.role["enum"] == ["admin", "member"])
+	assert(profile_json.required == ["name", "role"])
+	assert(parameters.required == ["profile"])
+	pass
+
+
+func open_ai_request_to_json_async_test() -> void:
+	var messages: Array[ChatMessage] = []
+	messages.append(ChatMessage.user("hello"))
+	var request := OpenAiRequest.new("test-model", messages, false)
+	var json: String = await ExecutorHelper.async_execute_pooled(request.to_json)
+	assert(json.contains("\"model\": \"test-model\""))
+	assert(json.contains("\"content\": \"hello\""))
+	pass
+
+
+func open_ai_request_to_json_thinking_disabled_test() -> void:
+	var messages: Array[ChatMessage] = []
+	messages.append(ChatMessage.user("hello"))
+	var request := OpenAiRequest.new("test-model", messages, false)
+	request.thinking = OpenAiRequest.THINKING_DISABLED
+	var json := request.to_json()
+	assert(json.contains("\"thinking\": {\"type\": \"disabled\"}"))
+	pass
+
+
+func open_ai_request_to_json_response_format_json_object_test() -> void:
+	var messages: Array[ChatMessage] = []
+	messages.append(ChatMessage.user("hello"))
+	var request := OpenAiRequest.new("test-model", messages, false)
+	request.response_format = OpenAiRequest.RESPONSE_FORMAT_JSON_OBJECT
+	var json := request.to_json()
+	assert(json.contains("\"response_format\": {\"type\": \"json_object\"}"))
+	pass
+
+
+func extract_stream_usage_test() -> void:
+	var body := (
+		"data: {\"choices\":[{\"delta\":{\"content\":\"OK\"}}]}\n\n"
+		+ "data: {\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}],"
+		+ "\"usage\":{\"prompt_tokens\":12,\"completion_tokens\":5,\"total_tokens\":17}}\n"
+	)
+	var usage := client.extract_stream_usage(client.parse_stream_chunks(body))
+	assert(usage.total_tokens == 17)
+	assert(usage.prompt_tokens == 12)
+	assert(usage.completion_tokens == 5)
+	pass
+
+
+func collect_stream_text_test() -> void:
+	var body := (
+		"data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"thin\"}}]}\n\n"
+		+ "data: {\"choices\":[{\"delta\":{\"reasoning_content\":\"king\"}}]}\n\n"
+		+ "data: {\"choices\":[{\"delta\":{\"content\":\"Hel\"}}]}\n\n"
+		+ "data: {\"choices\":[{\"delta\":{\"content\":\"lo\"}}]}\n\n"
+		+ "data: [DONE]\n"
+	)
+	var chunks := client.parse_stream_chunks(body)
+	assert(chunks.size() == 4)
+	assert(client.extract_stream_content(chunks) == "Hello")
+	assert(client.extract_stream_reasoning_content(chunks) == "thinking")
+	pass
+
+
+func parse_stream_chunks_skips_blank_body_test() -> void:
+	assert(client.parse_stream_chunks(StringUtils.EMPTY).is_empty())
+	pass
+
+
+func open_ai_request_to_json_escapes_control_characters_test() -> void:
+	var messages: Array[ChatMessage] = []
+	messages.append(ChatMessage.tool_result("call_1", "ansi" + char(0x1B) + "[0m"))
+	var request := OpenAiRequest.new("test-model", messages, true)
+	var json := request.to_json()
+	assert(JSON.parse_string(json) != null)
+	assert(json.contains(r"\u001b"))
+	assert(not json.contains(char(0x1B)))
+	pass
+
+
+func chat_message_from_dict_dispatches_by_role_test() -> void:
+	var system := JsonUtils.dict_to_object({"role": ChatMessage.ROLE_SYSTEM, "text": "sys"}, ChatMessage) as SystemChatMessage
+	assert(system != null and system.text == "sys")
+	var user := JsonUtils.dict_to_object({"role": ChatMessage.ROLE_USER, "parts": [{"part_type": "text", "text": "hi"}]}, ChatMessage) as UserChatMessage
+	assert(user != null and (user.parts[0] as UserTextPart).text == "hi")
+	assert(JsonUtils.dict_to_object({"role": "unknown"}, ChatMessage) == null)
+	pass
+
+
+func chat_message_tool_calls_reasoning_omits_empty_reasoning_test() -> void:
+	var tool_call := ToolCall.new()
+	tool_call.id = "call_1"
+	var message := ChatMessage.assistant_tool_calls([tool_call])
+	assert(not message.to_api_dict().has("reasoning_content"))
+	pass
+
+
+func chat_message_tool_calls_reasoning_roundtrip_test() -> void:
+	var tool_call := ToolCall.new()
+	tool_call.id = "call_1"
+	tool_call.function.name = "read"
+	var message := ChatMessage.assistant_tool_calls([tool_call], "", "thinking") as AssistantChatMessage
+	assert(message.reasoning_content == "thinking")
+	assert(message.to_api_dict()["reasoning_content"] == "thinking")
+	pass
+
+
+func chat_message_plain_assistant_reasoning_roundtrip_test() -> void:
+	var message := ChatMessage.assistant("done", "thinking") as AssistantChatMessage
+	assert(message.reasoning_content == "thinking")
+	assert(message.to_api_dict()["reasoning_content"] == "thinking")
+	pass
+
+
+func chat_message_plain_assistant_without_reasoning_omits_field_test() -> void:
+	var message := ChatMessage.assistant("done")
+	assert(not message.to_api_dict().has("reasoning_content"))
+	pass
+
+
+func chat_message_user_image_wire_shape_test() -> void:
+	var message := UserChatMessage.with_text_and_data_url("Inspect this image", "data:image/png;base64,AAAA")
+	var wire := message.to_api_dict()
+	assert(wire["role"] == ChatMessage.ROLE_USER)
+	assert(wire["content"].size() == 2)
+	assert(wire["content"][0] == {"type": "text", "text": "Inspect this image"})
+	assert(wire["content"][1] == {"type": "image_url", "image_url": {"url": "data:image/png;base64,AAAA"}})
+	pass
+
+
+func chat_message_user_image_roundtrip_test() -> void:
+	var message := UserChatMessage.with_text_and_data_url("Inspect this image", "data:image/png;base64,AAAA")
+	var json := JsonUtils.object_to_json(message)
+	var user := JsonUtils.json_to_object(json, ChatMessage) as UserChatMessage
+	assert(user != null)
+	assert((user.parts[0] as UserTextPart).text == (message.parts[0] as UserTextPart).text)
+	assert(user.first_image_data_url() == message.first_image_data_url())
+	pass
+
+
+func chat_message_user_image_default_caption_test() -> void:
+	var path := ProjectSettings.globalize_path("res://test/asset/explosion_animation.png")
+	var message := ChatMessage.user_image(StringUtils.EMPTY, path)
+	assert(StringUtils.is_not_blank(message.first_image_data_url()))
+	assert((message.parts[0] as UserTextPart).text == StringUtils.format("Image read: {}", path))
+	pass
+
+
+func chat_message_user_image_missing_file_has_no_data_url_test() -> void:
+	var path := ProjectSettings.globalize_path("res://test/asset/does_not_exist.png")
+	var message := ChatMessage.user_image("caption", path)
+	assert(StringUtils.is_blank(message.first_image_data_url()))
+	assert((message.parts[0] as UserTextPart).text == "caption")
+	pass
+
+
+func open_ai_request_to_json_tool_calls_reasoning_test() -> void:
+	var tool_call := ToolCall.new()
+	tool_call.id = "call_1"
+	tool_call.function.name = "read"
+	var messages: Array[ChatMessage] = []
+	messages.append(ChatMessage.user("hi"))
+	messages.append(ChatMessage.assistant_tool_calls([tool_call], "", "thinking"))
+	messages.append(ChatMessage.tool_result("call_1", "ok"))
+	var json := OpenAiRequest.new("test-model", messages, true).to_json()
+	var parsed: Dictionary = JSON.parse_string(json)
+	var wire_messages: Array = parsed["messages"]
+	assert(wire_messages[1]["reasoning_content"] == "thinking")
+	assert(wire_messages[1]["tool_calls"].size() == 1)
+	assert(not wire_messages[2].has("reasoning_content"))
+	pass
+
+
+func extract_finish_error_length_test() -> void:
+	assert(client.extract_finish_error("length") == "response truncated by the output token limit")
+	pass

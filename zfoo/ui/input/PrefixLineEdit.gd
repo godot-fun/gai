@@ -98,7 +98,7 @@ func refresh_prefix_icon() -> void:
 
 static func make_default_field_style() -> StyleBoxFlat:
 	return StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, 7, Margin.ma_2, Margin.ma_1,
-		Color(ThemeColor.title_color, 0.10), ControlSize.border_xs)
+		Colors.outline, ControlSize.border_xs)
 
 
 func load_prefix_icon(path: String) -> void:
