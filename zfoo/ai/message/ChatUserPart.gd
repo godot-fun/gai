@@ -1,14 +1,10 @@
 class_name ChatUserPart
-extends RefCounted
+extends IJsonSerializable
 
 const TYPE_TEXT := "text"
 const TYPE_IMAGE_URL := "image_url"
 
 var part_type: String = ""
-
-
-func to_api_dict() -> Dictionary:
-	return {}
 
 
 func deep_clone() -> ChatUserPart:
@@ -24,8 +20,7 @@ static func image_url_part(url: String) -> ChatUserPart:
 
 
 static func from_dict(data: Dictionary) -> ChatUserPart:
-	var type_id := str(data.get("part_type", ""))
-	match type_id:
+	match str(data.get("part_type", "")):
 		TYPE_TEXT:
 			return UserTextPart.from_dict(data)
 		TYPE_IMAGE_URL:

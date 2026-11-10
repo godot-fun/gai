@@ -28,12 +28,9 @@ func _init(_model: String = "", _messages: Array[ChatMessage] = [], _stream: boo
 
 
 func to_json() -> String:
-	var wire_messages: Array = []
-	for message: ChatMessage in messages:
-		wire_messages.append(message.to_api_dict())
 	var body := {
 		"model": model,
-		"messages": wire_messages,
+		"messages": messages,
 		"stream": stream,
 	}
 	if max_tokens > 0:

@@ -10,12 +10,27 @@ const ROLE_TOOL := "tool"
 var role: String = ""
 
 
-func to_api_dict() -> Dictionary:
-	return {}
-
-
 func deep_clone() -> ChatMessage:
 	return null
+
+
+# ---------------------------------------------------------------------------
+# JSON — [method serialize] is Chat Completions wire (also persisted via [method JsonUtils.object_to_json])
+# ---------------------------------------------------------------------------
+
+## Deserializes session or wire-shaped JSON into the subclass selected by [member role].
+func deserialize(data: Dictionary) -> Variant:
+	match str(data.get("role", "")):
+		ROLE_SYSTEM:
+			return SystemChatMessage.from_dict(data)
+		ROLE_USER:
+			return UserChatMessage.from_dict(data)
+		ROLE_ASSISTANT:
+			return AssistantChatMessage.from_dict(data)
+		ROLE_TOOL:
+			return ToolResultChatMessage.from_dict(data)
+		_:
+			return null
 
 
 # ---------------------------------------------------------------------------
@@ -46,22 +61,3 @@ static func assistant_tool_calls(calls: Array[ToolCall], text: String = "", reas
 
 static func tool_result(call_id: String, text: String) -> ToolResultChatMessage:
 	return ToolResultChatMessage.new(call_id, text)
-
-
-# ---------------------------------------------------------------------------
-# Persistence (JsonUtils.object_to_json shape — not Chat Completions wire)
-# ---------------------------------------------------------------------------
-
-## Deserializes the persisted message into the subclass selected by [member role].
-func deserialize(data: Dictionary) -> Variant:
-	match str(data.get("role", "")):
-		ROLE_SYSTEM:
-			return SystemChatMessage.from_dict(data)
-		ROLE_USER:
-			return UserChatMessage.from_dict(data)
-		ROLE_ASSISTANT:
-			return AssistantChatMessage.from_dict(data)
-		ROLE_TOOL:
-			return ToolResultChatMessage.from_dict(data)
-		_:
-			return null

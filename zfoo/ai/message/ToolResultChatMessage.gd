@@ -12,8 +12,8 @@ func _init(_tool_call_id: String = "", _text: String = "") -> void:
 	pass
 
 
-func to_api_dict() -> Dictionary:
-	return {"role": role, "content": text, "tool_call_id": tool_call_id}
+func serialize() -> String:
+	return JsonUtils.object_to_json({"role": role, "content": text, "tool_call_id": tool_call_id})
 
 
 func deep_clone() -> ChatMessage:

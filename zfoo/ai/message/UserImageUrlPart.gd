@@ -10,8 +10,8 @@ func _init(_url: String = "") -> void:
 	pass
 
 
-func to_api_dict() -> Dictionary:
-	return {"type": part_type, "image_url": {"url": image_url}}
+func serialize() -> String:
+	return JsonUtils.object_to_json({"type": part_type, "image_url": {"url": image_url}})
 
 
 func deep_clone() -> ChatUserPart:

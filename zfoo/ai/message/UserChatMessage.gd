@@ -19,14 +19,11 @@ func first_image_data_url() -> String:
 	return StringUtils.EMPTY
 
 
-func to_api_dict() -> Dictionary:
+func serialize() -> String:
+	var content: Variant = parts
 	if parts.size() == 1 and parts[0] is UserTextPart:
-		return {"role": role, "content": (parts[0] as UserTextPart).text}
-	var wire: Array = []
-	for part: ChatUserPart in parts:
-		if part != null:
-			wire.append(part.to_api_dict())
-	return {"role": role, "content": wire}
+		content = (parts[0] as UserTextPart).text
+	return JsonUtils.object_to_json({"role": role, "content": content})
 
 
 func deep_clone() -> ChatMessage:
