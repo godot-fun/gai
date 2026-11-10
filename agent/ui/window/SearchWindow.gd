@@ -106,12 +106,26 @@ func style_result_button(result: Button) -> void:
 	ButtonStyle.apply_font_colors(result, Colors.primary_text, Colors.primary_text, Colors.primary_text)
 	var normal := StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_md, Margin.ma_2, Margin.ma_1,
 		Colors.outline_variant, ControlSize.border_xs)
+	apply_result_text_inset(result, normal)
 	var hover := normal.duplicate() as StyleBoxFlat
 	hover.bg_color = ThemeColor.selected_surface
 	hover.border_color = ThemeColor.accent_theme_color()
 	ButtonStyle.apply_style(result, normal, hover, hover.duplicate())
 	result.add_theme_stylebox_override("hover_pressed", normal.duplicate())
 	style_result_labels(result)
+	pass
+
+
+## A [Button] does not lay out children added by hand, so inset the text block by the content margins the
+## card style already declares — otherwise the first glyphs sit on the rounded outline and get clipped.
+func apply_result_text_inset(result: Button, style: StyleBoxFlat) -> void:
+	var text_block := result.get_node_or_null("ResultText") as Control
+	if text_block == null:
+		return
+	text_block.offset_left = style.get_margin(SIDE_LEFT)
+	text_block.offset_top = style.get_margin(SIDE_TOP)
+	text_block.offset_right = -style.get_margin(SIDE_RIGHT)
+	text_block.offset_bottom = -style.get_margin(SIDE_BOTTOM)
 	pass
 
 
