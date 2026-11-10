@@ -40,14 +40,12 @@ static func apply_height_limit(rich_text: RichTextLabel, limit_reached: bool, pr
 		rich_text.scroll_active = false
 		rich_text.custom_minimum_size.y = 0.0
 		return
-	var font := rich_text.get_theme_font("normal_font")
-	var font_size := rich_text.get_theme_font_size("normal_font_size")
-	var line_separation := rich_text.get_theme_constant("line_separation")
-	var preview_height := ceilf(font.get_height(font_size) * preview_lines + line_separation * (preview_lines - 1))
 	rich_text.fit_content = false
 	rich_text.scroll_active = true
 	rich_text.scroll_following = true
-	rich_text.custom_minimum_size.y = preview_height
+	var font := rich_text.get_theme_font("normal_font")
+	var font_size := rich_text.get_theme_font_size("normal_font_size")
+	rich_text.custom_minimum_size.y = ceilf(font.get_height(font_size) * preview_lines)
 	var scroll_bar := rich_text.get_v_scroll_bar()
 	scroll_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	scroll_bar.modulate.a = 0.0
