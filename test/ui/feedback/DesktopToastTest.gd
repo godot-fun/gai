@@ -3,8 +3,8 @@
 ## [method DesktopToast.corner_position] pins the toast to the bottom-right of the usable screen area.
 func DesktopToast_corner_position_test() -> void:
 	var toast_size: Vector2i = Vector2i(roundi(DesktopToast.CARD_WIDTH), 120)
-	var corner: Vector2i = DesktopToast.corner_position(toast_size)
 	var screen: int = DisplayServer.window_get_current_screen(DisplayServer.MAIN_WINDOW_ID)
+	var corner: Vector2i = DesktopToast.corner_position(toast_size, Corner.CORNER_BOTTOM_RIGHT, screen)
 	var usable: Rect2i = DisplayServer.screen_get_usable_rect(screen)
 	var margin: int = roundi(Margin.ma_6 * DisplayScale.compute_ui_scale())
 	assert(corner.x == usable.position.x + usable.size.x - toast_size.x - margin)
@@ -18,14 +18,30 @@ func DesktopToast_all_corner_positions_test() -> void:
 	var screen: int = DisplayServer.window_get_current_screen(DisplayServer.MAIN_WINDOW_ID)
 	var usable: Rect2i = DisplayServer.screen_get_usable_rect(screen)
 	var margin: int = roundi(Margin.ma_6 * DisplayScale.compute_ui_scale())
-	var top_left: Vector2i = DesktopToast.corner_position(toast_size, Corner.CORNER_TOP_LEFT)
-	var top_right: Vector2i = DesktopToast.corner_position(toast_size, Corner.CORNER_TOP_RIGHT)
-	var bottom_left: Vector2i = DesktopToast.corner_position(toast_size, Corner.CORNER_BOTTOM_LEFT)
-	var bottom_right: Vector2i = DesktopToast.corner_position(toast_size, Corner.CORNER_BOTTOM_RIGHT)
+	var top_left: Vector2i = DesktopToast.corner_position(toast_size, Corner.CORNER_TOP_LEFT, screen)
+	var top_right: Vector2i = DesktopToast.corner_position(toast_size, Corner.CORNER_TOP_RIGHT, screen)
+	var bottom_left: Vector2i = DesktopToast.corner_position(toast_size, Corner.CORNER_BOTTOM_LEFT, screen)
+	var bottom_right: Vector2i = DesktopToast.corner_position(toast_size, Corner.CORNER_BOTTOM_RIGHT, screen)
 	assert(top_left == Vector2i(usable.position.x + margin, usable.position.y + margin))
 	assert(top_right == Vector2i(usable.end.x - toast_size.x - margin, usable.position.y + margin))
 	assert(bottom_left == Vector2i(usable.position.x + margin, usable.end.y - toast_size.y - margin))
 	assert(bottom_right == Vector2i(usable.end.x - toast_size.x - margin, usable.end.y - toast_size.y - margin))
+	pass
+
+
+## Toasts follow the monitor under the pointer, so they do not stay on the app window's screen.
+func DesktopToast_active_screen_test() -> void:
+	var active: int = DesktopToast.active_screen()
+	assert(active >= 0)
+	# A headless run reports no screens at all, so the range check only applies with a display.
+	if DisplayServer.get_screen_count() > 0:
+		assert(active < DisplayServer.get_screen_count())
+	var screen: int = DisplayServer.window_get_current_screen(DisplayServer.MAIN_WINDOW_ID)
+	var usable: Rect2i = DisplayServer.screen_get_usable_rect(screen)
+	var margin: int = roundi(Margin.ma_6 * DisplayScale.compute_ui_scale())
+	var toast_size := Vector2i(400, 100)
+	var pinned: Vector2i = DesktopToast.corner_position(toast_size, Corner.CORNER_BOTTOM_RIGHT, screen)
+	assert(pinned == Vector2i(usable.end.x - toast_size.x - margin, usable.end.y - toast_size.y - margin))
 	pass
 
 

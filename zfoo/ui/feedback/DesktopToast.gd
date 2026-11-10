@@ -8,6 +8,7 @@ extends Window
 ##
 ## Example: `DesktopToast.show_toast("Run finished", summary, Colors.success)`
 ## Pass a global [enum Corner] as the fourth argument to choose another screen corner.
+## Toasts land on the monitor under the pointer, not on the one hosting the app window.
 ## The card uses the [ThemeColor] surface with the per-toast accent color on its leading edge.
 
 const CARD_WIDTH: float = 380.0
@@ -26,6 +27,9 @@ var title_text: String = ""
 var body_text: String = ""
 var accent: Color = Colors.info
 var toast_corner: Corner = Corner.CORNER_BOTTOM_RIGHT
+## Screen the toast was created on; kept per toast so a later relayout never moves it to another
+## monitor just because the pointer wandered off.
+var toast_screen: int = -1
 
 
 func _init() -> void:
@@ -93,7 +97,7 @@ func build_card() -> void:
 	var card_height: float = pad * 2.0 + title_font.get_height(title_size) + (gap + body_height if body_height > 0.0 else 0.0)
 	size = Vector2i(roundi(card_width), roundi(card_height))
 	# Place it while it is still invisible, so the window never flashes at the tree origin.
-	position = corner_position(size, toast_corner)
+	position = corner_position(size, toast_corner, toast_screen)
 
 	card = PanelContainer.new()
 	# The card with one accent stripe down the leading edge, everything scaled by the app UI scale.
@@ -169,16 +173,28 @@ static func show_toast(i18n_title: String, i18n_body: String, color: Color, corn
 	toast.body_text = I18n.t(i18n_body).strip_edges()
 	toast.accent = color
 	toast.toast_corner = corner
+	toast.toast_screen = active_screen()
 	toasts.append(toast)
 	gdf.gdf_node.add_child(toast)
 	pass
 
 
 
-## Anchor in the requested corner of the usable screen area (taskbar excluded).
-static func corner_position(window_size: Vector2i, corner: Corner = Corner.CORNER_BOTTOM_RIGHT) -> Vector2i:
-	var screen: int = DisplayServer.window_get_current_screen(DisplayServer.MAIN_WINDOW_ID)
-	var usable: Rect2i = DisplayServer.screen_get_usable_rect(screen)
+## Screen the user is currently working on: the monitor under the pointer. A toast that stayed on
+## the screen hosting the app window is easy to miss while the user works on another monitor.
+static func active_screen() -> int:
+	var pointer: Vector2i = DisplayServer.mouse_get_position()
+	# A zero-size rect intersects no screen and reports -1, so probe the pointer as a single pixel.
+	var screen: int = DisplayServer.get_screen_from_rect(Rect2(Vector2(pointer), Vector2.ONE))
+	return screen if screen >= 0 else DisplayServer.window_get_current_screen(DisplayServer.MAIN_WINDOW_ID)
+
+
+
+## Anchor in the requested corner of the usable screen area (taskbar excluded). [param screen] is the
+## target monitor; the negative default follows [method active_screen].
+static func corner_position(window_size: Vector2i, corner: Corner = Corner.CORNER_BOTTOM_RIGHT, screen: int = -1) -> Vector2i:
+	var target: int = active_screen() if screen < 0 else screen
+	var usable: Rect2i = DisplayServer.screen_get_usable_rect(target)
 	var margin: int = roundi(Margin.ma_6 * DisplayScale.compute_ui_scale())
 	var on_left: bool = corner == Corner.CORNER_TOP_LEFT or corner == Corner.CORNER_BOTTOM_LEFT
 	var on_top: bool = corner == Corner.CORNER_TOP_LEFT or corner == Corner.CORNER_TOP_RIGHT
@@ -237,7 +253,7 @@ static func relayout() -> void:
 		var toast: DesktopToast = toasts[i]
 		if not is_instance_valid(toast):
 			continue
-		var anchor: Vector2i = corner_position(toast.size, toast.toast_corner)
+		var anchor: Vector2i = corner_position(toast.size, toast.toast_corner, toast.toast_screen)
 		match toast.toast_corner:
 			Corner.CORNER_TOP_LEFT:
 				toast.position = Vector2i(anchor.x, anchor.y + top_left_offset)
