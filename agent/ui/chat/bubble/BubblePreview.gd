@@ -41,18 +41,36 @@ static func apply_height_limit(rich_text: RichTextLabel, limit_reached: bool, pr
 		rich_text.custom_minimum_size.y = 0.0
 		return
 	rich_text.fit_content = false
+	# The label keeps its own view pinned to the tail while the reply streams in, so the
+	# only thing to size here is the window.
 	rich_text.scroll_active = true
-	var font := rich_text.get_theme_font("normal_font")
-	var font_size := rich_text.get_theme_font_size("normal_font_size")
-	rich_text.custom_minimum_size.y = ceilf(font.get_height(font_size) * preview_lines)
+	rich_text.scroll_following = true
 	var scroll_bar := rich_text.get_v_scroll_bar()
 	scroll_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	scroll_bar.modulate.a = 0.0
-	gdf.callable_deferred(func() -> void:
-		if is_instance_valid(rich_text) and rich_text.scroll_active:
-			var first_visible_line := maxi(0, rich_text.get_line_count() - preview_lines)
-			rich_text.custom_minimum_size.y = ceilf(rich_text.get_content_height() - rich_text.get_line_offset(first_visible_line))
-			rich_text.scroll_to_line(first_visible_line)
-			rich_text.scroll_active = false
-	)
+	apply_preview_height(rich_text, preview_lines)
+	pass
+
+
+## Sizes the preview window to [param preview_lines] rendered lines.
+##
+## The height comes from the rendered line offsets: the font's line box is taller than the
+## [RichTextLabel] line, and the extra pixels left a sliver of the line above the window
+## visible while the reply was streaming in.
+static func apply_preview_height(rich_text: RichTextLabel, preview_lines: int) -> void:
+	var line_count := rich_text.get_line_count()
+	if line_count <= 0:
+		# A bubble is built before it enters the tree, so the first call has no text layout
+		# to measure; retry once the label is inside the tree.
+		if rich_text.is_inside_tree() or StringUtils.is_blank(rich_text.text):
+			return
+		gdf.callable_deferred(func() -> void:
+			if is_instance_valid(rich_text) and not rich_text.fit_content:
+				apply_preview_height(rich_text, preview_lines)
+		)
+		return
+	if line_count < 2:
+		rich_text.custom_minimum_size.y = rich_text.get_content_height()
+		return
+	rich_text.custom_minimum_size.y = (rich_text.get_line_offset(1) - rich_text.get_line_offset(0)) * preview_lines
 	pass
