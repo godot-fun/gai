@@ -121,7 +121,7 @@ The root [`AGENTS.md`](AGENTS.md) defines shared project conventions. Skills can
 - **Runtime** — TCP/WebSocket sessions and `Router`, audio (`Audio`, `Audios`, `AudioRecorder`), scene transitions, hot-update PCK flow
 - **App plumbing** — `Log` / `LoggerHelper`, `Setting`, `SchedulerBus`
 - **I18n** — locale in `Setting`, `I18n.t()`, `locale_changed` for UI refresh
-- **UI** — theme tokens (`ThemeColor`, `Colors`, `FileColors`), control styles, `DisplayScale`, feedback (`Alert`, `DesktopToast`, `PopupWindow`, `CommonWindow`, `ImagePreviewWindow`); see **UI** in [`AGENTS.md`](AGENTS.md)
+- **UI** — theme tokens (`ThemeColor`, `Colors`, `FileColors`), control styles, `DisplayScale`, `ScreenUtils` (window / active monitor, usable area), feedback (`Alert`, `DesktopToast`, `PopupWindow`, `CommonWindow`, `ImagePreviewWindow`); see **UI** in [`AGENTS.md`](AGENTS.md)
 - **Tests** — `UnitTest` and `IntegrationTest` under `zfoo/gdtest/`
 
 Agent-facing API notes and GDScript conventions live in [`AGENTS.md`](AGENTS.md).

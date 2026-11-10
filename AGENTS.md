@@ -285,7 +285,7 @@ Implement `IComponent` and call `start()` to receive `update()` every frame from
 - `ArrayUtils`, `CollectionUtils`, `FileUtils`, `GlobUtils`
 - `HttpUtils`, `IdUtils`, `JsonUtils`, `NetUtils`
 - `NodeUtils`, `NumberUtils`, `OSUtils`, `ProxyUtils`, `RandomUtils`
-- `RateLimitUtils`, `ReflectionUtils`, `StringUtils`, `ThreadUtils`, `TimeUtils`
+- `RateLimitUtils`, `ReflectionUtils`, `ScreenUtils`, `StringUtils`, `ThreadUtils`, `TimeUtils`
 
 `OSUtils.execute` / `OSUtils.async_execute` run subprocesses (UTF-8 output, timeout, optional `CancelScope`); `OSUtils.stop_all()` runs on shutdown.
 
