@@ -49,4 +49,10 @@ static func apply_height_limit(rich_text: RichTextLabel, limit_reached: bool, pr
 	var scroll_bar := rich_text.get_v_scroll_bar()
 	scroll_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	scroll_bar.modulate.a = 0.0
+	gdf.callable_deferred(func() -> void:
+		if is_instance_valid(rich_text) and rich_text.scroll_active:
+			var first_visible_line := maxi(0, rich_text.get_line_count() - preview_lines)
+			rich_text.custom_minimum_size.y = ceilf(rich_text.get_content_height() - rich_text.get_line_offset(first_visible_line))
+			rich_text.scroll_to_line(first_visible_line)
+	)
 	pass
