@@ -294,7 +294,7 @@ func chat_message_tool_calls_reasoning_omits_empty_reasoning_test() -> void:
 	var tool_call := ToolCall.new()
 	tool_call.id = "call_1"
 	var message := ChatMessage.assistant_tool_calls([tool_call])
-	assert(not JSON.parse_string(message.serialize()).has("reasoning_content"))
+	assert(not message.to_api_dict().has("reasoning_content"))
 	pass
 
 
@@ -304,26 +304,26 @@ func chat_message_tool_calls_reasoning_roundtrip_test() -> void:
 	tool_call.function.name = "read"
 	var message := ChatMessage.assistant_tool_calls([tool_call], "", "thinking") as AssistantChatMessage
 	assert(message.reasoning_content == "thinking")
-	assert(JSON.parse_string(message.serialize())["reasoning_content"] == "thinking")
+	assert(message.to_api_dict()["reasoning_content"] == "thinking")
 	pass
 
 
 func chat_message_plain_assistant_reasoning_roundtrip_test() -> void:
 	var message := ChatMessage.assistant("done", "thinking") as AssistantChatMessage
 	assert(message.reasoning_content == "thinking")
-	assert(JSON.parse_string(message.serialize())["reasoning_content"] == "thinking")
+	assert(message.to_api_dict()["reasoning_content"] == "thinking")
 	pass
 
 
 func chat_message_plain_assistant_without_reasoning_omits_field_test() -> void:
 	var message := ChatMessage.assistant("done")
-	assert(not JSON.parse_string(message.serialize()).has("reasoning_content"))
+	assert(not message.to_api_dict().has("reasoning_content"))
 	pass
 
 
 func chat_message_user_image_wire_shape_test() -> void:
 	var message := UserChatMessage.with_text_and_data_url("Inspect this image", "data:image/png;base64,AAAA")
-	var wire: Dictionary = JSON.parse_string(message.serialize())
+	var wire := message.to_api_dict()
 	assert(wire["role"] == ChatMessage.ROLE_USER)
 	assert(wire["content"].size() == 2)
 	assert(wire["content"][0] == {"type": "text", "text": "Inspect this image"})
@@ -333,7 +333,7 @@ func chat_message_user_image_wire_shape_test() -> void:
 
 func chat_message_user_image_roundtrip_test() -> void:
 	var message := UserChatMessage.with_text_and_data_url("Inspect this image", "data:image/png;base64,AAAA")
-	var json := JsonSerializer.serialize_object(message)
+	var json := JsonUtils.object_to_json(message)
 	var user := JsonUtils.json_to_object(json, ChatMessage) as UserChatMessage
 	assert(user != null)
 	assert((user.parts[0] as UserTextPart).text == (message.parts[0] as UserTextPart).text)

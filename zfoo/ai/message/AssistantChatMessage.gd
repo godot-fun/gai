@@ -13,13 +13,13 @@ func _init(_text: String = "", _reasoning: String = "") -> void:
 	pass
 
 
-func serialize() -> String:
+func to_api_dict() -> Dictionary:
 	var wire := {"role": role, "content": StringUtils.trim(text)}
 	if StringUtils.is_not_blank(reasoning_content):
 		wire["reasoning_content"] = StringUtils.trim(reasoning_content)
 	if not tool_calls.is_empty():
 		wire["tool_calls"] = tool_calls
-	return JsonUtils.object_to_json(wire)
+	return wire
 
 
 func deep_clone() -> ChatMessage:

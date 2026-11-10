@@ -14,11 +14,12 @@ func deep_clone() -> ChatMessage:
 	return null
 
 
-# ---------------------------------------------------------------------------
-# JSON — [method serialize] is Chat Completions wire (also persisted via [method JsonUtils.object_to_json])
-# ---------------------------------------------------------------------------
+## Returns the Chat Completions wire representation. JSON serialization remains the persistence format.
+func to_api_dict() -> Dictionary:
+	return {}
 
-## Deserializes session or wire-shaped JSON into the subclass selected by [member role].
+
+## Deserializes the persisted message into the subclass selected by [member role].
 func deserialize(data: Dictionary) -> Variant:
 	match str(data.get("role", "")):
 		ROLE_SYSTEM:
