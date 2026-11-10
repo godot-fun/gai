@@ -57,7 +57,7 @@ static func query_os_caret() -> Vector2i:
 	var pos := caret as Vector2i
 	var mouse := DisplayServer.mouse_get_position()
 	for screen_i in DisplayServer.get_screen_count():
-		var rect: Rect2i = DisplayServer.screen_get_usable_rect(screen_i)
+		var rect := ScreenUtils.usable_rect(screen_i)
 		if rect.size.x <= 0 or rect.size.y <= 0:
 			continue
 		if not rect.has_point(pos):
@@ -76,8 +76,7 @@ static func query_os_caret() -> Vector2i:
 ## usable rect of the screen under the mouse (mouse itself if that rect is empty).
 static func focused_screen_center() -> Vector2i:
 	var mouse := DisplayServer.mouse_get_position()
-	var screen := DisplayServer.get_screen_from_rect(Rect2(Vector2(mouse), Vector2.ONE))
-	var rect: Rect2i = DisplayServer.screen_get_usable_rect(screen)
+	var rect := ScreenUtils.usable_rect(ScreenUtils.active_screen())
 	if rect.size.x <= 0 or rect.size.y <= 0:
 		return mouse
 	return rect.position + rect.size / 2

@@ -86,7 +86,7 @@ func activate() -> void:
 	var window_id := get_window_id()
 	var mode := DisplayServer.window_get_mode(window_id)
 	if mode == DisplayServer.WINDOW_MODE_MINIMIZED:
-		var restored := DisplayServer.WINDOW_MODE_MAXIMIZED if covered_usable_screen(window_id) else DisplayServer.WINDOW_MODE_WINDOWED
+		var restored := DisplayServer.WINDOW_MODE_MAXIMIZED if ScreenUtils.window_covers_usable(window_id) else DisplayServer.WINDOW_MODE_WINDOWED
 		DisplayServer.window_set_mode(restored, window_id)
 	DisplayServer.window_move_to_foreground(window_id)
 	editor.focus_active_editor.call_deferred()
@@ -145,10 +145,3 @@ static func find_open_window() -> EditorWindow:
 		if node is EditorWindow:
 			return node as EditorWindow
 	return null
-
-
-static func covered_usable_screen(window_id: int) -> bool:
-	var window_size := Vector2(DisplayServer.window_get_size_with_decorations(window_id))
-	var screen := DisplayServer.window_get_current_screen(window_id)
-	var usable_size := Vector2(DisplayServer.screen_get_usable_rect(screen).size)
-	return window_size.x >= usable_size.x and window_size.y >= usable_size.y

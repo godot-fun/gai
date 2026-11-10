@@ -173,28 +173,18 @@ static func show_toast(i18n_title: String, i18n_body: String, color: Color, corn
 	toast.body_text = I18n.t(i18n_body).strip_edges()
 	toast.accent = color
 	toast.toast_corner = corner
-	toast.toast_screen = active_screen()
+	toast.toast_screen = ScreenUtils.active_screen()
 	toasts.append(toast)
 	gdf.gdf_node.add_child(toast)
 	pass
 
 
 
-## Screen the user is currently working on: the monitor under the pointer. A toast that stayed on
-## the screen hosting the app window is easy to miss while the user works on another monitor.
-static func active_screen() -> int:
-	var pointer: Vector2i = DisplayServer.mouse_get_position()
-	# A zero-size rect intersects no screen and reports -1, so probe the pointer as a single pixel.
-	var screen: int = DisplayServer.get_screen_from_rect(Rect2(Vector2(pointer), Vector2.ONE))
-	return screen if screen >= 0 else DisplayServer.window_get_current_screen(DisplayServer.MAIN_WINDOW_ID)
-
-
-
 ## Anchor in the requested corner of the usable screen area (taskbar excluded). [param screen] is the
-## target monitor; the negative default follows [method active_screen].
+## target monitor; the negative default follows [method ScreenUtils.active_screen], so a toast lands
+## on the monitor the user works on rather than on the one hosting the app window.
 static func corner_position(window_size: Vector2i, corner: Corner = Corner.CORNER_BOTTOM_RIGHT, screen: int = -1) -> Vector2i:
-	var target: int = active_screen() if screen < 0 else screen
-	var usable: Rect2i = DisplayServer.screen_get_usable_rect(target)
+	var usable: Rect2i = ScreenUtils.usable_rect(screen)
 	var margin: int = roundi(Margin.ma_6 * DisplayScale.compute_ui_scale())
 	var on_left: bool = corner == Corner.CORNER_TOP_LEFT or corner == Corner.CORNER_BOTTOM_LEFT
 	var on_top: bool = corner == Corner.CORNER_TOP_LEFT or corner == Corner.CORNER_TOP_RIGHT
@@ -214,7 +204,7 @@ static func activate_main_window() -> void:
 		# Godot drops the maximized flag while minimized, so the cached size decides that case.
 		var restored: DisplayServer.WindowMode = mode
 		if mode == DisplayServer.WINDOW_MODE_MINIMIZED:
-			restored = DisplayServer.WINDOW_MODE_MAXIMIZED if covered_usable_screen(window_id) else DisplayServer.WINDOW_MODE_WINDOWED
+			restored = DisplayServer.WINDOW_MODE_MAXIMIZED if ScreenUtils.window_covers_usable(window_id) else DisplayServer.WINDOW_MODE_WINDOWED
 		DisplayServer.window_set_mode(restored, window_id)
 	# Raising to the top works even when the foreground change is denied; drop the flag right after
 	# so the app does not stay above every other window.
@@ -228,15 +218,6 @@ static func activate_main_window() -> void:
 static func drop_topmost(window_id: int) -> void:
 	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_ALWAYS_ON_TOP, false, window_id)
 	pass
-
-
-
-## True while the window covers the usable screen — either maximized or minimized from maximized,
-## Godot drops the maximized flag while a window is minimized, so its cached size is all that is left.
-static func covered_usable_screen(window_id: int) -> bool:
-	var window_size: Vector2 = Vector2(DisplayServer.window_get_size_with_decorations(window_id))
-	var usable: Vector2 = Vector2(DisplayServer.screen_get_usable_rect(DisplayServer.window_get_current_screen(window_id)).size)
-	return window_size.x >= usable.x and window_size.y >= usable.y
 
 
 

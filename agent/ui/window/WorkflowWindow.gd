@@ -61,7 +61,7 @@ func activate() -> void:
 	var window_id := get_window_id()
 	var mode := DisplayServer.window_get_mode(window_id)
 	if mode == DisplayServer.WINDOW_MODE_MINIMIZED:
-		var restored := DisplayServer.WINDOW_MODE_MAXIMIZED if EditorWindow.covered_usable_screen(window_id) else DisplayServer.WINDOW_MODE_WINDOWED
+		var restored := DisplayServer.WINDOW_MODE_MAXIMIZED if ScreenUtils.window_covers_usable(window_id) else DisplayServer.WINDOW_MODE_WINDOWED
 		DisplayServer.window_set_mode(restored, window_id)
 	DisplayServer.window_move_to_foreground(window_id)
 	pass

@@ -134,8 +134,7 @@ static func compute_ui_scale() -> float:
 
 ## Usable screen width under [param anchor] vs [constant REF_SCREEN_WIDTH] (2K layout band).
 static func compute_screen_scale(anchor: Vector2i) -> float:
-	var screen := DisplayServer.get_screen_from_rect(Rect2(Vector2(anchor), Vector2.ONE))
-	var usable: Rect2i = DisplayServer.screen_get_usable_rect(screen)
+	var usable := ScreenUtils.usable_rect(ScreenUtils.screen_at(anchor))
 	if usable.size.x <= 0:
 		return 1.0
 	return float(usable.size.x) / float(REF_SCREEN_WIDTH)

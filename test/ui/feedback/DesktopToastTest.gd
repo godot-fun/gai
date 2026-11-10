@@ -29,19 +29,13 @@ func DesktopToast_all_corner_positions_test() -> void:
 	pass
 
 
-## Toasts follow the monitor under the pointer, so they do not stay on the app window's screen.
-func DesktopToast_active_screen_test() -> void:
-	var active: int = DesktopToast.active_screen()
-	assert(active >= 0)
-	# A headless run reports no screens at all, so the range check only applies with a display.
-	if DisplayServer.get_screen_count() > 0:
-		assert(active < DisplayServer.get_screen_count())
-	var screen: int = DisplayServer.window_get_current_screen(DisplayServer.MAIN_WINDOW_ID)
-	var usable: Rect2i = DisplayServer.screen_get_usable_rect(screen)
-	var margin: int = roundi(Margin.ma_6 * DisplayScale.compute_ui_scale())
-	var toast_size := Vector2i(400, 100)
-	var pinned: Vector2i = DesktopToast.corner_position(toast_size, Corner.CORNER_BOTTOM_RIGHT, screen)
-	assert(pinned == Vector2i(usable.end.x - toast_size.x - margin, usable.end.y - toast_size.y - margin))
+## A toast pins the monitor it was created on, so a later relayout keeps it there.
+func DesktopToast_toast_screen_test() -> void:
+	var before: int = DesktopToast.toasts.size()
+	DesktopToast.show_toast("feedback toast", "run finished", Colors.success)
+	var toast: DesktopToast = DesktopToast.toasts[before]
+	assert(toast.toast_screen == ScreenUtils.active_screen())
+	toast.close_toast()
 	pass
 
 

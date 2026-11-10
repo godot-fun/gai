@@ -229,12 +229,8 @@ func fit_window_size() -> void:
 
 
 func clamp_to_usable(pos: Vector2i, window_size: Vector2i) -> Vector2i:
-	var screen := DisplayServer.get_screen_from_rect(Rect2(Vector2(pos), Vector2(maxi(1, window_size.x), maxi(1, window_size.y))))
-	var usable: Rect2i = DisplayServer.screen_get_usable_rect(screen)
 	var margin := roundi(Margin.ma_2 * screen_scale)
-	var x := clampi(pos.x, usable.position.x + margin, usable.end.x - window_size.x - margin)
-	var y := clampi(pos.y, usable.position.y + margin, usable.end.y - window_size.y - margin)
-	return Vector2i(x, y)
+	return ScreenUtils.clamp_rect_to_usable(pos, window_size, margin, ScreenUtils.screen_of_rect(Rect2i(pos, window_size)))
 
 
 ## Title-bar drag: poll global mouse so motion still tracks when the cursor leaves the label.
