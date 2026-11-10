@@ -6,7 +6,7 @@ func glob_skip_rules_test() -> void:
 	DirAccess.make_dir_recursive_absolute(root.path_join(".cursor/skills/humanizer"))
 	FileUtils.write_string_to_file(root.path_join(".cursor/skills/humanizer/skip.gd"), "extends Node\n")
 	var skip: Array[String] = [".git", ".cursor/skills/humanizer"]
-	var rel := relative_paths(root, GlobUtils.glob(root, "**/*.gd", true, 1_048_576, skip))
+	var rel := relative_paths(root, await GlobUtils.async_glob(root, "**/*.gd", true, 1_048_576, skip))
 	assert(not rel.has(".cursor/skills/humanizer/skip.gd"))
 	remove_fixture_tree(root)
 	pass
@@ -14,7 +14,7 @@ func glob_skip_rules_test() -> void:
 
 func glob_pattern_test() -> void:
 	var root := create_fixture_tree()
-	var gd_files := GlobUtils.glob(root, "**/*.gd", true, 1_048_576, [".git"])
+	var gd_files := await GlobUtils.async_glob(root, "**/*.gd", true, 1_048_576, [".git"])
 	var rel := relative_paths(root, gd_files)
 	assert(rel.size() == 3)
 	assert(rel.has("root.gd"))
@@ -27,7 +27,7 @@ func glob_pattern_test() -> void:
 
 func glob_non_recursive_test() -> void:
 	var root := create_fixture_tree()
-	var files := relative_paths(root, GlobUtils.glob(root, "*.gd", false, 0))
+	var files := relative_paths(root, await GlobUtils.async_glob(root, "*.gd", false, 0))
 	assert(files == ["root.gd"])
 	remove_fixture_tree(root)
 	pass
@@ -35,7 +35,7 @@ func glob_non_recursive_test() -> void:
 
 func glob_skips_dirs_test() -> void:
 	var root := create_fixture_tree()
-	var all := GlobUtils.glob(root, "**/*", true, 1_048_576, [".git"])
+	var all := await GlobUtils.async_glob(root, "**/*", true, 1_048_576, [".git"])
 	var rel := relative_paths(root, all)
 	assert(not rel.has(".git/objects/sha"))
 	remove_fixture_tree(root)
@@ -46,7 +46,7 @@ func glob_max_file_bytes_test() -> void:
 	var root := create_fixture_tree()
 	var huge_path := root.path_join("src/huge.bin")
 	FileUtils.write_string_to_file(huge_path, "x".repeat(2_000))
-	var capped := GlobUtils.glob(root, "**/*", true, 1_000, [".git"])
+	var capped := await GlobUtils.async_glob(root, "**/*", true, 1_000, [".git"])
 	var rel := relative_paths(root, capped)
 	assert(not rel.has("src/huge.bin"))
 	assert(rel.has("src/a.gd"))
@@ -57,10 +57,10 @@ func glob_max_file_bytes_test() -> void:
 func glob_single_file_test() -> void:
 	var root := create_fixture_tree()
 	var one := root.path_join("src/a.gd")
-	var matched := GlobUtils.glob(one, "*.gd")
+	var matched := await GlobUtils.async_glob(one, "*.gd")
 	assert(matched.size() == 1)
 	assert(matched[0] == one)
-	var rejected := GlobUtils.glob(one, "*.txt")
+	var rejected := await GlobUtils.async_glob(one, "*.txt")
 	assert(rejected.is_empty())
 	remove_fixture_tree(root)
 	pass
@@ -72,8 +72,8 @@ func glob_treats_hash_and_bang_as_literal_pattern_test() -> void:
 	DirAccess.make_dir_recursive_absolute(root.path_join("!data"))
 	FileUtils.write_string_to_file(root.path_join("#cache/item.txt"), "text\n")
 	FileUtils.write_string_to_file(root.path_join("!data/item.json"), "{}\n")
-	var hash_matches := relative_paths(root, GlobUtils.glob(root, "#cache/*.txt"))
-	var bang_matches := relative_paths(root, GlobUtils.glob(root, "!data/*.json"))
+	var hash_matches := relative_paths(root, await GlobUtils.async_glob(root, "#cache/*.txt"))
+	var bang_matches := relative_paths(root, await GlobUtils.async_glob(root, "!data/*.json"))
 	assert(hash_matches == ["#cache/item.txt"])
 	assert(bang_matches == ["!data/item.json"])
 	remove_fixture_tree(root)
@@ -333,7 +333,7 @@ func glob_gitignore_skips_files_test() -> void:
 	FileUtils.write_string_to_file(root.path_join("scratch.tmp"), "x\n")
 	FileUtils.write_string_to_file(root.path_join("keep.tmp"), "x\n")
 	var rules: Array[String] = ["*.tmp", "!keep.tmp"]
-	var rel := relative_paths(root, GlobUtils.glob(root, "**/*", true, 0, rules))
+	var rel := relative_paths(root, await GlobUtils.async_glob(root, "**/*", true, 0, rules))
 	assert(not rel.has("scratch.tmp"))
 	assert(rel.has("keep.tmp"))
 	remove_fixture_tree(root)
@@ -352,10 +352,10 @@ func glob_match_anchored_root_pattern_test() -> void:
 ## `/`, right before the entries they hold, and the skip rules prune them with their whole subtree.
 func glob_include_directories_test() -> void:
 	var root := create_fixture_tree()
-	var tree := relative_paths(root, GlobUtils.glob(root, "", true, 0, [".git"], true))
+	var tree := relative_paths(root, await GlobUtils.async_glob(root, "", true, 0, [".git"], true))
 	assert(tree == ["root.gd", "src/", "src/a.gd", "src/b.txt", "src/nested/", "src/nested/c.gd"], str(tree))
 	# The default stays file-only, so GlobTool and GrepTool keep seeing exactly what they saw before.
-	var files := relative_paths(root, GlobUtils.glob(root, "", true, 0, [".git"]))
+	var files := relative_paths(root, await GlobUtils.async_glob(root, "", true, 0, [".git"]))
 	assert(files == ["root.gd", "src/a.gd", "src/b.txt", "src/nested/c.gd"], str(files))
 	remove_fixture_tree(root)
 	pass
@@ -367,7 +367,7 @@ func glob_include_directories_skip_rules_test() -> void:
 	FileUtils.write_string_to_file(root.path_join(".cursor/skills/humanizer/skip.gd"), "extends Node\n")
 	DirAccess.make_dir_recursive_absolute(root.path_join("node_modules/pkg"))
 	FileUtils.write_string_to_file(root.path_join("node_modules/pkg/index.js"), "x\n")
-	var tree := relative_paths(root, GlobUtils.glob(root, "", true, 0, [".git", ".cursor/skills/humanizer", "node_modules/"], true))
+	var tree := relative_paths(root, await GlobUtils.async_glob(root, "", true, 0, [".git", ".cursor/skills/humanizer", "node_modules/"], true))
 	# A path rule, a name rule and a directory rule all drop the folder, its rows and its subtree; its
 	# parents stay rows, because only the ignored folder is missing.
 	assert(tree.has(".cursor/skills/"), str(tree))
@@ -383,15 +383,18 @@ func glob_include_directories_skip_rules_test() -> void:
 func glob_caps_test() -> void:
 	var root := create_fixture_tree()
 	# `max_entries` stops the walk itself; its 4096 default is far past a fixture-sized tree.
-	assert(GlobUtils.glob(root, "", true, 0, [".git"], true, 2).size() == 2)
-	assert(GlobUtils.glob(root, "", true, 0, [".git"], true).size() == 6)
-	assert(GlobUtils.glob(root.path_join("missing"), "", true, 0, [".git"], true).is_empty())
+	var capped := await GlobUtils.async_glob(root, "", true, 0, [".git"], true, 2)
+	assert(capped.size() == 2)
+	var tree := await GlobUtils.async_glob(root, "", true, 0, [".git"], true)
+	assert(tree.size() == 6)
+	var missing := await GlobUtils.async_glob(root.path_join("missing"), "", true, 0, [".git"], true)
+	assert(missing.is_empty())
 	remove_fixture_tree(root)
 	pass
 
 
 # ---------------------------------------------------------------------------
-# .gitignore — [method GlobUtils.gitignore_is_ignored] and [method GlobUtils.glob] skip rules
+# .gitignore — [method GlobUtils.gitignore_is_ignored] and [method GlobUtils.async_glob] skip rules
 #
 # Syntax coverage in this section:
 # - Comments (#) and blank lines; line trim
@@ -403,8 +406,8 @@ func glob_caps_test() -> void:
 # - Literal `[` `]` `{` `}` (no char-class / brace expansion)
 # - Escaped regex metacharacters in patterns (`.`, `+`, `(`, `)`, `$`, …)
 # - `tmp*`, `*.tmp.*`, `npm-debug.log*`-style suffix stars
-# - Path-shaped `!` opens ignored dirs during [method GlobUtils.glob] walks
-# - [method GlobUtils.glob] + ignore + search pattern + include_directories
+# - Path-shaped `!` opens ignored dirs during [method GlobUtils.async_glob] walks
+# - [method GlobUtils.async_glob] + ignore + search pattern + include_directories
 # - Full `res://.gitignore` rule list spot checks
 # ---------------------------------------------------------------------------
 
@@ -490,7 +493,7 @@ func glob_gitignore_enter_ignored_dir_test() -> void:
 	DirAccess.make_dir_recursive_absolute(root.path_join("node_modules/pkg"))
 	FileUtils.write_string_to_file(root.path_join("node_modules/pkg/index.js"), "js\n")
 	var rules: Array[String] = [".godot/**", "!.godot/extension_list.cfg", "node_modules/"]
-	var rel := relative_paths(root, GlobUtils.glob(root, "**/*", true, 0, rules))
+	var rel := relative_paths(root, await GlobUtils.async_glob(root, "**/*", true, 0, rules))
 	assert(rel.has(".godot/extension_list.cfg"), str(rel))
 	assert(not rel.has(".godot/editor.log"), str(rel))
 	assert(not rel.has("node_modules/pkg/index.js"), str(rel))
@@ -505,7 +508,7 @@ func glob_gitignore_negated_file_under_wildcard_test() -> void:
 	FileUtils.write_string_to_file(root.path_join("vendor/keep.txt"), "ok\n")
 	FileUtils.write_string_to_file(root.path_join("vendor/cache/drop.bin"), "bin\n")
 	var rules: Array[String] = ["vendor/**", "!vendor/keep.txt"]
-	var rel := relative_paths(root, GlobUtils.glob(root, "**/*", true, 0, rules))
+	var rel := relative_paths(root, await GlobUtils.async_glob(root, "**/*", true, 0, rules))
 	assert(rel.has("vendor/keep.txt"), str(rel))
 	assert(not rel.has("vendor/cache/drop.bin"), str(rel))
 	remove_fixture_tree(root)
@@ -517,7 +520,7 @@ func glob_gitignore_skips_ignored_at_any_depth_test() -> void:
 	DirAccess.make_dir_recursive_absolute(root.path_join("vendor/cache"))
 	FileUtils.write_string_to_file(root.path_join("vendor/cache/scratch.tmp"), "x\n")
 	FileUtils.write_string_to_file(root.path_join("src/nested/note.tmp"), "x\n")
-	var rel := relative_paths(root, GlobUtils.glob(root, "**/*", true, 0, ["*.tmp"]))
+	var rel := relative_paths(root, await GlobUtils.async_glob(root, "**/*", true, 0, ["*.tmp"]))
 	assert(not rel.has("vendor/cache/scratch.tmp"))
 	assert(not rel.has("src/nested/note.tmp"))
 	assert(rel.has("src/a.gd"))
@@ -532,7 +535,7 @@ func glob_gitignore_public_subfolder_exception_test() -> void:
 	FileUtils.write_string_to_file(root.path_join("build/public/index.html"), "<html></html>\n")
 	FileUtils.write_string_to_file(root.path_join("build/private/secret.txt"), "x\n")
 	var rules: Array[String] = ["build/", "!build/public/"]
-	var rel := relative_paths(root, GlobUtils.glob(root, "**/*", true, 0, rules))
+	var rel := relative_paths(root, await GlobUtils.async_glob(root, "**/*", true, 0, rules))
 	assert(rel.has("build/public/index.html"), str(rel))
 	assert(not rel.has("build/private/secret.txt"), str(rel))
 	remove_fixture_tree(root)
@@ -543,7 +546,7 @@ func glob_gitignore_with_search_pattern_test() -> void:
 	var root := create_fixture_tree()
 	FileUtils.write_string_to_file(root.path_join("scratch.tmp"), "x\n")
 	FileUtils.write_string_to_file(root.path_join("keep.gd"), "extends Node\n")
-	var rel := relative_paths(root, GlobUtils.glob(root, "**/*.gd", true, 0, ["*.tmp", "src/"]))
+	var rel := relative_paths(root, await GlobUtils.async_glob(root, "**/*.gd", true, 0, ["*.tmp", "src/"]))
 	assert(rel == ["keep.gd", "root.gd"], str(rel))
 	remove_fixture_tree(root)
 	pass
@@ -768,12 +771,12 @@ func glob_gitignore_enter_dir_exceptions_test() -> void:
 	FileUtils.write_string_to_file(root.path_join("vendor/cache/x.bin"), "bin\n")
 	FileUtils.write_string_to_file(root.path_join("cache/stale.tmp"), "tmp\n")
 	FileUtils.write_string_to_file(root.path_join("blocked/important.dat"), "dat\n")
-	var vendor_rel := relative_paths(root, GlobUtils.glob(root, "**/*", true, 0, ["vendor/**", "!vendor/keep.txt", "!vendor/pub/"]))
+	var vendor_rel := relative_paths(root, await GlobUtils.async_glob(root, "**/*", true, 0, ["vendor/**", "!vendor/keep.txt", "!vendor/pub/"]))
 	assert(vendor_rel.has("vendor/keep.txt") and vendor_rel.has("vendor/pub/readme.txt"), str(vendor_rel))
 	assert(not vendor_rel.has("vendor/cache/x.bin"), str(vendor_rel))
-	assert(relative_paths(root, GlobUtils.glob(root, "**/*", true, 0, ["cache/"])).has("src/a.gd"))
-	assert(not relative_paths(root, GlobUtils.glob(root, "**/*", true, 0, ["cache/"])).has("cache/stale.tmp"))
-	assert(not relative_paths(root, GlobUtils.glob(root, "**/*", true, 0, ["blocked/", "!important.dat"])).has("blocked/important.dat"))
+	assert(relative_paths(root, await GlobUtils.async_glob(root, "**/*", true, 0, ["cache/"])).has("src/a.gd"))
+	assert(not relative_paths(root, await GlobUtils.async_glob(root, "**/*", true, 0, ["cache/"])).has("cache/stale.tmp"))
+	assert(not relative_paths(root, await GlobUtils.async_glob(root, "**/*", true, 0, ["blocked/", "!important.dat"])).has("blocked/important.dat"))
 	remove_fixture_tree(root)
 	pass
 
@@ -785,7 +788,7 @@ func glob_gitignore_include_directories_honors_ignore_test() -> void:
 	FileUtils.write_string_to_file(root.path_join("build/public/index.html"), "html\n")
 	FileUtils.write_string_to_file(root.path_join("build/private/secret.txt"), "x\n")
 	var rules: Array[String] = ["build/", "!build/public/"]
-	var tree := relative_paths(root, GlobUtils.glob(root, "", true, 0, rules, true))
+	var tree := relative_paths(root, await GlobUtils.async_glob(root, "", true, 0, rules, true))
 	assert(tree.has("build/public/"), str(tree))
 	assert(not tree.has("build/private/"), str(tree))
 	assert(tree.has("build/public/index.html"))
@@ -801,7 +804,7 @@ func glob_gitignore_nested_negated_directory_test() -> void:
 	FileUtils.write_string_to_file(root.path_join("pkg/internal/secret.gd"), "extends Node\n")
 	FileUtils.write_string_to_file(root.path_join("pkg/public/open.gd"), "extends Node\n")
 	var rules: Array[String] = ["pkg/", "!pkg/public/", "!pkg/public/*.gd"]
-	var rel := relative_paths(root, GlobUtils.glob(root, "**/*", true, 0, rules))
+	var rel := relative_paths(root, await GlobUtils.async_glob(root, "**/*", true, 0, rules))
 	assert(rel.has("pkg/public/open.gd"), str(rel))
 	assert(not rel.has("pkg/internal/secret.gd"), str(rel))
 	remove_fixture_tree(root)
@@ -850,7 +853,7 @@ func gitignore_only_comment_block_test() -> void:
 
 func glob_gitignore_empty_skip_list_is_no_op_test() -> void:
 	var root := create_fixture_tree()
-	var rel := relative_paths(root, GlobUtils.glob(root, "**/*.gd", true, 0, []))
+	var rel := relative_paths(root, await GlobUtils.async_glob(root, "**/*.gd", true, 0, []))
 	assert(rel.size() == 3)
 	remove_fixture_tree(root)
 	pass

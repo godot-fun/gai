@@ -46,7 +46,7 @@ func run(document: WorkflowDocument) -> void:
 		return
 
 	var glob_pattern: String = batch_node_data.manual_inputs.get(GraphNodesConfig.CONTROL_FIELD_GLOB, "*.*")
-	var files: Array[String] = GlobUtils.glob(folder_path, glob_pattern, false)
+	var files: Array[String] = await GlobUtils.async_glob(folder_path, glob_pattern, false)
 	if files.is_empty():
 		WorkflowEvents.events.pipeline_finished.emit(false, StringUtils.format("No matching files in batch folder ({})", glob_pattern))
 		return

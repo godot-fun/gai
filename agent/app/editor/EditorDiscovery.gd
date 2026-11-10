@@ -183,6 +183,7 @@ static func jetbrains_paths(product_names: Array[String], executable_names: Arra
 	var toolbox_root := OS.get_environment("LOCALAPPDATA").path_join("JetBrains/Toolbox/apps")
 	if DirAccess.dir_exists_absolute(toolbox_root):
 		for executable_name in executable_names:
+			# discover() runs on a worker task, so the walk must stay on this thread.
 			paths.append_array(GlobUtils.glob(toolbox_root, "**/bin/" + executable_name, true, 0, [], false, 64))
 	return paths
 

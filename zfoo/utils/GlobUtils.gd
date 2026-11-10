@@ -14,12 +14,22 @@ static var regex_cache := LruCacheString.new(REGEX_CACHE_MAX_SIZE)
 # ---------------------------------------------------------------------------
 
 ## Finds paths under [param search_root] whose relative path matches [param glob_pattern].
+## The walk runs on [method ExecutorHelper.async_execute], so a large tree never blocks the main thread.
+## Call this method from the main thread; inside a worker task use [method glob] instead.
+##
 ## Set [param recursive] to [code]false[/code] to search only the root folder.
 ## Uses breadth-first traversal and skips files larger than [param max_file_bytes]; [code]0[/code] disables the limit.
 ##
 ## [param skip_glob_rules] is an ordered .gitignore rule list; see the ignore section at the bottom of this file.
 ## Set [param include_directories] to also return matched folders with a trailing [code]/[/code].
 ## [param max_entries] stops the walk once that many paths are collected. Results are sorted by path.
+static func async_glob(search_root: String, glob_pattern: String, recursive: bool = true, max_file_bytes: int = 0, skip_glob_rules: Array[String] = [], include_directories: bool = false, max_entries: int = 4096) -> Array[String]:
+	return await ExecutorHelper.async_execute(glob.bind(search_root, glob_pattern, recursive, max_file_bytes, skip_glob_rules, include_directories, max_entries))
+
+
+## Same walk as [method async_glob] on the calling thread. Use it from worker tasks
+## ([method ExecutorHelper.async_execute_pooled] / [method ExecutorHelper.execute]) where
+## [method async_glob] cannot wait for main-thread frames.
 static func glob(search_root: String, glob_pattern: String, recursive: bool = true, max_file_bytes: int = 0, skip_glob_rules: Array[String] = [], include_directories: bool = false, max_entries: int = 4096) -> Array[String]:
 	var paths: Array[String] = []
 	var pattern := glob_pattern.strip_edges().replace("\\", "/")
@@ -196,7 +206,7 @@ class GitIgnoreRule extends RefCounted:
 		pass
 
 
-## .gitignore-style skip lines for GlobUtils.glob and gitignore_is_ignored.
+## .gitignore-style skip lines for GlobUtils.glob / async_glob and gitignore_is_ignored.
 ##
 ## Same as Git for is_ignored: skip blanks and # lines; last match wins; ! un-ignores; glob patterns via glob_match_pattern.
 ##
