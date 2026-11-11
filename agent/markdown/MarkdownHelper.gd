@@ -207,6 +207,37 @@ static func update_rich_text_label_text(label: RichTextLabel, raw_text: String, 
 		label.text = raw_text
 	pass
 
+## Absolute path of the local file a Markdown link points at, or "" when the destination is not a
+## local path. Accepts absolute paths ([code]res://[/code] / [code]user://[/code] included),
+## [code]file://[/code] URLs, and workspace-relative paths — replies link workspace files without a
+## prefix. A GitHub-style [code]#L671[/code] anchor names a line inside the file, not part of the path.
+static func resolve_local_link(destination: String) -> String:
+	var path := destination.strip_edges()
+	var anchor_index := path.find("#")
+	if anchor_index > 0:
+		path = path.substr(0, anchor_index)
+	if path.begins_with("file://"):
+		path = path.trim_prefix("file://")
+		# `file:///C:/dir/a.md` keeps the slash before the drive letter.
+		if path.begins_with("/") and path.length() > 3 and path[2] == ":":
+			path = path.substr(1)
+	# Any other scheme (`https://…`) reads as an absolute path to the engine, so it must be
+	# rejected before the local branches below.
+	if path.is_empty() or path.contains("://"):
+		return StringUtils.EMPTY
+	# An absolute path — `res://` / `user://` included — is local whatever its state, and
+	# [method FileUtils.normalize_path] globalizes the resource prefixes; the editor reports a
+	# missing file itself. Relative destinations resolve against the workspace root, like every
+	# agent tool path, and only count when they exist, so a bare `example.com/page` link still opens
+	# in the browser.
+	if path.is_absolute_path():
+		return FileUtils.normalize_path(path)
+	var workspace_path := AgentWorkspace.resolve_path(path)
+	if FileUtils.exists(workspace_path):
+		return workspace_path
+	return StringUtils.EMPTY
+
+
 static func handle_meta_clicked(meta: Variant) -> void:
 	var url := str(meta).strip_edges()
 	if StringUtils.is_blank(url):
@@ -220,11 +251,19 @@ static func handle_meta_clicked(meta: Variant) -> void:
 		if http_error != OK:
 			Log.error("open link failed url:[{}] err:[{}]", url, http_error)
 		return
-	if url.begins_with("res://") or url.begins_with("user://") or url.is_absolute_path():
-		if ImageHelper.EXTENSIONS.has(url.get_extension().to_lower()):
-			ImagePreviewWindow.show_window(url, I18n.t("common.image_preview"))
+	# An existing local path wins over the `https://` guess below: replies link workspace files
+	# relative to the workspace root, and that guess sent them to the browser.
+	var local_path := resolve_local_link(url)
+	if StringUtils.is_not_blank(local_path):
+		# A folder has nothing to show in the editor, so the OS file manager takes it.
+		if DirAccess.dir_exists_absolute(local_path):
+			var folder_error := FileUtils.open_file(local_path)
+			if folder_error != OK:
+				Log.error("open folder failed path:[{}] err:[{}]", local_path, folder_error)
 			return
-		var local_path := ProjectSettings.globalize_path(url)
+		if ImageHelper.EXTENSIONS.has(local_path.get_extension().to_lower()):
+			ImagePreviewWindow.show_window(local_path, I18n.t("common.image_preview"))
+			return
 		await EditorDiscovery.async_open_file(local_path)
 		return
 	if not lower.begins_with("http://") and not lower.begins_with("https://") and not lower.begins_with("mailto:"):

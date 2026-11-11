@@ -325,6 +325,22 @@ func dropped_file_markdown_test() -> void:
 	pass
 
 
+## Replies link workspace files without a prefix (`agent/ui/input/AgentChatInput.gd#L671`).
+## Such a destination is a local path, not a domain, so it must resolve against the workspace
+## root instead of falling into the `https://` guess that opened the browser.
+func local_link_resolution_test() -> void:
+	var relative := "agent/ui/input/AgentChatInput.gd"
+	var expected := AgentWorkspace.resolve_path(relative)
+	assert(relative in MarkdownParser.inline_to_bbcode("[AgentChatInput.gd:671](" + relative + "#L671)"))
+	assert(MarkdownHelper.resolve_local_link(relative) == expected)
+	assert(MarkdownHelper.resolve_local_link(relative + "#L671") == expected)
+	assert(MarkdownHelper.resolve_local_link(expected) == expected)
+	assert(MarkdownHelper.resolve_local_link("file:///" + expected.trim_prefix("/")) == expected)
+	assert(MarkdownHelper.resolve_local_link("missing/folder/nothing.gd#L3") == StringUtils.EMPTY)
+	assert(MarkdownHelper.resolve_local_link("https://example.com/" + relative) == StringUtils.EMPTY)
+	pass
+
+
 func local_file_link_prefix_test() -> void:
 	var folder_path := ProjectSettings.globalize_path("res://agent/markdown").replace("\\", "/")
 	var file_bbcode := MarkdownParser.inline_to_bbcode(MarkdownHelper.format_file_as_markdown(r"C:\My Files\notes.bin"))
