@@ -5,8 +5,10 @@ extends RefCounted
 
 const BUILTIN_ID := "builtin"
 const FILE_EXPLORER_ID := "file_explorer"
+const GIT_BASH_ID := "git_bash"
 const CODE_ICON_PATH := "res://icon.svg"
 const FILE_EXPLORER_ICON_PATH := "res://agent/asset/image/ui/folder_open.svg"
+const GIT_BASH_ICON_PATH := "res://agent/asset/image/file/git.svg"
 
 static var cached_editors: Array[EditorApplication] = []
 
@@ -25,6 +27,7 @@ static func discover() -> Array[EditorApplication]:
 		EditorApplication.new(FILE_EXPLORER_ID, I18n.t("editor.file_explorer"), "", FILE_EXPLORER_ICON_PATH),
 	]
 	if OSUtils.is_windows():
+		add_git_bash_editor(editors)
 		add_windows_editor(editors, "visual_studio", "Visual Studio", ["devenv.exe"], [], "res://agent/asset/image/file/visualstudio.svg")
 		add_windows_editor(editors, "vscode", "Visual Studio Code", ["code.exe", "code.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/Microsoft VS Code/Code.exe")], "res://agent/asset/image/file/vscode.svg")
 		add_windows_editor(editors, "vscode_insiders", "Visual Studio Code Insiders", ["code-insiders.exe", "code-insiders.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/Microsoft VS Code Insiders/Code - Insiders.exe")], "res://agent/asset/image/file/vscode.svg")
@@ -113,6 +116,11 @@ static func async_open_file(path: String) -> bool:
 			return true
 		Alert.alert(StringUtils.format(I18n.t("editor.launch_failed"), selected.label), Colors.error)
 		return false
+	if selected != null and selected.id == GIT_BASH_ID:
+		if open_in_git_bash(normalized):
+			return true
+		Alert.alert(StringUtils.format(I18n.t("editor.launch_failed"), selected.label), Colors.error)
+		return false
 	if selected != null and selected.id != BUILTIN_ID:
 		var executable := selected.executable
 		var arguments := selected.arguments.duplicate()
@@ -139,6 +147,25 @@ static func open_in_file_explorer(path: String) -> bool:
 	return OS.shell_show_in_file_manager(normalized) == OK
 
 
+## Opens a Git Bash terminal window at a folder, or at the folder containing a file. Git Bash has
+## no notion of editing a path, so a file only decides where the terminal starts.
+## Returns true when the terminal window was launched.
+static func open_in_git_bash(path: String) -> bool:
+	if not OSUtils.is_windows():
+		return false
+	var normalized := FileUtils.normalize_path(ProjectSettings.globalize_path(path))
+	if normalized.is_empty() or not FileUtils.exists(normalized):
+		return false
+	var folder := normalized if DirAccess.dir_exists_absolute(normalized) else normalized.get_base_dir()
+	var launcher := GitHelper.find_git_bash_launcher()
+	if launcher.is_empty():
+		return false
+	if launcher.get_file().to_lower() == "git-bash.exe":
+		return OS.create_process(launcher, PackedStringArray(["--cd=" + folder]), false) >= 0
+	# A bare bash.exe would inherit this console-less process, so cmd hands it a visible window.
+	return OS.create_process("cmd.exe", PackedStringArray(["/c", "start", "", "/D", folder, launcher]), false) >= 0
+
+
 # ---------------------------------------------------------------------------
 # Editor lookup
 # ---------------------------------------------------------------------------
@@ -157,6 +184,15 @@ static func find_editor(editors: Array[EditorApplication], editor_id: String) ->
 static func add_custom_editor(editors: Array[EditorApplication], custom_path: String) -> void:
 	if not custom_path.is_empty() and FileAccess.file_exists(custom_path):
 		editors.append(EditorApplication.new("custom", custom_path.get_file().get_basename(), custom_path, CODE_ICON_PATH))
+	pass
+
+
+## Git for Windows ships its own terminal, so the entry rides along with the detected Git install
+## instead of a separate executable probe.
+static func add_git_bash_editor(editors: Array[EditorApplication]) -> void:
+	var launcher := GitHelper.find_git_bash_launcher()
+	if StringUtils.is_not_blank(launcher) and FileAccess.file_exists(launcher):
+		editors.append(EditorApplication.new(GIT_BASH_ID, I18n.t("editor.git_bash"), launcher, GIT_BASH_ICON_PATH))
 	pass
 
 

@@ -50,6 +50,10 @@ func on_button_pressed() -> void:
 		if not EditorDiscovery.open_in_file_explorer(AgentWorkspace.get_root()):
 			Alert.alert(StringUtils.format(I18n.t("editor.launch_failed"), editor.label), Colors.error)
 		return
+	if editor.id == EditorDiscovery.GIT_BASH_ID:
+		if not EditorDiscovery.open_in_git_bash(AgentWorkspace.get_root()):
+			Alert.alert(StringUtils.format(I18n.t("editor.launch_failed"), editor.label), Colors.error)
+		return
 	var executable := str(editor.executable)
 	var arguments: PackedStringArray = editor.arguments.duplicate()
 	var workspace := AgentWorkspace.get_root()

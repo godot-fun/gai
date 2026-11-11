@@ -153,3 +153,18 @@ static func find_windows_git_bash() -> String:
 			return windows_git_bash_path
 	windows_git_bash_path = "bash.exe"
 	return windows_git_bash_path
+
+
+static var windows_git_bash_launcher_path := ""
+
+## Terminal window launcher from the same Git installation as [method find_windows_git_bash].
+## `git-bash.exe` (Mintty) opens a real window, while a bare `bash.exe` started from a GUI app has
+## no console to attach to, so it only serves as the last-resort fallback.
+static func find_git_bash_launcher() -> String:
+	if StringUtils.is_not_blank(windows_git_bash_launcher_path):
+		return windows_git_bash_launcher_path
+	var bash_path := find_windows_git_bash()
+	var git_root := bash_path.get_base_dir().get_base_dir()
+	var git_bash_launcher := git_root.path_join("git-bash.exe")
+	windows_git_bash_launcher_path = git_bash_launcher if FileAccess.file_exists(git_bash_launcher) else bash_path
+	return windows_git_bash_launcher_path

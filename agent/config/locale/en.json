@@ -103,6 +103,7 @@
     "open_with": "Open workspace with {}",
     "builtin": "GAI Editor",
     "file_explorer": "File Explorer",
+    "git_bash": "Git Bash",
     "launch_failed": "Could not open {}",
     "shortcuts_tooltip": "Editor shortcuts\n{modifier}+S  Save\n{modifier}+Shift+S  Save all\n{modifier}+W  Close tab\n{modifier}+Tab  Next tab\n{modifier}+Shift+Tab  Previous tab\n\nFile tree\n{modifier}+C  Copy file or folder\n{modifier}+V  Paste file or folder\nDelete  Delete file or folder",
     "back": "Back to GAI",

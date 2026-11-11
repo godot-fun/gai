@@ -46,6 +46,22 @@ static func editor_discovery_find_editor_test() -> void:
 	pass
 
 
+static func editor_discovery_system_entries_test() -> void:
+	EditorDiscovery.invalidate_cache()
+	var discovered: Variant = await ExecutorHelper.async_execute_pooled(EditorDiscovery.discover)
+	var editors := discovered as Array[EditorApplication]
+	assert(EditorDiscovery.find_editor(editors, EditorDiscovery.FILE_EXPLORER_ID) != null)
+	# Git Bash rides along with the detected Git install, so it only appears when Git is installed.
+	var git_bash := EditorDiscovery.find_editor(editors, EditorDiscovery.GIT_BASH_ID)
+	if OSUtils.is_windows() and FileAccess.file_exists(GitHelper.find_windows_git_bash()):
+		assert(git_bash != null)
+		assert(FileAccess.file_exists(git_bash.executable))
+	# Missing paths report failure instead of launching anything.
+	assert(not EditorDiscovery.open_in_file_explorer("res://editor-discovery-missing-path"))
+	assert(not EditorDiscovery.open_in_git_bash("res://editor-discovery-missing-path"))
+	pass
+
+
 static func notification_sound_volume_round_trip_test() -> void:
 	var original := AgentSetting.get_notification_sound_volume()
 	AgentSetting.set_notification_sound_volume(35)

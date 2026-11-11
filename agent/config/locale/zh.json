@@ -103,6 +103,7 @@
     "open_with": "使用 {} 打开工作区",
     "builtin": "GAI 编辑器",
     "file_explorer": "文件资源管理器",
+    "git_bash": "Git Bash",
     "launch_failed": "无法打开 {}",
     "shortcuts_tooltip": "编辑器快捷键\n{modifier}+S  保存\n{modifier}+Shift+S  全部保存\n{modifier}+W  关闭标签页\n{modifier}+Tab  下一个标签页\n{modifier}+Shift+Tab  上一个标签页\n\n文件树\n{modifier}+C  复制文件或文件夹\n{modifier}+V  粘贴文件或文件夹\nDelete  删除文件或文件夹",
     "back": "返回 GAI",
