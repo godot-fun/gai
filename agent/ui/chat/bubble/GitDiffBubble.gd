@@ -32,7 +32,9 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 
 	# Revert restores the whole workspace, not only the listed files: hover summarises the tradeoff,
 	# clicking opens the comparison other coding agents make in the same situation.
-	var help_button := ButtonStyle.create_icon_button(HELP_ICON_PATH, I18n.t("git.rollback_help"))
+	# It sits on the xs tier of the header buttons beside it — a larger disc would set the row height and
+	# stretch Revert / Diff to match.
+	var help_button := ButtonStyle.create_icon_button(HELP_ICON_PATH, I18n.t("git.rollback_help"), ControlSize.xs)
 	help_button.name = "RollbackHelpButton"
 	help_button.pressed.connect(on_help_pressed)
 	header.add_child(help_button)
