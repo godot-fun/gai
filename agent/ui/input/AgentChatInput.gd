@@ -668,7 +668,10 @@ func on_field_gui_input(event: InputEvent) -> void:
 			return
 		# Escape and Enter open or close the completion list further down, so re-fit once they ran.
 		relayout_if_height_changed.call_deferred()
-		if key.is_action_pressed("ui_paste") and chat_input_attachment.paste_clipboard_files():
+		if key.is_action_pressed("ui_paste"):
+			# The composer owns paste: it inserts files, pixels, or plain text itself, so the field
+			# must not run its own paste on top.
+			chat_input_attachment.paste_clipboard()
 			input_field.accept_event()
 			input_field.get_viewport().set_input_as_handled()
 			return

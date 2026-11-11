@@ -34,20 +34,25 @@ func is_drop_focus_guarded() -> bool:
 	return drop_focus_guard
 
 
-func paste_clipboard_files() -> bool:
+## Handles the clipboard off the main thread: resolving it needs a subprocess, so the insert lands a
+## few frames later. Explorer can expose copied image files both as image pixels and as a
+## FileDropList, so the file list is probed first and a mixed selection (for example, images plus
+## videos) is pasted in full; pixels and ordinary text follow when it comes back empty.
+func paste_clipboard() -> void:
 	if not input_field.editable:
-		return false
-	# Explorer can expose copied image files both as image pixels and as a FileDropList. Prefer the
-	# file list so a mixed selection (for example, images plus videos) is pasted in full.
-	var file_markdown := get_pasted_file_markdown()
+		return
+	var file_markdown: String = await get_pasted_file_markdown()
+	if not is_instance_valid(input_field):
+		return
 	if not file_markdown.is_empty():
 		input_field.insert_text_at_caret(file_markdown)
-		return true
+		return
 	var image_markdown := save_clipboard_image()
 	if image_markdown.is_empty():
-		return false
+		input_field.paste()
+		return
 	input_field.insert_text_at_caret(image_markdown)
-	return true
+	pass
 
 
 ## Persists copied pixel data before inserting it, so the chat message references a stable file.
@@ -105,7 +110,7 @@ func clear_drop_focus_guard() -> void:
 
 ## Godot exposes clipboard text and images, but not Explorer's CF_HDROP file list. Explorer may
 ## publish both FileDropList and text flavors for copied files, so always inspect FileDropList on
-## Windows; an empty result lets ordinary text continue through the native paste path.
+## Windows; an empty result lets pixels and ordinary text continue.
 func get_pasted_file_markdown() -> String:
 	if not OSUtils.is_windows():
 		return StringUtils.EMPTY
@@ -116,9 +121,12 @@ func get_pasted_file_markdown() -> String:
 		+ "$encoded = foreach ($path in $paths) { " \
 		+ "[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($path)) }; " \
 		+ "[Console]::Out.Write(($encoded -join ','))"
-	var result := OSUtils.execute(PackedStringArray([
+	# Spawning PowerShell costs a few hundred milliseconds, so the probe runs on the thread pool
+	# instead of stalling the frame the paste arrived on. The timeout keeps a hung shell from
+	# swallowing the paste: it gives up and lets pixels or plain text through.
+	var result: OSUtils.ExecResult = await OSUtils.async_execute(PackedStringArray([
 		"powershell.exe", "-NoProfile", "-NonInteractive", "-STA", "-Command", script
-	]), false)
+	]), false, 3000)
 	if result.exit_code != 0:
 		return StringUtils.EMPTY
 	var files := PackedStringArray()
