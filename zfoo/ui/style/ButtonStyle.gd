@@ -104,18 +104,47 @@ static func apply_icon_colors(button: BaseButton, base_color: Color, hover_color
 # ----------------------------------------------------------------------------------------------------------------------
 
 
-## Theme a [CheckButton]: no button chrome, accent checked indicator, optional label colors.
-## Text and checked colors default from [Colors] and [ThemeColor]; override any slot when a control needs a custom ramp.
-## Empty style-box padding uses the same top / right / bottom / left order as [method StyleBoxHelper.apply_margin].
-static func apply_check_button(check: CheckButton, normal_color: Color = Colors.primary_text, hover_color: Color = ThemeColor.promote(Colors.primary_text, Weights.w_2), pressed_color: Color = ThemeColor.demote(Colors.primary_text, Weights.w_2), checked_color: Color = ThemeColor.accent_theme_color(), h_separation: int = Margin.ma_2, margin_top: int = Margin.ma_1, margin_right: int = Margin.ma_1, margin_bottom: int = Margin.ma_1, margin_left: int = Margin.ma_0) -> void:
-	apply_font_colors(check, normal_color, hover_color, pressed_color)
-	check.add_theme_color_override("button_checked_color", checked_color)
-	check.add_theme_constant_override("h_separation", h_separation)
-	var empty := StyleBoxEmpty.new()
-	StyleBoxHelper.apply_margin(empty, margin_top, margin_right, margin_bottom, margin_left)
-	for state: String in ["normal", "disabled", "focus", "hover", "pressed", "hover_pressed"]:
-		check.add_theme_stylebox_override(state, empty.duplicate())
+## Theme a [CheckButton]: no chrome at rest, and the visible parts follow the accent color instead of
+## the engine's neutral ramp — label text, checked track, and unchecked track.
+## Every check control in the app shares this appearance, so the ramp is fixed here instead of being
+## threaded through call sites: accent at rest, promoted on hover, demoted while pressed, the same
+## pairing [method apply_font_colors] uses for the other accent-styled buttons.
+static func apply_check_button(check: CheckButton) -> void:
+	var accent := ThemeColor.accent_theme_color()
+	apply_font_colors(check, accent, ThemeColor.promote(accent, Weights.w_2), ThemeColor.demote(accent, Weights.w_2))
+	check.add_theme_color_override("button_checked_color", accent)
+	# The engine leaves the off track on its own neutral grey; tinting it from the secondary text keeps
+	# the "off" reading calm while still placing it inside the theme hue.
+	check.add_theme_color_override("button_unchecked_color", ThemeColor.mix_with_theme_color(Colors.secondary_text, Weights.w_4))
+	check.add_theme_constant_override("h_separation", Margin.ma_2)
+	# The switch alone is only as tall as its icon, which would leave the hover fill visibly shorter than
+	# the md-tall fields it sits next to. Claim the shared control tier and keep it centred so every
+	# check button answers the pointer with the same pill, whatever row it lands in.
+	check.custom_minimum_size.y = ControlSize.md
+	check.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	# A toggle reports its checked state through the same "pressed" draw mode a held-down button uses,
+	# so a pressed fill would paint every switched-on check button permanently. Only the hover pair is
+	# safe to fill: it is the one state pair that never doubles as "checked".
+	# The switch icon also has a single color per checked state and ignores hover, so an icon-only
+	# toggle needs that hover fill to show any feedback at all.
+	var box := check_button_box()
+	var hover := theme_hover_style_for(box)
+	check.add_theme_stylebox_override("normal", box)
+	check.add_theme_stylebox_override("disabled", box.duplicate())
+	check.add_theme_stylebox_override("focus", box.duplicate())
+	check.add_theme_stylebox_override("pressed", box.duplicate())
+	check.add_theme_stylebox_override("hover", hover)
+	check.add_theme_stylebox_override("hover_pressed", hover.duplicate())
 	pass
+
+
+## Chrome-less box behind a [CheckButton]: transparent, padded just enough for the hover fill to read
+## as a pill. The padding is shared by every state so the footprint never shifts on hover.
+## Uses the top / right / bottom / left order of [method StyleBoxHelper.apply_margin].
+static func check_button_box() -> StyleBoxFlat:
+	var box := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_md)
+	StyleBoxHelper.apply_margin(box, Margin.ma_1, Margin.ma_2, Margin.ma_1, Margin.ma_2)
+	return box
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -145,12 +174,60 @@ static func apply_option_button(option: OptionButton, normal: StyleBoxFlat = Lin
 
 
 ## Icon-first [Button] and [MenuButton] (for example FileDialog [code]FlatButton[/code]): transparent chrome, muted at rest, stronger on hover.
-static func apply_icon_button(button: Button, normal: Color = Colors.secondary_text, hover: Color = ThemeColor.title_color, press: Color = ThemeColor.accent_theme_color()) -> void:
+##
+## The engine-flat variant recolors the glyph per state and paints no hover fill; for a standalone icon
+## that needs hover feedback use [method apply_icon_button].
+static func apply_flat_icon_button(button: Button, normal: Color = Colors.secondary_text, hover: Color = ThemeColor.title_color, press: Color = ThemeColor.accent_theme_color()) -> void:
 	var box_normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_sm, Margin.ma_2, Margin.ma_1)
 	apply_style(button, box_normal)
 	apply_font_colors(button, normal, hover, hover)
 	apply_icon_colors(button, normal, hover, press)
 	pass
+
+
+## Rasterize UI SVGs oversized; [code]icon_max_*[/code] trims them back to the icon token so they stay crisp.
+const ICON_RASTER_SCALE := 2.0
+
+
+## Round icon [Button] shared by queued-message rows and chat bubble headers: the icon sits alone at rest
+## and gains a filled disc on hover, instead of the outlined box a text button beside it needs.
+##
+## [param size] is the square tier of the button; the disc radius is half of it, so the hover shape stays a
+## circle on every tier. The icon takes the room left after [constant Margin.ma_1] padding, which lands on
+## the matching icon token (sm → icon_md, xs → icon_xs) without a second table of sizes.
+##
+## Callers that own a UI SVG path should use [method create_icon_button] instead.
+static func apply_icon_button(button: Button, size: int = ControlSize.sm) -> void:
+	button.flat = false
+	button.focus_mode = Control.FOCUS_NONE
+	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	button.custom_minimum_size = ControlSize.square(size)
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	button.expand_icon = false
+	var icon_size := size - 2 * Margin.ma_1
+	button.add_theme_constant_override("icon_max_width", icon_size)
+	button.add_theme_constant_override("icon_max_height", icon_size)
+	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, size / 2, Margin.ma_1, Margin.ma_1)
+	apply_style(button, normal,
+			StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface),
+			StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), Weights.w_2)))
+	pass
+
+
+## Complete icon [Button] from a UI SVG path: the glyph is rasterized white and colored through the icon
+## overrides, so one texture covers every state and any icon drops in without extra wiring — the caller
+## only sets a name if it needs one, connects [signal BaseButton.pressed], and adds it to a row.
+##
+## [param icon_color] defaults to the accent color; the transparent default is the same "unset" sentinel
+## [method StyleBoxHelper.duplicate_with_bg_color] uses.
+static func create_icon_button(icon_path: String, tooltip: String, size: int = ControlSize.sm, icon_color: Color = Color.TRANSPARENT) -> Button:
+	var button := Button.new()
+	button.tooltip_text = tooltip
+	button.icon = ImageHelper.tint_svg(icon_path, Color.WHITE, ICON_RASTER_SCALE)
+	apply_icon_button(button, size)
+	var resolved_color := ThemeColor.accent_theme_color() if icon_color.a == 0.0 else icon_color
+	apply_icon_colors(button, resolved_color, resolved_color, resolved_color)
+	return button
 
 
 ## Filled action [Button] shared by settings rows and window toolbars: raised surface fill with no

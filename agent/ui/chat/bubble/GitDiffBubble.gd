@@ -1,6 +1,8 @@
 class_name GitDiffBubble
 extends BubbleContainer
 
+const HELP_ICON_PATH := "res://agent/asset/image/ui/help.svg"
+
 var rich_text: RichTextLabel
 
 ## Git diff bubble appended after agent_end, listing files changed from the run checkpoint.
@@ -27,6 +29,13 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 	title_label.add_theme_color_override("font_color", Colors.secondary_text)
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium)
 	header.add_child(title_label)
+
+	# Revert restores the whole workspace, not only the listed files: hover summarises the tradeoff,
+	# clicking opens the comparison other coding agents make in the same situation.
+	var help_button := ButtonStyle.create_icon_button(HELP_ICON_PATH, I18n.t("git.rollback_help"))
+	help_button.name = "RollbackHelpButton"
+	help_button.pressed.connect(on_help_pressed)
+	header.add_child(help_button)
 
 	var spacer := Control.new()
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -99,6 +108,19 @@ static func open_file_diff(meta: Variant, patch_path: String) -> void:
 static func on_diff_pressed(patch_path: String) -> void:
 	if not GitDiffManager.open_diff(patch_path):
 		Alert.alert(I18n.t("git.unavailable"), Colors.error)
+	pass
+
+
+## Whole-tree rollback is the same choice Codex snapshots make, not the per-file tracking Claude Code
+## and Cursor use; the popup spells out both tradeoffs instead of hiding them behind a one-liner.
+static func on_help_pressed() -> void:
+	var window := PopupWindow.new()
+	window.title = I18n.t("git.rollback_help_title")
+	gdf.gdf_node.add_child(window)
+	window.set_body(I18n.t("git.rollback_help_detail"))
+	# set_body parks the view at the tail for streamed text; this help must open at the top.
+	window.text_edit.scroll_vertical = 0
+	window.present_centered(60, 70)
 	pass
 
 

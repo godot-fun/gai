@@ -123,11 +123,11 @@ static func style_control(node: Node, label_texts: Dictionary[String, String] = 
 		PopupMenuStyle.apply(popup_menu)
 		apply_popup_menu_text(popup_menu, label_texts)
 	elif node is MenuButton:
-		ButtonStyle.apply_icon_button(node as MenuButton)
+		ButtonStyle.apply_flat_icon_button(node as MenuButton)
 	elif node is Button:
 		var button := node as Button
 		if button.theme_type_variation == &"FlatButton":
-			ButtonStyle.apply_icon_button(button)
+			ButtonStyle.apply_flat_icon_button(button)
 		else:
 			style_button(button)
 	elif node is Tree:

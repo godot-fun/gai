@@ -126,17 +126,9 @@ static func apply_queue_row(row: PanelContainer, title: Label, header: bool, hov
 
 static func apply_queue_action_button(button: Button) -> void:
 	button.text = ""
-	button.custom_minimum_size = ControlSize.square(ControlSize.sm)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	button.flat = false
-	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	button.add_theme_constant_override("icon_max_width", ControlSize.icon_md)
-	button.add_theme_constant_override("icon_max_height", ControlSize.icon_md)
-	var normal := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.sm / 2, Margin.ma_1, Margin.ma_1)
-	ButtonStyle.apply_style(button, normal,
-		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface),
-		StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), Weights.w_2)))
+	ButtonStyle.apply_icon_button(button)
 	pass
 
 

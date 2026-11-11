@@ -385,9 +385,9 @@ func ButtonStyle_apply_font_colors_test() -> void:
 	pass
 
 
-func ButtonStyle_apply_icon_button_test() -> void:
+func ButtonStyle_apply_flat_icon_button_test() -> void:
 	var button := Button.new()
-	ButtonStyle.apply_icon_button(button)
+	ButtonStyle.apply_flat_icon_button(button)
 	var normal: StyleBoxFlat = button.get_theme_stylebox("normal") as StyleBoxFlat
 	assert(normal.bg_color == Color.TRANSPARENT)
 	assert(button.get_theme_color("font_color") == Colors.secondary_text)
@@ -409,19 +409,85 @@ func ButtonStyle_apply_icon_colors_test() -> void:
 	pass
 
 
+## A glyph button stays square on every tier and shows its hover as a filled disc, never as the
+## outlined box a text button beside it uses. The disc radius is half the tier, so the shape is a circle.
+func ButtonStyle_apply_icon_button_test() -> void:
+	var button := Button.new()
+	ButtonStyle.apply_icon_button(button)
+	assert(button.custom_minimum_size == ControlSize.square(ControlSize.sm))
+	assert(button.get_theme_constant("icon_max_width") == ControlSize.icon_md)
+	assert(button.get_theme_constant("icon_max_height") == ControlSize.icon_md)
+	assert(button.mouse_default_cursor_shape == Control.CURSOR_POINTING_HAND)
+	var normal := button.get_theme_stylebox("normal") as StyleBoxFlat
+	assert(normal.bg_color.a == 0.0)
+	var hover := button.get_theme_stylebox("hover") as StyleBoxFlat
+	assert(hover.bg_color == ThemeColor.selected_surface)
+	assert(hover.corner_radius_top_left == ControlSize.sm / 2)
+	assert(hover.get_margin(SIDE_LEFT) == Margin.ma_1)
+	var pressed := button.get_theme_stylebox("pressed") as StyleBoxFlat
+	assert(pressed.bg_color == ThemeColor.selected_surface.lerp(ThemeColor.accent_theme_color(), Weights.w_2))
+	button.free()
+
+	# The same rule holds for a smaller tier: the glyph takes the room left after the ma_1 padding.
+	var small := Button.new()
+	ButtonStyle.apply_icon_button(small, ControlSize.xs)
+	assert(small.custom_minimum_size == ControlSize.square(ControlSize.xs))
+	assert(small.get_theme_constant("icon_max_width") == ControlSize.xs - 2 * Margin.ma_1)
+	small.free()
+	pass
+
+
+## The factory returns a ready-to-add button: rasterized glyph, tooltip, accent icon, hover chrome.
+## A caller that wants a different icon only swaps the path.
+func ButtonStyle_create_icon_button_test() -> void:
+	var button := ButtonStyle.create_icon_button("res://agent/asset/image/ui/help.svg", "help text")
+	assert(button.tooltip_text == "help text")
+	assert(button.icon != null and button.icon.get_width() > 0)
+	assert(button.get_theme_color("icon_normal_color") == ThemeColor.accent_theme_color())
+	assert(button.get_theme_color("icon_hover_color") == ThemeColor.accent_theme_color())
+	assert(button.custom_minimum_size == ControlSize.square(ControlSize.sm))
+
+	# Transparent is the "unset" sentinel; an explicit color wins.
+	var tinted := ButtonStyle.create_icon_button("res://agent/asset/image/ui/help.svg", "", ControlSize.xs, Color.RED)
+	assert(tinted.get_theme_color("icon_normal_color") == Color.RED)
+	assert(tinted.custom_minimum_size == ControlSize.square(ControlSize.xs))
+	button.free()
+	tinted.free()
+	pass
+
+
+## The whole control follows the accent color: label ramp, checked track, and an unchecked track
+## tinted toward the theme hue instead of the engine's neutral grey.
+##
+## Hover is the only state pair that may be filled: a checked toggle reports itself as *pressed*, so a
+## pressed fill would paint every switched-on check button permanently.
 func ButtonStyle_apply_check_button_test() -> void:
 	var check := CheckButton.new()
-	ButtonStyle.apply_check_button(check, Color.BLUE, Color.RED, Color.GREEN, Color.YELLOW, Margin.ma_1, 3, 4, 5, 2)
-	assert(check.get_theme_color("font_color") == Color.BLUE)
-	assert(check.get_theme_color("font_hover_color") == Color.RED)
-	assert(check.get_theme_color("font_pressed_color") == Color.GREEN)
-	assert(check.get_theme_color("button_checked_color") == Color.YELLOW)
-	assert(check.get_theme_constant("h_separation") == Margin.ma_1)
-	var normal: StyleBox = check.get_theme_stylebox("normal")
-	assert(normal.content_margin_left == 2)
-	assert(normal.content_margin_top == 3)
-	assert(normal.content_margin_right == 4)
-	assert(normal.content_margin_bottom == 5)
+	ButtonStyle.apply_check_button(check)
+	var accent := ThemeColor.accent_theme_color()
+	assert(check.get_theme_color("font_color") == accent)
+	assert(check.get_theme_color("font_hover_color") == ThemeColor.promote(accent, Weights.w_2))
+	assert(check.get_theme_color("font_pressed_color") == ThemeColor.demote(accent, Weights.w_2))
+	assert(check.get_theme_color("button_checked_color") == accent)
+	assert(check.get_theme_color("button_unchecked_color") == ThemeColor.mix_with_theme_color(Colors.secondary_text, Weights.w_4))
+	assert(check.get_theme_constant("h_separation") == Margin.ma_2)
+	# The switch alone is icon-tall; the control claims the md tier so its hover fill lines up with the
+	# fields beside it, and stays centred instead of stretching inside a taller row.
+	assert(check.custom_minimum_size.y == ControlSize.md)
+	assert(check.size_flags_vertical == Control.SIZE_SHRINK_CENTER)
+
+	var normal := check.get_theme_stylebox("normal") as StyleBoxFlat
+	assert(normal.bg_color.a == 0.0)
+	assert(normal.content_margin_top == Margin.ma_1)
+	assert(normal.content_margin_right == Margin.ma_2)
+	assert(normal.content_margin_bottom == Margin.ma_1)
+	assert(normal.content_margin_left == Margin.ma_2)
+	for quiet: String in ["pressed", "focus", "disabled"]:
+		assert((check.get_theme_stylebox(quiet) as StyleBoxFlat).bg_color.a == 0.0)
+	var hover := check.get_theme_stylebox("hover") as StyleBoxFlat
+	assert(hover.bg_color == ThemeColor.selected_surface)
+	assert(hover.get_margin(SIDE_LEFT) == normal.get_margin(SIDE_LEFT))
+	assert((check.get_theme_stylebox("hover_pressed") as StyleBoxFlat).bg_color == hover.bg_color)
 	check.free()
 	pass
 
