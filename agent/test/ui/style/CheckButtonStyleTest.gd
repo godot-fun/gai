@@ -45,6 +45,11 @@ func CheckButtonStyle_apply_test() -> void:
 	var hover := check.get_theme_stylebox("hover") as StyleBoxFlat
 	assert(hover.bg_color == ThemeColor.selected_surface)
 	assert(hover.get_margin(SIDE_LEFT) == normal.get_margin(SIDE_LEFT))
+	# The fill is inset so it hugs the switch instead of painting the whole md-tall control rect, and its
+	# radius is half of what is left — a capsule around the switch.
+	assert(hover.expand_margin_left == -float(Margin.ma_1))
+	assert(hover.expand_margin_top == -float(Margin.ma_1))
+	assert(hover.corner_radius_top_left == (ControlSize.md - 2 * Margin.ma_1) / 2)
 	assert((check.get_theme_stylebox("hover_pressed") as StyleBoxFlat).bg_color == hover.bg_color)
 	check.free()
 	pass

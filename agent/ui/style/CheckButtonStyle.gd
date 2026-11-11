@@ -58,8 +58,13 @@ static func apply(check: CheckButton) -> void:
 	# The box is chrome-less at rest: transparent, padded just enough for the hover fill to read as a
 	# pill. Padding is shared by every state so the footprint never shifts on hover. Uses the
 	# top / right / bottom / left order of [method StyleBoxHelper.apply_margin].
-	var box := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_md)
+	#
+	# The fill is then inset by one grid step, so it hugs the switch instead of painting the whole
+	# md-tall control rect — a third of that rect is empty space above and below the glyph. The radius
+	# is half of the remaining height, which turns the fill into a capsule around the switch.
+	var box := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, (ControlSize.md - 2 * Margin.ma_1) / 2)
 	StyleBoxHelper.apply_margin(box, Margin.ma_1, Margin.ma_2, Margin.ma_1, Margin.ma_2)
+	box.set_expand_margin_all(-float(Margin.ma_1))
 	var hover := ButtonStyle.theme_hover_style_for(box)
 	check.add_theme_stylebox_override("normal", box)
 	check.add_theme_stylebox_override("disabled", box.duplicate())
