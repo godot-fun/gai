@@ -179,10 +179,12 @@ func PopupWindow_transient_test() -> void:
 	assert(window.text_edit.get_parent() == window.container)
 	assert(window.container.get_parent() == window)
 	assert(window.text_edit.editable == false)
-	assert(window.container.offset_left == -ControlSize.border_xs)
-	assert(window.container.offset_top == -ControlSize.border_xs)
-	assert(window.container.offset_right == ControlSize.border_xs)
-	assert(window.container.offset_bottom == ControlSize.border_xs)
+	# The frame outline lives on the window's expand rectangle, so the content host fills the window
+	# rect exactly instead of being nudged out by the border width.
+	assert(window.container.offset_left == 0.0)
+	assert(window.container.offset_top == 0.0)
+	assert(window.container.offset_right == 0.0)
+	assert(window.container.offset_bottom == 0.0)
 	window.free()
 	pass
 

@@ -15,10 +15,10 @@ func _init() -> void:
 	visible = false
 	container = PanelContainer.new()
 	container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	container.offset_left = -ControlSize.border_xs
-	container.offset_top = -ControlSize.border_xs
-	container.offset_right = ControlSize.border_xs
-	container.offset_bottom = ControlSize.border_xs
+	# container.offset_left = -ControlSize.border_xs
+	# container.offset_top = -ControlSize.border_xs
+	# container.offset_right = ControlSize.border_xs
+	# container.offset_bottom = ControlSize.border_xs
 	container.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	add_child(container)
 	close_requested.connect(on_close_requested)
