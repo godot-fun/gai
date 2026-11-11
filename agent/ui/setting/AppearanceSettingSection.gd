@@ -134,5 +134,5 @@ func apply_theme() -> void:
 		select.get_popup().add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(
 			ThemeColor.card_surface, ControlSize.radius_lg, Margin.ma_1, Margin.ma_1,
 			Colors.outline_variant, ControlSize.border_xs))
-	ButtonStyle.apply_check_button(markdown_toggle_button)
+	CheckButtonStyle.apply(markdown_toggle_button)
 	pass

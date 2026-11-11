@@ -264,7 +264,7 @@ func apply_theme() -> void:
 	separator_style.thickness = ControlSize.border_xs
 	for separator in separators:
 		separator.add_theme_stylebox_override("separator", separator_style)
-	ButtonStyle.apply_check_button(enabled_check)
+	CheckButtonStyle.apply(enabled_check)
 	ButtonStyle.apply_option_button(backend_select)
 	style_button(hotkey_button)
 	style_text_edit(prompt_edit)

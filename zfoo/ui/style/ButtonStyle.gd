@@ -100,54 +100,6 @@ static func apply_icon_colors(button: BaseButton, base_color: Color, hover_color
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-# CheckButton
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-## Theme a [CheckButton]: no chrome at rest, and the visible parts follow the accent color instead of
-## the engine's neutral ramp — label text, checked track, and unchecked track.
-## Every check control in the app shares this appearance, so the ramp is fixed here instead of being
-## threaded through call sites: accent at rest, promoted on hover, demoted while pressed, the same
-## pairing [method apply_font_colors] uses for the other accent-styled buttons.
-static func apply_check_button(check: CheckButton) -> void:
-	var accent := ThemeColor.accent_theme_color()
-	apply_font_colors(check, accent, ThemeColor.promote(accent, Weights.w_2), ThemeColor.demote(accent, Weights.w_2))
-	check.add_theme_color_override("button_checked_color", accent)
-	# The engine leaves the off track on its own neutral grey; tinting it from the secondary text keeps
-	# the "off" reading calm while still placing it inside the theme hue.
-	check.add_theme_color_override("button_unchecked_color", ThemeColor.mix_with_theme_color(Colors.secondary_text, Weights.w_4))
-	check.add_theme_constant_override("h_separation", Margin.ma_2)
-	# The switch alone is only as tall as its icon, which would leave the hover fill visibly shorter than
-	# the md-tall fields it sits next to. Claim the shared control tier and keep it centred so every
-	# check button answers the pointer with the same pill, whatever row it lands in.
-	check.custom_minimum_size.y = ControlSize.md
-	check.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	# A toggle reports its checked state through the same "pressed" draw mode a held-down button uses,
-	# so a pressed fill would paint every switched-on check button permanently. Only the hover pair is
-	# safe to fill: it is the one state pair that never doubles as "checked".
-	# The switch icon also has a single color per checked state and ignores hover, so an icon-only
-	# toggle needs that hover fill to show any feedback at all.
-	var box := check_button_box()
-	var hover := theme_hover_style_for(box)
-	check.add_theme_stylebox_override("normal", box)
-	check.add_theme_stylebox_override("disabled", box.duplicate())
-	check.add_theme_stylebox_override("focus", box.duplicate())
-	check.add_theme_stylebox_override("pressed", box.duplicate())
-	check.add_theme_stylebox_override("hover", hover)
-	check.add_theme_stylebox_override("hover_pressed", hover.duplicate())
-	pass
-
-
-## Chrome-less box behind a [CheckButton]: transparent, padded just enough for the hover fill to read
-## as a pill. The padding is shared by every state so the footprint never shifts on hover.
-## Uses the top / right / bottom / left order of [method StyleBoxHelper.apply_margin].
-static func check_button_box() -> StyleBoxFlat:
-	var box := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_md)
-	StyleBoxHelper.apply_margin(box, Margin.ma_1, Margin.ma_2, Margin.ma_1, Margin.ma_2)
-	return box
-
-
-# ----------------------------------------------------------------------------------------------------------------------
 # OptionButton
 # ----------------------------------------------------------------------------------------------------------------------
 

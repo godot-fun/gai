@@ -259,7 +259,7 @@ func ButtonStyle_theme_style_test() -> void:
 	var hover := ButtonStyle.theme_hover_style()
 	var pressed := ButtonStyle.theme_pressed_style()
 	assert(hover.bg_color == ThemeColor.selected_surface)
-	assert(hover.border_color == ThemeColor.alpha_theme_color(0.85))
+	assert(hover.border_color == ThemeColor.alpha_theme_color(Weights.w_10))
 	assert(pressed.bg_color == ThemeColor.promote(ThemeColor.selected_surface, Weights.w_2))
 	assert(pressed.border_color == ThemeColor.accent_theme_color())
 	assert(hover.get_margin(SIDE_LEFT) == normal.get_margin(SIDE_LEFT))
@@ -453,42 +453,6 @@ func ButtonStyle_create_icon_button_test() -> void:
 	assert(tinted.custom_minimum_size == ControlSize.square(ControlSize.xs))
 	button.free()
 	tinted.free()
-	pass
-
-
-## The whole control follows the accent color: label ramp, checked track, and an unchecked track
-## tinted toward the theme hue instead of the engine's neutral grey.
-##
-## Hover is the only state pair that may be filled: a checked toggle reports itself as *pressed*, so a
-## pressed fill would paint every switched-on check button permanently.
-func ButtonStyle_apply_check_button_test() -> void:
-	var check := CheckButton.new()
-	ButtonStyle.apply_check_button(check)
-	var accent := ThemeColor.accent_theme_color()
-	assert(check.get_theme_color("font_color") == accent)
-	assert(check.get_theme_color("font_hover_color") == ThemeColor.promote(accent, Weights.w_2))
-	assert(check.get_theme_color("font_pressed_color") == ThemeColor.demote(accent, Weights.w_2))
-	assert(check.get_theme_color("button_checked_color") == accent)
-	assert(check.get_theme_color("button_unchecked_color") == ThemeColor.mix_with_theme_color(Colors.secondary_text, Weights.w_4))
-	assert(check.get_theme_constant("h_separation") == Margin.ma_2)
-	# The switch alone is icon-tall; the control claims the md tier so its hover fill lines up with the
-	# fields beside it, and stays centred instead of stretching inside a taller row.
-	assert(check.custom_minimum_size.y == ControlSize.md)
-	assert(check.size_flags_vertical == Control.SIZE_SHRINK_CENTER)
-
-	var normal := check.get_theme_stylebox("normal") as StyleBoxFlat
-	assert(normal.bg_color.a == 0.0)
-	assert(normal.content_margin_top == Margin.ma_1)
-	assert(normal.content_margin_right == Margin.ma_2)
-	assert(normal.content_margin_bottom == Margin.ma_1)
-	assert(normal.content_margin_left == Margin.ma_2)
-	for quiet: String in ["pressed", "focus", "disabled"]:
-		assert((check.get_theme_stylebox(quiet) as StyleBoxFlat).bg_color.a == 0.0)
-	var hover := check.get_theme_stylebox("hover") as StyleBoxFlat
-	assert(hover.bg_color == ThemeColor.selected_surface)
-	assert(hover.get_margin(SIDE_LEFT) == normal.get_margin(SIDE_LEFT))
-	assert((check.get_theme_stylebox("hover_pressed") as StyleBoxFlat).bg_color == hover.bg_color)
-	check.free()
 	pass
 
 
