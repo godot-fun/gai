@@ -69,7 +69,7 @@ func scrollbar_thickness_scales_with_ui_test() -> void:
 
 func common_window_chrome_scales_with_ui_test() -> void:
 	var window := Window.new()
-	CommonWindow.apply_window_theme(window, Color.BLACK, Color.WHITE, Color.WHITE)
+	CommonWindow.apply_window_theme(window, Color.BLACK, Color.WHITE)
 	var border := window.get_theme_stylebox("embedded_border") as StyleBoxFlat
 	assert(window.get_theme_constant("title_height") == ControlSize.md)
 	assert(window.get_theme_constant("close_h_offset") == ControlSize.icon_sm + ControlSize.border_sm)

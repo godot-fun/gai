@@ -632,6 +632,3 @@ func window_background_color() -> Color:
 func window_title_color() -> Color:
 	return Colors.primary_text
 
-
-func window_border_color() -> Color:
-	return Colors.primary_text

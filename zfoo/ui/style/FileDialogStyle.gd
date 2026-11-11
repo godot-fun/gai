@@ -76,7 +76,7 @@ static func apply_control_theme(dialog: FileDialog) -> void:
 
 static func apply_dialog_style(dialog: FileDialog) -> void:
 	dialog.transient = true
-	CommonWindow.apply_window_theme(dialog, ThemeColor.accent_surface, ThemeColor.title_color, ThemeColor.title_color)
+	CommonWindow.apply_window_theme(dialog, ThemeColor.accent_surface, ThemeColor.title_color)
 	var folder_color := Colors.info.lerp(ThemeColor.accent_theme_color(), 0.35)
 	dialog.add_theme_color_override("folder_icon_color", folder_color)
 	dialog.add_theme_color_override("file_icon_color", Color(Colors.secondary_text, 0.78))

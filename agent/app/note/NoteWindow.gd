@@ -83,10 +83,6 @@ func window_title_color() -> Color:
 	return Colors.primary_text
 
 
-func window_border_color() -> Color:
-	return Colors.primary_text
-
-
 func style_open_on_startup() -> void:
 	open_on_startup_check.add_theme_font_override("font", Fonts.regular())
 	open_on_startup_check.add_theme_font_size_override("font_size", Typography.label_medium)

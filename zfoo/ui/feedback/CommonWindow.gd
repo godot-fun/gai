@@ -5,10 +5,6 @@
 class_name CommonWindow
 extends Window
 
-## Hairline around the frame, so the window separates from the app in either theme.
-const BORDER_ALPHA: float = 0.18
-const BORDER_ALPHA_UNFOCUSED: float = 0.08
-
 ## Full-window content host used by subclasses instead of adding controls directly to the window.
 var container: PanelContainer
 
@@ -39,7 +35,7 @@ func apply_theme() -> void:
 		theme = Theme.new()
 		theme.default_font = Fonts.regular()
 		theme.default_font_size = Typography.body_medium
-	apply_window_theme(self, window_background_color(), window_title_color(), window_border_color())
+	apply_window_theme(self, window_background_color(), window_title_color())
 	pass
 
 
@@ -49,11 +45,6 @@ func window_background_color() -> Color:
 
 func window_title_color() -> Color:
 	return ThemeColor.title_color
-
-
-func window_border_color() -> Color:
-	return ThemeColor.title_color
-
 
 ## Center the window and apply embedded-window font oversampling.
 func present_centered(width_percent: int = 70, height_percent: int = 80) -> void:
@@ -121,9 +112,11 @@ func on_ui_cancel() -> void:
 
 ## Apply the common embedded-window frame to a [Window]. Use this for built-in windows such as
 ## [FileDialog], which cannot inherit [CommonWindow] but should share its title and frame chrome.
-static func apply_window_theme(window: Window, background: Color, title_color: Color, border_color: Color) -> void:
-	window.add_theme_stylebox_override("embedded_border", make_embedded_border(window, background, border_color, BORDER_ALPHA))
-	window.add_theme_stylebox_override("embedded_unfocused_border", make_embedded_border(window, background, border_color, BORDER_ALPHA_UNFOCUSED))
+static func apply_window_theme(window: Window, background: Color, title_color: Color, border_color: Color = Colors.outline_variant) -> void:
+	# The outline is the outermost pixel of the frame, so it is drawn over the application canvas
+	# instead of over the frame fill below it: opaque while focused, dimmed through [Weights] while not.
+	window.add_theme_stylebox_override("embedded_border", make_embedded_border(window, background, border_color))
+	window.add_theme_stylebox_override("embedded_unfocused_border", make_embedded_border(window, background, Color(border_color, Weights.w_8)))
 	window.add_theme_color_override("title_color", title_color)
 	window.add_theme_font_override("title_font", Fonts.semibold())
 	window.add_theme_font_size_override("title_font_size", Typography.title_medium)
@@ -136,11 +129,11 @@ static func apply_window_theme(window: Window, background: Color, title_color: C
 
 
 
-static func make_embedded_border(window: Window, background: Color, border_color: Color, border_alpha: float) -> StyleBoxFlat:
+static func make_embedded_border(window: Window, background: Color, border_color: Color) -> StyleBoxFlat:
 	var style: StyleBoxFlat = window.get_theme_stylebox("embedded_border").duplicate() as StyleBoxFlat
 	style.bg_color = background
 	style.set_corner_radius_all(ControlSize.radius_md)
-	style.border_color = Color(border_color, border_alpha)
+	style.border_color = border_color
 	style.set_border_width_all(ControlSize.border_xs)
 	style.content_margin_left = Margin.ma_5 * 0.5
 	style.content_margin_top = Margin.ma_7

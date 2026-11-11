@@ -16,7 +16,7 @@ extends Object
 static func apply(dialog: ConfirmationDialog, secondary_buttons: Array[Button] = []) -> void:
 	dialog.transient = true
 	dialog.oversampling_override = DisplayScale.compute_ui_scale()
-	CommonWindow.apply_window_theme(dialog, ThemeColor.accent_surface, ThemeColor.title_color, ThemeColor.title_color)
+	CommonWindow.apply_window_theme(dialog, ThemeColor.accent_surface, ThemeColor.title_color)
 	dialog.add_theme_stylebox_override("panel", FileDialogStyle.make_dialog_body_style())
 	dialog.add_theme_color_override("font_color", ThemeColor.title_color)
 	dialog.add_theme_font_override("font", Fonts.regular())
