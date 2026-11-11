@@ -28,11 +28,21 @@ static func apply(check: CheckButton) -> void:
 	# The icons are rasterized with their tint baked in, so the engine modulate must stay neutral.
 	check.add_theme_color_override("button_checked_color", Color.WHITE)
 	check.add_theme_color_override("button_unchecked_color", Color.WHITE)
+	# The mirrored entries are the ones an RTL layout asks for; the glyph itself is symmetric, so both
+	# directions share one texture and an RTL UI never falls back to the engine's own switch art.
 	var scale := float(ControlSize.md) / SWITCH_ART_SIZE
-	check.add_theme_icon_override("checked", ImageHelper.tint_svg(SWITCH_ON_PATH, accent, scale))
-	check.add_theme_icon_override("unchecked", ImageHelper.tint_svg(SWITCH_OFF_PATH, Colors.secondary_text, scale))
-	check.add_theme_icon_override("checked_disabled", ImageHelper.tint_svg(SWITCH_ON_PATH, Colors.disabled_text, scale))
-	check.add_theme_icon_override("unchecked_disabled", ImageHelper.tint_svg(SWITCH_OFF_PATH, Colors.disabled_text, scale))
+	var on_icon := ImageHelper.tint_svg(SWITCH_ON_PATH, accent, scale)
+	var off_icon := ImageHelper.tint_svg(SWITCH_OFF_PATH, Colors.secondary_text, scale)
+	var on_disabled := ImageHelper.tint_svg(SWITCH_ON_PATH, Colors.disabled_text, scale)
+	var off_disabled := ImageHelper.tint_svg(SWITCH_OFF_PATH, Colors.disabled_text, scale)
+	for state: String in ["checked", "checked_mirrored"]:
+		check.add_theme_icon_override(state, on_icon)
+	for state: String in ["unchecked", "unchecked_mirrored"]:
+		check.add_theme_icon_override(state, off_icon)
+	for state: String in ["checked_disabled", "checked_disabled_mirrored"]:
+		check.add_theme_icon_override(state, on_disabled)
+	for state: String in ["unchecked_disabled", "unchecked_disabled_mirrored"]:
+		check.add_theme_icon_override(state, off_disabled)
 	check.add_theme_constant_override("h_separation", Margin.ma_2)
 	# The switch alone is only as tall as its icon, which would leave the hover fill visibly shorter than
 	# the md-tall fields it sits next to. Claim the shared control tier and keep it centred so every
