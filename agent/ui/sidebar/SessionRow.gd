@@ -40,7 +40,8 @@ func build(p_session_id: int, title: String) -> void:
 	# Inner box is transparent to the mouse, so the panel stays one big drag handle.
 	var content: HBoxContainer = HBoxContainer.new()
 	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	content.add_theme_constant_override("separation", Margin.ma_1)
+	# The title carries its own padding, so the action slot sits right next to it.
+	content.add_theme_constant_override("separation", Margin.ma_0)
 	add_child(content)
 
 	title_button = Button.new()
