@@ -46,6 +46,10 @@ func on_button_pressed() -> void:
 	if editor.id == EditorDiscovery.BUILTIN_ID:
 		EditorWindow.show_editor()
 		return
+	if editor.id == EditorDiscovery.FILE_EXPLORER_ID:
+		if not EditorDiscovery.open_in_file_explorer(AgentWorkspace.get_root()):
+			Alert.alert(StringUtils.format(I18n.t("editor.launch_failed"), editor.label), Colors.error)
+		return
 	var executable := str(editor.executable)
 	var arguments: PackedStringArray = editor.arguments.duplicate()
 	var workspace := AgentWorkspace.get_root()
@@ -152,7 +156,9 @@ func editor_icon(editor: EditorApplication) -> Texture2D:
 	elif extension == "png":
 		texture = ImageHelper.load_external_image(icon_path)
 	else:
-		texture = ImageHelper.tint_svg(icon_path, Colors.secondary_text, 1.0)
+		# Brand SVGs carry their own fills, so only monochrome glyphs such as the File Explorer
+		# folder take this tint; it keeps them in step with the user accent color.
+		texture = ImageHelper.tint_svg(icon_path, ThemeColor.accent_theme_color(), 1.0)
 	return normalize_icon(texture, ControlSize.icon_md)
 
 

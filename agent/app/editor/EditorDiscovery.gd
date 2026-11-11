@@ -4,7 +4,9 @@ extends RefCounted
 ## Finds workspace editors from the host OS and the user-configured executable path.
 
 const BUILTIN_ID := "builtin"
+const FILE_EXPLORER_ID := "file_explorer"
 const CODE_ICON_PATH := "res://icon.svg"
+const FILE_EXPLORER_ICON_PATH := "res://agent/asset/image/ui/folder_open.svg"
 
 static var cached_editors: Array[EditorApplication] = []
 
@@ -18,7 +20,10 @@ static func discover() -> Array[EditorApplication]:
 		return copy_cached_editors()
 	var builtin_label := I18n.t("editor.builtin")
 	var custom_path := AgentSetting.get_custom_editor_path()
-	var editors: Array[EditorApplication] = [EditorApplication.new(BUILTIN_ID, builtin_label, "", CODE_ICON_PATH)]
+	var editors: Array[EditorApplication] = [
+		EditorApplication.new(BUILTIN_ID, builtin_label, "", CODE_ICON_PATH),
+		EditorApplication.new(FILE_EXPLORER_ID, I18n.t("editor.file_explorer"), "", FILE_EXPLORER_ICON_PATH),
+	]
 	if OSUtils.is_windows():
 		add_windows_editor(editors, "visual_studio", "Visual Studio", ["devenv.exe"], [], "res://agent/asset/image/file/visualstudio.svg")
 		add_windows_editor(editors, "vscode", "Visual Studio Code", ["code.exe", "code.cmd"], [OS.get_environment("LOCALAPPDATA").path_join("Programs/Microsoft VS Code/Code.exe")], "res://agent/asset/image/file/vscode.svg")
@@ -103,6 +108,11 @@ static func async_open_file(path: String) -> bool:
 	var discovered: Variant = await ExecutorHelper.async_execute_pooled(discover)
 	var editors := discovered as Array[EditorApplication]
 	var selected := find_editor(editors, AgentSetting.get_workspace_editor())
+	if selected != null and selected.id == FILE_EXPLORER_ID:
+		if open_in_file_explorer(normalized):
+			return true
+		Alert.alert(StringUtils.format(I18n.t("editor.launch_failed"), selected.label), Colors.error)
+		return false
 	if selected != null and selected.id != BUILTIN_ID:
 		var executable := selected.executable
 		var arguments := selected.arguments.duplicate()
@@ -118,6 +128,15 @@ static func async_open_file(path: String) -> bool:
 		return true
 	Alert.alert(StringUtils.format(I18n.t("editor.launch_failed"), normalized), Colors.error)
 	return false
+
+
+## Shows a file or folder in the OS file manager, selecting the file when the platform supports it.
+## Returns true when the file manager accepted the path.
+static func open_in_file_explorer(path: String) -> bool:
+	var normalized := FileUtils.normalize_path(path)
+	if normalized.is_empty() or not FileUtils.exists(normalized):
+		return false
+	return OS.shell_show_in_file_manager(normalized) == OK
 
 
 # ---------------------------------------------------------------------------
