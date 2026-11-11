@@ -179,7 +179,6 @@ func open_rename() -> void:
 	var field: LineEdit = LineEdit.new()
 	field.text = title_button.text
 	field.placeholder_text = I18n.t("agent.sidebar.chat_title")
-	field.max_length = AgentSessionManager.MAX_TITLE_LENGTH
 	field.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if title_button.size.y > 0.0:
 		field.custom_minimum_size.y = title_button.size.y

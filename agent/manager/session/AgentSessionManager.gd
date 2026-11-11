@@ -3,9 +3,6 @@ extends Object
 
 ## Manages multiple agent sessions and the active selection.
 
-## Sidebar titles are trimmed to this many characters before they land in the session index.
-const MAX_TITLE_LENGTH := 64
-
 static var session_indexes := AgentSessionIndexes.new()
 ## Selected session. 0 only before [method load_from_disk]; from then on this is always a live session id.
 static var active_session_id: int = 0
@@ -225,15 +222,23 @@ static func get_title(session_id: int) -> String:
 
 
 ## Writes the sidebar title and persists it via [signal AgentEvents.events.session_title_changed].
-## Trimmed to one line and capped to [constant MAX_TITLE_LENGTH] (no ellipsis suffix) so a long
-## title does not bloat the session index; the sidebar shows as much as fits the row width.
+## A pasted or dropped file reaches the composer as `![name](<path>)` / `[name](<path>)`, and that
+## cache path is never what the chat is about, so those links are cut and everything else in the
+## message stays exactly as written. When the cut leaves too little to name the chat with, the
+## untouched message becomes the title instead.
+## Trimmed to one line and capped to 64 characters (no ellipsis suffix) so a long title does not
+## bloat the session index; the sidebar shows as much as fits the row width.
 ## Blank titles and unknown sessions are ignored, so a row keeps its previous name.
 static func set_title(session_id: int, title: String) -> void:
 	var session_index := get_session_index(session_id)
-	if session_index == null or StringUtils.is_blank(title):
+	if session_index == null:
 		return
-	var one_line := title.strip_edges().replace(FileUtils.NEWLINE_LF, " ").replace(FileUtils.NEWLINE_CR, "")
-	session_index.title = one_line.left(MAX_TITLE_LENGTH)
+	var message := title.replace(FileUtils.NEWLINE_LF, " ").replace(FileUtils.NEWLINE_CR, "").strip_edges()
+	if StringUtils.is_blank(message):
+		return
+	var without_attachments := RegEx.create_from_string(r"!?\[[^\]]*\]\(<[^>]*>\)").sub(message, StringUtils.EMPTY, true).strip_edges()
+	var one_line := without_attachments if without_attachments.length() >= 2 else message
+	session_index.title = one_line.left(64)
 	AgentEvents.events.session_title_changed.emit(session_id, session_index.title)
 	pass
 
