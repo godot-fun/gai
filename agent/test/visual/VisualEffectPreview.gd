@@ -159,6 +159,8 @@ func _ready() -> void:
 	TransformerController.complete_animation_on_agent_end = true
 	TaiChi.complete_animation_on_agent_end = true
 	I18nHelper.init_i18n()
+	# Tokens start at their 100% design values; read the user's scale before any control is styled.
+	DisplayScale.apply_ui_scale()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	AgentSessionManager.load_from_disk()
 	theme_color_select.setup(theme_color_select_node)
