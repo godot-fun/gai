@@ -1,5 +1,5 @@
 import "dotenv/config";
-import {setGlobalDispatcher, ProxyAgent} from "undici"
+import { ProxyAgent, setGlobalDispatcher } from "undici";
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -62,9 +62,10 @@ export function isProxyEnabled(): boolean {
   return config.proxy !== "";
 }
 
-// download cloak browser for proxy
+// Route downloads (the CloakBrowser binary) through the configured proxy as well.
 if (isProxyEnabled()) {
   setGlobalDispatcher(new ProxyAgent(config.proxy));
-  console.log(`cloak browser path:[${process.env.CLOAKBROWSER_CACHE_DIR}]`);
-  console.log(`working path:[${process.cwd()}]`);
+  console.log(`Proxy enabled address:[${config.proxy}]`);
+  console.log(`CloakBrowser cache path:[${process.env.CLOAKBROWSER_CACHE_DIR ?? ""}]`);
+  console.log(`Working path:[${process.cwd()}]`);
 }

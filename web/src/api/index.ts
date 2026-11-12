@@ -8,15 +8,23 @@ import "./search";
 import "./stop";
 import { getApiRoutes, type ApiRoute } from "./route";
 
-async function route(request: IncomingMessage, response: ServerResponse, routes: readonly ApiRoute[]): Promise<void> {
-  const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "localhost"}`);
-  const matchedRoute = routes.find((candidate) => candidate.method === request.method && candidate.path === url.pathname);
+// Routing only needs the request path, so a fixed base keeps a hostile Host header out of URL parsing.
+const BASE_URL = "http://localhost";
+
+function routeKey(route: ApiRoute): string {
+  return `${route.method} ${route.path}`;
+}
+
+async function route(request: IncomingMessage, response: ServerResponse, routes: ReadonlyMap<string, ApiRoute>): Promise<void> {
+  const pathname = new URL(request.url ?? "/", BASE_URL).pathname;
+  const matchedRoute = routes.get(`${request.method} ${pathname}`);
   if (matchedRoute === undefined) throw new HttpError(HttpStatus.NOT_FOUND, "NOT_FOUND", "Route not found");
   await matchedRoute.handle(request, response);
 }
 
 export function createApiServer(): Server {
-  const routes = getApiRoutes();
+  const routes = new Map(getApiRoutes().map((registered) => [routeKey(registered), registered]));
+
   async function handleRequest(request: IncomingMessage, response: ServerResponse): Promise<void> {
     function handleTimeout(): void {
       if (!response.headersSent) sendJson(response, HttpStatus.GATEWAY_TIMEOUT, { error: { code: "REQUEST_TIMEOUT", message: "Request timed out" } });

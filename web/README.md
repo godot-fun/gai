@@ -12,7 +12,7 @@ Start:
 .dependency/node/npm.cmd start --prefix web
 ```
 
-Test:
+Test (start the server first; the `/fetch`, `/search`, and `/healthy` tests call it):
 
 ```bash
 .dependency/node/npm.cmd run test --prefix web

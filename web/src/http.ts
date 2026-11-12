@@ -68,3 +68,16 @@ export function requireObject(value: unknown): Record<string, unknown> {
   }
   return value as Record<string, unknown>;
 }
+
+export function requireString(value: unknown, name: string): string {
+  if (typeof value !== "string" || value.trim() === "") {
+    throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `${name} must be a non-empty string`);
+  }
+  return value;
+}
+
+export function optionalString(value: unknown, name: string): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `${name} must be a string`);
+  return value;
+}

@@ -5,6 +5,7 @@ import { getApiRoutes } from "./api/route";
 import { config } from "./config";
 import { browserService } from "./services/browser-service";
 import { mcpService } from "./services/mcp-service";
+import { registerShutdownHandler, requestShutdown } from "./shutdown";
 
 async function listen(server: Server): Promise<void> {
   server.listen(config.port, config.host);
@@ -20,25 +21,15 @@ async function main(): Promise<void> {
   await browserService.start();
   const server = createApiServer();
   await listen(server);
+  registerShutdownHandler(async () => {
+    await Promise.all([closeServer(server), browserService.close(), mcpService.close()]);
+  });
   console.log("Supported endpoints:");
   for (const route of getApiRoutes()) console.log(`  ${route.method.padEnd(5)}${route.path}`);
   console.log(`Web server listening at http://${config.host}:${config.port}`);
 
-  let shuttingDown = false;
-  async function shutdown(signal: NodeJS.Signals): Promise<void> {
-    if (shuttingDown) return;
-    shuttingDown = true;
-    console.log(`Received ${signal}; shutting down...`);
-    try {
-      await Promise.all([closeServer(server), browserService.close(), mcpService.close()]);
-      process.exitCode = 0;
-    } catch (error) {
-      console.error("Shutdown failed", error);
-      process.exitCode = 1;
-    }
-  }
-  process.once("SIGINT", shutdown);
-  process.once("SIGTERM", shutdown);
+  process.once("SIGINT", () => requestShutdown("SIGINT"));
+  process.once("SIGTERM", () => requestShutdown("SIGTERM"));
 }
 
 try {

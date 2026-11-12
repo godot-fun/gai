@@ -5,13 +5,39 @@ import path from "node:path";
 import { test } from "node:test";
 import type { Page } from "playwright-core";
 import { HttpError } from "../src/http";
-import { captureScreenshot } from "../src/services/screenshot-service";
+import { captureScreenshot, validateScreenshotPath } from "../src/services/screenshot-service";
 
 test("captureScreenshot skips blank paths", async () => {
   let called = false;
   const page = { screenshot: async () => { called = true; } } as unknown as Page;
   assert.deepEqual(await captureScreenshot(page, "  "), { screenshotPath: "", screenshotError: "" });
   assert.equal(called, false);
+});
+
+test("validateScreenshotPath rejects unusable paths before a page is opened", () => {
+  assert.doesNotThrow(() => validateScreenshotPath(undefined));
+  assert.doesNotThrow(() => validateScreenshotPath("  "));
+  assert.doesNotThrow(() => validateScreenshotPath(path.join(os.tmpdir(), "page.PNG")));
+  assert.throws(() => validateScreenshotPath("page.webp"), HttpError);
+  assert.throws(() => validateScreenshotPath(path.join(os.tmpdir(), "page.bmp")), HttpError);
+});
+
+test("captureScreenshot still captures when a page never runs animation frames", async () => {
+  const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), "gai-screenshot-"));
+  const screenshotPath = path.join(temporaryDirectory, "hidden.png");
+  const page = {
+    evaluate: async () => new Promise<void>(() => undefined),
+    screenshot: async (options: { path?: string }) => {
+      const { writeFile } = await import("node:fs/promises");
+      await writeFile(options.path!, "image");
+    },
+  } as unknown as Page;
+
+  try {
+    assert.deepEqual(await captureScreenshot(page, screenshotPath), { screenshotPath, screenshotError: "" });
+  } finally {
+    await rm(temporaryDirectory, { recursive: true, force: true });
+  }
 });
 
 test("captureScreenshot saves to the requested absolute path", async () => {

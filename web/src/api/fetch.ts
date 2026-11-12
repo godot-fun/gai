@@ -1,8 +1,8 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { Defuddle } from "defuddle/node";
-import { HttpError, HttpStatus, readJsonBody, requireObject, sendOk } from "../http";
+import { HttpError, HttpStatus, optionalString, readJsonBody, requireObject, requireString, sendOk } from "../http";
 import { browserService } from "../services/browser-service";
-import { captureScreenshot } from "../services/screenshot-service";
+import { captureScreenshot, validateScreenshotPath } from "../services/screenshot-service";
 import { registerApi, type ApiRoute } from "./route";
 
 export interface FetchResponse {
@@ -30,9 +30,11 @@ export class FetchApi implements ApiRoute {
 
   async handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
     const body = requireObject(await readJsonBody(request));
-    if (typeof body.url !== "string") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "url must be a string");
-    if (body.screenshotPath !== undefined && typeof body.screenshotPath !== "string") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "screenshotPath must be a string");
-    sendOk(response, await this.fetch(body.url, body.screenshotPath));
+    const url = requireString(body.url, "url");
+    const screenshotPath = optionalString(body.screenshotPath, "screenshotPath");
+    // Reject an unusable screenshot path before spending a browser page on the navigation.
+    validateScreenshotPath(screenshotPath);
+    sendOk(response, await this.fetch(url, screenshotPath));
   }
 
   private async fetch(rawUrl: string, screenshotPath?: string): Promise<FetchResponse> {

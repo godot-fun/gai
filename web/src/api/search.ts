@@ -1,9 +1,9 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Page } from "playwright-core";
 import { isProxyEnabled } from "../config";
-import { HttpError, HttpStatus, readJsonBody, requireObject, sendOk } from "../http";
+import { HttpError, HttpStatus, optionalString, readJsonBody, requireObject, requireString, sendOk } from "../http";
 import { browserService } from "../services/browser-service";
-import { captureScreenshot } from "../services/screenshot-service";
+import { captureScreenshot, validateScreenshotPath } from "../services/screenshot-service";
 import { registerApi, type ApiRoute } from "./route";
 
 const DEFAULT_RESULT_COUNT = 10;
@@ -36,17 +36,18 @@ export class SearchApi implements ApiRoute {
 
   async handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
     const body = requireObject(await readJsonBody(request));
-    if (typeof body.query !== "string") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "query must be a string");
+    const query = requireString(body.query, "query").trim();
+    const screenshotPath = optionalString(body.screenshotPath, "screenshotPath");
     if (body.count !== undefined && typeof body.count !== "number") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "count must be a number");
-    if (body.screenshotPath !== undefined && typeof body.screenshotPath !== "string") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "screenshotPath must be a string");
     if (body.engine !== undefined && !SEARCH_ENGINES.includes(body.engine as SearchEngine)) {
       throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "engine must be bing or google");
     }
-    sendOk(response, await this.search(body.query, body.count, body.screenshotPath, body.engine as SearchEngine | undefined));
+    // Reject an unusable screenshot path before spending a browser page on the search.
+    validateScreenshotPath(screenshotPath);
+    sendOk(response, await this.search(query, body.count, screenshotPath, body.engine as SearchEngine | undefined));
   }
 
   private async search(query: string, count: number = DEFAULT_RESULT_COUNT, screenshotPath?: string, engine?: SearchEngine): Promise<SearchResponse> {
-    if (query.trim() === "") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "query must not be empty");
     if (!Number.isSafeInteger(count) || count < 1 || count > MAX_RESULT_COUNT) {
       throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `count must be an integer between 1 and ${MAX_RESULT_COUNT}`);
     }
@@ -55,10 +56,10 @@ export class SearchApi implements ApiRoute {
     try {
       await using browserPage = await browserService.acquirePage();
       const results = selectedEngine === SearchEngine.Google
-        ? await this.searchGoogle(browserPage.page, query.trim(), count)
-        : await this.searchBing(browserPage.page, query.trim(), count);
+        ? await this.searchGoogle(browserPage.page, query, count)
+        : await this.searchBing(browserPage.page, query, count);
       const screenshot = await captureScreenshot(browserPage.page, screenshotPath);
-      return { query: query.trim(), results, ...screenshot };
+      return { query, results, ...screenshot };
     } catch (error) {
       if (error instanceof HttpError) throw error;
       const engineName = selectedEngine === SearchEngine.Google ? "Google" : "Bing";

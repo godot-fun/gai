@@ -17,10 +17,10 @@ interface Connection {
 
 export class McpService {
   private readonly connections = new Map<string, Connection>();
-  private loaded = false;
+  private loading: Promise<void> | null = null;
 
   async listTools(): Promise<unknown[]> {
-    await this.load();
+    await this.ensureConnected();
     return [...this.connections.entries()].flatMap(([server, connection]) => connection.tools.map((tool) => ({
       server,
       name: tool.name,
@@ -31,28 +31,34 @@ export class McpService {
   }
 
   async callTool(server: string, name: string, args: Record<string, unknown>): Promise<unknown> {
-    await this.load();
+    await this.ensureConnected();
     const connection = this.connections.get(server);
     if (connection === undefined) throw new Error(`Unknown MCP server: ${server}`);
     return connection.client.callTool({ name, arguments: args });
   }
 
   async close(): Promise<void> {
+    this.loading = null;
     await Promise.allSettled([...this.connections.values()].map(({ client }) => client.close()));
     this.connections.clear();
-    this.loaded = false;
   }
 
-  private async load(): Promise<void> {
-    if (this.loaded) return;
-    this.loaded = true;
+  /** Connects every configured server once; concurrent callers await the same attempt. */
+  private ensureConnected(): Promise<void> {
+    this.loading ??= this.connect().catch((error: unknown) => {
+      this.loading = null; // Let a later request retry instead of caching the failure.
+      throw error;
+    });
+    return this.loading;
+  }
+
+  private async connect(): Promise<void> {
     const path = process.env.MCP_CONFIG_PATH?.trim() || "mcp.json";
     let config: McpConfig;
     try {
       config = JSON.parse(await readFile(path, "utf8")) as McpConfig;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
-      this.loaded = false;
       throw error;
     }
 

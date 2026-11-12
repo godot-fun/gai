@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { HttpError, HttpStatus, readJsonBody, requireObject, sendOk } from "../http";
+import { HttpError, HttpStatus, readJsonBody, requireObject, requireString, sendOk } from "../http";
 import { mcpService } from "../services/mcp-service";
 import { registerApi, type ApiRoute } from "./route";
 
@@ -27,11 +27,6 @@ class McpCallApi implements ApiRoute {
       throw new HttpError(HttpStatus.BAD_GATEWAY, "MCP_CALL_FAILED", error instanceof Error ? error.message : String(error));
     }
   }
-}
-
-function requireString(value: unknown, name: string): string {
-  if (typeof value !== "string" || value.trim() === "") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `${name} must be a non-empty string`);
-  return value;
 }
 
 registerApi(new McpToolsApi());

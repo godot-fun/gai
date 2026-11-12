@@ -1,14 +1,38 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { sendOk } from "../http";
+import { browserService } from "../services/browser-service";
+import { mcpService } from "../services/mcp-service";
+import { requestShutdown } from "../shutdown";
 import { registerApi, type ApiRoute } from "./route";
+
+// The caller force-kills this process right after the reply, so never let cleanup block the reply.
+const PRE_SHUTDOWN_TIMEOUT_MS = 5_000;
 
 export class StopApi implements ApiRoute {
   readonly method = "POST";
   readonly path = "/stop";
 
-  handle(_request: IncomingMessage, response: ServerResponse): void {
-    response.once("finish", () => setTimeout(() => process.kill(process.pid, "SIGTERM"), 500));
+  async handle(_request: IncomingMessage, response: ServerResponse): Promise<void> {
+    // Release the browser and MCP child processes first; otherwise they outlive the killed server.
+    try {
+      await closeChildren();
+    } catch (error) {
+      console.error("Pre-shutdown cleanup failed", error);
+    }
     sendOk(response, { status: "stopping" });
+    response.once("finish", () => setTimeout(() => requestShutdown("/stop"), 100));
+  }
+}
+
+async function closeChildren(): Promise<void> {
+  let timer: NodeJS.Timeout | undefined;
+  try {
+    await Promise.race([
+      Promise.all([browserService.close(), mcpService.close()]),
+      new Promise<void>((resolve) => { timer = setTimeout(resolve, PRE_SHUTDOWN_TIMEOUT_MS); }),
+    ]);
+  } finally {
+    clearTimeout(timer);
   }
 }
 
