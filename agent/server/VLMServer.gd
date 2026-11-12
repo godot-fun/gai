@@ -88,7 +88,7 @@ static func async_chat_completion(messages: Array, max_tokens: int = 2048) -> St
 		"stream": false,
 	}
 	var response := await HttpHelper.async_post(server_url() + "/v1/chat/completions", JSON.stringify(payload), PackedStringArray())
-	if not response.success:
+	if not response.is_ok():
 		Log.error("vision language model request failed code:[{}] body:[{}]", response.code, response.get_body_string())
 		return StringUtils.EMPTY
 	var data: Variant = response.get_body_json()

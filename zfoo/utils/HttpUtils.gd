@@ -9,7 +9,7 @@ const CONNECTIVITY_CHECK_TIMEOUT_MILLIS := 5000
 ## Uses Google's lightweight 204 endpoint; an optional proxy can be supplied for the check.
 static func async_is_cross_firewall(timeout_millis: int = CONNECTIVITY_CHECK_TIMEOUT_MILLIS) -> bool:
 	var response := await HttpHelper.async_get(GOOGLE_CONNECTIVITY_CHECK_URL, timeout_millis)
-	return response.success and response.code == 204
+	return response.is_ok() and response.code == 204
 
 
 static func is_https_url(url: String) -> bool:

@@ -22,7 +22,7 @@ class TokenizeResult extends RefCounted:
 ## Returns whether the llama-server health endpoint reports a ready status.
 static func async_health(server_url: String) -> bool:
 	var response := await HttpHelper.async_get(server_url.trim_suffix("/") + "/health", TimeUtils.MILLIS_PER_SECOND)
-	var data: Variant = response.get_body_json() if response.code == 200 else null
+	var data: Variant = response.get_body_json() if response.is_ok() else null
 	return typeof(data) == TYPE_DICTIONARY and data.get("status", "") == "ok"
 
 
@@ -36,7 +36,7 @@ static func async_tokenize(server_url: String, prompt: String) -> TokenizeResult
 		"with_pieces": true,
 	}
 	var response := await HttpHelper.async_post(server_url.trim_suffix("/") + "/tokenize", JSON.stringify(payload))
-	if not response.success:
+	if not response.is_ok():
 		Log.error("llama tokenize failed code:[{}] body:[{}]", response.code, response.get_body_string())
 		return result
 	var data: Variant = response.get_body_json()

@@ -63,7 +63,7 @@ func async_chat_messages_text(messages: Array[ChatMessage], proxy: String = "", 
 	var response := await HttpHelper.async_post(base_url, request_body, build_headers(), REQUEST_TIMEOUT_MILLIS, proxy, Callable(), cancel_scope)
 	var body := response.get_body_string()
 	Log.info("OpenAI response body:[{}]", StringUtils.truncate(body, 512))
-	if not response.success or response.code != 200:
+	if not response.is_ok():
 		Log.error("OpenAI request failed, http code:[{}], {}", response.code, StringUtils.truncate(response.get_error_string(), 512))
 		return StringUtils.EMPTY
 	var parser := JSON.new()
@@ -123,7 +123,7 @@ func async_chat_messages_stream(messages: Array[ChatMessage], tools: Array[ToolD
 	## The final body carries every delta verbatim, so content / reasoning / finish_reason / usage
 	## all come from that one string instead of being accumulated during streaming.
 	var body := response.get_body_string()
-	if not response.success or response.code != 200:
+	if not response.is_ok():
 		var result := OpenAiCompletion.failure(StringUtils.format("request failed, http code:[{}], {}", response.code, response.get_error_string()))
 		Log.error("OpenAI stream failed:[{}]", StringUtils.truncate(result.error, 512))
 		return result

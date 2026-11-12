@@ -186,7 +186,7 @@ static func async_health() -> bool:
 	if not is_running():
 		return false
 	var response := await HttpHelper.async_get(server_url() + "/healthy", TimeUtils.MILLIS_PER_SECOND)
-	if response.code != HTTPClient.RESPONSE_OK:
+	if not response.is_ok():
 		return false
 	var result: HealthyResponse = JsonUtils.json_to_object(response.get_body_string(), HealthyResponse)
 	return result != null and result.status == "ok"
@@ -203,7 +203,7 @@ static func async_fetch(url: String, screenshot_path: String = "") -> FetchRespo
 	if StringUtils.is_not_blank(screenshot_path):
 		payload["screenshotPath"] = screenshot_path
 	var response := await HttpHelper.async_post(server_url() + "/fetch", JsonUtils.object_to_json(payload), PackedStringArray(), request_timeout_millis)
-	if not response.success:
+	if not response.is_ok():
 		Log.error("web server request failed path:[/fetch] code:[{}] error:[{}]", response.code, response.get_error_string())
 		return null
 	var result: FetchResponse = JsonUtils.json_to_object(response.get_body_string(), FetchResponse)
@@ -226,7 +226,7 @@ static func async_search(query: String, count: int = 10, screenshot_path: String
 	if StringUtils.is_not_blank(screenshot_path):
 		payload["screenshotPath"] = screenshot_path
 	var response := await HttpHelper.async_post(server_url() + "/search", JsonUtils.object_to_json(payload), PackedStringArray(), request_timeout_millis)
-	if not response.success:
+	if not response.is_ok():
 		Log.error("web server request failed path:[/search] code:[{}] error:[{}]", response.code, response.get_error_string())
 		return null
 	var result: SearchResponse = JsonUtils.json_to_object(response.get_body_string(), SearchResponse)
@@ -241,8 +241,8 @@ static func async_stop() -> StopResponse:
 		stop_process()
 		return null
 	var response := await HttpHelper.async_post(server_url() + "/stop", JsonUtils.object_to_json({}), PackedStringArray(), request_timeout_millis)
-	var result: StopResponse = JsonUtils.json_to_object(response.get_body_string(), StopResponse) if response.success else null
-	if not response.success:
+	var result: StopResponse = JsonUtils.json_to_object(response.get_body_string(), StopResponse) if response.is_ok() else null
+	if not response.is_ok():
 		Log.error("web server stop failed code:[{}] error:[{}]", response.code, response.get_error_string())
 	elif result == null or result.status != "stopping":
 		Log.error("web server returned invalid response path:[/stop] body:[{}]", response.get_body_string())

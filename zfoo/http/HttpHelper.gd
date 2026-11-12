@@ -12,6 +12,7 @@ static func async_get(url: String, timeout_millis: int = AsyncHttp.DEFAULT_TIMEO
 	var response: HttpResponse
 	for _request_count in 18:
 		response = await http.async_request(HTTPClient.METHOD_GET, request_url, "", extra_headers, timeout_millis, proxy, Callable(), cancel_scope)
+		# A redirect is a 3xx, so this asks whether the exchange completed, not whether it answered 2xx.
 		if not response.success or not response.is_redirect():
 			return response
 		var location := response.get_header("Location")

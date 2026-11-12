@@ -50,7 +50,7 @@ func checking() -> void:
 	Log.info("Checking remote version manifest url:[{}]", version_url)
 	var response := await HttpHelper.async_get(version_url)
 	Log.info("Remote version manifest response:[{}]}", response.get_body_string())
-	if !response.success || response.code != 200:
+	if !response.is_ok():
 		_fail("Request remote version manifest fail, please check your network connection and try again.")
 		return
 	remote_hot_update_manifest = JsonUtils.json_to_object(response.get_body_string(), HotUpdateManifest)
