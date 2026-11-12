@@ -44,6 +44,9 @@ static func ensure_exclude_file(git_dir: String) -> void:
 
 static func ensure_repo(git: GitHelper.Git) -> Error:
 	var git_dir := git.git_dir
+	# A killed Git process leaves `*.lock` files behind; the shadow repository is ours alone, so drop
+	# them before use and a crashed snapshot never blocks the next command.
+	GitHelper.clear_stale_locks(git_dir)
 	if DirAccess.dir_exists_absolute(git_dir):
 		# Supplying --work-tree makes Git report false even for a valid bare repository.
 		var check := await git.async_is_bare()

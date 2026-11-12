@@ -81,6 +81,15 @@ static func async_execute(command: String) -> OSUtils.ExecResult:
 	return await Git.new().async_execute(command)
 
 
+## Deletes `*.lock` files a killed Git process (shutdown, cancel, timeout) left behind; a leftover
+## lock makes every later command fail with "cannot lock ref". Only for repositories this app owns.
+static func clear_stale_locks(git_dir: String) -> void:
+	for file_path in FileUtils.get_all_files_in_folder(git_dir, true):
+		if file_path.ends_with(".lock"):
+			DirAccess.remove_absolute(file_path)
+	pass
+
+
 ## Compares two in-memory texts through Git without depending on a repository or index.
 static func async_diff_texts(old_text: String, new_text: String) -> OSUtils.ExecResult:
 	var temp_prefix := "user://git-diff/" + str(IdUtils.uuid())
