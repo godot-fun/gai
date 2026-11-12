@@ -187,24 +187,30 @@ const BODY_PROBE_LENGTH := 200
 
 ## Exact file a Markdown link points at, found by file name and content.
 ##
-## The link names a file (`README_CN.md`; a `#L671` anchor is dropped) and the whole workspace is
-## searched for that name, because a README inside a subfolder links its siblings by bare name. Same-named
-## candidates are then narrowed by content: the one holding this body's text is the document being
-## displayed, so `(README.md)` inside `.memory/README.md` means the file next door. Absolute paths,
-## `scheme://`, and workspace-relative paths keep the [method resolve_local_link] rules; "" means the
-## click is not a local file and belongs to the browser guess.
+## A bare name (`README_CN.md`, a `#L671` anchor dropped) is searched for as a path tail: a link inside a
+## document is relative to that document, and the workspace root may hold neither the file nor the folder
+## it names. A destination that spells a path stays the workspace root's answer when that exists, and is
+## searched by its tail otherwise. Same-named candidates are then narrowed by content — the one holding
+## this body's text is the document being displayed, so `(README.md)` inside `.memory/README.md` means the
+## file next door. Absolute paths and `scheme://` keep the [method resolve_local_link] rules, and "" means
+## the click belongs to the browser guess.
 static func async_search_link_file(destination: String, markdown_body: MarkdownRichTextLabel) -> String:
-	# Dropped files and `res://` links arrive absolute; they need no search at all.
 	var path := destination.strip_edges()
+	var local_path := resolve_local_link(path)
 	if path.is_absolute_path() or path.contains("://"):
-		return resolve_local_link(path)
+		return local_path
 	var anchor_index := path.find("#")
 	if anchor_index > 0:
 		path = path.substr(0, anchor_index)
 	var file_name := path.get_file()
 	if file_name.is_empty() or file_name.get_extension().is_empty():
-		return resolve_local_link(destination)
-	var matches: Array[String] = await GlobUtils.async_glob(AgentWorkspace.get_root(), "**/" + file_name, true, FileUtils.BYTES_PER_MB, GitIgnore.ignore_rules)
+		return local_path
+	# A destination that spells a path is the workspace root's answer when that exists; only a missing one
+	# needs the tail search below (a document may still mean the copy next to itself).
+	if file_name != path and StringUtils.is_not_blank(local_path):
+		return local_path
+	var tail := path.simplify_path().trim_prefix("./")
+	var matches: Array[String] = await GlobUtils.async_glob(AgentWorkspace.get_root(), "**/" + tail, true, FileUtils.BYTES_PER_MB, GitIgnore.ignore_rules)
 	if matches.size() == 1:
 		return matches[0]
 
@@ -216,7 +222,6 @@ static func async_search_link_file(destination: String, markdown_body: MarkdownR
 				return match_path
 
 	# Nothing conclusive: the workspace-root rules, then the first candidate the walk returned.
-	var local_path := resolve_local_link(destination)
 	if StringUtils.is_not_blank(local_path) or matches.is_empty():
 		return local_path
 	Log.info("link search is ambiguous file:[{}] candidates:[{}] opening:[{}]", file_name, matches.size(), matches[0])

@@ -11,7 +11,6 @@ extends RichTextLabel
 ## click reaches whatever is underneath. Watch starts on the press that selects and ends with the
 ## highlight, so labels without one stay out of the input path.
 
-var outside_press_watch: bool = false
 ## Markdown this body was rendered from. Two files can share a name, and a link click has to know which
 ## one holds this very text; the rendered text itself has already lost its markers.
 var raw_text: String = ""
@@ -42,14 +41,13 @@ func on_body_gui_input(event: InputEvent) -> void:
 	pass
 
 
+## Input processing is the watch: outside this window [method _input] is not called at all.
 func start_outside_press_watch() -> void:
-	outside_press_watch = true
 	set_process_input(true)
 	pass
 
 
 func stop_outside_press_watch() -> void:
-	outside_press_watch = false
 	set_process_input(false)
 	pass
 
@@ -57,8 +55,6 @@ func stop_outside_press_watch() -> void:
 ## Right click opens the copy menu and the wheel only scrolls the chat history — both read the
 ## highlight, so a left press outside is the one that clears it.
 func _input(event: InputEvent) -> void:
-	if not outside_press_watch:
-		return
 	if not event is InputEventMouseButton:
 		return
 	var mouse := event as InputEventMouseButton

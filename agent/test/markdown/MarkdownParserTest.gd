@@ -357,8 +357,10 @@ func workspace_link_search_test() -> void:
 	var root_path := AgentWorkspace.resolve_path("README.md")
 	var root_markdown := MarkdownHelper.create_rich_text_label(Color.WHITE, FileUtils.read_file_to_string(root_path), true)
 	assert(await MarkdownHelper.async_search_link_file("README.md", root_markdown) == root_path)
-	# A reply names no file of its own, so the workspace-root rule still decides; an absolute destination
-	# is taken as it is, never replaced by a same-named file found elsewhere.
+	# A destination that spells a path is searched by that tail too, because a link inside a document is
+	# relative to the document: `markdown/MarkdownHelper.gd` from inside `agent/` is resolved by the search
+	# when the workspace root has no such folder. An absolute destination is taken as it is.
+	assert(await MarkdownHelper.async_search_link_file("markdown/MarkdownHelper.gd", reply_markdown) == AgentWorkspace.resolve_path("agent/markdown/MarkdownHelper.gd"))
 	assert(await MarkdownHelper.async_search_link_file("agent/ui/input/AgentChatInput.gd#L671", reply_markdown) == AgentWorkspace.resolve_path("agent/ui/input/AgentChatInput.gd"))
 	assert(await MarkdownHelper.async_search_link_file("C:/no/such/folder/README.md", reply_markdown) == "C:/no/such/folder/README.md")
 	# Only a real file name is searched; a site path, an in-page anchor, and an unknown file keep falling
