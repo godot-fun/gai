@@ -204,7 +204,7 @@ static func async_search_link_file(destination: String, markdown_body: MarkdownR
 	var file_name := path.get_file()
 	if file_name.is_empty() or file_name.get_extension().is_empty():
 		return resolve_local_link(destination)
-	var matches: Array[String] = await GlobUtils.async_glob(AgentWorkspace.get_root(), "**/" + file_name, true, AgentTool.MAX_FILE_BYTES, GitIgnore.ignore_rules)
+	var matches: Array[String] = await GlobUtils.async_glob(AgentWorkspace.get_root(), "**/" + file_name, true, FileUtils.BYTES_PER_MB, GitIgnore.ignore_rules)
 	if matches.size() == 1:
 		return matches[0]
 
