@@ -83,10 +83,12 @@ static func async_execute(command: String) -> OSUtils.ExecResult:
 
 ## Deletes `*.lock` files a killed Git process (shutdown, cancel, timeout) left behind; a leftover
 ## lock makes every later command fail with "cannot lock ref". Only for repositories this app owns.
-static func clear_stale_locks(git_dir: String) -> void:
-	for file_path in FileUtils.get_all_files_in_folder(git_dir, true):
-		if file_path.ends_with(".lock"):
-			DirAccess.remove_absolute(file_path)
+## The scan and deletes run on the worker thread pool.
+static func async_clear_stale_locks(git_dir: String) -> void:
+	await ExecutorHelper.async_execute_pooled(func() -> void:
+		for file_path in FileUtils.get_all_files_in_folder(git_dir, true):
+			if file_path.ends_with(".lock"):
+				DirAccess.remove_absolute(file_path))
 	pass
 
 

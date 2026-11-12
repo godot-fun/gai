@@ -28,7 +28,7 @@ static func download_url_uses_official_git_site_test() -> void:
 
 
 ## A killed Git process leaves `index.lock` behind; clearing it must restore write access.
-static func clear_stale_locks_test() -> void:
+static func async_clear_stale_locks_test() -> void:
 	if not GitHelper.is_git_installed():
 		return
 	var temp_root := FileUtils.globalize_writable_path("user://git-lock-test-" + str(IdUtils.uuid()))
@@ -43,7 +43,7 @@ static func clear_stale_locks_test() -> void:
 	assert(FileUtils.write_string_to_file(index_lock_path, StringUtils.EMPTY) == OK)
 	assert((await git.async_stage_all()).exit_code != 0)
 
-	GitHelper.clear_stale_locks(git_dir)
+	await GitHelper.async_clear_stale_locks(git_dir)
 	assert(not FileAccess.file_exists(index_lock_path))
 	assert((await git.async_stage_all()).exit_code == 0)
 	assert(FileUtils.delete_file_or_directory(temp_root) == OK)

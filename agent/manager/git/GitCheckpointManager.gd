@@ -42,11 +42,11 @@ static func ensure_exclude_file(git_dir: String) -> void:
 	pass
 
 
-static func ensure_repo(git: GitHelper.Git) -> Error:
+static func async_ensure_repo(git: GitHelper.Git) -> Error:
 	var git_dir := git.git_dir
 	# A killed Git process leaves `*.lock` files behind; the shadow repository is ours alone, so drop
 	# them before use and a crashed snapshot never blocks the next command.
-	GitHelper.clear_stale_locks(git_dir)
+	await GitHelper.async_clear_stale_locks(git_dir)
 	if DirAccess.dir_exists_absolute(git_dir):
 		# Supplying --work-tree makes Git report false even for a valid bare repository.
 		var check := await git.async_is_bare()
@@ -85,7 +85,7 @@ static func remove_checkpoint_repo(git_dir: String) -> Error:
 	return error
 
 
-static func stage_workspace(git: GitHelper.Git) -> Error:
+static func async_stage_workspace(git: GitHelper.Git) -> Error:
 	var add := await git.async_stage_all()
 	if add.exit_code == 0:
 		return OK
@@ -100,10 +100,10 @@ static func stage_workspace(git: GitHelper.Git) -> Error:
 ## Commits the current workspace state and returns the commit id; empty when unavailable.
 static func async_snapshot(session_id: int) -> String:
 	var git := create_git_context(session_id)
-	var repo_error := await ensure_repo(git)
+	var repo_error := await async_ensure_repo(git)
 	if repo_error != OK:
 		return StringUtils.EMPTY
-	var stage_error := await stage_workspace(git)
+	var stage_error := await async_stage_workspace(git)
 	if stage_error != OK:
 		return StringUtils.EMPTY
 	var previous_head := await git.async_get_head()
@@ -132,7 +132,7 @@ static func async_cleanup() -> void:
 	for repo_shard_index in range(CHECKPOINT_REPO_SHARD_COUNT):
 		var git_dir := AgentWorkspace.get_data_path(CHECKPOINTS_SUBDIR).path_join(str(repo_shard_index))
 		var git := GitHelper.Git.new(git_dir, workspace_root)
-		var repo_error := await ensure_repo(git)
+		var repo_error := await async_ensure_repo(git)
 		if repo_error != OK:
 			continue
 		ensure_exclude_file(git_dir)
@@ -162,10 +162,10 @@ static func async_restore(session_id: int, sha: String) -> Error:
 	if StringUtils.is_blank(sha):
 		return ERR_INVALID_PARAMETER
 	var git := create_git_context(session_id)
-	var repo_error := await ensure_repo(git)
+	var repo_error := await async_ensure_repo(git)
 	if repo_error != OK:
 		return repo_error
-	var stage_error := await stage_workspace(git)
+	var stage_error := await async_stage_workspace(git)
 	if stage_error != OK:
 		return stage_error
 	var diff := await git.async_get_staged_name_status(sha)
