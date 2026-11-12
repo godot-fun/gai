@@ -26,4 +26,4 @@ Typecheck:
 
 ## MCP
 
-Copy `web/mcp.example.json` to `web/mcp.json` and configure one or more stdio or Streamable HTTP servers. The agent discovers them through `GET /mcp/tools` and calls them through `POST /mcp/call`. Without `mcp.json`, MCP is simply disabled.
+Copy `web/mcp.example.json` to `web/mcp.json` and configure one or more stdio or Streamable HTTP servers. The agent discovers them through `GET /mcp/tools` and calls them through `POST /mcp/call`. Without `mcp.json`, MCP is simply disabled. Set `MCP_CONFIG_PATH` to load the configuration from another location.

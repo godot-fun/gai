@@ -3,7 +3,6 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { McpService } from "../src/services/mcp-service";
 
 test("McpService accepts an empty server configuration", async () => {
   const directory = await mkdtemp(join(tmpdir(), "gai-mcp-"));
@@ -11,7 +10,9 @@ test("McpService accepts an empty server configuration", async () => {
   const previousPath = process.env.MCP_CONFIG_PATH;
   try {
     await writeFile(configPath, JSON.stringify({ servers: {} }));
+    // config snapshots the environment on import, so the path must be set before loading the service.
     process.env.MCP_CONFIG_PATH = configPath;
+    const { McpService } = await import("../src/services/mcp-service");
     const service = new McpService();
     assert.deepEqual(await service.listTools(), []);
     await service.close();

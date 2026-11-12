@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
+import { config } from "../config";
 
 type McpServerConfig =
   | { transport: "stdio"; command: string; args?: string[]; cwd?: string; env?: Record<string, string> }
@@ -53,17 +54,17 @@ export class McpService {
   }
 
   private async connect(): Promise<void> {
-    const path = process.env.MCP_CONFIG_PATH?.trim() || "mcp.json";
-    let config: McpConfig;
+    const path = config.mcpConfigPath;
+    let mcpConfig: McpConfig;
     try {
-      config = JSON.parse(await readFile(path, "utf8")) as McpConfig;
+      mcpConfig = JSON.parse(await readFile(path, "utf8")) as McpConfig;
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
       throw error;
     }
 
     try {
-      for (const [name, server] of Object.entries(config.servers ?? {})) {
+      for (const [name, server] of Object.entries(mcpConfig.servers ?? {})) {
         const client = new Client({ name: "gai", version: "1.0.0" }, { versionNegotiation: { mode: "auto" } });
         const transport = server.transport === "stdio"
           ? new StdioClientTransport({ command: server.command, args: server.args, cwd: server.cwd, env: server.env })

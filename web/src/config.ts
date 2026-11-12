@@ -12,6 +12,7 @@ export interface ServerConfig {
   browserMaxConcurrency: number;
   navigationTimeoutMs: number;
   requestTimeoutMs: number;
+  mcpConfigPath: string;
 }
 
 function readPositiveInteger(name: string, fallback: number): number {
@@ -53,6 +54,7 @@ export function loadConfig(): ServerConfig {
     browserMaxConcurrency: readPositiveInteger("BROWSER_MAX_CONCURRENCY", 4),
     navigationTimeoutMs: readPositiveInteger("NAVIGATION_TIMEOUT_MS", 30_000),
     requestTimeoutMs: readPositiveInteger("REQUEST_TIMEOUT_MS", 45_000),
+    mcpConfigPath: process.env.MCP_CONFIG_PATH?.trim() || "mcp.json",
   };
 }
 
