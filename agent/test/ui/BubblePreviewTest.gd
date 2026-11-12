@@ -15,14 +15,14 @@ const LINE := "The default parameter values of glob.bind(a, b, true, 0.0, false,
 func preview_window_shows_the_tail_test() -> void:
 	var host := add_host()
 	await settled()
-	var label := MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
-	label.text = LINE
-	host.add_child(label)
+	var markdown_label := MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
+	markdown_label.text = LINE
+	host.add_child(markdown_label)
 	await settled()
 
-	BubblePreview.apply_height_limit(label, true, PREVIEW_LINES)
+	BubblePreview.apply_height_limit(markdown_label, true, PREVIEW_LINES)
 	await settled()
-	assert_window(label)
+	assert_window(markdown_label)
 	host.queue_free()
 	pass
 
@@ -41,7 +41,7 @@ func streaming_preview_tracks_the_tail_test() -> void:
 		entry.body += "\n" + LINE
 		bubble.refresh(entry)
 		await settled()
-		assert_window(bubble.rich_text)
+		assert_window(bubble.markdown_label)
 	host.queue_free()
 	pass
 
@@ -57,8 +57,8 @@ func loaded_entry_sizes_its_window_test() -> void:
 	host.add_child(bubble)
 	await settled()
 
-	assert(not bubble.rich_text.fit_content)
-	assert_window(bubble.rich_text)
+	assert(not bubble.markdown_label.fit_content)
+	assert_window(bubble.markdown_label)
 	host.queue_free()
 	pass
 
@@ -67,33 +67,33 @@ func loaded_entry_sizes_its_window_test() -> void:
 func narrower_column_keeps_the_tail_test() -> void:
 	var host := add_host()
 	await settled()
-	var label := MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
-	label.text = "%s\n%s\n%s" % [LINE, LINE, LINE]
-	host.add_child(label)
+	var markdown_label := MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
+	markdown_label.text = "%s\n%s\n%s" % [LINE, LINE, LINE]
+	host.add_child(markdown_label)
 	await settled()
-	BubblePreview.apply_height_limit(label, true, PREVIEW_LINES)
+	BubblePreview.apply_height_limit(markdown_label, true, PREVIEW_LINES)
 	await settled()
-	var wide_line_count := label.get_line_count()
+	var wide_line_count := markdown_label.get_line_count()
 
 	host.size.x = 180.0
 	await settled()
-	assert(label.get_line_count() > wide_line_count)
-	assert_window(label)
+	assert(markdown_label.get_line_count() > wide_line_count)
+	assert_window(markdown_label)
 	host.queue_free()
 	pass
 
 
 func short_preview_releases_the_limit_test() -> void:
-	var label := MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
-	label.fit_content = false
-	label.scroll_active = true
-	label.custom_minimum_size.y = 40.0
+	var markdown_label := MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
+	markdown_label.fit_content = false
+	markdown_label.scroll_active = true
+	markdown_label.custom_minimum_size.y = 40.0
 
-	BubblePreview.apply_height_limit(label, false, PREVIEW_LINES)
-	assert(label.fit_content)
-	assert(not label.scroll_active)
-	assert(label.custom_minimum_size.y == 0.0)
-	label.free()
+	BubblePreview.apply_height_limit(markdown_label, false, PREVIEW_LINES)
+	assert(markdown_label.fit_content)
+	assert(not markdown_label.scroll_active)
+	assert(markdown_label.custom_minimum_size.y == 0.0)
+	markdown_label.free()
 	pass
 
 
@@ -113,12 +113,12 @@ static func settled() -> void:
 
 ## Exactly [constant PREVIEW_LINES] rendered lines, scrolled to the end of the text, and
 ## starting on a line boundary so neither the first nor the last line is partly cut.
-static func assert_window(label: MarkdownRichTextLabel) -> void:
-	var line_height := label.get_line_offset(1) - label.get_line_offset(0)
-	var scroll := label.get_v_scroll_bar().value
-	assert(label.get_line_count() > PREVIEW_LINES)
-	assert(is_equal_approx(label.custom_minimum_size.y, line_height * PREVIEW_LINES))
-	assert(is_equal_approx(label.size.y, line_height * PREVIEW_LINES))
-	assert(is_equal_approx(scroll, label.get_content_height() - label.size.y))
+static func assert_window(markdown_label: MarkdownRichTextLabel) -> void:
+	var line_height := markdown_label.get_line_offset(1) - markdown_label.get_line_offset(0)
+	var scroll := markdown_label.get_v_scroll_bar().value
+	assert(markdown_label.get_line_count() > PREVIEW_LINES)
+	assert(is_equal_approx(markdown_label.custom_minimum_size.y, line_height * PREVIEW_LINES))
+	assert(is_equal_approx(markdown_label.size.y, line_height * PREVIEW_LINES))
+	assert(is_equal_approx(scroll, markdown_label.get_content_height() - markdown_label.size.y))
 	assert(is_equal_approx(fmod(scroll, line_height), 0.0))
 	pass

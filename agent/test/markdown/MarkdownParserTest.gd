@@ -137,30 +137,30 @@ func inline_code_tinted_test() -> void:
 ## The engine's default 3px highlight padding paints the chip over the line above and
 ## below it, so the box is pinned to the glyphs instead.
 func inline_code_box_padding_test() -> void:
-	var label := MarkdownHelper.create_rich_text_label(Color.WHITE, "`x`", true)
-	assert(label.get_theme_constant("text_highlight_v_padding") == -ControlSize.border_md)
-	assert(label.get_theme_constant("text_highlight_h_padding") == ControlSize.border_md)
-	assert(label.get_theme_constant("table_h_separation") == MarkdownHelper.TABLE_H_SEPARATION)
-	assert(label.get_theme_font_size("normal_font_size") == Typography.body_large)
-	assert(label.get_theme_font_size("bold_font_size") == Typography.body_large)
-	assert(label.get_theme_font_size("italics_font_size") == Typography.body_large)
-	assert(label.get_theme_font_size("bold_italics_font_size") == Typography.body_large)
-	assert(label.get_theme_font_size("mono_font_size") == Typography.body_large)
-	label.free()
+	var markdown_label := MarkdownHelper.create_rich_text_label(Color.WHITE, "`x`", true)
+	assert(markdown_label.get_theme_constant("text_highlight_v_padding") == -ControlSize.border_md)
+	assert(markdown_label.get_theme_constant("text_highlight_h_padding") == ControlSize.border_md)
+	assert(markdown_label.get_theme_constant("table_h_separation") == MarkdownHelper.TABLE_H_SEPARATION)
+	assert(markdown_label.get_theme_font_size("normal_font_size") == Typography.body_large)
+	assert(markdown_label.get_theme_font_size("bold_font_size") == Typography.body_large)
+	assert(markdown_label.get_theme_font_size("italics_font_size") == Typography.body_large)
+	assert(markdown_label.get_theme_font_size("bold_italics_font_size") == Typography.body_large)
+	assert(markdown_label.get_theme_font_size("mono_font_size") == Typography.body_large)
+	markdown_label.free()
 	pass
 
 
 ## A highlight over a bubble follows the theme color ([ThemeColor]) instead of the
 ## engine's default tint, and both label kinds share it.
 func selection_theme_test() -> void:
-	var labels: Array[MarkdownRichTextLabel] = [
+	var markdown_labels: Array[MarkdownRichTextLabel] = [
 		MarkdownHelper.create_rich_text_label(Color.WHITE, "select me", true),
 		MarkdownHelper.create_plain_rich_text_label(Color.WHITE),
 	]
-	for label: MarkdownRichTextLabel in labels:
-		assert(label.get_theme_color("selection_color") == ThemeColor.selection_color)
-		assert(label.get_theme_color("font_selected_color") == ThemeColor.title_color)
-		label.free()
+	for markdown_label: MarkdownRichTextLabel in markdown_labels:
+		assert(markdown_label.get_theme_color("selection_color") == ThemeColor.selection_color)
+		assert(markdown_label.get_theme_color("font_selected_color") == ThemeColor.title_color)
+		markdown_label.free()
 	pass
 
 
@@ -306,14 +306,14 @@ func image_metadata_test() -> void:
 
 
 func local_markdown_image_test() -> void:
-	var label := MarkdownHelper.create_rich_text_label(
+	var markdown_label := MarkdownHelper.create_rich_text_label(
 			Color.WHITE,
 			"before ![Girl](res://.ai/test/image/girl.png) after",
 			true
 	)
-	assert("before" in label.get_parsed_text())
-	assert("after" in label.get_parsed_text())
-	label.free()
+	assert("before" in markdown_label.get_parsed_text())
+	assert("after" in markdown_label.get_parsed_text())
+	markdown_label.free()
 	pass
 
 
@@ -345,30 +345,30 @@ func local_link_resolution_test() -> void:
 ## name sits nowhere near the workspace root — the click used to fall into the `https://` guess and open
 ## the browser. The search places it, and same-named files are told apart by their content.
 func workspace_link_search_test() -> void:
-	var reply := MarkdownHelper.create_rich_text_label(Color.WHITE, "README_CN.md 是中文版", true)
+	var reply_markdown := MarkdownHelper.create_rich_text_label(Color.WHITE, "README_CN.md 是中文版", true)
 	# Bare name, only present in a subfolder, found by searching the whole workspace.
 	var chinese_path := AgentWorkspace.resolve_path(".memory/README_CN.md")
-	assert(await MarkdownHelper.async_search_link_file("README_CN.md", reply) == chinese_path)
-	assert(await MarkdownHelper.async_search_link_file("README_CN.md#intro", reply) == chinese_path)
+	assert(await MarkdownHelper.async_search_link_file("README_CN.md", reply_markdown) == chinese_path)
+	assert(await MarkdownHelper.async_search_link_file("README_CN.md#intro", reply_markdown) == chinese_path)
 	# Seven README.md files exist; the body decides which one the link means.
 	var memory_path := AgentWorkspace.resolve_path(".memory/README.md")
-	var memory_body := MarkdownHelper.create_rich_text_label(Color.WHITE, FileUtils.read_file_to_string(memory_path), true)
-	assert(await MarkdownHelper.async_search_link_file("README.md", memory_body) == memory_path)
+	var memory_markdown := MarkdownHelper.create_rich_text_label(Color.WHITE, FileUtils.read_file_to_string(memory_path), true)
+	assert(await MarkdownHelper.async_search_link_file("README.md", memory_markdown) == memory_path)
 	var root_path := AgentWorkspace.resolve_path("README.md")
-	var root_body := MarkdownHelper.create_rich_text_label(Color.WHITE, FileUtils.read_file_to_string(root_path), true)
-	assert(await MarkdownHelper.async_search_link_file("README.md", root_body) == root_path)
+	var root_markdown := MarkdownHelper.create_rich_text_label(Color.WHITE, FileUtils.read_file_to_string(root_path), true)
+	assert(await MarkdownHelper.async_search_link_file("README.md", root_markdown) == root_path)
 	# A reply names no file of its own, so the workspace-root rule still decides; an absolute destination
 	# is taken as it is, never replaced by a same-named file found elsewhere.
-	assert(await MarkdownHelper.async_search_link_file("agent/ui/input/AgentChatInput.gd#L671", reply) == AgentWorkspace.resolve_path("agent/ui/input/AgentChatInput.gd"))
-	assert(await MarkdownHelper.async_search_link_file("C:/no/such/folder/README.md", reply) == "C:/no/such/folder/README.md")
+	assert(await MarkdownHelper.async_search_link_file("agent/ui/input/AgentChatInput.gd#L671", reply_markdown) == AgentWorkspace.resolve_path("agent/ui/input/AgentChatInput.gd"))
+	assert(await MarkdownHelper.async_search_link_file("C:/no/such/folder/README.md", reply_markdown) == "C:/no/such/folder/README.md")
 	# Only a real file name is searched; a site path, an in-page anchor, and an unknown file keep falling
 	# through to the click handler's browser guess.
-	assert(await MarkdownHelper.async_search_link_file("example.com/page", reply) == StringUtils.EMPTY)
-	assert(await MarkdownHelper.async_search_link_file("#L671", reply) == StringUtils.EMPTY)
-	assert(await MarkdownHelper.async_search_link_file("nothing-here.md", reply) == StringUtils.EMPTY)
-	reply.free()
-	memory_body.free()
-	root_body.free()
+	assert(await MarkdownHelper.async_search_link_file("example.com/page", reply_markdown) == StringUtils.EMPTY)
+	assert(await MarkdownHelper.async_search_link_file("#L671", reply_markdown) == StringUtils.EMPTY)
+	assert(await MarkdownHelper.async_search_link_file("nothing-here.md", reply_markdown) == StringUtils.EMPTY)
+	reply_markdown.free()
+	memory_markdown.free()
+	root_markdown.free()
 	pass
 
 
@@ -412,15 +412,15 @@ func markdown_video_preview_test() -> void:
 
 
 func remote_image_download_state_test() -> void:
-	var label := MarkdownRichTextLabel.new()
+	var markdown_label := MarkdownRichTextLabel.new()
 	var image_url := "https://example.com/image.png"
 	assert(MarkdownRender.image_download_meta_key(image_url) != MarkdownRender.image_download_meta_key("https://example.com/other.png"))
-	assert(not label.has_meta(MarkdownRender.image_download_meta_key(image_url)))
-	MarkdownRender.set_image_downloading(label, image_url, true)
-	assert(label.has_meta(MarkdownRender.image_download_meta_key(image_url)))
-	MarkdownRender.set_image_downloading(label, image_url, false)
-	assert(not label.has_meta(MarkdownRender.image_download_meta_key(image_url)))
-	label.free()
+	assert(not markdown_label.has_meta(MarkdownRender.image_download_meta_key(image_url)))
+	MarkdownRender.set_image_downloading(markdown_label, image_url, true)
+	assert(markdown_label.has_meta(MarkdownRender.image_download_meta_key(image_url)))
+	MarkdownRender.set_image_downloading(markdown_label, image_url, false)
+	assert(not markdown_label.has_meta(MarkdownRender.image_download_meta_key(image_url)))
+	markdown_label.free()
 	pass
 
 
@@ -483,23 +483,23 @@ func click_outside_clears_selection_test() -> void:
 	host.size = Vector2(400, 400)
 	gdf.gdf_node.add_child(host)
 
-	var label := MarkdownHelper.create_rich_text_label(Color.WHITE, "select me", true)
-	label.position = Vector2(10, 10)
-	label.size = Vector2(200, 60)
-	host.add_child(label)
+	var markdown_label := MarkdownHelper.create_rich_text_label(Color.WHITE, "select me", true)
+	markdown_label.position = Vector2(10, 10)
+	markdown_label.size = Vector2(200, 60)
+	host.add_child(markdown_label)
 
 	var viewport := host.get_viewport()
 	await viewport.get_tree().process_frame
-	assert(not label.is_processing_input())
+	assert(not markdown_label.is_processing_input())
 
 	send_mouse_press(viewport, Vector2(20, 20))
-	label.select_all()
-	assert(label.get_selected_text() == "select me")
-	assert(label.is_processing_input())
+	markdown_label.select_all()
+	assert(markdown_label.get_selected_text() == "select me")
+	assert(markdown_label.is_processing_input())
 
 	send_mouse_press(viewport, Vector2(350, 350))
-	assert(label.get_selected_text() == StringUtils.EMPTY)
-	assert(not label.is_processing_input())
+	assert(markdown_label.get_selected_text() == StringUtils.EMPTY)
+	assert(not markdown_label.is_processing_input())
 
 	host.queue_free()
 	pass

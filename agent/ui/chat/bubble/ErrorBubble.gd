@@ -1,7 +1,7 @@
 class_name ErrorBubble
 extends BubbleContainer
 
-var rich_text: MarkdownRichTextLabel
+var markdown_label: MarkdownRichTextLabel
 var resume_button: Button
 
 ## Error bubble with optional resume action for the agent chat history.
@@ -26,12 +26,12 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium)
 	vbox.add_child(title_label)
 
-	rich_text = MarkdownHelper.create_rich_text_label(
+	markdown_label = MarkdownHelper.create_rich_text_label(
 			Colors.error,
 			StringUtils.EMPTY,
 			AgentSetting.get_markdown_enabled()
 	)
-	vbox.add_child(rich_text)
+	vbox.add_child(markdown_label)
 	refresh(entry)
 
 	if is_resumable(entry.body):
@@ -47,10 +47,10 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 
 
 func refresh(entry: ChatEntry) -> void:
-	if not is_instance_valid(rich_text) or entry == null:
+	if not is_instance_valid(markdown_label) or entry == null:
 		return
 	var display: String = StringUtils.first_lines(entry.body, MAX_LINES)
-	MarkdownHelper.update_rich_text_label_text(rich_text, display, AgentSetting.get_markdown_enabled())
+	MarkdownHelper.update_rich_text_label_text(markdown_label, display, AgentSetting.get_markdown_enabled())
 	pass
 
 

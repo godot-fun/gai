@@ -3,7 +3,7 @@ extends BubbleContainer
 
 const HELP_ICON_PATH := "res://agent/asset/image/ui/help.svg"
 
-var rich_text: MarkdownRichTextLabel
+var markdown_label: MarkdownRichTextLabel
 
 ## Git diff bubble appended after agent_end, listing files changed from the run checkpoint.
 
@@ -61,42 +61,42 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 	style_header_button(diff_button, Colors.surface, I18n.t("git.open_side_by_side"), ControlSize.xl)
 	header.add_child(diff_button)
 
-	rich_text = MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
-	rich_text.meta_clicked.connect(open_file_diff.bind(patch_path))
-	rich_text.tooltip_text = I18n.t("git.open_file")
-	vbox.add_child(rich_text)
+	markdown_label = MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
+	markdown_label.meta_clicked.connect(open_file_diff.bind(patch_path))
+	markdown_label.tooltip_text = I18n.t("git.open_file")
+	vbox.add_child(markdown_label)
 	refresh(entry)
 	pass
 
 
 func refresh(entry: ChatEntry) -> void:
-	if not is_instance_valid(rich_text) or entry == null:
+	if not is_instance_valid(markdown_label) or entry == null:
 		return
-	rich_text.clear()
+	markdown_label.clear()
 	var paths := entry.body.split(FileUtils.NEWLINE_LF, false)
 	if paths.is_empty():
-		rich_text.add_text(I18n.t("git.no_files_changed"))
+		markdown_label.add_text(I18n.t("git.no_files_changed"))
 		return
 	for i in paths.size():
 		var parts := paths[i].split("\t", false)
 		var path := parts[0].strip_edges()
 		if StringUtils.is_blank(path):
 			continue
-		rich_text.push_meta(path)
-		rich_text.add_text(path)
-		rich_text.pop()
+		markdown_label.push_meta(path)
+		markdown_label.add_text(path)
+		markdown_label.pop()
 		var added := parts[1].strip_edges() if parts.size() > 1 else "0"
 		var removed := parts[2].strip_edges() if parts.size() > 2 else "0"
-		rich_text.add_text("  ")
-		rich_text.push_color(Colors.success)
-		rich_text.add_text("+" + ("?" if added == "-" else added))
-		rich_text.pop()
-		rich_text.add_text("  ")
-		rich_text.push_color(Colors.error)
-		rich_text.add_text("-" + ("?" if removed == "-" else removed))
-		rich_text.pop()
+		markdown_label.add_text("  ")
+		markdown_label.push_color(Colors.success)
+		markdown_label.add_text("+" + ("?" if added == "-" else added))
+		markdown_label.pop()
+		markdown_label.add_text("  ")
+		markdown_label.push_color(Colors.error)
+		markdown_label.add_text("-" + ("?" if removed == "-" else removed))
+		markdown_label.pop()
 		if i < paths.size() - 1:
-			rich_text.newline()
+			markdown_label.newline()
 	pass
 
 

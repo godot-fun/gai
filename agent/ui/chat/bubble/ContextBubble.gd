@@ -1,7 +1,7 @@
 class_name ContextBubble
 extends BubbleContainer
 
-var rich_text: MarkdownRichTextLabel
+var markdown_label: MarkdownRichTextLabel
 
 ## Context chat bubble for skills / memory / AGENTS.md — expand/collapse with Markdown preview.
 ## Session / toolbar toggles live in SkillToggle and AgentPromptToggle.
@@ -56,12 +56,12 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 
 	vbox.add_child(header)
 
-	rich_text = MarkdownHelper.create_rich_text_label(
+	markdown_label = MarkdownHelper.create_rich_text_label(
 		Colors.secondary_text,
 		StringUtils.EMPTY,
 		true
 	)
-	vbox.add_child(rich_text)
+	vbox.add_child(markdown_label)
 	refresh(entry)
 	pass
 
@@ -78,12 +78,12 @@ func on_expand_pressed(entry: ChatEntry) -> void:
 
 
 func refresh(entry: ChatEntry) -> void:
-	if not is_instance_valid(rich_text) or entry == null:
+	if not is_instance_valid(markdown_label) or entry == null:
 		return
 	var can_expand: bool = needs_expand(entry.body)
 	var display: String = entry.body if expanded or not can_expand else StringUtils.first_lines(entry.body, PREVIEW_LINES)
-	rich_text.visible = StringUtils.is_not_blank(entry.body)
-	MarkdownHelper.update_rich_text_label_text(rich_text, display, true)
+	markdown_label.visible = StringUtils.is_not_blank(entry.body)
+	MarkdownHelper.update_rich_text_label_text(markdown_label, display, true)
 
 	if is_instance_valid(expand_button):
 		expand_button.visible = can_expand

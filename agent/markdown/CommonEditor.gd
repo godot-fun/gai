@@ -34,7 +34,7 @@ var mode_bar: HBoxContainer
 var split_container: HSplitContainer
 var text_edit: CodeEdit
 var preview_panel: PanelContainer
-var preview_label: MarkdownRichTextLabel
+var markdown_label: MarkdownRichTextLabel
 var edit_mode_button: Button
 var split_mode_button: Button
 var preview_mode_button: Button
@@ -149,14 +149,14 @@ func build_layout() -> void:
 	preview_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	split_container.add_child(preview_panel)
 
-	preview_label = MarkdownHelper.create_rich_text_label(Colors.primary_text, "", true)
-	preview_label.fit_content = false
-	preview_label.scroll_active = true
-	preview_label.clip_contents = true
-	preview_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	preview_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	markdown_label = MarkdownHelper.create_rich_text_label(Colors.primary_text, "", true)
+	markdown_label.fit_content = false
+	markdown_label.scroll_active = true
+	markdown_label.clip_contents = true
+	markdown_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	markdown_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	preview_panel.clip_contents = true
-	preview_panel.add_child(preview_label)
+	preview_panel.add_child(markdown_label)
 
 	mode_button_group = ButtonGroup.new()
 	edit_mode_button = make_mode_button(ViewMode.EDIT, EDIT_ICON_PATH)
@@ -247,9 +247,9 @@ func style_preview() -> void:
 		style.border_color = Colors.outline_variant
 		style.set_border_width(SIDE_LEFT, ControlSize.border_xs)
 	preview_panel.add_theme_stylebox_override("panel", style)
-	preview_label.add_theme_color_override("default_color", Colors.primary_text)
-	MarkdownHelper.apply_selection_theme(preview_label)
-	ScrollBarStyle.apply(preview_label.get_v_scroll_bar(), ScrollBarStyle.Thickness.LG)
+	markdown_label.add_theme_color_override("default_color", Colors.primary_text)
+	MarkdownHelper.apply_selection_theme(markdown_label)
+	ScrollBarStyle.apply(markdown_label.get_v_scroll_bar(), ScrollBarStyle.Thickness.LG)
 	pass
 
 
@@ -327,7 +327,7 @@ func on_text_changed() -> void:
 
 
 func refresh_preview() -> void:
-	MarkdownHelper.update_rich_text_label_text(preview_label, text_edit.text, true)
+	MarkdownHelper.update_rich_text_label_text(markdown_label, text_edit.text, true)
 	pass
 
 

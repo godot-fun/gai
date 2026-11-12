@@ -2,7 +2,7 @@ class_name UserBubble
 extends BubbleContainer
 
 var inset_panel: PanelContainer
-var rich_text: MarkdownRichTextLabel
+var markdown_label: MarkdownRichTextLabel
 
 ## User message bubble with a moving accent border shared with the chat input.
 ## Delete drops this turn and everything after it — chat only, code is left alone.
@@ -71,12 +71,12 @@ func apply(session_id: int, entry: ChatEntry) -> void:
 
 	vbox.add_child(header)
 
-	rich_text = MarkdownHelper.create_rich_text_label(
+	markdown_label = MarkdownHelper.create_rich_text_label(
 		Colors.primary_text,
 		StringUtils.EMPTY,
 		AgentSetting.get_markdown_enabled()
 	)
-	vbox.add_child(rich_text)
+	vbox.add_child(markdown_label)
 	refresh(entry)
 
 	var moving_border := MovingAccentBorder.new()
@@ -104,10 +104,10 @@ func flash_panel() -> PanelContainer:
 
 
 func refresh(entry: ChatEntry) -> void:
-	if not is_instance_valid(rich_text) or entry == null:
+	if not is_instance_valid(markdown_label) or entry == null:
 		return
-	rich_text.visible = StringUtils.is_not_blank(entry.body)
-	MarkdownHelper.update_rich_text_label_text(rich_text, entry.body, AgentSetting.get_markdown_enabled())
+	markdown_label.visible = StringUtils.is_not_blank(entry.body)
+	MarkdownHelper.update_rich_text_label_text(markdown_label, entry.body, AgentSetting.get_markdown_enabled())
 	pass
 
 

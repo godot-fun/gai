@@ -1,7 +1,7 @@
 class_name ToolBubble
 extends BubbleContainer
 
-var rich_text: MarkdownRichTextLabel
+var markdown_label: MarkdownRichTextLabel
 
 ## Tool-call bubble showing the command, query, path, or primary argument sent to a tool.
 
@@ -23,15 +23,15 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium)
 	vbox.add_child(title_label)
 
-	rich_text = MarkdownHelper.create_plain_rich_text_label(Colors.success)
-	vbox.add_child(rich_text)
+	markdown_label = MarkdownHelper.create_plain_rich_text_label(Colors.success)
+	vbox.add_child(markdown_label)
 	refresh(entry)
 	pass
 
 
 func refresh(entry: ChatEntry) -> void:
-	if not is_instance_valid(rich_text) or entry == null:
+	if not is_instance_valid(markdown_label) or entry == null:
 		return
-	rich_text.visible = StringUtils.is_not_blank(entry.body)
-	MarkdownHelper.update_rich_text_label_text(rich_text, entry.body, false)
+	markdown_label.visible = StringUtils.is_not_blank(entry.body)
+	MarkdownHelper.update_rich_text_label_text(markdown_label, entry.body, false)
 	pass

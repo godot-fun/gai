@@ -8,70 +8,70 @@ const MAX_REMOTE_IMAGE_BYTES := 20 * FileUtils.BYTES_PER_MB
 # Markdown media rendering
 ## Appends parsed BBCode and image tags in source order. Local images are inserted
 ## immediately; remote images use a keyed placeholder that is replaced after download.
-static func render_markdown_with_images(label: MarkdownRichTextLabel, result: MarkdownParseResult) -> void:
-	label.clear()
+static func render_markdown_with_images(markdown_label: MarkdownRichTextLabel, result: MarkdownParseResult) -> void:
+	markdown_label.clear()
 	var cursor := 0
 	for index in result.images.size():
 		var image_start := result.bbcode.find("[img]", cursor)
 		var image_end := result.bbcode.find("[/img]", image_start + 5)
 		if image_start < 0 or image_end < 0:
 			break
-		label.append_text(result.bbcode.substr(cursor, image_start - cursor))
-		append_markdown_image(label, result.images[index])
+		markdown_label.append_text(result.bbcode.substr(cursor, image_start - cursor))
+		append_markdown_image(markdown_label, result.images[index])
 		cursor = image_end + 6
-	label.append_text(result.bbcode.substr(cursor))
+	markdown_label.append_text(result.bbcode.substr(cursor))
 	pass
 
 
-static func append_markdown_image(label: MarkdownRichTextLabel, markdown_image: MarkdownParseResult.MarkdownImage) -> void:
+static func append_markdown_image(markdown_label: MarkdownRichTextLabel, markdown_image: MarkdownParseResult.MarkdownImage) -> void:
 	var image_url := markdown_image.image_url
 	var is_video := VideoHelper.is_video_path(image_url)
-	label.push_meta(image_url, RichTextLabel.META_UNDERLINE_NEVER)
+	markdown_label.push_meta(image_url, RichTextLabel.META_UNDERLINE_NEVER)
 	var placeholder := VideoHelper.create_placeholder_texture() if is_video else ImageHelper.create_placeholder_texture()
 	var image_tooltip := image_url if HttpUtils.is_valid_http_url(image_url) else FileUtils.normalize_path(image_url)
-	label.add_image(placeholder, 0, 0, Color.WHITE, 5, Rect2(), image_url, false, image_tooltip)
-	label.pop()
+	markdown_label.add_image(placeholder, 0, 0, Color.WHITE, 5, Rect2(), image_url, false, image_tooltip)
+	markdown_label.pop()
 	if is_video:
 		return
 	if HttpUtils.is_valid_http_url(image_url):
 		var cache_path := CacheManager.get_markdown_remote_image_cache_path(image_url)
 		if FileAccess.file_exists(cache_path):
-			load_image_into_label(label, image_url, cache_path)
+			load_image_into_label(markdown_label, image_url, cache_path)
 			return
-		if label.has_meta(image_download_meta_key(image_url)):
+		if markdown_label.has_meta(image_download_meta_key(image_url)):
 			return
-		set_image_downloading(label, image_url, true)
-		download_remote_image(label, image_url, cache_path)
+		set_image_downloading(markdown_label, image_url, true)
+		download_remote_image(markdown_label, image_url, cache_path)
 		return
-	load_image_into_label(label, image_url, image_url)
+	load_image_into_label(markdown_label, image_url, image_url)
 	pass
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Image loading and display
-static func load_image_into_label(label: MarkdownRichTextLabel, image_url: String, path: String) -> void:
+static func load_image_into_label(markdown_label: MarkdownRichTextLabel, image_url: String, path: String) -> void:
 	var texture: Texture2D = await ResourceHelper.async_load(path)
-	if texture == null or not is_instance_valid(label):
+	if texture == null or not is_instance_valid(markdown_label):
 		return
-	update_label_image(label, image_url, texture)
+	update_label_image(markdown_label, image_url, texture)
 	pass
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Remote image download and cache
-static func download_remote_image(label: MarkdownRichTextLabel, image_url: String, cache_path: String) -> void:
+static func download_remote_image(markdown_label: MarkdownRichTextLabel, image_url: String, cache_path: String) -> void:
 	var texture := await download_remote_image_texture(image_url, cache_path)
-	if not is_instance_valid(label):
+	if not is_instance_valid(markdown_label):
 		return
-	set_image_downloading(label, image_url, false)
+	set_image_downloading(markdown_label, image_url, false)
 	if texture != null:
-		update_label_image(label, image_url, texture)
+		update_label_image(markdown_label, image_url, texture)
 	pass
 
 
-static func update_label_image(label: MarkdownRichTextLabel, image_url: String, texture: Texture2D) -> void:
+static func update_label_image(markdown_label: MarkdownRichTextLabel, image_url: String, texture: Texture2D) -> void:
 	var display_size := get_image_display_size(texture)
-	label.update_image(image_url, RichTextLabel.UPDATE_TEXTURE | RichTextLabel.UPDATE_SIZE, texture, display_size.x, display_size.y)
+	markdown_label.update_image(image_url, RichTextLabel.UPDATE_TEXTURE | RichTextLabel.UPDATE_SIZE, texture, display_size.x, display_size.y)
 	pass
 
 
@@ -103,12 +103,12 @@ static func download_remote_image_texture(image_url: String, cache_path: String)
 	return texture
 
 
-static func set_image_downloading(label: MarkdownRichTextLabel, image_url: String, downloading: bool) -> void:
+static func set_image_downloading(markdown_label: MarkdownRichTextLabel, image_url: String, downloading: bool) -> void:
 	var meta_key := image_download_meta_key(image_url)
 	if downloading:
-		label.set_meta(meta_key, true)
+		markdown_label.set_meta(meta_key, true)
 		return
-	label.remove_meta(meta_key)
+	markdown_label.remove_meta(meta_key)
 	pass
 
 

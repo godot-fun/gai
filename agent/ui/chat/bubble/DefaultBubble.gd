@@ -1,7 +1,7 @@
 class_name DefaultBubble
 extends BubbleContainer
 
-var rich_text: MarkdownRichTextLabel
+var markdown_label: MarkdownRichTextLabel
 var system_entry: bool = false
 
 ## Basic titled markdown bubble used by system and unknown chat entry kinds.
@@ -26,19 +26,19 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium)
 	vbox.add_child(title_label)
 
-	rich_text = MarkdownHelper.create_rich_text_label(
+	markdown_label = MarkdownHelper.create_rich_text_label(
 		Colors.secondary_text,
 		StringUtils.EMPTY,
 		AgentSetting.get_markdown_enabled()
 	)
-	vbox.add_child(rich_text)
+	vbox.add_child(markdown_label)
 	refresh(entry)
 	pass
 
 
 func refresh(entry: ChatEntry) -> void:
-	if not is_instance_valid(rich_text) or entry == null:
+	if not is_instance_valid(markdown_label) or entry == null:
 		return
-	rich_text.visible = StringUtils.is_not_blank(entry.body)
-	MarkdownHelper.update_rich_text_label_text(rich_text, entry.body, AgentSetting.get_markdown_enabled())
+	markdown_label.visible = StringUtils.is_not_blank(entry.body)
+	MarkdownHelper.update_rich_text_label_text(markdown_label, entry.body, AgentSetting.get_markdown_enabled())
 	pass

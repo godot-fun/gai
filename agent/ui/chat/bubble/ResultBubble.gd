@@ -1,7 +1,7 @@
 class_name ResultBubble
 extends BubbleContainer
 
-var rich_text: MarkdownRichTextLabel
+var markdown_label: MarkdownRichTextLabel
 var view_button: Button
 var line_label: Label
 
@@ -44,16 +44,16 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 
 	vbox.add_child(header)
 
-	rich_text = MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
-	vbox.add_child(rich_text)
+	markdown_label = MarkdownHelper.create_plain_rich_text_label(Colors.secondary_text)
+	vbox.add_child(markdown_label)
 	refresh(entry)
 	pass
 
 
 func refresh(entry: ChatEntry) -> void:
-	if not is_instance_valid(rich_text) or entry == null:
+	if not is_instance_valid(markdown_label) or entry == null:
 		return
-	BubblePreview.apply(rich_text, view_button, line_label, entry.body)
+	BubblePreview.apply(markdown_label, view_button, line_label, entry.body)
 	pass
 
 
