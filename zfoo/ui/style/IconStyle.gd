@@ -15,13 +15,12 @@ static var cache: Dictionary = {}
 ## Returns [param path] tinted with [param color]. A positive [param size] centers the glyph on a
 ## transparent square canvas of that edge, keeping icon buttons on a stable baseline.
 static func tinted(path: String, color: Color, size: int = 0) -> Texture2D:
-	var key := "%s#%d" % [path, size]
-	var cached: Array = cache.get(key, [])
-	if cached.size() == 2 and cached[0] == color:
-		return cached[1]
+	var key := "%s#%d#%s" % [path, size, color.to_html(false)]
+	if cache.has(key):
+		return cache[key]
 	var texture := ImageHelper.tint_svg(path, color)
 	var result: Texture2D = square(texture, size) if size > 0 else texture
-	cache[key] = [color, result]
+	cache[key] = result
 	return result
 
 

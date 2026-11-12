@@ -151,19 +151,17 @@ func selected_editor() -> EditorApplication:
 
 func editor_icon(editor: EditorApplication) -> Texture2D:
 	var icon_path := editor.icon_path
-	var texture: Texture2D
-	var extension := icon_path.get_extension().to_lower()
+	var icon_size := ControlSize.icon_md
 	if icon_path == EditorDiscovery.CODE_ICON_PATH:
-		texture = ImageHelper.load_logo()
-	elif extension == "ico":
-		texture = ImageHelper.load_ico(icon_path, ControlSize.icon_md)
-	elif extension == "png":
-		texture = ImageHelper.load_external_image(icon_path)
-	else:
-		# Brand SVGs carry their own fills, so only monochrome glyphs such as the File Explorer
-		# folder take this tint; it keeps them in step with the user accent color.
-		return IconStyle.tinted(icon_path, ThemeColor.accent_theme_color(), ControlSize.icon_md)
-	return IconStyle.square(texture, ControlSize.icon_md)
+		return IconStyle.square(ImageHelper.load_logo(), icon_size)
+	match icon_path.get_extension().to_lower():
+		"ico":
+			return IconStyle.square(ImageHelper.load_ico(icon_path, icon_size), icon_size)
+		"png":
+			return IconStyle.square(ImageHelper.load_external_image(icon_path), icon_size)
+	# Brand SVGs carry their own fills, so only monochrome glyphs such as the File Explorer
+	# folder take this tint; it keeps them in step with the user accent color.
+	return IconStyle.tinted(icon_path, ThemeColor.accent_theme_color(), icon_size)
 
 
 func update_popup_items() -> void:

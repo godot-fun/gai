@@ -53,7 +53,7 @@ func drop_editor_data(_position: Vector2, _data: Variant) -> bool:
 
 func drag_paths_for_item(item: TreeItem) -> Array[String]:
 	var empty: Array[String] = []
-	if item == null or bool(item.get_meta("placeholder", false)):
+	if item == null or is_placeholder(item):
 		return empty
 	var path := FileUtils.normalize_path(str(item.get_metadata(0)))
 	if path.is_empty() or not FileUtils.exists(path):
@@ -126,6 +126,18 @@ func reload(path: String) -> void:
 	pass
 
 
+## Folder rows keep one stub child until their children are read, so the folding arrow shows up.
+## Stubs carry no path metadata, which is what tells them apart from real rows.
+static func is_placeholder(item: TreeItem) -> bool:
+	return item.get_metadata(0) == null
+
+
+## A folder is loaded once the stub is replaced by real entries; a file row has no children either.
+static func is_loaded(item: TreeItem) -> bool:
+	var child := item.get_first_child()
+	return child == null or not is_placeholder(child)
+
+
 func on_file_created(path: String) -> void:
 	refresh_directory(path.get_base_dir())
 	pass
@@ -138,10 +150,10 @@ func on_directory_changed(parent_path: String) -> void:
 
 func refresh_directory(path: String) -> void:
 	var normalized := FileUtils.normalize_path(path)
-	var item := get_root() if normalized == root_path else find_item_by_path(get_root(), normalized)
-	if item == null:
+	if not DirAccess.dir_exists_absolute(normalized):
 		return
-	if item != get_root() and not bool(item.get_meta("loaded", false)):
+	var item := get_root() if normalized == root_path else find_item_by_path(get_root(), normalized)
+	if item == null or not is_loaded(item):
 		return
 	var collapsed := item.collapsed
 	var child := item.get_first_child()
@@ -150,9 +162,7 @@ func refresh_directory(path: String) -> void:
 		child.free()
 		child = next
 	populate(item, normalized)
-	if item != get_root():
-		item.set_meta("loaded", true)
-		item.collapsed = collapsed
+	item.collapsed = collapsed
 	pass
 
 
@@ -161,7 +171,7 @@ func find_item_by_path(parent: TreeItem, path: String) -> TreeItem:
 		return null
 	var child := parent.get_first_child()
 	while child != null:
-		if not bool(child.get_meta("placeholder", false)):
+		if not is_placeholder(child):
 			if FileUtils.normalize_path(str(child.get_metadata(0))) == path:
 				return child
 			var found := find_item_by_path(child, path)
@@ -179,14 +189,12 @@ func select_path(path: String) -> void:
 
 
 func on_item_collapsed(item: TreeItem) -> void:
-	if item == null or bool(item.get_meta("placeholder", false)):
+	if item == null or is_placeholder(item):
 		return
-	if bool(item.get_meta("directory", false)):
-		apply_icon(item)
+	apply_icon(item)
 	# create_item() returns null while this signal is running, so load on the next frame.
-	if item.collapsed or bool(item.get_meta("loaded", false)):
-		return
-	ensure_loaded.call_deferred(item)
+	if not item.collapsed and not is_loaded(item):
+		ensure_loaded.call_deferred(item)
 	pass
 
 
@@ -223,7 +231,7 @@ func delete_selected() -> bool:
 
 func on_item_activated() -> void:
 	var item := get_selected()
-	if item == null or item.get_meta("placeholder", false):
+	if item == null or is_placeholder(item):
 		return
 	var path := str(item.get_metadata(0))
 	if path.is_empty():
@@ -241,7 +249,7 @@ func on_gui_input(event: InputEvent) -> void:
 		return
 	ensure_context_ui()
 	var item := get_item_at_position(mouse.position)
-	if item != null and not bool(item.get_meta("placeholder", false)):
+	if item != null and not is_placeholder(item):
 		if not item.is_selected(0):
 			deselect_all()
 			item.select(0)
@@ -281,7 +289,7 @@ func can_paste() -> bool:
 
 func paste_selected() -> void:
 	var item := get_selected()
-	context_path = "" if item == null or bool(item.get_meta("placeholder", false)) else FileUtils.normalize_path(str(item.get_metadata(0)))
+	context_path = "" if item == null or is_placeholder(item) else FileUtils.normalize_path(str(item.get_metadata(0)))
 	paste_copied()
 	pass
 
@@ -400,7 +408,7 @@ func selected_paths() -> Array[String]:
 	var paths: Array[String] = []
 	var item := get_next_selected(null)
 	while item != null:
-		if not bool(item.get_meta("placeholder", false)):
+		if not is_placeholder(item):
 			var path := FileUtils.normalize_path(str(item.get_metadata(0)))
 			if not path.is_empty() and FileUtils.is_relative_to(path, root_path) and FileUtils.exists(path):
 				paths.append(path)
@@ -418,14 +426,13 @@ func selected_paths() -> Array[String]:
 
 
 func ensure_loaded(item: TreeItem) -> void:
-	if item == null or item.get_meta("loaded", false):
+	if item == null or is_loaded(item):
 		return
 	var path := str(item.get_metadata(0))
 	var placeholder := item.get_first_child()
 	if placeholder != null:
-		item.remove_child(placeholder)
+		placeholder.free()
 	populate(item, path)
-	item.set_meta("loaded", true)
 	pass
 
 
@@ -467,11 +474,8 @@ func add_entry(parent: TreeItem, dir_path: String, entry_name: String) -> void:
 	item.set_text(0, entry_name)
 	item.set_tooltip_text(0, full_path)
 	item.set_metadata(0, full_path)
-	item.set_meta("directory", is_directory)
 	if is_directory:
-		var placeholder := create_item(item)
-		if placeholder != null:
-			placeholder.set_meta("placeholder", true)
+		create_item(item)
 		item.collapsed = true
 	apply_icon(item)
 	pass
@@ -480,8 +484,11 @@ func add_entry(parent: TreeItem, dir_path: String, entry_name: String) -> void:
 ## Applies the row icon; folders swap between the closed and open glyph for their expanded state.
 func apply_icon(item: TreeItem) -> void:
 	var path := str(item.get_metadata(0))
-	var is_directory := bool(item.get_meta("directory", false))
-	var icon := EditorFileIcon.texture(path, is_directory, is_directory and not item.collapsed)
+	var icon: Texture2D
+	if DirAccess.dir_exists_absolute(path):
+		icon = EditorFileIcon.folder_texture(not item.collapsed)
+	else:
+		icon = EditorFileIcon.texture(path)
 	if icon != null:
 		item.set_icon(0, icon)
 	pass
@@ -489,19 +496,14 @@ func apply_icon(item: TreeItem) -> void:
 
 ## Re-applies every row icon so folder glyphs pick up a changed accent color.
 func refresh_icons() -> void:
-	apply_icons(get_root())
-	pass
-
-
-func apply_icons(parent: TreeItem) -> void:
-	if parent == null:
+	var root := get_root()
+	if root == null:
 		return
-	var item := parent.get_first_child()
+	var item := root.get_first_child()
 	while item != null:
-		if not bool(item.get_meta("placeholder", false)):
+		if not is_placeholder(item):
 			apply_icon(item)
-		apply_icons(item)
-		item = item.get_next()
+		item = item.get_next_in_tree()
 	pass
 
 

@@ -14,18 +14,17 @@ class EventRecorder extends RefCounted:
 
 
 static func editor_file_icon_matches_name_and_extension_test() -> void:
-	assert(EditorFileIcon.icon_path("res://player.gd", false).ends_with("godot.svg"))
-	assert(EditorFileIcon.icon_path("C:/src/Player.GD", false).ends_with("godot.svg"))
-	assert(EditorFileIcon.icon_path("res://scene.tscn", false).ends_with("godot-assets.svg"))
-	assert(EditorFileIcon.icon_path("Dockerfile", false).ends_with("docker.svg"))
-	assert(EditorFileIcon.icon_path("Makefile", false).ends_with("makefile.svg"))
-	assert(EditorFileIcon.icon_path(".editorconfig", false).ends_with("editorconfig.svg"))
-	assert(EditorFileIcon.icon_path(".gitignore", false).ends_with("git.svg"))
-	assert(EditorFileIcon.icon_path("notes.md", false).ends_with("markdown.svg"))
-	assert(EditorFileIcon.icon_path("pic.png", false).ends_with("image.svg"))
-	assert(EditorFileIcon.icon_path("data.json", false).ends_with("json.svg"))
-	assert(EditorFileIcon.icon_path("src", true).ends_with("folder.svg"))
-	assert(EditorFileIcon.icon_path("unknown.zzz", false).ends_with("file.svg"))
+	assert(EditorFileIcon.icon_path("res://player.gd").ends_with("godot.svg"))
+	assert(EditorFileIcon.icon_path("C:/src/Player.GD").ends_with("godot.svg"))
+	assert(EditorFileIcon.icon_path("res://scene.tscn").ends_with("godot-assets.svg"))
+	assert(EditorFileIcon.icon_path("Dockerfile").ends_with("docker.svg"))
+	assert(EditorFileIcon.icon_path("Makefile").ends_with("makefile.svg"))
+	assert(EditorFileIcon.icon_path(".editorconfig").ends_with("editorconfig.svg"))
+	assert(EditorFileIcon.icon_path(".gitignore").ends_with("git.svg"))
+	assert(EditorFileIcon.icon_path("notes.md").ends_with("markdown.svg"))
+	assert(EditorFileIcon.icon_path("pic.png").ends_with("image.svg"))
+	assert(EditorFileIcon.icon_path("data.json").ends_with("json.svg"))
+	assert(EditorFileIcon.icon_path("unknown.zzz").ends_with("file.svg"))
 	pass
 
 
@@ -234,17 +233,40 @@ static func editor_file_tree_folder_icon_follows_expanded_state_test() -> void:
 	var folder := tree.get_root().get_first_child()
 	var closed := folder.get_icon(0)
 	assert(closed != null)
-	assert(closed == EditorFileIcon.texture(root_path.path_join("src"), true, false))
+	assert(closed == EditorFileIcon.folder_texture(false))
 
 	folder.collapsed = false
 	tree.on_item_collapsed(folder)
 	var expanded := folder.get_icon(0)
 	assert(expanded != null)
 	assert(expanded != closed)
-	assert(expanded == EditorFileIcon.texture(root_path.path_join("src"), true, true))
+	assert(expanded == EditorFileIcon.folder_texture(true))
 
 	var note := folder.get_next()
-	assert(note.get_icon(0) == EditorFileIcon.texture(root_path.path_join("note.md"), false))
+	assert(note.get_icon(0) == EditorFileIcon.texture(root_path.path_join("note.md")))
+	tree.free()
+	pass
+
+
+static func editor_file_tree_empty_folder_keeps_folder_icon_test() -> void:
+	var root_path := FileUtils.normalize_path(ProjectSettings.globalize_path(TREE_DIR + "_empty"))
+	DirAccess.make_dir_recursive_absolute(root_path.path_join("empty"))
+
+	var tree := EditorFileTree.new()
+	gdf.gdf_node.add_child(tree)
+	tree.reload(root_path)
+	var folder := tree.get_root().get_first_child()
+	assert(folder.get_icon(0) == EditorFileIcon.folder_texture(false))
+
+	folder.collapsed = false
+	tree.ensure_loaded(folder)
+	assert(folder.get_first_child() == null)
+	tree.ensure_loaded(folder)
+	assert(folder.get_first_child() == null)
+	# An empty folder keeps the folder glyph instead of falling back to the generic file icon.
+	var icon := folder.get_icon(0)
+	assert(icon == EditorFileIcon.folder_texture(not folder.collapsed))
+	assert(icon != EditorFileIcon.texture(root_path.path_join("empty")))
 	tree.free()
 	pass
 
@@ -443,7 +465,7 @@ static func child_names(item: TreeItem) -> Array[String]:
 	var names: Array[String] = []
 	var child := item.get_first_child()
 	while child != null:
-		if not child.get_meta("placeholder", false):
+		if not EditorFileTree.is_placeholder(child):
 			names.append(child.get_text(0))
 		child = child.get_next()
 	return names

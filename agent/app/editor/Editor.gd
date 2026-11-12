@@ -143,6 +143,7 @@ func apply_theme() -> void:
 	sidebar.add_theme_stylebox_override("panel", SessionSidebarTheme.sidebar_panel())
 	style_logo()
 	style_file_tree()
+	file_tree.refresh_icons()
 	ConfirmationDialogStyle.apply(confirm, [discard_button])
 	PopupMenuStyle.apply(tab_menu)
 	file_tree.apply_menu_theme()
@@ -198,7 +199,6 @@ func style_file_tree() -> void:
 	file_tree.add_theme_stylebox_override("cursor_unfocused", StyleBoxEmpty.new())
 	TreeStyle.apply_full_width_rows(file_tree, Margin.ma_2, Margin.ma_1)
 	style_internal_scroll_bars(file_tree)
-	file_tree.refresh_icons()
 	pass
 
 

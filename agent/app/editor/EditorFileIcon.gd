@@ -152,10 +152,8 @@ static var present: Dictionary[String, bool] = {}
 static var textures: Dictionary = {}
 
 
-## Resource path of the SVG for [param file_path]. Directories use the folder icon.
-static func icon_path(file_path: String, is_directory: bool) -> String:
-	if is_directory:
-		return FOLDER_ICON
+## Resource path of the SVG for [param file_path].
+static func icon_path(file_path: String) -> String:
 	var file_name := file_path.get_file().to_lower()
 	var stem: String = FILE_NAMES.get(file_name, "")
 	if stem.is_empty():
@@ -171,18 +169,21 @@ static func icon_path(file_path: String, is_directory: bool) -> String:
 	return icon_file(stem)
 
 
-## Texture for a row icon. Directories switch to the open folder while expanded; the Material
-## Symbols folders carry no fill color, so [IconStyle] tints them with the accent color.
-static func texture(file_path: String, is_directory: bool, expanded: bool = false) -> Texture2D:
-	if is_directory:
-		return IconStyle.tinted(FOLDER_OPEN_ICON if expanded else FOLDER_ICON, ThemeColor.accent_theme_color())
-	var path := icon_path(file_path, false)
+## Texture for a file row, loaded once per icon.
+static func texture(file_path: String) -> Texture2D:
+	var path := icon_path(file_path)
 	if textures.has(path):
 		return textures[path]
 	var loaded := load(path) as Texture2D
 	if loaded != null:
 		textures[path] = loaded
 	return loaded
+
+
+## Texture for a folder row. The Material Symbols folders carry no fill color, so [IconStyle] tints
+## them with the accent color; [param expanded] picks the open glyph.
+static func folder_texture(expanded: bool) -> Texture2D:
+	return IconStyle.tinted(FOLDER_OPEN_ICON if expanded else FOLDER_ICON, ThemeColor.accent_theme_color())
 
 
 static func icon_file(stem: String) -> String:
