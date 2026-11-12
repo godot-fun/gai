@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { sendOk } from "../http";
 import { browserService } from "../services/browser-service";
 import { mcpService } from "../services/mcp-service";
-import { requestShutdown } from "../shutdown";
+import { shutdown } from "../shutdown";
 import { registerApi, type ApiRoute } from "./route";
 
 // The caller force-kills this process right after the reply, so never let cleanup block the reply.
@@ -20,7 +20,7 @@ export class StopApi implements ApiRoute {
       console.error("Pre-shutdown cleanup failed", error);
     }
     sendOk(response, { status: "stopping" });
-    response.once("finish", () => setTimeout(() => requestShutdown("/stop"), 100));
+    response.once("finish", () => setTimeout(() => shutdown("/stop"), 100));
   }
 }
 

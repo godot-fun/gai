@@ -18,8 +18,8 @@ export function runShutdown(): Promise<void> {
   return shutdownTask;
 }
 
-/** Starts a graceful shutdown without waiting for it (signal handlers and /stop). */
-export function requestShutdown(reason: string): void {
+/** Starts a graceful shutdown and returns immediately; repeated calls are ignored (signal handlers and /stop). */
+export function shutdown(reason: string): void {
   if (isShuttingDown()) return;
   console.log(`Received ${reason}; shutting down...`);
   void runShutdown().catch((error: unknown) => {

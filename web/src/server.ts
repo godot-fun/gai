@@ -5,7 +5,7 @@ import { getApiRoutes } from "./api/route";
 import { config } from "./config";
 import { browserService } from "./services/browser-service";
 import { mcpService } from "./services/mcp-service";
-import { registerShutdownHandler, requestShutdown } from "./shutdown";
+import { registerShutdownHandler, shutdown } from "./shutdown";
 
 async function listen(server: Server): Promise<void> {
   server.listen(config.port, config.host);
@@ -25,12 +25,15 @@ async function main(): Promise<void> {
   registerShutdownHandler(async () => {
     await Promise.all([closeServer(server), browserService.close(), mcpService.close()]);
   });
+  // Signals are only caught after cleanup is registered: a signal during startup must keep the
+  // default behavior, otherwise shutdown would run an empty handler list and the process would hang.
+  // `once` keeps a second Ctrl+C as the force-quit escape hatch when cleanup gets stuck.
+  process.once("SIGINT", () => shutdown("SIGINT"));
+  process.once("SIGTERM", () => shutdown("SIGTERM"));
+
   console.log("Supported endpoints:");
   for (const route of getApiRoutes()) console.log(`  ${route.method.padEnd(5)}${route.path}`);
   console.log(`Web server listening at http://${config.host}:${config.port}`);
-
-  process.once("SIGINT", () => requestShutdown("SIGINT"));
-  process.once("SIGTERM", () => requestShutdown("SIGTERM"));
 }
 
 try {
