@@ -30,6 +30,12 @@ func is_redirect() -> bool:
 		or code == HTTPClient.RESPONSE_TEMPORARY_REDIRECT or code == HTTPClient.RESPONSE_PERMANENT_REDIRECT
 
 
+## True when the server answered 2xx. [member success] only says the exchange completed, so a 4xx/5xx
+## error payload arrives with [member success] set and only this method calls it a failure.
+func is_ok() -> bool:
+	return success and code >= HTTPClient.RESPONSE_OK and code < HTTPClient.RESPONSE_MULTIPLE_CHOICES
+
+
 func get_header(name: String) -> String:
 	var lower_name := name.to_lower()
 	for header: Variant in headers:

@@ -93,6 +93,19 @@ static func mcp_tool_registry_skips_over_long_name_test() -> void:
 	pass
 
 
+static func mcp_gateway_error_body_never_renders_as_empty_result_test() -> void:
+	# Regression: a gateway 4xx/5xx used to reach describe_result() and surface as "no content".
+	var response := HttpResponse.new()
+	response.success = true
+	response.code = HTTPClient.RESPONSE_BAD_GATEWAY
+	response.body = "{\"error\":{\"code\":\"MCP_CALL_FAILED\",\"message\":\"Cannot request input 'roots'\"}}".to_utf8_buffer()
+	assert(not response.is_ok())
+	var text := McpGateway.describe_error(response)
+	assert(text.contains("Cannot request input 'roots'"))
+	assert(text != McpGateway.EMPTY_RESULT_TEXT)
+	pass
+
+
 static func mcp_gateway_error_message_is_unwrapped_test() -> void:
 	var response := HttpResponse.new()
 	response.code = 502

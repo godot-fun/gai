@@ -34,6 +34,33 @@ static func error_string_never_blank_test() -> void:
 	pass
 
 
+static func is_ok_distinguishes_completed_from_2xx_test() -> void:
+	var ok := HttpResponse.new()
+	ok.success = true
+	ok.code = HTTPClient.RESPONSE_OK
+	assert(ok.is_ok())
+	var created := HttpResponse.new()
+	created.success = true
+	created.code = HTTPClient.RESPONSE_CREATED
+	assert(created.is_ok())
+	# The server answered, so the exchange completed, but not with a result.
+	var not_found := HttpResponse.new()
+	not_found.success = true
+	not_found.code = HTTPClient.RESPONSE_NOT_FOUND
+	assert(not not_found.is_ok())
+	var gateway_error := HttpResponse.new()
+	gateway_error.success = true
+	gateway_error.code = HTTPClient.RESPONSE_BAD_GATEWAY
+	assert(not gateway_error.is_ok())
+	var redirect := HttpResponse.new()
+	redirect.success = true
+	redirect.code = HTTPClient.RESPONSE_FOUND
+	assert(not redirect.is_ok())
+	assert(not HttpResponse.failure("Http connect error").is_ok())
+	assert(not HttpResponse.new().is_ok())
+	pass
+
+
 static func completion_is_error_when_request_failed_test() -> void:
 	# The invariant behind fail-fast: a failed request can never look like an empty answer.
 	var response := HttpResponse.failure("Http request cancelled url:[x]")
