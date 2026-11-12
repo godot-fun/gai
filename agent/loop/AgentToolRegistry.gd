@@ -53,7 +53,17 @@ static func reload_tools() -> void:
 	pass
 
 
+## The chat API requires unique tool names, so a duplicate is skipped instead of
+## overwriting the name map while leaving a second schema behind (which makes the
+## request invalid). First registration wins: builtin tools are registered before MCP ones.
 static func register(tool: AgentTool) -> void:
+	if StringUtils.is_blank(tool.name):
+		Log.error("skip tool with blank name class:[{}]", tool.get_script().get_global_name())
+		return
+	var existing: AgentTool = tools.get(tool.name)
+	if existing != null:
+		Log.error("skip duplicate tool name:[{}] existing:[{}] duplicate:[{}]", tool.name, existing.get_script().get_global_name(), tool.get_script().get_global_name())
+		return
 	tools[tool.name] = tool
 	schemas.append(tool.get_schema())
 	pass

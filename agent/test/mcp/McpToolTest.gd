@@ -25,3 +25,29 @@ static func agent_registry_appends_mcp_registry_tools_test() -> void:
 	McpToolRegistry.tools.clear()
 	AgentEvents.events.mcp_tools_changed.emit()
 	pass
+
+
+static func agent_registry_skips_duplicate_tool_name_test() -> void:
+	var first := McpTool.new()
+	first.name = "mcp__demo__duplicated"
+	var second := McpTool.new()
+	second.name = "mcp__demo__duplicated"
+	var tool_count := AgentToolRegistry.tools.size()
+	var schema_count := AgentToolRegistry.schemas.size()
+	AgentToolRegistry.register(first)
+	AgentToolRegistry.register(second)
+	assert(AgentToolRegistry.tools.get(first.name) == first)
+	assert(AgentToolRegistry.tools.size() == tool_count + 1)
+	assert(AgentToolRegistry.schemas.size() == schema_count + 1)
+	AgentToolRegistry.reload_tools()
+	pass
+
+
+static func agent_registry_skips_blank_tool_name_test() -> void:
+	var tool := McpTool.new()
+	var tool_count := AgentToolRegistry.tools.size()
+	var schema_count := AgentToolRegistry.schemas.size()
+	AgentToolRegistry.register(tool)
+	assert(AgentToolRegistry.tools.size() == tool_count)
+	assert(AgentToolRegistry.schemas.size() == schema_count)
+	pass
