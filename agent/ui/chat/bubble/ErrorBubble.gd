@@ -1,7 +1,7 @@
 class_name ErrorBubble
 extends BubbleContainer
 
-var rich_text: RichTextLabel
+var rich_text: MarkdownRichTextLabel
 var resume_button: Button
 
 ## Error bubble with optional resume action for the agent chat history.

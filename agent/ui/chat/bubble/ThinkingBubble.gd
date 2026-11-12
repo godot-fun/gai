@@ -1,7 +1,7 @@
 class_name ThinkingBubble
 extends BubbleContainer
 
-var rich_text: RichTextLabel
+var rich_text: MarkdownRichTextLabel
 var view_button: Button
 var line_label: Label
 

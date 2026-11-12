@@ -113,7 +113,7 @@ static func settled() -> void:
 
 ## Exactly [constant PREVIEW_LINES] rendered lines, scrolled to the end of the text, and
 ## starting on a line boundary so neither the first nor the last line is partly cut.
-static func assert_window(label: RichTextLabel) -> void:
+static func assert_window(label: MarkdownRichTextLabel) -> void:
 	var line_height := label.get_line_offset(1) - label.get_line_offset(0)
 	var scroll := label.get_v_scroll_bar().value
 	assert(label.get_line_count() > PREVIEW_LINES)

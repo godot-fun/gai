@@ -1,7 +1,7 @@
 class_name ToolBubble
 extends BubbleContainer
 
-var rich_text: RichTextLabel
+var rich_text: MarkdownRichTextLabel
 
 ## Tool-call bubble showing the command, query, path, or primary argument sent to a tool.
 

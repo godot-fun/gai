@@ -2,7 +2,7 @@ class_name UserBubble
 extends BubbleContainer
 
 var inset_panel: PanelContainer
-var rich_text: RichTextLabel
+var rich_text: MarkdownRichTextLabel
 
 ## User message bubble with a moving accent border shared with the chat input.
 ## Delete drops this turn and everything after it — chat only, code is left alone.

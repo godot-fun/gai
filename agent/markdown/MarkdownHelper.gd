@@ -10,12 +10,12 @@ extends Object
 ## [code]select(from, to)[/code]. Wait for engine PR godotengine/godot#84715 (proposal
 ## godotengine/godot-proposals#5517), then add:
 ##
-## - [code]highlight_matching_text(label: RichTextLabel, needle: String) -> void[/code]
+## - [code]highlight_matching_text(label: MarkdownRichTextLabel, needle: String) -> void[/code]
 ##   Case-insensitive match in [method RichTextLabel.get_parsed_text]; highlight every
 ##   non-overlapping occurrence (or first only — pick one). Uses [method apply_selection_theme]
 ##   colors via [method RichTextLabel.select] / [method RichTextLabel.deselect] after
 ##   a short hold (~2s), not BBCode [bgcolor].
-## - [code]select_parsed_range(label: RichTextLabel, start: int, end: int) -> void[/code]
+## - [code]select_parsed_range(label: MarkdownRichTextLabel, start: int, end: int) -> void[/code]
 ##   Map parsed-text indices to engine selection (exact API TBD when #84715 merges).
 ## - [code]find_all_match_starts(text: String, needle: String) -> Array[int][/code]
 ##   Shared index scan for [method highlight_matching_text].
@@ -50,78 +50,17 @@ static func format_file_as_markdown(path: String) -> String:
 	return link
 
 
-## RichTextLabel that also drops its highlight when a click lands outside it.
-##
-## `deselect_on_focus_loss_enabled` only fires when focus moves to another *focusable*
-## control, and a click on a bubble background never moves focus at all (chat lists and
-## their panels are not focusable), so the highlight outlived the click that was meant to
-## clear it. The label therefore watches presses itself: [method _input] runs before GUI
-## routing, so pressing outside clears the highlight before the click reaches whatever is
-## underneath. Watch starts on the press that selects and ends with the highlight, so
-## labels without one stay out of the input path.
-class SelectableRichTextLabel extends RichTextLabel:
-	var outside_press_watch: bool = false
-
-	func _init() -> void:
-		# selection_enabled already forces FOCUS_ALL; focus loss stays as the cheap path
-		# for clicks that do land on another focusable control.
-		selection_enabled = true
-		deselect_on_focus_loss_enabled = true
-		gui_input.connect(on_body_gui_input)
-		focus_exited.connect(stop_outside_press_watch)
-
-	## A script `_input` is auto-enabled on ready; only a highlight needs it here.
-	func _ready() -> void:
-		stop_outside_press_watch()
-		pass
-
-	## Left press inside — RichTextLabel starts (or clears) a highlight from here.
-	func on_body_gui_input(event: InputEvent) -> void:
-		if not event is InputEventMouseButton:
-			return
-		var mouse := event as InputEventMouseButton
-		if mouse.pressed and mouse.button_index == MOUSE_BUTTON_LEFT:
-			start_outside_press_watch()
-		pass
-
-	func start_outside_press_watch() -> void:
-		outside_press_watch = true
-		set_process_input(true)
-		pass
-
-	func stop_outside_press_watch() -> void:
-		outside_press_watch = false
-		set_process_input(false)
-		pass
-
-	## Right click opens the copy menu and the wheel only scrolls the chat history — both
-	## read the highlight, so a left press outside is the one that clears it.
-	func _input(event: InputEvent) -> void:
-		if not outside_press_watch:
-			return
-		if not event is InputEventMouseButton:
-			return
-		var mouse := event as InputEventMouseButton
-		if not mouse.pressed or mouse.button_index != MOUSE_BUTTON_LEFT:
-			return
-		if get_global_rect().has_point(mouse.position):
-			return
-		stop_outside_press_watch()
-		deselect()
-		pass
-
-
 ## Highlight colors of a selectable body: the card palette's accent-tinted selection plus its
 ## primary text for the highlighted glyphs. Both come from [ThemeColor], so a bubble keeps
 ## readable contrast in either theme and re-tints when the user picks another accent color.
-static func apply_selection_theme(label: RichTextLabel) -> void:
+static func apply_selection_theme(label: MarkdownRichTextLabel) -> void:
 	label.add_theme_color_override("selection_color", ThemeColor.selection_color)
 	label.add_theme_color_override("font_selected_color", ThemeColor.title_color)
 	pass
 
 
 ## Reapplies the live typography tokens after the user changes the interface scale.
-static func apply_typography(label: RichTextLabel) -> void:
+static func apply_typography(label: MarkdownRichTextLabel) -> void:
 	label.add_theme_font_size_override("normal_font_size", Typography.body_large)
 	label.add_theme_font_size_override("bold_font_size", Typography.body_large)
 	label.add_theme_font_size_override("italics_font_size", Typography.body_large)
@@ -130,8 +69,8 @@ static func apply_typography(label: RichTextLabel) -> void:
 	pass
 
 
-static func create_rich_text_label(text_color: Color, raw_text: String, markdown_enabled: bool) -> RichTextLabel:
-	var label := SelectableRichTextLabel.new()
+static func create_rich_text_label(text_color: Color, raw_text: String, markdown_enabled: bool) -> MarkdownRichTextLabel:
+	var label := MarkdownRichTextLabel.new()
 	label.scroll_active = false
 	label.fit_content = true
 	label.clip_contents = false
@@ -159,15 +98,15 @@ static func create_rich_text_label(text_color: Color, raw_text: String, markdown
 				label.accept_event()
 				copy_to_clipboard(label.get_selected_text())
 	)
-	label.meta_clicked.connect(handle_meta_clicked)
+	label.meta_clicked.connect(handle_meta_clicked.bind(label))
 	update_rich_text_label_text(label, raw_text, markdown_enabled)
 	return label
 
 
 ## Bare selectable label for plain-text bodies (thinking / result previews) — no markdown
 ## pass, same click-outside deselect as [method create_rich_text_label].
-static func create_plain_rich_text_label(text_color: Color) -> RichTextLabel:
-	var label := SelectableRichTextLabel.new()
+static func create_plain_rich_text_label(text_color: Color) -> MarkdownRichTextLabel:
+	var label := MarkdownRichTextLabel.new()
 	label.scroll_active = false
 	label.fit_content = true
 	label.bbcode_enabled = false
@@ -187,7 +126,8 @@ static func copy_to_clipboard(text: String) -> void:
 	DisplayServer.clipboard_set(text.replace(MarkdownParser.NBSP, StringUtils.SPACE).replace(MarkdownParser.INLINE_CODE_MARGIN, StringUtils.EMPTY).strip_edges())
 	pass
 
-static func update_rich_text_label_text(label: RichTextLabel, raw_text: String, markdown_enabled: bool) -> void:
+static func update_rich_text_label_text(label: MarkdownRichTextLabel, raw_text: String, markdown_enabled: bool) -> void:
+	label.raw_text = raw_text
 	if markdown_enabled:
 		var parse_result := MarkdownParser.to_bbcode(raw_text)
 		# Enabling bbcode re-parses existing text; raw markdown may contain literal
@@ -238,7 +178,54 @@ static func resolve_local_link(destination: String) -> String:
 	return StringUtils.EMPTY
 
 
-static func handle_meta_clicked(meta: Variant) -> void:
+# ---------------------------------------------------------------------------
+# Link target lookup — file name search + content comparison
+# ---------------------------------------------------------------------------
+
+## Markdown characters of the body compared with a candidate file: enough to tell two documents apart.
+const BODY_PROBE_LENGTH := 200
+
+## Exact file a Markdown link points at, found by file name and content.
+##
+## The link names a file (`README_CN.md`; a `#L671` anchor is dropped) and the whole workspace is
+## searched for that name, because a README inside a subfolder links its siblings by bare name. Same-named
+## candidates are then narrowed by content: the one holding this body's text is the document being
+## displayed, so `(README.md)` inside `.memory/README.md` means the file next door. Absolute paths,
+## `scheme://`, and workspace-relative paths keep the [method resolve_local_link] rules; "" means the
+## click is not a local file and belongs to the browser guess.
+static func async_search_link_file(destination: String, body: MarkdownRichTextLabel) -> String:
+	# Dropped files and `res://` links arrive absolute; they need no search at all.
+	var path := destination.strip_edges()
+	if path.is_absolute_path() or path.contains("://"):
+		return resolve_local_link(path)
+	var anchor_index := path.find("#")
+	if anchor_index > 0:
+		path = path.substr(0, anchor_index)
+	var file_name := path.get_file()
+	if file_name.is_empty() or file_name.get_extension().is_empty():
+		return resolve_local_link(destination)
+	var matches: Array[String] = await GlobUtils.async_glob(AgentWorkspace.get_root(), "**/" + file_name, true, AgentTool.MAX_FILE_BYTES, GitIgnore.ignore_rules)
+	if matches.size() == 1:
+		return matches[0]
+
+	# Same name in several folders: the file holding this very Markdown is the one meant.
+	var probe := body.raw_text.substr(0, BODY_PROBE_LENGTH)
+	if not probe.is_empty():
+		for match_path in matches:
+			if FileUtils.read_file_to_string(match_path).contains(probe):
+				return match_path
+
+	# Nothing conclusive: the workspace-root rules, then the first candidate the walk returned.
+	var local_path := resolve_local_link(destination)
+	if StringUtils.is_not_blank(local_path) or matches.is_empty():
+		return local_path
+	Log.info("link search is ambiguous file:[{}] candidates:[{}] opening:[{}]", file_name, matches.size(), matches[0])
+	return matches[0]
+
+
+## Opens a clicked Markdown link; [param body] is the label it came from and is what tells same-named
+## files apart. [method create_rich_text_label] binds it, so every rendered body always passes one.
+static func handle_meta_clicked(meta: Variant, body: MarkdownRichTextLabel) -> void:
 	var url := str(meta).strip_edges()
 	if StringUtils.is_blank(url):
 		return
@@ -252,8 +239,9 @@ static func handle_meta_clicked(meta: Variant) -> void:
 			Log.error("open link failed url:[{}] err:[{}]", url, http_error)
 		return
 	# An existing local path wins over the `https://` guess below: replies link workspace files
-	# relative to the workspace root, and that guess sent them to the browser.
-	var local_path := resolve_local_link(url)
+	# relative to the workspace root, and that guess sent them to the browser. A bare name from a
+	# subfolder is found by searching the workspace and comparing candidates with this very body.
+	var local_path := await async_search_link_file(url, body)
 	if StringUtils.is_not_blank(local_path):
 		# A folder has nothing to show in the editor, so the OS file manager takes it.
 		if DirAccess.dir_exists_absolute(local_path):

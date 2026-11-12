@@ -3,7 +3,7 @@ extends BubbleContainer
 
 const HELP_ICON_PATH := "res://agent/asset/image/ui/help.svg"
 
-var rich_text: RichTextLabel
+var rich_text: MarkdownRichTextLabel
 
 ## Git diff bubble appended after agent_end, listing files changed from the run checkpoint.
 

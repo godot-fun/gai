@@ -14,7 +14,7 @@ static func hidden_line_count(body: String, visible_line_count: int) -> int:
 	return maxi(0, body.count(FileUtils.NEWLINE_LF) + 1 - visible_line_count)
 
 
-static func apply(rich_text: RichTextLabel, view_button: Button, line_label: Label, body: String, fixed_height_at_limit: bool = false, preview_lines: int = PREVIEW_LINES) -> void:
+static func apply(rich_text: MarkdownRichTextLabel, view_button: Button, line_label: Label, body: String, fixed_height_at_limit: bool = false, preview_lines: int = PREVIEW_LINES) -> void:
 	if not is_instance_valid(rich_text):
 		return
 	var text := StringUtils.last_lines(body, preview_lines)
@@ -34,7 +34,7 @@ static func apply(rich_text: RichTextLabel, view_button: Button, line_label: Lab
 
 
 ## Stay compact for short content; lock the viewport only once preview truncation starts.
-static func apply_height_limit(rich_text: RichTextLabel, limit_reached: bool, preview_lines: int = PREVIEW_LINES) -> void:
+static func apply_height_limit(rich_text: MarkdownRichTextLabel, limit_reached: bool, preview_lines: int = PREVIEW_LINES) -> void:
 	if not limit_reached:
 		rich_text.fit_content = true
 		rich_text.scroll_active = false
@@ -57,7 +57,7 @@ static func apply_height_limit(rich_text: RichTextLabel, limit_reached: bool, pr
 ## The height comes from the rendered line offsets: the font's line box is taller than the
 ## [RichTextLabel] line, and the extra pixels left a sliver of the line above the window
 ## visible while the reply was streaming in.
-static func apply_preview_height(rich_text: RichTextLabel, preview_lines: int) -> void:
+static func apply_preview_height(rich_text: MarkdownRichTextLabel, preview_lines: int) -> void:
 	var line_count := rich_text.get_line_count()
 	if line_count <= 0:
 		# A bubble is built before it enters the tree, so the first call has no text layout

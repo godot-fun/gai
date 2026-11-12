@@ -1,7 +1,7 @@
 class_name DefaultBubble
 extends BubbleContainer
 
-var rich_text: RichTextLabel
+var rich_text: MarkdownRichTextLabel
 var system_entry: bool = false
 
 ## Basic titled markdown bubble used by system and unknown chat entry kinds.

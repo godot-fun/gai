@@ -1,7 +1,7 @@
 class_name AgentBubble
 extends BubbleContainer
 
-var rich_text: RichTextLabel
+var rich_text: MarkdownRichTextLabel
 
 ## Agent reply bubble markdown body; header copy puts ChatEntry.body on the clipboard.
 

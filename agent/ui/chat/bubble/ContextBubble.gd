@@ -1,7 +1,7 @@
 class_name ContextBubble
 extends BubbleContainer
 
-var rich_text: RichTextLabel
+var rich_text: MarkdownRichTextLabel
 
 ## Context chat bubble for skills / memory / AGENTS.md — expand/collapse with Markdown preview.
 ## Session / toolbar toggles live in SkillToggle and AgentPromptToggle.

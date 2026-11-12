@@ -153,11 +153,11 @@ func inline_code_box_padding_test() -> void:
 ## A highlight over a bubble follows the theme color ([ThemeColor]) instead of the
 ## engine's default tint, and both label kinds share it.
 func selection_theme_test() -> void:
-	var labels: Array[RichTextLabel] = [
+	var labels: Array[MarkdownRichTextLabel] = [
 		MarkdownHelper.create_rich_text_label(Color.WHITE, "select me", true),
 		MarkdownHelper.create_plain_rich_text_label(Color.WHITE),
 	]
-	for label: RichTextLabel in labels:
+	for label: MarkdownRichTextLabel in labels:
 		assert(label.get_theme_color("selection_color") == ThemeColor.selection_color)
 		assert(label.get_theme_color("font_selected_color") == ThemeColor.title_color)
 		label.free()
@@ -341,6 +341,37 @@ func local_link_resolution_test() -> void:
 	pass
 
 
+## A README inside a subfolder links its siblings by bare name (`[简体中文](README_CN.md)`), and that
+## name sits nowhere near the workspace root — the click used to fall into the `https://` guess and open
+## the browser. The search places it, and same-named files are told apart by their content.
+func workspace_link_search_test() -> void:
+	var reply := MarkdownHelper.create_rich_text_label(Color.WHITE, "README_CN.md 是中文版", true)
+	# Bare name, only present in a subfolder, found by searching the whole workspace.
+	var chinese_path := AgentWorkspace.resolve_path(".memory/README_CN.md")
+	assert(await MarkdownHelper.async_search_link_file("README_CN.md", reply) == chinese_path)
+	assert(await MarkdownHelper.async_search_link_file("README_CN.md#intro", reply) == chinese_path)
+	# Seven README.md files exist; the body decides which one the link means.
+	var memory_path := AgentWorkspace.resolve_path(".memory/README.md")
+	var memory_body := MarkdownHelper.create_rich_text_label(Color.WHITE, FileUtils.read_file_to_string(memory_path), true)
+	assert(await MarkdownHelper.async_search_link_file("README.md", memory_body) == memory_path)
+	var root_path := AgentWorkspace.resolve_path("README.md")
+	var root_body := MarkdownHelper.create_rich_text_label(Color.WHITE, FileUtils.read_file_to_string(root_path), true)
+	assert(await MarkdownHelper.async_search_link_file("README.md", root_body) == root_path)
+	# A reply names no file of its own, so the workspace-root rule still decides; an absolute destination
+	# is taken as it is, never replaced by a same-named file found elsewhere.
+	assert(await MarkdownHelper.async_search_link_file("agent/ui/input/AgentChatInput.gd#L671", reply) == AgentWorkspace.resolve_path("agent/ui/input/AgentChatInput.gd"))
+	assert(await MarkdownHelper.async_search_link_file("C:/no/such/folder/README.md", reply) == "C:/no/such/folder/README.md")
+	# Only a real file name is searched; a site path, an in-page anchor, and an unknown file keep falling
+	# through to the click handler's browser guess.
+	assert(await MarkdownHelper.async_search_link_file("example.com/page", reply) == StringUtils.EMPTY)
+	assert(await MarkdownHelper.async_search_link_file("#L671", reply) == StringUtils.EMPTY)
+	assert(await MarkdownHelper.async_search_link_file("nothing-here.md", reply) == StringUtils.EMPTY)
+	reply.free()
+	memory_body.free()
+	root_body.free()
+	pass
+
+
 func local_file_link_prefix_test() -> void:
 	var folder_path := ProjectSettings.globalize_path("res://agent/markdown").replace("\\", "/")
 	var file_bbcode := MarkdownParser.inline_to_bbcode(MarkdownHelper.format_file_as_markdown(r"C:\My Files\notes.bin"))
@@ -381,7 +412,7 @@ func markdown_video_preview_test() -> void:
 
 
 func remote_image_download_state_test() -> void:
-	var label := RichTextLabel.new()
+	var label := MarkdownRichTextLabel.new()
 	var image_url := "https://example.com/image.png"
 	assert(MarkdownRender.image_download_meta_key(image_url) != MarkdownRender.image_download_meta_key("https://example.com/other.png"))
 	assert(not label.has_meta(MarkdownRender.image_download_meta_key(image_url)))

@@ -34,7 +34,7 @@ var mode_bar: HBoxContainer
 var split_container: HSplitContainer
 var text_edit: CodeEdit
 var preview_panel: PanelContainer
-var preview_label: RichTextLabel
+var preview_label: MarkdownRichTextLabel
 var edit_mode_button: Button
 var split_mode_button: Button
 var preview_mode_button: Button
