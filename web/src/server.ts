@@ -13,7 +13,8 @@ async function listen(server: Server): Promise<void> {
 }
 
 async function closeServer(server: Server): Promise<void> {
-  await server[Symbol.asyncDispose]();
+  server.close();
+  await once(server, "close");
 }
 
 async function main(): Promise<void> {
