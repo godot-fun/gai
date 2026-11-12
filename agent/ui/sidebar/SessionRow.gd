@@ -155,10 +155,12 @@ func on_mouse_entered() -> void:
 	pass
 
 
-## Moving between the row's own controls keeps the highlight; leaving the whole row drops it.
+## Unconditional, because the row stays in the mouse-over chain while the cursor moves between its
+## own controls — those moves never reach this handler. Keeping the highlight when the cursor was
+## still inside the rect instead stored stale state: the engine drops the whole chain without a
+## second exit when a hovered control goes hidden (the title while a rename opens, the close button
+## when a run starts), so the row kept its hover background after the cursor had left it.
 func on_mouse_exited() -> void:
-	if get_global_rect().has_point(get_global_mouse_position()):
-		return
 	hovered = false
 	apply_style()
 	pass
