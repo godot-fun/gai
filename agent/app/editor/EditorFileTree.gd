@@ -179,8 +179,12 @@ func select_path(path: String) -> void:
 
 
 func on_item_collapsed(item: TreeItem) -> void:
+	if item == null or bool(item.get_meta("placeholder", false)):
+		return
+	if bool(item.get_meta("directory", false)):
+		apply_icon(item)
 	# create_item() returns null while this signal is running, so load on the next frame.
-	if item == null or item.collapsed or bool(item.get_meta("loaded", false)):
+	if item.collapsed or bool(item.get_meta("loaded", false)):
 		return
 	ensure_loaded.call_deferred(item)
 	pass
@@ -463,14 +467,41 @@ func add_entry(parent: TreeItem, dir_path: String, entry_name: String) -> void:
 	item.set_text(0, entry_name)
 	item.set_tooltip_text(0, full_path)
 	item.set_metadata(0, full_path)
-	var icon := EditorFileIcon.texture(full_path, is_directory)
-	if icon != null:
-		item.set_icon(0, icon)
+	item.set_meta("directory", is_directory)
 	if is_directory:
 		var placeholder := create_item(item)
 		if placeholder != null:
 			placeholder.set_meta("placeholder", true)
 		item.collapsed = true
+	apply_icon(item)
+	pass
+
+
+## Applies the row icon; folders swap between the closed and open glyph for their expanded state.
+func apply_icon(item: TreeItem) -> void:
+	var path := str(item.get_metadata(0))
+	var is_directory := bool(item.get_meta("directory", false))
+	var icon := EditorFileIcon.texture(path, is_directory, is_directory and not item.collapsed)
+	if icon != null:
+		item.set_icon(0, icon)
+	pass
+
+
+## Re-applies every row icon so folder glyphs pick up a changed accent color.
+func refresh_icons() -> void:
+	apply_icons(get_root())
+	pass
+
+
+func apply_icons(parent: TreeItem) -> void:
+	if parent == null:
+		return
+	var item := parent.get_first_child()
+	while item != null:
+		if not bool(item.get_meta("placeholder", false)):
+			apply_icon(item)
+		apply_icons(item)
+		item = item.get_next()
 	pass
 
 

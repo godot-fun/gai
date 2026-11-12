@@ -3,8 +3,12 @@ extends RefCounted
 
 ## Resolves a workspace path to a Material icon in [code]res://agent/asset/image/file[/code].
 ## Names are matched in lowercase. [code].gd[/code] uses [code]godot.svg[/code], not a file named [code]gd.svg[/code].
+## Directories reuse the colorless Material Symbols folders from [code]res://agent/asset/image/ui[/code],
+## tinted with the accent color so they follow the theme like the toolbar app icons.
 
 const ICON_DIRECTORY := "res://agent/asset/image/file/"
+const FOLDER_ICON := "res://agent/asset/image/ui/folder.svg"
+const FOLDER_OPEN_ICON := "res://agent/asset/image/ui/folder_open.svg"
 
 const FILE_NAMES: Dictionary[String, String] = {
 	"dockerfile": "docker",
@@ -151,7 +155,7 @@ static var textures: Dictionary = {}
 ## Resource path of the SVG for [param file_path]. Directories use the folder icon.
 static func icon_path(file_path: String, is_directory: bool) -> String:
 	if is_directory:
-		return icon_file("folder")
+		return FOLDER_ICON
 	var file_name := file_path.get_file().to_lower()
 	var stem: String = FILE_NAMES.get(file_name, "")
 	if stem.is_empty():
@@ -167,8 +171,12 @@ static func icon_path(file_path: String, is_directory: bool) -> String:
 	return icon_file(stem)
 
 
-static func texture(file_path: String, is_directory: bool) -> Texture2D:
-	var path := icon_path(file_path, is_directory)
+## Texture for a row icon. Directories switch to the open folder while expanded; the Material
+## Symbols folders carry no fill color, so [IconStyle] tints them with the accent color.
+static func texture(file_path: String, is_directory: bool, expanded: bool = false) -> Texture2D:
+	if is_directory:
+		return IconStyle.tinted(FOLDER_OPEN_ICON if expanded else FOLDER_ICON, ThemeColor.accent_theme_color())
+	var path := icon_path(file_path, false)
 	if textures.has(path):
 		return textures[path]
 	var loaded := load(path) as Texture2D

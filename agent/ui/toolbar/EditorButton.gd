@@ -76,7 +76,7 @@ func apply_theme() -> void:
 	select_button.text = ""
 	select_button.custom_minimum_size.x = ControlSize.xs
 	select_button.add_theme_constant_override("icon_max_width", ControlSize.icon_sm)
-	select_button.icon = ImageHelper.tint_svg(ARROW_ICON_PATH, Colors.secondary_text, 2.0)
+	select_button.icon = IconStyle.tinted(ARROW_ICON_PATH, Colors.secondary_text)
 	style_split_buttons()
 	PopupMenuStyle.apply(popup)
 	style_popup_spacing()
@@ -162,24 +162,8 @@ func editor_icon(editor: EditorApplication) -> Texture2D:
 	else:
 		# Brand SVGs carry their own fills, so only monochrome glyphs such as the File Explorer
 		# folder take this tint; it keeps them in step with the user accent color.
-		texture = ImageHelper.tint_svg(icon_path, ThemeColor.accent_theme_color(), 1.0)
-	return normalize_icon(texture, ControlSize.icon_md)
-
-
-static func normalize_icon(texture: Texture2D, target_size: int) -> ImageTexture:
-	if texture == null:
-		return ImageTexture.new()
-	var source := texture.get_image()
-	if source == null or source.is_empty():
-		return ImageTexture.new()
-	var source_size := source.get_size()
-	var scale := minf(float(target_size) / source_size.x, float(target_size) / source_size.y)
-	var scaled_size := Vector2i(maxi(1, roundi(source_size.x * scale)), maxi(1, roundi(source_size.y * scale)))
-	source.resize(scaled_size.x, scaled_size.y, Image.INTERPOLATE_LANCZOS)
-	var canvas := Image.create_empty(target_size, target_size, false, Image.FORMAT_RGBA8)
-	var offset := Vector2i((target_size - scaled_size.x) / 2, (target_size - scaled_size.y) / 2)
-	canvas.blit_rect(source, Rect2i(Vector2i.ZERO, scaled_size), offset)
-	return ImageTexture.create_from_image(canvas)
+		return IconStyle.tinted(icon_path, ThemeColor.accent_theme_color(), ControlSize.icon_md)
+	return IconStyle.square(texture, ControlSize.icon_md)
 
 
 func update_popup_items() -> void:

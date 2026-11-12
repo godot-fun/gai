@@ -223,6 +223,32 @@ static func editor_file_tree_lists_workspace_test() -> void:
 	pass
 
 
+static func editor_file_tree_folder_icon_follows_expanded_state_test() -> void:
+	var root_path := FileUtils.normalize_path(ProjectSettings.globalize_path(TREE_DIR + "_icons"))
+	DirAccess.make_dir_recursive_absolute(root_path.path_join("src"))
+	FileUtils.write_string_to_file(root_path.path_join("note.md"), "n")
+
+	var tree := EditorFileTree.new()
+	gdf.gdf_node.add_child(tree)
+	tree.reload(root_path)
+	var folder := tree.get_root().get_first_child()
+	var closed := folder.get_icon(0)
+	assert(closed != null)
+	assert(closed == EditorFileIcon.texture(root_path.path_join("src"), true, false))
+
+	folder.collapsed = false
+	tree.on_item_collapsed(folder)
+	var expanded := folder.get_icon(0)
+	assert(expanded != null)
+	assert(expanded != closed)
+	assert(expanded == EditorFileIcon.texture(root_path.path_join("src"), true, true))
+
+	var note := folder.get_next()
+	assert(note.get_icon(0) == EditorFileIcon.texture(root_path.path_join("note.md"), false))
+	tree.free()
+	pass
+
+
 static func editor_file_tree_refreshes_changed_folder_test() -> void:
 	var root_path := FileUtils.normalize_path(ProjectSettings.globalize_path(TREE_DIR + "_refresh"))
 	DirAccess.make_dir_recursive_absolute(root_path.path_join("src/nested"))
