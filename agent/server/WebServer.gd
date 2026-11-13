@@ -196,7 +196,7 @@ static func async_health() -> bool:
 
 
 ## POST /fetch. Returns the page metadata and its extracted Markdown content.
-static func async_fetch(url: String, screenshot_path: String = "") -> FetchResponse:
+static func async_fetch(url: String, screenshot_path: String, cancel_scope: CancelScope) -> FetchResponse:
 	if StringUtils.is_blank(url):
 		Log.error("web fetch url is empty")
 		return null
@@ -205,9 +205,13 @@ static func async_fetch(url: String, screenshot_path: String = "") -> FetchRespo
 	var payload := {"url": url}
 	if StringUtils.is_not_blank(screenshot_path):
 		payload["screenshotPath"] = screenshot_path
-	var response := await HttpHelper.async_post(server_url() + "/fetch", JsonUtils.object_to_json(payload), PackedStringArray(), request_timeout_millis)
+	var response := await HttpHelper.async_post(server_url() + "/fetch", JsonUtils.object_to_json(payload), PackedStringArray(), request_timeout_millis, StringUtils.EMPTY, Callable(), cancel_scope)
 	if not response.is_ok():
-		Log.error("web server request failed path:[/fetch] code:[{}] error:[{}]", response.code, response.get_error_string())
+		# A cancelled request is the user stopping the run, not a server failure.
+		if cancel_scope.cancelled:
+			Log.info("web server request cancelled path:[/fetch]")
+		else:
+			Log.error("web server request failed path:[/fetch] code:[{}] error:[{}]", response.code, response.get_error_string())
 		return null
 	var result: FetchResponse = JsonUtils.json_to_object(response.get_body_string(), FetchResponse)
 	if result == null:
@@ -216,7 +220,7 @@ static func async_fetch(url: String, screenshot_path: String = "") -> FetchRespo
 
 
 ## POST /search. Returns up to count results (Google with a configured proxy, otherwise Bing).
-static func async_search(query: String, count: int = 10, screenshot_path: String = "") -> SearchResponse:
+static func async_search(query: String, count: int, screenshot_path: String, cancel_scope: CancelScope) -> SearchResponse:
 	if StringUtils.is_blank(query):
 		Log.error("web search query is empty")
 		return null
@@ -228,9 +232,13 @@ static func async_search(query: String, count: int = 10, screenshot_path: String
 	var payload := {"query": query, "count": count}
 	if StringUtils.is_not_blank(screenshot_path):
 		payload["screenshotPath"] = screenshot_path
-	var response := await HttpHelper.async_post(server_url() + "/search", JsonUtils.object_to_json(payload), PackedStringArray(), request_timeout_millis)
+	var response := await HttpHelper.async_post(server_url() + "/search", JsonUtils.object_to_json(payload), PackedStringArray(), request_timeout_millis, StringUtils.EMPTY, Callable(), cancel_scope)
 	if not response.is_ok():
-		Log.error("web server request failed path:[/search] code:[{}] error:[{}]", response.code, response.get_error_string())
+		# A cancelled request is the user stopping the run, not a server failure.
+		if cancel_scope.cancelled:
+			Log.info("web server request cancelled path:[/search]")
+		else:
+			Log.error("web server request failed path:[/search] code:[{}] error:[{}]", response.code, response.get_error_string())
 		return null
 	var result: SearchResponse = JsonUtils.json_to_object(response.get_body_string(), SearchResponse)
 	if result == null:

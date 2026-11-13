@@ -24,7 +24,7 @@ func get_parameters() -> ToolParameters.Parameters:
 	return params
 
 
-func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
+func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope) -> AgentToolResult:
 	var query := str(args.get(ARG_QUERY, "")).strip_edges()
 	if query.is_empty():
 		return AgentToolResult.error("error: query is required")
@@ -32,8 +32,10 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 	if args.has(ARG_MAX_RESULTS):
 		max_results = clampi(int(str(args.get(ARG_MAX_RESULTS, DEFAULT_MAX_RESULTS))), 1, MAX_RESULTS_CAP)
 	var screenshot_path := FileUtils.globalize_writable_path(CacheManager.get_web_screenshot_cache_dir().path_join(StringUtils.format("search_{}.webp", IdUtils.uuid())))
-	var response := await async_search(query, max_results, screenshot_path)
+	var response := await async_search(query, max_results, screenshot_path, cancel_scope)
 	if response == null:
+		if cancel_scope.cancelled:
+			return AgentToolResult.error(StringUtils.format("error: web search cancelled: {}", query))
 		return AgentToolResult.error(StringUtils.format("error: web search request failed for: {}", query))
 	if response.results.is_empty():
 		var empty := StringUtils.format("No web results for: {}", query)
@@ -44,15 +46,18 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 
 
 ## Browser first; Bing's RSS endpoint when the browser server is unavailable, so a dead browser
-## still yields results. Returns null when both paths failed.
-static func async_search(query: String, count: int, screenshot_path: String) -> WebServer.SearchResponse:
-	var response := await WebServer.async_search(query, count, screenshot_path)
+## still yields results. Returns null when both paths failed, or when the caller cancelled the run
+## (no fallback request should start after a cancel).
+static func async_search(query: String, count: int, screenshot_path: String, cancel_scope: CancelScope) -> WebServer.SearchResponse:
+	var response := await WebServer.async_search(query, count, screenshot_path, cancel_scope)
 	if response != null:
 		if StringUtils.is_not_blank(response.screenshotError):
 			Log.error("web search screenshot failed error:[{}]", response.screenshotError)
 		return response
+	if cancel_scope.cancelled:
+		return null
 	Log.info("web search degraded to Bing RSS fallback query:[{}]", query)
-	var entries := await WebFallback.async_search(query, count)
+	var entries := await WebFallback.async_search(query, count, cancel_scope)
 	if entries.is_empty():
 		Log.error("web search fallback failed query:[{}]", query)
 		return null

@@ -26,7 +26,7 @@ func get_parameters() -> ToolParameters.Parameters:
 	return ToolParameters.Parameters.new()
 
 
-func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
+func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope) -> AgentToolResult:
 	return AgentToolResult.error("not implemented")
 
 

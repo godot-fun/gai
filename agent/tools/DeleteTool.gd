@@ -15,7 +15,7 @@ func get_parameters() -> ToolParameters.Parameters:
 	return ToolParameters.Parameters.new().string_prop(ARG_PATH, "Absolute or project-relative file path", true)
 
 
-func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
+func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope) -> AgentToolResult:
 	var raw_path := str(args.get(ARG_PATH, ""))
 	if StringUtils.is_blank(raw_path):
 		return AgentToolResult.error("error: path is required", AgentToolResult.ui_file_details("", "path is required"))

@@ -37,7 +37,7 @@ static func file_tools_reject_outside_workspace_test() -> void:
 		var tool: AgentTool = entry[0]
 		var args: Dictionary[String, Variant] = {}
 		args.assign(entry[1])
-		var result := await tool.async_execute(args)
+		var result := await tool.async_execute(args, CancelScope.new())
 		assert(result.is_error)
 		assert(result.content.contains("sandbox denied"))
 		assert(result.content.contains("outside workspace"))
@@ -50,11 +50,11 @@ static func edit_tool_replace_all_test() -> void:
 	var original := "before middle before"
 	assert(FileUtils.write_string_to_file(path, original) == OK)
 	var tool := EditTool.new()
-	var unique_result := await tool.async_execute({EditTool.ARG_PATH: path, EditTool.ARG_OLD_STRING: "before", EditTool.ARG_NEW_STRING: "after"})
+	var unique_result := await tool.async_execute({EditTool.ARG_PATH: path, EditTool.ARG_OLD_STRING: "before", EditTool.ARG_NEW_STRING: "after"}, CancelScope.new())
 	var unique_rejected := unique_result.is_error and FileUtils.read_file_to_string(path) == original
-	var replace_all_result := await tool.async_execute({EditTool.ARG_PATH: path, EditTool.ARG_OLD_STRING: "before", EditTool.ARG_NEW_STRING: "after", EditTool.ARG_REPLACE_ALL: true})
+	var replace_all_result := await tool.async_execute({EditTool.ARG_PATH: path, EditTool.ARG_OLD_STRING: "before", EditTool.ARG_NEW_STRING: "after", EditTool.ARG_REPLACE_ALL: true}, CancelScope.new())
 	var all_replaced := not replace_all_result.is_error and FileUtils.read_file_to_string(path) == "after middle after"
-	var empty_result := await tool.async_execute({EditTool.ARG_PATH: path, EditTool.ARG_OLD_STRING: "", EditTool.ARG_NEW_STRING: "invalid"})
+	var empty_result := await tool.async_execute({EditTool.ARG_PATH: path, EditTool.ARG_OLD_STRING: "", EditTool.ARG_NEW_STRING: "invalid"}, CancelScope.new())
 	var empty_rejected := empty_result.is_error and empty_result.content.contains("old_string must not be empty")
 	DirAccess.remove_absolute(path)
 	assert(unique_rejected)
@@ -77,7 +77,7 @@ static func required_file_tools_reject_missing_path_test() -> void:
 		var tool: AgentTool = entry[0]
 		var args: Dictionary[String, Variant] = {}
 		args.assign(entry[1])
-		var result := await tool.async_execute(args)
+		var result := await tool.async_execute(args, CancelScope.new())
 		assert(result.is_error)
 		assert(result.content.contains("required"))
 	pass
@@ -268,13 +268,13 @@ static func bash_policy_allows_normal_development_commands_test() -> void:
 static func bash_tool_rejects_dangerous_commands_when_sandbox_enabled_test() -> void:
 	var was_enabled := SandboxPolicy.is_enabled()
 	SandboxPolicy.set_enabled(true)
-	var result := await BashTool.new().async_execute({BashTool.ARG_COMMAND: "sudo apt update"})
+	var result := await BashTool.new().async_execute({BashTool.ARG_COMMAND: "sudo apt update"}, CancelScope.new())
 	assert(result.is_error)
 	assert(result.content.contains("sandbox denied"))
 	assert(result.content.contains(SandboxBashPolicyClass.REASON_PRIVILEGE_ESCALATION))
 
 	SandboxPolicy.set_enabled(false)
-	var allowed := await BashTool.new().async_execute({BashTool.ARG_COMMAND: "echo sandbox-ok"})
+	var allowed := await BashTool.new().async_execute({BashTool.ARG_COMMAND: "echo sandbox-ok"}, CancelScope.new())
 	assert(not allowed.is_error)
 	assert(allowed.content.contains("sandbox-ok"))
 	SandboxPolicy.set_enabled(was_enabled)

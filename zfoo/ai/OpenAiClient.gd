@@ -7,7 +7,7 @@ var api_key: String
 var base_url: String
 var model: String
 ## Optional cancellation scope; cancelling it aborts the in-flight request (see CancelScope).
-var cancel_scope: CancelScope = null
+var cancel_scope: CancelScope = CancelScope.new()
 
 
 func _init(p_api_key: String, p_base_url: String, p_model: String) -> void:

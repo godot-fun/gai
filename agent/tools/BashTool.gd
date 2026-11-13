@@ -18,7 +18,7 @@ func get_parameters() -> ToolParameters.Parameters:
 	return ToolParameters.Parameters.new().string_prop(ARG_COMMAND, "Shell command to execute", true)
 
 
-func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
+func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope) -> AgentToolResult:
 	var command := str(args.get(ARG_COMMAND, "")).strip_edges()
 	if command.is_empty():
 		return AgentToolResult.error("error: command is required")

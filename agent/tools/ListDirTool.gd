@@ -21,7 +21,7 @@ func get_parameters() -> ToolParameters.Parameters:
 	return params
 
 
-func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
+func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope) -> AgentToolResult:
 	var search_root := AgentWorkspace.resolve_path(str(args.get(ARG_PATH, "")))
 	if not SandboxPolicy.check_path_access(search_root):
 		return AgentToolResult.error(StringUtils.format("error: sandbox denied path outside workspace: {}", search_root), AgentToolResult.ui_file_details(search_root, "path outside workspace"))

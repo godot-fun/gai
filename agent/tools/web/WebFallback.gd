@@ -14,22 +14,29 @@ const MAX_BODY_BYTES: int = 5 * 1024 * 1024
 const USER_AGENT: String = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 const BING_RSS_URL: String = "https://www.bing.com/search"
 const CONTENT_TYPE_TEXT: String = "text"
+## Payload types that decode into readable text. Anything else (a PDF, an image) turns into
+## replacement characters and must not be handed to the model as if it were the page.
+const TEXT_MIME_TYPES: PackedStringArray = ["application/xhtml+xml", "application/xml", "application/json"]
 
 ## Escape hatch: false restores the browser-only behavior.
 static var enabled: bool = true
 
 
 ## Fetches the page over plain HTTP and extracts its article. Returns null when the page is
-## unreachable or its declared charset cannot be decoded.
-static func async_fetch(url: String) -> HtmlHelper.Article:
+## unreachable, carries a binary payload, or declares a charset that cannot be decoded.
+static func async_fetch(url: String, cancel_scope: CancelScope) -> HtmlHelper.Article:
 	if not enabled:
 		return null
-	var response := await HttpHelper.async_get(url, DEFAULT_TIMEOUT_MILLIS, ApiSetting.get_proxy_address(), build_headers())
+	var response := await HttpHelper.async_get(url, DEFAULT_TIMEOUT_MILLIS, ApiSetting.get_proxy_address(), build_headers(), cancel_scope)
 	if not has_body(response):
 		Log.info("web fallback fetch failed url:[{}] code:[{}] error:[{}]", url, response.code, response.error)
 		return null
+	var content_type := response.get_header("Content-Type")
+	if not is_text_payload(content_type):
+		Log.info("web fallback unsupported content type url:[{}] type:[{}]", url, content_type)
+		return null
 	var html := read_text(response)
-	var charset := HtmlHelper.get_declared_charset(html, response.get_header("Content-Type"))
+	var charset := HtmlHelper.get_declared_charset(html, content_type)
 	if not HtmlHelper.is_supported_charset(charset):
 		Log.info("web fallback unsupported charset url:[{}] charset:[{}]", url, charset)
 		return null
@@ -40,11 +47,11 @@ static func async_fetch(url: String) -> HtmlHelper.Article:
 
 
 ## Searches through Bing's RSS endpoint and returns at most [param count] results.
-static func async_search(query: String, count: int) -> Array[SearchResult]:
+static func async_search(query: String, count: int, cancel_scope: CancelScope) -> Array[SearchResult]:
 	if not enabled:
 		return []
 	var url := "%s?format=rss&q=%s" % [BING_RSS_URL, query.strip_edges().uri_encode()]
-	var response := await HttpHelper.async_get(url, DEFAULT_TIMEOUT_MILLIS, ApiSetting.get_proxy_address(), build_headers())
+	var response := await HttpHelper.async_get(url, DEFAULT_TIMEOUT_MILLIS, ApiSetting.get_proxy_address(), build_headers(), cancel_scope)
 	if not has_body(response):
 		Log.info("web fallback search failed query:[{}] code:[{}] error:[{}]", query, response.code, response.error)
 		return []
@@ -52,6 +59,15 @@ static func async_search(query: String, count: int) -> Array[SearchResult]:
 	if results.size() > count:
 		results.resize(count)
 	return results
+
+
+## True when the response carries text: a missing Content-Type counts as HTML, and every `text/*`
+## subtype decodes fine, so the check only has to reject the binary families.
+static func is_text_payload(content_type: String) -> bool:
+	var mime := content_type.get_slice(";", 0).strip_edges().to_lower()
+	if mime.is_empty():
+		return true
+	return mime.begins_with("text/") or TEXT_MIME_TYPES.has(mime)
 
 
 ## True when the exchange produced a usable 2xx payload. [method HttpResponse.is_ok] alone rejects a

@@ -14,5 +14,5 @@ func get_schema() -> ToolDef:
 	return definition
 
 
-func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
+func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope) -> AgentToolResult:
 	return await McpGateway.async_call_tool(server, remote_name, args, cancel_scope)

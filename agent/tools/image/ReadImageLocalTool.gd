@@ -19,7 +19,7 @@ func get_parameters() -> ToolParameters.Parameters:
 	return params
 
 
-func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
+func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope) -> AgentToolResult:
 	var path_result := resolve_image_path(str(args.get(ARG_PATH, "")))
 	if path_result.is_error:
 		return path_result

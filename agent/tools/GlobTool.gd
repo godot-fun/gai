@@ -19,7 +19,7 @@ func get_parameters() -> ToolParameters.Parameters:
 	return params
 
 
-func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
+func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope) -> AgentToolResult:
 	var pattern := str(args.get(ARG_PATTERN, "")).strip_edges()
 	if pattern.is_empty():
 		return AgentToolResult.error("error: pattern is required")

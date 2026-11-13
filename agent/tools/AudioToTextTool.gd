@@ -21,7 +21,7 @@ func get_parameters() -> ToolParameters.Parameters:
 	return params
 
 
-func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope = null) -> AgentToolResult:
+func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope) -> AgentToolResult:
 	var raw_path := str(args.get(ARG_PATH, "")).strip_edges()
 	if StringUtils.is_blank(raw_path):
 		return AgentToolResult.error("error: path is required")

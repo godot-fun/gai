@@ -98,6 +98,24 @@ func _poll_task(task: HttpTask) -> void:
 func fail(task: HttpTask, message: String) -> void:
 	if task.done:
 		return
+	terminate(task, message)
+	Log.error(message)
+	pass
+
+
+## Marks the task stopped by its caller (cancel or [method stop_all]). The bookkeeping matches
+## [method fail], but a caller-initiated stop is not a failure, so it logs at info level.
+func stop(task: HttpTask, message: String) -> void:
+	if task.done:
+		return
+	terminate(task, message)
+	Log.info(message)
+	pass
+
+
+## Shared tail of [method fail] and [method stop]: keeps the status code, closes the client, and stores
+## the message on the response.
+func terminate(task: HttpTask, message: String) -> void:
 	var client := task.client
 	task.done = true
 	# The server may have answered before the failure (a stalled or truncated body), so keep the status
@@ -105,7 +123,6 @@ func fail(task: HttpTask, message: String) -> void:
 	task.response.code = client.get_response_code()
 	client.close()
 	task.response.error = message
-	Log.error(message)
 	pass
 
 
@@ -129,14 +146,14 @@ func stop_last() -> void:
 	for index in range(signalTasks.size() - 1, -1, -1):
 		var task := signalTasks[index]
 		if !task.done:
-			fail(task, StringUtils.format("Http request stopped url:[{}]", task.url))
+			stop(task, StringUtils.format("Http request stopped url:[{}]", task.url))
 			return
 	pass
 
 ## Stops all requests that are still running.
 func stop_all() -> void:
 	for task in signalTasks:
-		fail(task, StringUtils.format("Http request stopped url:[{}]", task.url))
+		stop(task, StringUtils.format("Http request stopped url:[{}]", task.url))
 	pass
 
 
@@ -170,7 +187,7 @@ func async_request(method: HTTPClient.Method, url: String, body: String = "", he
 	task.on_body_chunk = on_body_chunk
 	signalTasks.append(task)
 	if cancel_scope != null:
-		cancel_scope.track(func() -> void: fail(task, StringUtils.format("Http request cancelled url:[{}]", task.url)))
+		cancel_scope.track(func() -> void: stop(task, StringUtils.format("Http request cancelled url:[{}]", task.url)))
 	var response: HttpResponse = await task.http_signal
 	var index := signalTasks.find(task)
 	signalTasks.remove_at(index)
