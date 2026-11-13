@@ -78,7 +78,7 @@ export class SearchApi implements ApiRoute {
     searchUrl.searchParams.set("q", query);
     searchUrl.searchParams.set("num", String(count));
     searchUrl.searchParams.set("udm", "14");
-    await page.goto(searchUrl.href, { waitUntil: "domcontentloaded" });
+    await page.goto(searchUrl.href, { waitUntil: "load" });
     await page.waitForSelector("#search a:has(h3)", { state: "visible" });
 
     const rawResults = await page.locator("#search a:has(h3)").evaluateAll((anchors) => anchors.map((element) => {
