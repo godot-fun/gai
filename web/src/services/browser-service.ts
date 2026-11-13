@@ -9,22 +9,19 @@ function unavailable(message: string): HttpError {
 
 export class BrowserService {
   private context: BrowserContext | null = null;
-  private host: Page | null = null;
-  private launching: Promise<void> | null = null;
-  private tabLock = Promise.resolve();
+  private launching: Promise<BrowserContext> | null = null;
 
   async start(): Promise<void> {
-    await this.ensure();
+    await this.getContext();
   }
 
   isReady(): boolean {
-    return this.host !== null && !this.host.isClosed();
+    return this.context !== null;
   }
 
-  /** Opens a tab. Caller must close the returned page. */
+  /** Opens a page. Caller must close it. Keep at least the launch blank page alive — Firefox exits if every page is closed. */
   async openPage(): Promise<Page> {
-    await this.ensure();
-    const page = await this.openTab();
+    const page = await (await this.getContext()).newPage();
     page.setDefaultNavigationTimeout(config.navigationTimeoutMs);
     page.setDefaultTimeout(config.navigationTimeoutMs);
     return page;
@@ -34,7 +31,6 @@ export class BrowserService {
     if (this.launching !== null) await this.launching.catch(() => undefined);
     const context = this.context;
     this.context = null;
-    this.host = null;
     if (context === null) return;
     try {
       await context.close();
@@ -43,16 +39,15 @@ export class BrowserService {
     }
   }
 
-  private async ensure(): Promise<void> {
-    if (this.isReady()) return;
+  private async getContext(): Promise<BrowserContext> {
+    if (this.context !== null) return this.context;
     this.launching ??= this.launch().finally(() => { this.launching = null; });
-    await this.launching;
+    return this.launching;
   }
 
-  private async launch(): Promise<void> {
-    let context: BrowserContext;
+  private async launch(): Promise<BrowserContext> {
     try {
-      context = await Camoufox({
+      const context = await Camoufox({
         persistent_context: true,
         user_data_dir: config.userDataDir,
         headless: config.headless,
@@ -65,44 +60,17 @@ export class BrowserService {
           "browser.startup.page": 0,
         },
       });
+      // Drop session-restored extras; keep pages[0] so the context stays alive.
+      await Promise.all(context.pages().slice(1).map((page) => page.close().catch(() => undefined)));
+      context.on("close", () => {
+        if (this.context === context) this.context = null;
+      });
+      this.context = context;
+      return context;
     } catch (error) {
       console.error("Camoufox launch failed", error);
       throw unavailable("Browser could not be started");
     }
-
-    const pages = context.pages();
-    const host = pages[0];
-    if (host === undefined) {
-      await context.close().catch(() => undefined);
-      throw unavailable("Browser could not be started");
-    }
-    // Keep the first window; Firefox tears the context down when the last window closes.
-    await Promise.all(pages.slice(1).map((page) => page.close().catch(() => undefined)));
-    context.on("close", () => {
-      // Intentionally closed paths null this.context first, so this only fires on crashes.
-      if (this.context !== context) return;
-      console.warn("Camoufox context closed unexpectedly; it will relaunch on the next request");
-      this.context = null;
-      this.host = null;
-    });
-    this.host = host;
-    this.context = context;
-  }
-
-  private openTab(): Promise<Page> {
-    const run = this.tabLock.then(async () => {
-      const context = this.context;
-      const host = this.host;
-      if (context === null || host === null || host.isClosed()) throw unavailable("Browser is unavailable");
-      // context.newPage() opens a new OS window in Firefox; window.open stays in the host window.
-      const [page] = await Promise.all([
-        context.waitForEvent("page"),
-        host.evaluate(() => window.open("about:blank", "_blank")),
-      ]);
-      return page;
-    });
-    this.tabLock = run.then(() => undefined, () => undefined);
-    return run;
   }
 }
 
