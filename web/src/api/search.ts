@@ -38,13 +38,15 @@ export class SearchApi implements ApiRoute {
     const body = requireObject(await readJsonBody(request));
     const query = requireString(body.query, "query").trim();
     const screenshotPath = optionalString(body.screenshotPath, "screenshotPath");
-    if (body.count !== undefined && typeof body.count !== "number") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "count must be a number");
-    if (body.engine !== undefined && !SEARCH_ENGINES.includes(body.engine as SearchEngine)) {
+    const count = body["count"];
+    const engine = body["engine"];
+    if (count !== undefined && typeof count !== "number") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "count must be a number");
+    if (engine !== undefined && !SEARCH_ENGINES.includes(engine as SearchEngine)) {
       throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "engine must be bing or google");
     }
     // Reject an unusable screenshot path before spending a browser page on the search.
     validateScreenshotPath(screenshotPath);
-    sendOk(response, await this.search(query, body.count, screenshotPath, body.engine as SearchEngine | undefined));
+    sendOk(response, await this.search(query, count as number | undefined, screenshotPath, engine as SearchEngine | undefined));
   }
 
   private async search(query: string, count: number = DEFAULT_RESULT_COUNT, screenshotPath?: string, engine?: SearchEngine): Promise<SearchResponse> {

@@ -25,7 +25,7 @@ export class StopApi implements ApiRoute {
 }
 
 async function closeChildren(): Promise<void> {
-  let timer: NodeJS.Timeout | undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     await Promise.race([
       Promise.all([browserService.close(), mcpService.close()]),

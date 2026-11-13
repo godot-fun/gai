@@ -67,7 +67,7 @@ function resolveScreenshotOptions(requestedPath?: string): ScreenshotOptions | n
 
 /** Waits two animation frames so late layout work lands in the capture, bounded by a timeout. */
 async function waitForLayout(page: Page): Promise<void> {
-  let timer: NodeJS.Timeout | undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     await Promise.race([
       page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))),

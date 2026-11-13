@@ -6,8 +6,7 @@ import { registerApi, type ApiRoute } from "./route";
 export class HealthyApi implements ApiRoute {
   readonly method = "GET";
   readonly path = "/healthy";
-
-  constructor(private readonly startedAt = Date.now()) {}
+  private readonly startedAt = Date.now();
 
   handle(_request: IncomingMessage, response: ServerResponse): void {
     const ready = browserService.isReady();
