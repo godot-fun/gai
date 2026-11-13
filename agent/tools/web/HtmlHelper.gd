@@ -5,6 +5,15 @@ extends Object
 ## Not a renderer: <article> or <main> wins as the content root when present, scripts/styles/comments
 ## are dropped, block tags become newlines, and entities are decoded.
 
+## The readable article of a page: the extraction result the fallback path hands to the tool layer.
+class Article extends RefCounted:
+	var title: String
+	var description: String
+	var content: String
+	var wordCount: int
+	pass
+
+
 ## Elements whose whole subtree is noise for a text extraction.
 static var re_drop_element: RegEx = RegEx.create_from_string(r"(?is)<(script|style|noscript|template|svg)\b[^>]*>.*?</\1\s*>")
 ## Leftover opening/closing tags of the dropped elements (an unclosed <script> keeps its text otherwise).
@@ -42,11 +51,11 @@ const ENTITIES: Dictionary[String, String] = {
 const CHARSET_SNIFF_CHARS: int = 4096
 
 
-## Extracts title, description, text content, and an approximate word count.
-## Returns an empty dictionary when there is nothing to read.
-static func extract(html: String) -> Dictionary:
+## Extracts the article of a page: title, description, body text, and an approximate word count.
+## Returns null when there is nothing to read.
+static func extract(html: String) -> Article:
 	if StringUtils.is_blank(html):
-		return {}
+		return null
 	var title := to_inline_text(extract_group(re_title, html))
 	var description := extract_description(html)
 	var body := re_comment.sub(html, StringUtils.EMPTY, true)
@@ -56,13 +65,13 @@ static func extract(html: String) -> Dictionary:
 	body = re_li_open.sub(body, "\n- ", true)
 	body = re_block.sub(body, "\n", true)
 	body = re_tag.sub(body, StringUtils.EMPTY, true)
-	var content := tidy_block(decode_entities(body))
-	return {
-		"title": title,
-		"description": description,
-		"content": content,
-		"wordCount": count_words(content),
-	}
+	var text := tidy_block(decode_entities(body))
+	var article := Article.new()
+	article.title = title
+	article.description = description
+	article.content = text
+	article.wordCount = count_words(text)
+	return article
 
 
 ## Charset declared by the Content-Type header or by a <meta> tag in the document head, lowercased.

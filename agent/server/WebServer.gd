@@ -39,14 +39,6 @@ class FetchResponse extends RefCounted:
 	pass
 
 
-class SearchResult extends RefCounted:
-	var position: int
-	var title: String
-	var url: String
-	var snippet: String
-	pass
-
-
 class SearchResponse extends RefCounted:
 	var query: String
 	var results: Array[SearchResult] = []

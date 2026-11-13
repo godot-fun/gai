@@ -1,7 +1,7 @@
 class_name BingRssParser
 extends Object
 
-## Parses Bing's RSS search feed (`/search?format=rss`) into plain result dictionaries.
+## Parses Bing's RSS search feed (`/search?format=rss`) into ranked [SearchResult] rows.
 ## Field-based XML with a fixed schema, so it is matched with regular expressions: Godot's
 ## XMLParser cannot return CDATA text, and a search snippet may wrap its highlight markup in CDATA.
 
@@ -14,21 +14,26 @@ static var re_description: RegEx = RegEx.create_from_string(r"(?is)<description\
 static var re_cdata: RegEx = RegEx.create_from_string(r"(?s)<!\[CDATA\[(.*?)\]\]>")
 
 
-## Returns [{title, url, snippet}] in feed order.
+## Returns the feed entries in feed order, numbered by [member SearchResult.position].
 ## Blank titles, non-HTTP(S) links, and duplicate URLs are dropped.
-static func parse(xml: String) -> Array[Dictionary]:
-	var results: Array[Dictionary] = []
+static func parse(xml: String) -> Array[SearchResult]:
+	var results: Array[SearchResult] = []
 	if StringUtils.is_blank(xml):
 		return results
 	var seen: Dictionary = {}
 	for item_match in re_item.search_all(xml):
-		var item := item_match.get_string(1)
-		var title := field(re_title, item)
-		var url := field(re_link, item)
+		var entry_xml := item_match.get_string(1)
+		var title := field(re_title, entry_xml)
+		var url := field(re_link, entry_xml)
 		if title.is_empty() or not is_http_url(url) or seen.has(url):
 			continue
 		seen[url] = true
-		results.append({"title": title, "url": url, "snippet": field(re_description, item)})
+		var result := SearchResult.new()
+		result.position = results.size() + 1
+		result.title = title
+		result.url = url
+		result.snippet = field(re_description, entry_xml)
+		results.append(result)
 		if results.size() >= MAX_RESULT_COUNT:
 			break
 	return results

@@ -58,13 +58,7 @@ static func async_search(query: String, count: int, screenshot_path: String) -> 
 		return null
 	var fallback := WebServer.SearchResponse.new()
 	fallback.query = query
-	for entry in entries:
-		var result := WebServer.SearchResult.new()
-		result.position = fallback.results.size() + 1
-		result.title = str(entry.get("title", StringUtils.EMPTY))
-		result.url = str(entry.get("url", StringUtils.EMPTY))
-		result.snippet = str(entry.get("snippet", StringUtils.EMPTY))
-		fallback.results.append(result)
+	fallback.results = entries
 	return fallback
 
 

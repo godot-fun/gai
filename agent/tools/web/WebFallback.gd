@@ -6,7 +6,7 @@ extends Object
 ## not a replacement — no JavaScript, no anti-bot handling, no screenshot, and no main-content
 ## heuristics beyond preferring <article>/<main>.
 ##
-## Every entry point returns an empty value on failure so [WebServer] keeps its browser-first
+## Every entry point returns an empty value on failure so the tools keep their browser-first
 ## contract: null still means "the web request failed".
 
 const DEFAULT_TIMEOUT_MILLIS: int = 10 * TimeUtils.MILLIS_PER_SECOND
@@ -19,33 +19,28 @@ const CONTENT_TYPE_TEXT: String = "text"
 static var enabled: bool = true
 
 
-## Fetches the page over plain HTTP and extracts its text.
-## Returns {title, description, content, wordCount, url, finalUrl, contentType} or {} on failure.
-static func async_fetch(url: String) -> Dictionary:
+## Fetches the page over plain HTTP and extracts its article. Returns null when the page is
+## unreachable or its declared charset cannot be decoded.
+static func async_fetch(url: String) -> HtmlHelper.Article:
 	if not enabled:
-		return {}
+		return null
 	var response := await HttpHelper.async_get(url, DEFAULT_TIMEOUT_MILLIS, ApiSetting.get_proxy_address(), build_headers())
 	if not has_body(response):
 		Log.info("web fallback fetch failed url:[{}] code:[{}] error:[{}]", url, response.code, response.error)
-		return {}
+		return null
 	var html := read_text(response)
 	var charset := HtmlHelper.get_declared_charset(html, response.get_header("Content-Type"))
 	if not HtmlHelper.is_supported_charset(charset):
 		Log.info("web fallback unsupported charset url:[{}] charset:[{}]", url, charset)
-		return {}
-	var page := HtmlHelper.extract(html)
-	if page.is_empty():
+		return null
+	var article := HtmlHelper.extract(html)
+	if article == null:
 		Log.info("web fallback extracted nothing url:[{}]", url)
-		return {}
-	# HttpHelper follows redirects internally and does not report the final URL, so the request URL stands in.
-	page["url"] = url
-	page["finalUrl"] = url
-	page["contentType"] = CONTENT_TYPE_TEXT
-	return page
+	return article
 
 
-## Searches through Bing's RSS endpoint and returns [{title, url, snippet}] capped at [param count].
-static func async_search(query: String, count: int) -> Array[Dictionary]:
+## Searches through Bing's RSS endpoint and returns at most [param count] results.
+static func async_search(query: String, count: int) -> Array[SearchResult]:
 	if not enabled:
 		return []
 	var url := "%s?format=rss&q=%s" % [BING_RSS_URL, query.strip_edges().uri_encode()]

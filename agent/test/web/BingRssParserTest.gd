@@ -13,6 +13,8 @@ const SAMPLE_RSS: String = "<?xml version=\"1.0\" encoding=\"utf-8\" ?><rss vers
 func parse_results_test() -> void:
 	var results := BingRssParser.parse(SAMPLE_RSS)
 	assert(results.size() == 2)
+	assert(results[0].position == 1)
+	assert(results[1].position == 2)
 	assert(results[0].title == "Godot & Engine")
 	assert(results[0].url == "https://godotengine.org/")
 	assert(results[0].snippet == "Free & open source")

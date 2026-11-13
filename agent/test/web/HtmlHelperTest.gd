@@ -4,37 +4,37 @@ func extract_prefers_article_test() -> void:
 	var html := "<html><head><title>Docs &amp; API</title><meta name=\"description\" content=\"Fast engine\"></head>" \
 		+ "<body><nav>menu item</nav><article><h1>Intro</h1><p>alpha <b>beta</b> gamma</p><ul><li>one</li><li>two</li></ul></article>" \
 		+ "<footer>footer text</footer></body></html>"
-	var page := HtmlHelper.extract(html)
-	assert(page.title == "Docs & API")
-	assert(page.description == "Fast engine")
-	assert("alpha beta gamma" in page.content)
-	assert("- one" in page.content)
-	assert("- two" in page.content)
-	assert("menu item" not in page.content)
-	assert("footer text" not in page.content)
+	var article := HtmlHelper.extract(html)
+	assert(article.title == "Docs & API")
+	assert(article.description == "Fast engine")
+	assert("alpha beta gamma" in article.content)
+	assert("- one" in article.content)
+	assert("- two" in article.content)
+	assert("menu item" not in article.content)
+	assert("footer text" not in article.content)
 	pass
 
 
 func extract_prefers_main_test() -> void:
-	var page := HtmlHelper.extract("<body><div>sidebar</div><main><p>main text</p></main></body>")
-	assert("main text" in page.content)
-	assert("sidebar" not in page.content)
+	var article := HtmlHelper.extract("<body><div>sidebar</div><main><p>main text</p></main></body>")
+	assert("main text" in article.content)
+	assert("sidebar" not in article.content)
 	pass
 
 
 func extract_drops_noise_elements_test() -> void:
 	var html := "<body><script>var x = 1 < 2;</script><style>.a{color:red}</style><p>visible</p><!-- note --></body>"
-	var page := HtmlHelper.extract(html)
-	assert("visible" in page.content)
-	assert("var x" not in page.content)
-	assert("color:red" not in page.content)
-	assert("note" not in page.content)
+	var article := HtmlHelper.extract(html)
+	assert("visible" in article.content)
+	assert("var x" not in article.content)
+	assert("color:red" not in article.content)
+	assert("note" not in article.content)
 	pass
 
 
 func extract_decodes_entities_test() -> void:
-	var page := HtmlHelper.extract("<p>a&nbsp;&amp;&nbsp;b &#39;c&#39; &#65; &lt;tag&gt;</p>")
-	assert(page.content == "a & b 'c' A <tag>")
+	var article := HtmlHelper.extract("<p>a&nbsp;&amp;&nbsp;b &#39;c&#39; &#65; &lt;tag&gt;</p>")
+	assert(article.content == "a & b 'c' A <tag>")
 	pass
 
 
@@ -45,13 +45,13 @@ func decode_named_entities_test() -> void:
 
 
 func extract_separates_blocks_test() -> void:
-	var page := HtmlHelper.extract("<p>first</p><p>second</p>")
-	assert(page.content == "first\n\nsecond")
+	var article := HtmlHelper.extract("<p>first</p><p>second</p>")
+	assert(article.content == "first\n\nsecond")
 	pass
 
 
 func extract_empty_test() -> void:
-	assert(HtmlHelper.extract("   ").is_empty())
+	assert(HtmlHelper.extract("   ") == null)
 	pass
 
 
