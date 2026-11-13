@@ -1,158 +1,141 @@
-# GAI
+<p align="center">
+  <img src="icon.svg" width="112" alt="GAI logo">
+</p>
 
-**An all-in-one AI workspace for Godot game development: build and verify code with a desktop agent, then connect audio, image, and video tools through visual workflows.**
+<h1 align="center">GAI</h1>
 
-GAI brings together a coding agent, reusable skills, command-line tools, and a lightweight Godot framework in one repository. Ask the agent to inspect a project, edit files, run commands, and execute tests—or connect processing nodes visually to build repeatable asset pipelines.
+<p align="center">
+  <b>An AI coding teammate that moves into your Godot project.</b>
+</p>
 
-## Desktop Coding Agent
+<p align="center">
+  <img alt="Godot 4.6" src="https://img.shields.io/badge/Godot-4.6-478cbf?logo=godotengine&logoColor=white">
+  <img alt="GDScript" src="https://img.shields.io/badge/GDScript-4.x-355570?logo=godotengine&logoColor=white">
+  <img alt="GDExtension" src="https://img.shields.io/badge/GDExtension-godot--cpp-00599c?logo=cplusplus&logoColor=white">
+  <img alt="MIT" src="https://img.shields.io/badge/license-MIT-22c55e">
+</p>
+
+> **It explores your repo, edits files, runs your tests, and shows you the diff — without leaving the app.**
+>
+> Every turn is a checkpoint, memory survives sessions, and MCP tools plug straight into the loop.
+
+## 🖼️ Look inside
 
 ![GAI desktop coding agent](agent/asset/image/screenshot/gai_1.png)
 
-Complete the full loop from request to verification in a native Godot desktop interface:
+<p align="center"><i>Streaming tool calls, inline diffs, and token usage — the whole loop in one window.</i></p>
 
-- Stream responses, command output, and file changes in real time
-- Use built-in `read`, `write`, `edit`, `delete`, `list_dir`, `glob`, `grep`, `bash`, `web_search`, and `web_fetch` tools
-- Run a model loop that calls tools, feeds their results back to the model, and repeats until it stops asking for tools or you end the run
-- Run multiple independent sessions and switch between them while agents are working
-- Preserve conversation history and pin frequently used sessions
-- Create workspace checkpoints before changes, with support for reverting conversations and files
-- Connect to OpenAI-compatible APIs with configurable models, endpoints, and proxies
+## ✨ Why it feels different
 
-## Visual Workflow Editor
+- 🧠 **An agent loop, not autocomplete.** Reads the codebase, plans, edits, runs commands and tests, then keeps going until the work is done.
+- 🧾 **Every turn is a checkpoint.** Diff it, restore one file, or roll the whole workspace back (when Git is installed). Your own repository is never touched.
+- 💾 **Memory that persists.** During compaction a background agent curates `.memory/` — your rules, goals, and history — so the next session already knows.
+- 🖥️ **An editor, not a bystander.** File tree, tabs, images, Markdown preview, and a Git Bash window, one click from the chat.
+- 🔌 **MCP-ready.** Any MCP tool joins the built-in toolbox and shows up in the same streaming transcript.
+- 🛡️ **Local-first vision.** Attach an image to the request, or let MiniCPM-V describe it on your machine. Only chat needs an endpoint.
 
-![GAI visual workflow editor](agent/asset/image/screenshot/workflow_1.png)
-
-The workflow editor exposes repository skills as connectable nodes. Select an input, connect processing steps, and run the entire pipeline at once:
-
-- Browse skill nodes grouped into Input, Audio, Image, Video, and other categories
-- Connect type-safe `audio`, `image`, `video`, `text`, and `folder` ports
-- Process entire folders with batch iteration and glob matching
-- Execute nodes in dependency order while monitoring progress and logs
-- Save workflows as `.workflow.json` files and reopen them later
-- Switch between English and Chinese interfaces
-
-The screenshot above shows this audio pipeline:
+## 🔁 One task, end to end
 
 ```text
-Input folder
-  → Batch for each
-  → Convert to WAV
-  → Trim leading and trailing silence
-  → Normalize loudness
-  → Standardize sample rate
-  → Export to OGG
+ask → explore → edit → verify → review
+      glob        edit   bash     diff
+      grep        write           checkpoint
+      read        delete
+        ↑                      │
+        └───────── fix ────────┘
 ```
 
-## Features
+## 🧰 The toolbox
 
-| Module | Capabilities |
+| Task | Tools |
 | --- | --- |
-| Agent | Understand codebases, edit files, run commands and tests, and search the web |
-| Workflow | Compose skills as nodes with batch processing, persistence, and execution logs |
-| AI | Text-to-speech and zero-shot voice cloning |
-| Audio | Conversion, trimming, denoising, fades, volume and loudness processing, and sample-rate standardization |
-| Image | PNG conversion, local inpainting, sprite-sheet splitting, background removal, trimming, and resizing |
-| Video | Audio-track processing, 60 FPS interpolation, 4K upscaling and normalization, merging, compression, and OGV export |
-| Storyboard | Bilingual storyboards, HTML animation previews, narration, audio/video mixing, and multi-platform publishing copy |
-| Godot Framework | AI chat (streaming, tools, cancellation), HTTP, subprocesses, concurrent executors, networking, async resources, audio, scenes, logging, settings, localization, UI tokens, testing, and shared utilities |
-| C++ (godot-cpp) | GDExtension support via godot-cpp for native classes usable from GDScript |
+| Explore the codebase | `list_dir` · `glob` · `grep` · `read` |
+| Change files | `edit` · `write` · `delete` |
+| Verify | `bash` — commands, builds, test suites |
+| Images & audio | `read_image` · `audio_to_text` |
+| Web | `web_search` · `web_fetch` |
+| Everything else | Any tool exposed by your MCP servers |
 
-See [`.agents/skills/README.md`](.agents/skills/README.md) for the complete skill catalog and usage details.
+## ⚡ Start in 30 seconds
 
-## Quick Start
-
-### Run the Coding Agent
-
-1. Open the root `project.godot` file in Godot.
-2. Set `OPENAI_API_KEY`, or configure the API connection from the Agent toolbar.
-3. Open `agent/Agent.tscn` and press **F6** to run the current scene.
-
-Alternatively, temporarily set the main scene to:
-
-```ini
-run/main_scene="res://agent/Agent.tscn"
+```bash
+.dependency/node/npm.cmd install --prefix web   # once
+agent.bat                                       # pull, reimport, launch
 ```
 
-### Run the Workflow Editor
+Set `OPENAI_API_KEY` or configure the connection in **Settings**. Runtimes live under `.dependency/` — see [`agent/Dependency.md`](agent/Dependency.md).
 
-1. Open this project in Godot.
-2. Open `agent/app/workflow/Workflow.tscn`.
-3. Press **F6**, then double-click nodes in the skill library and connect them on the canvas.
-4. Provide the required input paths and click **Run**.
+## 🧱 Under the hood
 
-See the [Workflow documentation](agent/app/workflow/README.md) for more details.
+- **AI** — streaming chat, tool calls, cancellation, JSON serialization
+- **Runtime** — concurrency executors, networking, subprocesses, hot-update PCK, scheduler, audio, scenes
+- **UI** — theme tokens, display scaling, alerts, toasts, popups, shared windows
+- **Native** — godot-cpp extension for global hotkeys and OS integration (Windows)
 
-## Skills and CLI
+Read [`AGENTS.md`](AGENTS.md) for conventions, [`cpp/README.md`](cpp/README.md) for native builds.
 
-Each skill consists of two parts:
+<details>
+<summary><b>More</b> — asset skills, workflows, local services, MCP, tests</summary>
 
-- [`.agents/skills/`](.agents/skills/): instructions and execution constraints for AI agents
-- [`.ai/`](.ai/): scripts that perform the actual processing
+### Beyond code: asset skills
 
-Run all scripts from the repository root. Source files are not overwritten by default. Refer to the corresponding `SKILL.md` for commands, flags, dependencies, and output rules.
-
-For example, to convert an audio file to WAV:
+The agent also owns a library of **36 asset skills** — audio cleanup, image processing, video
+pipelines, storyboards, and TTS. Each is a folder with a `SKILL.md` the agent understands and an
+`.ai/` script the machine runs, reachable from chat, the CLI, and a typed node canvas.
 
 ```bash
 .dependency/python/python .ai/audio-to-wav/convert.py --audio path/to/audio.mp3
 ```
 
-Skills can be invoked by the desktop agent, executed directly from the command line, or combined into reusable visual workflows.
+![GAI workflow editor](agent/asset/image/screenshot/workflow_1.png)
 
-## Agent Compatibility
+Browse the [full catalog](.agents/skills/README.md); details are in [`agent/app/workflow/README.md`](agent/app/workflow/README.md).
 
-The root [`AGENTS.md`](AGENTS.md) defines shared project conventions. Skills can also be reused with other coding agents that support project instructions or skill packages.
+### Local services
+
+| Service | Role |
+| --- | --- |
+| [`web/`](web/) | Node.js + Playwright: web search, page fetch with screenshots, MCP gateway (`GET /mcp/tools`, `POST /mcp/call`) |
+| [`VLMServer`](agent/server/VLMServer.gd) | MiniCPM-V via llama.cpp: local image reading and descriptions (idle-released) |
+
+### MCP
+
+Copy `web/mcp.example.json` to `web/mcp.json`, list stdio or Streamable HTTP servers, then restart the browser service from **Settings**.
+
+### Works with other agents
 
 | Agent | Setup |
 | --- | --- |
 | OpenCode | Use the included [`opencode.json`](opencode.json) |
 | DeepSeek / Codex | Native project-instruction and skill support |
-| Cursor | Keep `AGENTS.md` and copy `.agents/skills/` to `.cursor/skills/` |
-| Claude | Copy the contents of `AGENTS.md` to `CLAUDE.md`, then copy `.agents/skills/` to `.claude/skills/` |
+| Cursor | Copy `.agents/skills/` to `.cursor/skills/` |
+| Claude | Copy `AGENTS.md` to `CLAUDE.md`, then copy `.agents/skills/` to `.claude/skills/` |
 
-## Godot Framework
-
-[`zfoo/`](zfoo/) is the reusable Godot framework that powers GAI. Highlights:
-
-- **AI** — `OpenAiClient` with non-stream and SSE streaming chat, tool calls, and `CancelScope`
-- **HTTP & processes** — `HttpHelper` / `AsyncHttp` (redirects, proxy, cancellation); `OSUtils` for sync/async subprocesses
-- **Concurrency** — `ExecutorHelper` (single-thread and worker-pool queues), `ConcurrentArrayList`, `ConcurrentMapInt`
-- **Assets** — `ResourceHelper` / `AsyncResourceLoader`, plus `ImageHelper` and `VideoHelper` for external files
-- **Runtime** — TCP/WebSocket sessions and `Router`, audio (`Audio`, `Audios`, `AudioRecorder`), scene transitions, hot-update PCK flow
-- **App plumbing** — `Log` / `LoggerHelper`, `Setting`, `SchedulerBus`
-- **I18n** — locale in `Setting`, `I18n.t()`, `locale_changed` for UI refresh
-- **UI** — theme tokens (`ThemeColor`, `Colors`, `FileColors`), control styles, `DisplayScale`, `ScreenUtils` (window / active monitor, usable area), feedback (`Alert`, `DesktopToast`, `PopupWindow`, `CommonWindow`, `ImagePreviewWindow`); see **UI** in [`AGENTS.md`](AGENTS.md)
-- **Tests** — `UnitTest` and `IntegrationTest` under `zfoo/gdtest/`
-
-Agent-facing API notes and GDScript conventions live in [`AGENTS.md`](AGENTS.md).
-
-To reuse it in another Godot project:
-
-1. Copy `zfoo/` into the target project.
-2. Register the following entry under **Project → Project Settings → Autoload**:
-
-| Name | Path |
-| --- | --- |
-| `GodotFramework` | `res://zfoo/GodotFramework.tscn` |
-
-The Autoload exposes the global class name `gdf`. Call `gdf.shutdown()` for a clean exit (HTTP, subprocesses, and executors are stopped automatically).
-
-## Repository Structure
+### Repository map
 
 ```text
-gai/
-├── agent/           # Desktop coding agent and visual workflow editor
-├── cli/             # Command-line examples for individual skills
-├── cpp/             # godot-cpp GDExtension (C++ native classes)
-├── .agents/skills/  # Agent skill definitions and instructions
-├── .ai/             # Skill implementation scripts
-├── .dependency/     # Isolated runtimes, models, and external tools
-├── zfoo/            # Reusable Godot framework
-└── test/            # Unit and integration tests
+agent/  desktop agent · editor · tools · MCP · local servers
+web/    Node.js browser + MCP gateway        cpp/   godot-cpp GDExtension
+cli/    skill command examples               zfoo/  reusable Godot framework
+.ai/    skill scripts                        .dependency/  isolated runtimes
+.agents/skills/  skill definitions           .memory/      durable agent memory
+test/   zfoo tests                           agent/test/   app tests
 ```
 
-See [`cpp/README.md`](cpp/README.md) for build and usage details.
+### Tests
 
-## License
+```bash
+# framework unit tests
+.dependency/godot-4.6.1/Godot_v4.6.1-stable_win64_console.exe --headless --path . res://test/common/CommonTest.tscn
 
-This project is released under the terms described in [LICENSE](LICENSE).
+# agent integration suite
+.dependency/godot-4.6.1/Godot_v4.6.1-stable_win64_console.exe --headless --path . res://agent/test/AgentIntegrationTest.tscn
+```
+
+A run passes only when Godot exits with code `0`; see **Testing** in [`AGENTS.md`](AGENTS.md).
+
+</details>
+
+## 📄 License
+
+MIT — see [LICENSE](LICENSE).
