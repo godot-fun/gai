@@ -46,7 +46,7 @@ export class FetchApi implements ApiRoute {
     }
     const page = await browserService.openPage();
     try {
-      await page.goto(requestedUrl.href, { waitUntil: "domcontentloaded" });
+      await page.goto(requestedUrl.href, { waitUntil: "load" });
       const finalUrl = page.url();
       const html = await page.content();
       const result = await Defuddle(html, finalUrl, { markdown: true, useAsync: false });
