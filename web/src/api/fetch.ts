@@ -44,9 +44,8 @@ export class FetchApi implements ApiRoute {
     } catch {
       throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_URL", "url must be a valid absolute URL");
     }
+    const page = await browserService.openPage();
     try {
-      await using browserPage = await browserService.acquirePage();
-      const page = browserPage.page;
       await page.goto(requestedUrl.href, { waitUntil: "domcontentloaded" });
       const finalUrl = page.url();
       const html = await page.content();
@@ -74,6 +73,8 @@ export class FetchApi implements ApiRoute {
       if (error instanceof Error && error.name === "TimeoutError") throw new HttpError(HttpStatus.GATEWAY_TIMEOUT, "NAVIGATION_TIMEOUT", "Page navigation timed out");
       console.error(error);
       throw new HttpError(HttpStatus.BAD_GATEWAY, "FETCH_FAILED", "Page content could not be fetched");
+    } finally {
+      await page.close().catch(() => undefined);
     }
   }
 }

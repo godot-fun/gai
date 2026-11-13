@@ -53,12 +53,12 @@ export class SearchApi implements ApiRoute {
     }
 
     const selectedEngine = engine ?? (isProxyEnabled() ? SearchEngine.Google : SearchEngine.Bing);
+    const page = await browserService.openPage();
     try {
-      await using browserPage = await browserService.acquirePage();
       const results = selectedEngine === SearchEngine.Google
-        ? await this.searchGoogle(browserPage.page, query, count)
-        : await this.searchBing(browserPage.page, query, count);
-      const screenshot = await captureScreenshot(browserPage.page, screenshotPath);
+        ? await this.searchGoogle(page, query, count)
+        : await this.searchBing(page, query, count);
+      const screenshot = await captureScreenshot(page, screenshotPath);
       return { query, results, ...screenshot };
     } catch (error) {
       if (error instanceof HttpError) throw error;
@@ -66,6 +66,8 @@ export class SearchApi implements ApiRoute {
       if (error instanceof Error && error.name === "TimeoutError") throw new HttpError(HttpStatus.GATEWAY_TIMEOUT, "NAVIGATION_TIMEOUT", `${engineName} search timed out`);
       console.error(error);
       throw new HttpError(HttpStatus.BAD_GATEWAY, "SEARCH_FAILED", `${engineName} search failed`);
+    } finally {
+      await page.close().catch(() => undefined);
     }
   }
 

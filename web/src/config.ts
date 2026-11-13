@@ -23,7 +23,6 @@ export interface ServerConfig {
   headless: boolean;
   userDataDir: string;
   proxy: string;
-  browserMaxConcurrency: number;
   navigationTimeoutMs: number;
   requestTimeoutMs: number;
   mcpConfigPath: string;
@@ -65,7 +64,6 @@ export function loadConfig(): ServerConfig {
     headless: readBooleanArgument("browser-headless") ?? readBoolean("BROWSER_HEADLESS", true),
     userDataDir: process.env.CAMOUFOX_USER_DATA_DIR?.trim() || "./.user_data",
     proxy: readArgument("proxy-address") || process.env.BROWSER_PROXY?.trim() || "",
-    browserMaxConcurrency: readPositiveInteger("BROWSER_MAX_CONCURRENCY", 4),
     navigationTimeoutMs: readPositiveInteger("NAVIGATION_TIMEOUT_MS", 30_000),
     requestTimeoutMs: readPositiveInteger("REQUEST_TIMEOUT_MS", 45_000),
     mcpConfigPath: process.env.MCP_CONFIG_PATH?.trim() || "mcp.json",
