@@ -1,6 +1,8 @@
 # gai-web-server
 
-Install:
+Always run through `.dependency/node/npm.cmd` so the repo Node is used (not a host install).
+
+Install (dependencies + Chromium via `postinstall`):
 
 ```bash
 .dependency/node/npm.cmd install --prefix web

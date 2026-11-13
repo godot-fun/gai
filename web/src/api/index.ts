@@ -1,4 +1,4 @@
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { createServer, IncomingMessage, Server, ServerResponse } from "node:http";
 import { config } from "../config";
 import { HttpError, HttpStatus, sendError, sendJson } from "../http";
 import "./fetch";
@@ -6,7 +6,7 @@ import "./healthy";
 import "./mcp";
 import "./search";
 import "./stop";
-import { getApiRoutes, type ApiRoute } from "./route";
+import { getApiRoutes, ApiRoute } from "./route";
 
 // Routing only needs the request path, so a fixed base keeps a hostile Host header out of URL parsing.
 const BASE_URL = "http://localhost";

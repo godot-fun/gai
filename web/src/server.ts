@@ -1,5 +1,5 @@
 import { once } from "node:events";
-import type { Server } from "node:http";
+import { Server } from "node:http";
 import { createApiServer } from "./api/index";
 import { getApiRoutes } from "./api/route";
 import { config } from "./config";
@@ -18,7 +18,7 @@ async function closeServer(server: Server): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  console.log("Starting CloakBrowser...");
+  console.log("Starting browser...");
   await browserService.start();
   const server = createApiServer();
   await listen(server);

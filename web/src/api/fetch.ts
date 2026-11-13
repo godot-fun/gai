@@ -1,9 +1,9 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
+import { IncomingMessage, ServerResponse } from "node:http";
 import { Defuddle } from "defuddle/node";
 import { HttpError, HttpStatus, optionalString, readJsonBody, requireObject, requireString, sendOk } from "../http";
 import { browserService } from "../services/browser-service";
 import { captureScreenshot, validateScreenshotPath } from "../services/screenshot-service";
-import { registerApi, type ApiRoute } from "./route";
+import { registerApi, ApiRoute } from "./route";
 
 export interface FetchResponse {
   url: string;

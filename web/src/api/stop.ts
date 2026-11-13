@@ -1,9 +1,9 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
+import { IncomingMessage, ServerResponse } from "node:http";
 import { sendOk } from "../http";
 import { browserService } from "../services/browser-service";
 import { mcpService } from "../services/mcp-service";
 import { shutdown } from "../shutdown";
-import { registerApi, type ApiRoute } from "./route";
+import { registerApi, ApiRoute } from "./route";
 
 // The caller force-kills this process right after the reply, so never let cleanup block the reply.
 const PRE_SHUTDOWN_TIMEOUT_MS = 5_000;

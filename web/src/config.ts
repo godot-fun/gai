@@ -1,6 +1,9 @@
 import "dotenv/config";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { ProxyAgent, setGlobalDispatcher } from "undici";
 
+const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 // ---------------------------------------------------------------------------------------------------------------------
 export interface ServerConfig {
@@ -8,11 +11,19 @@ export interface ServerConfig {
   port: number;
   headless: boolean;
   userDataDir: string;
+  /** Playwright browsers dir; `0` means node_modules/playwright-core/.local-browsers. */
+  playwrightBrowsersPath: string;
   proxy: string;
   browserMaxConcurrency: number;
   navigationTimeoutMs: number;
   requestTimeoutMs: number;
   mcpConfigPath: string;
+}
+
+function resolvePlaywrightBrowsersPath(raw: string): string {
+  const value = raw.trim() || "0";
+  if (value === "0" || path.isAbsolute(value)) return value;
+  return path.resolve(packageRoot, value);
 }
 
 function readPositiveInteger(name: string, fallback: number): number {
@@ -49,7 +60,8 @@ export function loadConfig(): ServerConfig {
     host: process.env.HOST?.trim() || "127.0.0.1",
     port: readPositiveInteger("PORT", 3000),
     headless: readBooleanArgument("browser-headless") ?? readBoolean("BROWSER_HEADLESS", true),
-    userDataDir: process.env.CLOAKBROWSER_USER_DATA_DIR?.trim() || "./.user_data",
+    userDataDir: process.env.BROWSER_USER_DATA_DIR?.trim() || "./.user_data",
+    playwrightBrowsersPath: resolvePlaywrightBrowsersPath(process.env.PLAYWRIGHT_BROWSERS_PATH ?? "0"),
     proxy: readArgument("proxy-address") || process.env.BROWSER_PROXY?.trim() || "",
     browserMaxConcurrency: readPositiveInteger("BROWSER_MAX_CONCURRENCY", 4),
     navigationTimeoutMs: readPositiveInteger("NAVIGATION_TIMEOUT_MS", 30_000),
@@ -59,15 +71,14 @@ export function loadConfig(): ServerConfig {
 }
 
 export const config = loadConfig();
+process.env.PLAYWRIGHT_BROWSERS_PATH = config.playwrightBrowsersPath;
 
 export function isProxyEnabled(): boolean {
   return config.proxy !== "";
 }
 
-// Route downloads (the CloakBrowser binary) through the configured proxy as well.
 if (isProxyEnabled()) {
   setGlobalDispatcher(new ProxyAgent(config.proxy));
   console.log(`Proxy enabled address:[${config.proxy}]`);
-  console.log(`CloakBrowser cache path:[${process.env.CLOAKBROWSER_CACHE_DIR ?? ""}]`);
   console.log(`Working path:[${process.cwd()}]`);
 }

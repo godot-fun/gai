@@ -1,4 +1,4 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
+import { IncomingMessage, ServerResponse } from "node:http";
 
 const MAX_REQUEST_BODY_BYTES = 1024 * 1024;
 
