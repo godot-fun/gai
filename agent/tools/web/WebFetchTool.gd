@@ -1,7 +1,8 @@
 class_name WebFetchTool
 extends AgentTool
 
-## Fetch a URL through the local browser server and return extracted Markdown.
+## Fetch a URL through the local browser server, degrading to plain HTTP with a local text
+## extraction (see [WebFallback]) when that server or its browser is unavailable.
 
 const NAME := "web_fetch"
 const ARG_URL := "url"
@@ -34,13 +35,28 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope 
 	if args.has(ARG_MAX_CHARS) and str(args.get(ARG_MAX_CHARS, "")).strip_edges().is_valid_int():
 		max_chars = clampi(int(str(args.get(ARG_MAX_CHARS, "")).strip_edges()), 1_000, MAX_CHARS_CAP)
 	var screenshot_path := FileUtils.globalize_writable_path(CacheManager.get_web_screenshot_cache_dir().path_join(StringUtils.format("fetch_{}.webp", IdUtils.uuid())))
-	var response := await WebServer.async_fetch(url, screenshot_path)
-	if response == null:
+	var page := await async_fetch(url, screenshot_path)
+	if page.is_empty():
 		return AgentToolResult.error(StringUtils.format("error: fetch failed: {}", url))
-	if StringUtils.is_not_blank(response.screenshotError):
-		Log.error("web fetch screenshot failed error:[{}]", response.screenshotError)
-	if StringUtils.is_blank(response.content):
+	var content := str(page.get("content", StringUtils.EMPTY))
+	if StringUtils.is_blank(content):
 		return AgentToolResult.error(StringUtils.format("error: empty response from {}", url))
-	var text := StringUtils.truncate(response.content.strip_edges(), max_chars, FileUtils.NEWLINE_LF + TRUNCATED_SUFFIX)
-	return AgentToolResult.ok(text, AgentToolResult.ui_web_details(NAME, text, response.screenshotPath))
+	var text := StringUtils.truncate(content.strip_edges(), max_chars, FileUtils.NEWLINE_LF + TRUNCATED_SUFFIX)
+	return AgentToolResult.ok(text, AgentToolResult.ui_web_details(NAME, text, str(page.get("screenshotPath", StringUtils.EMPTY))))
 # AgentTool-Interface-Implement-End
+
+
+## Browser first; plain HTTP when the browser server is unavailable, so a dead browser still fetches.
+## Returns {content, screenshotPath} or an empty dictionary when both paths failed.
+static func async_fetch(url: String, screenshot_path: String) -> Dictionary:
+	var response := await WebServer.async_fetch(url, screenshot_path)
+	if response != null:
+		if StringUtils.is_not_blank(response.screenshotError):
+			Log.error("web fetch screenshot failed error:[{}]", response.screenshotError)
+		return {"content": response.content, "screenshotPath": response.screenshotPath}
+	Log.info("web fetch degraded to HTTP fallback url:[{}]", url)
+	var fallback := await WebFallback.async_fetch(url)
+	if fallback.is_empty():
+		Log.error("web fetch fallback failed url:[{}]", url)
+		return {}
+	return {"content": str(fallback.get("content", StringUtils.EMPTY)), "screenshotPath": StringUtils.EMPTY}
