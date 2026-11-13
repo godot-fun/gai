@@ -66,18 +66,29 @@ static func _static_init() -> void:
 	await ThreadUtils.async_sleep(TimeUtils.MILLIS_PER_SECOND)
 	gdf.events.application_end.connect(stop_process)
 	AgentEvents.events.proxy_address_changed.connect(on_proxy_address_changed)
-	await async_restart()
+	await async_start()
 	pass
 
 
-static func async_restart() -> int:
-	await async_stop()
+## Starts the server only when it is not already healthy. async_ensure_server_running owns that
+## health check and reuses a running instance, so a plain launch never pays for the heavy stop/start cycle.
+static func async_start() -> int:
 	var error := await async_ensure_server_running()
 	if error != OK:
-		Log.error("web server restart failed error:[{}]", error)
+		Log.error("web server start failed error:[{}]", error)
 		return error
 	AgentEvents.events.web_server_started.emit()
 	return OK
+
+
+## Heavy stop/start cycle. Reserve it for changes the running process cannot pick up (proxy address,
+## browser mode) and for explicit user restarts.
+static func async_restart() -> int:
+	await async_stop()
+	if await NetUtils.telnet(server_host, server_port):
+		Log.error("web server restart aborted because the old process is still listening url:[{}]", server_url())
+		return FAILED
+	return await async_start()
 
 
 static func on_proxy_address_changed() -> void:
@@ -182,9 +193,9 @@ static func load_server_config() -> void:
 # ----------------------------------------------------------------------------------------------------------------------
 # Web server APIs
 # ----------------------------------------------------------------------------------------------------------------------
+## Probes the HTTP endpoint only: a healthy server started by an earlier run is just as usable as one
+## owned by this process, and ownership is what the stop path needs, not the request path.
 static func async_health() -> bool:
-	if not is_running():
-		return false
 	var response := await HttpHelper.async_get(server_url() + "/healthy", TimeUtils.MILLIS_PER_SECOND)
 	if not response.is_ok():
 		return false
