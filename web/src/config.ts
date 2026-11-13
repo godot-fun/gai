@@ -1,5 +1,19 @@
-import "dotenv/config";
+import path from "node:path";
+import dotenv from "dotenv";
 import { ProxyAgent, setGlobalDispatcher } from "undici";
+
+// Windows already sets LOCALAPPDATA; override so .env can replace it before camoufox loads.
+dotenv.config({ override: true });
+
+const localAppData = (process.env.LOCALAPPDATA ?? "").trim();
+if (localAppData !== "") {
+  const absolute = path.resolve(localAppData);
+  process.env.LOCALAPPDATA = absolute;
+  if (process.platform !== "win32" && process.platform !== "darwin") {
+    process.env.XDG_CACHE_HOME = absolute;
+  }
+  console.log(`Camoufox LOCALAPPDATA:[${absolute}]`);
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -49,7 +63,7 @@ export function loadConfig(): ServerConfig {
     host: process.env.HOST?.trim() || "127.0.0.1",
     port: readPositiveInteger("PORT", 3000),
     headless: readBooleanArgument("browser-headless") ?? readBoolean("BROWSER_HEADLESS", true),
-    userDataDir: process.env.CLOAKBROWSER_USER_DATA_DIR?.trim() || "./.user_data",
+    userDataDir: process.env.CAMOUFOX_USER_DATA_DIR?.trim() || "./.user_data",
     proxy: readArgument("proxy-address") || process.env.BROWSER_PROXY?.trim() || "",
     browserMaxConcurrency: readPositiveInteger("BROWSER_MAX_CONCURRENCY", 4),
     navigationTimeoutMs: readPositiveInteger("NAVIGATION_TIMEOUT_MS", 30_000),
@@ -64,10 +78,9 @@ export function isProxyEnabled(): boolean {
   return config.proxy !== "";
 }
 
-// Route downloads (the CloakBrowser binary) through the configured proxy as well.
+// Route downloads (the Camoufox browser binary) through the configured proxy as well.
 if (isProxyEnabled()) {
   setGlobalDispatcher(new ProxyAgent(config.proxy));
   console.log(`Proxy enabled address:[${config.proxy}]`);
-  console.log(`CloakBrowser cache path:[${process.env.CLOAKBROWSER_CACHE_DIR ?? ""}]`);
   console.log(`Working path:[${process.cwd()}]`);
 }

@@ -18,7 +18,7 @@ async function closeServer(server: Server): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  console.log("Starting CloakBrowser...");
+  console.log("Starting Camoufox...");
   await browserService.start();
   const server = createApiServer();
   await listen(server);

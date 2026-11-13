@@ -94,7 +94,7 @@ static func stop_process() -> void:
 		Log.info("web server stopped pid:[{}]", pid)
 	pass
 
-## Starts npm from the bundled Node.js dependency and waits until CloakBrowser is ready.
+## Starts npm from the bundled Node.js dependency and waits until Camoufox is ready.
 ## Concurrent callers share the same startup instead of spawning duplicate processes.
 static func async_ensure_server_running() -> int:
 	if await async_health():

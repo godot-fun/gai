@@ -6,7 +6,9 @@ web/coverage/
 web/.cache/
 web/.npm/
 .cloakbrowser/
+.camoufox/
 .user_data/
+.app_data/
 web/.eslintcache
 web/*.tsbuildinfo
 web/.env

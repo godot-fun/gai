@@ -1,6 +1,6 @@
-import { launchPersistentContext } from "cloakbrowser";
 import type { BrowserContext, Page } from "playwright-core";
 import { config } from "../config";
+import { Camoufox } from "camoufox";
 import { HttpError, HttpStatus } from "../http";
 
 const releasePage = Symbol("releasePage");
@@ -100,7 +100,7 @@ export class BrowserService {
     try {
       await context.close();
     } catch (error) {
-      console.error("CloakBrowser close failed", error);
+      console.error("Camoufox close failed", error);
     }
   }
 
@@ -127,14 +127,21 @@ export class BrowserService {
   private async launchContext(): Promise<BrowserContext> {
     let context: BrowserContext;
     try {
-      context = await launchPersistentContext({
+      context = await Camoufox({
+        persistent_context: true,
+        user_data_dir: config.userDataDir,
         headless: config.headless,
-        userDataDir: config.userDataDir,
-        proxy: config.proxy || undefined,
-        args: config.headless ? undefined : ["--fingerprint-noise=false"],
+        proxy: config.proxy ? { server: config.proxy } : undefined,
+        geoip: true,
+        // Persistent Firefox restores prior windows on launch; keep a clean slate.
+        firefox_user_prefs: {
+          "browser.sessionstore.resume_from_crash": false,
+          "browser.sessionstore.max_resumed_crashes": 0,
+          "browser.startup.page": 0,
+        },
       });
     } catch (error) {
-      console.error("CloakBrowser launch failed", error);
+      console.error("Camoufox launch failed", error);
       throw unavailable("Browser could not be started");
     }
 
@@ -142,6 +149,9 @@ export class BrowserService {
       await context.close().catch(() => undefined);
       throw unavailable("Server is shutting down");
     }
+    // launchPersistentContext already opens about:blank; Playwright Firefox also
+    // turns each newPage() into a separate OS window — drop restored/blank pages now.
+    await Promise.all(context.pages().map((page) => page.close().catch(() => undefined)));
     context.on("close", this.handleContextClose);
     this.context = context;
     return context;
@@ -174,7 +184,7 @@ export class BrowserService {
   }
 
   private handleContextClose(): void {
-    if (!this.closing) console.warn("CloakBrowser context closed unexpectedly; it will relaunch on the next request");
+    if (!this.closing) console.warn("Camoufox context closed unexpectedly; it will relaunch on the next request");
     this.context = null;
     this.rejectQueue(unavailable("Browser is disconnected"));
   }

@@ -209,7 +209,6 @@ func glob_match_repo_gitignore_positive_cases_test() -> void:
 		["web/coverage/", "web/coverage/lcov.info"],
 		["web/.cache/", "web/.cache/build.json"],
 		["web/.npm/", "web/.npm/cache.json"],
-		[".cloakbrowser/", ".cloakbrowser/session.json"],
 		[".user_data/", ".user_data/cache/state.json"],
 		["web/.eslintcache", "web/.eslintcache"],
 		["web/*.tsbuildinfo", "web/app.tsbuildinfo"],
