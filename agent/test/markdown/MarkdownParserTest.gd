@@ -470,6 +470,29 @@ func table_inline_in_cell_test() -> void:
 	pass
 
 
+## A long table wraps inside the label instead of running past its right edge. The cell gutter has
+## to live in the text ([constant MarkdownParser.TABLE_CELL_GUTTER]): RichTextLabel measures a
+## column as `width + padding` but lays the cell text out across the whole `width`, so horizontal
+## `[cell]` padding made a full-width table (long cells wrap to fill their column) end that much
+## past the label box, and the right-hand columns were clipped.
+func table_fits_label_width_test() -> void:
+	var cell := "两个入口：async_fetch(url, screenshot_path) / async_search(query, count, screenshot_path)；10s 超时；浏览器 UA"
+	var md := StringUtils.format(
+			"| 文件 | 职责 | 约 | 行 |\n|---|---|---|---|\n| agent/server/WebFallback.gd | {} | +140 | 320 |\n| agent/tools/WebFetchTool.gd | {} | +2 | 90 |",
+			cell,
+			cell
+	)
+	for width: int in [400, 900]:
+		var markdown_label := MarkdownHelper.create_rich_text_label(Color.WHITE, md, true)
+		gdf.gdf_node.add_child(markdown_label)
+		markdown_label.size = Vector2(width, 400)
+		await markdown_label.get_tree().process_frame
+		await markdown_label.get_tree().process_frame
+		assert(markdown_label.get_content_width() <= width)
+		markdown_label.free()
+	pass
+
+
 func pipe_without_separator_stays_plain_test() -> void:
 	var bbcode := MarkdownParser.to_bbcode("a | b\nc | d").bbcode
 	assert("[table=" not in bbcode)

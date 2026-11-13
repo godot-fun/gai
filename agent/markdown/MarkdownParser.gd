@@ -58,6 +58,14 @@ const PROTECT_START := "\uE000"
 const PROTECT_END := "\uE001"
 const ESCAPE_SENTINEL := "\uE002"
 const NBSP := "\u00A0"
+## Cell gutter, either side of a table cell's text: two NBSPs (≈ [member Margin.ma_2] at the body
+## size). Horizontal `[cell]` padding cannot be used for this — `RichTextLabel::_set_table_size`
+## measures a column as `width + padding` and lays its text out across the whole `width`, so every
+## padded column ends up that much wider than the space it was given, and a long cell (which wraps
+## to fill its column) pushes the right-hand columns past the label box; the table is clipped even
+## though its text wrapped. Inside the text the gutter is wrapped and measured with the glyphs, so
+## the table always ends on the label box.
+const TABLE_CELL_GUTTER := NBSP + NBSP
 ## Colored emoji markers before link labels for local paths in RichText BBCode (see [method get_link_prefix]).
 ## Category and color follow [FileColors.category_for_path]; image / video use dedicated icons instead of [member FILE_PREFIX].
 const FOLDER_PREFIX := "📁 "
@@ -70,7 +78,7 @@ const EMAIL_PREFIX := "✉ "
 const CONFIG_PREFIX := "⚙ "
 const TEXT_DOCUMENT_PREFIX := "📝 "
 const CODE_LANGUAGE_PREFIX := "⌨ "
-const TABLE_CELL_PADDING := "8,4,8,4"
+const TABLE_CELL_PADDING := "0,4,0,4"
 const CODE_BLOCK_PADDING := "6,6,6,6"
 const BLOCKQUOTE_BAR_PADDING := "2,0,0,0"
 const BLOCKQUOTE_BODY_PADDING := "6,0,0,0"
@@ -571,22 +579,12 @@ static func format_table_bbcode(
 
 static func format_table_cell(text: String, is_header: bool, result: MarkdownParseResult) -> String:
 	var content := inline_to_bbcode(text, result)
-	var border := to_bbcode_color(Colors.outline_variant)
 	if is_header:
 		content = StringUtils.format("[b]{}[/b]", content)
-		return StringUtils.format(
-				"[cell border={} bg={} padding={}]{}[/cell]",
-				border,
-				to_bbcode_color(Colors.surface_container),
-				TABLE_CELL_PADDING,
-				content
-		)
-	return StringUtils.format(
-			"[cell border={} padding={}]{}[/cell]",
-			border,
-			TABLE_CELL_PADDING,
-			content
-	)
+	content = TABLE_CELL_GUTTER + content + TABLE_CELL_GUTTER
+	var border := to_bbcode_color(Colors.outline_variant)
+	var background := (" bg=" + to_bbcode_color(Colors.surface_container)) if is_header else StringUtils.EMPTY
+	return StringUtils.format("[cell border={}{} padding={}]{}[/cell]", border, background, TABLE_CELL_PADDING, content)
 
 
 # ---------------------------------------------------------------------------
