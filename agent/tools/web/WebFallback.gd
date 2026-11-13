@@ -10,7 +10,6 @@ extends Object
 ## contract: null still means "the web request failed".
 
 const DEFAULT_TIMEOUT_MILLIS: int = 10 * TimeUtils.MILLIS_PER_SECOND
-const MAX_BODY_BYTES: int = 5 * 1024 * 1024
 const USER_AGENT: String = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 const BING_RSS_URL: String = "https://www.bing.com/search"
 const CONTENT_TYPE_TEXT: String = "text"
@@ -35,12 +34,17 @@ static func async_fetch(url: String, cancel_scope: CancelScope) -> HtmlHelper.Ar
 	if not is_text_payload(content_type):
 		Log.info("web fallback unsupported content type url:[{}] type:[{}]", url, content_type)
 		return null
-	var html := read_text(response)
-	var charset := HtmlHelper.get_declared_charset(html, content_type)
+	var head := response.body.slice(0, HtmlHelper.CHARSET_SNIFF_CHARS).get_string_from_utf8()
+	var charset := HtmlHelper.get_declared_charset(head, content_type)
 	if not HtmlHelper.is_supported_charset(charset):
 		Log.info("web fallback unsupported charset url:[{}] charset:[{}]", url, charset)
 		return null
-	var article := HtmlHelper.extract(html)
+	# Decoding and the regex pass are the expensive part of a fallback fetch (20 MB of HTML measured ~6 s
+	# here), so they run on the worker pool. The callable stays free of logging and scene-tree access.
+	var body := response.body
+	var article: HtmlHelper.Article = await ExecutorHelper.async_execute_pooled(func() -> HtmlHelper.Article:
+		return HtmlHelper.extract(body.get_string_from_utf8())
+	)
 	if article == null:
 		Log.info("web fallback extracted nothing url:[{}]", url)
 	return article
@@ -55,7 +59,11 @@ static func async_search(query: String, count: int, cancel_scope: CancelScope) -
 	if not response.is_ok_with_body():
 		Log.info("web fallback search failed query:[{}] code:[{}] error:[{}]", query, response.code, response.error)
 		return []
-	var results := BingRssParser.parse(read_text(response))
+	# Same deal as [method async_fetch]: parsing stays off the main thread so a huge feed cannot stall it.
+	var body := response.body
+	var results: Array[SearchResult] = await ExecutorHelper.async_execute_pooled(func() -> Array[SearchResult]:
+		return BingRssParser.parse(body.get_string_from_utf8())
+	)
 	if results.size() > count:
 		results.resize(count)
 	return results
@@ -68,15 +76,6 @@ static func is_text_payload(content_type: String) -> bool:
 	if mime.is_empty():
 		return true
 	return mime.begins_with("text/") or TEXT_MIME_TYPES.has(mime)
-
-
-## Decodes the body as UTF-8 and caps it so a hostile or huge page cannot blow up the extraction.
-static func read_text(response: HttpResponse) -> String:
-	var body := response.body
-	if body.size() > MAX_BODY_BYTES:
-		Log.info("web fallback truncated body size:[{}] cap:[{}]", body.size(), MAX_BODY_BYTES)
-		body = body.slice(0, MAX_BODY_BYTES)
-	return body.get_string_from_utf8()
 
 
 static func build_headers() -> PackedStringArray:

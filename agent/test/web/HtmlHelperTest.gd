@@ -80,3 +80,19 @@ func to_inline_text_test() -> void:
 	assert(HtmlHelper.to_inline_text("  <b>a</b>\n  b  ") == "a b")
 	assert(HtmlHelper.to_inline_text("") == StringUtils.EMPTY)
 	pass
+
+
+func extract_drops_page_chrome_test() -> void:
+	var html := "<body><nav>menu link</nav><aside>ad box</aside><footer>copyright</footer><header>site banner</header><p>real content</p></body>"
+	var article := HtmlHelper.extract(html)
+	assert(article.content == "real content")
+	pass
+
+
+func extract_picks_the_biggest_article_test() -> void:
+	var html := "<body><article><p>tiny</p></article><nav>menu link</nav><article><p>the longer article body wins</p></article></body>"
+	var article := HtmlHelper.extract(html)
+	assert(article.content == "the longer article body wins")
+	assert("menu link" not in article.content)
+	assert("tiny" not in article.content)
+	pass

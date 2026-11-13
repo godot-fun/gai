@@ -1,5 +1,5 @@
-## Offline tests for the plain-HTTP fallback helpers: payload type filtering and the body size cap.
-## No network, no browser.
+## Offline tests for the plain-HTTP fallback helpers: payload type filtering. No network, no browser.
+## The extraction itself (decoding + article picking) is covered by HtmlHelperTest.
 
 func is_text_payload_test() -> void:
 	assert(WebFallback.is_text_payload("text/html; charset=utf-8"))
@@ -19,25 +19,3 @@ func is_text_payload_rejects_binary_test() -> void:
 	pass
 
 
-func read_text_test() -> void:
-	var response := usable_response(200, "hello")
-	assert(WebFallback.read_text(response) == "hello")
-	pass
-
-
-func read_text_caps_body_test() -> void:
-	var oversized := PackedByteArray()
-	oversized.resize(WebFallback.MAX_BODY_BYTES + 16)
-	oversized.fill("a".to_utf8_buffer()[0])
-	var response := usable_response(200, StringUtils.EMPTY)
-	response.body = oversized
-	assert(WebFallback.read_text(response).length() == WebFallback.MAX_BODY_BYTES)
-	pass
-
-
-static func usable_response(code: int, body: String) -> HttpResponse:
-	var response := HttpResponse.new()
-	response.success = true
-	response.code = code
-	response.body = body.to_utf8_buffer()
-	return response

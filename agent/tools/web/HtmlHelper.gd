@@ -2,8 +2,8 @@ class_name HtmlHelper
 extends Object
 
 ## Turns a raw HTML document into plain text for the HTTP fallback path (no browser, no DOM).
-## Not a renderer: <article> or <main> wins as the content root when present, scripts/styles/comments
-## are dropped, block tags become newlines, and entities are decoded.
+## Not a renderer: the biggest <article> (or <main>) wins as the content root when present, page chrome
+## and scripts/styles/comments are dropped, block tags become newlines, and entities are decoded.
 
 ## The readable article of a page: the extraction result the fallback path hands to the tool layer.
 class Article extends RefCounted:
@@ -16,11 +16,14 @@ class Article extends RefCounted:
 
 ## Elements whose whole subtree is noise for a text extraction.
 static var re_drop_element: RegEx = RegEx.create_from_string(r"(?is)<(script|style|noscript|template|svg)\b[^>]*>.*?</\1\s*>")
+## Page chrome: navigation, banners, sidebars, and forms never belong to the readable text, whether or
+## not the page has an <article>/<main> scope.
+static var re_drop_chrome: RegEx = RegEx.create_from_string(r"(?is)<(nav|aside|footer|header|form|dialog)\b[^>]*>.*?</\1\s*>")
 ## Leftover opening/closing tags of the dropped elements (an unclosed <script> keeps its text otherwise).
-static var re_drop_element_tag: RegEx = RegEx.create_from_string(r"(?is)</?(script|style|noscript|template|svg)\b[^>]*>")
+static var re_drop_element_tag: RegEx = RegEx.create_from_string(r"(?is)</?(script|style|noscript|template|svg|nav|aside|footer|header|form|dialog)\b[^>]*>")
 static var re_comment: RegEx = RegEx.create_from_string(r"(?s)<!--.*?-->")
-static var re_article: RegEx = RegEx.create_from_string(r"(?is)<article\b[^>]*>(.*)</article\s*>")
-static var re_main: RegEx = RegEx.create_from_string(r"(?is)<main\b[^>]*>(.*)</main\s*>")
+static var re_article: RegEx = RegEx.create_from_string(r"(?is)<article\b[^>]*>(.*?)</article\s*>")
+static var re_main: RegEx = RegEx.create_from_string(r"(?is)<main\b[^>]*>(.*?)</main\s*>")
 static var re_title: RegEx = RegEx.create_from_string(r"(?is)<title\b[^>]*>(.*?)</title\s*>")
 static var re_meta: RegEx = RegEx.create_from_string(r"(?is)<meta\b[^>]*>")
 static var re_meta_description: RegEx = RegEx.create_from_string(r"(?i)(?:name|property)\s*=\s*[\"']?(?:description|og:description)[\"']?")
@@ -60,6 +63,7 @@ static func extract(html: String) -> Article:
 	var description := extract_description(html)
 	var body := re_comment.sub(html, StringUtils.EMPTY, true)
 	body = re_drop_element.sub(body, StringUtils.EMPTY, true)
+	body = re_drop_chrome.sub(body, StringUtils.EMPTY, true)
 	body = re_drop_element_tag.sub(body, StringUtils.EMPTY, true)
 	body = scope_content(body)
 	body = re_li_open.sub(body, "\n- ", true)
@@ -123,14 +127,25 @@ static func count_words(content: String) -> int:
 	return re_word.search_all(content).size()
 
 
+## The article is the content root: the biggest <article> block wins, then the biggest <main>, and a
+## page with neither keeps its whole body (chrome already removed).
 static func scope_content(body: String) -> String:
-	var article := re_article.search(body)
-	if article != null:
-		return article.get_string(1)
-	var main := re_main.search(body)
-	if main != null:
-		return main.get_string(1)
+	var article := longest_content(re_article, body)
+	if StringUtils.is_not_blank(article):
+		return article
+	var main := longest_content(re_main, body)
+	if StringUtils.is_not_blank(main):
+		return main
 	return body
+
+
+static func longest_content(regex: RegEx, text: String) -> String:
+	var longest := StringUtils.EMPTY
+	for found in regex.search_all(text):
+		var candidate := found.get_string(1)
+		if candidate.length() > longest.length():
+			longest = candidate
+	return longest
 
 
 static func extract_description(html: String) -> String:
