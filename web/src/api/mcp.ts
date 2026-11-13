@@ -1,7 +1,7 @@
-import { IncomingMessage, ServerResponse } from "node:http";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { HttpError, HttpStatus, readJsonBody, requireObject, requireString, sendOk } from "../http";
 import { mcpService } from "../services/mcp-service";
-import { registerApi, ApiRoute } from "./route";
+import { registerApi, type ApiRoute } from "./route";
 
 class McpToolsApi implements ApiRoute {
   readonly method = "GET";

@@ -1,5 +1,6 @@
+import { launchPersistentContext } from "cloakbrowser";
+import type { BrowserContext, Page } from "playwright-core";
 import { config } from "../config";
-import { chromium, BrowserContext, Page } from "playwright";
 import { HttpError, HttpStatus } from "../http";
 
 const releasePage = Symbol("releasePage");
@@ -99,7 +100,7 @@ export class BrowserService {
     try {
       await context.close();
     } catch (error) {
-      console.error("Browser close failed", error);
+      console.error("CloakBrowser close failed", error);
     }
   }
 
@@ -126,12 +127,14 @@ export class BrowserService {
   private async launchContext(): Promise<BrowserContext> {
     let context: BrowserContext;
     try {
-      context = await chromium.launchPersistentContext(config.userDataDir, {
+      context = await launchPersistentContext({
         headless: config.headless,
-        proxy: config.proxy ? { server: config.proxy } : undefined,
+        userDataDir: config.userDataDir,
+        proxy: config.proxy || undefined,
+        args: config.headless ? undefined : ["--fingerprint-noise=false"],
       });
     } catch (error) {
-      console.error("Browser launch failed", error);
+      console.error("CloakBrowser launch failed", error);
       throw unavailable("Browser could not be started");
     }
 
@@ -171,7 +174,7 @@ export class BrowserService {
   }
 
   private handleContextClose(): void {
-    if (!this.closing) console.warn("Browser context closed unexpectedly; it will relaunch on the next request");
+    if (!this.closing) console.warn("CloakBrowser context closed unexpectedly; it will relaunch on the next request");
     this.context = null;
     this.rejectQueue(unavailable("Browser is disconnected"));
   }

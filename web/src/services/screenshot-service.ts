@@ -1,6 +1,6 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
-import { Page, PageScreenshotOptions } from "playwright";
+import type { Page, PageScreenshotOptions } from "playwright-core";
 import { HttpError, HttpStatus } from "../http";
 
 const ALLOWED_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp"]);

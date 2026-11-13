@@ -1,7 +1,7 @@
-import { IncomingMessage, ServerResponse } from "node:http";
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { HttpStatus, sendJson } from "../http";
 import { browserService } from "../services/browser-service";
-import { registerApi, ApiRoute } from "./route";
+import { registerApi, type ApiRoute } from "./route";
 
 export class HealthyApi implements ApiRoute {
   readonly method = "GET";

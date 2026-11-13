@@ -1,10 +1,10 @@
-import { IncomingMessage, ServerResponse } from "node:http";
-import { Page } from "playwright";
+import type { IncomingMessage, ServerResponse } from "node:http";
+import type { Page } from "playwright-core";
 import { isProxyEnabled } from "../config";
 import { HttpError, HttpStatus, optionalString, readJsonBody, requireObject, requireString, sendOk } from "../http";
 import { browserService } from "../services/browser-service";
 import { captureScreenshot, validateScreenshotPath } from "../services/screenshot-service";
-import { registerApi, ApiRoute } from "./route";
+import { registerApi, type ApiRoute } from "./route";
 
 const DEFAULT_RESULT_COUNT = 10;
 const MAX_RESULT_COUNT = 100;

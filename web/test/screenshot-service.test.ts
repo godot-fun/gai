@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import { Page } from "playwright";
+import type { Page } from "playwright-core";
 import { HttpError } from "../src/http";
 import { captureScreenshot, validateScreenshotPath } from "../src/services/screenshot-service";
 
