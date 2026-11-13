@@ -131,6 +131,7 @@ export class BrowserService {
         headless: config.headless,
         userDataDir: config.userDataDir,
         proxy: config.proxy || undefined,
+        args: config.headless ? undefined : ["--fingerprint-noise=false"],
       });
     } catch (error) {
       console.error("CloakBrowser launch failed", error);
