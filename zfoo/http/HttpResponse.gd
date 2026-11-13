@@ -36,6 +36,14 @@ func is_ok() -> bool:
 	return success and code >= HTTPClient.RESPONSE_OK and code < HTTPClient.RESPONSE_MULTIPLE_CHOICES
 
 
+## True when the server answered 2xx with a body, no matter how [member success] ended up.
+## A server that sends `Connection: close` makes the client report the peer close as a transport
+## error after the body already arrived, so [method is_ok] rejects a payload that is in fact complete;
+## callers that only need the data read this instead.
+func is_ok_with_body() -> bool:
+	return code >= HTTPClient.RESPONSE_OK and code < HTTPClient.RESPONSE_MULTIPLE_CHOICES and not body.is_empty()
+
+
 func get_header(name: String) -> String:
 	var lower_name := name.to_lower()
 	for header: Variant in headers:

@@ -61,6 +61,33 @@ static func is_ok_distinguishes_completed_from_2xx_test() -> void:
 	pass
 
 
+static func is_ok_with_body_keeps_a_closed_connection_payload_test() -> void:
+	var response := HttpResponse.new()
+	# A server that answers with `Connection: close`: the body arrives, then the peer close is
+	# reported as a transport error, so [member success] stays false.
+	response.success = false
+	response.code = HTTPClient.RESPONSE_OK
+	response.body = "hello".to_utf8_buffer()
+	response.error = "Http connection error:[STATUS_CONNECTION_ERROR]"
+	assert(not response.is_ok())
+	assert(response.is_ok_with_body())
+	pass
+
+
+static func is_ok_with_body_rejects_errors_and_empty_payloads_test() -> void:
+	var not_found := HttpResponse.new()
+	not_found.success = true
+	not_found.code = HTTPClient.RESPONSE_NOT_FOUND
+	not_found.body = "<p>not found</p>".to_utf8_buffer()
+	assert(not not_found.is_ok_with_body())
+	var empty := HttpResponse.new()
+	empty.success = true
+	empty.code = HTTPClient.RESPONSE_OK
+	assert(not empty.is_ok_with_body())
+	assert(not HttpResponse.new().is_ok_with_body())
+	pass
+
+
 static func completion_is_error_when_request_failed_test() -> void:
 	# The invariant behind fail-fast: a failed request can never look like an empty answer.
 	var response := HttpResponse.failure("Http request cancelled url:[x]")

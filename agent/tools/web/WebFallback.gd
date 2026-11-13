@@ -28,7 +28,7 @@ static func async_fetch(url: String, cancel_scope: CancelScope) -> HtmlHelper.Ar
 	if not enabled:
 		return null
 	var response := await HttpHelper.async_get(url, DEFAULT_TIMEOUT_MILLIS, ApiSetting.get_proxy_address(), build_headers(), cancel_scope)
-	if not has_body(response):
+	if not response.is_ok_with_body():
 		Log.info("web fallback fetch failed url:[{}] code:[{}] error:[{}]", url, response.code, response.error)
 		return null
 	var content_type := response.get_header("Content-Type")
@@ -52,7 +52,7 @@ static func async_search(query: String, count: int, cancel_scope: CancelScope) -
 		return []
 	var url := "%s?format=rss&q=%s" % [BING_RSS_URL, query.strip_edges().uri_encode()]
 	var response := await HttpHelper.async_get(url, DEFAULT_TIMEOUT_MILLIS, ApiSetting.get_proxy_address(), build_headers(), cancel_scope)
-	if not has_body(response):
+	if not response.is_ok_with_body():
 		Log.info("web fallback search failed query:[{}] code:[{}] error:[{}]", query, response.code, response.error)
 		return []
 	var results := BingRssParser.parse(read_text(response))
@@ -68,20 +68,6 @@ static func is_text_payload(content_type: String) -> bool:
 	if mime.is_empty():
 		return true
 	return mime.begins_with("text/") or TEXT_MIME_TYPES.has(mime)
-
-
-## True when the exchange produced a usable 2xx payload. [method HttpResponse.is_ok] alone rejects a
-## server that answers with `Connection: close`: the body arrives, then the peer close is reported as
-## a transport error, and for a text extraction a complete body beats an empty result.
-static func has_body(response: HttpResponse) -> bool:
-	if response.is_ok():
-		return true
-	if response.code < HTTPClient.RESPONSE_OK or response.code >= HTTPClient.RESPONSE_MULTIPLE_CHOICES:
-		return false
-	if response.body.is_empty():
-		return false
-	Log.info("web fallback kept a closed-connection body code:[{}] size:[{}]", response.code, response.body.size())
-	return true
 
 
 ## Decodes the body as UTF-8 and caps it so a hostile or huge page cannot blow up the extraction.
