@@ -2,6 +2,7 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import type { Page, PageScreenshotOptions } from "playwright-core";
 import { HttpError, HttpStatus } from "../http";
+import { raceTimeout } from "../async-utils";
 
 const ALLOWED_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp"]);
 // A hidden or script-blocked page never runs requestAnimationFrame; never wait longer than this.
@@ -67,15 +68,7 @@ function resolveScreenshotOptions(requestedPath?: string): ScreenshotOptions | n
 
 /** Waits two animation frames so late layout work lands in the capture, bounded by a timeout. */
 async function waitForLayout(page: Page): Promise<void> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    await Promise.race([
-      page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))),
-      new Promise<void>((resolve) => { timer = setTimeout(resolve, LAYOUT_SETTLE_TIMEOUT_MS); }),
-    ]);
-  } catch {
-    // A page that cannot evaluate scripts still gets its screenshot.
-  } finally {
-    clearTimeout(timer);
-  }
+  const frames = page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+  // A page that cannot evaluate scripts still gets its screenshot.
+  await raceTimeout(frames, LAYOUT_SETTLE_TIMEOUT_MS).catch(() => undefined);
 }

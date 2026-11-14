@@ -4,6 +4,7 @@ import { browserService } from "../services/browser-service";
 import { browserSession } from "../services/browser-session";
 import { mcpService } from "../services/mcp-service";
 import { shutdown } from "../shutdown";
+import { raceTimeout } from "../async-utils";
 import { registerApi, type ApiRoute } from "./route";
 
 // The caller force-kills this process right after the reply, so never let cleanup block the reply.
@@ -26,15 +27,7 @@ export class StopApi implements ApiRoute {
 }
 
 async function closeChildren(): Promise<void> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  try {
-    await Promise.race([
-      Promise.all([browserSession.close(), browserService.close(), mcpService.close()]),
-      new Promise<void>((resolve) => { timer = setTimeout(resolve, PRE_SHUTDOWN_TIMEOUT_MS); }),
-    ]);
-  } finally {
-    clearTimeout(timer);
-  }
+  await raceTimeout(Promise.all([browserSession.close(), browserService.close(), mcpService.close()]), PRE_SHUTDOWN_TIMEOUT_MS);
 }
 
 registerApi(new StopApi());

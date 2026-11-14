@@ -1,12 +1,9 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { HttpError, HttpStatus, optionalString, readJsonBody, requireObject, requireString, sendOk } from "../http";
-import { browserService } from "../services/browser-service";
+import { browserService, pageFailure, PAGE_SETTLE_TIMEOUT_MS } from "../services/browser-service";
 import { extractPageContent } from "../services/page-content";
 import { captureScreenshot, validateScreenshotPath } from "../services/screenshot-service";
 import { registerApi, type ApiRoute } from "./route";
-
-/** How long a parsed document may keep hydrating before the content is read anyway. */
-const SETTLE_TIMEOUT_MS = 5_000;
 
 export interface FetchResponse {
   url: string;
@@ -37,40 +34,38 @@ export class FetchApi implements ApiRoute {
     const screenshotPath = optionalString(body.screenshotPath, "screenshotPath");
     // Reject an unusable screenshot path before spending a browser page on the navigation.
     validateScreenshotPath(screenshotPath);
-    sendOk(response, await this.fetch(url, screenshotPath));
+    sendOk(response, await fetchPage(url, screenshotPath));
   }
+}
 
-  private async fetch(rawUrl: string, screenshotPath?: string): Promise<FetchResponse> {
-    let requestedUrl: URL;
-    try {
-      requestedUrl = new URL(rawUrl);
-    } catch {
-      throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_URL", "url must be a valid absolute URL");
-    }
-    const page = await browserService.openPage();
-    try {
-      await page.goto(requestedUrl.href, { waitUntil: "domcontentloaded" });
-      // Hydration is best effort: a page that polls keeps the network busy forever, so waiting for
-      // `networkidle` inside the navigation used to turn a readable page into a 504.
-      await page.waitForLoadState("networkidle", { timeout: SETTLE_TIMEOUT_MS }).catch(() => undefined);
-      const finalUrl = page.url();
-      const content = await extractPageContent(page);
-      const screenshot = await captureScreenshot(page, screenshotPath);
-      return {
-        url: requestedUrl.href,
-        finalUrl,
-        ...content,
-        contentType: "markdown",
-        ...screenshot,
-      };
-    } catch (error) {
-      if (error instanceof HttpError) throw error;
-      if (error instanceof Error && error.name === "TimeoutError") throw new HttpError(HttpStatus.GATEWAY_TIMEOUT, "NAVIGATION_TIMEOUT", "Page navigation timed out");
-      console.error(error);
-      throw new HttpError(HttpStatus.BAD_GATEWAY, "FETCH_FAILED", "Page content could not be fetched");
-    } finally {
-      await page.close().catch(() => undefined);
-    }
+/** Reads one URL through a short-lived page: navigate, settle, extract, capture, close. */
+async function fetchPage(rawUrl: string, screenshotPath?: string): Promise<FetchResponse> {
+  let requestedUrl: URL;
+  try {
+    requestedUrl = new URL(rawUrl);
+  } catch {
+    throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_URL", "url must be a valid absolute URL");
+  }
+  const page = await browserService.openPage();
+  try {
+    await page.goto(requestedUrl.href, { waitUntil: "domcontentloaded" });
+    // Hydration is best effort: a page that polls keeps the network busy forever, so waiting for
+    // `networkidle` inside the navigation used to turn a readable page into a 504.
+    await page.waitForLoadState("networkidle", { timeout: PAGE_SETTLE_TIMEOUT_MS }).catch(() => undefined);
+    const content = await extractPageContent(page);
+    const screenshot = await captureScreenshot(page, screenshotPath);
+    return {
+      url: requestedUrl.href,
+      finalUrl: page.url(),
+      ...content,
+      contentType: "markdown",
+      ...screenshot,
+    };
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw pageFailure(error, "Page navigation", "FETCH_FAILED");
+  } finally {
+    await page.close().catch(() => undefined);
   }
 }
 

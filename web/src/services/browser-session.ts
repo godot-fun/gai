@@ -1,6 +1,6 @@
 import type { ElementHandle, Frame, Locator, Page } from "playwright-core";
 import { config } from "../config";
-import { browserService } from "./browser-service";
+import { browserService, PAGE_SETTLE_TIMEOUT_MS } from "./browser-service";
 import { collectInteractiveCandidates, refFrame, refIndex, selectCandidates, type InteractiveCandidate } from "./interactive";
 import { extractPageContent } from "./page-content";
 import { captureScreenshot } from "./screenshot-service";
@@ -61,7 +61,6 @@ export interface BrowserResult {
 }
 
 const DEFAULT_STEP_TIMEOUT_MS = 10_000;
-const SETTLE_TIMEOUT_MS = 5_000;
 const MAX_ERROR_CHARS = 1_000;
 /** Keeps the reply ahead of the HTTP request timeout, so the agent gets the reason instead of a 504. */
 const BUDGET_MARGIN_MS = 5_000;
@@ -251,7 +250,7 @@ export class BrowserSession {
     const url = parseHttpUrl(step.url ?? "");
     await page.goto(url, { waitUntil: "domcontentloaded", timeout });
     // `load` is best effort: a chatty page keeps requests open forever and must not fail the step.
-    await page.waitForLoadState("load", { timeout: Math.min(timeout, SETTLE_TIMEOUT_MS) }).catch(() => undefined);
+    await page.waitForLoadState("load", { timeout: Math.min(timeout, PAGE_SETTLE_TIMEOUT_MS) }).catch(() => undefined);
   }
 
   /** Clicks the target and follows a popup (`target=_blank`) the click opened. */
@@ -260,15 +259,14 @@ export class BrowserSession {
     await this.withTarget(page, step, (target) => target.click({ timeout }));
     const popup = page.context().pages().find((candidate) => candidate !== page && !before.has(candidate));
     if (popup === undefined || popup.isClosed()) return;
-    await popup.waitForLoadState("domcontentloaded", { timeout: SETTLE_TIMEOUT_MS }).catch(() => undefined);
+    await popup.waitForLoadState("domcontentloaded", { timeout: PAGE_SETTLE_TIMEOUT_MS }).catch(() => undefined);
     await installNameHelper(popup);
     this.page = popup;
   }
 
   private async press(page: Page, step: BrowserStep, timeout: number): Promise<void> {
-    const raw = (step.key ?? "").trim();
-    if (raw === "") throw new BrowserStepError("press needs a key, for example Enter, Escape, or Alt+Left");
-    const key = normalizeKey(raw);
+    const key = normalizeKey(step.key ?? "");
+    if (key === "") throw new BrowserStepError("press needs a key, for example Enter, Escape, or Alt+Left");
     if (step.ref === undefined && step.selector === undefined) {
       await page.keyboard.press(key);
       return;
@@ -288,11 +286,7 @@ export class BrowserSession {
     }, step.direction === "up");
   }
 
-  /**
-   * Resolves the target of a targeted step, runs one action on it, and releases what the lookup
-   * minted: a `ref` becomes an `ElementHandle`, and the page keeps every handle alive until it is
-   * disposed — an agent page lives across many requests, so un-disposed handles pile up.
-   */
+  /** Runs one action on the step's target and releases the `ElementHandle` a `ref` minted — a page keeps those alive until then. */
   private async withTarget<T>(page: Page, step: BrowserStep, run: (target: ActionTarget) => Promise<T>): Promise<T> {
     const target = await this.resolveTarget(page, step);
     try {
@@ -305,21 +299,20 @@ export class BrowserSession {
   /** Resolves a ref handle or a selector into something clickable. */
   private async resolveTarget(page: Page, step: BrowserStep): Promise<ActionTarget> {
     if (step.ref !== undefined) {
-      const frame = this.frames.get(refFrame(step.ref)) ?? (refFrame(step.ref) === "" ? page.mainFrame() : null);
-      if (frame === null) {
-        throw new BrowserStepError(`ref ${step.ref} is stale: that frame is gone, take a new snapshot first`);
-      }
-      const index = refIndex(step.ref);
+      const ref = step.ref;
+      const frame = this.frameFor(page, ref);
+      if (frame === null) throw new BrowserStepError(`ref ${ref} is stale: that frame is gone, take a new snapshot first`);
       const handle = await frame.evaluateHandle((wanted: number) => {
         const store = window as unknown as { __gaiBrowserRefs?: Element[] };
         const elements = store.__gaiBrowserRefs;
         if (!Array.isArray(elements)) return null;
         const element = elements[wanted];
         return element !== undefined && element.isConnected ? element : null;
-      }, index);
+      }, refIndex(ref));
       const element = handle.asElement();
       if (element === null) {
-        throw new BrowserStepError(`ref ${step.ref} is stale: the page changed since the last snapshot, take a new snapshot first`);
+        await handle.dispose().catch(() => undefined);
+        throw new BrowserStepError(`ref ${ref} is stale: the page changed since the last snapshot, take a new snapshot first`);
       }
       return element;
     }
@@ -328,6 +321,12 @@ export class BrowserSession {
     const locator = page.locator(selector).first();
     if ((await locator.count()) === 0) throw new BrowserStepError(`no element matches selector: ${selector}`);
     return locator;
+  }
+
+  /** An unprefixed ref lives in the main frame; `f2`-style refs name a frame the last snapshot saw. */
+  private frameFor(page: Page, ref: string): Frame | null {
+    const prefix = refFrame(ref);
+    return prefix === "" ? page.mainFrame() : this.frames.get(prefix) ?? null;
   }
 
   /** The main frame stays unprefixed (`e12`); other frames are numbered in the order they are seen. */
@@ -346,10 +345,10 @@ export class BrowserSession {
     await waitForDocument(page);
     let candidates: InteractiveCandidate[] = [];
     for (let attempt = 0; attempt < SNAPSHOT_ATTEMPTS; attempt += 1) {
+      // An empty result usually means the document is still parsing or about to be replaced.
+      if (attempt > 0) await page.waitForTimeout(SNAPSHOT_RETRY_DELAY_MS);
       candidates = await this.collectCandidates(page);
       if (candidates.some((candidate) => candidate.rendered)) break;
-      // An empty result usually means the document is still parsing or about to be replaced.
-      await page.waitForTimeout(SNAPSHOT_RETRY_DELAY_MS);
     }
     return formatSnapshot(selectCandidates(candidates));
   }
@@ -393,7 +392,7 @@ async function installNameHelper(page: Page): Promise<void> {
 
 /** Waits for a document that is still loading, so the next capture reads real content. */
 async function waitForDocument(page: Page): Promise<void> {
-  await page.waitForLoadState("domcontentloaded", { timeout: SETTLE_TIMEOUT_MS }).catch(() => undefined);
+  await page.waitForLoadState("domcontentloaded", { timeout: PAGE_SETTLE_TIMEOUT_MS }).catch(() => undefined);
 }
 
 /** Releases the handle a `ref` resolved to; a selector resolves to a `Locator`, which has nothing to release. */

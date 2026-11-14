@@ -38,10 +38,7 @@ function readPositiveInteger(name: string, fallback: number): number {
 
 function readBoolean(name: string, fallback: boolean): boolean {
   const raw = process.env[name];
-  if (raw === undefined || raw.trim() === "") return fallback;
-  if (raw === "true") return true;
-  if (raw === "false") return false;
-  throw new Error(`${name} must be true or false`);
+  return raw === undefined || raw.trim() === "" ? fallback : parseBoolean(raw, name);
 }
 
 function readArgument(name: string): string {
@@ -51,10 +48,14 @@ function readArgument(name: string): string {
 
 function readBooleanArgument(name: string): boolean | undefined {
   const raw = readArgument(name);
-  if (raw === "") return undefined;
+  return raw === "" ? undefined : parseBoolean(raw, `--${name}`);
+}
+
+/** Both the environment and the command line spell a boolean the same way: `true` or `false`. */
+function parseBoolean(raw: string, name: string): boolean {
   if (raw === "true") return true;
   if (raw === "false") return false;
-  throw new Error(`--${name} must be true or false`);
+  throw new Error(`${name} must be true or false`);
 }
 
 export function loadConfig(): ServerConfig {

@@ -11,6 +11,5 @@ import { Defuddle } from "defuddle/node";
 export type PageContent = Awaited<ReturnType<typeof Defuddle>>;
 
 export async function extractPageContent(page: Page): Promise<PageContent> {
-  const html = await page.content();
-  return Defuddle(html, page.url(), { markdown: true, useAsync: false });
+  return Defuddle(await page.content(), page.url(), { markdown: true, useAsync: false });
 }

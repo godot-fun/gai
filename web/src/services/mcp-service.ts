@@ -16,19 +16,24 @@ interface Connection {
   tools: Awaited<ReturnType<Client["listTools"]>>["tools"];
 }
 
+type McpTool = Connection["tools"][number];
+
+/** One entry of `GET /mcp/tools`, named the way the agent's tool registry wants it. */
+interface ToolDescription {
+  server: string;
+  name: string;
+  qualifiedName: string;
+  description: string;
+  inputSchema: McpTool["inputSchema"];
+}
+
 export class McpService {
   private readonly connections = new Map<string, Connection>();
   private loading: Promise<void> | null = null;
 
-  async listTools(): Promise<unknown[]> {
+  async listTools(): Promise<ToolDescription[]> {
     await this.ensureConnected();
-    return [...this.connections.entries()].flatMap(([server, connection]) => connection.tools.map((tool) => ({
-      server,
-      name: tool.name,
-      qualifiedName: `mcp__${normalize(server)}__${normalize(tool.name)}`,
-      description: tool.description ?? "",
-      inputSchema: tool.inputSchema,
-    })));
+    return [...this.connections].flatMap(([server, connection]) => connection.tools.map((tool) => describeTool(server, tool)));
   }
 
   async callTool(server: string, name: string, args: Record<string, unknown>): Promise<unknown> {
@@ -80,7 +85,19 @@ export class McpService {
   }
 }
 
-function normalize(value: string): string {
+/** One tool as the agent sees it: namespaced name plus the description and schema, passed through. */
+function describeTool(server: string, tool: McpTool): ToolDescription {
+  return {
+    server,
+    name: tool.name,
+    qualifiedName: `mcp__${sanitizeName(server)}__${sanitizeName(tool.name)}`,
+    description: tool.description ?? "",
+    inputSchema: tool.inputSchema,
+  };
+}
+
+/** MCP names may hold dots and spaces; the tool registry only accepts `[A-Za-z0-9_-]`. */
+function sanitizeName(value: string): string {
   return value.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 

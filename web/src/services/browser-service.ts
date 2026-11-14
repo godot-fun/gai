@@ -3,8 +3,21 @@ import { config } from "../config";
 import { Camoufox } from "camoufox";
 import { HttpError, HttpStatus } from "../http";
 
+/** How long a page handed out here may keep loading before the caller reads it anyway. */
+export const PAGE_SETTLE_TIMEOUT_MS = 5_000;
+
 function unavailable(message: string): HttpError {
   return new HttpError(HttpStatus.SERVICE_UNAVAILABLE, "BROWSER_UNAVAILABLE", message);
+}
+
+/**
+ * Turns a failed page operation into the error the agent sees: a Playwright timeout blames the
+ * upstream site (504), everything else stays a generic gateway failure (502).
+ */
+export function pageFailure(error: unknown, what: string, code: string): HttpError {
+  if (error instanceof Error && error.name === "TimeoutError") return new HttpError(HttpStatus.GATEWAY_TIMEOUT, "NAVIGATION_TIMEOUT", `${what} timed out`);
+  console.error(what, error);
+  return new HttpError(HttpStatus.BAD_GATEWAY, code, `${what} failed`);
 }
 
 export class BrowserService {

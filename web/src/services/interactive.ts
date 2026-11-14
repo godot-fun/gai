@@ -68,9 +68,11 @@ const NAME_OPTIONAL = new Set(["textbox", "searchbox", "combobox", "checkbox", "
  * still reads like the page.
  */
 export function selectCandidates(candidates: readonly InteractiveCandidate[], limits: SnapshotLimits = DEFAULT_LIMITS): SnapshotNode[] {
-  const ordered = candidates.map((candidate, order) => ({ candidate, order }));
-  const byPriority = [...ordered].sort((left, right) => priority(left.candidate) - priority(right.candidate));
-  const seen = new Map<string, number>();
+  const byPriority = candidates
+    .map((candidate, order) => ({ candidate, order }))
+    .sort((left, right) => priority(left.candidate) - priority(right.candidate));
+  // role|name -> copies already kept; navigation and footer repeats collapse onto the same key.
+  const copies = new Map<string, number>();
   const kept: { candidate: InteractiveCandidate; order: number }[] = [];
   let links = 0;
   let overBudget = 0;
@@ -79,12 +81,14 @@ export function selectCandidates(candidates: readonly InteractiveCandidate[], li
 
   for (const entry of byPriority) {
     const { candidate } = entry;
+    const key = `${candidate.role}|${candidate.name}`;
+    const count = copies.get(key) ?? 0;
     if (!candidate.rendered || !candidate.enabled) continue;
     if (!isUsable(candidate)) {
       unnamed += 1;
       continue;
     }
-    if (repeats(seen, candidate) >= limits.maxPerName) {
+    if (count >= limits.maxPerName) {
       repeated += 1;
       continue;
     }
@@ -92,7 +96,7 @@ export function selectCandidates(candidates: readonly InteractiveCandidate[], li
       overBudget += 1;
       continue;
     }
-    seen.set(`${candidate.role}|${candidate.name}`, repeats(seen, candidate) + 1);
+    copies.set(key, count + 1);
     if (candidate.role === "link") links += 1;
     kept.push(entry);
   }
@@ -105,7 +109,7 @@ export function selectCandidates(candidates: readonly InteractiveCandidate[], li
       const groupKey = `${candidate.regionRole}|${candidate.regionName}`;
       if (groupKey !== region) {
         region = groupKey;
-        nodes.push({ depth: 0, role: candidate.regionRole, name: candidate.regionName, value: "", state: "", ref: "" });
+        nodes.push(plainNode(candidate.regionRole, candidate.regionName));
       }
     }
     nodes.push({
@@ -122,8 +126,13 @@ export function selectCandidates(candidates: readonly InteractiveCandidate[], li
   if (overBudget > 0) notes.push(`${overBudget} interactive elements over the per-step budget, use mode=markdown or a narrower page`);
   if (repeated > 0) notes.push(`${repeated} repeats collapsed (same role and name more than ${limits.maxPerName} times)`);
   if (unnamed > 0) notes.push(`${unnamed} nameless elements skipped`);
-  if (notes.length > 0) nodes.push({ depth: 0, role: "text", name: `(${notes.join("; ")})`, value: "", state: "", ref: "" });
+  if (notes.length > 0) nodes.push(plainNode("text", `(${notes.join("; ")})`));
   return nodes;
+}
+
+/** A line without a handle: region headers and the closing budget note. */
+function plainNode(role: string, name: string): SnapshotNode {
+  return { depth: 0, role, name, value: "", state: "", ref: "" };
 }
 
 /** `e12` -> 12, `f2e12` -> 12; the frame prefix travels in [member InteractiveCandidate.ref]. */
@@ -138,10 +147,6 @@ export function refFrame(ref: string): string {
 
 function priority(candidate: InteractiveCandidate): number {
   return ROLE_PRIORITY[candidate.role] ?? 1;
-}
-
-function repeats(seen: Map<string, number>, candidate: InteractiveCandidate): number {
-  return seen.get(`${candidate.role}|${candidate.name}`) ?? 0;
 }
 
 /** An unnamed icon or an empty link costs a line and tells the model nothing. */
@@ -166,6 +171,8 @@ export function collectInteractiveCandidates(framePrefix: string): InteractiveCa
   const LANDMARKS: Readonly<Record<string, string>> = { nav: "navigation", main: "main", header: "banner", footer: "contentinfo", aside: "complementary", form: "form", dialog: "dialog" };
   const INTERACTIVE = new Set(["link", "button", "textbox", "searchbox", "checkbox", "radio", "combobox", "listbox", "option", "menuitem", "menuitemcheckbox", "menuitemradio", "tab", "switch", "slider", "spinbutton", "summary", "treeitem"]);
   const SKIP_TAGS = new Set(["script", "style", "noscript", "template", "head", "title", "meta", "link", "svg", "br", "hr"]);
+  // Input types that behave like a button rather than a text field.
+  const BUTTON_INPUT_TYPES = new Set(["submit", "button", "reset", "image", "file"]);
   const PASSWORD_MASK = "••••";
   // Roles whose name comes from their visible text; an input needs its label instead.
   const CONTENT_NAMED = new Set(["link", "button", "option", "menuitem", "menuitemcheckbox", "menuitemradio", "tab", "summary", "treeitem", "checkbox", "radio"]);
@@ -198,26 +205,12 @@ export function collectInteractiveCandidates(framePrefix: string): InteractiveCa
       case "option":
         return "option";
       case "input": {
-        switch ((element.getAttribute("type") ?? "text").toLowerCase()) {
-          case "checkbox":
-            return "checkbox";
-          case "radio":
-            return "radio";
-          case "submit":
-          case "button":
-          case "reset":
-          case "image":
-          case "file":
-            return "button";
-          case "hidden":
-            return "";
-          case "range":
-            return "slider";
-          case "number":
-            return "spinbutton";
-          default:
-            return "textbox";
-        }
+        const type = (element.getAttribute("type") ?? "text").toLowerCase();
+        if (type === "checkbox" || type === "radio") return type;
+        if (type === "range") return "slider";
+        if (type === "number") return "spinbutton";
+        if (type === "hidden") return "";
+        return BUTTON_INPUT_TYPES.has(type) ? "button" : "textbox";
       }
       default:
         break;
@@ -276,9 +269,10 @@ export function collectInteractiveCandidates(framePrefix: string): InteractiveCa
     if (explicit !== "") return explicit;
     const native = normalize(element.getAttribute("alt") ?? "") || labelText(element);
     if (native !== "") return native;
-    const allowedContent = CONTENT_NAMED.has(role);
-    const content = allowedContent ? normalize(element.textContent ?? "") : "";
-    if (content !== "") return content;
+    if (CONTENT_NAMED.has(role)) {
+      const content = normalize(element.textContent ?? "");
+      if (content !== "") return content;
+    }
     const placeholder = normalize(element.getAttribute("placeholder") ?? "");
     if (placeholder !== "") return placeholder;
     return normalize(element.getAttribute("title") ?? "");
@@ -293,7 +287,8 @@ export function collectInteractiveCandidates(framePrefix: string): InteractiveCa
     }
     if (element instanceof HTMLTextAreaElement) return clip(normalize(element.value), MAX_VALUE_CHARS);
     if (element instanceof HTMLSelectElement) {
-      return clip(normalize(Array.from(element.selectedOptions).map((option) => normalize(option.textContent ?? "")).join(", ")), MAX_VALUE_CHARS);
+      const selected = Array.from(element.selectedOptions, (option) => normalize(option.textContent ?? ""));
+      return clip(normalize(selected.join(", ")), MAX_VALUE_CHARS);
     }
     return "";
   }

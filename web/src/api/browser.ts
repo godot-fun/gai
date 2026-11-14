@@ -37,8 +37,8 @@ const REQUIRED: Readonly<Partial<Record<BrowserStepAction, StepField>>> = {
   select: "value",
 };
 
-/** Actions that only work on an element: a ref from the last snapshot, or a selector once it is stale. */
-const TARGETED: readonly BrowserStepAction[] = ["click", "type", "hover", "select"];
+/** Actions that cannot run without an element: a ref from the last snapshot, or a selector once it is stale. */
+const NEEDS_TARGET: readonly BrowserStepAction[] = ["click", "type", "hover", "select"];
 
 /**
  * Runs browser steps against the shared page and answers with the page metadata plus a snapshot.
@@ -90,20 +90,23 @@ function readStep(value: unknown, index: number): BrowserStep {
   }
   if (action === "scroll") {
     const direction = optionalString(step.direction, `steps[${index}].direction`);
-    if (direction !== undefined) {
-      if (direction !== "up" && direction !== "down") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `steps[${index}].direction must be up or down`);
-      parsed.direction = direction;
-    }
+    if (direction === "up" || direction === "down") parsed.direction = direction;
+    else if (direction !== undefined) throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `steps[${index}].direction must be up or down`);
   }
 
   const required = REQUIRED[action];
-  if (required !== undefined && (parsed[required] ?? "").trim() === "") {
+  if (required !== undefined && isBlank(parsed[required])) {
     throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `steps[${index}] ${action} needs a non-empty ${required}`);
   }
-  if (TARGETED.includes(action) && (parsed.ref ?? "").trim() === "" && (parsed.selector ?? "").trim() === "") {
+  if (NEEDS_TARGET.includes(action) && isBlank(parsed.ref) && isBlank(parsed.selector)) {
     throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `steps[${index}] ${action} needs a ref from the last snapshot, or a selector`);
   }
   return parsed;
+}
+
+/** A field counts as given only when something survives trimming. */
+function isBlank(value: string | undefined): boolean {
+  return (value ?? "").trim() === "";
 }
 
 function isStepAction(value: string): value is BrowserStepAction {
