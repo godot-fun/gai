@@ -54,8 +54,13 @@ export class BrowserService {
 
   private async getContext(): Promise<BrowserContext> {
     if (this.context !== null) return this.context;
-    this.launching ??= this.launch().finally(() => { this.launching = null; });
-    return this.launching;
+    // Concurrent callers share one launch, and a failed launch is forgotten so the next one retries.
+    const launching = (this.launching ??= this.launch());
+    try {
+      return await launching;
+    } finally {
+      this.launching = null;
+    }
   }
 
   private async launch(): Promise<BrowserContext> {

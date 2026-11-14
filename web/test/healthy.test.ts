@@ -1,13 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import axios from "axios";
-import { loadConfig } from "../src/config";
-
-const config = loadConfig();
-const baseUrl = `http://${config.host}:${config.port}`;
+import { baseUrl, client } from "./server-client";
 
 test("GET /healthy reports browser readiness", async () => {
-  const response = await axios.get(`${baseUrl}/healthy`);
+  const response = await client.get(`${baseUrl}/healthy`);
   const body = response.data as Record<string, unknown>;
   assert.equal(response.status, 200);
   assert.equal(body.status, "ok");

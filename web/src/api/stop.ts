@@ -22,6 +22,7 @@ export class StopApi implements ApiRoute {
       console.error("Pre-shutdown cleanup failed", error);
     }
     sendOk(response, { status: "stopping" });
+    // Let the reply reach the caller before the process starts tearing down.
     response.once("finish", () => setTimeout(() => shutdown("/stop"), 100));
   }
 }

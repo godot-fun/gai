@@ -3,13 +3,7 @@ import { mkdtemp, rm, stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
-import axios from "axios";
-import { loadConfig } from "../src/config";
-
-const config = loadConfig();
-const baseUrl = `http://${config.host}:${config.port}`;
-// The environment may export HTTP_PROXY for the browser; the local server must be reached directly.
-const client = axios.create({ proxy: false });
+import { baseUrl, client } from "./server-client";
 
 interface ActionBody {
   ok: boolean;

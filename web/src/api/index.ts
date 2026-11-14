@@ -30,6 +30,7 @@ export function createApiServer(): Server {
   const routes = new Map(getApiRoutes().map((registered) => [routeKey(registered.method, registered.path), registered]));
 
   async function handleRequest(request: IncomingMessage, response: ServerResponse): Promise<void> {
+    // A socket timeout is the last line of defence: a step stuck in the page must not pin the request forever.
     function handleTimeout(): void {
       if (!response.headersSent) sendJson(response, HttpStatus.GATEWAY_TIMEOUT, { error: { code: "REQUEST_TIMEOUT", message: "Request timed out" } });
       else response.destroy();

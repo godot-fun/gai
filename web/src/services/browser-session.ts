@@ -1,7 +1,7 @@
 import type { ElementHandle, Frame, Locator, Page } from "playwright-core";
 import { config } from "../config";
 import { browserService, PAGE_SETTLE_TIMEOUT_MS } from "./browser-service";
-import { collectInteractiveCandidates, refFrame, refIndex, selectCandidates, type InteractiveCandidate } from "./interactive";
+import { collectInteractiveCandidates, elementForRef, refFrame, refIndex, selectCandidates, type InteractiveCandidate } from "./interactive";
 import { extractPageContent } from "./page-content";
 import { captureScreenshot } from "./screenshot-service";
 import { formatSnapshot } from "./snapshot";
@@ -148,7 +148,8 @@ export class BrowserSession {
   /** Serialized entry point: steps share one page, so a second request must not interleave. */
   run(request: BrowserRequest): Promise<BrowserResult> {
     const task = this.queue.then(() => this.runSteps(request));
-    this.queue = task.then(ignore, ignore);
+    // The queue only needs the settled state; the result (and the failure) travel through `task`.
+    this.queue = task.then(() => undefined, () => undefined);
     return task;
   }
 
@@ -193,7 +194,8 @@ export class BrowserSession {
     }
 
     // A snapshot after a failure is what lets the model correct itself instead of retrying blind.
-    const snapshot = request.snapshot || error !== "" ? await this.takeSnapshot(page) : "";
+    const wantsSnapshot = request.snapshot || error !== "";
+    const snapshot = wantsSnapshot ? await this.takeSnapshot(page) : "";
     const screenshot = await captureScreenshot(page, request.screenshotPath);
     return {
       ok: error === "",
@@ -302,13 +304,7 @@ export class BrowserSession {
       const ref = step.ref;
       const frame = this.frameFor(page, ref);
       if (frame === null) throw new BrowserStepError(`ref ${ref} is stale: that frame is gone, take a new snapshot first`);
-      const handle = await frame.evaluateHandle((wanted: number) => {
-        const store = window as unknown as { __gaiBrowserRefs?: Element[] };
-        const elements = store.__gaiBrowserRefs;
-        if (!Array.isArray(elements)) return null;
-        const element = elements[wanted];
-        return element !== undefined && element.isConnected ? element : null;
-      }, refIndex(ref));
+      const handle = await frame.evaluateHandle(elementForRef, refIndex(ref));
       const element = handle.asElement();
       if (element === null) {
         await handle.dispose().catch(() => undefined);
@@ -395,11 +391,10 @@ async function waitForDocument(page: Page): Promise<void> {
   await page.waitForLoadState("domcontentloaded", { timeout: PAGE_SETTLE_TIMEOUT_MS }).catch(() => undefined);
 }
 
-/** Releases the handle a `ref` resolved to; a selector resolves to a `Locator`, which has nothing to release. */
+/** A `ref` resolves to a Playwright `ElementHandle`, which the page keeps alive until it is disposed; a selector resolves to a `Locator`, which has nothing to release. */
 async function releaseTarget(target: ActionTarget): Promise<void> {
-  const handle = target as ElementHandle<Element>;
-  if (typeof handle.dispose !== "function") return;
-  await handle.dispose().catch(() => undefined);
+  if (!("dispose" in target)) return;
+  await target.dispose().catch(() => undefined);
 }
 
 function parseHttpUrl(raw: string): string {
@@ -424,8 +419,4 @@ function describeFailure(action: string, failure: unknown): string {
   const timeout = failure instanceof Error && failure.name === "TimeoutError" ? "timeout: " : "";
   const text = `${action} failed: ${timeout}${reason}`;
   return text.length > MAX_ERROR_CHARS ? `${text.slice(0, MAX_ERROR_CHARS)}…` : text;
-}
-
-function ignore(): void {
-  // Queue links only need the settled state; the result travels through the promise returned to the caller.
 }

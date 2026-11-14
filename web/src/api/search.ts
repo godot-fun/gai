@@ -9,12 +9,13 @@ import { registerApi, type ApiRoute } from "./route";
 const DEFAULT_RESULT_COUNT = 10;
 const MAX_RESULT_COUNT = 100;
 
-export enum SearchEngine {
-  Bing = "bing",
-  Google = "google",
-}
+/** Search engines the API can drive; a const object instead of an enum, like `HttpStatus`. */
+export const SearchEngine = {
+  Bing: "bing",
+  Google: "google",
+} as const;
 
-const SEARCH_ENGINES = Object.values(SearchEngine);
+export type SearchEngine = (typeof SearchEngine)[keyof typeof SearchEngine];
 
 export interface SearchResult {
   position: number;
@@ -154,10 +155,13 @@ function readCount(value: unknown): number | undefined {
 
 function readEngine(value: unknown): SearchEngine | undefined {
   if (value === undefined) return undefined;
-  if (!SEARCH_ENGINES.includes(value as SearchEngine)) {
-    throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "engine must be bing or google");
-  }
-  return value as SearchEngine;
+  if (!isSearchEngine(value)) throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "engine must be bing or google");
+  return value;
+}
+
+/** A new engine means a new value in [constant SearchEngine] and a new line here. */
+function isSearchEngine(value: unknown): value is SearchEngine {
+  return value === SearchEngine.Bing || value === SearchEngine.Google;
 }
 
 registerApi(new SearchApi());

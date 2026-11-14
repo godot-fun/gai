@@ -7,6 +7,9 @@ import { registerApi, type ApiRoute } from "./route";
 /** One request may chain a few steps, but the HTTP timeout bounds how many can finish. */
 const MAX_STEPS = 12;
 
+/** The action list as a lookup table, so validating a step does not scan the array. */
+const STEP_ACTIONS = new Set<string>(BROWSER_STEP_ACTIONS);
+
 /** The plain text fields a step can carry; `action` and `direction` are handled on their own. */
 type StepField = "url" | "ref" | "selector" | "text" | "key" | "value";
 
@@ -110,7 +113,7 @@ function isBlank(value: string | undefined): boolean {
 }
 
 function isStepAction(value: string): value is BrowserStepAction {
-  return (BROWSER_STEP_ACTIONS as readonly string[]).includes(value);
+  return STEP_ACTIONS.has(value);
 }
 
 registerApi(new BrowserActionApi());

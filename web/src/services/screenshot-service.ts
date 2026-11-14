@@ -4,7 +4,13 @@ import type { Page, PageScreenshotOptions } from "playwright-core";
 import { HttpError, HttpStatus } from "../http";
 import { raceTimeout } from "../async-utils";
 
-const ALLOWED_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp"]);
+/** Extension -> the format Playwright writes; anything else is rejected before a page is opened. */
+const SCREENSHOT_FORMATS = new Map<string, PageScreenshotOptions["type"]>([
+  [".png", "png"],
+  [".webp", "webp"],
+  [".jpg", "jpeg"],
+  [".jpeg", "jpeg"],
+]);
 // A hidden or script-blocked page never runs requestAnimationFrame; never wait longer than this.
 const LAYOUT_SETTLE_TIMEOUT_MS = 1_000;
 
@@ -57,12 +63,10 @@ function resolveScreenshotOptions(requestedPath?: string): ScreenshotOptions | n
     throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_SCREENSHOT_PATH", "screenshotPath must be absolute");
   }
 
-  const extension = path.extname(screenshotPath).toLowerCase();
-  if (!ALLOWED_EXTENSIONS.has(extension)) {
+  const type = SCREENSHOT_FORMATS.get(path.extname(screenshotPath).toLowerCase());
+  if (type === undefined) {
     throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_SCREENSHOT_TYPE", "screenshotPath must end with png, jpg, jpeg, or webp");
   }
-
-  const type: PageScreenshotOptions["type"] = extension === ".png" ? "png" : extension === ".webp" ? "webp" : "jpeg";
   return { path: screenshotPath, type, quality: type === "png" ? undefined : 100 };
 }
 

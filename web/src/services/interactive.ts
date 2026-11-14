@@ -157,6 +157,24 @@ function isUsable(candidate: InteractiveCandidate): boolean {
 }
 
 /**
+ * Where a snapshot parks the elements it printed refs for. Both sides of the contract live in this
+ * module: [function collectInteractiveCandidates] writes it, [function elementForRef] reads it, and
+ * a navigation (new document, empty store) is what makes a ref stale.
+ */
+interface BrowserRefStore {
+  __gaiBrowserRefs?: Element[];
+}
+
+/**
+ * Runs inside the page: the element behind a `ref` printed by the last snapshot, or `null` when the
+ * document changed since. Self-contained for the same reason as the collector.
+ */
+export function elementForRef(index: number): Element | null {
+  const element = (window as unknown as BrowserRefStore).__gaiBrowserRefs?.[index];
+  return element !== undefined && element.isConnected ? element : null;
+}
+
+/**
  * Runs inside the page: every interactable element of one frame in composed-tree order (open shadow
  * roots included), with the facts the filter needs. Must stay self-contained — Playwright serializes
  * this function alone into the page.
@@ -179,8 +197,7 @@ export function collectInteractiveCandidates(framePrefix: string): InteractiveCa
 
   const refs: Element[] = [];
   const candidates: InteractiveCandidate[] = [];
-  const store = window as unknown as { __gaiBrowserRefs?: Element[] };
-  store.__gaiBrowserRefs = refs;
+  (window as unknown as BrowserRefStore).__gaiBrowserRefs = refs;
   // Filled by labelIndex() on the first element that has an id.
   let labelCache: Map<string, string> | null = null;
 
@@ -342,8 +359,8 @@ export function collectInteractiveCandidates(framePrefix: string): InteractiveCa
       }
     }
     // Shadow content is part of the composed tree, so it is walked where the host sits.
-    const shadow = (element as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot;
-    if (shadow !== null && shadow !== undefined) {
+    const shadow = element instanceof HTMLElement ? element.shadowRoot : null;
+    if (shadow !== null) {
       for (const child of shadow.children) {
         if (candidates.length >= MAX_CANDIDATES) return;
         collect(child, regionRole, regionName);
