@@ -16,7 +16,7 @@ static func agent_context_message_matches_system_text_test() -> void:
 
 
 static func system_prompt_uses_workspace_system_md_test() -> void:
-	var previous_context := SystemPrompt.get_system_context()
+	var previous_context := SystemPrompt.system_context
 	var body := "custom system prompt"
 	SystemPrompt.system_context = body
 	assert(SystemPrompt.has_system_context())
@@ -26,7 +26,7 @@ static func system_prompt_uses_workspace_system_md_test() -> void:
 
 
 static func system_prompt_falls_back_to_generated_prompt_test() -> void:
-	var previous_context := SystemPrompt.get_system_context()
+	var previous_context := SystemPrompt.system_context
 	SystemPrompt.system_context = ""
 	assert(not SystemPrompt.has_system_context())
 	var prompt := SystemPrompt.build()

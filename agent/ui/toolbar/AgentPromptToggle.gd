@@ -1,7 +1,7 @@
 class_name AgentPromptToggle
 extends RefCounted
 
-## Toolbar toggle for the AGENTS.md project prompt (session append/remove).
+## Toolbar toggle for the AGENTS.md project prompt.
 
 var button: Button
 
@@ -28,17 +28,5 @@ func refresh_toggle_button() -> void:
 
 func on_toggled(enabled: bool) -> void:
 	AgentSetting.set_agent_prompt_in_prompt_enabled(enabled)
-
 	refresh_toggle_button()
-
-	var session_id := AgentSessionManager.active_session_id
-	if AgentSessionManager.has_chat_history(session_id):
-		return
-
-	if enabled:
-		ContextInjectionManager.append_agent_prompt(session_id)
-	else:
-		ContextInjectionManager.remove_agent_prompt(session_id)
-	AgentSessionManager.persist_session(session_id)
-	AgentEvents.events.agent_context_changed.emit(session_id)
 	pass

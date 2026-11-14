@@ -31,9 +31,6 @@ func setup(
 	gdf.events.theme_color_changed.connect(on_theme_color_changed)
 	gdf.events.locale_changed.connect(on_locale_changed)
 	AgentEvents.events.markdown_changed.connect(on_markdown_changed)
-	AgentEvents.events.skill_context_changed.connect(on_agent_context_changed)
-	AgentEvents.events.memory_context_changed.connect(on_agent_context_changed)
-	AgentEvents.events.agent_context_changed.connect(on_agent_context_changed)
 	AgentEvents.events.session_selected.connect(on_session_selected)
 	AgentEvents.events.session_removed.connect(on_session_removed)
 	AgentEvents.events.agent_start.connect(on_agent_start)
@@ -124,12 +121,6 @@ func on_chat_entry_delete(session_id: int, entry_idx: int, delete_from_here: boo
 # ---------------------------------------------------------------------------
 # AgentEvents — appearance
 # ---------------------------------------------------------------------------
-
-## Re-render the chat history after a context prompt (skills / memory / AGENTS.md) is added or removed.
-func on_agent_context_changed(session_id: int) -> void:
-	invalidate_session(session_id)
-	pass
-
 
 func on_markdown_changed(_enabled: bool) -> void:
 	var session: AgentSession = AgentSessionStore.load_session(AgentSessionManager.active_session_id)
@@ -237,16 +228,6 @@ func rebuild(session_id: int) -> void:
 	chat_scroll.cache_session_scroll(session_id)
 	chat_list_cache.clear_all()
 	show_session(session_id)
-	pass
-
-
-func invalidate_session(session_id: int) -> void:
-	var is_active: bool = AgentSessionManager.is_active(session_id)
-	if is_active:
-		chat_scroll.cache_session_scroll(session_id)
-	chat_list_cache.remove(session_id)
-	if is_active:
-		show_session(session_id)
 	pass
 
 

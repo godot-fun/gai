@@ -50,11 +50,6 @@ static func append_memory(session_id: int) -> void:
 	pass
 
 
-static func remove_memory(session_id: int) -> void:
-	remove_context(session_id, ChatEntry.KIND_MEMORY, MemoryPrompt.is_memory_context_message)
-	pass
-
-
 static func append_skill(session_id: int) -> void:
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null or has_context_kind(session, ChatEntry.KIND_SKILL):
@@ -67,11 +62,6 @@ static func append_skill(session_id: int) -> void:
 	pass
 
 
-static func remove_skill(session_id: int) -> void:
-	remove_context(session_id, ChatEntry.KIND_SKILL, SkillPrompt.is_skill_context_message)
-	pass
-
-
 static func append_agent_prompt(session_id: int) -> void:
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null or has_context_kind(session, ChatEntry.KIND_AGENT_PROMPT):
@@ -81,28 +71,6 @@ static func append_agent_prompt(session_id: int) -> void:
 	var context := AgentPrompt.get_agent_context()
 	session.messages.append(ChatMessage.system(context))
 	AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_AGENT_PROMPT, ChatEntry.TITLE_AGENT_PROMPT, context)
-	pass
-
-
-static func remove_agent_prompt(session_id: int) -> void:
-	remove_context(session_id, ChatEntry.KIND_AGENT_PROMPT, AgentPrompt.is_agent_context_message)
-	pass
-
-
-static func remove_context(session_id: int, kind: String, matches_message: Callable) -> void:
-	var session := AgentSessionStore.load_session(session_id)
-	if session == null:
-		return
-	var kept_messages: Array[ChatMessage] = []
-	for message: ChatMessage in session.messages:
-		if not matches_message.call(message):
-			kept_messages.append(message)
-	session.messages = kept_messages
-	var kept_entries: Array[ChatEntry] = []
-	for entry: ChatEntry in session.chat_entries:
-		if entry.kind != kind:
-			kept_entries.append(entry)
-	session.chat_entries = kept_entries
 	pass
 
 

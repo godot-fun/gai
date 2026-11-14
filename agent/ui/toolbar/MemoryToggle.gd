@@ -1,7 +1,7 @@
 class_name MemoryToggle
 extends RefCounted
 
-## Toolbar toggle for the project memory index (session append/remove).
+## Toolbar toggle for the project memory index.
 
 var button: Button
 
@@ -29,16 +29,4 @@ func refresh_toggle_button() -> void:
 func on_toggled(enabled: bool) -> void:
 	AgentSetting.set_memory_in_prompt_enabled(enabled)
 	refresh_toggle_button()
-
-	var session_id := AgentSessionManager.active_session_id
-	if AgentSessionManager.has_chat_history(session_id):
-		return
-
-	if enabled:
-		MemoryPrompt.reload_memory_context()
-		ContextInjectionManager.append_memory(session_id)
-	else:
-		ContextInjectionManager.remove_memory(session_id)
-	AgentSessionManager.persist_session(session_id)
-	AgentEvents.events.memory_context_changed.emit(session_id)
 	pass

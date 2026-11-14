@@ -1,7 +1,7 @@
 class_name SkillToggle
 extends RefCounted
 
-## Toolbar toggle for the skill index prompt (session append/remove).
+## Toolbar toggle for the skill index prompt.
 
 var button: Button
 
@@ -28,17 +28,5 @@ func refresh_toggle_button() -> void:
 
 func on_toggled(enabled: bool) -> void:
 	AgentSetting.set_skill_in_prompt_enabled(enabled)
-
 	refresh_toggle_button()
-	
-	var session_id := AgentSessionManager.active_session_id
-	if AgentSessionManager.has_chat_history(session_id):
-		return
-	
-	if enabled:
-		ContextInjectionManager.append_skill(session_id)
-	else:
-		ContextInjectionManager.remove_skill(session_id)
-	AgentSessionManager.persist_session(session_id)
-	AgentEvents.events.skill_context_changed.emit(session_id)
 	pass

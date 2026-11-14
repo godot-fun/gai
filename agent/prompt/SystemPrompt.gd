@@ -33,10 +33,6 @@ static func _static_init() -> void:
 	pass
 
 
-static func get_system_context() -> String:
-	return system_context
-
-
 static func has_system_context() -> bool:
 	return StringUtils.is_not_blank(system_context)
 
