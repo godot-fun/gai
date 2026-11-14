@@ -43,12 +43,7 @@ static func apply_field(input_field: CodeEdit) -> void:
 ## composer so the popup does not look like an editor widget.
 static func apply_completion(input_field: CodeEdit) -> void:
 	var panel := StyleBoxHelper.create_style_box_flat(Colors.surface_container_high, ControlSize.radius_md,
-		Margin.ma_2, Margin.ma_2)
-	panel.border_color = Colors.outline
-	panel.set_border_width(SIDE_LEFT, ControlSize.border_xs)
-	panel.set_border_width(SIDE_TOP, ControlSize.border_xs)
-	panel.set_border_width(SIDE_RIGHT, ControlSize.border_xs)
-	panel.set_border_width(SIDE_BOTTOM, ControlSize.border_xs)
+		Margin.ma_2, Margin.ma_2, Colors.outline_variant, ControlSize.border_xs)
 	panel.shadow_color = Color(0, 0, 0, 0.32 if ThemeColor.is_dark_theme() else 0.10)
 	panel.shadow_size = Margin.ma_3
 	panel.shadow_offset = Vector2(0, Margin.ma_1)
