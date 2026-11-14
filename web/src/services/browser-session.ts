@@ -50,8 +50,6 @@ export interface BrowserRequest {
 
 export interface BrowserResult {
   ok: boolean;
-  /** Last step the server attempted, so a batch failure names the step that broke. */
-  action: string;
   url: string;
   title: string;
   error: string;
@@ -178,11 +176,9 @@ export class BrowserSession {
   private async runSteps(request: BrowserRequest): Promise<BrowserResult> {
     const page = await this.currentPage();
     const deadline = Date.now() + Math.max(MIN_BUDGET_MS, config.requestTimeoutMs - BUDGET_MARGIN_MS);
-    let action = request.steps[0]?.action ?? "";
     let error = "";
     let markdown = "";
     for (const step of request.steps) {
-      action = step.action;
       const remaining = deadline - Date.now();
       if (remaining < MIN_BUDGET_MS) {
         error = `the request ran out of time before: ${step.action}`;
@@ -202,7 +198,6 @@ export class BrowserSession {
     const screenshot = await captureScreenshot(page, request.screenshotPath);
     return {
       ok: error === "",
-      action,
       url: page.url(),
       title: await page.title().catch(() => ""),
       error,

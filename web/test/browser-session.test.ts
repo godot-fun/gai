@@ -50,7 +50,6 @@ test("run reports page metadata and a snapshot for a snapshot step", async () =>
   const session = new BrowserSession(async () => createFakePage());
   const result = await session.run({ steps: [step("snapshot")], snapshot: true });
   assert.equal(result.ok, true);
-  assert.equal(result.action, "snapshot");
   assert.equal(result.url, "https://example.com/");
   assert.equal(result.title, "Example");
   assert.equal(result.snapshot, EMPTY_PAGE_SNAPSHOT);
@@ -74,7 +73,6 @@ test("run names the failing step, keeps the reason, and still returns a snapshot
   const session = new BrowserSession(async () => createFakePage({ gotoError: failure }));
   const result = await session.run({ steps: [step("goto", { url: "https://nope.invalid" })], snapshot: false });
   assert.equal(result.ok, false);
-  assert.equal(result.action, "goto");
   assert.ok(result.error.includes("goto failed"));
   assert.ok(result.error.includes("net::ERR_NAME_NOT_RESOLVED"));
   assert.equal(result.snapshot, EMPTY_PAGE_SNAPSHOT);
@@ -94,7 +92,7 @@ test("run stops the batch at the first failing step", async () => {
     snapshot: false,
   });
   assert.equal(result.ok, false);
-  assert.equal(result.action, "goto");
+  assert.ok(result.error.includes("goto failed"));
 });
 
 test("run serializes concurrent requests over the shared page", async () => {

@@ -7,23 +7,37 @@ import { registerApi, type ApiRoute } from "./route";
 /** One request may chain a few steps, but the HTTP timeout bounds how many can finish. */
 const MAX_STEPS = 12;
 
-/** String fields an action cannot run without; a targeted action additionally needs `ref` or `selector`. */
-const FIELDS: Readonly<Record<BrowserStepAction, readonly string[]>> = {
+/** The plain text fields a step can carry; `action` and `direction` are handled on their own. */
+type StepField = "url" | "ref" | "selector" | "text" | "key" | "value";
+
+/**
+ * Fields each action reads. A step is parsed from its action, so a field that does not belong to it
+ * is dropped instead of forwarded — the same rule the tool layer applies before sending.
+ */
+const FIELDS: Readonly<Record<BrowserStepAction, readonly StepField[]>> = {
   goto: ["url"],
   snapshot: [],
   markdown: [],
-  click: [],
-  type: ["text"],
-  press: ["key"],
-  hover: [],
-  select: ["value"],
-  scroll: [],
+  click: ["ref", "selector"],
+  type: ["ref", "selector", "text"],
+  press: ["ref", "selector", "key"],
+  hover: ["ref", "selector"],
+  select: ["ref", "selector", "value"],
+  scroll: ["ref", "selector"],
   back: [],
   forward: [],
   reload: [],
 };
 
-/** Actions that only need a target plus something to do with it. */
+/** The one field an action cannot run without. */
+const REQUIRED: Readonly<Partial<Record<BrowserStepAction, StepField>>> = {
+  goto: "url",
+  type: "text",
+  press: "key",
+  select: "value",
+};
+
+/** Actions that only work on an element: a ref from the last snapshot, or a selector once it is stale. */
 const TARGETED: readonly BrowserStepAction[] = ["click", "type", "hover", "select"];
 
 /**
@@ -70,33 +84,26 @@ function readStep(value: unknown, index: number): BrowserStep {
     throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_ACTION", `steps[${index}].action must be one of: ${BROWSER_STEP_ACTIONS.join(", ")}`);
   }
   const parsed: BrowserStep = { action };
-  for (const field of ["url", "ref", "selector", "text", "key", "value"] as const) {
+  for (const field of FIELDS[action]) {
     const raw = optionalString(step[field], `steps[${index}].${field}`);
     if (raw !== undefined) parsed[field] = raw;
   }
-  const direction = step.direction;
-  if (direction !== undefined) {
-    if (direction !== "up" && direction !== "down") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `steps[${index}].direction must be up or down`);
-    parsed.direction = direction;
-  }
-  validateFields(parsed, index);
-  return parsed;
-}
-
-/** Fails the whole request when a step cannot possibly run; the message names the action and field. */
-function validateFields(step: BrowserStep, index: number): void {
-  for (const field of FIELDS[step.action]) {
-    const value = step[field as keyof BrowserStep];
-    if (typeof value !== "string" || value.trim() === "") {
-      throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `steps[${index}] ${step.action} needs a non-empty ${field}`);
+  if (action === "scroll") {
+    const direction = optionalString(step.direction, `steps[${index}].direction`);
+    if (direction !== undefined) {
+      if (direction !== "up" && direction !== "down") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `steps[${index}].direction must be up or down`);
+      parsed.direction = direction;
     }
   }
-  if (!TARGETED.includes(step.action)) return;
-  const hasRef = (step.ref ?? "").trim() !== "";
-  const hasSelector = (step.selector ?? "").trim() !== "";
-  if (!hasRef && !hasSelector) {
-    throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `steps[${index}] ${step.action} needs a ref from the last snapshot, or a selector`);
+
+  const required = REQUIRED[action];
+  if (required !== undefined && (parsed[required] ?? "").trim() === "") {
+    throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `steps[${index}] ${action} needs a non-empty ${required}`);
   }
+  if (TARGETED.includes(action) && (parsed.ref ?? "").trim() === "" && (parsed.selector ?? "").trim() === "") {
+    throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `steps[${index}] ${action} needs a ref from the last snapshot, or a selector`);
+  }
+  return parsed;
 }
 
 function isStepAction(value: string): value is BrowserStepAction {

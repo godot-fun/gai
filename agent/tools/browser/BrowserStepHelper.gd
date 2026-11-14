@@ -59,18 +59,40 @@ static func normalize_steps(raw_steps: Array) -> ParseResult:
 	return result
 
 
-## Maps one raw JSON object onto the typed step. Unset fields stay blank, unknown fields are dropped.
+## Maps one raw JSON object onto the typed step.
+##
+## The action is read first and decides which fields exist: a model that writes `text` on a click
+## gets that field dropped instead of forwarded, so the wire only carries what the step means.
 static func read_step(entry: Dictionary) -> BrowserStep:
 	var step := BrowserStep.new()
 	step.action = read_string(entry, "action")
-	step.url = read_string(entry, "url")
+	match step.action:
+		BrowserStep.ACTION_GOTO:
+			step.url = read_string(entry, "url")
+		BrowserStep.ACTION_CLICK, BrowserStep.ACTION_HOVER:
+			read_target(entry, step)
+		BrowserStep.ACTION_TYPE:
+			read_target(entry, step)
+			step.text = read_string(entry, "text")
+		BrowserStep.ACTION_PRESS:
+			read_target(entry, step)
+			step.key = read_string(entry, "key")
+		BrowserStep.ACTION_SELECT:
+			read_target(entry, step)
+			step.value = read_string(entry, "value")
+		BrowserStep.ACTION_SCROLL:
+			read_target(entry, step)
+			step.direction = read_string(entry, "direction").to_lower()
+		_:
+			pass
+	return step
+
+
+## The element a step acts on: a handle from the last snapshot, or a selector once the handle is stale.
+static func read_target(entry: Dictionary, step: BrowserStep) -> void:
 	step.ref = read_string(entry, "ref")
 	step.selector = read_string(entry, "selector")
-	step.text = read_string(entry, "text")
-	step.key = read_string(entry, "key")
-	step.value = read_string(entry, "value")
-	step.direction = read_string(entry, "direction").to_lower()
-	return step
+	pass
 
 
 ## Field checks that must fail before a step costs a browser action.

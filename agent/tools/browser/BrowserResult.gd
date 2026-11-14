@@ -9,8 +9,6 @@ extends RefCounted
 ## [WebServer], which starts the local server.
 
 var ok: bool
-## Last step the server attempted, so a batch failure names the step that broke.
-var action: String
 var url: String
 var title: String
 var error: String

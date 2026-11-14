@@ -22,8 +22,6 @@ export interface SnapshotNode {
 /** Keeps a snapshot inside the budget the agent uses for other tool output. */
 export const MAX_SNAPSHOT_CHARS = 24_000;
 export const SNAPSHOT_TRUNCATED_SUFFIX = "\n... (snapshot truncated: use mode=markdown, or open a narrower page)";
-/** Deeper indentation stops helping and starts costing tokens. */
-const MAX_INDENT_DEPTH = 8;
 
 const EMPTY_PAGE_TEXT = "(page has no readable or interactive content)";
 
@@ -32,7 +30,7 @@ export function formatSnapshot(nodes: readonly SnapshotNode[]): string {
   if (nodes.length === 0) return EMPTY_PAGE_TEXT;
   const lines: string[] = [];
   for (const node of nodes) {
-    lines.push(`${"  ".repeat(clampDepth(node.depth))}- ${describeNode(node)}`);
+    lines.push(`${"  ".repeat(Math.max(0, node.depth))}- ${describeNode(node)}`);
   }
   return truncateSnapshot(lines.join("\n"));
 }
@@ -54,11 +52,6 @@ function describeNode(node: SnapshotNode): string {
   if (node.state !== "") line += ` (${node.state})`;
   if (node.ref !== "") line += ` [${node.ref}]`;
   return line;
-}
-
-function clampDepth(depth: number): number {
-  if (!Number.isFinite(depth)) return 0;
-  return Math.max(0, Math.min(Math.trunc(depth), MAX_INDENT_DEPTH));
 }
 
 /** Collapses whitespace and escapes, so one node always stays on one line. */

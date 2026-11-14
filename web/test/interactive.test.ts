@@ -21,8 +21,8 @@ test("selectCandidates keeps rendered, enabled, named elements", () => {
   ]);
   assert.deepEqual(elements(nodes).map((node) => node.name), ["Docs"]);
   assert.equal(elements(nodes)[0]?.ref, "e0");
-  // Unrendered and disabled elements are facts, not budget cuts, so only the unnamed link is reported.
-  assert.ok(nodes.some((node) => node.name.includes("1 interactive elements over the per-step budget")));
+  // Unrendered and disabled elements are facts, not drops; only the unnamed link is reported.
+  assert.ok(nodes.some((node) => node.name.includes("1 nameless elements skipped")));
 });
 
 test("selectCandidates keeps a nameless form control because its value carries it", () => {
@@ -32,7 +32,7 @@ test("selectCandidates keeps a nameless form control because its value carries i
     candidate({ role: "button", name: "", ref: "e2" }),
   ]);
   assert.deepEqual(elements(nodes).map((node) => node.role), ["textbox", "combobox"]);
-  assert.ok(nodes.some((node) => node.name.includes("1 interactive elements over the per-step budget")));
+  assert.ok(nodes.some((node) => node.name.includes("1 nameless elements skipped")));
 });
 
 test("selectCandidates collapses repeated navigation and footer links", () => {

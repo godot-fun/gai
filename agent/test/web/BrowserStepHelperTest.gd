@@ -87,7 +87,6 @@ func step_payload_only_carries_the_fields_that_are_set_test() -> void:
 func describe_puts_the_failure_first_test() -> void:
 	var response := BrowserResult.new()
 	response.ok = false
-	response.action = BrowserStep.ACTION_CLICK
 	response.url = "https://example.com/"
 	response.title = "Example"
 	response.error = "click failed: ref e9 is stale"
@@ -140,7 +139,6 @@ func browser_wire_format_test() -> void:
 	var response: BrowserResult = JsonUtils.json_to_object(body, BrowserResult)
 	assert(response != null)
 	assert(not response.ok)
-	assert(response.action == BrowserStep.ACTION_CLICK)
 	assert(response.url == "https://example.com/")
 	assert(response.title == "Example")
 	assert(response.error.contains("stale"))
@@ -196,4 +194,22 @@ func normalize_steps_treats_null_as_absent_test() -> void:
 	var number_batch := BrowserStepHelper.normalize_steps([{"action": "type", "ref": "e1", "text": 42}])
 	assert(number_batch.is_valid())
 	assert(number_batch.steps[0].text == "42")
+	pass
+
+
+## The action decides which fields exist: applying a field to a step that has no use for it must not
+## forward it to the server.
+func read_step_keeps_only_the_fields_of_its_action_test() -> void:
+	var batch := BrowserStepHelper.normalize_steps([
+		{"action": "click", "ref": "e3", "text": "not used by click", "value": "nor this"},
+		{"action": "goto", "ref": "e9", "url": "https://example.com"},
+		{"action": "type", "ref": "e4", "text": "hello"},
+	])
+	assert(batch.is_valid())
+	assert(batch.steps[0].to_dict().size() == 2)
+	assert(not batch.steps[0].to_dict().has("text"))
+	assert(not batch.steps[0].to_dict().has("value"))
+	assert(batch.steps[1].to_dict().size() == 2)
+	assert(not batch.steps[1].to_dict().has("ref"))
+	assert(batch.steps[2].text == "hello")
 	pass

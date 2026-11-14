@@ -25,7 +25,7 @@ static func parse(xml: String) -> Array[SearchResult]:
 		var entry_xml := item_match.get_string(1)
 		var title := field(re_title, entry_xml)
 		var url := field(re_link, entry_xml)
-		if title.is_empty() or not is_http_url(url) or seen.has(url):
+		if title.is_empty() or not HttpUtils.is_valid_http_url(url) or seen.has(url):
 			continue
 		seen[url] = true
 		var result := SearchResult.new()
@@ -49,7 +49,3 @@ static func field(regex: RegEx, item: String) -> String:
 static func unwrap_cdata(text: String) -> String:
 	var found := re_cdata.search(text)
 	return found.get_string(1) if found != null else text
-
-
-static func is_http_url(url: String) -> bool:
-	return url.begins_with("http://") or url.begins_with("https://")

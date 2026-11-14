@@ -73,14 +73,15 @@ export function selectCandidates(candidates: readonly InteractiveCandidate[], li
   const seen = new Map<string, number>();
   const kept: { candidate: InteractiveCandidate; order: number }[] = [];
   let links = 0;
-  let dropped = 0;
+  let overBudget = 0;
+  let unnamed = 0;
   let repeated = 0;
 
   for (const entry of byPriority) {
     const { candidate } = entry;
     if (!candidate.rendered || !candidate.enabled) continue;
     if (!isUsable(candidate)) {
-      dropped += 1;
+      unnamed += 1;
       continue;
     }
     if (repeats(seen, candidate) >= limits.maxPerName) {
@@ -88,7 +89,7 @@ export function selectCandidates(candidates: readonly InteractiveCandidate[], li
       continue;
     }
     if ((candidate.role === "link" && links >= limits.maxLinks) || kept.length >= limits.maxElements) {
-      dropped += 1;
+      overBudget += 1;
       continue;
     }
     seen.set(`${candidate.role}|${candidate.name}`, repeats(seen, candidate) + 1);
@@ -118,8 +119,9 @@ export function selectCandidates(candidates: readonly InteractiveCandidate[], li
   }
   // Declared, never silent: the model has to know the view is partial, and why.
   const notes: string[] = [];
-  if (dropped > 0) notes.push(`${dropped} interactive elements over the per-step budget, use mode=markdown or a narrower page`);
+  if (overBudget > 0) notes.push(`${overBudget} interactive elements over the per-step budget, use mode=markdown or a narrower page`);
   if (repeated > 0) notes.push(`${repeated} repeats collapsed (same role and name more than ${limits.maxPerName} times)`);
+  if (unnamed > 0) notes.push(`${unnamed} nameless elements skipped`);
   if (notes.length > 0) nodes.push({ depth: 0, role: "text", name: `(${notes.join("; ")})`, value: "", state: "", ref: "" });
   return nodes;
 }

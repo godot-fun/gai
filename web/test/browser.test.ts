@@ -32,7 +32,6 @@ async function runAction(steps: unknown[], extra: Record<string, unknown> = {}):
 test("POST /browser/action navigates and returns a snapshot with refs", async () => {
   const body = await runAction([{ action: "goto", url: "https://example.com/" }]);
   assert.equal(body.ok, true);
-  assert.equal(body.action, "goto");
   assert.equal(body.url, "https://example.com/");
   assert.equal(body.title, "Example Domain");
   assert.equal(body.error, "");
@@ -47,7 +46,6 @@ test("POST /browser/action clicks a ref from the snapshot and keeps the page", a
 
   const clicked = await runAction([{ action: "click", ref }]);
   assert.equal(clicked.ok, true);
-  assert.equal(clicked.action, "click");
   assert.ok(clicked.url.startsWith("https://www.iana.org/"));
   assert.notEqual(clicked.snapshot, "");
 });
@@ -125,4 +123,16 @@ test("POST /browser/action reports the budget instead of dropping elements silen
   assert.equal(observed.ok, true);
   assert.match(observed.snapshot, /^- (banner|navigation|main|form|dialog|page)( ")?/m);
   assert.match(observed.snapshot, /\(\d+ interactive elements over the per-step budget/);
+});
+
+test("POST /browser/action drops fields that do not belong to the action", async () => {
+  // `direction` only exists for scroll: on a click it is ignored instead of rejected.
+  const ignored = await client.post(`${baseUrl}/browser/action`, { steps: [{ action: "click", ref: "e999", direction: "left" }] }, { validateStatus: () => true });
+  assert.equal(ignored.status, 200);
+  assert.equal(ignored.data.error.includes("direction"), false);
+
+  // On scroll it is still validated.
+  const rejected = await client.post(`${baseUrl}/browser/action`, { steps: [{ action: "scroll", direction: "left" }] }, { validateStatus: () => true });
+  assert.equal(rejected.status, 400);
+  assert.ok(rejected.data.error.message.includes("direction"));
 });

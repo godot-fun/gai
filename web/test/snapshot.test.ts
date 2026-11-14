@@ -33,11 +33,6 @@ test("formatSnapshot reports a page without content instead of an empty string",
   assert.equal(formatSnapshot([]), "(page has no readable or interactive content)");
 });
 
-test("formatSnapshot clamps indentation so one deep node cannot blow up the line width", () => {
-  const text = formatSnapshot([node({ depth: 40, role: "link", ref: "e3" })]);
-  assert.ok(text.startsWith("                - link"));
-});
-
 test("formatSnapshot never exceeds the tool output budget", () => {
   const nodes: SnapshotNode[] = [];
   for (let index = 0; index < 400; index += 1) nodes.push(node({ role: "link", name: `item ${index} ${"x".repeat(120)}`, depth: 1, ref: `e${index}` }));
