@@ -1,14 +1,14 @@
 class_name SkillPrompt
 extends RefCounted
 
-## Skill index prompt — loads the skill index once and caches its text.
+## Skill index prompt — loads the workspace-root SKILLS.md once and caches its text.
 ## The index is appended to a session right after the system prompt (messages[0]); it is
-## identified by [SystemChatMessage] text so the auto-generated index text never has to be matched.
-## [method reload_skill_context] re-reads the file, so a new session picks up an edited index
-## without restarting the app.
+## identified by [SystemChatMessage] text so the skill index text never has to be re-read for
+## matching. [method reload_skill_context] re-reads the file, so a new session picks up an edited
+## SKILLS.md without restarting the app.
 
 
-const SKILL_INDEX_PATH := "SKILLS.md"
+const SKILLS_PATH := "SKILLS.md"
 
 static var skill_context: String = ""
 
@@ -20,7 +20,7 @@ static func _static_init() -> void:
 
 static func reload_skill_context() -> String:
 	skill_context = ""
-	var path := AgentWorkspace.resolve_path(SKILL_INDEX_PATH)
+	var path := AgentWorkspace.resolve_path(SKILLS_PATH)
 	if FileAccess.file_exists(path):
 		skill_context = FileUtils.read_file_to_string(path)
 	return skill_context

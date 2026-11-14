@@ -8,8 +8,8 @@ Batch asset tools — run from repo root; use each skill's script; never overwri
 |----------|----------|--------|
 | [AI](#ai) | Text-to-speech | 1 skill |
 | [Audio](#audio) | to-wav → trim → loudness → export / transcription | 10 skills |
-| [Image](#image) | to-png → watermark → split → background → trim / resize | 8 skills |
-| [Video](#video) | mute / wav → 60fps → 4K → merge → compress / OGV | 10 skills |
+| [Image](#image) | to-png → inpaint → split → background → trim / resize | 9 skills |
+| [Video](#video) | mute / wav → 60fps → 4K → merge → compress / OGV → publish | 10 skills |
 | [Storyboard](#storyboard) | Storyboard → HTML preview / video → VO → AV mix → merge → publish | 4 skills |
 | [Other](#other) | Naming, commits | 2 skills |
 

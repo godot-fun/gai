@@ -3,6 +3,8 @@ extends RefCounted
 
 ## Minimal coding-agent system prompt (Pi-style, under ~500 tokens).
 ## A workspace-root [constant SYSTEM_PATH] replaces the generated prompt entirely when present.
+## [method reload_system_context] re-reads the file, so a new session picks up an edited
+## SYSTEM.md without restarting the app.
 
 
 # ---------------------------------------------------------------------------
@@ -11,7 +13,7 @@ extends RefCounted
 
 static func build() -> String:
 	if has_system_context():
-		return system_context
+		return get_system_context()
 	return build_generated_prompt()
 
 
@@ -26,12 +28,20 @@ static var system_context: String = ""
 
 
 static func _static_init() -> void:
-	var path := AgentWorkspace.resolve_path(SYSTEM_PATH)
-	if not FileAccess.file_exists(path):
-		return
-	system_context = FileUtils.read_file_to_string(path)
+	reload_system_context()
 	pass
 
+
+static func reload_system_context() -> String:
+	system_context = ""
+	var path := AgentWorkspace.resolve_path(SYSTEM_PATH)
+	if FileAccess.file_exists(path):
+		system_context = FileUtils.read_file_to_string(path)
+	return system_context
+
+
+static func get_system_context() -> String:
+	return system_context
 
 static func has_system_context() -> bool:
 	return StringUtils.is_not_blank(system_context)

@@ -119,6 +119,7 @@ web/    Node.js browser + MCP gateway        cpp/   godot-cpp GDExtension
 cli/    skill command examples               zfoo/  reusable Godot framework
 .ai/    skill scripts                        .dependency/  isolated runtimes
 .agents/skills/  skill definitions           .memory/      durable agent memory
+SKILLS.md        skill index                 MEMORY.md     memory index
 test/   zfoo tests                           agent/test/   app tests
 ```
 

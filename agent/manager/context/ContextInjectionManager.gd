@@ -7,6 +7,7 @@ extends Object
 ## Initializes contexts in a stable order before the new-session notification is emitted.
 static func initialize(session_id: int) -> void:
 	if AgentSetting.get_system_prompt_in_prompt_enabled():
+		SystemPrompt.reload_system_context()
 		append_system_prompt(session_id)
 	if AgentSetting.get_memory_in_prompt_enabled():
 		MemoryPrompt.reload_memory_context()
@@ -15,6 +16,7 @@ static func initialize(session_id: int) -> void:
 		SkillPrompt.reload_skill_context()
 		append_skill(session_id)
 	if AgentSetting.get_agent_prompt_in_prompt_enabled():
+		AgentPrompt.reload_agent_context()
 		append_agent_prompt(session_id)
 	pass
 

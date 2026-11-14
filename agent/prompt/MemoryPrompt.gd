@@ -1,13 +1,15 @@
 class_name MemoryPrompt
 extends RefCounted
 
-## Project memory prompt — loads the workspace memory index once and caches its text.
-## The file text is appended to a session as a context message and is identified by
-## matching [SystemChatMessage] text so it can be removed without disturbing other system messages.
+## Project memory prompt — loads the workspace-root MEMORY.md once and caches its text.
+## The index is appended to a session right after the system prompt (messages[0]); it is
+## identified by [SystemChatMessage] text so it can be removed without disturbing other messages.
+## [method reload_memory_context] re-reads the file, so a new session picks up an edited
+## MEMORY.md without restarting the app.
 ## Also owns the text protocol for durable memory maintenance during compaction.
 
 
-const MEMORY_INDEX_PATH := "MEMORY.md"
+const MEMORY_PATH := "MEMORY.md"
 
 static var memory_context: String = ""
 
@@ -19,7 +21,7 @@ static func _static_init() -> void:
 
 static func reload_memory_context() -> String:
 	memory_context = ""
-	var path := AgentWorkspace.resolve_path(MEMORY_INDEX_PATH)
+	var path := AgentWorkspace.resolve_path(MEMORY_PATH)
 	if FileAccess.file_exists(path):
 		memory_context = FileUtils.read_file_to_string(path)
 	return memory_context
@@ -27,7 +29,6 @@ static func reload_memory_context() -> String:
 
 static func get_memory_context() -> String:
 	return memory_context
-
 
 static func has_memory_context() -> bool:
 	return StringUtils.is_not_blank(memory_context)
