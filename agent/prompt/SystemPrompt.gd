@@ -68,9 +68,22 @@ static func build_godot_context() -> String:
 	return build.build_joined(FileUtils.NEWLINE_LF)
 
 
+## Script runtimes a coding task calls directly. Everything else in `.dependency/` belongs to a
+## single skill, which resolves its own path from `.dependency/manifest.json`.
+const CORE_DEPENDENCIES: Array[String] = ["python", "node"]
+
+
+## Installed core dependencies, one per line. Paths are relative to the project root.
 static func build_dependency_context() -> String:
 	var build := StringBuilder.new()
-	build.append(StringUtils.format("Python path: {}", DependencyManifest.PYTHON_PATH))
+	build.append("Dependencies:")
+	for runtime: String in CORE_DEPENDENCIES:
+		var entry: DependencyManifest.DependencyManifestEntry = DependencyManifest.entries.get(runtime)
+		var path := entry.bin if entry != null and entry.populated else StringUtils.EMPTY
+		if StringUtils.is_blank(path) and runtime == "python":
+			path = DependencyManifest.PYTHON_PATH
+		if StringUtils.is_not_blank(path):
+			build.append(StringUtils.format("- {}: {}", runtime, path))
 	return build.build_joined(FileUtils.NEWLINE_LF)
 
 
@@ -93,12 +106,18 @@ static func build_operating_system_context() -> String:
 	return StringUtils.format("Operating system: {} {}", OS.get_name(), OS.get_version())
 
 
-## Builds one concise line containing the system locale and time zone.
+## Builds one concise line containing the system locale and the UTC offset. The raw zone name is
+## skipped because the OS returns it in the system language ("中国标准时间"), which mixes scripts
+## inside an otherwise English prompt and is harder for the model to reason about than an offset.
 static func build_locale_context() -> String:
-	var time_zone := str(Time.get_time_zone_from_system().get("name", ""))
-	if StringUtils.is_not_blank(time_zone):
-		return StringUtils.format("Locale: {}, time zone: {}", OS.get_locale(), time_zone)
-	return StringUtils.format("Locale: {}", OS.get_locale())
+	return StringUtils.format("Locale: {} · {}", OS.get_locale(), build_utc_offset_context())
+
+
+## Formats the system UTC offset as UTC+08:00. Godot reports the offset in whole minutes east of UTC.
+static func build_utc_offset_context() -> String:
+	var offset := int(Time.get_time_zone_from_system().get("bias", 0))
+	var absolute := absi(offset)
+	return "UTC%s%02d:%02d" % ["+" if offset >= 0 else "-", absolute / 60, absolute % 60]
 
 
 ## Builds one line describing the Bash environment used by command-line tools.

@@ -36,6 +36,21 @@ static func system_prompt_falls_back_to_generated_prompt_test() -> void:
 	pass
 
 
+static func system_prompt_lists_core_dependencies_test() -> void:
+	var dependencies := SystemPrompt.build_dependency_context()
+	assert(dependencies.begins_with("Dependencies:"))
+	assert(dependencies.contains("- python: "))
+	for runtime: String in SystemPrompt.CORE_DEPENDENCIES:
+		var entry: DependencyManifest.DependencyManifestEntry = DependencyManifest.entries.get(runtime)
+		if entry == null or not entry.populated or StringUtils.is_blank(entry.bin):
+			continue
+		assert(dependencies.contains("- %s: %s" % [runtime, entry.bin]))
+	# Skill-only dependencies stay out of the prompt.
+	assert(not dependencies.contains("funasr"))
+	assert(not dependencies.contains("qwen3-vl"))
+	pass
+
+
 static func system_prompt_toggle_controls_system_message_test() -> void:
 	var previous_enabled := AgentSetting.get_system_prompt_in_prompt_enabled()
 
