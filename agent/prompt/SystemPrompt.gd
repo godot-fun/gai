@@ -2,9 +2,17 @@ class_name SystemPrompt
 extends RefCounted
 
 ## Minimal coding-agent system prompt (Pi-style, under ~500 tokens).
+## A workspace-root [constant SYSTEM_PATH] replaces the generated prompt entirely when present.
+
+
+## Workspace-root file that overrides the generated prompt.
+const SYSTEM_PATH := "SYSTEM.md"
 
 
 static func build() -> String:
+	var system_text := load_system_prompt()
+	if StringUtils.is_not_blank(system_text):
+		return system_text
 	return StringUtils.format(
 		"""You are a coding agent in a Godot project workspace.
 
@@ -25,6 +33,14 @@ Rules:
 		build_dependency_context(),
 		build_os_context()
 	)
+
+
+## Reads the workspace-root [constant SYSTEM_PATH] override; empty when the file is absent or blank.
+static func load_system_prompt() -> String:
+	var path := AgentWorkspace.resolve_path(SYSTEM_PATH)
+	if not FileAccess.file_exists(path):
+		return StringUtils.EMPTY
+	return FileUtils.read_file_to_string(path).strip_edges()
 
 
 static func build_godot_context() -> String:
