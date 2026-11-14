@@ -5,6 +5,9 @@ import { extractPageContent } from "../services/page-content";
 import { captureScreenshot, validateScreenshotPath } from "../services/screenshot-service";
 import { registerApi, type ApiRoute } from "./route";
 
+/** How long a parsed document may keep hydrating before the content is read anyway. */
+const SETTLE_TIMEOUT_MS = 5_000;
+
 export interface FetchResponse {
   url: string;
   finalUrl: string;
@@ -46,7 +49,10 @@ export class FetchApi implements ApiRoute {
     }
     const page = await browserService.openPage();
     try {
-      await page.goto(requestedUrl.href, { waitUntil: "networkidle" });
+      await page.goto(requestedUrl.href, { waitUntil: "domcontentloaded" });
+      // Hydration is best effort: a page that polls keeps the network busy forever, so waiting for
+      // `networkidle` inside the navigation used to turn a readable page into a 504.
+      await page.waitForLoadState("networkidle", { timeout: SETTLE_TIMEOUT_MS }).catch(() => undefined);
       const finalUrl = page.url();
       const content = await extractPageContent(page);
       const screenshot = await captureScreenshot(page, screenshotPath);

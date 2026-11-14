@@ -174,6 +174,8 @@ export function collectInteractiveCandidates(framePrefix: string): InteractiveCa
   const candidates: InteractiveCandidate[] = [];
   const store = window as unknown as { __gaiBrowserRefs?: Element[] };
   store.__gaiBrowserRefs = refs;
+  // Filled by labelIndex() on the first element that has an id.
+  let labelCache: Map<string, string> | null = null;
 
   const clip = (text: string, limit: number): string => (text.length > limit ? `${text.slice(0, limit)}…` : text);
   const normalize = (raw: string): string => raw.replace(/\s+/g, " ").trim();
@@ -226,14 +228,27 @@ export function collectInteractiveCandidates(framePrefix: string): InteractiveCa
   function labelText(element: Element): string {
     const id = element.getAttribute("id");
     if (id !== null && id !== "") {
-      const label = element.ownerDocument.querySelector(`label[for="${id.replace(/"/g, '\\"')}"]`);
-      if (label !== null) {
-        const text = normalize(label.textContent ?? "");
-        if (text !== "") return text;
-      }
+      const text = labelIndex().get(id) ?? "";
+      if (text !== "") return text;
     }
     const wrapping = element.closest("label");
     return wrapping === null ? "" : normalize(wrapping.textContent ?? "");
+  }
+
+  /**
+   * Every `label[for]` in one pass. A `querySelector` per element was the expensive part of
+   * collecting a form-heavy page — the page is walked for candidates and each one asked again.
+   * The first label in document order wins, the same rule a per-element `querySelector` applied.
+   */
+  function labelIndex(): Map<string, string> {
+    if (labelCache !== null) return labelCache;
+    labelCache = new Map<string, string>();
+    for (const label of document.querySelectorAll("label[for]")) {
+      const id = label.getAttribute("for") ?? "";
+      if (id === "" || labelCache.has(id)) continue;
+      labelCache.set(id, normalize(label.textContent ?? ""));
+    }
+    return labelCache;
   }
 
   /** Name from explicit labelling only — a landmark must never be named after all its children. */
@@ -334,12 +349,12 @@ export function collectInteractiveCandidates(framePrefix: string): InteractiveCa
     // Shadow content is part of the composed tree, so it is walked where the host sits.
     const shadow = (element as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot;
     if (shadow !== null && shadow !== undefined) {
-      for (const child of Array.from(shadow.children)) {
+      for (const child of shadow.children) {
         if (candidates.length >= MAX_CANDIDATES) return;
         collect(child, regionRole, regionName);
       }
     }
-    for (const child of Array.from(element.children)) {
+    for (const child of element.children) {
       if (candidates.length >= MAX_CANDIDATES) return;
       collect(child, regionRole, regionName);
     }

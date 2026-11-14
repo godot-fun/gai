@@ -55,7 +55,7 @@ Request:
 - `snapshot` — return a fresh snapshot (default `true`).
 - `screenshotPath` — optional absolute `.png`/`.jpg`/`.jpeg`/`.webp` path.
 
-Reply: `{ ok, action, url, title, error, snapshot, markdown, screenshotPath, screenshotError }`.
+Reply: `{ ok, url, title, error, snapshot, markdown, screenshotPath, screenshotError }`.
 A failed step answers `200` with `ok: false` and the message in `error`, plus a snapshot of the
 page it failed on; only a malformed request is a `4xx`. `snapshot` groups the interactable elements of the
 page under their landmark region:
@@ -72,8 +72,9 @@ page under their landmark region:
 
 Collection is deliberately unfiltered: every frame and every open shadow root is walked for elements
 Playwright could interact with, and only then is the budget applied (300 elements, 180 links, two
-copies of the same role+name, form controls before links). Anything beyond the budget is reported as
-`(N interactive elements not shown)` instead of disappearing silently.
+copies of the same role+name, form controls before links). A partial view says so in a closing `text`
+line — `(N interactive elements over the per-step budget, ...; N repeats collapsed ...; N nameless
+elements skipped)` — instead of dropping elements silently.
 
 `[eN]` is the handle to pass back as `ref`; a frame after the first prefixes it (`f2e12`). Refs are
 stored in the page, so they go stale as soon as the document changes — the next call reports that

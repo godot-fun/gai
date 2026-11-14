@@ -221,16 +221,16 @@ export class BrowserSession {
         await this.click(page, step, timeout);
         return "";
       case "type":
-        await (await this.resolveTarget(page, step)).fill(step.text ?? "", { timeout });
+        await this.withTarget(page, step, (target) => target.fill(step.text ?? "", { timeout }));
         return "";
       case "press":
         await this.press(page, step, timeout);
         return "";
       case "hover":
-        await (await this.resolveTarget(page, step)).hover({ timeout });
+        await this.withTarget(page, step, (target) => target.hover({ timeout }));
         return "";
       case "select":
-        await (await this.resolveTarget(page, step)).selectOption(step.value ?? "", { timeout });
+        await this.withTarget(page, step, (target) => target.selectOption(step.value ?? "", { timeout }));
         return "";
       case "scroll":
         await this.scroll(page, step, timeout);
@@ -257,7 +257,7 @@ export class BrowserSession {
   /** Clicks the target and follows a popup (`target=_blank`) the click opened. */
   private async click(page: Page, step: BrowserStep, timeout: number): Promise<void> {
     const before = new Set(page.context().pages());
-    await (await this.resolveTarget(page, step)).click({ timeout });
+    await this.withTarget(page, step, (target) => target.click({ timeout }));
     const popup = page.context().pages().find((candidate) => candidate !== page && !before.has(candidate));
     if (popup === undefined || popup.isClosed()) return;
     await popup.waitForLoadState("domcontentloaded", { timeout: SETTLE_TIMEOUT_MS }).catch(() => undefined);
@@ -273,19 +273,33 @@ export class BrowserSession {
       await page.keyboard.press(key);
       return;
     }
-    await (await this.resolveTarget(page, step)).press(key, { timeout });
+    await this.withTarget(page, step, (target) => target.press(key, { timeout }));
   }
 
   /** One viewport per step: the model cannot know pixel sizes, and a viewport is what it sees. */
   private async scroll(page: Page, step: BrowserStep, timeout: number): Promise<void> {
     if (step.ref !== undefined || step.selector !== undefined) {
-      await (await this.resolveTarget(page, step)).scrollIntoViewIfNeeded({ timeout });
+      await this.withTarget(page, step, (target) => target.scrollIntoViewIfNeeded({ timeout }));
       return;
     }
     await page.evaluate((up: boolean) => {
       // 0.9 keeps the last line of the previous screen visible, so nothing is skipped unseen.
       window.scrollBy(0, (up ? -1 : 1) * window.innerHeight * 0.9);
     }, step.direction === "up");
+  }
+
+  /**
+   * Resolves the target of a targeted step, runs one action on it, and releases what the lookup
+   * minted: a `ref` becomes an `ElementHandle`, and the page keeps every handle alive until it is
+   * disposed — an agent page lives across many requests, so un-disposed handles pile up.
+   */
+  private async withTarget<T>(page: Page, step: BrowserStep, run: (target: ActionTarget) => Promise<T>): Promise<T> {
+    const target = await this.resolveTarget(page, step);
+    try {
+      return await run(target);
+    } finally {
+      await releaseTarget(target);
+    }
   }
 
   /** Resolves a ref handle or a selector into something clickable. */
@@ -380,6 +394,13 @@ async function installNameHelper(page: Page): Promise<void> {
 /** Waits for a document that is still loading, so the next capture reads real content. */
 async function waitForDocument(page: Page): Promise<void> {
   await page.waitForLoadState("domcontentloaded", { timeout: SETTLE_TIMEOUT_MS }).catch(() => undefined);
+}
+
+/** Releases the handle a `ref` resolved to; a selector resolves to a `Locator`, which has nothing to release. */
+async function releaseTarget(target: ActionTarget): Promise<void> {
+  const handle = target as ElementHandle<Element>;
+  if (typeof handle.dispose !== "function") return;
+  await handle.dispose().catch(() => undefined);
 }
 
 function parseHttpUrl(raw: string): string {

@@ -13,7 +13,6 @@ const client = axios.create({ proxy: false });
 
 interface ActionBody {
   ok: boolean;
-  action: string;
   url: string;
   title: string;
   error: string;

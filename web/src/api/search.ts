@@ -23,11 +23,45 @@ export interface SearchResult {
   snippet: string;
 }
 
+/** What an engine page yields before filtering; a result may still be blank or unusable here. */
+interface RawSearchResult {
+  title: string;
+  url: string;
+  snippet: string;
+}
+
 export interface SearchResponse {
   query: string;
   results: SearchResult[];
   screenshotPath: string;
   screenshotError: string;
+}
+
+/**
+ * Drops empty, non-http, and repeated results, and numbers what survives.
+ *
+ * Dedupe uses the normalized `URL.href`: an engine lists the same target with differently spelled
+ * hrefs (`HTTPS://Example.com/x`, a bare host vs. a trailing slash), and comparing the raw strings
+ * would report it twice.
+ */
+export function normalizeSearchResults(rawResults: readonly RawSearchResult[], count: number): SearchResult[] {
+  const seen = new Set<string>();
+  const results: SearchResult[] = [];
+  for (const result of rawResults) {
+    if (result.title === "" || result.url === "") continue;
+    let url: URL;
+    try {
+      url = new URL(result.url);
+    } catch {
+      continue;
+    }
+    if (url.protocol !== "http:" && url.protocol !== "https:") continue;
+    if (seen.has(url.href)) continue;
+    seen.add(url.href);
+    results.push({ position: results.length + 1, title: result.title, url: url.href, snippet: result.snippet });
+    if (results.length >= count) break;
+  }
+  return results;
 }
 
 export class SearchApi implements ApiRoute {
@@ -92,7 +126,7 @@ export class SearchApi implements ApiRoute {
       };
     }));
 
-    return this.normalizeResults(rawResults, count);
+    return normalizeSearchResults(rawResults, count);
   }
 
   private async searchBing(page: Page, query: string, count: number): Promise<SearchResult[]> {
@@ -112,26 +146,7 @@ export class SearchApi implements ApiRoute {
       };
     }));
 
-    return this.normalizeResults(rawResults, count);
-  }
-
-  private normalizeResults(rawResults: Array<{ title: string; url: string; snippet: string }>, count: number): SearchResult[] {
-    const seen = new Set<string>();
-    const results: SearchResult[] = [];
-    for (const result of rawResults) {
-      if (result.title === "" || result.url === "" || seen.has(result.url)) continue;
-      let url: URL;
-      try {
-        url = new URL(result.url);
-      } catch {
-        continue;
-      }
-      if (url.protocol !== "http:" && url.protocol !== "https:") continue;
-      seen.add(url.href);
-      results.push({ position: results.length + 1, title: result.title, url: url.href, snippet: result.snippet });
-      if (results.length >= count) break;
-    }
-    return results;
+    return normalizeSearchResults(rawResults, count);
   }
 }
 
