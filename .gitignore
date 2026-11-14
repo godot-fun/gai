@@ -11,7 +11,9 @@ web/.npm/
 .app_data/
 web/.eslintcache
 web/*.tsbuildinfo
-
+web/.env
+web/.env.*
+!web/.env.example
 web/mcp.json
 npm-debug.log*
 yarn-debug.log*
