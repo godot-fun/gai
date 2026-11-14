@@ -1,11 +1,15 @@
 ## Glob matching and recursive file discovery with a bounded compiled-RegEx cache.
-## Paths are normalized to forward slashes before matching.
+## Paths are normalized to forward slashes before matching. Walks run on worker threads
+## ([method async_glob], and [method glob] from [method ExecutorHelper.async_execute_pooled] tasks), so the
+## cache below is shared across threads and [LruCacheString] guards it with its own lock.
 class_name GlobUtils
 extends Object
 
 ## Keeps repeated ignore rules cheap without allowing unbounded process-lifetime growth.
-const REGEX_CACHE_MAX_SIZE: int = 256
+const REGEX_CACHE_MAX_SIZE: int = 512
 
+## Shared by every walk: one on the worker pool and one on the single-thread executor can compile the same
+## rule at the same time, so the cache is only touched through its thread-safe methods.
 static var regex_cache := LruCacheString.new(REGEX_CACHE_MAX_SIZE)
 
 
@@ -73,13 +77,14 @@ static func glob(search_root: String, glob_pattern: String, recursive: bool = tr
 				if paths.size() >= max_entries:
 					break
 				var child_path := folder_path.path_join(dir_name)
-				var relative_child := child_path.replace("\\", "/").substr(root_prefix.length())
+				var normalized_child := child_path.replace("\\", "/")
+				var relative_child := normalized_child.substr(root_prefix.length())
 				if skip != null and not skip.may_enter_dir(relative_child):
 					continue
 				var match_child := relative_child if pattern_has_path else dir_name
 				if include_directories and (pattern.is_empty() or glob_match(pattern, match_child, false)):
 					if skip == null or not skip.is_ignored(relative_child, true):
-						paths.append(child_path.replace("\\", "/") + "/")
+						paths.append(normalized_child + "/")
 				folders.append(child_path)
 		if folder_index >= 1024 and folder_index * 2 >= folders.size():
 			folders = folders.slice(folder_index)
@@ -181,8 +186,9 @@ static func get_or_compile_regex(glob_rule: String, directory_rule: bool = false
 	var regex := RegEx.new()
 	if regex.compile(expression) != OK:
 		return null
-	regex_cache.put_if_absent(cache_key, regex)
-	return regex
+	# Another worker may have compiled the same rule while this one did, and the cache stores whichever
+	# expression won, so the cached one is the answer.
+	return regex_cache.get_or_put(cache_key, regex) as RegEx
 
 
 # ---------------------------------------------------------------------------

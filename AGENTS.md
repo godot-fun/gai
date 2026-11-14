@@ -178,7 +178,7 @@ ExecutorHelper.execute_pooled(func() -> void: pass)
 var pooled: Variant = await ExecutorHelper.async_execute_pooled(func() -> int: return 1)
 ```
 
-- `ConcurrentArrayList`, `ConcurrentMapInt` — mutex-backed thread-safe list and int-key map.
+- `ConcurrentArrayList`, `ConcurrentMapInt`, `LruCacheString` — mutex-backed thread-safe list, int-key map, and bounded String-key LRU cache.
 
 
 ## Network
@@ -268,7 +268,7 @@ label.text = I18n.t("settings.title")
 
 ## Collection — collection utilities
 
-`ArrayMapString`, `LazyCache`, `LruCacheInt`, `LruCacheString`, `ReadyQueue`, `RingListInt`, `RingListString`, `PairInt`, `PairString`
+`ArrayMapString`, `LazyCache`, `LruCacheInt`, `ReadyQueue`, `RingListInt`, `RingListString`, `PairInt`, `PairString`
 
 
 ## Common — common utilities
