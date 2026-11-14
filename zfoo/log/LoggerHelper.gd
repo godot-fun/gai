@@ -6,9 +6,10 @@ static var LOG_FILE_PATH: String = OS.get_user_data_dir() + "/logs/godot.log"
 static func init() -> void:
 	if OS.is_debug_build():
 		OS.add_logger(ConsoleLogger.new())
-		return
-	OS.add_logger(FileLogger.new())
-	print(StringUtils.format("{} - add loggger file:[{}]", TimeUtils.date(), LOG_FILE_PATH))
+	else:
+		OS.add_logger(FileLogger.new())
+	# Reported in both builds so the resolved location is visible at startup.
+	Log.info("log file:[{}]", LOG_FILE_PATH)
 	pass
 
 
