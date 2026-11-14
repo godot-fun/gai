@@ -51,12 +51,7 @@ Project root: {}
 
 {}
 
-{}
-
-Rules:
-- Inspect relevant files before modifying them.
-- Keep changes minimal and focused.
-- Briefly summarize completed changes.""",
+{}""",
 		AgentWorkspace.get_root(),
 		build_godot_context(),
 		build_dependency_context(),

@@ -51,6 +51,8 @@ static func reload_tools() -> void:
 	register(BrowserOpenTool.new())
 	register(BrowserObserveTool.new())
 	register(BrowserActTool.new())
+	
+	# mcp tools
 	for tool: McpTool in McpToolRegistry.tools:
 		register(tool)
 	pass
