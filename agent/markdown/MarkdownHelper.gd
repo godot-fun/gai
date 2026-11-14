@@ -38,10 +38,29 @@ const TABLE_V_SEPARATION := 0
 # draw code, and a future clamp to 0 would only make the box line-height again.
 
 
-## Formats a local file path for display in Markdown. Images and video thumbnails render inline;
-## other files are links.
-static func format_file_as_markdown(path: String) -> String:
+## What the caller already knows about a path, so the shared formatter need not ask the disk: the `@`
+## completion rows read their kind from the workspace index. [constant PathKind.AUTO] classifies the path
+## instead, the same way the markdown renderer does.
+enum PathKind { AUTO, FILE, DIRECTORY }
+
+
+## Formats one local path for display in Markdown: images and video thumbnails render inline, other files
+## are links (`[name](<path>)`), and a folder keeps both trailing slashes (`[name/](<path/>)`) — that is
+## what makes [method FileColors.category_for_path] answer [constant FileColors.Category.FOLDER] for it and
+## a click hand the path to the file manager instead of an editor tab.
+##
+## [param path_kind] carries the kind the caller already has. Leave [constant PathKind.AUTO] when it has
+## none — drops and clipboard file lists hand over raw OS paths, and a folder may still carry a trailing
+## separator — and the kind is read from the path and the disk here instead of by every caller.
+static func format_path_as_markdown(path: String, path_kind: PathKind = PathKind.AUTO) -> String:
 	var normalized_path := path.replace("\\", "/")
+	var is_directory := path_kind == PathKind.DIRECTORY
+	if path_kind == PathKind.AUTO:
+		is_directory = FileColors.category_for_path(normalized_path) == FileColors.Category.FOLDER
+	if is_directory:
+		var folder_path := normalized_path if normalized_path.ends_with("/") else normalized_path + "/"
+		var folder_name := folder_path.trim_suffix("/").get_file().replace("[", "(").replace("]", ")")
+		return StringUtils.format("[{}/](<{}>)", folder_name, folder_path)
 	var file_name := normalized_path.get_file().replace("[", "(").replace("]", ")")
 	var link := StringUtils.format("[{}](<{}>)", file_name, normalized_path)
 	var extension := normalized_path.get_extension().to_lower()

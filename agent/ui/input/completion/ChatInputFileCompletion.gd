@@ -5,10 +5,10 @@ extends ChatInputCompletionProvider
 ##
 ## An `@` that opens a word starts a mention (`@agent/ui`, `@SKILL.md`) and the rows come from the
 ## workspace index ([method async_refresh_index] walks it on a worker), minus the folders
-## [member GitIgnore.ignore_rules] hides. Folders end in `/` so accepting
-## one drills into it; files become the same Markdown link the drop and clipboard paths produce
-## ([method MarkdownHelper.format_file_as_markdown]), so bubbles and the agent see one shape no matter
-## how the file got in.
+## [member GitIgnore.ignore_rules] hides. A folder row ends in `/` and drills into the next level, while
+## the row of the folder the token already names and every file row close the mention with a Markdown link
+## ([method MarkdownHelper.format_path_as_markdown]) — the shape drops and clipboard paths produce too, so
+## bubbles and the agent see one shape no matter how the path got in.
 
 const MENTION := "@"
 const DIRECTORY_SUFFIX := "/"
@@ -45,8 +45,10 @@ class MentionPath extends RefCounted:
 
 
 var entries: Array[MentionPath] = []
-var indexed: bool = false
-## Workspace root [member entries] were built for; compared to [method AgentWorkspace.get_root] on refresh.
+## Workspace root [member entries] were built for, and what tells [method async_refresh_index] the index is
+## current: a different [method AgentWorkspace.get_root] means the rows are stale, and the same one re-walks
+## only when [method RateLimitUtils.limit_second_30] lets it. Set together with [member entries], so the
+## pair never mixes two workspaces.
 var indexed_root: String = ""
 
 
@@ -62,12 +64,13 @@ func build_options() -> Array[ChatInputCompletionProvider.CompletionRow]:
 	var query_text: String = prefix.substr(mention_at + MENTION.length()) if mention_at >= 0 else StringUtils.EMPTY
 	var matches: Array[MentionPath] = matching_entries(entries, query_text, MAX_OPTIONS)
 	for entry: MentionPath in matches:
-		options.append(ChatInputCompletionProvider.CompletionRow.new(build_display_text(entry), build_insert_text(entry)))
+		options.append(ChatInputCompletionProvider.CompletionRow.new(
+			build_display_text(entry), build_insert_text(entry, query_text)))
 	return options
 
 
-## The whole `@token` is replaced. Live tokens keep the mention open (`@agent/` drills into the next
-## level) and files close it with the Markdown link plus a blank.
+## The whole `@token` is replaced. Child folders keep the mention open (`@agent/` drills into the next
+## level), while an accepted folder or file row closes it: both leave a Markdown link plus a blank.
 func token_span() -> Vector2i:
 	var line: String = input_field.get_line(input_field.get_caret_line())
 	var caret_column: int = input_field.get_caret_column()
@@ -110,29 +113,35 @@ static func is_token_break(code: int) -> bool:
 
 
 ## Prefix matches first, then rows whose name starts with the query, then anything containing it — the
-## same widening order as [method ChatInputSkillCompletion.matching_summaries]. Inside a bucket the
-## shallowest path wins, so `@not` offers `notes.md` before `docs/notes.md`, and the folder just drilled
-## into is left out because its whole path is the query.
+## same widening order as [method ChatInputSkillCompletion.matching_summaries]. The row the query already
+## spells leads, so a fully typed path can still be accepted. Inside a bucket the shallowest path wins, so
+## `@not` offers `notes.md` before `docs/notes.md`. Comparisons fold case without building a lower-cased
+## copy of the row: the index is rescanned on every keystroke.
 static func matching_entries(entries: Array[MentionPath], query_text: String, limit: int = MAX_OPTIONS) -> Array[MentionPath]:
-	var needle := query_text.strip_edges().replace("\\", "/").to_lower()
+	var needle := normalized_query(query_text)
 	if needle.is_empty():
 		# Browsing, not searching: the alphabetical index head is the top of the tree.
 		return entries.slice(0, limit)
 	var name_needle := needle.substr(needle.rfind("/") + 1)
+	var exact_match: MentionPath = null
 	var prefix_matches: Array[MentionPath] = []
 	var name_matches: Array[MentionPath] = []
 	var loose_matches: Array[MentionPath] = []
 	for entry: MentionPath in entries:
-		var path := entry.path.to_lower()
-		if path == needle:
-			continue
-		if path.begins_with(needle):
+		var found_at := entry.path.findn(needle)
+		if found_at == 0 and entry.path.length() == needle.length():
+			exact_match = entry
+		elif found_at == 0:
 			prefix_matches.append(entry)
-		elif not name_needle.is_empty() and entry.name.to_lower().begins_with(name_needle):
+		elif not name_needle.is_empty() and entry.name.findn(name_needle) == 0:
 			name_matches.append(entry)
-		elif path.contains(needle):
+		elif found_at > 0:
 			loose_matches.append(entry)
 	var matches: Array[MentionPath] = []
+	# The entry the token already names leads the list, so it stays reachable after being typed out or
+	# drilled into — otherwise a folder could only ever be descended through, never used as a reference.
+	if exact_match != null and limit > 0:
+		matches.append(exact_match)
 	for bucket: Array[MentionPath] in [prefix_matches, name_matches, loose_matches]:
 		bucket.sort_custom(entry_order_before)
 		for entry: MentionPath in bucket:
@@ -140,6 +149,11 @@ static func matching_entries(entries: Array[MentionPath], query_text: String, li
 				return matches
 			matches.append(entry)
 	return matches
+
+
+## Query text in the spelling the index uses: trimmed, forward slashes, lower case.
+static func normalized_query(query_text: String) -> String:
+	return query_text.strip_edges().replace("\\", "/").to_lower()
 
 
 ## File name first so the popup's end ellipsis never eats it, folder second for orientation.
@@ -151,10 +165,16 @@ static func build_display_text(entry: MentionPath) -> String:
 	return StringUtils.format("{}{}{}{}", entry.name, suffix, DISPLAY_SEPARATOR, parent + DIRECTORY_SUFFIX)
 
 
-func build_insert_text(entry: MentionPath) -> String:
-	if entry.dir:
+## The `@token` replacement for one row: a child folder row stays live (`@agent/`) so accepting it drills
+## into the next level, while the folder the token already names and a file close the mention with the
+## Markdown link the drop and clipboard paths produce — that folder row is the only way to keep a folder
+## itself (`[browser/](<...>)`) in the message instead of one of its files. The row knows whether it is a
+## folder from the index, so the formatter never has to read the disk here.
+func build_insert_text(entry: MentionPath, query_text: String) -> String:
+	if entry.dir and entry.path.nocasecmp_to(normalized_query(query_text)) != 0:
 		return MENTION + entry.path
-	return MarkdownHelper.format_file_as_markdown(indexed_root.path_join(entry.path)) + " "
+	var path_kind := MarkdownHelper.PathKind.DIRECTORY if entry.dir else MarkdownHelper.PathKind.FILE
+	return MarkdownHelper.format_path_as_markdown(indexed_root.path_join(entry.path), path_kind) + " "
 
 
 ## Shallowest first, then alphabetical: a root file beats the same name nested in a folder.
@@ -165,16 +185,16 @@ static func entry_order_before(left: MentionPath, right: MentionPath) -> bool:
 
 
 ## Workspace-relative [member entries]. [method GlobUtils.glob] runs on a worker
-## ([method ExecutorHelper.async_execute_pooled]); matching stays on the main thread.
+## ([method ExecutorHelper.async_execute_pooled]); matching stays on the main thread. The rows are built
+## aside and swapped in together with [member indexed_root], so a refresh never leaves an empty list — or
+## a path pair from two different workspaces — behind while the walk is in flight.
 func async_refresh_index() -> void:
-	if RateLimitUtils.limit_second_30() and indexed and indexed_root == AgentWorkspace.get_root():
+	if RateLimitUtils.limit_second_30() and indexed_root == AgentWorkspace.get_root():
 		return
 	var root := AgentWorkspace.get_root()
-	indexed = false
-	entries = []
-	indexed_root = root
 	if root.is_empty():
-		indexed = true
+		entries = []
+		indexed_root = root
 		return
 	var skip_rules := GitIgnore.ignore_rules.duplicate()
 	var paths: Array[String] = await ExecutorHelper.async_execute_pooled(func() -> Array[String]:
@@ -184,8 +204,10 @@ func async_refresh_index() -> void:
 		return
 	var root_prefix := root.replace("\\", "/")
 	root_prefix = root_prefix if root_prefix.ends_with(DIRECTORY_SUFFIX) else root_prefix + DIRECTORY_SUFFIX
+	var rows: Array[MentionPath] = []
 	for path: String in paths:
 		var relative := path.replace("\\", "/").substr(root_prefix.length())
-		entries.append(MentionPath.folder(relative) if relative.ends_with(DIRECTORY_SUFFIX) else MentionPath.file(relative))
-	indexed = true
+		rows.append(MentionPath.folder(relative) if relative.ends_with(DIRECTORY_SUFFIX) else MentionPath.file(relative))
+	entries = rows
+	indexed_root = root
 	pass

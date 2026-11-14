@@ -14,7 +14,9 @@ extends RefCounted
 ## - confirm: replace the whole token with the accepted row ([method confirm]).
 ##
 ## Providers are asked in order and the first active one wins. Accepting always rebuilds the list, so a
-## folder row (`@agent/`) keeps drilling while a file row (`[name](<path>) `) closes it.
+## child folder row (`@agent/`) keeps drilling, while the row of the folder the token already names and a
+## file row close it — both leave the Markdown link the drop path produces
+## (`[browser/](<path/>)` / `[name](<path>) `).
 
 ## Rows the list tries to show at once; the composer is grown to match while it is open.
 const POPUP_ROWS: int = 10

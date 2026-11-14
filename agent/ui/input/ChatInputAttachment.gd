@@ -154,5 +154,5 @@ func join_markdown_for_attachments(files: PackedStringArray) -> String:
 			continue
 		if include_leading_spacing or not build.is_empty():
 			build.append("    ")
-		build.append(MarkdownHelper.format_file_as_markdown(file) + "    ")
+		build.append(MarkdownHelper.format_path_as_markdown(file) + "    ")
 	return build.build_string()

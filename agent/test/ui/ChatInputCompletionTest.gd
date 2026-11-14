@@ -15,18 +15,19 @@ func file_row_accept_links_the_file_test() -> void:
 	# `notes.md` at the root is offered before `docs/notes.md`, the shallower path winning.
 	assert(completion.options.size() == 2)
 	assert(completion.options[0].insert_text
-		== MarkdownHelper.format_file_as_markdown(root.path_join("notes.md")) + " ")
+		== MarkdownHelper.format_path_as_markdown(root.path_join("notes.md")) + " ")
 	assert(completion.is_popup_open())
 	field.set_code_completion_selected_index(0)
 	await completion.confirm()
-	assert(field.text == MarkdownHelper.format_file_as_markdown(root.path_join("notes.md")) + " ")
+	assert(field.text == MarkdownHelper.format_path_as_markdown(root.path_join("notes.md")) + " ")
 	assert(not completion.is_popup_open())
 	field.free()
 	swap_workspace(prior_workspace)
 	pass
 
 
-## A folder row stays open: `@docs/` is left under the caret so the next level lists right away.
+## A folder row stays open: `@docs/` is left under the caret so the next level lists right away — led by
+## the folder itself, whose row leaves the same Markdown link a file row leaves.
 func folder_row_accept_keeps_drilling_test() -> void:
 	var root := make_scratch_workspace("drill")
 	var prior_workspace := swap_workspace(root)
@@ -38,9 +39,15 @@ func folder_row_accept_keeps_drilling_test() -> void:
 	await completion.confirm()
 	assert(field.text == "@docs/")
 	assert(completion.is_popup_open())
-	assert(completion.options.size() == 1)
-	assert(completion.options[0].insert_text == MarkdownHelper.format_file_as_markdown(
+	assert(completion.options.size() == 2)
+	assert(completion.options[0].insert_text
+		== MarkdownHelper.format_path_as_markdown(root.path_join("docs/")) + " ")
+	assert(completion.options[1].insert_text == MarkdownHelper.format_path_as_markdown(
 		root.path_join("docs/notes.md")) + " ")
+	field.set_code_completion_selected_index(0)
+	await completion.confirm()
+	assert(field.text == MarkdownHelper.format_path_as_markdown(root.path_join("docs/")) + " ")
+	assert(not completion.is_popup_open())
 	field.free()
 	swap_workspace(prior_workspace)
 	pass

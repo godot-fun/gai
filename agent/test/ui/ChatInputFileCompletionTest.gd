@@ -33,11 +33,20 @@ func token_end_test() -> void:
 
 func matching_entries_test() -> void:
 	var entries: Array[MentionPath] = [
+		MentionPath.folder("agent/"),
 		MentionPath.folder("agent/ui/"),
 		MentionPath.file("agent/ui/ChatInputAttachment.gd"),
+		MentionPath.folder("docs/"),
 		MentionPath.file("docs/notes.md"),
 	]
-	assert(ChatInputFileCompletion.matching_entries(entries, "").size() == 3)
+	assert(ChatInputFileCompletion.matching_entries(entries, "").size() == 5)
+	# The folder the token already names leads its own level, so it stays selectable instead of only
+	# being drilled through.
+	var agent_rows: Array[MentionPath] = ChatInputFileCompletion.matching_entries(entries, "agent/")
+	assert(agent_rows.size() == 3)
+	assert(agent_rows[0].path == "agent/")
+	assert(agent_rows[1].path == "agent/ui/")
+	assert(agent_rows[2].path == "agent/ui/ChatInputAttachment.gd")
 	# The folder name matches first, then the file that only contains the query in its path.
 	var ui: Array[MentionPath] = ChatInputFileCompletion.matching_entries(entries, "ui")
 	assert(ui.size() == 2)
@@ -47,8 +56,12 @@ func matching_entries_test() -> void:
 	assert(ChatInputFileCompletion.matching_entries(entries, "notes")[0].path == "docs/notes.md")
 	# A typed Windows separator is the same query as a slash, and the shallower folder wins.
 	assert(ChatInputFileCompletion.matching_entries(entries, "agent\\ui")[0].path == "agent/ui/")
-	# The folder just drilled into is the query itself, so it is not offered again.
-	assert(ChatInputFileCompletion.matching_entries(entries, "agent/ui/").size() == 1)
+	# A fully typed path is still a row, so it can be accepted rather than vanishing from the list.
+	assert(ChatInputFileCompletion.matching_entries(entries, "agent/ui/")[0].path == "agent/ui/")
+	assert(ChatInputFileCompletion.matching_entries(entries, "docs/notes.md")[0].path == "docs/notes.md")
+	# Matching folds case without lower-casing the rows; the spelling stays whatever the disk has.
+	assert(ChatInputFileCompletion.matching_entries(entries, "AGENT/UI/")[0].path == "agent/ui/")
+	assert(ChatInputFileCompletion.matching_entries(entries, "NOTES")[0].path == "docs/notes.md")
 	assert(ChatInputFileCompletion.matching_entries(entries, "missing").is_empty())
 	assert(ChatInputFileCompletion.matching_entries(entries, "", 1).size() == 1)
 	# Inside one bucket the shallower path comes first, so a root file beats a nested namesake.
@@ -66,6 +79,22 @@ func display_text_test() -> void:
 		== "ui/" + ChatInputFileCompletion.DISPLAY_SEPARATOR + "agent/")
 	assert(ChatInputFileCompletion.build_display_text(MentionPath.file("agent/ui/ChatInputAttachment.gd"))
 		== "ChatInputAttachment.gd" + ChatInputFileCompletion.DISPLAY_SEPARATOR + "agent/ui/")
+	pass
+
+
+## A child folder drills (no trailing blank, so the mention stays live), the folder the token already
+## names becomes a folder link, and a file always becomes a file link — both links close the mention.
+func insert_text_test() -> void:
+	var completion := ChatInputFileCompletion.new()
+	completion.indexed_root = "C:/repo"
+	assert(completion.build_insert_text(MentionPath.folder("agent/ui/"), "agent") == "@agent/ui/")
+	assert(completion.build_insert_text(MentionPath.folder("agent/ui/"), "agent\\ui/") == "[ui/](<C:/repo/agent/ui/>) ")
+	assert(completion.build_insert_text(MentionPath.folder("agent/ui/"), "agent/ui") == "@agent/ui/")
+	# The query folds case, the inserted text keeps the spelling the index has.
+	assert(completion.build_insert_text(MentionPath.folder("Agent/UI/"), "agent") == "@Agent/UI/")
+	assert(completion.build_insert_text(MentionPath.folder("Agent/UI/"), "agent/ui/") == "[UI/](<C:/repo/Agent/UI/>) ")
+	assert(completion.build_insert_text(MentionPath.file("agent/ui/ChatInputAttachment.gd"), "agent/ui")
+		== "[ChatInputAttachment.gd](<C:/repo/agent/ui/ChatInputAttachment.gd>) ")
 	pass
 
 

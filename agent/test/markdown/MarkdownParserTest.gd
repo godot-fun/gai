@@ -318,10 +318,32 @@ func local_markdown_image_test() -> void:
 
 
 func dropped_file_markdown_test() -> void:
-	assert(MarkdownHelper.format_file_as_markdown(r"C:\My Files\notes.md") == "[notes.md](<C:/My Files/notes.md>)")
-	assert(MarkdownHelper.format_file_as_markdown(r"C:\My Files\voice.WAV") == "[voice.WAV](<C:/My Files/voice.WAV>)")
-	assert(MarkdownHelper.format_file_as_markdown(r"C:\My Files\photo.png") == "![photo.png](<C:/My Files/photo.png>)")
-	assert(MarkdownHelper.format_file_as_markdown(r"C:\My Files\demo.MP4") == "![demo.MP4](<C:/My Files/demo.MP4>)")
+	assert(MarkdownHelper.format_path_as_markdown(r"C:\My Files\notes.md") == "[notes.md](<C:/My Files/notes.md>)")
+	assert(MarkdownHelper.format_path_as_markdown(r"C:\My Files\voice.WAV") == "[voice.WAV](<C:/My Files/voice.WAV>)")
+	assert(MarkdownHelper.format_path_as_markdown(r"C:\My Files\photo.png") == "![photo.png](<C:/My Files/photo.png>)")
+	assert(MarkdownHelper.format_path_as_markdown(r"C:\My Files\demo.MP4") == "![demo.MP4](<C:/My Files/demo.MP4>)")
+	# A folder takes the same shape, with the trailing `/` on the label and on the destination that make
+	# the row and the click read as a folder.
+	assert(MarkdownHelper.format_path_as_markdown("C:/My Files/assets", MarkdownHelper.PathKind.DIRECTORY) == "[assets/](<C:/My Files/assets/>)")
+	assert(MarkdownHelper.format_path_as_markdown("C:/My Files/assets/", MarkdownHelper.PathKind.DIRECTORY) == "[assets/](<C:/My Files/assets/>)")
+	assert(MarkdownHelper.format_path_as_markdown("C:/My Files/[draft]", MarkdownHelper.PathKind.DIRECTORY) == "[(draft)/](<C:/My Files/[draft]/>)")
+	pass
+
+
+## Drops and clipboard file lists hand over OS paths without their kind, so the one entry point reads it
+## from the path and the disk: a real folder takes the folder link (trailing separator or not), a real file
+## the file link. A caller that already knows the kind passes it and no disk read happens.
+func path_markdown_kind_test() -> void:
+	var folder_path := ProjectSettings.globalize_path("res://agent/markdown").replace("\\", "/")
+	var file_path := ProjectSettings.globalize_path("res://agent/markdown/MarkdownHelper.gd").replace("\\", "/")
+	assert(MarkdownHelper.format_path_as_markdown(folder_path) == "[markdown/](<" + folder_path + "/>)")
+	assert(MarkdownHelper.format_path_as_markdown(folder_path + "/") == "[markdown/](<" + folder_path + "/>)")
+	assert(MarkdownHelper.format_path_as_markdown(file_path) == "[MarkdownHelper.gd](<" + file_path + ">)")
+	# The kind the caller passes wins over the disk, which is how the `@` rows stay stat-free.
+	assert(MarkdownHelper.format_path_as_markdown(file_path, MarkdownHelper.PathKind.DIRECTORY)
+		== "[MarkdownHelper.gd/](<" + file_path + "/>)")
+	assert(MarkdownHelper.format_path_as_markdown("C:/no/such/folder", MarkdownHelper.PathKind.DIRECTORY)
+		== "[folder/](<C:/no/such/folder/>)")
 	pass
 
 
@@ -376,9 +398,9 @@ func workspace_link_search_test() -> void:
 
 func local_file_link_prefix_test() -> void:
 	var folder_path := ProjectSettings.globalize_path("res://agent/markdown").replace("\\", "/")
-	var file_bbcode := MarkdownParser.inline_to_bbcode(MarkdownHelper.format_file_as_markdown(r"C:\My Files\notes.bin"))
-	var audio_bbcode := MarkdownParser.inline_to_bbcode(MarkdownHelper.format_file_as_markdown(r"C:\My Files\voice.WAV"))
-	var folder_bbcode := MarkdownParser.inline_to_bbcode(MarkdownHelper.format_file_as_markdown(folder_path))
+	var file_bbcode := MarkdownParser.inline_to_bbcode(MarkdownHelper.format_path_as_markdown(r"C:\My Files\notes.bin"))
+	var audio_bbcode := MarkdownParser.inline_to_bbcode(MarkdownHelper.format_path_as_markdown(r"C:\My Files\voice.WAV"))
+	var folder_bbcode := MarkdownParser.inline_to_bbcode(MarkdownHelper.format_path_as_markdown(folder_path))
 	var config_bbcode := MarkdownParser.inline_to_bbcode("[settings.json](<C:/My Files/settings.json>)")
 	var document_bbcode := MarkdownParser.inline_to_bbcode("[README.md](<C:/My Files/README.md>)")
 	var website_bbcode := MarkdownParser.inline_to_bbcode("[website](https://example.com/file.txt)")
