@@ -12,6 +12,7 @@ static func initialize(session_id: int) -> void:
 		MemoryPrompt.reload_memory_context()
 		append_memory(session_id)
 	if AgentSetting.get_skill_in_prompt_enabled():
+		SkillPrompt.reload_skill_context()
 		append_skill(session_id)
 	if AgentSetting.get_agent_prompt_in_prompt_enabled():
 		append_agent_prompt(session_id)

@@ -88,7 +88,7 @@ static func chat_list_cache_removes_entries_from_index_test() -> void:
 
 
 static func memory_prompt_reads_workspace_memory_test() -> void:
-	assert(MemoryPrompt.MEMORY_README_PATH == ".memory/README.md")
+	assert(MemoryPrompt.MEMORY_README_PATH == "MEMORY.md")
 	assert(MemoryPrompt.has_memory_context())
 	assert(MemoryPrompt.get_memory_context() == FileUtils.read_file_to_string(AgentWorkspace.resolve_path(MemoryPrompt.MEMORY_README_PATH)))
 	pass

@@ -187,13 +187,13 @@ const BODY_PROBE_LENGTH := 200
 
 ## Exact file a Markdown link points at, found by file name and content.
 ##
-## A bare name (`README_CN.md`, a `#L671` anchor dropped) is searched for as a path tail: a link inside a
+## A bare name (`focus.md`, a `#L671` anchor dropped) is searched for as a path tail: a link inside a
 ## document is relative to that document, and the workspace root may hold neither the file nor the folder
 ## it names. A destination that spells a path stays the workspace root's answer when that exists, and is
 ## searched by its tail otherwise. Same-named candidates are then narrowed by content — the one holding
-## this body's text is the document being displayed, so `(README.md)` inside `.memory/README.md` means the
-## file next door. Absolute paths and `scheme://` keep the [method resolve_local_link] rules, and "" means
-## the click belongs to the browser guess.
+## this body's text is the document being displayed, so `(focus.md)` inside `MEMORY.md` means the file
+## next door in `.memory/`. Absolute paths and `scheme://` keep the [method resolve_local_link] rules, and
+## "" means the click belongs to the browser guess.
 static func async_search_link_file(destination: String, markdown_body: MarkdownRichTextLabel) -> String:
 	var path := destination.strip_edges()
 	var local_path := resolve_local_link(path)

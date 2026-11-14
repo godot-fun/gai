@@ -89,7 +89,7 @@ pipelines, storyboards, and TTS. Each is a folder with a `SKILL.md` the agent un
 
 ![GAI workflow editor](agent/asset/image/screenshot/workflow_1.png)
 
-Browse the [full catalog](.agents/skills/README.md); details are in [`agent/app/workflow/README.md`](agent/app/workflow/README.md).
+Browse the [full catalog](SKILLS.md); details are in [`agent/app/workflow/README.md`](agent/app/workflow/README.md).
 
 ### Local services
 

@@ -341,19 +341,19 @@ func local_link_resolution_test() -> void:
 	pass
 
 
-## A README inside a subfolder links its siblings by bare name (`[简体中文](README_CN.md)`), and that
-## name sits nowhere near the workspace root — the click used to fall into the `https://` guess and open
-## the browser. The search places it, and same-named files are told apart by their content.
+## A document in a subfolder links its siblings by bare name (`[focus.md](focus.md)`), and that name
+## sits nowhere near the workspace root — the click used to fall into the `https://` guess and open the
+## browser. The search places it, and same-named files are told apart by their content.
 func workspace_link_search_test() -> void:
-	var reply_markdown := MarkdownHelper.create_rich_text_label(Color.WHITE, "README_CN.md 是中文版", true)
+	var reply_markdown := MarkdownHelper.create_rich_text_label(Color.WHITE, "focus.md 记录了当前任务", true)
 	# Bare name, only present in a subfolder, found by searching the whole workspace.
-	var chinese_path := AgentWorkspace.resolve_path(".memory/README_CN.md")
-	assert(await MarkdownHelper.async_search_link_file("README_CN.md", reply_markdown) == chinese_path)
-	assert(await MarkdownHelper.async_search_link_file("README_CN.md#intro", reply_markdown) == chinese_path)
-	# Seven README.md files exist; the body decides which one the link means.
-	var memory_path := AgentWorkspace.resolve_path(".memory/README.md")
-	var memory_markdown := MarkdownHelper.create_rich_text_label(Color.WHITE, FileUtils.read_file_to_string(memory_path), true)
-	assert(await MarkdownHelper.async_search_link_file("README.md", memory_markdown) == memory_path)
+	var focus_path := AgentWorkspace.resolve_path(".memory/focus.md")
+	assert(await MarkdownHelper.async_search_link_file("focus.md", reply_markdown) == focus_path)
+	assert(await MarkdownHelper.async_search_link_file("focus.md#intro", reply_markdown) == focus_path)
+	# Several README.md files exist; the body decides which one the link means.
+	var workflow_path := AgentWorkspace.resolve_path("agent/app/workflow/README.md")
+	var workflow_markdown := MarkdownHelper.create_rich_text_label(Color.WHITE, FileUtils.read_file_to_string(workflow_path), true)
+	assert(await MarkdownHelper.async_search_link_file("README.md", workflow_markdown) == workflow_path)
 	var root_path := AgentWorkspace.resolve_path("README.md")
 	var root_markdown := MarkdownHelper.create_rich_text_label(Color.WHITE, FileUtils.read_file_to_string(root_path), true)
 	assert(await MarkdownHelper.async_search_link_file("README.md", root_markdown) == root_path)
@@ -369,7 +369,7 @@ func workspace_link_search_test() -> void:
 	assert(await MarkdownHelper.async_search_link_file("#L671", reply_markdown) == StringUtils.EMPTY)
 	assert(await MarkdownHelper.async_search_link_file("nothing-here.md", reply_markdown) == StringUtils.EMPTY)
 	reply_markdown.free()
-	memory_markdown.free()
+	workflow_markdown.free()
 	root_markdown.free()
 	pass
 

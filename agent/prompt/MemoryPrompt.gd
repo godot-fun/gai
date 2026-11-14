@@ -7,7 +7,7 @@ extends RefCounted
 ## Also owns the text protocol for durable memory maintenance during compaction.
 
 
-const MEMORY_README_PATH := ".memory/README.md"
+const MEMORY_README_PATH := "MEMORY.md"
 
 static var memory_context: String = ""
 
@@ -46,7 +46,7 @@ const MEMORY_PREFIX := "Previous compacted context:"
 const MEMORY_UPDATE_REQUEST := """Update `.memory/` with information from this conversation that is worth keeping.
 
 Work immediately without explaining or planning:
-1. Read `.memory/README.md`.
+1. Read `MEMORY.md`.
 2. If nothing is worth retaining, return `Done` without reading other files.
 3. Otherwise, read only the directly relevant memory files and update them in place with the fewest tool calls.
 
