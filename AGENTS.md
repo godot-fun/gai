@@ -5,8 +5,9 @@
 - `cli/`: Command-line application.
 - `cpp/`: godot-cpp GDExtension (C++ bindings for the Godot script API).
 - `test/`: Unit and integration tests for the reusable `zfoo/` framework only. Application-specific tests belong under their application directory (for example, `agent/test/`).
-- `.agents/skills/`: Reusable AI agent skills.
+- `.agents/skills/`: Reusable AI agent skills; [SKILLS.md](SKILLS.md) indexes them.
 - `.ai/`: Scripts used by skills.
+- `.memory/`: Durable agent memory; [MEMORY.md](MEMORY.md) indexes it.
 
 
 ---

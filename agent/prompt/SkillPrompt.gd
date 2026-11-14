@@ -8,7 +8,7 @@ extends RefCounted
 ## without restarting the app.
 
 
-const SKILL_README_PATH := "SKILLS.md"
+const SKILL_INDEX_PATH := "SKILLS.md"
 
 static var skill_context: String = ""
 
@@ -20,7 +20,7 @@ static func _static_init() -> void:
 
 static func reload_skill_context() -> String:
 	skill_context = ""
-	var path := AgentWorkspace.resolve_path(SKILL_README_PATH)
+	var path := AgentWorkspace.resolve_path(SKILL_INDEX_PATH)
 	if FileAccess.file_exists(path):
 		skill_context = FileUtils.read_file_to_string(path)
 	return skill_context

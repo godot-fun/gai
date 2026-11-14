@@ -7,7 +7,7 @@ extends RefCounted
 ## Also owns the text protocol for durable memory maintenance during compaction.
 
 
-const MEMORY_README_PATH := "MEMORY.md"
+const MEMORY_INDEX_PATH := "MEMORY.md"
 
 static var memory_context: String = ""
 
@@ -19,7 +19,7 @@ static func _static_init() -> void:
 
 static func reload_memory_context() -> String:
 	memory_context = ""
-	var path := AgentWorkspace.resolve_path(MEMORY_README_PATH)
+	var path := AgentWorkspace.resolve_path(MEMORY_INDEX_PATH)
 	if FileAccess.file_exists(path):
 		memory_context = FileUtils.read_file_to_string(path)
 	return memory_context
