@@ -107,6 +107,39 @@ func Colors_hover_state_layer_test() -> void:
 	pass
 
 
+## The container ladder walks away from `surface` one step at a time: the light theme darkens, the dark
+## theme lightens. Inverted values still pass a "does it compile" check but read as a typo on screen —
+## a nearly white `highest` makes inline code vanish on a white panel.
+func Colors_surface_container_ladder_test() -> void:
+	var original := ThemeColor.current_theme
+
+	ThemeColor.current_theme = ThemeColor.ThemeEnum.DARK
+	ThemeColor.refresh_derived_colors()
+	var dark_surface := Colors.surface.get_luminance()
+	var dark_container := Colors.surface_container.get_luminance()
+	var dark_high := Colors.surface_container_high.get_luminance()
+	var dark_highest := Colors.surface_container_highest.get_luminance()
+	assert(dark_surface < dark_container)
+	assert(dark_container < dark_high)
+	assert(dark_high < dark_highest)
+
+	ThemeColor.current_theme = ThemeColor.ThemeEnum.LIGHT
+	ThemeColor.refresh_derived_colors()
+	var light_surface := Colors.surface.get_luminance()
+	var light_container := Colors.surface_container.get_luminance()
+	var light_high := Colors.surface_container_high.get_luminance()
+	var light_highest := Colors.surface_container_highest.get_luminance()
+	assert(light_surface > light_container)
+	assert(light_container > light_high)
+	assert(light_high > light_highest)
+	# Every step is wide enough to see, including the last one that carries inline code.
+	assert(light_high - light_highest > 0.01 and dark_highest - dark_high > 0.01)
+
+	ThemeColor.current_theme = original
+	ThemeColor.refresh_derived_colors()
+	pass
+
+
 func Colors_chrome_surface_roles_test() -> void:
 	assert(Colors.DARK_SURFACE == Color(0.13, 0.13, 0.14))
 	assert(Colors.DARK_TEXT == Color(0.91, 0.92, 0.93))

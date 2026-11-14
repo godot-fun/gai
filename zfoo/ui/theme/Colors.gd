@@ -21,10 +21,12 @@ const DARK_CHROME_SURFACE := Color(0.10, 0.11, 0.13)
 # Dark content surfaces -----------------------------------------------------------------------------------------------
 ## Default dark content surface (#202124).
 const DARK_SURFACE := Color(0.13, 0.13, 0.14)
-## Material-style content layers, ordered from subtle grouping to strongest nested emphasis.
-const DARK_SURFACE_CONTAINER := Color(1.0, 1.0, 1.0, 0.08)
-const DARK_SURFACE_CONTAINER_HIGH := Color(0.15, 0.16, 0.18)
-const DARK_SURFACE_CONTAINER_HIGHEST := Color(0.45, 0.47, 0.52, 0.18)
+## Material-style content layers. Each role sits one step further from [constant DARK_SURFACE], so a
+## nested container is always lighter than the one it sits in. Solid colors keep that order exact:
+## an alpha overlay would compound differently on every parent it happens to be drawn over.
+const DARK_SURFACE_CONTAINER := Color(0.17, 0.175, 0.185)
+const DARK_SURFACE_CONTAINER_HIGH := Color(0.20, 0.205, 0.215)
+const DARK_SURFACE_CONTAINER_HIGHEST := Color(0.24, 0.245, 0.255)
 
 # Dark outlines -------------------------------------------------------------------------------------------------------
 ## Material-style functional boundary (#8E918F) and decorative boundary (#444746).
@@ -47,9 +49,11 @@ const LIGHT_CHROME_SURFACE := Color(0.95, 0.95, 0.96)
 # Light content surfaces ----------------------------------------------------------------------------------------------
 ## Default light content surface (#FFFFFF).
 const LIGHT_SURFACE := Color(1.00, 1.00, 1.00)
-const LIGHT_SURFACE_CONTAINER := Color(0.0, 0.0, 0.0, 0.05)
-const LIGHT_SURFACE_CONTAINER_HIGH := Color(0.45, 0.47, 0.52, 0.18)
-const LIGHT_SURFACE_CONTAINER_HIGHEST := Color(0.96, 0.965, 0.97)
+## Mirror of the dark ladder: one step further from [constant LIGHT_SURFACE] means darker here, so a
+## nested container is always deeper than the one it sits in (#F2F2F4 → #EBECED → #E3E4E6).
+const LIGHT_SURFACE_CONTAINER := Color(0.95, 0.95, 0.955)
+const LIGHT_SURFACE_CONTAINER_HIGH := Color(0.92, 0.925, 0.93)
+const LIGHT_SURFACE_CONTAINER_HIGHEST := Color(0.89, 0.895, 0.90)
 
 # Light outlines ------------------------------------------------------------------------------------------------------
 ## Material-style functional boundary (#747775) and decorative boundary (#C4C7C5).
@@ -101,6 +105,8 @@ static var chrome_surface: Color = DARK_CHROME_SURFACE
 ## Default panel, dialog and content-card surface.
 static var surface: Color = DARK_SURFACE
 ## Material-style neutral containers for nested content such as tables and code.
+## The ladder always walks *away* from [member surface]: darker in the light theme, lighter in the
+## dark theme, one step per role. Pick the level by nesting depth, never by "which looks paler".
 static var surface_container: Color = DARK_SURFACE_CONTAINER
 static var surface_container_high: Color = DARK_SURFACE_CONTAINER_HIGH
 static var surface_container_highest: Color = DARK_SURFACE_CONTAINER_HIGHEST
