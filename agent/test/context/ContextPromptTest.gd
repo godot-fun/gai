@@ -74,3 +74,14 @@ static func skill_context_message_matches_system_text_test() -> void:
 	assert(SkillPrompt.is_skill_context_message(ChatMessage.system(body)))
 	assert(not SkillPrompt.is_skill_context_message(ChatMessage.user(body)))
 	pass
+
+
+static func context_messages_follow_system_agent_skill_memory_order_test() -> void:
+	var session := AgentSessionStore.create_session()
+	ContextInjectionManager.initialize(session.id)
+	assert(session.messages.size() >= 4)
+	assert(session.messages[0] is SystemChatMessage)
+	assert(AgentPrompt.is_agent_context_message(session.messages[1]))
+	assert(SkillPrompt.is_skill_context_message(session.messages[2]))
+	assert(MemoryPrompt.is_memory_context_message(session.messages[3]))
+	pass

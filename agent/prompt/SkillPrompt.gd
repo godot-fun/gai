@@ -2,7 +2,7 @@ class_name SkillPrompt
 extends RefCounted
 
 ## Skill index prompt — loads the workspace-root SKILLS.md once and caches its text.
-## The index is appended to a session right after the system prompt (messages[0]); it is
+## The index is appended to a session after the agent prompt; it is
 ## identified by [SystemChatMessage] text so the skill index text never has to be re-read for
 ## matching. [method reload_skill_context] re-reads the file, so a new session picks up an edited
 ## SKILLS.md without restarting the app.

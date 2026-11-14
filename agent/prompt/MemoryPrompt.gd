@@ -2,7 +2,7 @@ class_name MemoryPrompt
 extends RefCounted
 
 ## Project memory prompt — loads the workspace-root MEMORY.md once and caches its text.
-## The index is appended to a session right after the system prompt (messages[0]); it is
+## The index is appended to a session last, after the skill index; it is
 ## identified by [SystemChatMessage] text so it can be removed without disturbing other messages.
 ## [method reload_memory_context] re-reads the file, so a new session picks up an edited
 ## MEMORY.md without restarting the app.

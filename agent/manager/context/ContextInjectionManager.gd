@@ -4,20 +4,21 @@ extends Object
 ## Owns the optional system contexts attached to a session.
 
 
-## Initializes contexts in a stable order before the new-session notification is emitted.
+## Initializes contexts in a stable order before the new-session notification is emitted:
+## system, agent prompt, skill index, then memory.
 static func initialize(session_id: int) -> void:
 	if AgentSetting.get_system_prompt_in_prompt_enabled():
 		SystemPrompt.reload_system_context()
 		append_system_prompt(session_id)
-	if AgentSetting.get_memory_in_prompt_enabled():
-		MemoryPrompt.reload_memory_context()
-		append_memory(session_id)
-	if AgentSetting.get_skill_in_prompt_enabled():
-		SkillPrompt.reload_skill_context()
-		append_skill(session_id)
 	if AgentSetting.get_agent_prompt_in_prompt_enabled():
 		AgentPrompt.reload_agent_context()
 		append_agent_prompt(session_id)
+	if AgentSetting.get_skill_in_prompt_enabled():
+		SkillPrompt.reload_skill_context()
+		append_skill(session_id)
+	if AgentSetting.get_memory_in_prompt_enabled():
+		MemoryPrompt.reload_memory_context()
+		append_memory(session_id)
 	pass
 
 
