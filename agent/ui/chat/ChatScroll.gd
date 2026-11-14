@@ -155,27 +155,43 @@ func collect_entry_indices(session: AgentSession, entry_kind: String) -> Array[i
 
 
 func find_entry_nav_index(entry_indices: Array[int], direction: int) -> int:
+	if direction > 0:
+		return find_next_entry_index(entry_indices)
+	return find_previous_entry_index(entry_indices)
+
+
+## The first match the bar has not reached yet; past the end it stays on the newest one.
+func find_next_entry_index(entry_indices: Array[int]) -> int:
 	var vbar: VScrollBar = chat_scroll.get_v_scroll_bar()
 	if vbar == null:
 		return -1
 	var max_scroll := maxf(vbar.min_value, vbar.max_value - vbar.page)
-	var current_slot := -1
 	for slot in range(entry_indices.size()):
 		var entry_index: int = entry_indices[slot]
 		# The bar value [method reveal_entry] parks this entry at. The tail of the history cannot
 		# be lifted [constant Margin.ma_5] below the viewport top, so those entries park together on
-		# the bottom edge and count as reached only once the bar gets there.
+		# the bottom edge and stay reached only once the bar gets there.
 		var parked_y := clampf(entry_y_for_index(entry_index) - Margin.ma_5, vbar.min_value, max_scroll)
-		if parked_y <= vbar.value:
-			current_slot = slot
-	if direction > 0:
-		var next_slot := current_slot + 1
-		if next_slot >= entry_indices.size():
-			next_slot = entry_indices.size() - 1
-		return entry_indices[next_slot]
-	if current_slot <= 0:
-		return entry_indices[0]
-	return entry_indices[current_slot - 1]
+		if parked_y > vbar.value:
+			return entry_indices[slot]
+	return entry_indices[entry_indices.size() - 1]
+
+
+## The last match whose bubble has scrolled above the viewport top. The bottom edge is what counts:
+## a reply taller than the view keeps its tail on screen, so the answer being read stays put and a
+## long one no longer hides the user message above it.
+func find_previous_entry_index(entry_indices: Array[int]) -> int:
+	var vbar: VScrollBar = chat_scroll.get_v_scroll_bar()
+	if vbar == null:
+		return -1
+	var target_slot := -1
+	for slot in range(entry_indices.size()):
+		if entry_bottom_for_index(entry_indices[slot]) <= vbar.value + Margin.ma_5:
+			target_slot = slot
+	if target_slot >= 0:
+		return entry_indices[target_slot]
+	# Nothing has scrolled out yet (the history fits the view): step back off the newest match.
+	return entry_indices[maxi(entry_indices.size() - 2, 0)]
 
 
 func entry_y_for_index(entry_index: int) -> float:
@@ -189,6 +205,15 @@ func entry_y_for_index(entry_index: int) -> float:
 
 func entry_y_for_control(entry_control: Control) -> float:
 	return active_chat_list.position.y + entry_control.position.y
+
+
+func entry_bottom_for_index(entry_index: int) -> float:
+	if not is_instance_valid(active_chat_list) or entry_index < 0 or entry_index >= active_chat_list.get_child_count():
+		return 0.0
+	var entry_control := active_chat_list.get_child(entry_index) as Control
+	if entry_control == null:
+		return 0.0
+	return entry_y_for_control(entry_control) + entry_control.size.y
 
 
 func on_chat_scroll_gui_input(event: InputEvent) -> void:

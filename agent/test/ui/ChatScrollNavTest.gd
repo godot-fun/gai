@@ -2,14 +2,18 @@ extends Object
 
 ## Regression guard for the chat-history jumps behind the user-message and reply shortcuts.
 ##
-## A history ends with a reply, so the newest matching bubbles cannot be lifted [constant Margin.ma_5]
-## below the viewport top: their reveal parks on the bottom edge. Reading the viewport top as "the
-## current row" then named the row above them, and the jump back skipped one matching message.
+## Going back lands on the last match whose bubble has scrolled above the viewport top. A history
+## ends with a reply, so reading the viewport top instead skipped one match in two cases: the tail of
+## the history parks its reveal on the bottom edge, and a reply taller than the view keeps its tail on
+## screen while the user message above it is out of sight.
 
 ## Row heights of the fixture history: 0, 2 and 4 are the user messages, a reply follows each.
 const ROW_HEIGHTS: Array[float] = [120.0, 320.0, 90.0, 140.0, 90.0, 140.0]
 const USER_ROWS: Array[int] = [0, 2, 4]
+const REPLY_ROWS: Array[int] = [1, 3, 5]
 const VIEWPORT_HEIGHT := 300.0
+## Last reply taller than the viewport, so the newest user message ends up off screen at the bottom.
+const TALL_REPLY_HEIGHTS: Array[float] = [120.0, 320.0, 90.0, 140.0, 90.0, 900.0]
 
 
 ## Following the stream: the newest match parks on the bottom edge, so it is the current row.
@@ -74,11 +78,37 @@ func unreached_match_stays_ahead_test() -> void:
 
 ## A history shorter than the viewport has no scroll range, so every match parks at the top.
 func history_that_fits_the_view_counts_every_match_as_reached_test() -> void:
-	var nav := build_history([60.0, 60.0, 60.0])
+	var nav := build_history([40.0, 40.0, 40.0, 40.0, 40.0])
 	await settled()
 	assert(max_scroll(nav) <= 0.0)
 	assert(nav.find_entry_nav_index(USER_ROWS, -1) == 2)
 	assert(nav.find_entry_nav_index(USER_ROWS, 1) == 4)
+	nav.chat_scroll.queue_free()
+	pass
+
+
+## A reply taller than the viewport leaves the newest user message scrolled out of sight above the
+## bottom edge; going back from the end of the stream lands on it instead of the one before.
+func bottom_below_the_newest_match_lands_on_it_test() -> void:
+	var nav := build_history(TALL_REPLY_HEIGHTS)
+	await settled()
+	scroll_to_bottom(nav)
+	assert(nav.find_entry_nav_index(USER_ROWS, -1) == 4)
+	nav.reveal_entry(4)
+	assert(nav.find_entry_nav_index(USER_ROWS, -1) == 2)
+	nav.chat_scroll.queue_free()
+	pass
+
+
+## The same long reply keeps its own tail on screen at the bottom edge, so the reply being read
+## stays current and going back still lands on the reply before it.
+func bottom_below_a_tall_reply_keeps_the_previous_reply_test() -> void:
+	var nav := build_history(TALL_REPLY_HEIGHTS)
+	await settled()
+	scroll_to_bottom(nav)
+	assert(nav.find_entry_nav_index(REPLY_ROWS, -1) == 3)
+	nav.reveal_entry(3)
+	assert(nav.find_entry_nav_index(REPLY_ROWS, -1) == 1)
 	nav.chat_scroll.queue_free()
 	pass
 
