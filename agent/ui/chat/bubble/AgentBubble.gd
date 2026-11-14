@@ -1,10 +1,9 @@
 class_name AgentBubble
 extends BubbleContainer
 
-var markdown_label: MarkdownRichTextLabel
-
 ## Agent reply bubble markdown body; header copy puts ChatEntry.body on the clipboard.
 
+var markdown_label: MarkdownRichTextLabel
 
 func panel_color() -> Color:
 	return Colors.surface

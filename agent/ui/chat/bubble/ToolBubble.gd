@@ -1,9 +1,9 @@
 class_name ToolBubble
 extends BubbleContainer
 
-var markdown_label: MarkdownRichTextLabel
-
 ## Tool-call bubble showing the command, query, path, or primary argument sent to a tool.
+
+var markdown_label: MarkdownRichTextLabel
 
 func panel_color() -> Color:
 	return Colors.success_surface

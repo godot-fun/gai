@@ -1,15 +1,14 @@
 class_name ThinkingBubble
 extends BubbleContainer
 
+## Thinking / reasoning bubble — plain text preview in chat.
+## Full text lives on ChatEntry.body; the header ··· button opens it in PopupWindow.
+
 var markdown_label: MarkdownRichTextLabel
 var view_button: Button
 var line_label: Label
 
 const PREVIEW_LINES := 3
-
-## Thinking / reasoning bubble — plain text preview in chat.
-## Full text lives on ChatEntry.body; the header ··· button opens it in PopupWindow.
-
 
 func panel_color() -> Color:
 	return Colors.purple_surface

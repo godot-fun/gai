@@ -1,7 +1,7 @@
 class_name SkillToggle
 extends RefCounted
 
-## Toolbar toggle for the skill index prompt.
+## Toolbar toggle for the skill index (SKILLS.md).
 
 var button: Button
 

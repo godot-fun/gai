@@ -1,11 +1,10 @@
 class_name DefaultBubble
 extends BubbleContainer
 
-var markdown_label: MarkdownRichTextLabel
-var system_entry: bool = false
-
 ## Basic titled markdown bubble used by system and unknown chat entry kinds.
 
+var markdown_label: MarkdownRichTextLabel
+var system_entry: bool = false
 
 func panel_color() -> Color:
 	return ThemeColor.promote(Colors.info_surface, Weights.w_2) if system_entry else Colors.surface

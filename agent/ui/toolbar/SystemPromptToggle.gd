@@ -1,7 +1,7 @@
 class_name SystemPromptToggle
 extends RefCounted
 
-## Toolbar toggle for the system prompt message (session apply/skip).
+## Toolbar toggle for the system prompt (SYSTEM.md).
 
 var button: Button
 

@@ -1,12 +1,11 @@
 class_name WebResultBubble
 extends BubbleContainer
 
+## Web-tool result bubble with a text preview and an optional browser screenshot.
+
 var markdown_label: MarkdownRichTextLabel
 var view_button: Button
 var line_label: Label
-
-## Web-tool result bubble with a text preview and an optional browser screenshot.
-
 
 func panel_color() -> Color:
 	return Colors.grey_surface

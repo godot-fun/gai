@@ -1,7 +1,7 @@
 class_name AgentPromptToggle
 extends RefCounted
 
-## Toolbar toggle for the AGENTS.md project prompt.
+## Toolbar toggle for the project prompt (AGENTS.md).
 
 var button: Button
 

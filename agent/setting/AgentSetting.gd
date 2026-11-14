@@ -81,7 +81,7 @@ static func set_markdown_enabled(enabled: bool) -> void:
 
 # ---------------------------------------------------- Skill prompt ----------------------------------------------------
 
-## [SkillToggle] — keep the skill index system message inside new sessions.
+## [SkillToggle] — keep the skill index (SKILLS.md) inside new sessions.
 const SKILL_IN_PROMPT_ENABLED_KEY := "agent_skill_in_prompt_enabled"
 
 
@@ -97,7 +97,7 @@ static func set_skill_in_prompt_enabled(enabled: bool) -> void:
 
 # --------------------------------------------------- Memory prompt ----------------------------------------------------
 
-## [MemoryToggle] — keep the project memory index inside new sessions.
+## [MemoryToggle] — keep the memory index (MEMORY.md) inside new sessions.
 const MEMORY_IN_PROMPT_ENABLED_KEY := "agent_memory_in_prompt_enabled"
 
 
@@ -113,7 +113,7 @@ static func set_memory_in_prompt_enabled(enabled: bool) -> void:
 
 # -------------------------------------------------- AGENTS.md prompt -------------------------------------------------
 
-## [AgentPromptToggle] — keep the AGENTS.md project prompt inside new sessions.
+## [AgentPromptToggle] — keep the project prompt (AGENTS.md) inside new sessions.
 const AGENT_PROMPT_IN_PROMPT_ENABLED_KEY := "agent_agents_md_in_prompt_enabled"
 
 
@@ -129,7 +129,7 @@ static func set_agent_prompt_in_prompt_enabled(enabled: bool) -> void:
 
 # -------------------------------------------------- System prompt ----------------------------------------------------
 
-## [SystemPromptToggle] — keep the system prompt message inside new sessions.
+## [SystemPromptToggle] — keep the system prompt (SYSTEM.md) inside new sessions.
 const SYSTEM_PROMPT_IN_PROMPT_ENABLED_KEY := "agent_system_prompt_in_prompt_enabled"
 
 

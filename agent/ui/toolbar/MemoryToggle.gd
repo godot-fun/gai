@@ -1,7 +1,7 @@
 class_name MemoryToggle
 extends RefCounted
 
-## Toolbar toggle for the project memory index.
+## Toolbar toggle for the memory index (MEMORY.md).
 
 var button: Button
 

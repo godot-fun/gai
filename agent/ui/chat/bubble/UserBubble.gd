@@ -1,17 +1,16 @@
 class_name UserBubble
 extends BubbleContainer
 
-var inset_panel: PanelContainer
-var markdown_label: MarkdownRichTextLabel
-
 ## User message bubble with a moving accent border shared with the chat input.
 ## Delete drops this turn and everything after it — chat only, code is left alone.
 ## Revert does the same and restores the workspace snapshot taken before the turn (only shown when
 ## the entry has one). Both hand the message body back to the chat input for re-editing.
 ## The body follows the shared Markdown toolbar setting, matching agent replies.
 
-const BORDER_HIGHLIGHT_STRENGTH: float = 1.0
+var inset_panel: PanelContainer
+var markdown_label: MarkdownRichTextLabel
 
+const BORDER_HIGHLIGHT_STRENGTH: float = 1.0
 
 func apply(session_id: int, entry: ChatEntry) -> void:
 	# The outer panel only hosts the overflow-capable border overlay; the inner panel draws the card.

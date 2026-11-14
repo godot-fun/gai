@@ -1,13 +1,12 @@
 class_name ResultBubble
 extends BubbleContainer
 
-var markdown_label: MarkdownRichTextLabel
-var view_button: Button
-var line_label: Label
-
 ## Result bubble — plain text preview in chat.
 ## Full text lives on ChatEntry.body; the header ··· button opens it in PopupWindow.
 
+var markdown_label: MarkdownRichTextLabel
+var view_button: Button
+var line_label: Label
 
 func panel_color() -> Color:
 	return Colors.control_surface

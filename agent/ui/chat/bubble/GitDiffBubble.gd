@@ -1,11 +1,11 @@
 class_name GitDiffBubble
 extends BubbleContainer
 
+## Git diff bubble appended after agent_end, listing files changed from the run checkpoint.
+
 const HELP_ICON_PATH := "res://agent/asset/image/ui/help.svg"
 
 var markdown_label: MarkdownRichTextLabel
-
-## Git diff bubble appended after agent_end, listing files changed from the run checkpoint.
 
 func panel_color() -> Color:
 	return Colors.control_surface

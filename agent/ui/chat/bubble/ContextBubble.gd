@@ -1,11 +1,11 @@
 class_name ContextBubble
 extends BubbleContainer
 
+## Context chat bubble for the system prompt, the skill index, memory, AGENTS.md, and the
+## compaction summary — expand/collapse with Markdown preview. Session / toolbar toggles live in
+## SystemPromptToggle, SkillToggle, MemoryToggle, and AgentPromptToggle.
+
 var markdown_label: MarkdownRichTextLabel
-
-## Context chat bubble for skills / memory / AGENTS.md — expand/collapse with Markdown preview.
-## Session / toolbar toggles live in SkillToggle and AgentPromptToggle.
-
 
 const PREVIEW_LINES: int = 8
 var expanded: bool = false
