@@ -1,5 +1,5 @@
 import type { ElementHandle, Frame, Locator, Page } from "playwright-core";
-import { config } from "../config";
+import { NAVIGATION_TIMEOUT_MS, REQUEST_TIMEOUT_MS } from "../config";
 import { browserService, PAGE_SETTLE_TIMEOUT_MS } from "./browser-service";
 import { collectInteractiveCandidates, elementForRef, refFrame, refIndex, selectCandidates, type InteractiveCandidate } from "./interactive";
 import { extractPageContent } from "./page-content";
@@ -175,7 +175,7 @@ export class BrowserSession {
 
   private async runSteps(request: BrowserRequest): Promise<BrowserResult> {
     const page = await this.currentPage();
-    const deadline = Date.now() + Math.max(MIN_BUDGET_MS, config.requestTimeoutMs - BUDGET_MARGIN_MS);
+    const deadline = Date.now() + Math.max(MIN_BUDGET_MS, REQUEST_TIMEOUT_MS - BUDGET_MARGIN_MS);
     let error = "";
     let markdown = "";
     for (const step of request.steps) {
@@ -409,7 +409,7 @@ function parseHttpUrl(raw: string): string {
 }
 
 function stepTimeout(step: BrowserStep): number {
-  return step.action === "goto" ? config.navigationTimeoutMs : DEFAULT_STEP_TIMEOUT_MS;
+  return step.action === "goto" ? NAVIGATION_TIMEOUT_MS : DEFAULT_STEP_TIMEOUT_MS;
 }
 
 /** Playwright appends a call log full of noise; the first line is the part the model can act on. */

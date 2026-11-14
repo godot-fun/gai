@@ -1,5 +1,5 @@
 import type { BrowserContext, Page } from "playwright-core";
-import { config } from "../config";
+import { config, NAVIGATION_TIMEOUT_MS } from "../config";
 import { Camoufox } from "camoufox";
 import { HttpError, HttpStatus } from "../http";
 
@@ -35,8 +35,8 @@ export class BrowserService {
   /** Opens a page. Caller must close it. Keep at least the launch blank page alive — Firefox exits if every page is closed. */
   async openPage(): Promise<Page> {
     const page = await (await this.getContext()).newPage();
-    page.setDefaultNavigationTimeout(config.navigationTimeoutMs);
-    page.setDefaultTimeout(config.navigationTimeoutMs);
+    page.setDefaultNavigationTimeout(NAVIGATION_TIMEOUT_MS);
+    page.setDefaultTimeout(NAVIGATION_TIMEOUT_MS);
     return page;
   }
 

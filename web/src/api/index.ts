@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
-import { config } from "../config";
+import { REQUEST_TIMEOUT_MS } from "../config";
 import { HttpError, HttpStatus, sendError, sendJson } from "../http";
 // Importing a route module registers it through `registerApi`.
 import "./browser";
@@ -36,7 +36,7 @@ export function createApiServer(): Server {
       else response.destroy();
     }
 
-    response.setTimeout(config.requestTimeoutMs, handleTimeout);
+    response.setTimeout(REQUEST_TIMEOUT_MS, handleTimeout);
     try {
       await route(request, response, routes);
     } catch (error: unknown) {

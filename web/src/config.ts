@@ -17,14 +17,23 @@ if (localAppData !== "") {
 
 
 // ---------------------------------------------------------------------------------------------------------------------
+/**
+ * Fixed deadline for one request: `/fetch`, `/search`, or a batch of `/browser/action` steps must
+ * answer within it, or the socket closes with a 504. Fixed rather than configurable because the
+ * agent that waits on the reply cannot see a value tuned in `.env` — a mismatch would only surface
+ * as a mystery timeout on the other side.
+ */
+export const REQUEST_TIMEOUT_MS = 60_000;
+
+/** A page load or `goto` gets half the budget, so one slow site cannot spend the whole call. */
+export const NAVIGATION_TIMEOUT_MS = REQUEST_TIMEOUT_MS / 2;
+
 export interface ServerConfig {
   host: string;
   port: number;
   headless: boolean;
   userDataDir: string;
   proxy: string;
-  navigationTimeoutMs: number;
-  requestTimeoutMs: number;
   mcpConfigPath: string;
 }
 
@@ -65,8 +74,6 @@ export function loadConfig(): ServerConfig {
     headless: readBooleanArgument("browser-headless") ?? readBoolean("BROWSER_HEADLESS", true),
     userDataDir: process.env.CAMOUFOX_USER_DATA_DIR?.trim() || "./.user_data",
     proxy: readArgument("proxy-address") || process.env.BROWSER_PROXY?.trim() || "",
-    navigationTimeoutMs: readPositiveInteger("NAVIGATION_TIMEOUT_MS", 30_000),
-    requestTimeoutMs: readPositiveInteger("REQUEST_TIMEOUT_MS", 45_000),
     mcpConfigPath: process.env.MCP_CONFIG_PATH?.trim() || "mcp.json",
   };
 }

@@ -9,7 +9,7 @@ const STRUCTURED_CONTENT_LABEL := "[structuredContent] "
 static func async_list_tools() -> Array[Dictionary]:
 	if await WebServer.async_ensure_server_running() != OK:
 		return []
-	var response := await HttpHelper.async_get(WebServer.server_url() + "/mcp/tools", WebServer.request_timeout_millis)
+	var response := await HttpHelper.async_get(WebServer.server_url() + "/mcp/tools", WebServer.REQUEST_TIMEOUT_MILLIS)
 	if not response.is_ok():
 		Log.error("MCP tool listing failed code:[{}] error:[{}]", response.code, describe_error(response))
 		return []
@@ -24,7 +24,7 @@ static func async_list_tools() -> Array[Dictionary]:
 
 static func async_call_tool(server: String, tool_name: String, args: Dictionary[String, Variant], cancel_scope: CancelScope) -> AgentToolResult:
 	var payload := {"server": server, "name": tool_name, "arguments": args}
-	var response := await HttpHelper.async_post(WebServer.server_url() + "/mcp/call", JsonUtils.object_to_json(payload), PackedStringArray(), WebServer.request_timeout_millis, "", Callable(), cancel_scope)
+	var response := await HttpHelper.async_post(WebServer.server_url() + "/mcp/call", JsonUtils.object_to_json(payload), PackedStringArray(), WebServer.REQUEST_TIMEOUT_MILLIS, "", Callable(), cancel_scope)
 	if not response.is_ok():
 		return AgentToolResult.error(describe_error(response))
 	var body = response.get_body_json()

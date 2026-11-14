@@ -5,11 +5,13 @@ extends Object
 
 const NPM_CLI_REL_PATH := "node_modules/npm/bin/npm-cli.js"
 const WEB_ENV_PATH := "web/.env"
+## The server gives up on its own 60s budget, so wait a little longer: its 504 message is more
+## useful to the model than a client-side timeout that says nothing about the page.
+const REQUEST_TIMEOUT_MILLIS: int = 65 * TimeUtils.MILLIS_PER_SECOND
 
 static var process_id: int = 0
 static var server_host: String = "127.0.0.1"
 static var server_port: int = 33713
-static var request_timeout_millis: int = 45 * TimeUtils.MILLIS_PER_SECOND
 
 
 class HealthyResponse extends RefCounted:
@@ -177,8 +179,6 @@ static func load_server_config() -> void:
 			server_host = value
 		elif key == "PORT":
 			server_port = int(value)
-		elif key == "REQUEST_TIMEOUT_MS" and int(value) > 0:
-			request_timeout_millis = int(value)
 	pass
 
 
@@ -205,7 +205,7 @@ static func async_fetch(url: String, screenshot_path: String, cancel_scope: Canc
 	var payload := {"url": url}
 	if StringUtils.is_not_blank(screenshot_path):
 		payload["screenshotPath"] = screenshot_path
-	var response := await HttpHelper.async_post(server_url() + "/fetch", JsonUtils.object_to_json(payload), PackedStringArray(), request_timeout_millis, StringUtils.EMPTY, Callable(), cancel_scope)
+	var response := await HttpHelper.async_post(server_url() + "/fetch", JsonUtils.object_to_json(payload), PackedStringArray(), REQUEST_TIMEOUT_MILLIS, StringUtils.EMPTY, Callable(), cancel_scope)
 	if not response.is_ok():
 		# A cancelled request is the user stopping the run, not a server failure.
 		if cancel_scope.cancelled:
@@ -230,7 +230,7 @@ static func async_browser_action(steps: Array[BrowserStep], screenshot_path: Str
 	var payload := {"steps": steps, "snapshot": want_snapshot}
 	if StringUtils.is_not_blank(screenshot_path):
 		payload["screenshotPath"] = screenshot_path
-	var response := await HttpHelper.async_post(server_url() + "/browser/action", JsonUtils.object_to_json(payload), PackedStringArray(), request_timeout_millis, StringUtils.EMPTY, Callable(), cancel_scope)
+	var response := await HttpHelper.async_post(server_url() + "/browser/action", JsonUtils.object_to_json(payload), PackedStringArray(), REQUEST_TIMEOUT_MILLIS, StringUtils.EMPTY, Callable(), cancel_scope)
 	if not response.is_ok():
 		# A cancelled request is the user stopping the run, not a server failure.
 		if cancel_scope.cancelled:
@@ -257,7 +257,7 @@ static func async_search(query: String, count: int, screenshot_path: String, can
 	var payload := {"query": query, "count": count}
 	if StringUtils.is_not_blank(screenshot_path):
 		payload["screenshotPath"] = screenshot_path
-	var response := await HttpHelper.async_post(server_url() + "/search", JsonUtils.object_to_json(payload), PackedStringArray(), request_timeout_millis, StringUtils.EMPTY, Callable(), cancel_scope)
+	var response := await HttpHelper.async_post(server_url() + "/search", JsonUtils.object_to_json(payload), PackedStringArray(), REQUEST_TIMEOUT_MILLIS, StringUtils.EMPTY, Callable(), cancel_scope)
 	if not response.is_ok():
 		# A cancelled request is the user stopping the run, not a server failure.
 		if cancel_scope.cancelled:
@@ -276,7 +276,7 @@ static func async_stop() -> StopResponse:
 	if not await NetUtils.telnet(server_host, server_port):
 		stop_process()
 		return null
-	var response := await HttpHelper.async_post(server_url() + "/stop", JsonUtils.object_to_json({}), PackedStringArray(), request_timeout_millis)
+	var response := await HttpHelper.async_post(server_url() + "/stop", JsonUtils.object_to_json({}), PackedStringArray(), REQUEST_TIMEOUT_MILLIS)
 	var result: StopResponse = JsonUtils.json_to_object(response.get_body_string(), StopResponse) if response.is_ok() else null
 	if not response.is_ok():
 		Log.error("web server stop failed code:[{}] error:[{}]", response.code, response.get_error_string())
