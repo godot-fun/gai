@@ -52,15 +52,11 @@ static func on_persist_session(session_id: int, _arg: Variant = null) -> void:
 
 ## New session is prepended to the index; it is not selected here — [method select_default_session]
 ## covers the boot case and the sidebar selects its own new session explicitly.
-## Seeds the system prompt and optional contexts before notifying observers.
+## Seeds the system prompt and optional contexts through [method ContextInjectionManager.initialize]
+## before notifying observers.
 static func create_session() -> AgentSession:
 	var session := AgentSessionStore.create_session()
 	add_session_index(session)
-
-	# LLM history + matching System bubble in chat UI.
-	var system_text := SystemPrompt.build()
-	session.messages.append(ChatMessage.system(system_text))
-	add_chat_entry(session.id, ChatEntry.KIND_SYSTEM, ChatEntry.TITLE_SYSTEM, system_text)
 
 	ContextInjectionManager.initialize(session.id)
 	AgentEvents.events.session_added.emit(session.id, get_title(session.id))

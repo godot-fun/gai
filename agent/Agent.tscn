@@ -141,6 +141,19 @@ toggle_mode = true
 mouse_default_cursor_shape = 2
 text = "AG"
 
+[node name="SystemPromptToggleWrap" type="MarginContainer" parent="Root/Toolbar/ToolbarRow"]
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+theme_override_constants/margin_right = 8
+
+[node name="SystemPromptToggleButton" type="Button" parent="Root/Toolbar/ToolbarRow/SystemPromptToggleWrap"]
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+mouse_default_cursor_shape = 2
+text = "SY"
+
 [node name="SkillToggleWrap" type="MarginContainer" parent="Root/Toolbar/ToolbarRow"]
 layout_mode = 2
 size_flags_horizontal = 4

@@ -127,6 +127,22 @@ static func set_agent_prompt_in_prompt_enabled(enabled: bool) -> void:
 	pass
 
 
+# -------------------------------------------------- System prompt ----------------------------------------------------
+
+## [SystemPromptToggle] — keep the system prompt message inside new sessions.
+const SYSTEM_PROMPT_IN_PROMPT_ENABLED_KEY := "agent_system_prompt_in_prompt_enabled"
+
+
+static func get_system_prompt_in_prompt_enabled() -> bool:
+	return Setting.get_bool(SYSTEM_PROMPT_IN_PROMPT_ENABLED_KEY, true)
+
+
+static func set_system_prompt_in_prompt_enabled(enabled: bool) -> void:
+	Setting.set_bool(SYSTEM_PROMPT_IN_PROMPT_ENABLED_KEY, enabled)
+	Setting.save()
+	pass
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Agent
 # ----------------------------------------------------------------------------------------------------------------------

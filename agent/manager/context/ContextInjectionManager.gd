@@ -6,6 +6,8 @@ extends Object
 
 ## Initializes contexts in a stable order before the new-session notification is emitted.
 static func initialize(session_id: int) -> void:
+	if AgentSetting.get_system_prompt_in_prompt_enabled():
+		append_system_prompt(session_id)
 	if AgentSetting.get_memory_in_prompt_enabled():
 		MemoryPrompt.reload_memory_context()
 		append_memory(session_id)
@@ -23,6 +25,17 @@ static func has_context_kind(session: AgentSession, kind: String) -> bool:
 		if entry.kind == kind:
 			return true
 	return false
+
+
+## Seeds the system prompt (messages[0]) plus its matching System bubble.
+static func append_system_prompt(session_id: int) -> void:
+	var session := AgentSessionStore.load_session(session_id)
+	if session == null or has_context_kind(session, ChatEntry.KIND_SYSTEM):
+		return
+	var prompt := SystemPrompt.build()
+	session.messages.append(ChatMessage.system(prompt))
+	AgentSessionManager.add_chat_entry(session_id, ChatEntry.KIND_SYSTEM, ChatEntry.TITLE_SYSTEM, prompt)
+	pass
 
 
 static func append_memory(session_id: int) -> void:

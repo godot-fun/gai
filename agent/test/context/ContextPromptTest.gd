@@ -36,6 +36,23 @@ static func system_prompt_falls_back_to_generated_prompt_test() -> void:
 	pass
 
 
+static func system_prompt_toggle_controls_system_message_test() -> void:
+	var previous_enabled := AgentSetting.get_system_prompt_in_prompt_enabled()
+
+	var enabled_session := AgentSessionStore.create_session()
+	ContextInjectionManager.initialize(enabled_session.id)
+	assert(ContextInjectionManager.has_context_kind(enabled_session, ChatEntry.KIND_SYSTEM))
+	assert(enabled_session.messages[0] is SystemChatMessage)
+
+	AgentSetting.set_system_prompt_in_prompt_enabled(false)
+	var disabled_session := AgentSessionStore.create_session()
+	ContextInjectionManager.initialize(disabled_session.id)
+	assert(not ContextInjectionManager.has_context_kind(disabled_session, ChatEntry.KIND_SYSTEM))
+
+	AgentSetting.set_system_prompt_in_prompt_enabled(previous_enabled)
+	pass
+
+
 static func skill_context_message_matches_system_text_test() -> void:
 	var body := "skills index"
 	SkillPrompt.skill_context = body

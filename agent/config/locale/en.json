@@ -249,6 +249,8 @@
       "remove_memory": "Remove memory from this chat",
       "add_agents": "Add AGENTS.md to this chat",
       "remove_agents": "Remove AGENTS.md from this chat",
+      "add_system": "Add the system prompt to this chat",
+      "remove_system": "Remove the system prompt from this chat",
       "hide_animation": "Hide run animation",
       "show_animation": "Show run animation while agent works",
       "visuals": "Choose run visual",

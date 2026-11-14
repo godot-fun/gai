@@ -25,6 +25,7 @@ const SUBTITLE: String = "GAI Code Agent"
 @onready var memory_toggle_button: Button = $Root/Toolbar/ToolbarRow/MemoryToggleWrap/MemoryToggleButton
 @onready var visuals_button_node: Button = $Root/Toolbar/ToolbarRow/VisualsButtonWrap/VisualsButton
 @onready var agent_prompt_toggle_button: Button = $Root/Toolbar/ToolbarRow/AgentPromptToggleWrap/AgentPromptToggleButton
+@onready var system_prompt_toggle_button: Button = $Root/Toolbar/ToolbarRow/SystemPromptToggleWrap/SystemPromptToggleButton
 @onready var skill_toggle_button: Button = $Root/Toolbar/ToolbarRow/SkillToggleWrap/SkillToggleButton
 @onready var input_bar: Control = $Root/Body/ChatArea/InputBar
 @onready var input_wrap: PanelContainer = $Root/Body/ChatArea/InputBar/InputWrap
@@ -58,6 +59,7 @@ var theme_color_select: ThemeColorSelect = ThemeColorSelect.new()
 var visuals_button: VisualsButton = VisualsButton.new()
 var skill_toggle: SkillToggle = SkillToggle.new()
 var agent_prompt_toggle: AgentPromptToggle = AgentPromptToggle.new()
+var system_prompt_toggle: SystemPromptToggle = SystemPromptToggle.new()
 var compaction_button: CompactionButton = CompactionButton.new()
 var memory_toggle: MemoryToggle = MemoryToggle.new()
 var setting_button: SettingButton = SettingButton.new()
@@ -89,6 +91,7 @@ func _ready() -> void:
 	visuals_button.setup(visuals_button_node)
 	skill_toggle.setup(skill_toggle_button)
 	agent_prompt_toggle.setup(agent_prompt_toggle_button)
+	system_prompt_toggle.setup(system_prompt_toggle_button)
 	agent_chat_view.setup(chat_scroll_node, chat_lists_container)
 
 	agent_chat_input.setup(input_bar, input_wrap, input_inner, input_field, send_button)

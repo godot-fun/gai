@@ -249,6 +249,8 @@
       "remove_memory": "从当前对话移除记忆",
       "add_agents": "将 AGENTS.md 加入当前对话",
       "remove_agents": "从当前对话移除 AGENTS.md",
+      "add_system": "将系统提示词加入当前对话",
+      "remove_system": "从当前对话移除系统提示词",
       "hide_animation": "隐藏运行动画",
       "show_animation": "智能体工作时显示运行动画",
       "visuals": "选择运行视觉效果",
