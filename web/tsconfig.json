@@ -4,6 +4,8 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "strict": true,
+    // Every import of a type must say so: the runtime is esbuild (tsx), which cannot tell.
+    "verbatimModuleSyntax": true,
     "noEmit": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

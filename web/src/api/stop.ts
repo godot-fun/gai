@@ -1,6 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { sendOk } from "../http";
 import { browserService } from "../services/browser-service";
+import { browserSession } from "../services/browser-session";
 import { mcpService } from "../services/mcp-service";
 import { shutdown } from "../shutdown";
 import { registerApi, type ApiRoute } from "./route";
@@ -28,7 +29,7 @@ async function closeChildren(): Promise<void> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     await Promise.race([
-      Promise.all([browserService.close(), mcpService.close()]),
+      Promise.all([browserSession.close(), browserService.close(), mcpService.close()]),
       new Promise<void>((resolve) => { timer = setTimeout(resolve, PRE_SHUTDOWN_TIMEOUT_MS); }),
     ]);
   } finally {

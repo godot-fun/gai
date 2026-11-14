@@ -1,6 +1,8 @@
-import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { createServer } from "node:http";
+import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import { config } from "../config";
 import { HttpError, HttpStatus, sendError, sendJson } from "../http";
+import "./browser";
 import "./fetch";
 import "./healthy";
 import "./mcp";

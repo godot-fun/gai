@@ -48,6 +48,9 @@ static func reload_tools() -> void:
 	# web tools
 	register(WebFetchTool.new())
 	register(WebSearchTool.new())
+	register(BrowserOpenTool.new())
+	register(BrowserObserveTool.new())
+	register(BrowserActTool.new())
 	for tool: McpTool in McpToolRegistry.tools:
 		register(tool)
 	pass

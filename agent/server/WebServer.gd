@@ -219,6 +219,31 @@ static func async_fetch(url: String, screenshot_path: String, cancel_scope: Canc
 	return result
 
 
+## POST /browser/action. Runs one or more browser steps against the shared page and returns the
+## page metadata plus a fresh snapshot (see [BrowserResult]).
+static func async_browser_action(steps: Array[BrowserStep], screenshot_path: String, want_snapshot: bool, cancel_scope: CancelScope) -> BrowserResult:
+	if steps.is_empty():
+		Log.error("browser action steps are empty")
+		return null
+	if await async_ensure_server_running() != OK:
+		return null
+	var payload := {"steps": steps, "snapshot": want_snapshot}
+	if StringUtils.is_not_blank(screenshot_path):
+		payload["screenshotPath"] = screenshot_path
+	var response := await HttpHelper.async_post(server_url() + "/browser/action", JsonUtils.object_to_json(payload), PackedStringArray(), request_timeout_millis, StringUtils.EMPTY, Callable(), cancel_scope)
+	if not response.is_ok():
+		# A cancelled request is the user stopping the run, not a server failure.
+		if cancel_scope.cancelled:
+			Log.info("web server request cancelled path:[/browser/action]")
+		else:
+			Log.error("web server request failed path:[/browser/action] code:[{}] error:[{}]", response.code, response.get_error_string())
+		return null
+	var result: BrowserResult = JsonUtils.json_to_object(response.get_body_string(), BrowserResult)
+	if result == null:
+		Log.error("web server returned invalid JSON path:[/browser/action]")
+	return result
+
+
 ## POST /search. Returns up to count results (Google with a configured proxy, otherwise Bing).
 static func async_search(query: String, count: int, screenshot_path: String, cancel_scope: CancelScope) -> SearchResponse:
 	if StringUtils.is_blank(query):

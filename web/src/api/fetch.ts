@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { Defuddle } from "defuddle/node";
 import { HttpError, HttpStatus, optionalString, readJsonBody, requireObject, requireString, sendOk } from "../http";
 import { browserService } from "../services/browser-service";
+import { extractPageContent } from "../services/page-content";
 import { captureScreenshot, validateScreenshotPath } from "../services/screenshot-service";
 import { registerApi, type ApiRoute } from "./route";
 
@@ -48,24 +48,13 @@ export class FetchApi implements ApiRoute {
     try {
       await page.goto(requestedUrl.href, { waitUntil: "networkidle" });
       const finalUrl = page.url();
-      const html = await page.content();
-      const result = await Defuddle(html, finalUrl, { markdown: true, useAsync: false });
+      const content = await extractPageContent(page);
       const screenshot = await captureScreenshot(page, screenshotPath);
       return {
         url: requestedUrl.href,
         finalUrl,
-        title: result.title,
-        description: result.description,
-        author: result.author,
-        published: result.published,
-        site: result.site,
-        domain: result.domain,
-        language: result.language,
-        favicon: result.favicon,
-        image: result.image,
-        content: result.content,
+        ...content,
         contentType: "markdown",
-        wordCount: result.wordCount,
         ...screenshot,
       };
     } catch (error) {
