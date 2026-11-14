@@ -158,11 +158,15 @@ func find_entry_nav_index(entry_indices: Array[int], direction: int) -> int:
 	var vbar: VScrollBar = chat_scroll.get_v_scroll_bar()
 	if vbar == null:
 		return -1
-	var anchor := vbar.value + Margin.ma_5
+	var max_scroll := maxf(vbar.min_value, vbar.max_value - vbar.page)
 	var current_slot := -1
 	for slot in range(entry_indices.size()):
 		var entry_index: int = entry_indices[slot]
-		if entry_y_for_index(entry_index) <= anchor + 1.0:
+		# The bar value [method reveal_entry] parks this entry at. The tail of the history cannot
+		# be lifted [constant Margin.ma_5] below the viewport top, so those entries park together on
+		# the bottom edge and count as reached only once the bar gets there.
+		var parked_y := clampf(entry_y_for_index(entry_index) - Margin.ma_5, vbar.min_value, max_scroll)
+		if parked_y <= vbar.value:
 			current_slot = slot
 	if direction > 0:
 		var next_slot := current_slot + 1

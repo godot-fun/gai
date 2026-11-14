@@ -75,7 +75,22 @@ Set `OPENAI_API_KEY` or configure the connection in **Settings**. Runtimes live 
 Read [`AGENTS.md`](AGENTS.md) for conventions, [`cpp/README.md`](cpp/README.md) for native builds.
 
 <details>
-<summary><b>More</b> — asset skills, workflows, local services, MCP, tests</summary>
+<summary><b>More</b> — project context, asset skills, workflows, local services, MCP, tests</summary>
+
+### Project context
+
+Four workspace-root files are injected into every session, and each one has a toolbar toggle, so a single conversation can include or skip any of them:
+
+| File | What it adds |
+| --- | --- |
+| [`AGENTS.md`](AGENTS.md) | Repository map, GDScript conventions, and testing rules — the agent's standing instructions for this project |
+| `SYSTEM.md` | Not shipped with the repo: create one to replace the generated system prompt — project root, Godot version, dependency paths, and OS facts — with your own text |
+| [`MEMORY.md`](MEMORY.md) | Index of the durable memory under `.memory/` — current task, rules, goals, relationships, past experiences; curated by a background agent during compaction |
+| [`SKILLS.md`](SKILLS.md) | Index of the 36 asset skills in `.agents/skills/`, one line per skill pointing at its `SKILL.md` |
+
+`AGENTS.md`, `MEMORY.md`, and `SKILLS.md` are appended as extra context messages; `SYSTEM.md` is the only one that replaces the base prompt instead of adding to it.
+
+Edit any of them and the next new session already sees the change — no app restart needed.
 
 ### Beyond code: asset skills
 
