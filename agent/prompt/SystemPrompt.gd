@@ -90,20 +90,24 @@ static func build_dependency_context() -> String:
 static func build_os_context() -> String:
 	var build := StringBuilder.new()
 	build.append(build_operating_system_context())
-	build.append(build_locale_context())
 	build.append(build_cpu_context())
 	build.append(build_memory_context())
 	build.append(build_gpu_context())
+	build.append(build_locale_context())
 	build.append(build_shell_context())
 	return build.build_joined(FileUtils.NEWLINE_LF)
 
 
-## Builds one concise line containing the operating system name, version, and distribution.
+## Builds one concise line with the operating system. The distribution is only added when it says
+## something beyond the OS name — Windows reports "Windows" as its distribution, which is noise.
 static func build_operating_system_context() -> String:
+	var os_name := OS.get_name()
+	var os_version := OS.get_version()
 	var distro := OS.get_distribution_name()
-	if StringUtils.is_not_blank(distro):
-		return StringUtils.format("Operating system: {} {}, distribution: {}", OS.get_name(), OS.get_version(), distro)
-	return StringUtils.format("Operating system: {} {}", OS.get_name(), OS.get_version())
+	var has_distro := StringUtils.is_not_blank(distro) and distro.to_lower() != os_name.to_lower()
+	if has_distro:
+		return StringUtils.format("OS: {} {}, distribution: {}", os_name, os_version, distro)
+	return StringUtils.format("OS: {} {}", os_name, os_version)
 
 
 ## Builds one concise line containing the system locale and the UTC offset. The raw zone name is
@@ -120,11 +124,11 @@ static func build_utc_offset_context() -> String:
 	return "UTC%s%02d:%02d" % ["+" if offset >= 0 else "-", absolute / 60, absolute % 60]
 
 
-## Builds one line describing the Bash environment used by command-line tools.
+## Builds one line naming the shell used by command-line tools.
 static func build_shell_context() -> String:
 	if OSUtils.is_windows():
-		return "Bash tool runs via: Git Bash"
-	return "Bash tool runs via: /bin/bash"
+		return "Shell: Git Bash"
+	return "Shell: /bin/bash"
 
 
 ## Builds one concise line containing CPU core count and architecture.
