@@ -5,7 +5,6 @@ extends Object
 ## content internally, so this helper styles its public controls after the dialog is in the tree.
 ## Call [method apply] again after a theme or accent-color change.
 
-
 ## Apply the application's dialog, field, list, button, and scrollbar tokens to [param dialog].
 ## [param label_texts] maps Godot's built-in English captions to caller-resolved display text.
 ## Its keys must be the original strings exposed by FileDialog (for example, [code]"Path:"[/code],
@@ -15,6 +14,7 @@ extends Object
 ## keeping this reusable style helper independent of I18n. The ready-time second pass catches
 ## FileDialog controls created when the node enters the scene tree.
 static func apply(dialog: FileDialog, label_texts: Dictionary[String, String] = {}) -> void:
+	FileDialogHelper.apply(dialog)
 	apply_close(dialog)
 	apply_control_theme(dialog)
 	apply_dialog_style(dialog)
@@ -22,8 +22,6 @@ static func apply(dialog: FileDialog, label_texts: Dictionary[String, String] = 
 	if not dialog.is_node_ready():
 		dialog.ready.connect(func() -> void: apply_control_styles(dialog, label_texts), CONNECT_ONE_SHOT)
 	pass
-
-
 ## FileDialog is reused by settings and workspace selection, so dismiss it by hiding rather than
 ## freeing it. `popup_window` makes an outside click emit `close_requested`, matching CommonWindow.
 static func apply_close(dialog: FileDialog) -> void:
@@ -87,9 +85,9 @@ static func apply_dialog_style(dialog: FileDialog) -> void:
 ## Open a centered FileDialog at the same viewport-relative size convention as CommonWindow.
 static func present_centered(dialog: FileDialog, width_percent: int = 60, height_percent: int = 70, label_texts: Dictionary[String, String] = {}) -> void:
 	dialog.size = CommonWindow.size_from_viewport_percent(width_percent, height_percent)
+	apply(dialog, label_texts)
 	dialog.popup_centered()
 	dialog.oversampling_override = DisplayScale.compute_ui_scale()
-	apply(dialog, label_texts)
 	pass
 
 

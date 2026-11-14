@@ -173,6 +173,8 @@ func configure_sidebar_layout() -> void:
 func configure_dialog_layout() -> void:
 	save_dialog.size = AgentLayout.file_dialog_size
 	load_dialog.size = AgentLayout.file_dialog_size
+	FileDialogStyle.apply(save_dialog)
+	FileDialogStyle.apply(load_dialog)
 	pass
 
 
