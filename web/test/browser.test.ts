@@ -17,7 +17,7 @@ interface ActionBody {
 }
 
 async function runAction(steps: unknown[], extra: Record<string, unknown> = {}): Promise<ActionBody> {
-  const response = await client.post(`${baseUrl}/browser/action`, { steps, ...extra });
+  const response = await client.post(`${baseUrl}/browser/action`, { steps, snapshot: true, ...extra });
   assert.equal(response.status, 200);
   return response.data as ActionBody;
 }
@@ -76,9 +76,13 @@ test("POST /browser/action rejects a malformed request before touching the page"
   const noSteps = await client.post(`${baseUrl}/browser/action`, { steps: [] }, { validateStatus: () => true });
   assert.equal(noSteps.status, 400);
 
-  const manySteps = await client.post(`${baseUrl}/browser/action`, { steps: Array.from({ length: 13 }, () => ({ action: "snapshot" })) }, { validateStatus: () => true });
+  const manySteps = await client.post(`${baseUrl}/browser/action`, { steps: Array.from({ length: 13 }, () => ({ action: "snapshot" })), snapshot: true }, { validateStatus: () => true });
   assert.equal(manySteps.status, 400);
   assert.equal(manySteps.data.error.code, "TOO_MANY_STEPS");
+
+  const noSnapshot = await client.post(`${baseUrl}/browser/action`, { steps: [{ action: "snapshot" }] }, { validateStatus: () => true });
+  assert.equal(noSnapshot.status, 400);
+  assert.equal(noSnapshot.data.error.code, "INVALID_REQUEST");
 });
 
 test("POST /browser/action goes back and reloads without a key press", async () => {
@@ -120,12 +124,12 @@ test("POST /browser/action reports the budget instead of dropping elements silen
 
 test("POST /browser/action drops fields that do not belong to the action", async () => {
   // `direction` only exists for scroll: on a click it is ignored instead of rejected.
-  const ignored = await client.post(`${baseUrl}/browser/action`, { steps: [{ action: "click", ref: "e999", direction: "left" }] }, { validateStatus: () => true });
+  const ignored = await client.post(`${baseUrl}/browser/action`, { steps: [{ action: "click", ref: "e999", direction: "left" }], snapshot: true }, { validateStatus: () => true });
   assert.equal(ignored.status, 200);
   assert.equal(ignored.data.error.includes("direction"), false);
 
   // On scroll it is still validated.
-  const rejected = await client.post(`${baseUrl}/browser/action`, { steps: [{ action: "scroll", direction: "left" }] }, { validateStatus: () => true });
+  const rejected = await client.post(`${baseUrl}/browser/action`, { steps: [{ action: "scroll", direction: "left" }], snapshot: true }, { validateStatus: () => true });
   assert.equal(rejected.status, 400);
   assert.ok(rejected.data.error.message.includes("direction"));
 });

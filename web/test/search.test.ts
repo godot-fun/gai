@@ -18,3 +18,13 @@ test("POST /search returns web search results", async () => {
     assert.equal(typeof result.snippet, "string");
   }
 });
+
+test("POST /search rejects a missing or non-numeric count before opening a page", async () => {
+  const missing = await client.post(`${baseUrl}/search`, { query: "Godot Engine" }, { validateStatus: () => true });
+  assert.equal(missing.status, 400);
+  assert.equal(missing.data.error.code, "INVALID_REQUEST");
+
+  const notANumber = await client.post(`${baseUrl}/search`, { query: "Godot Engine", count: "5" }, { validateStatus: () => true });
+  assert.equal(notANumber.status, 400);
+  assert.equal(notANumber.data.error.code, "INVALID_REQUEST");
+});

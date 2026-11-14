@@ -64,8 +64,8 @@ export class BrowserActionApi implements ApiRoute {
   }
 }
 
+/** `snapshot` is required: the tool layer decides per call whether it wants a ref tree, so a missing value is the caller's mistake. */
 function readSnapshotFlag(value: unknown): boolean {
-  if (value === undefined) return true;
   if (typeof value !== "boolean") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "snapshot must be a boolean");
   return value;
 }

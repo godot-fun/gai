@@ -6,9 +6,6 @@ import { browserService, pageFailure } from "../services/browser-service";
 import { captureScreenshot, validateScreenshotPath } from "../services/screenshot-service";
 import { registerApi, type ApiRoute } from "./route";
 
-const DEFAULT_RESULT_COUNT = 10;
-const MAX_RESULT_COUNT = 100;
-
 /** Search engines the API can drive; a const object instead of an enum, like `HttpStatus`. */
 export const SearchEngine = {
   Bing: "bing",
@@ -55,11 +52,7 @@ export class SearchApi implements ApiRoute {
 }
 
 /** Reads one engine's results through a short-lived page: navigate, wait for results, extract, capture, close. */
-async function runSearch(query: string, count: number = DEFAULT_RESULT_COUNT, screenshotPath?: string, engine?: SearchEngine): Promise<SearchResponse> {
-  if (!Number.isSafeInteger(count) || count < 1 || count > MAX_RESULT_COUNT) {
-    throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `count must be an integer between 1 and ${MAX_RESULT_COUNT}`);
-  }
-
+async function runSearch(query: string, count: number, screenshotPath?: string, engine?: SearchEngine): Promise<SearchResponse> {
   const selectedEngine = engine ?? (isProxyEnabled() ? SearchEngine.Google : SearchEngine.Bing);
   const engineName = selectedEngine === SearchEngine.Google ? "Google" : "Bing";
   const page = await browserService.openPage();
@@ -146,13 +139,13 @@ export function normalizeSearchResults(rawResults: readonly RawSearchResult[], c
   return results;
 }
 
-/** `count` and `engine` are optional, but a wrong type is the caller's mistake, not a search failure. */
-function readCount(value: unknown): number | undefined {
-  if (value === undefined) return undefined;
+/** `count` is required: the tool layer decides it and clamps it, so the server only rejects a wrong type. */
+function readCount(value: unknown): number {
   if (typeof value !== "number") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "count must be a number");
   return value;
 }
 
+/** `engine` is optional, but a wrong type is the caller's mistake, not a search failure. */
 function readEngine(value: unknown): SearchEngine | undefined {
   if (value === undefined) return undefined;
   if (!isSearchEngine(value)) throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "engine must be bing or google");
