@@ -79,7 +79,7 @@ func _ready() -> void:
 	window_state.setup(get_window())
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
-	gdf.events.locale_changed.connect(apply_locale)
+	gdf.events.locale_changed.connect(apply_theme)
 	gdf.events.ui_scale_changed.connect(on_ui_scale_changed)
 	
 	agent_toolbar.setup(toolbar_panel, toolbar_logo, workspace_button_node)
@@ -106,7 +106,6 @@ func _ready() -> void:
 	search_button.setup(search_button_node)
 	log_button.setup(log_button_node)
 	sense_input.setup()
-	apply_locale()
 	gdf.callable_deferred(apply_theme)
 	# session
 	agent_session_sidebar.reload_sessions()
@@ -143,11 +142,6 @@ func apply_main_window_chrome() -> void:
 	DisplayServer.window_set_title(app_title, DisplayServer.MAIN_WINDOW_ID)
 	get_window().borderless = false
 	pass
-
-func apply_locale() -> void:
-	input_field.placeholder_text = I18n.t("agent.input.placeholder")
-	pass
-
 
 func apply_theme() -> void:
 	var app_theme := Theme.new()

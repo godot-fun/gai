@@ -89,7 +89,7 @@ func setup(
 	chat_completion.setup(input_field)
 	gdf.events.theme_changed.connect(on_ui_theme_changed)
 	gdf.events.theme_color_changed.connect(on_ui_theme_changed)
-	gdf.events.locale_changed.connect(on_ui_theme_changed)
+	gdf.events.locale_changed.connect(on_locale_changed)
 	AgentEvents.events.session_selected.connect(on_session_selected)
 	AgentEvents.events.session_queue_changed.connect(on_session_queue_changed)
 	AgentEvents.events.chat_input_prefill.connect(on_chat_input_prefill)
@@ -98,6 +98,7 @@ func setup(
 	AgentEvents.events.session_stop.connect(on_session_stop)
 	AgentEvents.events.compaction_start.connect(on_compaction_start)
 	AgentEvents.events.compaction_end.connect(on_compaction_end)
+	apply_locale()
 	apply_theme()
 	refresh_from_active_session()
 	pass
@@ -152,6 +153,19 @@ func on_ui_theme_changed() -> void:
 	apply_theme()
 	refresh_from_active_session()
 	refresh_moving_border()
+	pass
+
+
+## Locale copy owned by the composer: the placeholder and the collapsed tooltip.
+func on_locale_changed() -> void:
+	apply_locale()
+	on_ui_theme_changed()
+	pass
+
+
+func apply_locale() -> void:
+	input_field.placeholder_text = I18n.t("agent.input.placeholder")
+	input_wrap.tooltip_text = "" if expanded else I18n.t("agent.input.click_to_ask")
 	pass
 
 
@@ -887,7 +901,7 @@ func layout_bar() -> void:
 	input_field.visible = expanded
 	if not expanded:
 		input_field.scroll_fit_content_height = true
-	input_wrap.tooltip_text = "" if expanded else I18n.t("agent.input.click_to_ask")
+	apply_locale()
 	layout_send_button()
 	sync_queue_panel_visibility()
 	layout_queue_panel()
