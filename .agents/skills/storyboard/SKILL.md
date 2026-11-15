@@ -2,7 +2,7 @@
 name: storyboard
 description: >-
   Turns user materials into a shot-by-shot storyboard with bilingual narration
-  (Chinese + English VO, both required) and AI video prompts per shot. When the
+  (Chinese + English VO by default; honor explicit single-language requests) and AI video prompts per shot. When the
   user gives a target path (especially .md), write the full storyboard there —
   do not only print it in chat. Style and duration are free. Use when the user
   asks for storyboard, shot list, narration, VO script, AI video prompts,
@@ -35,15 +35,16 @@ If goal/audience is ambiguous, state one short assumption and proceed. Ask only 
 Treat a path as the **output file** when:
 
 1. User says write to / save as / put in + path
-2. Skill request is paired with **one** main `.md` / `.txt` document
-3. Path is an empty or draft file clearly opened for this output
+2. It is an empty or draft `.md` / `.txt` file clearly intended for this output
+3. The user identifies it as the storyboard document, not merely as source material
 
 **Rules:**
 
-- Always **read** the target file first if it exists. Non-empty body = text material; then **replace** with the full storyboard (keep useful facts in `## Materials` / Spine).
+- Always **read** the target file first if it exists. Replace a non-empty file only when it is clearly the requested output/draft; preserve its useful facts in `## Materials` / Spine.
+- Treat an existing non-empty document presented as a brief, script, transcript, or reference as **input**, not an overwrite target. If no output path is given, deliver in chat.
 - One doc + images → write to the doc; images are materials only.
 - Explicit output path + separate brief → write only to the output path.
-- Several docs, unclear target → prefer the path next to the skill invoke; if still ambiguous, ask once.
+- Several docs, unclear target → do not guess which file to overwrite; ask once or deliver in chat when no file output was requested.
 - User names a directory only → create `storyboard.md` there.
 
 ## Workflow
@@ -157,7 +158,7 @@ Section order is fixed: Materials → Visual Style → Spine → Assembly → Sh
 ## Quality bar
 
 - [ ] File path given → full markdown **saved there** (UTF-8); not chat-only
-- [ ] Section order: Spine → Assembly → Shots; every shot has Chinese + English + Video prompt (or user opt-out)
+- [ ] Section order: Materials → Visual Style → Spine → Assembly → Shots; every shot has Chinese + English + Video prompt unless the user opted out of one VO language
 - [ ] VO languages sense-aligned; durations match speak length
 - [ ] **Shot 01** grabs attention as a cold open (not a thesis summary; no slow-burn open)
 - [ ] Facts trace to materials; style coherent; i2v points at the right still

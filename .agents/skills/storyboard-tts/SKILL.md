@@ -4,8 +4,8 @@ description: >-
   Converts storyboard markdown (bilingual Chinese + English narration per shot)
   into speech audio via IndexTTS2 (same stack as ai-text-to-speech). Batch-writes
   WAVs under Chinese/ and English/ named by shot id (model loaded once), pads
-  0.4 s edge silence in place, then a speech-timeline.md and one concatenated
-  SRT per language (Chinese.srt / English.srt). Use when the user wants
+  0.4 s edge silence in place, and can generate speech-timeline.md plus one
+  concatenated SRT per language (Chinese.srt / English.srt). Use when the user wants
   storyboard TTS, storyboard to speech, narration VO, storyboard-to-speech, bilingual VO export,
   subtitles, or batch TTS from a storyboard.md.
 ---
@@ -35,8 +35,9 @@ When this skill applies, read and follow [dependency-manager](../dependency-mana
 3. Parse-only / report-only / subtitle-only steps use stdlib **`python`** (`.dependency/python/python`).
 4. Never overwrite the storyboard source. Write only under `<audio-dir>/`.
 5. Skip `(no VO)` / empty lines — no empty WAVs or empty subtitle cues.
-6. Confirm **voice reference** (and output dir if unclear) before a full batch.
-7. The top-level output directory uses the reference voice filename stem. Subdirectory names stay fixed. Default `<audio-dir>` is `<storyboard-dir>/<voice-stem>/`. Do **not** use `<storyboard-stem>-speech`.
+6. Confirm **voice reference** before a full batch. Confirm the output directory only when the default would be ambiguous or collide with unrelated output.
+7. The top-level output directory uses the shared reference voice filename stem. With separate references and no `--voice`, it uses the Chinese reference stem for `both`/`chinese`, or the English stem for `english`. Subdirectory names stay fixed. Default `<audio-dir>` is `<storyboard-dir>/<voice-stem>/`. Do **not** use `<storyboard-stem>-speech`.
+8. For a normal full delivery, include `--report` so the timeline and SRT files promised by this skill are written. Omit it only when the user wants WAVs alone.
 
 ## Inputs
 
@@ -52,7 +53,7 @@ When this skill applies, read and follow [dependency-manager](../dependency-mana
 | `--fp16` / emotion / `--device` | same meaning as ai-text-to-speech |
 | `--force` | off (skip existing WAVs) |
 | `--limit N` | 0 = all jobs (use `1` for trial) |
-| `--report` | write `speech-timeline.md` + `Chinese.srt` / `English.srt` after synth |
+| `--report` | off by default in the script; enable for the normal full delivery to write `speech-timeline.md` + `Chinese.srt` / `English.srt` |
 | `--no-subtitles` | with `--report`, skip SRT files |
 | Edge pad | on (`0.4` s); `--no-pad` / `--pad-duration` / `--pad-threshold` |
 
@@ -137,7 +138,7 @@ Resume from an existing `shots.json`:
 | `--voice-zh` / `--voice-en` | Per-language refs |
 | `--lang` | `both` (default), `chinese`, `english` |
 | `--limit N` | First N pending jobs only |
-| `--force` | Overwrite existing WAVs |
+| `--force` | Re-synthesize and overwrite existing WAVs |
 | `--report` | Write timeline + SRT subtitles |
 | `--report-out` | Custom timeline path |
 | `--no-subtitles` | Skip SRT when using `--report` |
@@ -158,7 +159,7 @@ On partial failure: script continues remaining jobs, prints `Failed jobs: …`, 
 4. IndexTTS install lives in [ai-text-to-speech](../ai-text-to-speech/SKILL.md); do not duplicate Setup here beyond “populate index-tts if missing”.
 5. Edge padding is **built in** (default 0.4 s, in place via `pad.py`). Use `--no-pad` only when they want raw TTS with no extra silence; `--pad-duration` if they want a different length.
 6. Loudnorm / OGG / trim remain separate skills after this one.
-7. If audio already exists and only subtitles are needed, run `write_subtitles.py` alone (stdlib python). Re-running `synthesize.py --report` without `--force` still pads existing WAVs, then rewrites the timeline/SRT.
+7. If audio already exists and only subtitles are needed, run `write_subtitles.py` alone (stdlib python). Re-running `synthesize.py --report` without `--force` skips synthesis but may still modify existing WAVs to satisfy edge padding, then rewrites the timeline/SRT. Use `--no-pad` when existing WAV bytes must remain untouched.
 
 ## Tests
 

@@ -40,7 +40,7 @@ If multiple shots and no id → ask once, or do **Shot 01** only when the user c
 **Rules:**
 
 - Always **write the full HTML file** (UTF-8). Chat: short confirm only (path, shot id, research notes, how to open).
-- Prefer **one self-contained `.html`** (inline CSS/JS). No build step, no CDN frameworks required. Google Fonts OK if useful.
+- Prefer **one self-contained `.html`** (inline CSS/JS). No build step or network dependency. Use system font stacks by default; if the user explicitly wants a web font, treat it as an optional online enhancement and provide a readable local fallback.
 - **Fullscreen by default** (see below) — first paint is the stage filling the browser; no document scroll of title/meta under the frame.
 - After write: **open in the system browser** (`Start-Process` / `open` / `xdg-open`). If `file://` is flaky, serve the parent dir with a tiny static server and open `http://127.0.0.1:<port>/<file>`.
 - Never overwrite the storyboard `.md`.
@@ -55,7 +55,7 @@ The preview must play as a **full-viewport cinematic stage**, not a letterboxed 
 | Aspect | Keep storyboard aspect (default **16:9**) with **cover** (crop) or letterbox on black — prefer **cover** so the frame fills the screen |
 | No below-fold chrome | Title, tags, original prompt must **not** sit under the stage in normal flow |
 | Overlay meta | Put prompt / research in a **hidden overlay** (`I` or `?` to toggle; `Esc` closes). **Do not** burn VO/narration onto the stage — narration is for analysis only, not on-screen text |
-| **Space to play** | Animations stay **paused** on load (first frame / idle pose). **`Space`** starts playback **once**. Do not autoplay on open. Hint text: `Space to play · Click / F fullscreen · I prompt` (may also mention Space to start) |
+| **Space to play** | The **main narrative timeline** stays paused on load (first frame / idle pose). **`Space`** starts it **once**. Do not autoplay the story. Tiny non-narrative ambience may run before Space only when it does not advance or reveal the shot. Hint text: `Space to play · Click / F fullscreen · I prompt` |
 | **Play once** | Shot timeline is **one-shot** — no `infinite` / `alternate` loop on the main beat. When duration ends, **hold the final frame** (`animation-fill-mode: forwards` or equivalent). Do **not** restart on a second `Space`, and do not auto-replay |
 | Browser Fullscreen API | On click (or `F`), call `element.requestFullscreen()` on the stage root. Show a brief hint until entered (`Click / F fullscreen · Space to play`). `Esc` exits native fullscreen |
 | Open behavior | After writing the file, open it so the user lands on the fullscreen-ready **paused** page; wait for `Space` to play |
@@ -85,7 +85,7 @@ Map duration to animation timing when sensible (`~5s` → ~5s **one-shot** timel
 
 ### 2. Analyze narration (required)
 
-From VO, list **concrete concepts** that affect what the viewer should understand:
+From VO, list **concrete concepts** that affect what the viewer should understand. If the shot has no VO, state that narration analysis is not applicable and extract any factual concepts from the video prompt instead.
 
 - Product / feature / API / workflow names
 - Places, eras, UI metaphors, audience takeaway
@@ -151,7 +151,7 @@ Ship a **dense but readable** stage. Thin “one transform + one opacity” demo
 | 4. Light & atmosphere | Mood continuity from Visual Style | Lamp pulse, monitor bloom, volumetric haze drift, vignette breathe, rim-light shift |
 | 5. Micro-detail | Texture without stealing focus | Cursor blink, scrubber/knob, floating code bits, dust/particles, soft shadow crawl |
 
-Require **at least 4 of these 5 layers** on every shot, and **≥5 distinct animated properties** after `Space` (e.g. code line stagger + tree stagger + platforms + clock scrub + play-view bloom — **not** a default whole-frame scale). Ambient loops (`infinite` lamp flicker, dust) are OK **only if subtle** and do **not** read as the shot replaying; the **main narrative beat stays one-shot + forwards**.
+Require **at least 4 of these 5 layers** on every shot, and **≥5 independently timed animated elements or beats** after `Space` (e.g. code-line stagger + tree growth + platform docking + clock scrub + play-view bloom — **not** five CSS properties on one element). Ambient loops (`infinite` lamp flicker, dust) are OK **only if subtle**, non-narrative, and do **not** read as the shot replaying; the **main narrative beat stays one-shot + forwards**.
 
 **Camera vs readable content (priority):**
 
@@ -236,12 +236,13 @@ Adapt freely; keep **fullscreen** structure:
     html, body { height: 100%; margin: 0; overflow: hidden; background: #000; }
     .stage {
       position: fixed; inset: 0; width: 100vw; height: 100vh;
-      /* 16:9 cover inside .frame */
+      /* Full viewport host; .frame uses 16:9 cover by default. */
     }
     .frame {
-      position: absolute; inset: 0; margin: auto;
-      width: 100vw; height: 56.25vw; /* 16:9 */
-      max-height: 100vh; max-width: 177.78vh;
+      position: absolute; left: 50%; top: 50%;
+      width: max(100vw, 177.78vh); /* 16:9 cover */
+      height: max(100vh, 56.25vw);
+      transform: translate(-50%, -50%);
       overflow: hidden;
     }
     .hud { position: fixed; /* hint + overlay; hidden by default */ }
@@ -273,11 +274,11 @@ Only if the user asks for a full board:
 
 - [ ] HTML file written to disk; browser opened (or clear open instructions)
 - [ ] **Fullscreen:** stage fills viewport; Fullscreen API on click/`F`; no scrolling meta under the frame
-- [ ] **Space to play:** paused on load; `Space` starts once; no autoplay; no on-stage VO text
+- [ ] **Space to play:** main timeline paused on load; `Space` starts once; no story autoplay; optional pre-play ambience is subtle and non-narrative; no on-stage VO text
 - [ ] **Play once:** no loop; end frame held; no auto-replay / Space restart after finish
 - [ ] Stage matches prompt subject, camera energy, and aspect
-- [ ] Narration concepts analyzed; factual/usage gaps researched when needed
-- [ ] **Rich motion:** ≥4 of 5 layers (camera / primary / secondary / light / micro); ≥5 animated properties; ≥3 depth planes
+- [ ] Concepts extracted from VO, or from the video prompt when VO is absent; factual/usage gaps researched when needed
+- [ ] **Rich motion:** ≥4 of 5 layers (camera / primary / secondary / light / micro); ≥5 independently timed elements or beats; ≥3 depth planes
 - [ ] **Readable priority:** important code/content → locked camera or local emphasis; no default whole-frame zoom that shrinks text
 - [ ] **Typography:** on-stage labels use large clamps (primary ≥~14–20px, secondary ≥~13–17px); no critical 7–11px micro-text
 - [ ] Timing follows Duration (setup → development → accent → hold); staggers on lists/UI; not one global fade

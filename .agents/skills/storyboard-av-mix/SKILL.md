@@ -4,7 +4,7 @@ description: >-
   Muxes per-shot storyboard video with Chinese and English voice-over by retiming
   video to match VO duration (setpts), writing Video-Chinese/ and Video-English/
   (matched by shot id 01, 02, …). Use when the user wants storyboard A/V mix,
-  storyboard A/V mix, VO dubbing mix, video retime to audio, Video-Chinese, Video-English,
+  VO dubbing mix, video retime to audio, Video-Chinese, Video-English,
   bilingual VO on cut video, or batch mux Video/ + Chinese/ + English/.
 ---
 
@@ -30,7 +30,7 @@ When this skill applies, read and follow [dependency-manager](../dependency-mana
 1. **VO timing is immutable.** Never stretch, shrink, pad, trim, or `atempo` the voice-over. Duration of the VO file is the master clock.
 2. **Video serves audio.** Only change video duration (FFmpeg `setpts`) so it equals that shot’s VO length, then mux.
 3. Drop all audio from the source video; replace with the VO track. Prefer `-c:a copy`; if the container cannot hold the VO codec (e.g. WAV→MP4), encode AAC **without** changing length.
-4. **Do not downgrade video.** `setpts` requires a re-encode, but match the source: codec family (H.265 Main10 when source is 10-bit HEVC), `pix_fmt`, bitrate, color tags, and HDR side data (mastering display / MaxCLL). Copy container + video-stream metadata from the source clip.
+4. **Preserve source quality characteristics.** `setpts` requires a re-encode. The bundled script keeps HEVC/10-bit sources in H.265 Main10, preserves source `pix_fmt`, bitrate when known, color tags, and supported HDR metadata (mastering display / MaxCLL); other sources currently encode with H.264 while retaining their reported pixel format and color tags. Copy available container and video-stream metadata from the source clip.
 5. Match shots by **filename stem** (`01.mp4` ↔ `01.wav`).
 6. Batch only via `.ai/storyboard-av-mix/mix.py` — do not hand-write FFmpeg mux/retime commands.
 7. Never overwrite inputs under `Video/`, `Chinese/`, or `English/`.
@@ -53,7 +53,7 @@ Per shot / language the script:
 
 1. Probes VO duration (source of truth) and video duration
 2. Applies `setpts=PTS*(vo_dur/video_dur)` — stretch or compress **video only** (plus short freeze-tail so video ≥ VO)
-3. Muxes with `-shortest` so **container duration == VO duration**
+3. Muxes with `-shortest` so the output follows the VO clock (minor frame/container rounding may remain)
 4. Writes `<root>/Video-Chinese|` or `Video-English/` / `<shot-id>.<same-ext>`
 
 ## Layout
@@ -92,7 +92,7 @@ Existing outputs are overwritten. Missing VO for a language → skip that job wi
 
 1. Audio first: if durations disagree, change **video**, never VO.
 2. Prefer one `mix.py` run for the whole board.
-3. Re-encode must preserve source quality tags (Main10 / HDR / bitrate) — never force 8-bit H.264.
+3. Verify the reported output profile for high-bit-depth/HDR sources; the script must not force those sources to 8-bit H.264.
 4. Chat summary: `<root>`, jobs done / skipped, paths to `Video-Chinese/` and `Video-English/`.
 5. Upstream VO usually from [storyboard-tts](../storyboard-tts/SKILL.md); this skill does not synthesize speech.
 6. Missing Python/FFmpeg → populate `.dependency/` per dependency-manager, retry same command.
