@@ -9,7 +9,7 @@ func _init() -> void:
 	name = NAME
 	description = """
 		Run a Bash command in the project root (Git Bash on Windows). Returns stdout/stderr and exit code. 
-		When using the timeout command the time limit should generally be set to 30 seconds."
+		The default timeout is 30 seconds when no timeout is specified.
 	"""
 	pass
 
