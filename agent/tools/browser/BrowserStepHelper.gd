@@ -35,17 +35,16 @@ class ParseResult extends RefCounted:
 ## per-element `Variant` remains. The caller guarantees it is an array.
 static func normalize_steps(raw_steps: Array) -> ParseResult:
 	var result := ParseResult.new()
-	var items := raw_steps
-	if items.is_empty():
+	if raw_steps.is_empty():
 		result.error = "error: at least one step is required"
 		return result
-	if items.size() > MAX_STEPS:
+	if raw_steps.size() > MAX_STEPS:
 		result.error = StringUtils.format("error: at most {} steps per call, split the work across calls", MAX_STEPS)
 		return result
 
 	var steps: Array[BrowserStep] = []
-	for index in items.size():
-		var entry: Variant = items[index]
+	for index in raw_steps.size():
+		var entry: Variant = raw_steps[index]
 		if typeof(entry) != TYPE_DICTIONARY:
 			result.error = StringUtils.format("error: steps[{}] must be an object", index)
 			return result
@@ -117,7 +116,7 @@ static func validate_step(step: BrowserStep, index: int) -> String:
 	return StringUtils.EMPTY
 
 
-## Model-facing text: the failure first, then where the page ended up, then the snapshot.
+## Model-facing text: the failure first, then page metadata and whichever observation was requested.
 static func describe(response: BrowserResult) -> String:
 	var build := StringBuilder.new()
 	if StringUtils.is_not_blank(response.error):

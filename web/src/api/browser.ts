@@ -76,11 +76,8 @@ export class BrowserObserveApi implements ApiRoute {
   async handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
     const body = requireObject(await readJsonBody(request));
     const mode = readObserveMode(body.mode);
-    const screenshotPath = optionalString(body.screenshotPath, "screenshotPath");
-    if (mode === "screenshot") {
-      if (screenshotPath === undefined) throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "screenshotPath is required for screenshot mode");
-      validateScreenshotPath(screenshotPath);
-    }
+    const screenshotPath = mode === "screenshot" ? requireString(body.screenshotPath, "screenshotPath") : undefined;
+    validateScreenshotPath(screenshotPath);
     sendOk(response, await browserSession.observe(mode, screenshotPath));
   }
 }

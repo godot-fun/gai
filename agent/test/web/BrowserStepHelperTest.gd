@@ -134,14 +134,15 @@ func browser_wire_format_test() -> void:
 	assert(payload.steps[0].ref == "e3")
 	assert(not payload.steps[0].has("text"))
 
-	var body := "{\"ok\":false,\"action\":\"click\",\"url\":\"https://example.com/\",\"title\":\"Example\",\"error\":\"click failed: ref e9 is stale\",\"snapshot\":\"- link \\\"Learn more\\\" [e0]\",\"screenshotPath\":\"\",\"screenshotError\":\"\"}"
+	var body := "{\"ok\":false,\"url\":\"https://example.com/\",\"title\":\"Example\",\"error\":\"click failed: ref e9 is stale\",\"snapshot\":\"\",\"markdown\":\"\",\"screenshotPath\":\"C:/cache/action.webp\",\"screenshotError\":\"\"}"
 	var response: BrowserResult = JsonUtils.json_to_object(body, BrowserResult)
 	assert(response != null)
 	assert(not response.ok)
 	assert(response.url == "https://example.com/")
 	assert(response.title == "Example")
 	assert(response.error.contains("stale"))
-	assert(response.snapshot.contains("[e0]"))
+	assert(StringUtils.is_blank(response.snapshot))
+	assert(response.screenshotPath == "C:/cache/action.webp")
 	pass
 
 

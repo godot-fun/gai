@@ -163,7 +163,7 @@ export class BrowserSession {
   }
 
   /** Runs mutations and always captures their final visual state when a path is supplied. */
-  act(steps: readonly BrowserStep[], screenshotPath?: string): Promise<BrowserResult> {
+  act(steps: readonly BrowserStep[], screenshotPath: string): Promise<BrowserResult> {
     return this.enqueue((page) => this.runSteps(page, steps, screenshotPath));
   }
 
@@ -195,7 +195,7 @@ export class BrowserSession {
     return page;
   }
 
-  private async runSteps(page: Page, steps: readonly BrowserStep[], screenshotPath?: string): Promise<BrowserResult> {
+  private async runSteps(page: Page, steps: readonly BrowserStep[], screenshotPath: string): Promise<BrowserResult> {
     const deadline = Date.now() + Math.max(MIN_BUDGET_MS, REQUEST_TIMEOUT_MS - BUDGET_MARGIN_MS);
     let error = "";
     for (const step of steps) {
@@ -206,12 +206,15 @@ export class BrowserSession {
       }
       try {
         await this.applyStep(page, step, Math.min(remaining, DEFAULT_STEP_TIMEOUT_MS));
+        page = await this.currentPage();
       } catch (failure) {
         error = describeFailure(step.action, failure);
         break;
       }
     }
 
+    // A click may promote a newly opened tab to the shared page. Report and capture that final page,
+    // not the page on which the batch started.
     const screenshot = await captureScreenshot(page, screenshotPath);
     return this.result(page, error, "", "", screenshot);
   }

@@ -18,7 +18,7 @@ if (localAppData !== "") {
 
 // ---------------------------------------------------------------------------------------------------------------------
 /**
- * Fixed deadline for one request: `/fetch`, `/search`, or a batch of `/browser/action` steps must
+ * Fixed deadline for one request: `/fetch`, `/search`, or any browser operation must
  * answer within it, or the socket closes with a 504. Fixed rather than configurable because the
  * agent that waits on the reply cannot see a value tuned in `.env` — a mismatch would only surface
  * as a mystery timeout on the other side.

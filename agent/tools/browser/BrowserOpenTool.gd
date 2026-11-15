@@ -1,7 +1,7 @@
 class_name BrowserOpenTool
 extends BrowserTool
 
-## Opens a URL in the shared browser and returns a snapshot the model can target with refs.
+## Opens a URL in the shared browser. Observation is an explicit follow-up operation.
 
 const NAME := "browser_open"
 

@@ -12,15 +12,27 @@ interface FakePageOptions {
   /** Receives the same arguments as `page.evaluate`, so a test can tell the collector from the shim. */
   evaluate?: (pageFunction?: unknown) => Promise<unknown>;
   html?: string;
+  url?: string;
+  popup?: Page;
+  onClick?: () => void;
 }
 
 /** Minimal stand-in for the agent page; only the calls the session actually makes are implemented. */
 function createFakePage(options: FakePageOptions = {}): Page {
+  const pages: Page[] = [];
+  const locator = {
+    first: () => locator,
+    count: async () => 1,
+    click: async () => {
+      options.onClick?.();
+      if (options.popup !== undefined) pages.push(options.popup);
+    },
+  };
   const page = {
     isClosed: () => false,
-    url: () => "https://example.com/",
+    url: () => options.url ?? "https://example.com/",
     title: async () => "Example",
-    context: () => ({ pages: () => [page] }) as unknown as BrowserContext,
+    context: () => ({ pages: () => pages }) as unknown as BrowserContext,
     // The page doubles as its own frame: collection runs through `frame.evaluate`.
     frames: () => [page],
     mainFrame: () => page,
@@ -37,8 +49,10 @@ function createFakePage(options: FakePageOptions = {}): Page {
     waitForTimeout: async () => undefined,
     content: async () => options.html ?? "<html><body><p>empty</p></body></html>",
     evaluate: options.evaluate ?? (async () => []),
+    locator: () => locator,
     close: async () => undefined,
   };
+  pages.push(page as unknown as Page);
   return page as unknown as Page;
 }
 
@@ -87,9 +101,22 @@ test("open rejects a non-http url as a result failure instead of a crash", async
 
 test("act stops the batch at the first failing step", async () => {
   const session = new BrowserSession(async () => createFakePage());
-  const result = await session.act([step("press")]);
+  const result = await session.act([step("press")], "");
   assert.equal(result.ok, false);
   assert.ok(result.error.includes("press failed"));
+});
+
+test("act continues a batch on a popup promoted by a click", async () => {
+  let popupClicks = 0;
+  const popup = createFakePage({ url: "https://popup.example/", onClick: () => { popupClicks += 1; } });
+  const session = new BrowserSession(async () => createFakePage({ popup }));
+  const result = await session.act([
+    step("click", { selector: "a[target=_blank]" }),
+    step("click", { selector: "#continue" }),
+  ], "");
+  assert.equal(result.ok, true);
+  assert.equal(result.url, "https://popup.example/");
+  assert.equal(popupClicks, 1);
 });
 
 test("open serializes concurrent requests over the shared page", async () => {

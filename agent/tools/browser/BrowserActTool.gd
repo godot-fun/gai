@@ -1,7 +1,7 @@
 class_name BrowserActTool
 extends BrowserTool
 
-## Runs an ordered batch of steps against the shared browser and returns a fresh snapshot.
+## Runs an ordered batch of steps against the shared browser and returns a screenshot.
 
 const NAME := "browser_act"
 
