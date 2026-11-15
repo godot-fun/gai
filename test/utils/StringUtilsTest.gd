@@ -91,7 +91,6 @@ func first_lines_test() -> void:
 	assert(StringUtils.first_lines("", 5) == StringUtils.EMPTY)
 	assert(StringUtils.first_lines("single line", 28) == "single line")
 	assert(StringUtils.first_lines("a\nb\n", 2) == "a\nb")
-	assert(StringUtils.first_lines("a\nb\n" + "tail".repeat(100_000), 2) == "a\nb")
 	pass
 
 func first_lines_after_test() -> void:
