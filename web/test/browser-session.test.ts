@@ -46,9 +46,9 @@ function step(action: BrowserStep["action"], extra: Partial<BrowserStep> = {}): 
   return { action, ...extra };
 }
 
-test("run reports page metadata and a snapshot for a snapshot step", async () => {
+test("observe elements reports page metadata and a snapshot", async () => {
   const session = new BrowserSession(async () => createFakePage());
-  const result = await session.run({ steps: [step("snapshot")], snapshot: true });
+  const result = await session.observe("elements");
   assert.equal(result.ok, true);
   assert.equal(result.url, "https://example.com/");
   assert.equal(result.title, "Example");
@@ -57,45 +57,42 @@ test("run reports page metadata and a snapshot for a snapshot step", async () =>
   assert.equal(result.screenshotPath, "");
 });
 
-test("run skips the snapshot when the caller did not ask for one", async () => {
+test("open does not collect a snapshot", async () => {
   let collected = 0;
   // The `__name` shim is installed with a string evaluate; only a function call is a collection.
   const page = createFakePage({ evaluate: async (pageFunction) => { if (typeof pageFunction === "function") collected += 1; return []; } });
   const session = new BrowserSession(async () => page);
-  const result = await session.run({ steps: [step("goto", { url: "https://example.com" })], snapshot: false });
+  const result = await session.open("https://example.com");
   assert.equal(result.ok, true);
   assert.equal(result.snapshot, "");
   assert.equal(collected, 0);
 });
 
-test("run names the failing step, keeps the reason, and still returns a snapshot", async () => {
+test("open reports navigation failure without observing the page", async () => {
   const failure = new Error("net::ERR_NAME_NOT_RESOLVED");
   const session = new BrowserSession(async () => createFakePage({ gotoError: failure }));
-  const result = await session.run({ steps: [step("goto", { url: "https://nope.invalid" })], snapshot: false });
+  const result = await session.open("https://nope.invalid");
   assert.equal(result.ok, false);
-  assert.ok(result.error.includes("goto failed"));
+  assert.ok(result.error.includes("open failed"));
   assert.ok(result.error.includes("net::ERR_NAME_NOT_RESOLVED"));
-  assert.equal(result.snapshot, EMPTY_PAGE_SNAPSHOT);
+  assert.equal(result.snapshot, "");
 });
 
-test("run rejects a non-http url as a step failure instead of a crash", async () => {
+test("open rejects a non-http url as a result failure instead of a crash", async () => {
   const session = new BrowserSession(async () => createFakePage());
-  const result = await session.run({ steps: [step("goto", { url: "file:///etc/passwd" })], snapshot: false });
+  const result = await session.open("file:///etc/passwd");
   assert.equal(result.ok, false);
   assert.ok(result.error.includes("http"));
 });
 
-test("run stops the batch at the first failing step", async () => {
-  const session = new BrowserSession(async () => createFakePage({ gotoError: new Error("boom") }));
-  const result = await session.run({
-    steps: [step("snapshot"), step("goto", { url: "https://example.com" }), step("press", { key: "Escape" })],
-    snapshot: false,
-  });
+test("act stops the batch at the first failing step", async () => {
+  const session = new BrowserSession(async () => createFakePage());
+  const result = await session.act([step("press")]);
   assert.equal(result.ok, false);
-  assert.ok(result.error.includes("goto failed"));
+  assert.ok(result.error.includes("press failed"));
 });
 
-test("run serializes concurrent requests over the shared page", async () => {
+test("open serializes concurrent requests over the shared page", async () => {
   let running = 0;
   let peak = 0;
   const page = createFakePage({
@@ -107,18 +104,18 @@ test("run serializes concurrent requests over the shared page", async () => {
     },
   });
   const session = new BrowserSession(async () => page);
-  const requests = [1, 2, 3].map(() => session.run({ steps: [step("goto", { url: "https://example.com" })], snapshot: false }));
+  const requests = [1, 2, 3].map(() => session.open("https://example.com"));
   const results = await Promise.all(requests);
   // Interleaved requests would share one page and step on each other's refs; the queue keeps them apart.
   assert.equal(peak, 1);
   assert.ok(results.every((result) => result.ok));
 });
 
-test("run truncates a Playwright call log out of the error message", async () => {
+test("open truncates a Playwright call log out of the error message", async () => {
   const failure = new Error("element is not visible\nCall log:\n  - waiting for locator(\"a\")");
   const session = new BrowserSession(async () => createFakePage({ gotoError: failure }));
-  const result = await session.run({ steps: [step("goto", { url: "https://example.com" })], snapshot: false });
-  assert.equal(result.error, "goto failed: element is not visible");
+  const result = await session.open("https://example.com");
+  assert.equal(result.error, "open failed: element is not visible");
 });
 
 test("normalizeKey speaks the key names a model and a user write", () => {
@@ -135,19 +132,19 @@ test("normalizeKey speaks the key names a model and a user write", () => {
   assert.equal(normalizeKey("  "), "");
 });
 
-test("run returns the page text for a markdown step", async () => {
+test("observe markdown returns the live page text", async () => {
   const page = createFakePage({
     html: "<html><head><title>Doc</title></head><body><article><h1>Heading</h1><p>readable body text that is long enough to keep</p></article></body></html>",
   });
   const session = new BrowserSession(async () => page);
-  const result = await session.run({ steps: [step("markdown")], snapshot: false });
+  const result = await session.observe("markdown");
   assert.equal(result.ok, true);
   assert.ok(result.markdown.includes("readable body text"));
   assert.equal(result.snapshot, "");
 });
 
-test("run reports an empty markdown instead of failing when nothing was read", async () => {
+test("open leaves markdown empty", async () => {
   const session = new BrowserSession(async () => createFakePage());
-  const result = await session.run({ steps: [step("goto", { url: "https://example.com" })], snapshot: false });
+  const result = await session.open("https://example.com");
   assert.equal(result.markdown, "");
 });

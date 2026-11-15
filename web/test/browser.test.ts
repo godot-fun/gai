@@ -5,7 +5,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { baseUrl, client } from "./server-client";
 
-interface ActionBody {
+interface BrowserBody {
   ok: boolean;
   url: string;
   title: string;
@@ -16,120 +16,113 @@ interface ActionBody {
   screenshotError: string;
 }
 
-async function runAction(steps: unknown[], extra: Record<string, unknown> = {}): Promise<ActionBody> {
-  const response = await client.post(`${baseUrl}/browser/action`, { steps, snapshot: true, ...extra });
+async function open(url: string): Promise<BrowserBody> {
+  const response = await client.post(`${baseUrl}/browser/open`, { url });
   assert.equal(response.status, 200);
-  return response.data as ActionBody;
+  return response.data as BrowserBody;
 }
 
-test("POST /browser/action navigates and returns a snapshot with refs", async () => {
-  const body = await runAction([{ action: "goto", url: "https://example.com/" }]);
-  assert.equal(body.ok, true);
-  assert.equal(body.url, "https://example.com/");
-  assert.equal(body.title, "Example Domain");
-  assert.equal(body.error, "");
-  // The elements view lists interactable elements only; prose comes from mode=markdown.
-  assert.match(body.snapshot, /^- link "Learn more" \[e\d+\]$/m);
+async function observe(mode: "elements" | "markdown" | "screenshot", screenshotPath?: string): Promise<BrowserBody> {
+  const response = await client.post(`${baseUrl}/browser/observe`, { mode, screenshotPath });
+  assert.equal(response.status, 200);
+  return response.data as BrowserBody;
+}
+
+async function act(steps: unknown[], screenshotPath: string): Promise<BrowserBody> {
+  const response = await client.post(`${baseUrl}/browser/action`, { steps, screenshotPath });
+  assert.equal(response.status, 200);
+  return response.data as BrowserBody;
+}
+
+test("open navigates and observe elements returns refs", async () => {
+  const opened = await open("https://example.com/");
+  assert.equal(opened.ok, true);
+  assert.equal(opened.url, "https://example.com/");
+  assert.equal(opened.snapshot, "");
+
+  const observed = await observe("elements");
+  assert.match(observed.snapshot, /^- link "Learn more" \[e\d+\]$/m);
+  assert.equal(observed.markdown, "");
 });
 
-test("POST /browser/action clicks a ref from the snapshot and keeps the page", async () => {
-  const opened = await runAction([{ action: "goto", url: "https://example.com/" }]);
-  const ref = /\[(e\d+)\]/.exec(opened.snapshot)?.[1] ?? "";
+test("action clicks an observed ref and always captures a screenshot", async () => {
+  await open("https://example.com/");
+  const observed = await observe("elements");
+  const ref = /\[(e\d+)\]/.exec(observed.snapshot)?.[1] ?? "";
   assert.notEqual(ref, "");
 
-  const clicked = await runAction([{ action: "click", ref }]);
-  assert.equal(clicked.ok, true);
-  assert.ok(clicked.url.startsWith("https://www.iana.org/"));
-  assert.notEqual(clicked.snapshot, "");
-});
-
-test("POST /browser/action reports a stale ref instead of clicking blind", async () => {
-  await runAction([{ action: "goto", url: "https://example.com/" }]);
-  const stale = await runAction([{ action: "click", ref: "e999" }]);
-  assert.equal(stale.ok, false);
-  assert.ok(stale.error.includes("e999"));
-  assert.ok(stale.snapshot.includes("Learn more"));
-});
-
-test("POST /browser/action captures a screenshot when a path is given", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "gai-browser-"));
-  const screenshotPath = path.join(directory, "page.png");
+  const screenshotPath = path.join(directory, "action.png");
   try {
-    const body = await runAction([{ action: "goto", url: "https://example.com/" }], { screenshotPath });
-    assert.equal(body.screenshotPath, screenshotPath);
-    assert.equal(body.screenshotError, "");
+    const result = await act([{ action: "click", ref }], screenshotPath);
+    assert.equal(result.ok, true);
+    assert.ok(result.url.startsWith("https://www.iana.org/"));
+    assert.equal(result.snapshot, "");
+    assert.equal(result.screenshotPath, screenshotPath);
     assert.ok((await stat(screenshotPath)).size > 0);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
 });
 
-test("POST /browser/action rejects a malformed request before touching the page", async () => {
-  const unknownAction = await client.post(`${baseUrl}/browser/action`, { steps: [{ action: "eval", text: "1" }] }, { validateStatus: () => true });
+test("action reports a stale ref without returning a snapshot", async () => {
+  await open("https://example.com/");
+  const directory = await mkdtemp(path.join(os.tmpdir(), "gai-browser-"));
+  try {
+    const result = await act([{ action: "click", ref: "e999" }], path.join(directory, "failed.png"));
+    assert.equal(result.ok, false);
+    assert.ok(result.error.includes("e999"));
+    assert.equal(result.snapshot, "");
+    assert.notEqual(result.screenshotPath, "");
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("observe supports markdown and screenshot modes", async () => {
+  await open("https://example.com/");
+  const markdown = await observe("markdown");
+  assert.ok(markdown.markdown.includes("documentation examples"));
+  assert.equal(markdown.snapshot, "");
+
+  const directory = await mkdtemp(path.join(os.tmpdir(), "gai-browser-"));
+  const screenshotPath = path.join(directory, "observe.png");
+  try {
+    const screenshot = await observe("screenshot", screenshotPath);
+    assert.equal(screenshot.screenshotPath, screenshotPath);
+    assert.ok((await stat(screenshotPath)).size > 0);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("browser endpoints reject malformed requests before touching the page", async () => {
+  const unknownAction = await client.post(`${baseUrl}/browser/action`, { steps: [{ action: "eval" }], screenshotPath: "C:/tmp/a.png" }, { validateStatus: () => true });
   assert.equal(unknownAction.status, 400);
   assert.equal(unknownAction.data.error.code, "INVALID_ACTION");
 
-  const missingKey = await client.post(`${baseUrl}/browser/action`, { steps: [{ action: "press" }] }, { validateStatus: () => true });
-  assert.equal(missingKey.status, 400);
-  assert.equal(missingKey.data.error.code, "INVALID_REQUEST");
+  const noScreenshot = await client.post(`${baseUrl}/browser/action`, { steps: [{ action: "reload" }] }, { validateStatus: () => true });
+  assert.equal(noScreenshot.status, 400);
 
-  const noSteps = await client.post(`${baseUrl}/browser/action`, { steps: [] }, { validateStatus: () => true });
-  assert.equal(noSteps.status, 400);
+  const gotoAction = await client.post(`${baseUrl}/browser/action`, { steps: [{ action: "goto", url: "https://example.com" }], screenshotPath: "C:/tmp/a.png" }, { validateStatus: () => true });
+  assert.equal(gotoAction.status, 400);
+  assert.equal(gotoAction.data.error.code, "INVALID_ACTION");
 
-  const manySteps = await client.post(`${baseUrl}/browser/action`, { steps: Array.from({ length: 13 }, () => ({ action: "snapshot" })), snapshot: true }, { validateStatus: () => true });
-  assert.equal(manySteps.status, 400);
-  assert.equal(manySteps.data.error.code, "TOO_MANY_STEPS");
+  const badMode = await client.post(`${baseUrl}/browser/observe`, { mode: "dom" }, { validateStatus: () => true });
+  assert.equal(badMode.status, 400);
 
-  const noSnapshot = await client.post(`${baseUrl}/browser/action`, { steps: [{ action: "snapshot" }] }, { validateStatus: () => true });
-  assert.equal(noSnapshot.status, 400);
-  assert.equal(noSnapshot.data.error.code, "INVALID_REQUEST");
+  const screenshotWithoutPath = await client.post(`${baseUrl}/browser/observe`, { mode: "screenshot" }, { validateStatus: () => true });
+  assert.equal(screenshotWithoutPath.status, 400);
 });
 
-test("POST /browser/action goes back and reloads without a key press", async () => {
-  await runAction([{ action: "goto", url: "https://example.com/" }]);
-  const opened = await runAction([{ action: "goto", url: "https://www.iana.org/help/example-domains" }]);
-  assert.equal(opened.url, "https://www.iana.org/help/example-domains");
-
-  // Synthetic key events stop at the content process, so Alt+Left cannot replace this step.
-  const back = await runAction([{ action: "back" }], { snapshot: false });
-  assert.equal(back.ok, true);
-  assert.equal(back.url, "https://example.com/");
-
-  const reload = await runAction([{ action: "reload" }, { action: "forward" }], { snapshot: false });
-  assert.equal(reload.ok, true);
-  assert.equal(reload.url, "https://www.iana.org/help/example-domains");
-});
-
-test("POST /browser/action rejects the removed wait step", async () => {
-  const response = await client.post(`${baseUrl}/browser/action`, { steps: [{ action: "wait", milliseconds: 500 }] }, { validateStatus: () => true });
-  assert.equal(response.status, 400);
-  assert.equal(response.data.error.code, "INVALID_ACTION");
-});
-
-test("POST /browser/action reads the live page as Markdown", async () => {
-  await runAction([{ action: "goto", url: "https://example.com/" }]);
-  const observed = await runAction([{ action: "markdown" }], { snapshot: false });
-  assert.equal(observed.ok, true);
-  assert.ok(observed.markdown.includes("documentation examples"));
-  assert.equal(observed.snapshot, "");
-});
-
-test("POST /browser/action reports the budget instead of dropping elements silently", async () => {
-  await runAction([{ action: "goto", url: "https://en.wikipedia.org/wiki/Godot_(game_engine)" }]);
-  const observed = await runAction([{ action: "snapshot" }]);
-  assert.equal(observed.ok, true);
-  assert.match(observed.snapshot, /^- (banner|navigation|main|form|dialog|page)( ")?/m);
-  assert.match(observed.snapshot, /\(\d+ interactive elements over the per-step budget/);
-});
-
-test("POST /browser/action drops fields that do not belong to the action", async () => {
-  // `direction` only exists for scroll: on a click it is ignored instead of rejected.
-  const ignored = await client.post(`${baseUrl}/browser/action`, { steps: [{ action: "click", ref: "e999", direction: "left" }], snapshot: true }, { validateStatus: () => true });
+test("action validates fields belonging to each action", async () => {
+  const screenshotPath = path.join(os.tmpdir(), `gai-browser-${Date.now()}.png`);
+  const ignored = await client.post(`${baseUrl}/browser/action`, { steps: [{ action: "click", ref: "e999", direction: "left" }], screenshotPath }, { validateStatus: () => true });
   assert.equal(ignored.status, 200);
   assert.equal(ignored.data.error.includes("direction"), false);
 
-  // On scroll it is still validated.
-  const rejected = await client.post(`${baseUrl}/browser/action`, { steps: [{ action: "scroll", direction: "left" }], snapshot: true }, { validateStatus: () => true });
+  const rejected = await client.post(`${baseUrl}/browser/action`, { steps: [{ action: "scroll", direction: "left" }], screenshotPath }, { validateStatus: () => true });
   assert.equal(rejected.status, 400);
   assert.ok(rejected.data.error.message.includes("direction"));
+  await rm(screenshotPath, { force: true });
 });

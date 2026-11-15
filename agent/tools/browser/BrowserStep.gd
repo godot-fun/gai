@@ -12,10 +12,6 @@ extends IJsonSerializable
 ## `Alt+Left` or `Ctrl+R` never reach Firefox's browser chrome. Waiting is not an action at all —
 ## the server settles the document before it snapshots.
 
-const ACTION_GOTO := "goto"
-const ACTION_SNAPSHOT := "snapshot"
-## Page text as Markdown, read from the live page rather than from a fresh fetch of its URL.
-const ACTION_MARKDOWN := "markdown"
 const ACTION_CLICK := "click"
 const ACTION_TYPE := "type"
 const ACTION_PRESS := "press"
@@ -26,7 +22,7 @@ const ACTION_BACK := "back"
 const ACTION_FORWARD := "forward"
 const ACTION_RELOAD := "reload"
 
-const ACTIONS: PackedStringArray = [ACTION_GOTO, ACTION_SNAPSHOT, ACTION_MARKDOWN, ACTION_CLICK, ACTION_TYPE, ACTION_PRESS, ACTION_HOVER, ACTION_SELECT, ACTION_SCROLL, ACTION_BACK, ACTION_FORWARD, ACTION_RELOAD]
+const ACTIONS: PackedStringArray = [ACTION_CLICK, ACTION_TYPE, ACTION_PRESS, ACTION_HOVER, ACTION_SELECT, ACTION_SCROLL, ACTION_BACK, ACTION_FORWARD, ACTION_RELOAD]
 ## Actions that need an element handle from the last snapshot (or an explicit selector).
 const TARGETED_ACTIONS: PackedStringArray = [ACTION_CLICK, ACTION_TYPE, ACTION_HOVER, ACTION_SELECT]
 
@@ -34,7 +30,6 @@ const DIRECTION_UP := "up"
 const DIRECTION_DOWN := "down"
 
 var action: String = StringUtils.EMPTY
-var url: String = StringUtils.EMPTY
 ## Handle printed by a snapshot, e.g. `e12`.
 var ref: String = StringUtils.EMPTY
 ## Playwright selector, used when [member ref] is blank.
@@ -62,7 +57,6 @@ static func is_targeted(step_action: String) -> bool:
 ## Fields are listed one by one on purpose: each line is the wire contract and stays greppable.
 func to_dict() -> Dictionary[String, Variant]:
 	var data: Dictionary[String, Variant] = {"action": action}
-	set_if_not_blank(data, "url", url)
 	set_if_not_blank(data, "ref", ref)
 	set_if_not_blank(data, "selector", selector)
 	set_if_not_blank(data, "text", text)

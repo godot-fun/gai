@@ -26,8 +26,7 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope)
 	var mode := BrowserStepHelper.normalize_mode(raw_mode)
 	if StringUtils.is_blank(mode):
 		return AgentToolResult.error(StringUtils.format("error: mode:[{}] is not supported allowed:[{}]", raw_mode, ", ".join(BrowserStepHelper.OBSERVE_MODES)))
-	var observation := BrowserTool.Observation.new()
-	observation.with_snapshot = mode == BrowserStepHelper.MODE_ELEMENTS
-	observation.with_screenshot = mode == BrowserStepHelper.MODE_SCREENSHOT
-	return await async_run(NAME, BrowserStepHelper.observe_steps(mode), observation, cancel_scope)
+	var screenshot_path := create_screenshot_path() if mode == BrowserStepHelper.MODE_SCREENSHOT else StringUtils.EMPTY
+	var response := await WebServer.async_browser_observe(mode, screenshot_path, cancel_scope)
+	return to_result(NAME, response, cancel_scope)
 # AgentTool-Interface-Implement-End

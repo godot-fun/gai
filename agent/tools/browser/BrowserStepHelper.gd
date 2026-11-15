@@ -67,8 +67,6 @@ static func read_step(entry: Dictionary) -> BrowserStep:
 	var step := BrowserStep.new()
 	step.action = read_string(entry, "action")
 	match step.action:
-		BrowserStep.ACTION_GOTO:
-			step.url = read_string(entry, "url")
 		BrowserStep.ACTION_CLICK, BrowserStep.ACTION_HOVER:
 			read_target(entry, step)
 		BrowserStep.ACTION_TYPE:
@@ -100,9 +98,6 @@ static func validate_step(step: BrowserStep, index: int) -> String:
 	if not BrowserStep.ACTIONS.has(step.action):
 		return StringUtils.format("error: steps[{}].action is not supported action:[{}] allowed:[{}]", index, step.action, ", ".join(BrowserStep.ACTIONS))
 	match step.action:
-		BrowserStep.ACTION_GOTO:
-			if StringUtils.is_blank(step.url):
-				return missing_field(index, step.action, "url")
 		BrowserStep.ACTION_TYPE:
 			if StringUtils.is_blank(step.text):
 				return missing_field(index, step.action, "text")
@@ -163,10 +158,3 @@ static func normalize_mode(raw_mode: String) -> String:
 	if StringUtils.is_blank(mode):
 		return MODE_ELEMENTS
 	return mode if OBSERVE_MODES.has(mode) else StringUtils.EMPTY
-
-
-## The single step that reads the page in [param mode]: page text, or the element tree that a
-## screenshot also needs as a no-op read.
-static func observe_steps(mode: String) -> Array[BrowserStep]:
-	var steps: Array[BrowserStep] = [BrowserStep.create(BrowserStep.ACTION_MARKDOWN if mode == MODE_MARKDOWN else BrowserStep.ACTION_SNAPSHOT)]
-	return steps

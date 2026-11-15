@@ -59,7 +59,7 @@ static func get_tool_call_summary(tool_name: String, args: Dictionary[String, Va
 				if not batch.steps.is_empty():
 					var step: BrowserStep = batch.steps[0]
 					body = step.action
-					for detail: String in [step.ref, step.url, step.text, step.key, step.value]:
+					for detail: String in [step.ref, step.text, step.key, step.value]:
 						if StringUtils.is_not_blank(detail):
 							body = StringUtils.format("{} {}", step.action, detail)
 							break

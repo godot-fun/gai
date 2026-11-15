@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { HttpError, HttpStatus, optionalString, readJsonBody, requireObject, sendOk } from "../http";
-import { BROWSER_STEP_ACTIONS, browserSession, type BrowserStep, type BrowserStepAction } from "../services/browser-session";
+import { HttpError, HttpStatus, optionalString, readJsonBody, requireObject, requireString, sendOk } from "../http";
+import { BROWSER_OBSERVE_MODES, BROWSER_STEP_ACTIONS, browserSession, type BrowserObserveMode, type BrowserStep, type BrowserStepAction } from "../services/browser-session";
 import { validateScreenshotPath } from "../services/screenshot-service";
 import { registerApi, type ApiRoute } from "./route";
 
@@ -9,18 +9,16 @@ const MAX_STEPS = 12;
 
 /** The action list as a lookup table, so validating a step does not scan the array. */
 const STEP_ACTIONS = new Set<string>(BROWSER_STEP_ACTIONS);
+const OBSERVE_MODES = new Set<string>(BROWSER_OBSERVE_MODES);
 
 /** The plain text fields a step can carry; `action` and `direction` are handled on their own. */
-type StepField = "url" | "ref" | "selector" | "text" | "key" | "value";
+type StepField = "ref" | "selector" | "text" | "key" | "value";
 
 /**
  * Fields each action reads. A step is parsed from its action, so a field that does not belong to it
  * is dropped instead of forwarded — the same rule the tool layer applies before sending.
  */
 const FIELDS: Readonly<Record<BrowserStepAction, readonly StepField[]>> = {
-  goto: ["url"],
-  snapshot: [],
-  markdown: [],
   click: ["ref", "selector"],
   type: ["ref", "selector", "text"],
   press: ["ref", "selector", "key"],
@@ -34,7 +32,6 @@ const FIELDS: Readonly<Record<BrowserStepAction, readonly StepField[]>> = {
 
 /** The one field an action cannot run without. */
 const REQUIRED: Readonly<Partial<Record<BrowserStepAction, StepField>>> = {
-  goto: "url",
   type: "text",
   press: "key",
   select: "value",
@@ -44,7 +41,7 @@ const REQUIRED: Readonly<Partial<Record<BrowserStepAction, StepField>>> = {
 const NEEDS_TARGET: readonly BrowserStepAction[] = ["click", "type", "hover", "select"];
 
 /**
- * Runs browser steps against the shared page and answers with the page metadata plus a snapshot.
+ * Runs browser steps against the shared page and captures their final visual state.
  *
  * A failing step is reported with `200` and `ok: false` so the model sees the reason and the state
  * it failed in; only a malformed request (unknown action, missing field, bad screenshot path) is a 4xx.
@@ -55,19 +52,44 @@ export class BrowserActionApi implements ApiRoute {
 
   async handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
     const body = requireObject(await readJsonBody(request));
-    const screenshotPath = optionalString(body.screenshotPath, "screenshotPath");
-    // Reject an unusable screenshot path before spending steps on the page.
+    const screenshotPath = requireString(body.screenshotPath, "screenshotPath");
     validateScreenshotPath(screenshotPath);
     const steps = readSteps(body.steps);
-    const snapshot = readSnapshotFlag(body.snapshot);
-    sendOk(response, await browserSession.run({ steps, snapshot, screenshotPath }));
+    sendOk(response, await browserSession.act(steps, screenshotPath));
   }
 }
 
-/** `snapshot` is required: the tool layer decides per call whether it wants a ref tree, so a missing value is the caller's mistake. */
-function readSnapshotFlag(value: unknown): boolean {
-  if (typeof value !== "boolean") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "snapshot must be a boolean");
-  return value;
+export class BrowserOpenApi implements ApiRoute {
+  readonly method = "POST";
+  readonly path = "/browser/open";
+
+  async handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
+    const body = requireObject(await readJsonBody(request));
+    sendOk(response, await browserSession.open(requireString(body.url, "url")));
+  }
+}
+
+export class BrowserObserveApi implements ApiRoute {
+  readonly method = "POST";
+  readonly path = "/browser/observe";
+
+  async handle(request: IncomingMessage, response: ServerResponse): Promise<void> {
+    const body = requireObject(await readJsonBody(request));
+    const mode = readObserveMode(body.mode);
+    const screenshotPath = optionalString(body.screenshotPath, "screenshotPath");
+    if (mode === "screenshot") {
+      if (screenshotPath === undefined) throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "screenshotPath is required for screenshot mode");
+      validateScreenshotPath(screenshotPath);
+    }
+    sendOk(response, await browserSession.observe(mode, screenshotPath));
+  }
+}
+
+function readObserveMode(value: unknown): BrowserObserveMode {
+  if (typeof value !== "string" || !OBSERVE_MODES.has(value)) {
+    throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `mode must be one of: ${BROWSER_OBSERVE_MODES.join(", ")}`);
+  }
+  return value as BrowserObserveMode;
 }
 
 function readSteps(value: unknown): BrowserStep[] {
@@ -117,3 +139,5 @@ function isStepAction(value: string): value is BrowserStepAction {
 }
 
 registerApi(new BrowserActionApi());
+registerApi(new BrowserOpenApi());
+registerApi(new BrowserObserveApi());

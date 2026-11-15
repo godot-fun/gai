@@ -8,7 +8,7 @@ const NAME := "browser_open"
 
 func _init() -> void:
 	name = NAME
-	description = "Open a URL in the shared browser and return a snapshot of the page. Clickable and typable elements are printed with a ref such as [e3]; pass that ref to browser_act. For an image of the page use browser_observe with mode=screenshot."
+	description = "Open an absolute HTTP or HTTPS URL in the shared browser. Use browser_observe afterwards to read elements, Markdown, or a screenshot."
 	pass
 
 # AgentTool-Interface-Implement-Start
@@ -22,8 +22,6 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope)
 	var url := str(args.get(ARG_URL, "")).strip_edges()
 	if not HttpUtils.is_valid_http_url(url):
 		return AgentToolResult.error("error: url must start with http:// or https://")
-	var step := BrowserStep.create(BrowserStep.ACTION_GOTO)
-	step.url = url
-	var steps: Array[BrowserStep] = [step]
-	return await async_run(NAME, steps, BrowserTool.Observation.new(), cancel_scope)
+	var response := await WebServer.async_browser_open(url, cancel_scope)
+	return to_result(NAME, response, cancel_scope)
 # AgentTool-Interface-Implement-End

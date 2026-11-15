@@ -28,7 +28,7 @@ static func browser_tool_classification_test() -> void:
 	var open_args: Dictionary[String, Variant] = {"url": "https://example.com"}
 	assert(ToolHelper.get_tool_call_summary(BrowserOpenTool.NAME, open_args) == "https://example.com")
 	var goto_args: Dictionary[String, Variant] = {"steps": [{"action": "goto", "url": "https://a.b"}]}
-	assert(ToolHelper.get_tool_call_summary(BrowserActTool.NAME, goto_args) == "goto https://a.b")
+	assert(StringUtils.is_blank(ToolHelper.get_tool_call_summary(BrowserActTool.NAME, goto_args)))
 	var broken_args: Dictionary[String, Variant] = {"steps": "click"}
 	assert(StringUtils.is_blank(ToolHelper.get_tool_call_summary(BrowserActTool.NAME, broken_args)))
 	var empty_args: Dictionary[String, Variant] = {"steps": []}

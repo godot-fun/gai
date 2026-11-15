@@ -1,8 +1,8 @@
 class_name BrowserResult
 extends RefCounted
 
-## Reply of `POST /browser/action`: the page after the steps ran, a fresh snapshot, and the reason
-## when a step failed.
+## Common reply of the browser endpoints. Only observation fills snapshot or Markdown; actions
+## always fill the screenshot fields.
 ##
 ## Named after the `BrowserResult` interface it deserializes (see web/src/services/browser-session.ts),
 ## and kept in its own file so the browser tools can be tested without the static initializer of
@@ -13,7 +13,7 @@ var url: String
 var title: String
 var error: String
 var snapshot: String
-## Readable Markdown of the live page; only a `markdown` step fills it.
+## Readable Markdown of the live page; only a markdown observation fills it.
 var markdown: String
 var screenshotPath: String
 var screenshotError: String

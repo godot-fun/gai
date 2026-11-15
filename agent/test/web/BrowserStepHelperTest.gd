@@ -43,7 +43,7 @@ func normalize_steps_rejects_a_malformed_batch_test() -> void:
 	assert(StringUtils.is_not_blank(BrowserStepHelper.normalize_steps(["click"]).error))
 	var too_many: Array = []
 	for index in BrowserStepHelper.MAX_STEPS + 1:
-		too_many.append({"action": "snapshot"})
+		too_many.append({"action": "reload"})
 	assert(StringUtils.is_not_blank(BrowserStepHelper.normalize_steps(too_many).error))
 	pass
 
@@ -57,7 +57,6 @@ func normalize_steps_rejects_an_unknown_action_test() -> void:
 
 
 func normalize_steps_reports_the_missing_field_test() -> void:
-	assert(BrowserStepHelper.normalize_steps([{"action": "goto"}]).error.contains("url"))
 	assert(BrowserStepHelper.normalize_steps([{"action": "type", "ref": "e1"}]).error.contains("text"))
 	assert(BrowserStepHelper.normalize_steps([{"action": "press"}]).error.contains("key"))
 	assert(BrowserStepHelper.normalize_steps([{"action": "select", "ref": "e1"}]).error.contains("value"))
@@ -128,8 +127,8 @@ func browser_wire_format_test() -> void:
 	var click := BrowserStep.create(BrowserStep.ACTION_CLICK)
 	click.ref = "e3"
 	var steps: Array[BrowserStep] = [click]
-	var payload: Dictionary = JSON.parse_string(JsonUtils.object_to_json({"steps": steps, "snapshot": true}))
-	assert(payload.snapshot == true)
+	var payload: Dictionary = JSON.parse_string(JsonUtils.object_to_json({"steps": steps, "screenshotPath": "C:/cache/action.webp"}))
+	assert(payload.screenshotPath == "C:/cache/action.webp")
 	assert(payload.steps.size() == 1)
 	assert(payload.steps[0].action == "click")
 	assert(payload.steps[0].ref == "e3")
@@ -164,10 +163,6 @@ func observe_mode_selects_one_view_test() -> void:
 	assert(BrowserStepHelper.normalize_mode("MARKDOWN") == BrowserStepHelper.MODE_MARKDOWN)
 	assert(BrowserStepHelper.normalize_mode(" screenshot ") == BrowserStepHelper.MODE_SCREENSHOT)
 	assert(StringUtils.is_blank(BrowserStepHelper.normalize_mode("dom")))
-	assert(BrowserStepHelper.observe_steps(BrowserStepHelper.MODE_MARKDOWN)[0].action == BrowserStep.ACTION_MARKDOWN)
-	assert(BrowserStepHelper.observe_steps(BrowserStepHelper.MODE_ELEMENTS)[0].action == BrowserStep.ACTION_SNAPSHOT)
-	assert(BrowserStepHelper.observe_steps(BrowserStepHelper.MODE_SCREENSHOT)[0].action == BrowserStep.ACTION_SNAPSHOT)
-	assert(BrowserStepHelper.normalize_steps([{"action": BrowserStep.ACTION_MARKDOWN}]).is_valid())
 	pass
 
 
@@ -202,14 +197,11 @@ func normalize_steps_treats_null_as_absent_test() -> void:
 func read_step_keeps_only_the_fields_of_its_action_test() -> void:
 	var batch := BrowserStepHelper.normalize_steps([
 		{"action": "click", "ref": "e3", "text": "not used by click", "value": "nor this"},
-		{"action": "goto", "ref": "e9", "url": "https://example.com"},
 		{"action": "type", "ref": "e4", "text": "hello"},
 	])
 	assert(batch.is_valid())
 	assert(batch.steps[0].to_dict().size() == 2)
 	assert(not batch.steps[0].to_dict().has("text"))
 	assert(not batch.steps[0].to_dict().has("value"))
-	assert(batch.steps[1].to_dict().size() == 2)
-	assert(not batch.steps[1].to_dict().has("ref"))
-	assert(batch.steps[2].text == "hello")
+	assert(batch.steps[1].text == "hello")
 	pass

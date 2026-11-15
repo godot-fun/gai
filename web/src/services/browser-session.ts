@@ -22,15 +22,16 @@ import { formatSnapshot } from "./snapshot";
  * `back`, `forward`, and `reload` are steps rather than `press` shortcuts on purpose: synthetic key
  * events only reach the content process, so `Alt+Left` / `Ctrl+R` / `F5` never trigger Firefox's
  * browser-level history or reload (verified against Camoufox). Waiting has no action at all — the
- * session settles the document before it reads the DOM. `markdown` is an action rather than a
- * request flag so a batch can act and then read the page it produced.
+ * session settles the document before observation. Navigation has its own operation, so action
+ * steps only mutate the current page.
  */
-export const BROWSER_STEP_ACTIONS = ["goto", "snapshot", "markdown", "click", "type", "press", "hover", "select", "scroll", "back", "forward", "reload"] as const;
+export const BROWSER_STEP_ACTIONS = ["click", "type", "press", "hover", "select", "scroll", "back", "forward", "reload"] as const;
 export type BrowserStepAction = (typeof BROWSER_STEP_ACTIONS)[number];
+export const BROWSER_OBSERVE_MODES = ["elements", "markdown", "screenshot"] as const;
+export type BrowserObserveMode = (typeof BROWSER_OBSERVE_MODES)[number];
 
 export interface BrowserStep {
   action: BrowserStepAction;
-  url?: string;
   /** Handle printed by a previous snapshot, e.g. `e12`. */
   ref?: string;
   /** Playwright selector; used when `ref` is absent. */
@@ -39,13 +40,6 @@ export interface BrowserStep {
   key?: string;
   value?: string;
   direction?: "up" | "down";
-}
-
-export interface BrowserRequest {
-  steps: readonly BrowserStep[];
-  /** Whether the reply carries a fresh snapshot; a failed step reports one regardless. */
-  snapshot: boolean;
-  screenshotPath?: string;
 }
 
 export interface BrowserResult {
@@ -145,9 +139,37 @@ export class BrowserSession {
     this.openPage = openPage;
   }
 
-  /** Serialized entry point: steps share one page, so a second request must not interleave. */
-  run(request: BrowserRequest): Promise<BrowserResult> {
-    const task = this.queue.then(() => this.runSteps(request));
+  /** Opens one URL on the shared page. Reading the result is an explicit observe operation. */
+  open(url: string): Promise<BrowserResult> {
+    return this.enqueue(async (page) => {
+      let error = "";
+      try {
+        await this.goto(page, url, NAVIGATION_TIMEOUT_MS);
+      } catch (failure) {
+        error = describeFailure("open", failure);
+      }
+      return this.result(page, error);
+    });
+  }
+
+  /** Reads one representation of the current page without changing it. */
+  observe(mode: BrowserObserveMode, screenshotPath?: string): Promise<BrowserResult> {
+    return this.enqueue(async (page) => {
+      const snapshot = mode === "elements" ? await this.takeSnapshot(page) : "";
+      const markdown = mode === "markdown" ? (await extractPageContent(page)).content : "";
+      const screenshot = await captureScreenshot(page, mode === "screenshot" ? screenshotPath : undefined);
+      return this.result(page, "", snapshot, markdown, screenshot);
+    });
+  }
+
+  /** Runs mutations and always captures their final visual state when a path is supplied. */
+  act(steps: readonly BrowserStep[], screenshotPath?: string): Promise<BrowserResult> {
+    return this.enqueue((page) => this.runSteps(page, steps, screenshotPath));
+  }
+
+  /** Operations share one page, so a second request must not interleave. */
+  private enqueue(operation: (page: Page) => Promise<BrowserResult>): Promise<BrowserResult> {
+    const task = this.queue.then(async () => operation(await this.currentPage()));
     // The queue only needs the settled state; the result (and the failure) travel through `task`.
     this.queue = task.then(() => undefined, () => undefined);
     return task;
@@ -173,30 +195,34 @@ export class BrowserSession {
     return page;
   }
 
-  private async runSteps(request: BrowserRequest): Promise<BrowserResult> {
-    const page = await this.currentPage();
+  private async runSteps(page: Page, steps: readonly BrowserStep[], screenshotPath?: string): Promise<BrowserResult> {
     const deadline = Date.now() + Math.max(MIN_BUDGET_MS, REQUEST_TIMEOUT_MS - BUDGET_MARGIN_MS);
     let error = "";
-    let markdown = "";
-    for (const step of request.steps) {
+    for (const step of steps) {
       const remaining = deadline - Date.now();
       if (remaining < MIN_BUDGET_MS) {
         error = `the request ran out of time before: ${step.action}`;
         break;
       }
       try {
-        const text = await this.applyStep(page, step, Math.min(remaining, stepTimeout(step)));
-        if (text !== "") markdown = text;
+        await this.applyStep(page, step, Math.min(remaining, DEFAULT_STEP_TIMEOUT_MS));
       } catch (failure) {
         error = describeFailure(step.action, failure);
         break;
       }
     }
 
-    // A snapshot after a failure is what lets the model correct itself instead of retrying blind.
-    const wantsSnapshot = request.snapshot || error !== "";
-    const snapshot = wantsSnapshot ? await this.takeSnapshot(page) : "";
-    const screenshot = await captureScreenshot(page, request.screenshotPath);
+    const screenshot = await captureScreenshot(page, screenshotPath);
+    return this.result(page, error, "", "", screenshot);
+  }
+
+  private async result(
+    page: Page,
+    error: string,
+    snapshot = "",
+    markdown = "",
+    screenshot = { screenshotPath: "", screenshotError: "" },
+  ): Promise<BrowserResult> {
     return {
       ok: error === "",
       url: page.url(),
@@ -208,48 +234,40 @@ export class BrowserSession {
     };
   }
 
-  /** Runs one step and returns the page text when the step read the page, otherwise an empty string. */
-  private async applyStep(page: Page, step: BrowserStep, timeout: number): Promise<string> {
+  private async applyStep(page: Page, step: BrowserStep, timeout: number): Promise<void> {
     switch (step.action) {
-      case "goto":
-        await this.goto(page, step, timeout);
-        return "";
-      case "snapshot":
-        return "";
-      case "markdown":
-        return (await extractPageContent(page)).content;
       case "click":
         await this.click(page, step, timeout);
-        return "";
+        return;
       case "type":
         await this.withTarget(page, step, (target) => target.fill(step.text ?? "", { timeout }));
-        return "";
+        return;
       case "press":
         await this.press(page, step, timeout);
-        return "";
+        return;
       case "hover":
         await this.withTarget(page, step, (target) => target.hover({ timeout }));
-        return "";
+        return;
       case "select":
         await this.withTarget(page, step, (target) => target.selectOption(step.value ?? "", { timeout }));
-        return "";
+        return;
       case "scroll":
         await this.scroll(page, step, timeout);
-        return "";
+        return;
       case "back":
         await page.goBack({ waitUntil: "domcontentloaded", timeout });
-        return "";
+        return;
       case "forward":
         await page.goForward({ waitUntil: "domcontentloaded", timeout });
-        return "";
+        return;
       case "reload":
         await page.reload({ waitUntil: "domcontentloaded", timeout });
-        return "";
+        return;
     }
   }
 
-  private async goto(page: Page, step: BrowserStep, timeout: number): Promise<void> {
-    const url = parseHttpUrl(step.url ?? "");
+  private async goto(page: Page, rawUrl: string, timeout: number): Promise<void> {
+    const url = parseHttpUrl(rawUrl);
     await page.goto(url, { waitUntil: "domcontentloaded", timeout });
     // `load` is best effort: a chatty page keeps requests open forever and must not fail the step.
     await page.waitForLoadState("load", { timeout: Math.min(timeout, PAGE_SETTLE_TIMEOUT_MS) }).catch(() => undefined);
@@ -406,10 +424,6 @@ function parseHttpUrl(raw: string): string {
   }
   if (url.protocol !== "http:" && url.protocol !== "https:") throw new BrowserStepError(`url must be http or https, got: ${raw}`);
   return url.href;
-}
-
-function stepTimeout(step: BrowserStep): number {
-  return step.action === "goto" ? NAVIGATION_TIMEOUT_MS : DEFAULT_STEP_TIMEOUT_MS;
 }
 
 /** Playwright appends a call log full of noise; the first line is the part the model can act on. */
