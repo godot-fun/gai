@@ -1,9 +1,9 @@
 ---
-name: video-split
-description: Splits a single video into two precisely timed MP4 segments using FFmpeg, defaulting to two equal-duration halves. Re-encodes as compatible H.264/AAC so the cut is not shifted to a nearby keyframe. Use when the user wants to split or divide a video in half, cut a video into two parts, split at a timestamp, or separate the first and second half of a clip.
+name: video-cut
+description: Cuts a single video at a specified time into two precisely timed MP4 segments using FFmpeg, defaulting to two equal-duration halves when no time is given. Re-encodes as compatible H.264/AAC so the cut is not shifted to a nearby keyframe. Use when the user wants to cut or divide a video into two parts, cut at a timestamp, split a video in half, or separate the first and second portions of a clip.
 ---
 
-# Video Split
+# Video Cut
 
 Split one video into **part 1** (start to split point) and **part 2** (split point to end). Default to the exact temporal midpoint.
 
@@ -14,29 +14,27 @@ Read and follow [dependency-manager](../dependency-manager.md). Run the bundled 
 ## Quick Start
 
 ```bash
-.dependency/python/python .ai/video-split/split.py --video path/to/video.mp4
+.dependency/python/python .ai/video-cut/cut.py --video path/to/video.mp4
 ```
 
 Outputs:
 
 ```text
-video-split/video_part1.mp4
-video-split/video_part2.mp4
+video-cut/video_part1.mp4
+video-cut/video_part2.mp4
 ```
 
-## Split Point
+## Cut Point
 
-Provide at most one:
+Use one optional parameter:
 
 | Flag | Meaning |
 |------|---------|
-| `-s` / `--split-at` | Time in seconds |
-| `-p` / `--percent` | Percentage of total duration |
+| `-s` / `--seconds` | Cut position in seconds |
 | none | Exact 50% midpoint |
 
 ```bash
-.dependency/python/python .ai/video-split/split.py --video clip.mov --split-at 12.5
-.dependency/python/python .ai/video-split/split.py --video clip.webm --percent 30
+.dependency/python/python .ai/video-cut/cut.py --video clip.mov --seconds 12.5
 ```
 
 ## Output
@@ -58,7 +56,7 @@ Use `-o` / `--output` to choose an output directory. Never overwrite or modify t
 ## Tests
 
 ```bash
-.dependency/python/python .ai/video-split/test_split.py
+.dependency/python/python .ai/video-cut/test_cut.py
 ```
 
-Manual examples: [cli/video-split.md](../../../cli/video-split.md)
+Manual examples: [cli/video-cut.md](../../../cli/video-cut.md)

@@ -7,9 +7,8 @@ Never use host python/py.
 
 Usage
 -----
-    .dependency/python/python .ai/video-split/split.py --video path/to/video.mp4
-    .dependency/python/python .ai/video-split/split.py --video path/to/video.mp4 -s 12.5
-    .dependency/python/python .ai/video-split/split.py --video path/to/video.mp4 -p 30
+    .dependency/python/python .ai/video-cut/cut.py --video path/to/video.mp4
+    .dependency/python/python .ai/video-cut/cut.py --video path/to/video.mp4 --seconds 12.5
 """
 
 from __future__ import annotations
@@ -26,7 +25,7 @@ from common.cli_tools import resolve_ffmpeg, resolve_ffprobe  # noqa: E402
 from common.output_utils import configure_utf8_stdio, format_default_output_dir_help, resolve_output_dir  # noqa: E402
 from common.video_utils import resolve_video_file  # noqa: E402
 
-DEFAULT_OUTPUT_SUBDIR = "video-split"
+DEFAULT_OUTPUT_SUBDIR = "video-cut"
 
 
 def get_duration(ffprobe: Path, file_path: Path) -> float:
@@ -45,8 +44,8 @@ def get_duration(ffprobe: Path, file_path: Path) -> float:
     return duration
 
 
-def resolve_split_seconds(duration: float, split_at: float | None, percent: float | None) -> float:
-    point = split_at if split_at is not None else duration * ((percent if percent is not None else 50.0) / 100.0)
+def resolve_cut_seconds(duration: float, seconds: float | None) -> float:
+    point = seconds if seconds is not None else duration * 0.5
     if point <= 0:
         raise ValueError("Split point must be after the start (> 0 seconds).")
     if point >= duration:
@@ -71,9 +70,7 @@ def encode_part(ffmpeg: Path, file_path: Path, output: Path, start: float | None
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Split one video into two precisely timed MP4 parts.")
     parser.add_argument("--video", required=True, help="Path to a single video file")
-    split = parser.add_mutually_exclusive_group()
-    split.add_argument("-s", "--split-at", type=float, help="Split time in seconds")
-    split.add_argument("-p", "--percent", type=float, help="Split position as a percentage (default: 50)")
+    parser.add_argument("-s", "--seconds", type=float, help="Cut position in seconds (default: video midpoint)")
     default_out = format_default_output_dir_help(DEFAULT_OUTPUT_SUBDIR, input_root_label="video-dir")
     parser.add_argument("-o", "--output", default="", help=f"Output directory (default: {default_out})")
     return parser.parse_args(argv)
@@ -91,7 +88,7 @@ def main(argv: list[str] | None = None) -> int:
     part1, part2 = output_paths(out_dir, video_path)
     try:
         duration = get_duration(ffprobe, video_path)
-        split_at = resolve_split_seconds(duration, args.split_at, args.percent)
+        split_at = resolve_cut_seconds(duration, args.seconds)
     except (RuntimeError, ValueError) as exc:
         print(f"[fail] {video_path.name}\n{exc}", file=sys.stderr)
         return 1

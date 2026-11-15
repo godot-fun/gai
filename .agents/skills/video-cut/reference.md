@@ -1,4 +1,4 @@
-# Video Split Reference
+# Video Cut Reference
 
 ## Default pipeline
 
@@ -29,8 +29,8 @@ Stream-copy cuts normally begin on nearby keyframes rather than the requested fr
 For `Video/intro.mov`:
 
 ```text
-Video/video-split/intro_part1.mp4
-Video/video-split/intro_part2.mp4
+Video/video-cut/intro_part1.mp4
+Video/video-cut/intro_part2.mp4
 ```
 
 Use `--output` to select another directory. The source is never modified.
