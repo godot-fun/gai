@@ -7,8 +7,10 @@ Never use host python/py.
 
 Usage
 -----
-    .dependency/python/python .ai/storyboard-av-mix/mix.py path/to/<root>
-    .dependency/python/python .ai/storyboard-av-mix/mix.py path/to/<root> --lang chinese
+    .dependency/python/python .ai/storyboard-av-mix/mix.py --audio path/to/<vo> --video path/to/Video
+
+--audio  VO work dir holding Chinese/ + English/   (required)
+--video  Per-shot clip folder with 01.mp4, 02.mp4…  (required)
 """
 
 from __future__ import annotations
@@ -34,6 +36,10 @@ LANG_DIRS = {
 
 # x264/x265 preset: slower encode, better rate-distortion at matched source bitrate.
 VIDEO_ENCODE_PRESET = "slow"
+
+
+class MixError(RuntimeError):
+    """Fatal setup problem: missing folders, no clips, bad flag."""
 
 
 @dataclass(frozen=True)
@@ -269,26 +275,34 @@ def list_by_stem(folder: Path, extensions: set[str]) -> dict[str, Path]:
     return found
 
 
-def build_jobs(root: Path, lang: str) -> list[MixJob]:
-    video_dir = root / "Video"
+def require_dir(value: Path, label: str) -> Path:
+    """Resolve a required flag path and fail loudly when it is not a directory."""
+    resolved = value.expanduser().resolve()
+    if not resolved.is_dir():
+        raise MixError(f"{label} not found: {resolved}")
+    return resolved
+
+
+def build_jobs(root: Path, lang: str, video_dir: Path) -> list[MixJob]:
     if not video_dir.is_dir():
-        print(f"Missing required folder: {video_dir}", file=sys.stderr)
-        sys.exit(1)
+        raise MixError(f"Missing required folder: {video_dir}")
 
     videos = list_by_stem(video_dir, VIDEO_EXTENSIONS)
     if not videos:
-        print(f"No video files in {video_dir}", file=sys.stderr)
-        sys.exit(1)
+        raise MixError(f"No video files in {video_dir}")
 
     langs = ["chinese", "english"] if lang == "both" else [lang]
+    audio_maps = {
+        lang_key: list_by_stem(root / LANG_DIRS[lang_key][0], AUDIO_EXTENSIONS)
+        for lang_key in langs
+    }
 
     jobs: list[MixJob] = []
     for shot_id in sorted(videos.keys()):
         video = videos[shot_id]
         for lang_key in langs:
             in_name, out_name = LANG_DIRS[lang_key]
-            audio_map = list_by_stem(root / in_name, AUDIO_EXTENSIONS)
-            audio = audio_map.get(shot_id)
+            audio = audio_maps[lang_key].get(shot_id)
             if audio is None:
                 print(
                     f"[skip] {shot_id} {lang_key}: no VO in {in_name}/",
@@ -383,9 +397,16 @@ def parse_args() -> argparse.Namespace:
         )
     )
     parser.add_argument(
-        "root",
+        "--audio",
         type=Path,
-        help="Work directory containing Video/, Chinese/, English/",
+        required=True,
+        help="VO work dir containing Chinese/ and English/",
+    )
+    parser.add_argument(
+        "--video",
+        type=Path,
+        required=True,
+        help="Per-shot clip folder with 01.mp4, 02.mp4, …",
     )
     parser.add_argument(
         "--lang",
@@ -399,18 +420,23 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     configure_utf8_stdio()
     args = parse_args()
-    root = args.root.resolve()
-    if not root.is_dir():
-        print(f"Root not found: {root}", file=sys.stderr)
+
+    try:
+        root = require_dir(args.audio, "Audio dir")
+        video_dir = require_dir(args.video, "Video dir")
+        print(f"Audio: {root}")
+        print(f"Video: {video_dir}")
+        jobs = build_jobs(root, args.lang, video_dir)
+    except MixError as exc:
+        print(str(exc), file=sys.stderr)
+        sys.exit(1)
+
+    if not jobs:
+        print("No mix jobs to run.", file=sys.stderr)
         sys.exit(1)
 
     ffmpeg = resolve_ffmpeg(Path(__file__))
     ffprobe = resolve_ffprobe(ffmpeg)
-
-    jobs = build_jobs(root, args.lang)
-    if not jobs:
-        print("No mix jobs to run.", file=sys.stderr)
-        sys.exit(1)
 
     counts = {"ok": 0, "failed": 0}
     failures: list[str] = []

@@ -43,19 +43,57 @@ class ListByStemTest(unittest.TestCase):
 class BuildJobsTest(unittest.TestCase):
     def test_builds_bilingual_jobs(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            (root / "Video").mkdir()
-            (root / "Chinese").mkdir()
+            root = Path(tmp) / "vo"
+            clips = Path(tmp) / "Video"
+            (root / "Chinese").mkdir(parents=True)
             (root / "English").mkdir()
-            (root / "Video" / "01.mp4").write_bytes(b"v")
+            clips.mkdir()
+            (clips / "01.mp4").write_bytes(b"v")
             (root / "Chinese" / "01.wav").write_bytes(b"a")
             (root / "English" / "01.wav").write_bytes(b"a")
 
-            jobs = mix.build_jobs(root, "both")
+            jobs = mix.build_jobs(root, "both", clips)
             self.assertEqual(len(jobs), 2)
             langs = {job.lang for job in jobs}
             self.assertEqual(langs, {"chinese", "english"})
             self.assertEqual(jobs[0].output.parent.name, "Video-Chinese")
+            pass
+
+    def test_single_language_builds_only_that_language(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "vo"
+            clips = Path(tmp) / "Video"
+            (root / "Chinese").mkdir(parents=True)
+            (root / "English").mkdir()
+            clips.mkdir()
+            (clips / "01.mp4").write_bytes(b"v")
+            (root / "Chinese" / "01.wav").write_bytes(b"a")
+            (root / "English" / "01.wav").write_bytes(b"a")
+
+            jobs = mix.build_jobs(root, "english", clips)
+            self.assertEqual([job.lang for job in jobs], ["english"])
+            pass
+
+    def test_missing_clip_folder_raises(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(mix.MixError):
+                mix.build_jobs(Path(tmp), "both", Path(tmp) / "Video")
+            pass
+
+
+class RequireDirTest(unittest.TestCase):
+    def test_resolves_existing_dir(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(mix.require_dir(Path(tmp), "Audio dir"), Path(tmp).resolve())
+            pass
+
+    def test_rejects_missing_dir_with_label(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(mix.MixError) as ctx:
+                mix.require_dir(Path(tmp) / "nope", "Video dir")
+            self.assertIn("Video dir not found", str(ctx.exception))
+            pass
+
 
 class VideoEncodeArgsTest(unittest.TestCase):
     def test_hevc_main10_preserves_hdr_params(self) -> None:
@@ -143,22 +181,68 @@ class MixCliTest(unittest.TestCase):
     def test_help(self) -> None:
         result = self.run_cli("--help")
         self.assertEqual(result.returncode, 0)
+        self.assertIn("--audio AUDIO", result.stdout)
+        self.assertIn("--video VIDEO", result.stdout)
         self.assertIn("--lang", result.stdout)
+        self.assertNotIn("Legacy", result.stdout)
+        pass
 
-    def test_missing_root(self) -> None:
+    def test_no_args_requires_both_flags(self) -> None:
         result = self.run_cli()
         self.assertNotEqual(result.returncode, 0)
+        self.assertIn("--audio", result.stderr)
+        self.assertIn("--video", result.stderr)
+        pass
 
-    def test_root_not_found(self) -> None:
-        result = self.run_cli("missing-no-such-root")
-        self.assertEqual(result.returncode, 1)
-        self.assertIn("Root not found", result.stderr)
-
-    def test_missing_video_folder(self) -> None:
+    def test_missing_video_flag(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
-            result = self.run_cli(tmp)
+            result = self.run_cli("--audio", tmp)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("--video", result.stderr)
+            pass
+
+    def test_missing_audio_flag(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = self.run_cli("--video", tmp)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("--audio", result.stderr)
+            pass
+
+    def test_positional_path_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = self.run_cli("--audio", tmp, "--video", tmp, tmp)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("unrecognized arguments", result.stderr)
+            pass
+
+    def test_audio_dir_not_found(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = self.run_cli("--audio", str(Path(tmp) / "nope"), "--video", tmp)
             self.assertEqual(result.returncode, 1)
-            self.assertIn("Missing required folder", result.stderr)
+            self.assertIn("Audio dir not found", result.stderr)
+            pass
+
+    def test_video_dir_not_found(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            result = self.run_cli("--audio", tmp, "--video", str(Path(tmp) / "nope"))
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("Video dir not found", result.stderr)
+            pass
+
+    def test_paths_reach_job_build(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            audio_dir = Path(tmp) / "vo"
+            (audio_dir / "Chinese").mkdir(parents=True)
+            (audio_dir / "English").mkdir()
+            clips = Path(tmp) / "Video"
+            clips.mkdir()
+            # Both dirs resolve, then job build fails on "no video files".
+            result = self.run_cli("--audio", str(audio_dir), "--video", str(clips))
+            self.assertEqual(result.returncode, 1)
+            self.assertIn("No video files in", result.stderr)
+            self.assertIn(f"Audio: {audio_dir.resolve()}", result.stdout)
+            self.assertIn(f"Video: {clips.resolve()}", result.stdout)
+            pass
 
 
 if __name__ == "__main__":
