@@ -9,7 +9,7 @@ Batch asset tools — run from repo root; use each skill's script; never overwri
 | [AI](#ai) | Text-to-speech | 1 skill |
 | [Audio](#audio) | to-wav → trim → loudness → export / transcription | 10 skills |
 | [Image](#image) | to-png → inpaint → split → background → trim / resize | 9 skills |
-| [Video](#video) | mute / wav / split → 60fps → 4K → merge → compress / MP4 / OGV → publish | 12 skills |
+| [Video](#video) | mute / wav / split / BGM → 60fps → 4K → merge → compress / MP4 / OGV → publish | 13 skills |
 | [Storyboard](#storyboard) | Storyboard → HTML preview / video → VO → AV mix → merge → publish | 4 skills |
 | [Other](#other) | Naming, commits | 2 skills |
 
@@ -102,6 +102,7 @@ Source video (Veo / Gemini generated)
 ① video-to-wav — extract audio (optional)
    ·or·  video-remove-audio — mute (optional)
    ·or·  video-cut — cut into two parts (optional)
+   ·or·  video-bgm — add looping background audio (optional)
     ↓
 ② video-to-60fps — RIFE interpolate to 60fps at source res (optional; skip if already 60)
     ↓
@@ -123,6 +124,7 @@ Source video (Veo / Gemini generated)
 | [video-to-wav](.agents/skills/video-to-wav/SKILL.md) | Extract audio track → WAV |
 | [video-remove-audio](.agents/skills/video-remove-audio/SKILL.md) | Remove all audio / mute video (stream copy) |
 | [video-cut](.agents/skills/video-cut/SKILL.md) | Cut one video into two precisely timed MP4 parts |
+| [video-bgm](.agents/skills/video-bgm/SKILL.md) | Add one or more background audio tracks to a video |
 | [video-to-60fps](.agents/skills/video-to-60fps/SKILL.md) | Interpolate → 60fps at source resolution (Video2X RIFE; skip if already 60) |
 | [video-to-4k](.agents/skills/video-to-4k/SKILL.md) | Upscale → unified 4K H.265 Main10 master, source fps kept (Video2X + FFmpeg) |
 | [video-4k-normalization](.agents/skills/video-4k-normalization/SKILL.md) | Normalize mixed clips → merge-safe 4K60 Main10 BT.709 SDR (FFmpeg; HDR tone-mapped) |

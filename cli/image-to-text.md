@@ -5,11 +5,7 @@
 ```
 
 ```bash
-.dependency/python/python.exe .ai/image-to-text/image_to_text.py --images .ai/test/image/tank1.jpg
-```
-
-```bash
-.dependency/python/python.exe .ai/image-to-text/image_to_text.py --images .ai/test/image/tank1.jpg .ai/test/image/tank2.jpg --prompt "Compare these images and list only visible changes."
+.dependency/python/python.exe .ai/image-to-text/image_to_text.py --image .ai/test/image/tank1.jpg
 ```
 
 ```bash

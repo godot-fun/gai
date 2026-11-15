@@ -45,20 +45,26 @@ class ImageToTextCpuTest(unittest.TestCase):
     def test_gpu_offloads_all_model_layers(self) -> None:
         self.assertEqual(MODULE.acceleration_args(True), ["-ngl", "999"])
 
-    @patch.object(MODULE, "describe_images", side_effect=[RuntimeError("GPU broke"), "CPU text"])
+    @patch.object(MODULE, "describe_image", side_effect=[RuntimeError("GPU broke"), "CPU text"])
     @patch.object(MODULE, "gpu_is_available", return_value=(True, "Vulkan0: GPU"))
-    def test_gpu_failure_falls_back_to_cpu(self, _gpu_available, describe_images) -> None:
+    def test_gpu_failure_falls_back_to_cpu(self, _gpu_available, describe_image) -> None:
         path = Path(__file__)
-        result = MODULE.infer_with_fallback(path, path, path, path, "prompt", [path])
+        result = MODULE.infer_with_fallback(path, path, path, path, "prompt", path)
         self.assertEqual(result, "CPU text")
-        self.assertEqual(describe_images.call_count, 2)
+        self.assertEqual(describe_image.call_count, 2)
 
-    @patch.object(MODULE, "describe_images", side_effect=[RuntimeError("GPU broke"), RuntimeError("CPU broke")])
+    @patch.object(MODULE, "describe_image", side_effect=[RuntimeError("GPU broke"), RuntimeError("CPU broke")])
     @patch.object(MODULE, "gpu_is_available", return_value=(True, "Vulkan0: GPU"))
-    def test_gpu_and_cpu_errors_are_both_reported(self, _gpu_available, _describe_images) -> None:
+    def test_gpu_and_cpu_errors_are_both_reported(self, _gpu_available, _describe_image) -> None:
         path = Path(__file__)
         with self.assertRaisesRegex(RuntimeError, r"GPU: GPU broke; CPU: CPU broke"):
-            MODULE.infer_with_fallback(path, path, path, path, "prompt", [path])
+            MODULE.infer_with_fallback(path, path, path, path, "prompt", path)
+
+    def test_image_parameter_is_single_value(self) -> None:
+        args = MODULE.parse_args(["--image", "one.png"])
+        self.assertEqual(args.image, "one.png")
+        with self.assertRaises(SystemExit):
+            MODULE.parse_args(["--image", "one.png", "two.png"])
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,10 +1,10 @@
 ---
 name: image-to-text
 description: >-
-  Converts one or more images into faithful text descriptions or OCR with the local
+  Converts one image into a faithful text description or OCR with the local
   1.3B MiniCPM-V 4.6 GGUF model through llama.cpp, automatically preferring an available
   Vulkan GPU and falling back to CPU. Use when the user asks to
-  describe, caption, compare, transcribe, inspect, or extract visible details and text
+  describe, caption, transcribe, inspect, or extract visible details and text
   from PNG, JPEG, WebP, GIF, BMP, or TIFF images without a GPU or remote vision API.
 ---
 
@@ -22,16 +22,12 @@ Read and follow [dependency-manager](../dependency-manager.md) before running co
 - Use `--gpu` or `-GPU` to require GPU inference and fail when unavailable.
 - Use `--cpu` to bypass detection and force CPU inference for troubleshooting or comparison.
 - Preserve observable facts and clearly distinguish uncertainty from fact.
-- Pass related images after one `--images` or `--image` option; both names are equivalent.
+- Pass exactly one image file to `--image` per invocation.
 
 ## Usage
 
 ```powershell
-.dependency/python/python.exe .ai/image-to-text/image_to_text.py --images C:\path\photo.png
-```
-
-```powershell
-.dependency/python/python.exe .ai/image-to-text/image_to_text.py --images before.png after.png --prompt "Compare these images and list only visible changes."
+.dependency/python/python.exe .ai/image-to-text/image_to_text.py --image C:\path\photo.png
 ```
 
 ```powershell
@@ -57,5 +53,5 @@ Use `--output description.md` to also save UTF-8 text. See [cli/image-to-text.md
 - Missing CPU runtime: verify `.dependency/llama-cpp-cpu/llama-mtmd-cli.exe` exists.
 - GPU unavailable: verify `.dependency/llama-cpp-gpu/llama-mtmd-cli.exe` exists and `--list-devices` reports a Vulkan device. Update the graphics driver if necessary.
 - Missing model: verify `MiniCPM-V-4_6-Q4_K_M.gguf` and `mmproj-model-f16.gguf` exist under `.dependency/minicpm-v-4.6/model`.
-- Out of memory: close other applications or process fewer/smaller images; the official GGUF listing states approximately 2GB memory, but working memory varies with image size and context.
+- Out of memory: close other applications or use a smaller image; the official GGUF listing states approximately 2GB memory, but working memory varies with image size and context.
 - Slow inference: CPU speed, core count, memory bandwidth, and image resolution directly affect latency.

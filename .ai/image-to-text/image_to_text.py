@@ -1,12 +1,11 @@
-"""Describe images with MiniCPM-V 4.6 GGUF, preferring an available GPU.
+"""Describe one image with MiniCPM-V 4.6 GGUF, preferring an available GPU.
 
 Run through default python from .dependency/manifest.json.
 Never use host python/py.
 
 Usage
 -----
-    .dependency/python/python.exe .ai/image-to-text/image_to_text.py --images image.png
-    .dependency/python/python.exe .ai/image-to-text/image_to_text.py --images before.png after.png --prompt "Compare the images."
+    .dependency/python/python.exe .ai/image-to-text/image_to_text.py --image image.png
 """
 
 from __future__ import annotations
@@ -33,27 +32,13 @@ DEFAULT_PROMPT = ("Describe the image accurately and comprehensively. Include vi
                   "do not invent details that are not visible.")
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Convert images to text with MiniCPM-V 4.6 locally.")
-    parser.add_argument("--images", "--image", dest="images", nargs="+", required=True,
-                        help="One or more input images.")
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Convert one image to text with MiniCPM-V 4.6 locally.")
+    parser.add_argument("--image", required=True, help="Path to one input image.")
     parser.add_argument("--prompt", default=DEFAULT_PROMPT, help="Instruction sent with the images.")
     parser.add_argument("--output", default="", help="Optional UTF-8 output text file; default: stdout only. "
                         + format_default_output_help("image-to-text", output_name_label="source-stem.txt"))
-    return parser.parse_args()
-
-
-def resolve_images(raw_paths: list[str]) -> list[Path] | None:
-    paths: list[Path] = []
-    for raw_path in raw_paths:
-        path = resolve_image_file(raw_path)
-        if path is None:
-            return None
-        if "," in str(path):
-            print(f"Image path cannot contain a comma: {path}", file=sys.stderr)
-            return None
-        paths.append(path)
-    return paths
+    return parser.parse_args(argv)
 
 
 def clean_model_output(output: str) -> str:
@@ -79,13 +64,13 @@ def gpu_is_available(executable: Path) -> tuple[bool, str]:
     return available, output.strip() or f"device probe exited with code {result.returncode}"
 
 
-def describe_images(executable: Path, model: Path, mmproj: Path, prompt: str,
-                    image_paths: list[Path], use_gpu: bool = False) -> str:
+def describe_image(executable: Path, model: Path, mmproj: Path, prompt: str,
+                   image_path: Path, use_gpu: bool = False) -> str:
     for required in (executable, model, mmproj):
         if not required.is_file():
             raise FileNotFoundError(f"Required local dependency is missing: {required}")
     command = [str(executable), "-m", str(model), "--mmproj", str(mmproj), "--image",
-               ",".join(str(path) for path in image_paths), "-p", prompt]
+               str(image_path), "-p", prompt]
     command.extend(acceleration_args(use_gpu))
     command.extend(["-c", "4096", "-n", "1024", "--temp", "0"])
     result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace")
@@ -99,18 +84,18 @@ def describe_images(executable: Path, model: Path, mmproj: Path, prompt: str,
 
 
 def infer_with_fallback(cpu_runtime: Path, gpu_runtime: Path, model: Path, mmproj: Path,
-                        prompt: str, image_paths: list[Path]) -> str:
+                        prompt: str, image_path: Path) -> str:
     gpu_error: str | None = None
     available, probe_detail = gpu_is_available(gpu_runtime)
     if available:
         try:
-            return describe_images(gpu_runtime, model, mmproj, prompt, image_paths, True)
+            return describe_image(gpu_runtime, model, mmproj, prompt, image_path, True)
         except (OSError, RuntimeError) as exc:
             gpu_error = str(exc)
     else:
         gpu_error = f"Vulkan device probe failed: {probe_detail}"
     try:
-        return describe_images(cpu_runtime, model, mmproj, prompt, image_paths, False)
+        return describe_image(cpu_runtime, model, mmproj, prompt, image_path, False)
     except (OSError, RuntimeError) as exc:
         if gpu_error is not None:
             raise RuntimeError(f"MiniCPM-V inference failed (GPU: {gpu_error}; CPU: {exc})") from exc
@@ -120,8 +105,8 @@ def infer_with_fallback(cpu_runtime: Path, gpu_runtime: Path, model: Path, mmpro
 def main() -> int:
     configure_utf8_stdio()
     args = parse_args()
-    image_paths = resolve_images(args.images)
-    if image_paths is None:
+    image_path = resolve_image_file(args.image)
+    if image_path is None:
         return 1
     try:
         root = find_repo_root(Path(__file__).parent)
@@ -131,10 +116,10 @@ def main() -> int:
         gpu_runtime = resolve_tool_bin(root, GPU_RUNTIME_TOOL)
         model_dir = resolve_tool_model_dir(root, MODEL_TOOL)
         description = infer_with_fallback(cpu_runtime, gpu_runtime, model_dir / MODEL_NAME,
-                                          model_dir / MMPROJ_NAME, args.prompt, image_paths)
+                                          model_dir / MMPROJ_NAME, args.prompt, image_path)
         if args.output:
-            output = resolve_output_path(args.output, image_paths[0], "image-to-text",
-                                         f"{image_paths[0].stem}.txt")
+            output = resolve_output_path(args.output, image_path, "image-to-text",
+                                         f"{image_path.stem}.txt")
             output.parent.mkdir(parents=True, exist_ok=True)
             output.write_text(description + "\n", encoding="utf-8")
         print(description)
