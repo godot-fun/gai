@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""Convert one video file to a broadly compatible H.264/AAC MP4."""
+"""
+Convert a single video file to a broadly compatible H.264/AAC MP4 using FFmpeg.
+
+Run through default python from .dependency/manifest.json.
+Never use host python/py.
+
+Usage
+-----
+    .dependency/python/python .ai/video-to-mp4/convert.py --video path/to/video.mkv
+"""
 
 from __future__ import annotations
 

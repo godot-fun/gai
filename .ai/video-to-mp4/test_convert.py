@@ -57,13 +57,18 @@ class ConvertCliTest(unittest.TestCase):
             self.assertEqual(result.returncode, 1)
             self.assertIn("directories are not supported", result.stderr)
 
+    def test_video_not_found(self) -> None:
+        result = self.run_cli("--video", "missing-no-such-video.mkv")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("Video file not found", result.stderr)
+
     def test_convert_single_file(self) -> None:
         if not SAMPLE_VIDEO.is_file():
             self.skipTest("sample video missing")
         with tempfile.TemporaryDirectory() as tmp:
             source = Path(tmp) / SAMPLE_VIDEO.name
             source.write_bytes(SAMPLE_VIDEO.read_bytes())
-            result = self.run_cli("--video", str(source))
+            result = self.run_cli("--video", str(source), "--force-encode")
             self.assertEqual(result.returncode, 0, result.stderr)
             output = source.parent / convert.DEFAULT_OUTPUT_SUBDIR / source.name
             self.assertTrue(output.is_file())
@@ -73,6 +78,18 @@ class ConvertCliTest(unittest.TestCase):
             self.assertIn(probe["video"].get("pix_fmt"), {"yuv420p", "yuvj420p"})
             if probe.get("audio"):
                 self.assertEqual(probe["audio"].get("codec"), "aac")
+
+    def test_custom_output_file(self) -> None:
+        if not SAMPLE_VIDEO.is_file():
+            self.skipTest("sample video missing")
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "custom.mp4"
+            result = self.run_cli("--video", str(SAMPLE_VIDEO), "--output", str(output), "--force-encode")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertTrue(output.is_file())
+            probe = convert.probe_streams(resolve_ffprobe(resolve_ffmpeg(CONVERT_SCRIPT)), output)
+            self.assertEqual(probe["video"].get("codec"), "h264")
+            self.assertEqual(probe["video"].get("pix_fmt"), "yuv420p")
 
 
 if __name__ == "__main__":
