@@ -61,11 +61,11 @@ func async_chat_messages_text(messages: Array[ChatMessage], proxy: String = "", 
 		request.response_format = response_format
 	var request_body: String = await ExecutorHelper.async_execute_pooled(request.to_json)
 	var response := await HttpHelper.async_post(base_url, request_body, build_headers(), REQUEST_TIMEOUT_MILLIS, proxy, Callable(), cancel_scope)
-	var body := response.get_body_string()
-	Log.info("OpenAI response body:[{}]", StringUtils.truncate(body, 512))
 	if not response.is_ok():
 		Log.error("OpenAI request failed, http code:[{}], {}", response.code, StringUtils.truncate(response.get_error_string(), 512))
 		return StringUtils.EMPTY
+	var body := response.get_body_string()
+	Log.info("OpenAI response body:[{}]", StringUtils.truncate(body, 512))
 	var parser := JSON.new()
 	if parser.parse(body) != OK or typeof(parser.data) != TYPE_DICTIONARY:
 		Log.error("OpenAI response is not valid JSON body:[{}]", StringUtils.truncate(body, 512))
