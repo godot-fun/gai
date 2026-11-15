@@ -9,7 +9,7 @@ Batch asset tools — run from repo root; use each skill's script; never overwri
 | [AI](#ai) | Text-to-speech | 1 skill |
 | [Audio](#audio) | to-wav → trim → loudness → export / transcription | 10 skills |
 | [Image](#image) | to-png → inpaint → split → background → trim / resize | 9 skills |
-| [Video](#video) | mute / wav → 60fps → 4K → merge → compress / OGV → publish | 10 skills |
+| [Video](#video) | mute / wav → 60fps → 4K → merge → compress / MP4 / OGV → publish | 11 skills |
 | [Storyboard](#storyboard) | Storyboard → HTML preview / video → VO → AV mix → merge → publish | 4 skills |
 | [Other](#other) | Naming, commits | 2 skills |
 
@@ -113,7 +113,8 @@ Source video (Veo / Gemini generated)
     ↓
 ⑥ video-compress-to-size — re-encode under max size (optional; GPU preferred)
     ↓
-⑦ video-to-ogv — Godot export
+⑦ video-to-mp4 — compatible H.264/AAC export (optional)
+   ·or·  video-to-ogv — Godot export
 ```
 
 | Skill | Purpose |
@@ -126,6 +127,7 @@ Source video (Veo / Gemini generated)
 | [video-merge](.agents/skills/video-merge/SKILL.md) | Merge folder of clips → one MP4 with random 0.5s xfade transitions (CPU `libx265`) |
 | [video-merge-gpu](.agents/skills/video-merge-gpu/SKILL.md) | Same merge, GPU HEVC only (`hevc_nvenc` / `hevc_amf` / `hevc_qsv`; no CPU fallback) |
 | [video-compress-to-size](.agents/skills/video-compress-to-size/SKILL.md) | Re-encode under a max file size (GPU VBR preferred; CPU two-pass fallback) |
+| [video-to-mp4](.agents/skills/video-to-mp4/SKILL.md) | Video → compatible H.264/AAC MP4 |
 | [video-to-ogv](.agents/skills/video-to-ogv/SKILL.md) | Video → OGV |
 | [video-publish](.agents/skills/video-publish/SKILL.md) | Materials → multi-platform publish pack (Zhihu / Reddit / covers / 8 platforms) |
 
