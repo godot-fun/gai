@@ -33,17 +33,26 @@
 
 Needs **Windows 10/11** and **Git**. Everything lands in `.dependency/` — nothing is installed system-wide.
 
+**1. Clone**
+
 ```bash
 git clone https://github.com/godot-fun/gai.git && cd gai
-
-# 1. hand agent/Dependency.md to a coding agent — it provisions Godot, Python, and Node.js
-
-# 2. browser service
-.dependency/node/npm.cmd install --prefix web
-
-# 3. launch: pulls, re-imports, starts the app
-agent.bat
 ```
+
+**2. Dependencies**
+
+Hand [`agent/Dependency.md`](agent/Dependency.md) to a coding agent — it provisions Godot, Python, and Node.js into `.dependency/`. Then install the browser service:
+
+```bash
+.dependency/node/npm.cmd install --prefix web
+```
+
+**3. Launch**
+
+| Way | How | Difference |
+| --- | --- | --- |
+| **Editor** (simplest) | Open the project in Godot 4.6, open `agent/Agent.tscn`, run the scene | No auto pull or re-import; `user://` stays with your OS profile and data goes to `.gai/` |
+| **Launcher** | `agent.bat` | Pulls, re-imports, starts; keeps `user://` inside the repo and data in `.gai2/` |
 
 ## ✨ Why it feels different
 
