@@ -5,98 +5,89 @@
 <h1 align="center">GAI</h1>
 
 <p align="center">
-  <b>An AI coding teammate that moves into your Godot project.</b>
+  <b>An AI coding agent built in Godot.</b>
 </p>
 
 <p align="center">
   <img alt="Godot 4.6" src="https://img.shields.io/badge/Godot-4.6-478cbf?logo=godotengine&logoColor=white">
-  <img alt="GDScript" src="https://img.shields.io/badge/GDScript-4.x-355570?logo=godotengine&logoColor=white">
   <img alt="GDExtension" src="https://img.shields.io/badge/GDExtension-godot--cpp-00599c?logo=cplusplus&logoColor=white">
+  <img alt="Python 3.14" src="https://img.shields.io/badge/Python-3.14-3776AB?logo=python&logoColor=white">
+  <img alt="Node.js 24" src="https://img.shields.io/badge/Node.js-24-5FA04E?logo=nodedotjs&logoColor=white">
   <img alt="MIT" src="https://img.shields.io/badge/license-MIT-22c55e">
 </p>
 
-> **It explores your repo, edits files, runs your tests, and shows you the diff — without leaving the app.**
->
-> Every turn is a checkpoint, memory survives sessions, and MCP tools plug straight into the loop.
+> **Built on a game engine** — the entire app is a Godot scene: GPU-drawn UI, shader effects, and visuals that react to what the agent is doing.  
+> **The loop** — read the code, look things up, change it, run the tests, show the diff, and revert with `git` when it misses.  
+> **Memory** — a background agent curates `.memory/` during compaction, so the next session already knows your rules and goals.  
+> **Browser use** — open, observe, click, type, and screenshot real pages.  
+> **Local deployment** — the engine, runtimes, and GGUF models land in `.dependency/`; point chat at `127.0.0.1` and nothing leaves the machine.  
+> **MCP** — any server's tools join the same transcript, plus 36 asset skills and a portable `AGENTS.md`.
 
 ## 🖼️ Look inside
 
 ![GAI desktop coding agent](agent/asset/image/screenshot/gai_1.png)
 
-<p align="center"><i>Streaming tool calls, inline diffs, and token usage — the whole loop in one window.</i></p>
+<p align="center"><i>Streaming tool calls, inline diffs, token usage — and one of 60 animated scenes painting over the transcript while it works.</i></p>
+
+## 🚀 Quick start
+
+Needs **Windows 10/11** and **Git**. Everything lands in `.dependency/` — nothing is installed system-wide.
+
+```bash
+git clone https://github.com/godot-fun/gai.git && cd gai
+
+# 1. hand agent/Dependency.md to a coding agent — it provisions Godot, Python, and Node.js
+
+# 2. browser service
+.dependency/node/npm.cmd install --prefix web
+
+# 3. launch: pulls, re-imports, starts the app
+agent.bat
+```
 
 ## ✨ Why it feels different
 
 - 🧠 **An agent loop, not autocomplete.** Reads the codebase, plans, edits, runs commands and tests, then keeps going until the work is done.
 - 🧾 **Every turn is a checkpoint.** Diff it, restore one file, or roll the whole workspace back (when Git is installed). Your own repository is never touched.
-- 💾 **Memory that persists.** During compaction a background agent curates `.memory/` — your rules, goals, and history — so the next session already knows.
+- 💾 **Memory you can read.** Rules, goals, and history live in `.memory/` as plain Markdown — inspect, edit, or delete anything; a background agent merges it during compaction.
+- 🗂️ **Sessions you can actually manage.** Pin, rename, drag to reorder, or delete conversations in the sidebar; each workspace keeps its own set.
 - 🖥️ **An editor, not a bystander.** File tree, tabs, images, Markdown preview, and a Git Bash window, one click from the chat.
-- 🔌 **MCP-ready.** Any MCP tool joins the built-in toolbox and shows up in the same streaming transcript.
-- 🛡️ **Local-first vision.** Attach an image to the request, or let MiniCPM-V describe it on your machine. Only chat needs an endpoint.
+- 🎙️ **Talk instead of typing.** Hold `Alt+Z` in any window — screen context, dictation, and a rewrite land in the field you were already looking at.
+- 🎆 **Scenes, not a spinner.** Tool calls drive live visuals over the transcript — matrix rain, a reasoning tree, a memory river — and you pick which.
+- 📷 **Images are first-class.** Drop a screenshot into the chat and MiniCPM-V reads it on your machine — no upload, no second vision API.
+- 🔒 **Safety mode.** When it is on, file tools stay inside the workspace and shell commands meet a heuristic guard, so a wrong step cannot wander off.
+- 🧱 **A framework, not just an app.** The agent runs on `zfoo/`, a standalone Godot framework you can [sync](sync-godot-framework.ps1) into your own project.
 
 ## 🔁 One task, end to end
 
 ```text
-ask → explore → edit → verify → review
-      glob        edit   bash     diff
-      grep        write           checkpoint
-      read        delete
-        ↑                      │
-        └───────── fix ────────┘
+ask    →    explore    →    search    →    edit    →    verify    →    review
+            list_dir        web_search     edit         bash           diff
+            glob            web_fetch      write        read_image     checkpoint
+            grep            browser_open   delete                      restore file
+            read            browser_act                                git revert
+              ↑                                         │
+              └────────────────── fix ──────────────────┘
 ```
 
-## 🧰 The toolbox
+## 🧭 Project context
 
-| Task | Tools |
-| --- | --- |
-| Explore the codebase | `list_dir` · `glob` · `grep` · `read` |
-| Change files | `edit` · `write` · `delete` |
-| Verify | `bash` — commands, builds, test suites |
-| Images & audio | `read_image` · `audio_to_text` |
-| Web | `web_search` · `web_fetch` |
-| Everything else | Any tool exposed by your MCP servers |
-
-## ⚡ Start in 30 seconds
-
-```bash
-.dependency/node/npm.cmd install --prefix web   # once
-agent.bat                                       # pull, reimport, launch
-```
-
-Set `OPENAI_API_KEY` or configure the connection in **Settings**. Runtimes live under `.dependency/` — see [`agent/Dependency.md`](agent/Dependency.md).
-
-## 🧱 Under the hood
-
-- **AI** — streaming chat, tool calls, cancellation, JSON serialization
-- **Runtime** — concurrency executors, networking, subprocesses, hot-update PCK, scheduler, audio, scenes
-- **UI** — theme tokens, display scaling, alerts, toasts, popups, shared windows
-- **Native** — godot-cpp extension for global hotkeys and OS integration (Windows)
-
-Read [`AGENTS.md`](AGENTS.md) for conventions, [`cpp/README.md`](cpp/README.md) for native builds.
-
-<details>
-<summary><b>More</b> — project context, asset skills, workflows, local services, MCP, tests</summary>
-
-### Project context
-
-Four workspace-root files are injected into every session, and each one has a toolbar toggle, so a single conversation can include or skip any of them:
+Four workspace-root files can join a session, and each one has a toolbar toggle, so a single conversation can include or skip any of them:
 
 | File | What it adds |
 | --- | --- |
 | [`AGENTS.md`](AGENTS.md) | Repository map, GDScript conventions, and testing rules — the agent's standing instructions for this project |
 | `SYSTEM.md` | Not shipped with the repo: create one to replace the generated system prompt — project root, Godot version, dependency paths, and OS facts — with your own text |
 | [`MEMORY.md`](MEMORY.md) | Index of the durable memory under `.memory/` — current task, rules, goals, relationships, past experiences; curated by a background agent during compaction |
-| [`SKILLS.md`](SKILLS.md) | Index of the 36 asset skills in `.agents/skills/`, one line per skill pointing at its `SKILL.md` |
+| [`SKILLS.md`](SKILLS.md) | Index of the asset skills in `.agents/skills/`, one line per skill pointing at its `SKILL.md` |
 
 `AGENTS.md`, `MEMORY.md`, and `SKILLS.md` are appended as extra context messages; `SYSTEM.md` is the only one that replaces the base prompt instead of adding to it.
 
 Edit any of them and the next new session already sees the change — no app restart needed.
 
-### Beyond code: asset skills
+## 🎨 Beyond code: asset skills
 
-The agent also owns a library of **36 asset skills** — audio cleanup, image processing, video
-pipelines, storyboards, and TTS. Each is a folder with a `SKILL.md` the agent understands and an
-`.ai/` script the machine runs, reachable from chat, the CLI, and a typed node canvas.
+The agent also owns a library of **36 asset skills** — audio cleanup, image processing, video pipelines, storyboards, and TTS. Each is a folder with a `SKILL.md` the agent understands and an `.ai/` script the machine runs, reachable from chat, the CLI, and a typed node canvas.
 
 ```bash
 .dependency/python/python .ai/audio-to-wav/convert.py --audio path/to/audio.mp3
@@ -106,18 +97,18 @@ pipelines, storyboards, and TTS. Each is a folder with a `SKILL.md` the agent un
 
 Browse the [full catalog](SKILLS.md); details are in [`agent/app/workflow/README.md`](agent/app/workflow/README.md).
 
-### Local services
+## 🔌 Local services
 
 | Service | Role |
 | --- | --- |
 | [`web/`](web/) | Node.js + Playwright: web search, page fetch with screenshots, MCP gateway (`GET /mcp/tools`, `POST /mcp/call`) |
 | [`VLMServer`](agent/server/VLMServer.gd) | MiniCPM-V via llama.cpp: local image reading and descriptions (idle-released) |
 
-### MCP
+## 🧩 MCP
 
 Copy `web/mcp.example.json` to `web/mcp.json`, list stdio or Streamable HTTP servers, then restart the browser service from **Settings**.
 
-### Works with other agents
+## 🤝 Works with other agents
 
 | Agent | Setup |
 | --- | --- |
@@ -126,7 +117,7 @@ Copy `web/mcp.example.json` to `web/mcp.json`, list stdio or Streamable HTTP ser
 | Cursor | Copy `.agents/skills/` to `.cursor/skills/` |
 | Claude | Copy `AGENTS.md` to `CLAUDE.md`, then copy `.agents/skills/` to `.claude/skills/` |
 
-### Repository map
+## 🗺️ Repository map
 
 ```text
 agent/  desktop agent · editor · tools · MCP · local servers
@@ -136,21 +127,8 @@ cli/    skill command examples               zfoo/  reusable Godot framework
 .agents/skills/  skill definitions           .memory/      durable agent memory
 SKILLS.md        skill index                 MEMORY.md     memory index
 test/   zfoo tests                           agent/test/   app tests
+.gai/   sessions + checkpoints (agent.bat passes --data-dir .gai2)
 ```
-
-### Tests
-
-```bash
-# framework unit tests
-.dependency/godot-4.6.1/Godot_v4.6.1-stable_win64_console.exe --headless --path . res://test/common/CommonTest.tscn
-
-# agent integration suite
-.dependency/godot-4.6.1/Godot_v4.6.1-stable_win64_console.exe --headless --path . res://agent/test/AgentIntegrationTest.tscn
-```
-
-A run passes only when Godot exits with code `0`; see **Testing** in [`AGENTS.md`](AGENTS.md).
-
-</details>
 
 ## 📄 License
 
