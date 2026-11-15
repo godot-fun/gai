@@ -42,6 +42,28 @@ func resize_image_to_max_size_test() -> void:
 	pass
 
 
+func resize_image_to_max_size_extreme_ratio_test() -> void:
+	var image := Image.create(2400, 1200, false, Image.FORMAT_RGBA8)
+	image.fill(Color.RED)
+	assert(ImageHelper.resize_image_to_max_size(image, Vector2i(400, 400)))
+	assert(image.get_size() == Vector2i(400, 200))
+	assert(image.get_pixel(0, 0).is_equal_approx(Color.RED))
+	var extreme := Image.create(1000, 10, false, Image.FORMAT_RGBA8)
+	assert(ImageHelper.resize_image_to_max_size(extreme, Vector2i(100, 100)))
+	assert(extreme.get_size() == Vector2i(100, 1))
+	pass
+
+
+func resize_image_to_max_size_compressed_test() -> void:
+	var image := Image.create(800, 400, false, Image.FORMAT_RGBA8)
+	image.fill(Color.RED)
+	assert(image.compress(Image.COMPRESS_S3TC) == OK)
+	assert(ImageHelper.resize_image_to_max_size(image, Vector2i(200, 200)))
+	assert(not image.is_compressed())
+	assert(image.get_size() == Vector2i(200, 100))
+	pass
+
+
 func convert_to_jpg_with_max_size_test() -> void:
 	var source := Image.create(2400, 1200, false, Image.FORMAT_RGBA8)
 	source.fill(Color.RED)

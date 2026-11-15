@@ -46,10 +46,6 @@ static func user(text: String) -> UserChatMessage:
 	return UserChatMessage.with_text(text)
 
 
-static func user_image(text: String, image_path: String) -> UserChatMessage:
-	return UserChatMessage.from_image_path(text, image_path)
-
-
 static func assistant(text: String, reasoning: String = "") -> AssistantChatMessage:
 	return AssistantChatMessage.new(text, reasoning)
 

@@ -19,7 +19,8 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope)
 		return path_result
 	var path := path_result.content
 
-	var image_message := ChatMessage.user_image(StringUtils.EMPTY, path)
+	# Huge images decode and re-encode for seconds; the worker pool keeps the UI responsive.
+	var image_message := await UserChatMessage.async_from_image_path(StringUtils.EMPTY, path)
 	if StringUtils.is_blank(image_message.first_image_data_url()):
 		return AgentToolResult.error("error: image could not be encoded for the API", AgentToolResult.ui_file_details(path, "image encoding failed"))
 	var result := AgentToolResult.ok(StringUtils.format("Image read successfully: {}", path), AgentToolResult.ui_file_details(path))

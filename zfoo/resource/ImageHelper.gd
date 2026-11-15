@@ -209,9 +209,13 @@ static func convert_to_webp_with_max_size(image_bytes: PackedByteArray, max_size
 
 
 ## Resizes [param image] proportionally only when it exceeds [param max_size].
+## Compressed formats (DDS / KTX) are decompressed first, because [method Image.resize] refuses them.
+## Godot widens the Lanczos kernel with the downscale factor, so one pass already anti-aliases a huge image.
 ## Returns true when the image dimensions changed.
 static func resize_image_to_max_size(image: Image, max_size: Vector2i) -> bool:
 	if image == null or image.is_empty() or max_size.x <= 0 or max_size.y <= 0:
+		return false
+	if image.is_compressed() and image.decompress() != OK:
 		return false
 	var scale := minf(1.0, minf(float(max_size.x) / image.get_width(), float(max_size.y) / image.get_height()))
 	if scale >= 1.0:

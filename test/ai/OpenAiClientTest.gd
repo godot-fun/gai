@@ -341,17 +341,17 @@ func chat_message_user_image_roundtrip_test() -> void:
 	pass
 
 
-func chat_message_user_image_default_caption_test() -> void:
+func async_user_chat_message_default_caption_test() -> void:
 	var path := ProjectSettings.globalize_path("res://test/asset/explosion_animation.png")
-	var message := ChatMessage.user_image(StringUtils.EMPTY, path)
+	var message := await UserChatMessage.async_from_image_path(StringUtils.EMPTY, path)
 	assert(StringUtils.is_not_blank(message.first_image_data_url()))
 	assert((message.parts[0] as UserTextPart).text == StringUtils.format("Image read: {}", path))
 	pass
 
 
-func chat_message_user_image_missing_file_has_no_data_url_test() -> void:
+func async_user_chat_message_missing_file_has_no_data_url_test() -> void:
 	var path := ProjectSettings.globalize_path("res://test/asset/does_not_exist.png")
-	var message := ChatMessage.user_image("caption", path)
+	var message := await UserChatMessage.async_from_image_path("caption", path)
 	assert(StringUtils.is_blank(message.first_image_data_url()))
 	assert((message.parts[0] as UserTextPart).text == "caption")
 	pass

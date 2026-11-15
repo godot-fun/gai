@@ -49,8 +49,14 @@ static func with_text_and_data_url(body: String, data_url: String) -> UserChatMe
 	return UserChatMessage.new(list)
 
 
-static func from_image_path(caption: String, image_path: String) -> UserChatMessage:
-	var data_url := encode_image_path_to_data_url(image_path)
+## Builds a caption + image message from [param image_path], or a text-only message when encoding fails.
+## The read / decode / downscale / re-encode pass runs on the worker pool: a multi-megapixel image costs
+## seconds of CPU, so the main thread keeps rendering while it waits.
+static func async_from_image_path(caption: String, image_path: String) -> UserChatMessage:
+	var data_url := StringUtils.EMPTY
+	var encoded: Variant = await ExecutorHelper.async_execute_pooled(encode_image_path_to_data_url.bind(image_path))
+	if encoded is String:
+		data_url = encoded
 	if StringUtils.is_blank(data_url):
 		return with_text(caption)
 	var body := caption
@@ -59,16 +65,21 @@ static func from_image_path(caption: String, image_path: String) -> UserChatMess
 	return with_text_and_data_url(body, data_url)
 
 
+## Reads, decodes, downscales, and re-encodes [param image_path] into a base64 data URL.
+## Only touches thread-safe Godot APIs, so [method async_from_image_path] may run it on the worker pool.
 static func encode_image_path_to_data_url(image_path: String) -> String:
 	var image_bytes := FileUtils.read_file_to_byte_array(image_path)
 	if image_bytes.is_empty():
 		Log.info("UserChatMessage encode_image_path read failed or empty path:[{}]", image_path)
 		return StringUtils.EMPTY
-	var decoded_image := ImageHelper.decode_image(image_bytes)
-	if decoded_image == null:
-		Log.info("UserChatMessage encode_image_path decode failed path:[{}]", image_path)
-		return StringUtils.EMPTY
-	var image_format := decoded_image.format
+	# Signature sniffing picks the encoder without a full decode; exotic containers fall back to decoding.
+	var image_format := ImageHelper.detect_image_format(image_bytes)
+	if image_format.is_empty():
+		var decoded_image := ImageHelper.decode_image(image_bytes)
+		if decoded_image == null:
+			Log.info("UserChatMessage encode_image_path decode failed path:[{}]", image_path)
+			return StringUtils.EMPTY
+		image_format = decoded_image.format
 	var encoded_bytes: PackedByteArray
 	var mime_subtype: String
 	if image_format == ImageHelper.png or image_format == ImageHelper.svg:
@@ -79,7 +90,7 @@ static func encode_image_path_to_data_url(image_path: String) -> String:
 		mime_subtype = ImageHelper.webp
 	else:
 		encoded_bytes = ImageHelper.convert_to_jpg_with_max_size(image_bytes, REMOTE_IMAGE_MAX_SIZE)
-		mime_subtype = "jpeg"
+		mime_subtype = ImageHelper.jpeg
 	if encoded_bytes.is_empty():
 		Log.info("UserChatMessage encode_image_path encode failed path:[{}] format:[{}]", image_path, image_format)
 		return StringUtils.EMPTY
