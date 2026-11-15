@@ -52,10 +52,12 @@ func get_header(name: String) -> String:
 	return ""
 
 
-## Reason text of a failed request: the body when the server answered with one (an API error
-## payload such as `401 {"error":{"message":"..."}}`, where [member error] stays empty), otherwise
-## [member error] (a transport failure, which has no status code and no body). Never blank.
+## Reason text of a failed request: a transport failure wins even when a partial response body was
+## received, because that body may be a large, truncated stream. Otherwise use the server's error
+## payload, then the stored transport reason. Never blank.
 func get_error_string() -> String:
+	if not success and StringUtils.is_not_blank(error):
+		return error
 	var body_text := get_body_string().strip_edges()
 	if StringUtils.is_not_blank(body_text):
 		return body_text

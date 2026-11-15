@@ -164,8 +164,6 @@ static func first_lines(s: String, max_lines: int) -> String:
 		return EMPTY
 	if is_empty(s):
 		return s
-	if s.count(FileUtils.NEWLINE_LF) < max_lines:
-		return s
 	var pos := 0
 	for _n in max_lines:
 		var idx := s.find(FileUtils.NEWLINE_LF, pos)

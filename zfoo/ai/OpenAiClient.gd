@@ -120,13 +120,14 @@ func async_chat_messages_stream(messages: Array[ChatMessage], tools: Array[ToolD
 		pass
 	var response := await HttpHelper.async_post(base_url, request_body, build_headers(true)
 			, REQUEST_TIMEOUT_MILLIS, proxy, on_chunk, cancel_scope)
-	## The final body carries every delta verbatim, so content / reasoning / finish_reason / usage
-	## all come from that one string instead of being accumulated during streaming.
-	var body := response.get_body_string()
 	if not response.is_ok():
 		var result := OpenAiCompletion.failure(StringUtils.format("request failed, http code:[{}], {}", response.code, response.get_error_string()))
-		Log.error("OpenAI stream failed:[{}]", StringUtils.truncate(result.error, 512))
+		Log.error("OpenAI stream failed:[{}]", result.error)
 		return result
+	## The final body carries every delta verbatim, so content / reasoning / finish_reason / usage
+	## all come from that one string instead of being accumulated during streaming. Convert only a
+	## successful response; a failed stream may hold a huge partial body that must be discarded.
+	var body := response.get_body_string()
 	var tail := pending_build.build_string() + utf8_decoder.flush()
 	if StringUtils.is_not_empty(tail):
 		consume_sse_buffer(tail + FileUtils.NEWLINE_LF, on_delta)

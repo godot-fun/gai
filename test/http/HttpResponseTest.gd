@@ -29,6 +29,18 @@ static func error_string_falls_back_to_transport_reason_test() -> void:
 	pass
 
 
+static func error_string_prefers_transport_reason_over_partial_stream_test() -> void:
+	# A streaming server can send HTTP 200 and a large partial body before the connection fails. The
+	# partial SSE must not become the displayed error message.
+	var response := HttpResponse.new()
+	response.success = false
+	response.code = HTTPClient.RESPONSE_OK
+	response.body = ("data: {\"content\":\"partial\"}\n\n".repeat(10_000)).to_utf8_buffer()
+	response.error = "Http connection error:[STATUS_CONNECTION_ERROR]"
+	assert(response.get_error_string() == response.error)
+	pass
+
+
 static func error_string_never_blank_test() -> void:
 	assert(StringUtils.is_not_blank(HttpResponse.new().get_error_string()))
 	pass
