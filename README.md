@@ -97,6 +97,23 @@ The agent also owns a library of **36 asset skills** — audio cleanup, image pr
 
 Browse the [full catalog](SKILLS.md); details are in [`agent/app/workflow/README.md`](agent/app/workflow/README.md).
 
+## 🧱 The Godot framework
+
+The app is built on `zfoo/` — a standalone GDScript framework that ships in this repo, not vendored glue. It is usable outside GAI: copy or [sync](sync-godot-framework.ps1) it into any Godot 4.6 project.
+
+| Module | What it gives you |
+| --- | --- |
+| `zfoo/ai/` | OpenAI-compatible chat, streaming, tool definitions, tool calls |
+| `zfoo/net/` | TCP and WebSocket clients, router request/response |
+| `zfoo/concurrent/` | executors, thread-safe collections, LRU caches |
+| `zfoo/ui/` | theme tokens, typography, display scaling, alerts, toasts, popups |
+| `zfoo/audio/` | music playlists, voice, sound effects, microphone recording |
+| `zfoo/resource/`, `zfoo/scene/` | async loading, fade and slide scene transitions |
+| `zfoo/hotupdate/` | PCK hot update |
+| `zfoo/gdtest/` | unit and integration test runners |
+
+Full API surface: the framework reference in [`AGENTS.md`](AGENTS.md).
+
 ## 🔌 Local services
 
 | Service | Role |
