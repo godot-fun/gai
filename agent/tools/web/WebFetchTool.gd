@@ -29,8 +29,8 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope)
 	var url := str(args.get(ARG_URL, "")).strip_edges()
 	if url.is_empty():
 		return AgentToolResult.error("error: url is required")
-	if not url.begins_with("http://") and not url.begins_with("https://"):
-		return AgentToolResult.error("error: url must start with http:// or https://")
+	if not HttpUtils.is_valid_http_url(url):
+		return AgentToolResult.error("error: url must be an absolute HTTP or HTTPS URL; local files are not supported")
 	var max_chars := DEFAULT_MAX_CHARS
 	if args.has(ARG_MAX_CHARS) and str(args.get(ARG_MAX_CHARS, "")).strip_edges().is_valid_int():
 		max_chars = clampi(int(str(args.get(ARG_MAX_CHARS, "")).strip_edges()), 1_000, MAX_CHARS_CAP)
