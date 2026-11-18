@@ -824,23 +824,6 @@ func wrap_offset_height() -> float:
 	return input_wrap.offset_bottom - input_wrap.offset_top
 
 
-## Bottom padding needed to let the final reply scroll completely above the floating controls.
-## A collapsed action button deliberately stays floating so it does not waste chat space.
-func get_chat_input_height() -> float:
-	if not expanded and layout_tween == null:
-		return Margin.ma_2
-	var top: float = input_wrap.offset_top
-	if queue_panel.visible:
-		top = minf(top, queue_panel.position.y)
-	return maxf(float(Margin.ma_2), input_bar.size.y - top + Margin.ma_2)
-
-
-func emit_chat_input_height(height: float = -1.0) -> void:
-	current_chat_input_height = get_chat_input_height() if height < 0.0 else height
-	AgentEvents.events.chat_input_height_changed.emit(current_chat_input_height)
-	pass
-
-
 func prepare_field_for_expand_measure() -> void:
 	input_field.visible = true
 	input_field.scroll_fit_content_height = true
@@ -1037,4 +1020,25 @@ func sync_expanded_height_after_layout() -> void:
 	var target_h: float = get_wrap_height(true)
 	if absf(wrap_offset_height() - target_h) > 1.0:
 		layout_bar()
+	pass
+
+
+# ---------------------------------------------------------------------------
+# Chat history avoidance
+# ---------------------------------------------------------------------------
+
+## Bottom padding needed to let the final reply scroll completely above the floating controls.
+## A collapsed action button deliberately stays floating so it does not waste chat space.
+func get_chat_input_height() -> float:
+	if not expanded and layout_tween == null:
+		return Margin.ma_2
+	var top: float = input_wrap.offset_top
+	if queue_panel.visible:
+		top = minf(top, queue_panel.position.y)
+	return maxf(float(Margin.ma_2), input_bar.size.y - top + Margin.ma_2)
+
+
+func emit_chat_input_height(height: float = -1.0) -> void:
+	current_chat_input_height = get_chat_input_height() if height < 0.0 else height
+	AgentEvents.events.chat_input_height_changed.emit(current_chat_input_height)
 	pass
