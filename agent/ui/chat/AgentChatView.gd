@@ -39,6 +39,7 @@ func setup(
 	AgentEvents.events.chat_entry_add.connect(on_chat_entry_add)
 	AgentEvents.events.chat_entry_update.connect(on_chat_entry_update)
 	AgentEvents.events.chat_entry_delete.connect(on_chat_entry_delete)
+	AgentEvents.events.chat_input_height_changed.connect(on_chat_input_height_changed)
 	pass
 
 
@@ -115,6 +116,32 @@ func on_chat_entry_update(session_id: int, entry: ChatEntry, _channel: String) -
 
 func on_chat_entry_delete(session_id: int, entry_idx: int, delete_from_here: bool) -> void:
 	chat_list_cache.remove_entries(session_id, entry_idx, delete_from_here)
+	pass
+
+
+## Keep the last reply scrollable above the floating composer. ChatScroll only follows the
+## changed range when the reader was already following the bottom.
+func on_chat_input_height_changed(height: float) -> void:
+	# Read this before changing the margin: afterwards the enlarged scroll range makes the old
+	# bottom position look as though the reader had intentionally scrolled upward.
+	var follow_bottom := chat_scroll.stick_to_bottom or chat_scroll.is_scrolled_to_bottom()
+	chat_lists_container.add_theme_constant_override(
+		"margin_bottom", ceili(maxf(float(Margin.ma_2), height)))
+	if follow_bottom:
+		chat_scroll.stick_to_bottom = true
+		scroll_to_bottom_after_input_layout()
+	pass
+
+
+## MarginContainer and ScrollContainer update their minimum size and range at the end of the frame.
+## Follow the new bottom after that layout settles. ChatScroll coalesces same-frame requests.
+func scroll_to_bottom_after_input_layout() -> void:
+	var tree := chat_scroll_node.get_tree()
+	if tree != null:
+		await tree.process_frame
+	if not chat_scroll.stick_to_bottom:
+		return
+	chat_scroll.queue_scroll_to_bottom()
 	pass
 
 

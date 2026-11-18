@@ -44,6 +44,7 @@ var tween_start_left: float = 0.0
 var tween_target_left: float = 0.0
 var tween_bar_size: Vector2 = Vector2.ZERO
 var tween_expand_target: bool = false
+var current_chat_input_height: float = 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -477,13 +478,15 @@ func sync_queue_panel_visibility() -> void:
 	pass
 
 
-func hide_queue_panel() -> void:
+func hide_queue_panel(notify_height: bool = true) -> void:
 	if queue_tween != null:
 		queue_tween.kill()
 		queue_tween = null
 	queue_panel.visible = false
 	queue_panel.modulate.a = 1.0
 	queue_panel.scale = Vector2.ONE
+	if notify_height:
+		emit_chat_input_height()
 	pass
 
 
@@ -491,6 +494,7 @@ func show_queue_panel() -> void:
 	var already_shown := queue_panel.visible and queue_panel.modulate.a > 0.01
 	queue_panel.visible = true
 	layout_queue_panel()
+	emit_chat_input_height()
 	if already_shown:
 		if queue_tween == null:
 			queue_panel.modulate.a = 1.0
@@ -583,6 +587,7 @@ func layout_queue_panel() -> void:
 	var right := input_bar.size.x - ControlSize.md * 5.0
 	queue_panel.position = Vector2(right - width, input_wrap.offset_top - content_height - Margin.ma_5)
 	queue_panel.size = Vector2(width, content_height)
+	emit_chat_input_height()
 	pass
 
 
@@ -819,6 +824,23 @@ func wrap_offset_height() -> float:
 	return input_wrap.offset_bottom - input_wrap.offset_top
 
 
+## Bottom padding needed to let the final reply scroll completely above the floating controls.
+## A collapsed action button deliberately stays floating so it does not waste chat space.
+func get_chat_input_height() -> float:
+	if not expanded and layout_tween == null:
+		return Margin.ma_2
+	var top: float = input_wrap.offset_top
+	if queue_panel.visible:
+		top = minf(top, queue_panel.position.y)
+	return maxf(float(Margin.ma_2), input_bar.size.y - top + Margin.ma_2)
+
+
+func emit_chat_input_height(height: float = -1.0) -> void:
+	current_chat_input_height = get_chat_input_height() if height < 0.0 else height
+	AgentEvents.events.chat_input_height_changed.emit(current_chat_input_height)
+	pass
+
+
 func prepare_field_for_expand_measure() -> void:
 	input_field.visible = true
 	input_field.scroll_fit_content_height = true
@@ -908,6 +930,7 @@ func layout_bar() -> void:
 	ChatInputTheme.apply_wrap(input_wrap, expanded)
 	layout_moving_border()
 	refresh_moving_border()
+	emit_chat_input_height()
 	pass
 
 
@@ -948,7 +971,9 @@ func set_expanded(is_expanded: bool, animate: bool) -> void:
 		layout_tween.kill()
 		layout_tween = null
 	# Collapse: hide list immediately. Expand: keep hidden until tween finishes, then fade in.
-	hide_queue_panel()
+	# The tween below reports the visible height on every step. Emitting here would announce the
+	# fully collapsed height before the first step and make the chat scrollbar jump.
+	hide_queue_panel(false)
 	layout_tween = input_bar.create_tween()
 	layout_tween.set_trans(Tween.TRANS_CUBIC)
 	layout_tween.set_ease(Tween.EASE_OUT)
@@ -962,13 +987,15 @@ func set_expanded(is_expanded: bool, animate: bool) -> void:
 	var wrap_right: float = tween_bar_size.x - ControlSize.md * 5.0
 	tween_target_left = wrap_right - get_wrap_width(is_expanded)
 	tween_expand_target = is_expanded
+	var start_chat_input_height := current_chat_input_height
+	var target_chat_input_height := (tween_target_h + Margin.ma_4 + Margin.ma_2 if is_expanded else float(Margin.ma_2))
 
-	layout_tween.tween_method(apply_input_tween_step, 0.0, 1.0, 0.22)
+	layout_tween.tween_method(apply_input_tween_step.bind(start_chat_input_height, target_chat_input_height), 0.0, 1.0, 0.22)
 	layout_tween.finished.connect(on_input_tween_finished, CONNECT_ONE_SHOT)
 	pass
 
 
-func apply_input_tween_step(value: float) -> void:
+func apply_input_tween_step(value: float, start_chat_input_height: float, target_chat_input_height: float) -> void:
 	var height: float = lerpf(tween_start_h, tween_target_h, value)
 	# Keep the right edge fixed throughout the tween; only the left edge and height are animated.
 	var wrap_right: float = tween_bar_size.x - ControlSize.md * 5.0
@@ -989,6 +1016,7 @@ func apply_input_tween_step(value: float) -> void:
 			wrap_right,
 			tween_bar_size.y - Margin.ma_4
 		)
+	emit_chat_input_height(lerpf(start_chat_input_height, target_chat_input_height, value))
 	pass
 
 

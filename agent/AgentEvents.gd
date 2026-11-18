@@ -117,6 +117,8 @@ class Events:
 	signal chat_search_result_selected(session_id: int, entry_index: int)
 	## A bubble handed its body back to the chat input (delete / revert) for re-editing.
 	signal chat_input_prefill(text: String)
+	## Floating chat input height changed; chat history uses it to keep the latest reply unobscured.
+	signal chat_input_height_changed(height: float)
 
 	# Sidebar session row actions (SessionRow -> AgentSessionSidebar)
 	## User clicked a session row title (select or start rename when already active).
