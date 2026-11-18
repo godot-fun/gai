@@ -10,7 +10,7 @@ Batch asset tools — run from repo root; use each skill's script; never overwri
 | [Audio](#audio) | to-wav → trim → loudness → export / transcription | 10 skills |
 | [Image](#image) | to-png → inpaint → split → background → trim / resize | 9 skills |
 | [Video](#video) | mute / wav / split / BGM → 60fps → 4K → merge → compress / MP4 / OGV → publish | 13 skills |
-| [Storyboard](#storyboard) | Storyboard → HTML preview / video → VO → AV mix → merge → publish | 4 skills |
+| [Storyboard](#storyboard) | Storyboard → HTML preview / video → VO → AV mix → merge → publish | 5 skills |
 | [Other](#other) | Naming, commits | 2 skills |
 
 ## AI
@@ -178,6 +178,7 @@ Materials / copy / images
 |-------|---------|
 | [storyboard](.agents/skills/storyboard/SKILL.md) | Materials → shot-by-shot storyboard (CN+EN narration, video prompts, cover) |
 | [storyboard-shot-to-html](.agents/skills/storyboard-shot-to-html/SKILL.md) | One shot (prompt + VO) → fullscreen HTML CSS animation preview (Space to play) |
+| [html-text-to-animation](.agents/skills/html-text-to-animation/SKILL.md) | Text, scripts, or narration → self-contained styled HTML animation |
 | [storyboard-tts](.agents/skills/storyboard-tts/SKILL.md) | Storyboard.md → bilingual VO WAVs (IndexTTS2 batch; Chinese/ + English/; 0.4 s edge pad) |
 | [storyboard-av-mix](.agents/skills/storyboard-av-mix/SKILL.md) | Video/ + Chinese/ + English/ → Video-Chinese/ + Video-English/ (retime to VO) |
 
