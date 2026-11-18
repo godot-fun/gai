@@ -9,7 +9,6 @@ Headword, pronunciation, senses, quotations, and etymology change across histori
 - Collection: Typography and Language Systems
 - Medium: HTML, SVG, Canvas, WebGL, or composited media
 - Best for: language, definitions, cultural change, and semantic history
-- Complexity: Moderate to advanced
 
 ## Signature Features
 
@@ -23,14 +22,7 @@ Create a polished HTML animation in the **Dictionary Entry Evolution** style. Ma
 
 Adapt duration, aspect ratio, hierarchy, and annotation without changing supplied wording. Verify every character, pronunciation, encoding, and reading convention used by the effect.
 
-## Customizable Elements
-
-- Adjust type family, scale, spacing, line length, pacing, annotation depth, and the balance between primary reading and structural explanation.
-- Change typographic scale, neutral surface, accent color, and motion amplitude while preserving valid glyphs, reading order, timing, and decodability.
-
 ## Avoid
 
 - Avoid fake quotations, decorative dictionary paper, random definitions, modern meanings projected backward, or animated page flips without semantic change.
 - Do not invent characters, pronunciations, encodings, reading conventions, or linguistic relationships to complete the composition.
-- Keep essential text readable and provide a stable reduced-motion state that preserves the final composition.
-

@@ -9,7 +9,6 @@ A small family of fragments gradually finds alignment and resolves into a reusab
 - Collection: Motion Styles
 - Medium: HTML animation, SVG, Canvas, WebGL, or composited media
 - Best for: openings, endings, and recurring brand signatures
-- Complexity: Moderate to advanced
 
 ## Signature Features
 
@@ -21,14 +20,6 @@ A small family of fragments gradually finds alignment and resolves into a reusab
 
 Create a polished visual narrative in the **Fragment Logo Assembly** style. Introduce fragments as meaningful shapes, converge them with controlled timing, lock edges precisely, and stop all residual motion once the identity is complete.
 
-Adapt the subject, copy, duration, aspect ratio, and implementation method while preserving the defining narrative and motion logic. Keep supplied text unchanged unless rewriting is requested.
-
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, palette, pacing, and implementation method.
-
 ## Avoid
 
-- Do not copy sample brands, characters, or wording from the source material.
-- Do not add motion that has no explanatory, rhythmic, or emotional purpose.
-- Preserve readability and one dominant idea per beat.
+- Avoid arbitrary debris, ambiguous assembly paths, imprecise final alignment, or continued motion after the mark has resolved.

@@ -9,7 +9,6 @@ Counted X-shaped stitches assemble a gridded image one color region at a time.
 - Collection: Print, Textile and Physical Craft
 - Medium: HTML, SVG, Canvas, WebGL, or composited media
 - Best for: pixel-like stories, patience, folk craft, and modular imagery
-- Complexity: Moderate to advanced
 
 ## Signature Features
 
@@ -21,15 +20,7 @@ Counted X-shaped stitches assemble a gridded image one color region at a time.
 
 Create a polished HTML animation in the **Cross-Stitch Pixel Narrative** style. Keep an explicit counted fabric grid with diagonal thread pairs, a limited floss palette, and slight handmade variation. Complete each X in a consistent order, work color regions methodically, and reveal the image through accumulated stitches. Let tool marks, joins, surface response, and small process variation provide material truth; choose colors plausible for the named craft. Use typography only where the process naturally permits it—as printed matter, labels, annotations, or adjacent editorial framing. Organize the message around the making sequence so every texture, seam, impression, cut, or color layer has a visible physical cause.
 
-Adapt subject matter, wording, duration, and aspect ratio to the user's material. Preserve supplied text unless rewriting is requested, and simplify secondary detail before compromising the defining construction logic.
-
-## Customizable Elements
-
-- Adjust motif, material scale, tool visibility, pacing, annotation depth, and the balance between workshop process and finished artifact.
-- Change motif, plausible material colors, work-surface context, and camera distance while preserving the craft's actual construction order.
-
 ## Avoid
 
 - Avoid square pixels instead of crossed thread, stitches between holes, unlimited gradients, or instant region fills.
 - Do not apply craft texture as a surface filter; show how tools, pressure, fibers, joins, or pigment actually produce it.
-- Keep essential text outside dense movement and preserve a clear reduced-motion end state.

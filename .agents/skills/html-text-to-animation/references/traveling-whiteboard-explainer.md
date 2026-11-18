@@ -9,7 +9,6 @@ A single glossy dry-erase board becomes a continuous world of handwriting, diagr
 - Collection: Lemo Opuscar
 - Medium: HTML animation, composited media, SVG, Canvas, or WebGL
 - Best for: long-form explanation, systems, lessons, and connected arguments
-- Complexity: Advanced
 
 ## Signature Features
 
@@ -22,16 +21,7 @@ A single glossy dry-erase board becomes a continuous world of handwriting, diagr
 
 Create a polished visual narrative in the **Traveling Whiteboard Explainer** style. Write and draw in narrative order, move the camera along the reasoning instead of cutting, and use erasure to revise or rewind ideas. Keep marker colors semantically fixed.
 
-Translate the user's material into this visual grammar rather than copying source examples. Preserve supplied wording, evidence, and attribution; select an implementation appropriate to the material.
-
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, pacing, palette emphasis, and implementation method.
-
 ## Avoid
 
 - Choose **Live-Drawn Whiteboard** for one bounded explanation, or **Engineering Briefing Board** for a physical project wall.
 - Pre-rendered text reveals, invisible writing tools, random marker colors, jump cuts, or a board filled before the audience can follow.
-- Never invent documents, measurements, quotations, sources, or factual evidence.
-- Do not use surface effects as a substitute for narrative structure.
-

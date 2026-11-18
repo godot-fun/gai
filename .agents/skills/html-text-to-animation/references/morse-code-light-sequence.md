@@ -9,7 +9,6 @@ Short and long pulses encode real characters with disciplined intra-letter and w
 - Collection: Typography and Language Systems
 - Medium: HTML, SVG, Canvas, WebGL, or composited media
 - Best for: signals, secrecy, communication, and rhythmic reveals
-- Complexity: Moderate to advanced
 
 ## Signature Features
 
@@ -23,14 +22,7 @@ Create a polished HTML animation in the **Morse-Code Light Sequence** style. Enc
 
 Adapt duration, aspect ratio, hierarchy, and annotation without changing supplied wording. Verify every character, pronunciation, encoding, and reading convention used by the effect.
 
-## Customizable Elements
-
-- Adjust type family, scale, spacing, line length, pacing, annotation depth, and the balance between primary reading and structural explanation.
-- Change typographic scale, neutral surface, accent color, and motion amplitude while preserving valid glyphs, reading order, timing, and decodability.
-
 ## Avoid
 
 - Avoid random blinking, equal dot and dash duration, no word spacing, multiple unsynchronized lights, or adding unrequested secret text.
 - Do not invent characters, pronunciations, encodings, reading conventions, or linguistic relationships to complete the composition.
-- Keep essential text readable and provide a stable reduced-motion state that preserves the final composition.
-

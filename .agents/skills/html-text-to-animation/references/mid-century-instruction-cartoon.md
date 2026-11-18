@@ -9,7 +9,6 @@ Broken ink lines, offset flat color, abstract rooms, and limited acting recall 1
 - Collection: Lemo Opuscar
 - Medium: HTML animation, composited media, SVG, Canvas, WebGL, or generated visual assets
 - Best for: instructions, civic explanation, and dry visual comedy
-- Complexity: Advanced
 
 ## Signature Features
 
@@ -24,12 +23,7 @@ Create a polished visual narrative in the **Mid-Century Instruction Cartoon** st
 
 Adapt the user's material to this grammar without copying source examples. Preserve supplied wording and factual attribution, and choose an implementation that supports the defining behavior.
 
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, pacing, palette emphasis, and implementation method.
-
 ## Avoid
 
 - Modern corporate vectors, full character animation, detailed rooms, smooth gradients, or frenetic comedy.
-- Do not use surface effects as a substitute for narrative structure.
 - Never invent evidence, measurements, quotations, or sources.

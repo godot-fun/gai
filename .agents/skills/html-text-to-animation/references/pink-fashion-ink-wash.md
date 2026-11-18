@@ -8,7 +8,7 @@ A 1960s fashion-illustration ensemble made from airborne ink, pooled pink waterc
 
 - Collection: Academy Award Film Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A 1960s fashion-illustration ensemble made from airborne ink, pooled pink watercolor, and rhythmic elongated figures.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A 1960s fashion-illustration ensemble made from airborne ink, pooled pink waterc
 ## Style Prompt
 
 Draw with rapid pressure-sensitive ink: thin along straights and small turns, swelling through broad curves, then breaking into dry hairs and a flick at release. Reserve solid black for dark garments, hats, gloves, and bold pattern, while faces remain warm paper white. Float loose soft-edged watercolor pools across most of the frame, using pink as the field, magenta for concentrated heat, pale rose for expansion, and a touch of plum for depth; let dried edges collect more pigment. Keep secondary figures and shadows warm grey. Arrange a horizontal procession of elongated nine-to-ten-head silhouettes in side view, repeating the lead through grey companions, poses, or echoes so the page never feels empty. Allow black-and-white costume geometry to press against and cut through the pink. Add a few directional thrown droplets that follow motion. Track slowly along the lineup and use an existing hat, coat, umbrella, or color pool as the transition mask.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

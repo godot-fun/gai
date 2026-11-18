@@ -8,7 +8,7 @@ A late-nineteenth-century newspaper comes alive through wood type, engraved repo
 
 - Collection: Academy Award Film Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A late-nineteenth-century newspaper comes alive through wood type, engraved reporting, and mechanical print rhythm.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A late-nineteenth-century newspaper comes alive through wood type, engraved repo
 ## Style Prompt
 
 Build the composition as a real broadsheet: masthead, a forceful full-width wood-type headline, three to six narrow columns, and one dominant engraved illustration. Use legible language appropriate to the content, but let body copy behave as texture at viewing distance. Distress every printed element through slight ink gain, broken edges, uneven pressure, missing flecks, and faint mirrored show-through from the reverse. Give the headline individual wood blocks with visible grain. Draw images entirely through contour and form-following hatch; cross-hatch only the dark zones, thicken contours away from light, and reduce ink in the distance. Print warm black on aged cream stock, with one muted accent plate on the narrative subject and a believable one- or two-pixel registration error. Animate letters dropping into a composing stick, striking and rebounding to leave impressions, a rotary press repeating, and pages flipping.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

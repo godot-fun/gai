@@ -9,7 +9,6 @@ A cobalt drafting grid on parchment supports a literary serif headline and preci
 - Collection: Ready-Made Layouts
 - Medium: HTML, CSS, SVG, or Canvas
 - Best for: design systems, architecture, research, and structured cultural narratives
-- Complexity: Moderate
 
 ## Signature Features
 
@@ -22,17 +21,7 @@ A cobalt drafting grid on parchment supports a literary serif headline and preci
 
 Create a polished HTML animation in the **Cobalt Grid** style. Reveal the grid first as an organizing instrument, then let type and blocks snap to its intersections. Use one or two controlled departures from the grid to create emphasis.
 
-Adapt the subject, wording, duration, aspect ratio, and rendering technique to the user's material. Preserve the defining visual grammar and keep supplied text unchanged unless rewriting is requested.
-
-## Customizable Elements
-
-- Subject, wording, duration, aspect ratio, palette emphasis, and scene content.
-- Use HTML, CSS, SVG, Canvas, WebGL, or generated visual assets as appropriate.
-
 ## Avoid
 
 - Choose **Cobalt Editorial** for polished presentation without an exposed grid, or **Cartesian Editorial** for taupe mathematical restraint.
 - Futuristic HUD styling, neon glow, arbitrary graph paper, many colors, or elements that ignore the grid.
-- Do not copy example brands, characters, or sample copy from the source material.
-- Do not sacrifice hierarchy or readability for surface decoration.
-

@@ -8,7 +8,7 @@ A leather-bound children's book opens on a wooden desk and reads itself through 
 
 - Collection: Code Video Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A leather-bound children's book opens on a wooden desk and reads itself through cream spreads, framed pastel scenes, gentle serif text, and a recurring plush mascot.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A leather-bound children's book opens on a wooden desk and reads itself through 
 ## Style Prompt
 
 Place a tactile leather-bound book on a warm wooden desk, open it physically, then settle into a flat head-on view of each spread. Use cream paper with one framed circular or locket-shaped illustration on the left and a short block of carefully set serif prose on the right. Type the text at a calm reading pace while the illustration breathes through tiny loops—cloud drift, blinking, waving, grass, water, or lamp glow. Carry one original plush round mascot through every spread so the reader has a guide and emotional anchor. Use soft pastel scene painting, muted earth-tone callouts, restrained gold ornament, and enough paper margin to feel cozy. Turn pages as physical objects and let the next scene begin only after the spread settles. End by closing the narrative and book gently.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

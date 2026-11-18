@@ -8,7 +8,7 @@ Frame-by-frame graphic animation whose living outlines, held-on-twos timing, sme
 
 - Collection: Motion Graphics Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: Frame-by-frame graphic animation whose living outlines, held-on-twos timing, smear frames, and hand-drawn effects create deliberate handmade energy.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ Frame-by-frame graphic animation whose living outlines, held-on-twos timing, sme
 ## Style Prompt
 
 Animate primarily on twos at a twenty-four-frame cadence, holding quieter poses on threes and switching to ones only for the fastest action. For every supposedly static drawing, create three or four subtly different outlines and cycle them so the image breathes without crawling. Keep the design clear and graphic beneath the boil. Before fast moves, add anticipation; during the move, use one elongated smear frame that can stretch the object several times along its path; then overshoot and settle. Draw smoke, splashes, flames, dust, speed lines, electricity, and sparkles frame by frame as secondary accents rather than procedural particles. Vary pressure, preserve slight registration drift between line and color, and multiply a restrained paper texture over the final image. Let the handmade irregularity support a clear narrative beat and strong end pose.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

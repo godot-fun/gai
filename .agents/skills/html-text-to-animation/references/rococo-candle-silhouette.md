@@ -8,7 +8,7 @@ A candlelit theatrical chamber of individually cut black profiles, gilded framin
 
 - Collection: Academy Award Film Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A candlelit theatrical chamber of individually cut black profiles, gilded framing, crimson velvet, and one painted face.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A candlelit theatrical chamber of individually cut black profiles, gilded framin
 ## Style Prompt
 
 Build every person as an individually designed eighteenth-century profile cut from near-black paper. Differentiate nose, wig, hat, lace perforation, instrument, letter, fan, and hand gesture so no silhouette feels duplicated. Trace a narrow warm-gold rim only along the edge facing the nearest candle and add a few hairline gold folds within major garments. Reserve painted color and an actual face for the single lead figure; all other figures remain true cutouts. Frame the image like a rococo box with gilded relief and deep crimson velvet occupying most of the surroundings. Treat outdoor material as a painted stage backdrop behind the silhouettes and limit night blue to that distant layer. Let candle flames fluctuate gently, with modest warm halos, thin smoke, grain, and vignette; never strobe. Arrange a dark foreground profile as a mask around a brighter distant stage, track laterally so layers separate, then advance toward the lead.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

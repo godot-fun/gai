@@ -9,7 +9,6 @@ Weight, width, slant, optical size, and custom font axes animate as semantic dim
 - Collection: Typography and Language Systems
 - Medium: HTML, SVG, Canvas, WebGL, or composited media
 - Best for: identity, emphasis, responsive typography, and vocal nuance
-- Complexity: Moderate to advanced
 
 ## Signature Features
 
@@ -23,14 +22,7 @@ Create a polished HTML animation in the **Variable-Font Axis Performance** style
 
 Adapt duration, aspect ratio, hierarchy, and annotation without changing supplied wording. Verify every character, pronunciation, encoding, and reading convention used by the effect.
 
-## Customizable Elements
-
-- Adjust type family, scale, spacing, line length, pacing, annotation depth, and the balance between primary reading and structural explanation.
-- Change typographic scale, neutral surface, accent color, and motion amplitude while preserving valid glyphs, reading order, timing, and decodability.
-
 ## Avoid
 
 - Avoid scaling glyphs instead of changing axes, arbitrary wobble, mixing unrelated fonts, illegible extremes, or every axis moving at once.
 - Do not invent characters, pronunciations, encodings, reading conventions, or linguistic relationships to complete the composition.
-- Keep essential text readable and provide a stable reduced-motion state that preserves the final composition.
-

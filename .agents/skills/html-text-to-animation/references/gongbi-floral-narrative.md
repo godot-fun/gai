@@ -8,7 +8,7 @@ A meticulous mineral-color painting built from fine contour, layered flat washes
 
 - Collection: Chinese Art Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A meticulous mineral-color painting built from fine contour, layered flat washes, controlled edge shading, and symbolically arranged flowers, birds, figures, or objects.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A meticulous mineral-color painting built from fine contour, layered flat washes
 ## Style Prompt
 
 Plan every contour before coloring. Draw figures, peonies or other plants, birds, furniture, architecture, and props with an even hair-fine dark line whose pressure remains disciplined through curves. Fill each shape with a clean local mineral color, then deepen undersides, overlaps, and folds through several transparent edge washes rather than Western cast-shadow modeling. Add shell white, vein lines, feather barbs, textile patterns, and restrained gold only after the forms are established. Keep colors rich but harmonized by warm silk or paper and maintain clear separation between adjacent shapes. Arrange flowers and objects symbolically around a readable central relationship rather than as decoration. Animate only what a painted scroll could gently sustain: petal tremor, bird blink, sleeve lift, breath, eye movement, or a slow camera drift.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

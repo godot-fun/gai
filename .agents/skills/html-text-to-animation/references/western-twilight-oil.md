@@ -8,7 +8,7 @@ A low-horizon oil landscape with broad directional strokes, warm silhouette dram
 
 - Collection: Academy Award Film Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A low-horizon oil landscape with broad directional strokes, warm silhouette drama, and a distinct blue-green night variant.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A low-horizon oil landscape with broad directional strokes, warm silhouette dram
 ## Style Prompt
 
 Block the scene first in large, unmistakable shapes, then lay thick but controlled strokes over them. Make sky marks broad and horizontal, ground and bodies follow their planes, and keep each stroke close enough to its underlying value that the whole form stays intact. Before full darkness, use a gold-orange-to-deep-red sky with the sun at the horizon; hold land, structures, animals, and people as warm dark silhouettes edged by a thin line of sunset. Keep the horizon low and let sky occupy roughly half to three fifths of the frame. Only after true night switch to blue-green sky and moon edges, deep neutral ground, warm yellow windows, and optional rain. Retain light canvas weave and loosen the end of each loaded brush stroke. Keep figures small to medium and let weather, horse, coat, smoke, or grass supply secondary motion. Move slowly from the wide silhouette toward the person rather than sweeping laterally.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

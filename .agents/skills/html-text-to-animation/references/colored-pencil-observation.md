@@ -8,7 +8,7 @@ A textured-paper drawing builds color through directional hatch, layered pressur
 
 - Collection: Chinese Art Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A textured-paper drawing builds color through directional hatch, layered pressure, visible tooth, and selectively burnished focal detail.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A textured-paper drawing builds color through directional hatch, layered pressur
 ## Style Prompt
 
 Draw on visibly toothed warm or neutral paper. Establish a light graphite or pale colored-pencil construction, then model each object with short directional hatch that follows its surface. Layer several related pencil hues rather than selecting one digital local color, allowing lower marks and paper tooth to remain visible. Increase pressure gradually in shadows and focal features; reserve full burnishing for a few highlights, eyes, edges, or polished objects so most of the sheet stays breathable. Use darker complementary pencils for accents instead of black everywhere and allow occasional overshoot, sharpened points, blunt broad strokes, erased lifts, and hand corrections. Animate the drawing in plausible passes—construction, local color, deepening, detail, and selected burnish—then hold with tiny living motion.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

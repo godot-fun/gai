@@ -9,7 +9,6 @@ Jointed red paper cutouts animate on a light ground, with carved voids functioni
 - Collection: Lemo Opuscar
 - Medium: HTML animation, composited media, SVG, Canvas, or WebGL
 - Best for: Chinese folk stories, festivals, family, and symbolic transformation
-- Complexity: Advanced
 
 ## Signature Features
 
@@ -22,16 +21,7 @@ Jointed red paper cutouts animate on a light ground, with carved voids functioni
 
 Create a polished visual narrative in the **Red Window Paper Cut** style. Design bold connected silhouettes with lace-like interior cuts, animate hinges and sliding layers, and let light through the voids become the secondary image.
 
-Translate the user's material into this visual grammar rather than copying source examples. Preserve supplied wording, evidence, and attribution; select an implementation appropriate to the material.
-
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, pacing, palette emphasis, and implementation method.
-
 ## Avoid
 
 - Choose **Layered Paper Cut** for a culturally neutral stacked-paper world.
 - Multicolor collage, detached confetti shapes, soft painted edges, deep 3D extrusion, or generic decorative Chinese motifs.
-- Never invent documents, measurements, quotations, sources, or factual evidence.
-- Do not use surface effects as a substitute for narrative structure.
-

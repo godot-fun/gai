@@ -8,7 +8,7 @@ A bright symmetrical illustrated world interrupted by a distinctly separate laye
 
 - Collection: Academy Award Film Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A bright symmetrical illustrated world interrupted by a distinctly separate layer of degraded late-1990s home video.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A bright symmetrical illustrated world interrupted by a distinctly separate laye
 ## Style Prompt
 
 Use two visual modes, never a hybrid frame. For most of the sequence, present a clean, bright, frontal illustration: the lead centered before a home, workplace, garden, or meaningful setting in strict symmetry. Build shapes from two or three softly joined value layers and fill the environment with trim, shrubs, flowers, and tree crowns assembled from many small leaf clusters. Keep daylight luminous under all conditions, shifting toward gold at sunset but never becoming murky. Use a strong red door or comparable architectural accent, white trim, saturated greens, warm grading, fine grain, and a mild vignette. To change modes, accumulate curling red petals or autumn leaves until a one-second gust completely covers the lens and hides the cut. The secondary mode is degraded late-1990s consumer DV of the same world: soft low resolution, chroma bleed, block artifacts, interlace lines, noise, exposure breathing, greenish shadows, and simple generic REC, battery, and date marks. Use one mode per frame and push slowly in either.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

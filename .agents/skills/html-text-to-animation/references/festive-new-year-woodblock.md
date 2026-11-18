@@ -8,7 +8,7 @@ A bold folk print of celebration, abundance, lanterns, couplets, auspicious obje
 
 - Collection: Chinese Art Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A bold folk print of celebration, abundance, lanterns, couplets, auspicious objects, and visible carved registration.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A bold folk print of celebration, abundance, lanterns, couplets, auspicious obje
 ## Style Prompt
 
 Design a celebratory folk scene around a doorway, courtyard, table, procession, or household altar. Use a warm paper ground, strong black carved contour, and a compact set of red, yellow, green, and blue plates. Keep forms broad and readable, with knife-cut corners, chipped line endings, small under-inked gaps, and slight registration drift. Include red lanterns and paired vertical couplets when architecturally appropriate, but write short meaningful text in the user's language rather than decorative gibberish. Add auspicious objects related to the subject—flowers, fruit, fish, grain, toys, tools, animals, or gifts—and give every figure a specific action and expression. Balance the composition broadly around a center while allowing hands, ribbons, animals, and props to create lively asymmetry. Reveal black key, color plates, and final red accents in succession.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

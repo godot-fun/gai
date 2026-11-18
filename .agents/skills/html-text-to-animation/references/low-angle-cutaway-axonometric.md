@@ -8,7 +8,7 @@ A continuous vector architectural section exposes connected rooms, terrain, or m
 
 - Collection: Academy Award Film Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A continuous vector architectural section exposes connected rooms, terrain, or machinery through a low-angle oblique projection and a single tracked route.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A continuous vector architectural section exposes connected rooms, terrain, or m
 ## Style Prompt
 
 Draw a cutaway using a low-angle oblique construction rather than a conventional thirty-degree isometric. Aim the cut face almost directly at the viewer along a near-horizontal axis and send depth back around forty-two degrees at half scale. Remove the roof and nearest wall so the cut passes through the actual location of interest—building, vessel, hill, tower, machine, or stacked landscape. Fill cut concrete near-black with visible aggregate and soil with forty-five-degree hatch plus small stones. Hold all visible edges at one device-pixel dark-grey weight regardless of zoom. Use pale daylight and a restrained material palette of concrete, oak, charcoal, pine green, white wall, grass, and translucent blue water. Furnish every visible room or compartment and add simple but specific small figures. At night, multiply the overall view by a modest moon blue and restore occupied rooms to warm light. Follow the lead along one continuous route while the camera rises and falls across two or three connected spaces; finish with the full cutaway filling most of the frame.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

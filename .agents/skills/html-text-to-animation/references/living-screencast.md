@@ -9,7 +9,6 @@ A believable high-resolution screen recording contains a low-resolution mascot t
 - Collection: Lemo Opuscar
 - Medium: HTML animation, composited media, SVG, Canvas, WebGL, or generated visual assets
 - Best for: product walkthroughs, onboarding, and playful feature education
-- Complexity: Advanced
 
 ## Signature Features
 
@@ -24,12 +23,7 @@ Create a polished visual narrative in the **Living Screencast** style. Record a 
 
 Adapt the user's material to this grammar without copying source examples. Preserve supplied wording and factual attribution, and choose an implementation that supports the defining behavior.
 
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, pacing, palette emphasis, and implementation method.
-
 ## Avoid
 
 - Fake UI, mascot motion unrelated to features, constant cursor wandering, or decorative gamification that obscures the task.
-- Do not use surface effects as a substitute for narrative structure.
 - Never invent evidence, measurements, quotations, or sources.

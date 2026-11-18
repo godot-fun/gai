@@ -8,7 +8,7 @@ A kinetic 1970s comic page with brush-black anatomy, exaggerated machinery, four
 
 - Collection: Academy Award Film Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A kinetic 1970s comic page with brush-black anatomy, exaggerated machinery, four-color dots, hand lettering, and panel-to-panel camera travel.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A kinetic 1970s comic page with brush-black anatomy, exaggerated machinery, four
 ## Style Prompt
 
 Lay out a complete sequential page with varied panel sizes, clear reading order, and at least one dominant action panel. Ink with a loaded brush: tapered contours, abrupt weight changes, broad black shadows, expressive faces, and machinery built from energetic interlocking forms rather than smooth tubes. Push perspective aggressively when action demands it and use clusters of black circular energy forms, speed lines, debris, and squared hand-drawn sound effects to direct force. Print cyan, magenta, yellow, and black through visible forty-five-degree halftones on fibrous yellowed newsprint, with slight plate drift, dot gain, and a soft shadow at the page gutter. Letter dialogue and captions by hand in the user's language, keeping them concise and panel-specific. Move the camera from establishing panel to detail panel, slide across a tier, and push close enough that dots briefly become pop geometry before resolving into the next image.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

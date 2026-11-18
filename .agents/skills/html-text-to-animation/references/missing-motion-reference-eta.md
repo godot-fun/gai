@@ -8,7 +8,7 @@ The corresponding source file is an empty placeholder and contains no style name
 
 - Collection: Motion Styles
 - Medium: Unspecified
-- Source status: Empty placeholder
+- Best for: The corresponding source file is an empty placeholder and contains no style name, description, or prompt to review.
 
 ## Signature Features
 
@@ -17,10 +17,6 @@ The corresponding source file is an empty placeholder and contains no style name
 ## Style Prompt
 
 No prompt can be responsibly reconstructed from the empty source file.
-
-## Customizable Elements
-
-- None until source material is supplied.
 
 ## Avoid
 

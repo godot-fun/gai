@@ -9,7 +9,6 @@ Translucent carved-hide puppets perform against a cotton screen lit from behind 
 - Collection: Lemo Opuscar
 - Medium: HTML animation, composited media, SVG, Canvas, or WebGL
 - Best for: folklore, myth, historical allegory, and ceremonial storytelling
-- Complexity: Advanced
 
 ## Signature Features
 
@@ -22,16 +21,7 @@ Translucent carved-hide puppets perform against a cotton screen lit from behind 
 
 Create a polished visual narrative in the **Chinese Shadow Theatre** style. Stage profiles and overlapping silhouettes like a live performance. Move joints with measured rod-driven arcs, let color deepen where layers overlap, and use side entrances rather than camera cuts.
 
-Translate the user's material into this visual grammar rather than copying source examples. Preserve supplied wording, evidence, and attribution; select an implementation appropriate to the material.
-
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, pacing, palette emphasis, and implementation method.
-
 ## Avoid
 
 - Choose **Wayang Kulit Shadow Performance** for Indonesian epic staging, or **Ottoman Shadow Comedy** for dialogue-led comic performance.
 - Opaque black silhouettes, 3D characters, modern neon backlight, invisible articulation, or frantic puppet motion.
-- Never invent documents, measurements, quotations, sources, or factual evidence.
-- Do not use surface effects as a substitute for narrative structure.
-

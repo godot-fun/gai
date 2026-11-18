@@ -9,7 +9,6 @@ Environment, pain point, solution, and benefit form a four-part product story th
 - Collection: Motion Styles
 - Medium: HTML animation, SVG, Canvas, WebGL, or composited media
 - Best for: new tools, skills, products, and service introductions
-- Complexity: Moderate to advanced
 
 ## Signature Features
 
@@ -22,14 +21,6 @@ Environment, pain point, solution, and benefit form a four-part product story th
 
 Create a polished visual narrative in the **Four-Part Launch Film** style. Give each section a distinct visual function while carrying one recurring motif across all four; keep the logo reveal short and earned.
 
-Adapt the subject, copy, duration, aspect ratio, and implementation method while preserving the defining narrative and motion logic. Keep supplied text unchanged unless rewriting is requested.
-
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, palette, pacing, and implementation method.
-
 ## Avoid
 
-- Do not copy sample brands, characters, or wording from the source material.
-- Do not add motion that has no explanatory, rhythmic, or emotional purpose.
-- Preserve readability and one dominant idea per beat.
+- Avoid opening with an unsupported product claim, treating the solution as a static beauty shot, or attaching an unearned logo ending.

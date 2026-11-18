@@ -9,7 +9,6 @@ Letter pairs negotiate negative space through measured shifts, rotation, and sca
 - Collection: Typography and Language Systems
 - Medium: HTML, SVG, Canvas, WebGL, or composited media
 - Best for: type design, balance, visual rhythm, and refined title sequences
-- Complexity: Moderate to advanced
 
 ## Signature Features
 
@@ -23,14 +22,7 @@ Create a polished HTML animation in the **Optical Kerning Ballet** style. Use a 
 
 Adapt duration, aspect ratio, hierarchy, and annotation without changing supplied wording. Verify every character, pronunciation, encoding, and reading convention used by the effect.
 
-## Customizable Elements
-
-- Adjust type family, scale, spacing, line length, pacing, annotation depth, and the balance between primary reading and structural explanation.
-- Change typographic scale, neutral surface, accent color, and motion amplitude while preserving valid glyphs, reading order, timing, and decodability.
-
 ## Avoid
 
 - Avoid random dancing letters, uniform mathematical spacing, scaling glyphs to fake balance, excessive easing, or sacrificing word recognition.
 - Do not invent characters, pronunciations, encodings, reading conventions, or linguistic relationships to complete the composition.
-- Keep essential text readable and provide a stable reduced-motion state that preserves the final composition.
-

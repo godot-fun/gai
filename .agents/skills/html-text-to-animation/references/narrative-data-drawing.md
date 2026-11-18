@@ -9,7 +9,6 @@ Real data is drawn mark by mark on cream paper with red-blue pencil and handwrit
 - Collection: Lemo Opuscar
 - Medium: HTML animation, composited media, SVG, Canvas, or WebGL
 - Best for: research stories, change over time, comparison, and evidence-led argument
-- Complexity: Advanced
 
 ## Signature Features
 
@@ -22,16 +21,7 @@ Real data is drawn mark by mark on cream paper with red-blue pencil and handwrit
 
 Create a polished visual narrative in the **Narrative Data Drawing** style. Establish axes and units, draw values in narrative order, pause on anomalies, and add notes only when the relevant mark exists. Use camera movement to follow the data rather than decorate it.
 
-Translate the user's material into this visual grammar rather than copying source examples. Preserve supplied wording, evidence, and attribution; select an implementation appropriate to the material.
-
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, pacing, palette emphasis, and implementation method.
-
 ## Avoid
 
 - Choose **Animated Data Growth** for formal chart grammar, or **Data Physicalization** for literal objects.
 - Invented values, misleading scales, dashboard cards, simultaneous chart reveals, or annotations disconnected from evidence.
-- Never invent documents, measurements, quotations, sources, or factual evidence.
-- Do not use surface effects as a substitute for narrative structure.
-

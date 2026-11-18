@@ -9,7 +9,6 @@ A near-empty stage, masked performer, bridge entrance, and extremely economical 
 - Collection: Performance, Ritual and Living Culture
 - Medium: HTML, SVG, Canvas, WebGL, or composited media
 - Best for: ritual drama, restraint, memory, and psychological stories
-- Complexity: Moderate to advanced
 
 ## Signature Features
 
@@ -21,16 +20,7 @@ A near-empty stage, masked performer, bridge entrance, and extremely economical 
 
 Create a polished HTML animation in the **Noh Stage Minimalism** style. Preserve the polished square stage, bridge entrance, pine backdrop, masked focal performer, and broad empty space. Use extremely measured walking, fan gestures, turns, and long holds; keep a respectful frontal camera and let time accumulate. Treat stage, material, performer, audience viewpoint, and timing as one coherent form; verify culturally specific features before using them. Keep typography in respectful editorial framing or authentic program-like contexts, never over faces, gestures, sacred objects, or primary craft detail. Let the performance's entrance, gesture, rhythm, object handling, and audience relationship determine transitions instead of using generic spectacle.
 
-Adapt subject, wording, duration, and frame format without collapsing distinct traditions. Preserve supplied text and identify cultural meanings only when they are verified and relevant.
-
-## Customizable Elements
-
-- Adjust episode, performer count, stage scale, pacing, editorial context, and the balance between full performance view and material detail.
-- Change secondary scenery, program typography, lighting intensity, and camera distance while preserving the named tradition's material and performance logic.
-
 ## Avoid
 
 - Avoid busy scenery, naturalistic facial animation, fast cutting, decorative fog, or mixing unrelated Japanese theater conventions.
 - Do not imitate cultural identity through generic ornament, invented symbols, unrelated regional motifs, or mixed traditions.
-- Keep essential text readable and provide a stable reduced-motion state that preserves the final composition.
-

@@ -9,7 +9,6 @@ Recovered camcorder tapes explore empty fluorescent spaces where posted rules cr
 - Collection: Lemo Opuscar
 - Medium: HTML animation, composited media, SVG, Canvas, WebGL, or generated visual assets
 - Best for: uncanny architecture, procedural horror, isolation, and implied threat
-- Complexity: Advanced
 
 ## Signature Features
 
@@ -24,12 +23,7 @@ Create a polished visual narrative in the **Liminal Found Footage** style. Move 
 
 Adapt the user's material to this grammar without copying source examples. Preserve supplied wording and factual attribution, and choose an implementation that supports the defining behavior.
 
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, pacing, palette emphasis, and implementation method.
-
 ## Avoid
 
 - Visible monster showcases, constant glitch, random gore, dramatic score, or rules with no consequence.
-- Do not use surface effects as a substitute for narrative structure.
 - Never invent evidence, measurements, quotations, or sources.

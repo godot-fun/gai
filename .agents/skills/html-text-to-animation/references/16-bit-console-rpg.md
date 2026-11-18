@@ -9,7 +9,6 @@ A film behaves like a mid-1990s role-playing game with fixed resolution, indexed
 - Collection: Lemo Opuscar
 - Medium: HTML animation, composited media, SVG, Canvas, WebGL, or generated visual assets
 - Best for: quests, progress, decisions, character growth, and nostalgic systems
-- Complexity: Advanced
 
 ## Signature Features
 
@@ -24,14 +23,8 @@ Create a polished visual narrative in the **16-Bit Console RPG** style. Structur
 
 Adapt the user's material to this grammar without copying source examples. Preserve supplied wording and factual attribution, and choose an implementation that supports the defining behavior.
 
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, pacing, palette emphasis, and implementation method.
-
 ## Avoid
 
 - Choose **Sixteen-Bit RPG Briefing** for information delivery, or **Sixteen-Bit Quest Run** for continuous action.
 - Mixed pixel scales, anti-aliasing, menus with no consequence, modern UI, or nostalgia overlays without game behavior.
-- Do not use surface effects as a substitute for narrative structure.
 - Never invent evidence, measurements, quotations, or sources.
-

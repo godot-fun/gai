@@ -9,7 +9,6 @@ Bid and ask depth shifts around a central price while trades consume liquidity i
 - Collection: Interfaces and Information Systems
 - Medium: HTML, SVG, Canvas, WebGL, or composited media
 - Best for: markets, supply and demand, volatility, and transactional systems
-- Complexity: Moderate to advanced
 
 ## Signature Features
 
@@ -21,16 +20,7 @@ Bid and ask depth shifts around a central price while trades consume liquidity i
 
 Create a polished HTML animation in the **Financial Order-Book Pulse** style. Center the current price between stacked bid and ask depth, recent trades, spread, and cumulative liquidity. Let limit orders enter, cancel, and be consumed at discrete price levels; move the midpoint only when available depth changes. Use a disciplined operational surface with color assigned consistently to status, confidence, ownership, or risk. Set typography in a compact UI sans serif or monospaced face; align values, units, timestamps, and labels to a stable grid. Organize the message around the operational decision so every state change, alert, route, or dependency has a readable cause.
 
-Adapt subject matter, wording, duration, and aspect ratio to the user's material. Preserve supplied text unless rewriting is requested, and simplify secondary detail before compromising the defining construction logic.
-
-## Customizable Elements
-
-- Adjust scenario, data density, update cadence, annotation depth, alert severity, and the balance between overview and inspection.
-- Change layout, status palette, map or graph scale, and viewpoint without breaking units, chronology, topology, or state semantics.
-
 ## Avoid
 
 - Avoid casino styling, random bar pulsing, guaranteed-profit implications, or price motion unrelated to executed orders.
 - Do not add dashboard chrome, alerts, metrics, or map layers that do not support the operational decision being shown.
-- Keep essential text outside dense movement and preserve a clear reduced-motion end state.
-

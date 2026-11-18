@@ -8,7 +8,7 @@ An 1980s-to-1990s cel-animation chase through elevated roads, towering city angl
 
 - Collection: Reference-Derived Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: An 1980s-to-1990s cel-animation chase through elevated roads, towering city angles, restrained light trails, and worn analog playback.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ An 1980s-to-1990s cel-animation chase through elevated roads, towering city angl
 ## Style Prompt
 
 Draw moving vehicles and people as traditional cels with pressure-sensitive dark lines, flat local color, one hard shadow step, and a few sharply placed highlights. Paint the city separately with dense gouache-like windows, elevated roads, signs, barriers, and upward-looking architecture. Keep the night palette in deep navy, charcoal, sodium amber, restrained cyan, and red tail lights. Convey speed through rapidly passing rail posts, lane markings, road texture, hair, clothing, and two continuous tail-light streaks; keep the main vehicle readable rather than smearing the whole image. Use low oblique angles, tracking views, and brief upward reveals of buildings. Finish as an old tape playback with mild scan lines, slight red-blue channel misalignment, fine luma noise, rare horizontal disturbance, and modest softness—never enough to destroy the drawing.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

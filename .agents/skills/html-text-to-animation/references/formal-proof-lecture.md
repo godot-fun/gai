@@ -8,7 +8,7 @@ A dark textbook-like argument proceeds through numbered lemmas, restrained diagr
 
 - Collection: Code Video Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A dark textbook-like argument proceeds through numbered lemmas, restrained diagrams, term-by-term equations, citations, and a final therefore statement with QED.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A dark textbook-like argument proceeds through numbered lemmas, restrained diagr
 ## Style Prompt
 
 Structure the material as a formal proof. State the proposition first, list only the assumptions required, then devote one screen or region to each numbered lemma. On a near-black static field with a faint off-center glow, use clean typography, thin-stroke diagrams, and a restrained color system in which each variable or concept keeps the same hue throughout. Build equations one term at a time and animate a chart only when it supplies evidence for the current lemma. Place small dim citations or source notes in a consistent corner. At each step, explicitly connect the result to the next claim rather than merely presenting facts. Conclude by combining the lemmas into one therefore statement and place a QED mark only if the claim has actually been established. Maintain a steady metronomic rhythm and no camera movement.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

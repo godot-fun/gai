@@ -9,7 +9,6 @@ Thousands of flexible strands carry pulses of light through a woven luminous vol
 - Collection: Light and Optical Materials
 - Medium: HTML, SVG, Canvas, WebGL, or composited media
 - Best for: connectivity, communication, neural metaphors, and immersive technology
-- Complexity: Moderate to advanced
 
 ## Signature Features
 
@@ -21,16 +20,6 @@ Thousands of flexible strands carry pulses of light through a woven luminous vol
 
 Create a polished HTML animation in the **Fiber-Optic Light Weave** style. Build a dense bundle of hair-thin dark fibers with luminous tips and a few visible woven crossings; use black, deep blue, and restrained cyan, violet, and warm-white pulses. Launch packets from distinct inputs, route them through bends, and let only endpoints flare; track along the bundle before pulling back to expose network topology. Use monospaced micro-labels at ports and a clean grotesk headline outside the fiber mass. Make every transition arise from the optical or scientific process itself, and preserve enough negative space for the supplied message to remain primary.
 
-Adapt the subject and duration without weakening the causal behavior that distinguishes this style. Keep supplied wording unchanged unless rewriting is requested, and label measurements or scientific claims only when the user provides reliable values.
-
-## Customizable Elements
-
-- Adjust subject matter, text, aspect ratio, duration, field density, annotation depth, and the relative prominence of the central phenomenon.
-- Vary palette intensity and environmental detail only within the physical logic described above; choose SVG, Canvas, WebGL, or layered CSS according to the required depth.
-
 ## Avoid
 
 - Avoid thick laser beams, every strand glowing continuously, sparks, tangled paths with no endpoints, or rapid nightclub color changes.
-- Keep labels, legends, and body text outside high-frequency detail or intense highlights.
-- Do not substitute a generic glow, particle field, or slideshow for the named phenomenon.
-

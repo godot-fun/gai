@@ -9,7 +9,6 @@ A real book opens on a desk and flat white-bordered actors perform among paper s
 - Collection: Lemo Opuscar
 - Medium: HTML animation, composited media, SVG, Canvas, WebGL, or generated visual assets
 - Best for: storybook scenes, theatre, education, and handcrafted transitions
-- Complexity: Advanced
 
 ## Signature Features
 
@@ -24,12 +23,7 @@ Create a polished visual narrative in the **Paper Pop-Up Stage** style. Show pag
 
 Adapt the user's material to this grammar without copying source examples. Preserve supplied wording and factual attribution, and choose an implementation that supports the defining behavior.
 
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, pacing, palette emphasis, and implementation method.
-
 ## Avoid
 
 - Floating paper with no mechanism, deep CGI worlds, invisible folds, glossy print, or arbitrary page turns.
-- Do not use surface effects as a substitute for narrative structure.
 - Never invent evidence, measurements, quotations, or sources.

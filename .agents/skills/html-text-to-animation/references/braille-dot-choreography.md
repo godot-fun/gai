@@ -9,7 +9,6 @@ Six-dot cells rise and settle into valid Braille characters with tactile spacing
 - Collection: Typography and Language Systems
 - Medium: HTML, SVG, Canvas, WebGL, or composited media
 - Best for: accessibility, language systems, touch, and inclusive design
-- Complexity: Moderate to advanced
 
 ## Signature Features
 
@@ -23,14 +22,7 @@ Create a polished HTML animation in the **Braille Dot Choreography** style. Use 
 
 Adapt duration, aspect ratio, hierarchy, and annotation without changing supplied wording. Verify every character, pronunciation, encoding, and reading convention used by the effect.
 
-## Customizable Elements
-
-- Adjust type family, scale, spacing, line length, pacing, annotation depth, and the balance between primary reading and structural explanation.
-- Change typographic scale, neutral surface, accent color, and motion amplitude while preserving valid glyphs, reading order, timing, and decodability.
-
 ## Avoid
 
 - Avoid random dot matrices, decorative constellations, invalid contractions, inaccessible low contrast, or treating Braille as a cipher.
 - Do not invent characters, pronunciations, encodings, reading conventions, or linguistic relationships to complete the composition.
-- Keep essential text readable and provide a stable reduced-motion state that preserves the final composition.
-

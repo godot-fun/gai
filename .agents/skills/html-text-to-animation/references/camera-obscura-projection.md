@@ -9,7 +9,6 @@ An exterior scene enters a dark room through a tiny aperture and appears inverte
 - Collection: Experimental Camera and Image Processes
 - Medium: HTML, SVG, Canvas, WebGL, or composited media
 - Best for: optics, observation, history, and inside–outside relationships
-- Complexity: Moderate to advanced
 
 ## Signature Features
 
@@ -21,16 +20,7 @@ An exterior scene enters a dark room through a tiny aperture and appears inverte
 
 Create a polished HTML animation in the **Camera Obscura Projection** style. Darken a real room, admit exterior light through one small aperture, and project an inverted low-contrast view across interior surfaces. Open the aperture gradually, let eyes adapt, and track the sun or street outside while the projection remains optically inverted. Use a tonal curve, grain or block structure, edge behavior, and color response native to the named capture, encoding, or darkroom process. Frame typography as a caption, contact-sheet note, instrument readout, or title outside the image-forming process. Let the capture, exposure, encoding, or feedback mechanism determine transitions instead of applying generic glitch or filter presets.
 
-Adapt subject, wording, duration, and frame format without weakening the image-forming process. Preserve supplied text unless rewriting is requested, and label technical settings only when they are known.
-
-## Customizable Elements
-
-- Adjust subject, capture interval, frame format, process intensity, annotation depth, and the balance between apparatus, intermediate state, and final image.
-- Change exposure, palette, grain, sampling rate, or processing strength only within the named technique; choose Canvas, WebGL, SVG, CSS, or prepared imagery to reproduce its artifacts.
-
 ## Avoid
 
 - Avoid upright projector video, glowing screens, impossible brightness, sharp focus across uneven walls, or a free-moving viewpoint.
 - Do not imitate a photographic, optical, or compression process with unrelated glitch decoration or a generic color filter.
-- Keep essential text readable and provide a stable reduced-motion state that preserves the final composition.
-

@@ -8,7 +8,7 @@ A fully underwater 3D room of teal depth, moving caustics, falling shafts, bubbl
 
 - Collection: Academy Award Film Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A fully underwater 3D room of teal depth, moving caustics, falling shafts, bubbles, and a few substantial warm practical lights.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A fully underwater 3D room of teal depth, moving caustics, falling shafts, bubbl
 ## Style Prompt
 
 Submerge the entire chosen world, even if that means turning an ordinary room into a flooded chamber or an outdoor subject into a drowned ruin. Use deep green-black distance, teal fog, and hemispheric illumination that is lighter above and darker below; attenuate red before other wavelengths. Put one strong source beyond the water surface and project moving caustic cells across the floor, walls, and lead, making nearby cells broad enough to read and letting them deform with surface waves. Spread volumetric shafts downward while keeping all four frame edges dark. Add bubbles of varied size, suspended matter, slow fabric or plant drift, and a visibly rippling surface from low angles. Include one to three genuine warm-gold lamps, windows, or fixtures, with at least one source broad enough to balance the teal field; supplement sparingly with cyan bioluminescence. Use smooth shading, ambient occlusion, shallow focus, moderate bloom, grain, and a slow low-angle push toward a half-frame-height subject placed beside the light.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

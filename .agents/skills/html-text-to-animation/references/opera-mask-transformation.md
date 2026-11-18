@@ -8,7 +8,7 @@ A frontal theatrical portrait uses codified mask geometry, bold color symbolism,
 
 - Collection: Chinese Art Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A frontal theatrical portrait uses codified mask geometry, bold color symbolism, costume, percussion, and controlled changes of identity.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A frontal theatrical portrait uses codified mask geometry, bold color symbolism,
 ## Style Prompt
 
 Center a frontal theatrical head and build its mask from interlocking geometric zones that follow brow, eye socket, nose bridge, cheek, forehead, and mouth. Keep the primary structure symmetrical while allowing tiny hand-painted variation. Assign colors intentionally according to the character traits or forces in the user's story; do not scatter the full palette without meaning. Extend the design into a specific headdress, beard or tassel system, collar, embroidered costume, and dark stage curtain so the face does not float as a logo. Reveal paint in ordered regions on percussion beats, let eyes and head direction remain controlled, and use a sleeve, fan, hand, or curtain to transform into a second mask when the narrative changes identity. Keep highlights painted and theatrical rather than glossy 3D.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

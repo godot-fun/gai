@@ -9,7 +9,6 @@ Marks, objects, gesture, and spoken context build and erase a ground-based spati
 - Collection: Performance, Ritual and Living Culture
 - Medium: HTML, SVG, Canvas, WebGL, or composited media
 - Best for: place, journeys, oral explanation, and ephemeral mapping
-- Complexity: Moderate to advanced
 
 ## Signature Features
 
@@ -21,16 +20,7 @@ Marks, objects, gesture, and spoken context build and erase a ground-based spati
 
 Create a polished HTML animation in the **Aboriginal Sand Narrative** style. Use non-sacred, non-community-specific marks, natural ground texture, hand gesture, objects, and clearly contextualized spatial explanation. Build and erase paths as the narration advances, keep the camera overhead or respectfully oblique, and avoid fixing ephemeral marks as universal symbols. Treat stage, material, performer, audience viewpoint, and timing as one coherent form; verify culturally specific features before using them. Keep typography in respectful editorial framing or authentic program-like contexts, never over faces, gestures, sacred objects, or primary craft detail. Let the performance's entrance, gesture, rhythm, object handling, and audience relationship determine transitions instead of using generic spectacle.
 
-Adapt subject, wording, duration, and frame format without collapsing distinct traditions. Preserve supplied text and identify cultural meanings only when they are verified and relevant.
-
-## Customizable Elements
-
-- Adjust episode, performer count, stage scale, pacing, editorial context, and the balance between full performance view and material detail.
-- Change secondary scenery, program typography, lighting intensity, and camera distance while preserving the named tradition's material and performance logic.
-
 ## Avoid
 
 - Avoid copying sacred or restricted designs, calling marks pan-Aboriginal, invented symbolism, souvenir aesthetics, or using the style without cultural context.
 - Do not imitate cultural identity through generic ornament, invented symbols, unrelated regional motifs, or mixed traditions.
-- Keep essential text readable and provide a stable reduced-motion state that preserves the final composition.
-

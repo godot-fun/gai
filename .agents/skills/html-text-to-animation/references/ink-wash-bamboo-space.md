@@ -8,7 +8,7 @@ A sparse monochrome wash world where absorbent paper, wet-to-dry ink, bamboo rhy
 
 - Collection: Chinese Art Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A sparse monochrome wash world where absorbent paper, wet-to-dry ink, bamboo rhythm, mist, and untouched space carry more meaning than detail.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A sparse monochrome wash world where absorbent paper, wet-to-dry ink, bamboo rhy
 ## Style Prompt
 
 Begin with the composition's empty paper and protect it deliberately. Place only a few weighted forms—bamboo, rocks, bank, roof, figure, branch, or distant ridge—so the unpainted space becomes sky, mist, water, and breath. Use a full ink range: pale diluted wash for distance, layered middle washes for volume, concentrated black for one or two anchors. Let wet passages feather naturally into absorbent paper and form tide lines; use dry, split brush for bark, stone, grass, and calligraphic edges. Paint bamboo joints, leaves, and stems with changes of pressure and speed rather than repeated vector shapes. Animate slowly: ink enters paper, fog reveals and conceals depth, leaves bend, water carries a broken reflection, or a bird crosses once. Keep color absent or permit one seal-red accent only.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

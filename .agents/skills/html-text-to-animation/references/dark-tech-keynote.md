@@ -9,7 +9,6 @@ A near-black launch film makes the interface itself the hero through grid precis
 - Collection: Lemo Opuscar
 - Medium: HTML animation, composited media, SVG, Canvas, WebGL, or generated visual assets
 - Best for: software launches, AI tools, premium interfaces, and technical milestones
-- Complexity: Advanced
 
 ## Signature Features
 
@@ -24,12 +23,7 @@ Create a polished visual narrative in the **Dark Tech Keynote** style. Reveal UI
 
 Adapt the user's material to this grammar without copying source examples. Preserve supplied wording and factual attribution, and choose an implementation that supports the defining behavior.
 
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, pacing, palette emphasis, and implementation method.
-
 ## Avoid
 
 - Generic neon HUDs, many accents, floating cards, excessive glow, or interface motion that ignores product behavior.
-- Do not use surface effects as a substitute for narrative structure.
 - Never invent evidence, measurements, quotations, or sources.

@@ -8,7 +8,7 @@ A drafting-table cyanotype specifies the subject through orthographic views, sec
 
 - Collection: Code Video Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A drafting-table cyanotype specifies the subject through orthographic views, sections, dimensions, numbered callouts, and a disciplined title block.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A drafting-table cyanotype specifies the subject through orthographic views, sec
 ## Style Prompt
 
 Treat the frame as a real engineering sheet lying on a drafting table. Use mottled Prussian blue with fold marks, exposure variation, and pale edge wear. Draw the subject in sharp printed white using a hierarchy of line weights: heavy cut or outer contour, medium visible edge, fine dimensions and hatch, dashed hidden geometry, and centerlines. Include at least two coordinated views—plan, elevation, section, or exploded detail—plus dimension chains, circled callouts, material notes, scale, revision mark, and a functional title block. Every annotation must describe something visible and meaningful. Animate as a drafting process: construction lines establish axes, main geometry resolves, dimensions extend, leaders and numbers arrive, then one detail circle enlarges as the camera advances. Preserve cyanotype softness at line edges without neon glow.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

@@ -9,7 +9,6 @@ A small number of visible facets describe objects with crisp economical form. Ch
 - Collection: Cartoon Styles
 - Medium: HTML, SVG, Canvas, WebGL, or generated visual assets
 - Best for: technology, maps, abstract worlds, and structural visualization
-- Complexity: Moderate
 
 ## Signature Features
 
@@ -22,17 +21,7 @@ A small number of visible facets describe objects with crisp economical form. Ch
 
 Create a polished HTML animation in the **Low-Poly 3D** style. Let facets catch broad light shifts and use slow camera movement to clarify form. Keep geometry intentional rather than merely low resolution.
 
-Adapt the subject, wording, duration, aspect ratio, and rendering technique to the user's material. Preserve the defining visual grammar and keep supplied text unchanged unless rewriting is requested.
-
-## Customizable Elements
-
-- Subject, wording, duration, aspect ratio, palette emphasis, and scene content.
-- Use HTML, CSS, SVG, Canvas, WebGL, or generated visual assets as appropriate.
-
 ## Avoid
 
 - Choose **Toon-Shaded 3D** for smooth models with cel bands, or **Cinematic Rounded 3D** for soft sculpted character appeal.
 - Smooth subdivision, detailed textures, noisy triangulation, glossy realism, or too many tiny facets.
-- Do not copy example brands, characters, or sample copy from the source material.
-- Do not sacrifice hierarchy or readability for surface decoration.
-

@@ -9,7 +9,6 @@ Bold headings, handwritten marker notes, underlines, and occasional dark-card in
 - Collection: Motion Styles
 - Medium: HTML animation, SVG, Canvas, WebGL, or composited media
 - Best for: methods, lists, advice, and practical instruction
-- Complexity: Moderate to advanced
 
 ## Signature Features
 
@@ -21,14 +20,6 @@ Bold headings, handwritten marker notes, underlines, and occasional dark-card in
 
 Create a polished visual narrative in the **Paper Note Explainer** style. Establish the main heading, add notes in reading order, use one highlighter family, and reserve the dark inversion for a genuine change in emphasis.
 
-Adapt the subject, copy, duration, aspect ratio, and implementation method while preserving the defining narrative and motion logic. Keep supplied text unchanged unless rewriting is requested.
-
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, palette, pacing, and implementation method.
-
 ## Avoid
 
-- Do not copy sample brands, characters, or wording from the source material.
-- Do not add motion that has no explanatory, rhythmic, or emotional purpose.
-- Preserve readability and one dominant idea per beat.
+- Avoid illegible handwriting, simultaneous annotations, decorative underlining, or dark-card interruptions without a genuine change in emphasis.

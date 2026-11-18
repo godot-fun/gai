@@ -8,7 +8,7 @@ A brush writes meaningful text stroke by stroke with authentic order, pressure, 
 
 - Collection: Chinese Art Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A brush writes meaningful text stroke by stroke with authentic order, pressure, ink load, absorption, rhythm, and compositional seal.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A brush writes meaningful text stroke by stroke with authentic order, pressure, 
 ## Style Prompt
 
 Choose a short meaningful phrase in the user's requested language and verify its correct characters and stroke order before animation. Show the brush tip contacting absorbent paper, pressing to broaden, turning through joints, lifting to taper, pausing to pool ink, and accelerating to create dry flying-white texture. Vary ink load naturally across the phrase: early strokes can be wet and dense, later strokes drier, but never random. Let feathering occur at slow, wet passages and preserve crisp broken edges at fast releases. Arrange characters as a balanced vertical column, paired columns, or horizontal line with deliberate spacing and a clear visual center. Let the camera follow the active brush without hiding the growing composition, then pull back and add one small red seal as closure.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

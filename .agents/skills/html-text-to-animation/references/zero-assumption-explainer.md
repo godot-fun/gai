@@ -9,7 +9,6 @@ A technical idea begins with familiar experience and earns each specialist term 
 - Collection: Motion Styles
 - Medium: HTML animation, SVG, Canvas, WebGL, or composited media
 - Best for: beginner science, unfamiliar tools, and public education
-- Complexity: Moderate to advanced
 
 ## Signature Features
 
@@ -21,14 +20,6 @@ A technical idea begins with familiar experience and earns each specialist term 
 
 Create a polished visual narrative in the **Zero-Assumption Explainer** style. Use example, observation, simple model, limitation, and formal name in that order; test each visual against what a first-time viewer can infer.
 
-Adapt the subject, copy, duration, aspect ratio, and implementation method while preserving the defining narrative and motion logic. Keep supplied text unchanged unless rewriting is requested.
-
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, palette, pacing, and implementation method.
-
 ## Avoid
 
-- Do not copy sample brands, characters, or wording from the source material.
-- Do not add motion that has no explanatory, rhythmic, or emotional purpose.
-- Preserve readability and one dominant idea per beat.
+- Avoid unexplained jargon, multiple conceptual leaps in one beat, introducing the formal term before the model, or examples that require specialist knowledge.

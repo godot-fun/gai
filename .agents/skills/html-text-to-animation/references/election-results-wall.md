@@ -9,7 +9,6 @@ Verified counts fill districts, seats, and proportional bars while uncertainty a
 - Collection: Interfaces and Information Systems
 - Medium: HTML, SVG, Canvas, WebGL, or composited media
 - Best for: elections, live reporting, geography, and public data
-- Complexity: Moderate to advanced
 
 ## Signature Features
 
@@ -21,16 +20,7 @@ Verified counts fill districts, seats, and proportional bars while uncertainty a
 
 Create a polished HTML animation in the **Election Results Wall** style. Combine a restrained district map, seat totals, reporting percentage, verified vote counts, and uncertainty indicators. Update only from reported batches, distinguish projected from confirmed states, and preserve previous totals for auditability. Use a disciplined operational surface with color assigned consistently to status, confidence, ownership, or risk. Set typography in a compact UI sans serif or monospaced face; align values, units, timestamps, and labels to a stable grid. Organize the message around the operational decision so every state change, alert, route, or dependency has a readable cause.
 
-Adapt subject matter, wording, duration, and aspect ratio to the user's material. Preserve supplied text unless rewriting is requested, and simplify secondary detail before compromising the defining construction logic.
-
-## Customizable Elements
-
-- Adjust scenario, data density, update cadence, annotation depth, alert severity, and the balance between overview and inspection.
-- Change layout, status palette, map or graph scale, and viewpoint without breaking units, chronology, topology, or state semantics.
-
 ## Avoid
 
 - Avoid horse-race confetti, premature calls, unlabeled color scales, or silently changing denominators.
 - Do not add dashboard chrome, alerts, metrics, or map layers that do not support the operational decision being shown.
-- Keep essential text outside dense movement and preserve a clear reduced-motion end state.
-

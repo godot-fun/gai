@@ -8,7 +8,7 @@ A quiet flat-illustration city at dusk with layered silhouettes, one rooftop sig
 
 - Collection: Reference-Derived Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A quiet flat-illustration city at dusk with layered silhouettes, one rooftop sign, seated companions, and a passing elevated train.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A quiet flat-illustration city at dusk with layered silhouettes, one rooftop sig
 ## Style Prompt
 
 Let the sky dominate with a broad dusk transition from warm peach near the horizon through rose into cool blue-violet above. Build the city from three clean flat silhouette layers: a pale far skyline, a middle layer with windows and bridges, and a dark foreground rooftop with vents, rails, antennas, tanks, and laundry or cables. Place one short original neon word or sign on the roof and use its glow sparingly. Seat one person and one animal or companion at the edge in a readable, relaxed silhouette, with small gestures rather than performance. Run an elevated train behind them, timing lit windows and structural posts to create gentle rhythm and parallax. Keep the palette limited, contours simple, and details concentrated around the rooftop. Use a slow push or lateral drift while clouds, sign light, train, hair, and tail provide micro-motion.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

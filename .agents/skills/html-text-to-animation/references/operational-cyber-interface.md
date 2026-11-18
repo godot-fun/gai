@@ -8,7 +8,7 @@ A fictional interface that behaves like a coherent instrument: layered grids, ta
 
 - Collection: Motion Graphics Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A fictional interface that behaves like a coherent instrument: layered grids, target tracking, waveform evidence, and stateful data tied to one mission.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A fictional interface that behaves like a coherent instrument: layered grids, ta
 ## Style Prompt
 
 Design the interface around one concrete operational task from the user's content. Establish a dark spatial field, a disciplined grid, and a limited luminous palette with one status color per meaning. Organize information into a clear hierarchy: primary target or object, supporting map or spatial view, one waveform or timeline, numerical evidence, system state, and a small action log. Every reticle, leader, coordinate, and graph must attach to real visible data. Animate in logical states: boot or scan, detection, acquisition, deeper analysis, warning or uncertainty, confirmation, and final resolved frame. Let panels slide or unfold only when their data becomes relevant; use subtle sweeps, ticking numbers, and cursor travel as background motion. Keep fine lines crisp, glow tight, and labels concise.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

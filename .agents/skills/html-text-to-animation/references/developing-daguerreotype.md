@@ -8,7 +8,7 @@ A cased silver portrait reveals itself slowly from a blank mirror plate, with re
 
 - Collection: Academy Award Film Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A cased silver portrait reveals itself slowly from a blank mirror plate, with restrained oxidation, polishing marks, and one translucent hand-tinted sitter.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A cased silver portrait reveals itself slowly from a blank mirror plate, with re
 ## Style Prompt
 
 Open on a nineteenth-century presentation case viewed frontally. Let its daguerreotype occupy most of the frame inside a rounded rectangular opening, surrounded by a beaded brass mat, with only a narrow border of red velvet and leather case visible. Keep the plate in neutral silver from near-black to pale metal; confine blue-violet-to-amber oxidation to a thin perimeter inside the opening. Add only subtle polishing swirls, hairline scratches, spots, and value variation. Light the sitter softly from an upper-left window against a plain studio cloth; for an outdoor subject, paint the location onto that backdrop rather than abandoning the portrait setup. Use one uninterrupted shot: push from the open case to the signature framing in about a second, then stop. Begin with blank mirror-grey metal, let dark passages appear first, and sweep a development boundary from left to right until the image is complete after several seconds. Apply translucent flat hand color only to the lead, preserving silver modeling beneath; keep lamps grey.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

@@ -9,7 +9,6 @@ An isometric three-tone diorama explains a system by opening structures and turn
 - Collection: Lemo Opuscar
 - Medium: HTML animation, composited media, SVG, Canvas, WebGL, or generated visual assets
 - Best for: systems, infrastructure, logistics, and quantitative explanation
-- Complexity: Advanced
 
 ## Signature Features
 
@@ -24,14 +23,8 @@ Create a polished visual narrative in the **Isometric System Diorama** style. Bu
 
 Adapt the user's material to this grammar without copying source examples. Preserve supplied wording and factual attribution, and choose an implementation that supports the defining behavior.
 
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, pacing, palette emphasis, and implementation method.
-
 ## Avoid
 
 - Choose **Isometric Blueprint** for technical line art, **Low-Poly Isometric Island** for an environmental world, or **Orthographic Miniature System** for projection without isometric emphasis.
 - Perspective drift, decorative buildings, floating dashboards, or numbers without visual scale.
-- Do not use surface effects as a substitute for narrative structure.
 - Never invent evidence, measurements, quotations, or sources.
-

@@ -8,7 +8,7 @@ A hybrid story world where warm paper and spare hand drawing are punctuated by a
 
 - Collection: Code Video Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A hybrid story world where warm paper and spare hand drawing are punctuated by a small 8-bit actor, dark title cards, and brief arcade states.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A hybrid story world where warm paper and spare hand drawing are punctuated by a
 ## Style Prompt
 
 Establish a warm lightly textured paper field with one thin hand-drawn horizon and only the essential ink objects needed to orient the story. Introduce a small original 8-bit mascot whose limited sprite cycles physically act out each idea—walking, lifting, pointing, failing, retrying, and celebrating—while the surrounding world stays loose and hand drawn. Use dark full-frame title cards for chapter turns and brief arcade screens for goals, counters, warnings, or results, but never let interface dominate the paper world. Match pixel scale consistently, move sprites in integer steps, and allow ink marks to become platforms, obstacles, or paths. Make transitions explicit: ink folds into a dark card, a card opens as a game screen, or the mascot exits back onto paper. Keep copy short and typography purposeful.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

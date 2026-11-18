@@ -9,7 +9,6 @@ One small object changes function across every scene, giving a mixed-style film 
 - Collection: Motion Styles
 - Medium: HTML animation, SVG, Canvas, WebGL, or composited media
 - Best for: anthologies, multi-scene explainers, and stories needing continuity
-- Complexity: Moderate to advanced
 
 ## Signature Features
 
@@ -21,14 +20,6 @@ One small object changes function across every scene, giving a mixed-style film 
 
 Create a polished visual narrative in the **Recurring Object Thread** style. Choose a simple object with a stable color or silhouette, transform it through motivated match cuts, and let each new role advance the narrative rather than merely decorate transitions.
 
-Adapt the subject, copy, duration, aspect ratio, and implementation method while preserving the defining narrative and motion logic. Keep supplied text unchanged unless rewriting is requested.
-
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, palette, pacing, and implementation method.
-
 ## Avoid
 
-- Do not copy sample brands, characters, or wording from the source material.
-- Do not add motion that has no explanatory, rhythmic, or emotional purpose.
-- Preserve readability and one dominant idea per beat.
+- Avoid disguising the recurring object beyond recognition, reusing it decoratively, or ending without recalling its opening identity.

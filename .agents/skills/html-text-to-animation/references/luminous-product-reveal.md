@@ -9,7 +9,6 @@ Soft white space, precise blue accents, glass-like materials, and continuous cam
 - Collection: Motion Styles
 - Medium: HTML animation, SVG, Canvas, WebGL, or composited media
 - Best for: interfaces, devices, tools, and polished launches
-- Complexity: Moderate to advanced
 
 ## Signature Features
 
@@ -22,14 +21,6 @@ Soft white space, precise blue accents, glass-like materials, and continuous cam
 
 Create a polished visual narrative in the **Luminous Product Reveal** style. Reveal form before features, move from exterior to interaction detail, and use clean continuous camera choreography with quiet sound cues.
 
-Adapt the subject, copy, duration, aspect ratio, and implementation method while preserving the defining narrative and motion logic. Keep supplied text unchanged unless rewriting is requested.
-
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, palette, pacing, and implementation method.
-
 ## Avoid
 
-- Do not copy sample brands, characters, or wording from the source material.
-- Do not add motion that has no explanatory, rhythmic, or emotional purpose.
-- Preserve readability and one dominant idea per beat.
+- Avoid generic glassmorphism, excessive bloom, static slide cuts, or lighting that fails to reveal material and function.

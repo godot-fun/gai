@@ -9,7 +9,6 @@ A tiny orthographic faceted world assembles block by block, with each arrival pu
 - Collection: Lemo Opuscar
 - Medium: HTML animation, composited media, SVG, Canvas, WebGL, or generated visual assets
 - Best for: systems, ecosystems, compact worlds, and modular growth
-- Complexity: Advanced
 
 ## Signature Features
 
@@ -24,14 +23,8 @@ Create a polished visual narrative in the **Low-Poly Isometric Island** style. B
 
 Adapt the user's material to this grammar without copying source examples. Preserve supplied wording and factual attribution, and choose an implementation that supports the defining behavior.
 
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, pacing, palette emphasis, and implementation method.
-
 ## Avoid
 
 - Choose **Isometric System Diorama** when processes and quantities must be explained.
 - Perspective camera drift, noisy triangulation, elastic motion everywhere, realistic textures, or additions with no spatial logic.
-- Do not use surface effects as a substitute for narrative structure.
 - Never invent evidence, measurements, quotations, or sources.
-

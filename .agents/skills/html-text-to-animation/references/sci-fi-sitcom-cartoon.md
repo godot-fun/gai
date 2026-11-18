@@ -9,7 +9,6 @@ A mismatched duo, boiling outlines, flat color, and one palette per world turn s
 - Collection: Lemo Opuscar
 - Medium: HTML animation, composited media, SVG, Canvas, WebGL, or generated visual assets
 - Best for: dialogue, odd-couple humor, portals, and absurd speculative scenarios
-- Complexity: Advanced
 
 ## Signature Features
 
@@ -24,12 +23,7 @@ Create a polished visual narrative in the **Sci-Fi Sitcom Cartoon** style. Stage
 
 Adapt the user's material to this grammar without copying source examples. Preserve supplied wording and factual attribution, and choose an implementation that supports the defining behavior.
 
-## Customizable Elements
-
-- Subject, copy, duration, aspect ratio, pacing, palette emphasis, and implementation method.
-
 ## Avoid
 
 - Direct imitation of a named show, constant action, complex rendering, interchangeable reactions, or portals used without narrative consequence.
-- Do not use surface effects as a substitute for narrative structure.
 - Never invent evidence, measurements, quotations, or sources.

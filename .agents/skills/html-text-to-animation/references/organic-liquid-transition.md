@@ -8,7 +8,7 @@ A glossy shape system that pours, merges, stretches into necks, breaks into drop
 
 - Collection: Motion Graphics Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A glossy shape system that pours, merges, stretches into necks, breaks into droplets, rebounds, and reforms into symbols or titles.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A glossy shape system that pours, merges, stretches into necks, breaks into drop
 ## Style Prompt
 
 Treat every transition as fluid behavior rather than a soft abstract blob. Launch a primary drop or sheet quickly, then let it decelerate as surface tension rounds its edge. Build wipe fronts from several differently phased bulges so no boundary remains straight. When two forms approach, bridge them gradually through a narrowing saddle and merge their mass; when a form separates, stretch a thin neck, break it cleanly, recoil both ends for a few frames, and shed smaller droplets that follow behind. On impact, flatten the drop, send a low rim outward, then recover. Use field-gradient lighting, controlled highlight, and a darker lower edge to suggest depth while preserving graphic clarity. Let the liquid reveal or assemble a meaningful symbol, package, word, or next scene.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

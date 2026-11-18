@@ -8,7 +8,7 @@ A high-energy brand explainer where one geometric world flows into the next thro
 
 - Collection: Motion Graphics Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A high-energy brand explainer where one geometric world flows into the next through object-led transitions, disciplined color, and elastic staggered motion.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A high-energy brand explainer where one geometric world flows into the next thro
 ## Style Prompt
 
 Reduce characters, environments, and ideas to clear vector geometry using a limited high-saturation palette plus cream and ink. Keep surfaces fully flat and use overlap, scale, and color rather than gradients to create hierarchy. Structure the sequence as one continuous visual journey: an object rolls, flies, expands, or wipes across frame and becomes the next scene, preserving direction and rhythm. Animate only one principal action at a time; stagger supporting entrances by a few frames. Give every arrival anticipation, modest squash or stretch, overshoot, and settle, then add secondary motion to hair, leaves, straps, or small props. Keep silhouettes readable, text brief, and negative space intentional. Build a decisive hero transformation around the latter middle of the sequence and hold the final composition with subtle living motion.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 

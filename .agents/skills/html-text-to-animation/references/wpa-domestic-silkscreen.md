@@ -8,7 +8,7 @@ A warm civic-poster language for lively groups, homes, workshops, and community 
 
 - Collection: Academy Award Film Styles
 - Medium: Cinematic HTML animation
-- Source type: visual style reference
+- Best for: A warm civic-poster language for lively groups, homes, workshops, and community action.
 
 ## Signature Features
 
@@ -21,10 +21,6 @@ A warm civic-poster language for lively groups, homes, workshops, and community 
 ## Style Prompt
 
 Reduce the scene to six opaque screen-print inks: cream for paper and light, ochre and vermilion for warm planes, teal for shadow, one dedicated focal color, and dark brown keylines printed last. Cut each later screen away from shapes that must remain light. Build shadows only by overprinting a darker ink, never by adding grey. Where a broad field needs transition, use two or three visible split-fountain steps, including an overlap color in the middle. Let every screen drift one to three pixels, with wandering stencil edges, incomplete pulls, and squeegee marks over warm rag-paper texture. Compose one or more expressive figures at half to two-thirds frame height using big geometric planes, crescent-shaped darks, and readable faces. Add a short bold capital title that belongs to the poster rather than floating above it. Reveal the print one separation at a time, then push slowly into the completed scene.
-
-## Customizable Elements
-
-Adapt the subject, setting, wording, duration, aspect ratio, and narrative emphasis. Adjust individual hues only within the palette roles defined above, and preserve the medium, composition, material behavior, and motion grammar that make the style recognizable.
 
 ## Avoid
 
