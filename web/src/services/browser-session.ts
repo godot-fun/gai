@@ -256,6 +256,7 @@ export class BrowserSession {
     await popup.waitForLoadState("domcontentloaded", { timeout: PAGE_SETTLE_TIMEOUT_MS }).catch(() => undefined);
     await installNameHelper(popup);
     this.page = popup;
+    await page.close().catch((error: unknown) => console.error("Previous browser page close failed", error));
   }
 
   private async press(page: Page, step: BrowserStep, timeout: number): Promise<void> {

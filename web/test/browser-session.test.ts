@@ -15,6 +15,7 @@ interface FakePageOptions {
   url?: string;
   popup?: Page;
   onClick?: () => void;
+  onClose?: () => void;
 }
 
 /** Minimal stand-in for the agent page; only the calls the session actually makes are implemented. */
@@ -50,7 +51,7 @@ function createFakePage(options: FakePageOptions = {}): Page {
     content: async () => options.html ?? "<html><body><p>empty</p></body></html>",
     evaluate: options.evaluate ?? (async () => []),
     locator: () => locator,
-    close: async () => undefined,
+    close: async () => { options.onClose?.(); },
   };
   pages.push(page as unknown as Page);
   return page as unknown as Page;
@@ -108,8 +109,9 @@ test("act stops the batch at the first failing step", async () => {
 
 test("act continues a batch on a popup promoted by a click", async () => {
   let popupClicks = 0;
+  let originalClosed = 0;
   const popup = createFakePage({ url: "https://popup.example/", onClick: () => { popupClicks += 1; } });
-  const session = new BrowserSession(async () => createFakePage({ popup }));
+  const session = new BrowserSession(async () => createFakePage({ popup, onClose: () => { originalClosed += 1; } }));
   const result = await session.act([
     step("click", { selector: "a[target=_blank]" }),
     step("click", { selector: "#continue" }),
@@ -117,6 +119,7 @@ test("act continues a batch on a popup promoted by a click", async () => {
   assert.equal(result.ok, true);
   assert.equal(result.url, "https://popup.example/");
   assert.equal(popupClicks, 1);
+  assert.equal(originalClosed, 1);
 });
 
 test("open serializes concurrent requests over the shared page", async () => {
