@@ -1,6 +1,6 @@
 import type { ElementHandle, Frame, Locator, Page } from "playwright-core";
 import { NAVIGATION_TIMEOUT_MS, REQUEST_TIMEOUT_MS } from "../config";
-import { errorMessage, isBlank, isErrorNamed, parseHttpUrl as tryParseHttpUrl, trimOrEmpty } from "../utils";
+import { errorMessage, isBlank, isErrorNamed, requireHttpUrl, trimOrEmpty } from "../utils";
 import { browserService, PAGE_SETTLE_TIMEOUT_MS } from "./browser-service";
 import { collectInteractiveCandidates, elementForRef, refFrame, refIndex, selectCandidates, type InteractiveCandidate } from "./interactive";
 import { extractPageContent } from "./page-content";
@@ -242,8 +242,8 @@ export class BrowserSession {
   }
 
   private async goto(page: Page, rawUrl: string, timeout: number): Promise<void> {
-    const url = parseHttpUrl(rawUrl);
-    await page.goto(url, { waitUntil: "domcontentloaded", timeout });
+    const url = requireHttpUrl(rawUrl);
+    await page.goto(url.href, { waitUntil: "domcontentloaded", timeout });
     // `load` is best effort: a chatty page keeps requests open forever and must not fail the step.
     await page.waitForLoadState("load", { timeout: Math.min(timeout, PAGE_SETTLE_TIMEOUT_MS) }).catch(() => undefined);
   }
@@ -381,12 +381,6 @@ async function waitForDocument(page: Page): Promise<void> {
 async function releaseTarget(target: ActionTarget): Promise<void> {
   if (!("dispose" in target)) return;
   await target.dispose().catch(() => undefined);
-}
-
-function parseHttpUrl(raw: string): string {
-  const url = tryParseHttpUrl(raw);
-  if (url === null) throw new Error(`url must be an absolute http or https URL, got: ${raw}`);
-  return url.href;
 }
 
 /** Playwright appends a call log full of noise; the first line is the part the model can act on. */

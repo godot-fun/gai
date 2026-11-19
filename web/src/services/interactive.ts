@@ -171,7 +171,7 @@ interface BrowserRefStore {
  */
 export function elementForRef(index: number): Element | null {
   const element = (window as unknown as BrowserRefStore).__gaiBrowserRefs?.[index];
-  return element !== undefined && element.isConnected ? element : null;
+  return element?.isConnected ? element : null;
 }
 
 /**
@@ -205,7 +205,7 @@ export function collectInteractiveCandidates(framePrefix: string): InteractiveCa
   const normalize = (raw: string): string => raw.replace(/\s+/g, " ").trim();
 
   function roleOf(element: Element): string {
-    const explicit = normalize(element.getAttribute("role") ?? "").toLowerCase().split(" ")[0] ?? "";
+    const explicit = normalize(element.getAttribute("role") ?? "").toLowerCase().split(" ")[0];
     if (explicit !== "") return explicit;
     const tag = element.tagName.toLowerCase();
     switch (tag) {
@@ -359,7 +359,7 @@ export function collectInteractiveCandidates(framePrefix: string): InteractiveCa
         });
         refs.push(element);
       }
-      const landmark = LANDMARKS[role === "" ? tag : role] ?? LANDMARKS[tag];
+      const landmark = LANDMARKS[role] ?? LANDMARKS[tag];
       if (landmark !== undefined) {
         regionRole = landmark;
         regionName = clip(explicitName(element), MAX_REGION_CHARS);

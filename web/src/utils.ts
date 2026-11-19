@@ -59,3 +59,10 @@ export function parseHttpUrl(raw: string): URL | null {
     return null;
   }
 }
+
+/** Parses an absolute HTTP(S) URL and throws when the value is invalid. */
+export function requireHttpUrl(raw: string): URL {
+  const url = parseHttpUrl(raw);
+  if (url === null) throw new Error(`url must be an absolute http or https URL, got: ${raw}`);
+  return url;
+}

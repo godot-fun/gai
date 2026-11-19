@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { errorMessage, isBlank, isErrorNamed, isOneOf, parseHttpUrl, sanitizeName, trimOrEmpty } from "../src/utils";
+import { errorMessage, isBlank, isErrorNamed, isOneOf, parseHttpUrl, requireHttpUrl, sanitizeName, trimOrEmpty } from "../src/utils";
 
 test("sanitizeName replaces characters rejected by tool registries", () => {
   assert.equal(sanitizeName("google.drive search/files"), "google_drive_search_files");
@@ -46,4 +46,9 @@ test("parseHttpUrl rejects malformed, relative, and non-HTTP URLs", () => {
   assert.equal(parseHttpUrl("not a url"), null);
   assert.equal(parseHttpUrl("/relative"), null);
   assert.equal(parseHttpUrl("file:///tmp/data"), null);
+});
+
+test("requireHttpUrl returns a URL or throws for an invalid value", () => {
+  assert.equal(requireHttpUrl("https://example.com").href, "https://example.com/");
+  assert.throws(() => requireHttpUrl("file:///tmp/data"), /absolute http or https URL/);
 });
