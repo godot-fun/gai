@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { HttpError, HttpStatus, optionalString, readJsonBody, requireObject, requireString, sendOk } from "../http";
 import { browserService, pageFailure, PAGE_SETTLE_TIMEOUT_MS } from "../services/browser-service";
-import { extractPageContent } from "../services/page-content";
+import { extractPageMarkdown } from "../services/page-markdown";
 import { captureScreenshot, validateScreenshotPath } from "../services/screenshot-service";
 import { parseHttpUrl } from "../utils";
 import { registerApi, type ApiRoute } from "./route";
@@ -49,7 +49,7 @@ async function fetchPage(rawUrl: string, screenshotPath?: string): Promise<Fetch
     // Hydration is best effort: a page that polls keeps the network busy forever, so waiting for
     // `networkidle` inside the navigation used to turn a readable page into a 504.
     await page.waitForLoadState("networkidle", { timeout: PAGE_SETTLE_TIMEOUT_MS }).catch(() => undefined);
-    const content = await extractPageContent(page);
+    const content = await extractPageMarkdown(page);
     const screenshot = await captureScreenshot(page, screenshotPath);
     return {
       url: requestedUrl.href,

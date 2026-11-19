@@ -8,6 +8,6 @@ import { Defuddle, type DefuddleResponse } from "defuddle/node";
  * SPA navigation, and whatever a click just changed — which a fresh fetch of the same URL does not.
  */
 
-export async function extractPageContent(page: Page): Promise<DefuddleResponse> {
+export async function extractPageMarkdown(page: Page): Promise<DefuddleResponse> {
   return Defuddle(await page.content(), page.url(), { markdown: true, useAsync: false });
 }
