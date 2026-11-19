@@ -612,3 +612,102 @@ All style files are stored in `references/`. After choosing a style, search that
 | Rajasthani Phad Scroll | traveling stories, folklore, episodic history, and painted performance |
 | Wayang Kulit Shadow Performance | myth, oral storytelling, silhouettes, and ensemble performance |
 | West African Adinkra Rhythm | proverbs, values, textile systems, and symbolic repetition |
+
+## Nature and Ecological Systems (19)
+
+| Style | Best for |
+|---|---|
+| Forest Canopy Succession | pioneer growth, canopy closure, competition, and gap renewal reshape layered forest strata |
+| Mycelium Communication Network | branching hyphae exchange nutrients and warnings among distinct root systems |
+| Coral Reef Day-Night Cycle | one reef changes activity, color, and bioluminescence across a continuous light cycle |
+| Watershed Journey | rain follows elevation into tributaries, floodplains, rivers, and an estuary |
+| Seasonal Phenology Wheel | annual rings synchronize flowering, migration, rainfall, temperature, and harvest |
+| Pollinator Route Choreography | insect visits transfer traceable pollen while learned routes become more efficient |
+| Tidal Wetland Breathing | a marsh floods and drains as salinity, sediment, roots, and wildlife respond at different rates |
+| Food-Web Energy Cascade | energy diminishes across trophic levels while disturbances propagate through feedback links |
+| Glacier Mass-Balance Chronicle | dated glacier outlines advance and retreat around a changing equilibrium line |
+| Dune Migration Field | grain-scale saltation over crests accumulates into slow directional dune migration |
+| Mangrove Root Nursery | prop roots slow tides, trap sediment, and shelter juvenile organisms |
+| Seed Dispersal Atlas | wind, water, animal, and ballistic dispersal obey visibly different physics |
+| Soil Horizon Formation | weathering, leaching, organisms, and roots gradually establish soil horizons |
+| River Meander Evolution | outer-bank erosion and inner-bank deposition move bends until an oxbow forms |
+| Forest-Fire Mosaic Recovery | fuel and moisture create a severity mosaic followed by asynchronous regrowth |
+| Plankton Bloom Dynamics | currents, nutrients, sunlight, and grazing expand, curl, fragment, and fade a bloom |
+| Animal Migration Flyway | cohorts travel between stopovers, replenish energy, and reroute around hazards |
+| Carbon Cycle Reservoirs | atmosphere, vegetation, soil, ocean, and rock exchange carbon at distinct rates |
+| Symbiotic Lichen Growth | fungal structure and photosynthetic cells cooperate to colonize bare stone |
+
+
+## Music and Sound Visualization (19)
+
+| Style | Best for |
+|---|---|
+| Spectral Orchestra Stage | instrument families occupy register bands whose entrances and dynamics build an ensemble |
+| Circular Step Sequencer | concentric step rings expose rests, accents, syncopation, and polyrhythm |
+| Polyphonic Voice Weave | independent melodic strands imitate, cross, separate, and resolve |
+| Vinyl Groove Journey | a stylus follows groove undulations that become rhythm and timbre |
+| Magnetic Tape Loop | recorded tape regions return with accumulating wear, flutter, and overdub |
+| Resonant Chladni Score | grains scatter between frequencies and settle along resonant nodal patterns |
+| Piano-Roll Cityscape | architectural note blocks encode pitch, duration, instrument, and harmony |
+| Conductor Gesture Field | baton paths cue tempo, articulation, entrances, and ensemble responses |
+| Spatial Audio Orbit | direction, distance, occlusion, and reflections reshape moving sound sources |
+| Foley Object Ensemble | impacts, scrapes, flexes, and releases turn objects into a tactile ensemble |
+| Graphic Score Performance | shape, density, direction, and color become consistent performance instructions |
+| Harmonic Overtone Ladder | ratio-aligned partial waves visibly sum above a fundamental into a complex timbre |
+| Drum-Rudiment Choreography | left and right strokes expose sticking, accents, grace notes, and rebound |
+| Song-Structure Architecture | intro, verse, chorus, bridge, and outro become rooms revisited with variation |
+| Choir Formant Constellation | singer traces move between vowel-formant regions and converge in blend |
+| Mechanical Music Box | cylinder pins lift tuned teeth through contact, release, and vibration |
+| Call-and-Response Waves | motifs travel between groups and return transformed in rhythm or register |
+| Dynamic-Range Landscape | whispers, peaks, silence, noise floor, and headroom form an intensity terrain |
+| Polyrhythm Phase Lattice | explicit rhythmic cycles move through offsets toward rare common alignments |
+
+
+## Cartography and Geographic Storytelling (19)
+
+| Style | Best for |
+|---|---|
+| Topographic Contour Ascent | indexed contours rise into coherent ridges, valleys, slopes, and landmarks |
+| Isochrone Accessibility Bloom | travel-time bands expand unevenly through networks, barriers, and modes |
+| Historic Border Palimpsest | dated borders advance, split, recede, and dissolve over persistent geography |
+| Nautical Chart Voyage | soundings, bearings, currents, hazards, and corrected fixes accumulate along a voyage |
+| Urban Morphology Growth | streets, blocks, parcels, and transit accrete through planning eras |
+| Desire-Line Transit Map | observed trips thicken into corridors before resolving into a transit network |
+| Climate Anomaly Atlas | regional departures evolve against a fixed baseline and honest diverging scale |
+| Migration Flow Cartogram | regions resize by quantity while flows preserve origin, destination, and uncertainty |
+| Geological Deep-Time Map | deposition, plate motion, uplift, faulting, and erosion replace rock units |
+| Walking Memory Map | landmarks sharpen, distort, and fade according to attention during a remembered route |
+| Airspace Corridor Stack | altitude layers, controlled zones, and waypoints form navigable volumes |
+| Ocean Current Route Map | travelers exploit, cross, or resist currents, eddies, temperature, and wind |
+| Watershed Boundary Atlas | rain traces divide drainage basins along ridges and distinct outlets |
+| Parcel-to-Metropolis Zoom | semantic zoom moves from parcels through districts to a metropolitan system |
+| Indigenous Place-Name Landscape | names attach to features through travel, season, practice, and living knowledge |
+| Disaster Evacuation Scenario | routes update as hazards change, roads close, and shelters fill |
+| Ecological Corridor Suitability | habitat cores, resistance surfaces, and barriers reveal least-cost corridors |
+| Trade-Wind World Routes | sailing routes curve with seasonal wind belts, ports, and voyage constraints |
+| Transit-Time Space Distortion | geography stretches or compresses according to a declared travel-time metric |
+
+
+## Industrial Design and Mechanical Systems (19)
+
+| Style | Best for |
+|---|---|
+| Exploded Gearbox Assembly | shafts, bearings, gears, seals, and casing seat before transmitting torque |
+| Four-Stroke Engine Cycle | piston, valves, crankshaft, ignition, and gases maintain correct four-stroke timing |
+| Robotic Assembly Cell | robots, fixtures, sensors, handoffs, and safety zones coordinate a production cell |
+| Patent Drawing Transformation | numbered views, sections, and callouts remain traceable while an invention assembles |
+| Hydraulic Circuit Flow | standard valves reroute pressure before cylinders and motors respond |
+| Cam and Linkage Theatre | cams, followers, cranks, and pivots convert one rotary input into phased outputs |
+| Injection-Molding Cycle | pellets melt, inject, pack, cool, and eject through a sectioned molding machine |
+| CNC Toolpath Carving | roughing and finishing paths remove persistent stock with distinct surface results |
+| Material Stress Laboratory | a specimen, strain field, and stress-strain curve stay synchronized through failure |
+| Conveyor-Line Balancing | station cycle times create queues, buffers, bottlenecks, and throughput changes |
+| Ball-Bearing Load Path | forces pass through shaft, rolling contacts, races, and housing |
+| Pneumatic Pick-and-Place | pressure, valves, actuation, vacuum grip, release, and reset occur with realistic lag |
+| Additive Manufacturing Layers | toolpaths deposit persistent layers while supports and overhang constraints remain visible |
+| Precision Watch Movement | mainspring energy crosses a gear train and escapement into regulated ticks |
+| Wind-Turbine Powertrain | wind becomes torque through blades, hub, shaft, gearbox, generator, and grid |
+| Bridge Load-Path Model | loads distribute through deck, members, bearings, piers, and foundations |
+| Circuit-Board Signal Journey | power and data cross traces, vias, planes, packages, and functional blocks |
+| Packaging Die-Line Fold | a flat net distinguishes cuts, creases, glue, and print before feasible folding |
+| Elevator Control Logic | cars group calls, dwell, reverse, and recover from conflicts across floors |

@@ -1,0 +1,26 @@
+# Ocean Current Route Map
+
+## Overview
+
+A purpose-built visual system in which travelers exploit, cross, or resist currents, eddies, temperature, and wind.
+
+## Metadata
+
+- Collection: Cartography and Geographic Storytelling
+- Medium: HTML, SVG, Canvas, or WebGL
+- Best for: travelers exploit, cross, or resist currents, eddies, temperature, and wind
+
+## Signature Features
+
+- Make the process whereby travelers exploit, cross, or resist currents, eddies, temperature, and wind the dominant visual mechanism.
+- Establish the specific causes, constraints, and scale governing **Ocean Current Route Map** before revealing their consequences.
+- Let labels, texture, and camera movement support the ocean current route map mechanism instead of competing with it.
+
+## Style Prompt
+
+Create a polished HTML animation in the **Ocean Current Route Map** style. Build the composition around a clear demonstration of how travelers exploit, cross, or resist currents, eddies, temperature, and wind. Preserve the governing spatial, temporal, material, or rhythmic relationship; add atmosphere and detail only after that relationship reads clearly.
+
+## Avoid
+
+- Do not replace **Ocean Current Route Map** with generic particles, glowing lines, a dashboard, or a slideshow.
+- Reject motion that makes **Ocean Current Route Map** physically or conceptually inconsistent, even when the surface effect looks attractive.

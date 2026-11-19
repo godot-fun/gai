@@ -594,3 +594,102 @@
 | Rajasthani Phad Scroll | 拉贾斯坦帕德长卷 |
 | Wayang Kulit Shadow Performance | 哇扬皮影表演 |
 | West African Adinkra Rhythm | 西非阿丁克拉纹样节奏 |
+
+## 自然与生态系统（19）
+
+| English style | 中文名称 |
+|---|---|
+| Forest Canopy Succession | 森林冠层演替 |
+| Mycelium Communication Network | 菌丝通信网络 |
+| Coral Reef Day-Night Cycle | 珊瑚礁昼夜循环 |
+| Watershed Journey | 流域汇流之旅 |
+| Seasonal Phenology Wheel | 季候物候轮盘 |
+| Pollinator Route Choreography | 传粉路径编舞 |
+| Tidal Wetland Breathing | 潮汐湿地呼吸 |
+| Food-Web Energy Cascade | 食物网能量级联 |
+| Glacier Mass-Balance Chronicle | 冰川质量平衡纪事 |
+| Dune Migration Field | 沙丘迁移场 |
+| Mangrove Root Nursery | 红树林根系育幼场 |
+| Seed Dispersal Atlas | 种子传播图谱 |
+| Soil Horizon Formation | 土壤层形成 |
+| River Meander Evolution | 河流曲流演化 |
+| Forest-Fire Mosaic Recovery | 林火镶嵌恢复 |
+| Plankton Bloom Dynamics | 浮游生物水华动力 |
+| Animal Migration Flyway | 动物迁徙廊道 |
+| Carbon Cycle Reservoirs | 碳循环储库 |
+| Symbiotic Lichen Growth | 共生地衣生长 |
+
+
+## 音乐与声音可视化（19）
+
+| English style | 中文名称 |
+|---|---|
+| Spectral Orchestra Stage | 频谱管弦舞台 |
+| Circular Step Sequencer | 环形步进音序器 |
+| Polyphonic Voice Weave | 复调声部织体 |
+| Vinyl Groove Journey | 黑胶唱纹之旅 |
+| Magnetic Tape Loop | 磁带循环回路 |
+| Resonant Chladni Score | 共振克拉德尼乐谱 |
+| Piano-Roll Cityscape | 钢琴卷帘城市景观 |
+| Conductor Gesture Field | 指挥手势场 |
+| Spatial Audio Orbit | 空间音频轨道 |
+| Foley Object Ensemble | 拟音物件合奏 |
+| Graphic Score Performance | 图形乐谱演奏 |
+| Harmonic Overtone Ladder | 泛音阶梯 |
+| Drum-Rudiment Choreography | 鼓点技法编舞 |
+| Song-Structure Architecture | 歌曲结构建筑 |
+| Choir Formant Constellation | 合唱共振峰星座 |
+| Mechanical Music Box | 机械音乐盒 |
+| Call-and-Response Waves | 呼应式声波 |
+| Dynamic-Range Landscape | 动态范围地貌 |
+| Polyrhythm Phase Lattice | 复节奏相位晶格 |
+
+
+## 地图与地理叙事（19）
+
+| English style | 中文名称 |
+|---|---|
+| Topographic Contour Ascent | 地形等高线攀升 |
+| Isochrone Accessibility Bloom | 等时圈可达性扩展 |
+| Historic Border Palimpsest | 历史边界重写图 |
+| Nautical Chart Voyage | 航海图航程 |
+| Urban Morphology Growth | 城市形态生长 |
+| Desire-Line Transit Map | 需求路径交通图 |
+| Climate Anomaly Atlas | 气候异常图集 |
+| Migration Flow Cartogram | 迁徙流动变形地图 |
+| Geological Deep-Time Map | 地质深时地图 |
+| Walking Memory Map | 步行记忆地图 |
+| Airspace Corridor Stack | 空域航路层叠图 |
+| Ocean Current Route Map | 洋流航线图 |
+| Watershed Boundary Atlas | 分水岭边界图集 |
+| Parcel-to-Metropolis Zoom | 地块至都市缩放 |
+| Indigenous Place-Name Landscape | 原住民地名景观 |
+| Disaster Evacuation Scenario | 灾害疏散情景图 |
+| Ecological Corridor Suitability | 生态廊道适宜性图 |
+| Trade-Wind World Routes | 信风世界航路 |
+| Transit-Time Space Distortion | 通勤时间空间扭曲 |
+
+
+## 工业设计与机械系统（19）
+
+| English style | 中文名称 |
+|---|---|
+| Exploded Gearbox Assembly | 齿轮箱爆炸装配 |
+| Four-Stroke Engine Cycle | 四冲程发动机循环 |
+| Robotic Assembly Cell | 机器人装配单元 |
+| Patent Drawing Transformation | 专利图变换 |
+| Hydraulic Circuit Flow | 液压回路流动 |
+| Cam and Linkage Theatre | 凸轮连杆剧场 |
+| Injection-Molding Cycle | 注塑成型循环 |
+| CNC Toolpath Carving | 数控刀路雕刻 |
+| Material Stress Laboratory | 材料应力实验室 |
+| Conveyor-Line Balancing | 输送线平衡 |
+| Ball-Bearing Load Path | 滚动轴承载荷路径 |
+| Pneumatic Pick-and-Place | 气动拾放机构 |
+| Additive Manufacturing Layers | 增材制造分层 |
+| Precision Watch Movement | 精密钟表机芯 |
+| Wind-Turbine Powertrain | 风力机传动链 |
+| Bridge Load-Path Model | 桥梁载荷路径模型 |
+| Circuit-Board Signal Journey | 电路板信号旅程 |
+| Packaging Die-Line Fold | 包装刀模折叠 |
+| Elevator Control Logic | 电梯控制逻辑 |
