@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { errorMessage, isBlank, isErrorNamed, parseHttpUrl, sanitizeName } from "../src/utils";
+import { errorMessage, isBlank, isErrorNamed, parseHttpUrl, sanitizeName, trimOrEmpty } from "../src/utils";
 
 test("sanitizeName replaces characters rejected by tool registries", () => {
   assert.equal(sanitizeName("google.drive search/files"), "google_drive_search_files");
@@ -11,6 +11,11 @@ test("isBlank accepts absent and whitespace-only values", () => {
   assert.equal(isBlank(undefined), true);
   assert.equal(isBlank(" \t\n"), true);
   assert.equal(isBlank(" value "), false);
+});
+
+test("trimOrEmpty normalizes optional strings", () => {
+  assert.equal(trimOrEmpty(undefined), "");
+  assert.equal(trimOrEmpty(" value \n"), "value");
 });
 
 test("errorMessage reads Errors and safely stringifies other thrown values", () => {

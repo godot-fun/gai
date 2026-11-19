@@ -19,9 +19,14 @@ export function sanitizeName(value: string): string {
   return value.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
+/** Trims an optional string and turns an absent value into an empty string. */
+export function trimOrEmpty(value: string | undefined): string {
+  return value?.trim() ?? "";
+}
+
 /** A value is blank when it is absent or contains only whitespace. */
 export function isBlank(value: string | undefined): boolean {
-  return (value ?? "").trim() === "";
+  return trimOrEmpty(value) === "";
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

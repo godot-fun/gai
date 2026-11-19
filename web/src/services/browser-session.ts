@@ -1,6 +1,6 @@
 import type { ElementHandle, Frame, Locator, Page } from "playwright-core";
 import { NAVIGATION_TIMEOUT_MS, REQUEST_TIMEOUT_MS } from "../config";
-import { errorMessage, isErrorNamed, parseHttpUrl as tryParseHttpUrl } from "../utils";
+import { errorMessage, isBlank, isErrorNamed, parseHttpUrl as tryParseHttpUrl, trimOrEmpty } from "../utils";
 import { browserService, PAGE_SETTLE_TIMEOUT_MS } from "./browser-service";
 import { collectInteractiveCandidates, elementForRef, refFrame, refIndex, selectCandidates, type InteractiveCandidate } from "./interactive";
 import { extractPageContent } from "./page-content";
@@ -84,8 +84,8 @@ const KEY_ALIASES: Readonly<Record<string, string>> = {
 
 /** Translates `Alt+Left` into `Alt+ArrowLeft`; unknown parts are passed through untouched. */
 export function normalizeKey(raw: string): string {
-  const parts = raw.split("+").map((part) => part.trim()).filter((part) => part !== "");
-  if (parts.length === 0) return raw.trim();
+  const parts = raw.split("+").map((part) => part.trim()).filter((part) => !isBlank(part));
+  if (parts.length === 0) return trimOrEmpty(raw);
   const lastIndex = parts.length - 1;
   return parts
     .map((part, index) => {
@@ -306,7 +306,7 @@ export class BrowserSession {
       }
       return element;
     }
-    const selector = (step.selector ?? "").trim();
+    const selector = trimOrEmpty(step.selector);
     if (selector === "") throw new Error("the step needs a ref from the last snapshot, or a CSS selector");
     const locator = page.locator(selector).first();
     if ((await locator.count()) === 0) throw new Error(`no element matches selector: ${selector}`);

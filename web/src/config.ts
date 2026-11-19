@@ -1,12 +1,12 @@
 import path from "node:path";
 import dotenv from "dotenv";
 import { ProxyAgent, setGlobalDispatcher } from "undici";
-import { isBlank } from "./utils";
+import { isBlank, trimOrEmpty } from "./utils";
 
 // Windows already sets LOCALAPPDATA; override so .env can replace it before camoufox loads.
 dotenv.config({ override: true });
 
-const localAppData = (process.env.LOCALAPPDATA ?? "").trim();
+const localAppData = trimOrEmpty(process.env.LOCALAPPDATA);
 if (!isBlank(localAppData)) {
   const absolute = path.resolve(localAppData);
   process.env.LOCALAPPDATA = absolute;
@@ -54,12 +54,12 @@ function readBoolean(name: string, fallback: boolean): boolean {
 
 function readArgument(name: string): string {
   const prefix = `--${name}=`;
-  return process.argv.find((argument) => argument.startsWith(prefix))?.slice(prefix.length).trim() || "";
+  return trimOrEmpty(process.argv.find((argument) => argument.startsWith(prefix))?.slice(prefix.length));
 }
 
 function readBooleanArgument(name: string): boolean | undefined {
   const raw = readArgument(name);
-  return raw === "" ? undefined : parseBoolean(raw, `--${name}`);
+  return isBlank(raw) ? undefined : parseBoolean(raw, `--${name}`);
 }
 
 /** Both the environment and the command line spell a boolean the same way: `true` or `false`. */
@@ -71,19 +71,19 @@ function parseBoolean(raw: string | undefined, name: string): boolean {
 
 export function loadConfig(): ServerConfig {
   return {
-    host: process.env.HOST?.trim() || "127.0.0.1",
+    host: trimOrEmpty(process.env.HOST) || "127.0.0.1",
     port: readPositiveInteger("PORT", 3000),
     headless: readBooleanArgument("browser-headless") ?? readBoolean("BROWSER_HEADLESS", true),
-    userDataDir: process.env.CAMOUFOX_USER_DATA_DIR?.trim() || "./.user_data",
-    proxy: readArgument("proxy-address") || process.env.BROWSER_PROXY?.trim() || "",
-    mcpConfigPath: process.env.MCP_CONFIG_PATH?.trim() || "mcp.json",
+    userDataDir: trimOrEmpty(process.env.CAMOUFOX_USER_DATA_DIR) || "./.user_data",
+    proxy: readArgument("proxy-address") || trimOrEmpty(process.env.BROWSER_PROXY),
+    mcpConfigPath: trimOrEmpty(process.env.MCP_CONFIG_PATH) || "mcp.json",
   };
 }
 
 export const config = loadConfig();
 
 export function isProxyEnabled(): boolean {
-  return config.proxy !== "";
+  return !isBlank(config.proxy);
 }
 
 // Route downloads (the Camoufox browser binary) through the configured proxy as well.

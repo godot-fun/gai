@@ -2,7 +2,7 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import type { Page, PageScreenshotOptions } from "playwright-core";
 import { HttpError, HttpStatus } from "../http";
-import { errorMessage, raceTimeout } from "../utils";
+import { errorMessage, raceTimeout, trimOrEmpty } from "../utils";
 
 /** Extension -> the format Playwright writes; anything else is rejected before a page is opened. */
 const SCREENSHOT_FORMATS = new Map<string, PageScreenshotOptions["type"]>([
@@ -57,7 +57,7 @@ export async function captureScreenshot(page: Page, requestedPath?: string): Pro
 }
 
 function resolveScreenshotOptions(requestedPath?: string): ScreenshotOptions | null {
-  const screenshotPath = requestedPath?.trim() ?? "";
+  const screenshotPath = trimOrEmpty(requestedPath);
   if (screenshotPath === "") return null;
   if (!path.isAbsolute(screenshotPath)) {
     throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_SCREENSHOT_PATH", "screenshotPath must be absolute");

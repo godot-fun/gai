@@ -16,6 +16,7 @@ test("normalizeSearchResults keeps usable results and numbers them from one", ()
 test("normalizeSearchResults drops blank and non-http results", () => {
   const results = normalizeSearchResults([
     { title: "", url: "https://example.com/", snippet: "" },
+    { title: "   ", url: "https://example.com/blank", snippet: "" },
     { title: "no url", url: "", snippet: "" },
     { title: "relative", url: "/search?q=godot", snippet: "" },
     { title: "javascript", url: "javascript:void(0)", snippet: "" },

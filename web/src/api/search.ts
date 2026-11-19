@@ -4,7 +4,7 @@ import { isProxyEnabled } from "../config";
 import { HttpError, HttpStatus, optionalString, readJsonBody, requireObject, requireString, sendOk } from "../http";
 import { browserService, pageFailure } from "../services/browser-service";
 import { captureScreenshot, validateScreenshotPath } from "../services/screenshot-service";
-import { parseHttpUrl } from "../utils";
+import { isBlank, parseHttpUrl } from "../utils";
 import { registerApi, type ApiRoute } from "./route";
 
 /** Search engines the API can drive; a const object instead of an enum, like `HttpStatus`. */
@@ -124,7 +124,7 @@ export function normalizeSearchResults(rawResults: readonly RawSearchResult[], c
   const seen = new Set<string>();
   const results: SearchResult[] = [];
   for (const result of rawResults) {
-    if (result.title === "" || result.url === "") continue;
+    if (isBlank(result.title) || isBlank(result.url)) continue;
     const url = parseHttpUrl(result.url);
     if (url === null) continue;
     if (seen.has(url.href)) continue;
