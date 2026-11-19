@@ -224,6 +224,7 @@ export function collectInteractiveCandidates(framePrefix: string): InteractiveCa
       case "input": {
         const type = (element.getAttribute("type") ?? "text").toLowerCase();
         if (type === "checkbox" || type === "radio") return type;
+        if (type === "search") return "searchbox";
         if (type === "range") return "slider";
         if (type === "number") return "spinbutton";
         if (type === "hidden") return "";
@@ -312,13 +313,19 @@ export function collectInteractiveCandidates(framePrefix: string): InteractiveCa
 
   function stateOf(element: Element): string {
     const states: string[] = [];
-    if (element instanceof HTMLInputElement) {
+    const isNativeCheckable = element instanceof HTMLInputElement && (element.type === "checkbox" || element.type === "radio");
+    if (isNativeCheckable) {
       if (element.indeterminate) states.push("mixed");
-      else if (element.type === "checkbox" || element.type === "radio") states.push(element.checked ? "checked" : "unchecked");
+      else states.push(element.checked ? "checked" : "unchecked");
+    } else {
+      const ariaChecked = element.getAttribute("aria-checked");
+      if (ariaChecked === "true") states.push("checked");
+      else if (ariaChecked === "false") states.push("unchecked");
+      else if (ariaChecked === "mixed") states.push("mixed");
+    }
+    if (element instanceof HTMLInputElement) {
       if (element.required) states.push("required");
     }
-    const ariaChecked = element.getAttribute("aria-checked");
-    if (ariaChecked !== null) states.push(`checked=${ariaChecked}`);
     const ariaExpanded = element.getAttribute("aria-expanded");
     if (ariaExpanded !== null) states.push(`expanded=${ariaExpanded}`);
     if (element.getAttribute("aria-selected") === "true") states.push("selected");
