@@ -6,25 +6,7 @@ import { extractPageContent } from "./page-content";
 import { captureScreenshot } from "./screenshot-service";
 import { formatSnapshot } from "./snapshot";
 
-/**
- * Long-lived page the agent drives step by step.
- *
- * `BrowserService.openPage` hands out short-lived pages to `/fetch` and `/search`; browser control
- * needs the opposite: one page keeping its scroll position, login session, and element handles
- * across many requests. Refs are therefore stored inside the page (`window.__gaiBrowserRefs`) and
- * only survive while that document lives — a navigation invalidates them, which the next action
- * reports as a stale ref instead of silently clicking the wrong element.
- */
-
-/**
- * Steps a request may contain; the route rejects anything else before a page is touched.
- *
- * `back`, `forward`, and `reload` are steps rather than `press` shortcuts on purpose: synthetic key
- * events only reach the content process, so `Alt+Left` / `Ctrl+R` / `F5` never trigger Firefox's
- * browser-level history or reload (verified against Camoufox). Waiting has no action at all — the
- * session settles the document before observation. Navigation has its own operation, so action
- * steps only mutate the current page.
- */
+/** Supported mutations. Navigation and observation use separate operations. */
 export const BROWSER_STEP_ACTIONS = ["click", "type", "press", "hover", "select", "scroll", "back", "forward", "reload"] as const;
 export type BrowserStepAction = (typeof BROWSER_STEP_ACTIONS)[number];
 export const BROWSER_OBSERVE_MODES = ["elements", "markdown", "screenshot"] as const;
@@ -65,10 +47,7 @@ const SNAPSHOT_RETRY_DELAY_MS = 300;
 
 type ActionTarget = ElementHandle<Element> | Locator;
 
-/**
- * Key aliases a browser user would write. Playwright wants `Alt+ArrowLeft` and `Control+R`, while a
- * model (like a person) writes `Alt+Left` and `Ctrl+R`, so the session translates before pressing.
- */
+/** Maps common key names to Playwright names. */
 const KEY_ALIASES: Readonly<Record<string, string>> = {
   ctrl: "Control",
   control: "Control",
@@ -117,14 +96,6 @@ export function normalizeKey(raw: string): string {
     .join("+");
 }
 
-/** A step the browser could not perform; the message is forwarded to the model as-is. */
-class BrowserStepError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "BrowserStepError";
-  }
-}
-
 export class BrowserSession {
   private page: Page | null = null;
   private queue: Promise<void> = Promise.resolve();
@@ -157,12 +128,12 @@ export class BrowserSession {
     return this.enqueue(async (page) => {
       const snapshot = mode === "elements" ? await this.takeSnapshot(page) : "";
       const markdown = mode === "markdown" ? (await extractPageContent(page)).content : "";
-      const screenshot = await captureScreenshot(page, mode === "screenshot" ? screenshotPath : undefined);
+      const screenshot = await captureScreenshot(page, screenshotPath);
       return this.result(page, "", snapshot, markdown, screenshot);
     });
   }
 
-  /** Runs mutations and always captures their final visual state when a path is supplied. */
+  /** Runs mutations and captures the final state. */
   act(steps: readonly BrowserStep[], screenshotPath: string): Promise<BrowserResult> {
     return this.enqueue((page) => this.runSteps(page, steps, screenshotPath));
   }
@@ -289,7 +260,7 @@ export class BrowserSession {
 
   private async press(page: Page, step: BrowserStep, timeout: number): Promise<void> {
     const key = normalizeKey(step.key ?? "");
-    if (key === "") throw new BrowserStepError("press needs a key, for example Enter, Escape, or Alt+Left");
+    if (key === "") throw new Error("press needs a key, for example Enter, Escape, or Alt+Left");
     if (step.ref === undefined && step.selector === undefined) {
       await page.keyboard.press(key);
       return;
@@ -309,7 +280,7 @@ export class BrowserSession {
     }, step.direction === "up");
   }
 
-  /** Runs one action on the step's target and releases the `ElementHandle` a `ref` minted — a page keeps those alive until then. */
+  /** Runs against a target and releases ref handles afterward. */
   private async withTarget<T>(page: Page, step: BrowserStep, run: (target: ActionTarget) => Promise<T>): Promise<T> {
     const target = await this.resolveTarget(page, step);
     try {
@@ -324,19 +295,19 @@ export class BrowserSession {
     if (step.ref !== undefined) {
       const ref = step.ref;
       const frame = this.frameFor(page, ref);
-      if (frame === null) throw new BrowserStepError(`ref ${ref} is stale: that frame is gone, take a new snapshot first`);
+      if (frame === null) throw new Error(`ref ${ref} is stale: that frame is gone, take a new snapshot first`);
       const handle = await frame.evaluateHandle(elementForRef, refIndex(ref));
       const element = handle.asElement();
       if (element === null) {
         await handle.dispose().catch(() => undefined);
-        throw new BrowserStepError(`ref ${ref} is stale: the page changed since the last snapshot, take a new snapshot first`);
+        throw new Error(`ref ${ref} is stale: the page changed since the last snapshot, take a new snapshot first`);
       }
       return element;
     }
     const selector = (step.selector ?? "").trim();
-    if (selector === "") throw new BrowserStepError("the step needs a ref from the last snapshot, or a CSS selector");
+    if (selector === "") throw new Error("the step needs a ref from the last snapshot, or a CSS selector");
     const locator = page.locator(selector).first();
-    if ((await locator.count()) === 0) throw new BrowserStepError(`no element matches selector: ${selector}`);
+    if ((await locator.count()) === 0) throw new Error(`no element matches selector: ${selector}`);
     return locator;
   }
 
@@ -356,7 +327,7 @@ export class BrowserSession {
     return prefix;
   }
 
-  /** Collects a snapshot; a failed collection still leaves the page metadata in the reply. */
+  /** Collects a snapshot, retrying once when the page is still loading. */
   private async takeSnapshot(page: Page): Promise<string> {
     // A step that navigated may still be parsing; waiting here is what replaces a model-driven `wait`.
     await waitForDocument(page);
@@ -370,10 +341,7 @@ export class BrowserSession {
     return formatSnapshot(selectCandidates(candidates));
   }
 
-  /**
-   * Every interactable element of every frame, unfiltered. Recalls what the DOM offers instead of
-   * guessing from a tree walk, so shadow roots and cross-frame widgets are not silently lost.
-   */
+  /** Collects interactive elements from every frame. */
   private async collectCandidates(page: Page): Promise<InteractiveCandidate[]> {
     this.frames.clear();
     const candidates: InteractiveCandidate[] = [];
@@ -393,15 +361,10 @@ export class BrowserSession {
 
 export const browserSession = new BrowserSession();
 
-/** esbuild's `keepNames` helper, as a string so esbuild cannot name-wrap the shim itself. */
+/** Page-side shim required by esbuild's `keepNames` transform. */
 const NAME_HELPER = "globalThis.__name = globalThis.__name || ((target) => target)";
 
-/**
- * `tsx` compiles with esbuild's `keepNames`, which wraps every named function in the evaluated body
- * as `__name(fn, "fn")`. That helper lives in the module, not in the page, so the page needs a
- * no-op stand-in. An init script covers every later navigation and child frame; the immediate
- * evaluate covers the document that is already loaded. Called once per page, not per snapshot.
- */
+/** Installs the shim in the current document and future navigations. */
 async function installNameHelper(page: Page): Promise<void> {
   await page.addInitScript(NAME_HELPER);
   await page.evaluate(NAME_HELPER);
@@ -412,7 +375,7 @@ async function waitForDocument(page: Page): Promise<void> {
   await page.waitForLoadState("domcontentloaded", { timeout: PAGE_SETTLE_TIMEOUT_MS }).catch(() => undefined);
 }
 
-/** A `ref` resolves to a Playwright `ElementHandle`, which the page keeps alive until it is disposed; a selector resolves to a `Locator`, which has nothing to release. */
+/** Releases ref handles; locators need no cleanup. */
 async function releaseTarget(target: ActionTarget): Promise<void> {
   if (!("dispose" in target)) return;
   await target.dispose().catch(() => undefined);
@@ -423,9 +386,9 @@ function parseHttpUrl(raw: string): string {
   try {
     url = new URL(raw.trim());
   } catch {
-    throw new BrowserStepError(`url must be an absolute URL, got: ${raw}`);
+    throw new Error(`url must be an absolute URL, got: ${raw}`);
   }
-  if (url.protocol !== "http:" && url.protocol !== "https:") throw new BrowserStepError(`url must be http or https, got: ${raw}`);
+  if (url.protocol !== "http:" && url.protocol !== "https:") throw new Error(`url must be http or https, got: ${raw}`);
   return url.href;
 }
 
