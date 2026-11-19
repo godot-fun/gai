@@ -96,6 +96,31 @@ All browser endpoints use the common response shape:
 
 Fields not produced by the selected operation are empty strings.
 
+## HTML animation packages
+
+`POST /animation/packages` renders a self-contained HTML animation into PNG frames in the
+background. The request supplies the HTML file and the parent output directory:
+
+```json
+{
+  "htmlPath": "C:/input/product-intro.html",
+  "outputDirectory": "C:/output/animations"
+}
+```
+
+The response contains only the animation name, derived from the HTML filename:
+
+```json
+{ "animation": "product-intro" }
+```
+
+Frames and `manifest.json` are written under
+`C:/output/animations/product-intro/`. Rendering is always 60 FPS at the largest physical
+resolution reported by the host's displays. The HTML must set `window.__ANIMATION_READY__` to
+`true` and expose `window.__ANIMATION__` with a positive `durationMs` and a deterministic
+`seek(timeMs)` function. An existing package directory is never overwritten; the endpoint returns
+HTTP 409 instead.
+
 ## MCP
 
 Copy `web/mcp.example.json` to `web/mcp.json` and configure one or more stdio or Streamable HTTP

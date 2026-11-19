@@ -3,6 +3,7 @@ import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import { REQUEST_TIMEOUT_MS } from "../config";
 import { HttpError, HttpStatus, sendError, sendJson } from "../http";
 // Importing a route module registers it through `registerApi`.
+import "./animation";
 import "./browser";
 import "./fetch";
 import "./healthy";

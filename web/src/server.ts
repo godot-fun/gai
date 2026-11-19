@@ -3,6 +3,7 @@ import type { Server } from "node:http";
 import { createApiServer } from "./api/index";
 import { getApiRoutes } from "./api/route";
 import { config } from "./config";
+import { animationService } from "./services/animation-service";
 import { browserService } from "./services/browser-service";
 import { browserSession } from "./services/browser-session";
 import { mcpService } from "./services/mcp-service";
@@ -24,7 +25,7 @@ async function main(): Promise<void> {
   const server = createApiServer();
   await listen(server);
   registerShutdownHandler(async () => {
-    await Promise.all([closeServer(server), browserSession.close(), browserService.close(), mcpService.close()]);
+    await Promise.all([closeServer(server), animationService.close(), browserSession.close(), browserService.close(), mcpService.close()]);
   });
   // Signals are only caught after cleanup is registered: a signal during startup must keep the
   // default behavior, otherwise shutdown would run an empty handler list and the process would hang.
