@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { errorMessage } from "../utils";
 import { HttpError, HttpStatus, readJsonBody, requireObject, requireString, sendOk } from "../http";
 import { mcpService } from "../services/mcp-service";
 import { registerApi, type ApiRoute } from "./route";
@@ -24,7 +25,7 @@ class McpCallApi implements ApiRoute {
     try {
       sendOk(response, await mcpService.callTool(server, name, args));
     } catch (error) {
-      throw new HttpError(HttpStatus.BAD_GATEWAY, "MCP_CALL_FAILED", error instanceof Error ? error.message : String(error));
+      throw new HttpError(HttpStatus.BAD_GATEWAY, "MCP_CALL_FAILED", errorMessage(error));
     }
   }
 }

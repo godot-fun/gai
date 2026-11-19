@@ -4,7 +4,7 @@ import { browserService } from "../services/browser-service";
 import { browserSession } from "../services/browser-session";
 import { mcpService } from "../services/mcp-service";
 import { shutdown } from "../shutdown";
-import { raceTimeout } from "../async-utils";
+import { raceTimeout } from "../utils";
 import { registerApi, type ApiRoute } from "./route";
 
 // The caller force-kills this process right after the reply, so never let cleanup block the reply.

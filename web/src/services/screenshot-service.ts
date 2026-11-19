@@ -2,7 +2,7 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import type { Page, PageScreenshotOptions } from "playwright-core";
 import { HttpError, HttpStatus } from "../http";
-import { raceTimeout } from "../async-utils";
+import { errorMessage, raceTimeout } from "../utils";
 
 /** Extension -> the format Playwright writes; anything else is rejected before a page is opened. */
 const SCREENSHOT_FORMATS = new Map<string, PageScreenshotOptions["type"]>([
@@ -50,7 +50,7 @@ export async function captureScreenshot(page: Page, requestedPath?: string): Pro
     });
     return { screenshotPath: options.path, screenshotError: "" };
   } catch (error) {
-    const screenshotError = error instanceof Error ? error.message : String(error);
+    const screenshotError = errorMessage(error);
     console.error("Screenshot failed", { screenshotPath: options.path, error: screenshotError });
     return { screenshotPath: "", screenshotError };
   }

@@ -3,6 +3,7 @@ import { HttpError, HttpStatus, optionalString, readJsonBody, requireObject, req
 import { browserService, pageFailure, PAGE_SETTLE_TIMEOUT_MS } from "../services/browser-service";
 import { extractPageContent } from "../services/page-content";
 import { captureScreenshot, validateScreenshotPath } from "../services/screenshot-service";
+import { parseHttpUrl } from "../utils";
 import { registerApi, type ApiRoute } from "./route";
 
 export interface FetchResponse {
@@ -40,12 +41,8 @@ export class FetchApi implements ApiRoute {
 
 /** Reads one URL through a short-lived page: navigate, settle, extract, capture, close. */
 async function fetchPage(rawUrl: string, screenshotPath?: string): Promise<FetchResponse> {
-  let requestedUrl: URL;
-  try {
-    requestedUrl = new URL(rawUrl);
-  } catch {
-    throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_URL", "url must be a valid absolute URL");
-  }
+  const requestedUrl = parseHttpUrl(rawUrl);
+  if (requestedUrl === null) throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_URL", "url must be a valid absolute http or https URL");
   const page = await browserService.openPage();
   try {
     await page.goto(requestedUrl.href, { waitUntil: "domcontentloaded" });

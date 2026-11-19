@@ -1,6 +1,7 @@
 import type { BrowserContext, Page } from "playwright-core";
 import { config, NAVIGATION_TIMEOUT_MS } from "../config";
 import { Camoufox } from "camoufox";
+import { isErrorNamed } from "../utils";
 import { HttpError, HttpStatus } from "../http";
 
 /** How long a page handed out here may keep loading before the caller reads it anyway. */
@@ -15,7 +16,7 @@ function unavailable(message: string): HttpError {
  * upstream site (504), everything else stays a generic gateway failure (502).
  */
 export function pageFailure(error: unknown, what: string, code: string): HttpError {
-  if (error instanceof Error && error.name === "TimeoutError") return new HttpError(HttpStatus.GATEWAY_TIMEOUT, "NAVIGATION_TIMEOUT", `${what} timed out`);
+  if (isErrorNamed(error, "TimeoutError")) return new HttpError(HttpStatus.GATEWAY_TIMEOUT, "NAVIGATION_TIMEOUT", `${what} timed out`);
   console.error(what, error);
   return new HttpError(HttpStatus.BAD_GATEWAY, code, `${what} failed`);
 }

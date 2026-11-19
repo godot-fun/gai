@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 import { config } from "../config";
+import { sanitizeName } from "../utils";
 
 type McpServerConfig =
   | { transport: "stdio"; command: string; args?: string[]; cwd?: string; env?: Record<string, string> }
@@ -94,11 +95,6 @@ function describeTool(server: string, tool: McpTool): ToolDescription {
     description: tool.description ?? "",
     inputSchema: tool.inputSchema,
   };
-}
-
-/** MCP names may hold dots and spaces; the tool registry only accepts `[A-Za-z0-9_-]`. */
-function sanitizeName(value: string): string {
-  return value.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
 export const mcpService = new McpService();

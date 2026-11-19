@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { isBlank } from "./utils";
 
 const MAX_REQUEST_BODY_BYTES = 1024 * 1024;
 
@@ -70,7 +71,7 @@ export function requireObject(value: unknown): Record<string, unknown> {
 }
 
 export function requireString(value: unknown, name: string): string {
-  if (typeof value !== "string" || value.trim() === "") {
+  if (typeof value !== "string" || isBlank(value)) {
     throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `${name} must be a non-empty string`);
   }
   return value;

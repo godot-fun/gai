@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { HttpError, HttpStatus, optionalString, readJsonBody, requireObject, requireString, sendOk } from "../http";
 import { BROWSER_OBSERVE_MODES, BROWSER_STEP_ACTIONS, browserSession, type BrowserObserveMode, type BrowserStep, type BrowserStepAction } from "../services/browser-session";
 import { validateScreenshotPath } from "../services/screenshot-service";
+import { isBlank } from "../utils";
 import { registerApi, type ApiRoute } from "./route";
 
 /** String fields copied from an incoming step. */
@@ -106,11 +107,6 @@ function readStep(value: unknown, index: number): BrowserStep {
     throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `steps[${index}] ${action} needs a ref from the last snapshot, or a selector`);
   }
   return parsed;
-}
-
-/** A field counts as given only when something survives trimming. */
-function isBlank(value: string | undefined): boolean {
-  return (value ?? "").trim() === "";
 }
 
 function isStepAction(value: string): value is BrowserStepAction {

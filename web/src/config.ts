@@ -1,12 +1,13 @@
 import path from "node:path";
 import dotenv from "dotenv";
 import { ProxyAgent, setGlobalDispatcher } from "undici";
+import { isBlank } from "./utils";
 
 // Windows already sets LOCALAPPDATA; override so .env can replace it before camoufox loads.
 dotenv.config({ override: true });
 
 const localAppData = (process.env.LOCALAPPDATA ?? "").trim();
-if (localAppData !== "") {
+if (!isBlank(localAppData)) {
   const absolute = path.resolve(localAppData);
   process.env.LOCALAPPDATA = absolute;
   if (process.platform !== "win32" && process.platform !== "darwin") {
@@ -39,7 +40,7 @@ export interface ServerConfig {
 
 function readPositiveInteger(name: string, fallback: number): number {
   const raw = process.env[name];
-  if (raw === undefined || raw.trim() === "") return fallback;
+  if (isBlank(raw)) return fallback;
   const value = Number(raw);
   if (!Number.isSafeInteger(value) || value <= 0) throw new Error(`${name} must be a positive integer`);
   return value;
@@ -47,7 +48,8 @@ function readPositiveInteger(name: string, fallback: number): number {
 
 function readBoolean(name: string, fallback: boolean): boolean {
   const raw = process.env[name];
-  return raw === undefined || raw.trim() === "" ? fallback : parseBoolean(raw, name);
+  if (isBlank(raw)) return fallback;
+  return parseBoolean(raw, name);
 }
 
 function readArgument(name: string): string {
@@ -61,7 +63,7 @@ function readBooleanArgument(name: string): boolean | undefined {
 }
 
 /** Both the environment and the command line spell a boolean the same way: `true` or `false`. */
-function parseBoolean(raw: string, name: string): boolean {
+function parseBoolean(raw: string | undefined, name: string): boolean {
   if (raw === "true") return true;
   if (raw === "false") return false;
   throw new Error(`${name} must be true or false`);
