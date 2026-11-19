@@ -167,7 +167,7 @@ export class BrowserSession {
   }
 
   private async runSteps(page: Page, steps: readonly BrowserStep[], screenshotPath: string): Promise<BrowserResult> {
-    const deadline = Date.now() + Math.max(MIN_BUDGET_MS, REQUEST_TIMEOUT_MS - BUDGET_MARGIN_MS);
+    const deadline = Date.now() + REQUEST_TIMEOUT_MS - BUDGET_MARGIN_MS;
     let error = "";
     for (const step of steps) {
       const remaining = deadline - Date.now();
