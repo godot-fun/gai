@@ -7,10 +7,6 @@ import { HttpError, HttpStatus } from "../http";
 /** How long a page handed out here may keep loading before the caller reads it anyway. */
 export const PAGE_SETTLE_TIMEOUT_MS = 5_000;
 
-function unavailable(message: string): HttpError {
-  return new HttpError(HttpStatus.SERVICE_UNAVAILABLE, "BROWSER_UNAVAILABLE", message);
-}
-
 /**
  * Turns a failed page operation into the error the agent sees: a Playwright timeout blames the
  * upstream site (504), everything else stays a generic gateway failure (502).
@@ -88,7 +84,7 @@ export class BrowserService {
       return context;
     } catch (error) {
       console.error("Camoufox launch failed", error);
-      throw unavailable("Browser could not be started");
+      throw new HttpError(HttpStatus.SERVICE_UNAVAILABLE, "BROWSER_UNAVAILABLE", "Browser could not be started");
     }
   }
 }

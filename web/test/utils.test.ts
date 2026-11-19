@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { errorMessage, isBlank, isErrorNamed, parseHttpUrl, sanitizeName, trimOrEmpty } from "../src/utils";
+import { errorMessage, isBlank, isErrorNamed, isOneOf, parseHttpUrl, sanitizeName, trimOrEmpty } from "../src/utils";
 
 test("sanitizeName replaces characters rejected by tool registries", () => {
   assert.equal(sanitizeName("google.drive search/files"), "google_drive_search_files");
@@ -16,6 +16,13 @@ test("isBlank accepts absent and whitespace-only values", () => {
 test("trimOrEmpty normalizes optional strings", () => {
   assert.equal(trimOrEmpty(undefined), "");
   assert.equal(trimOrEmpty(" value \n"), "value");
+});
+
+test("isOneOf accepts only strings from the provided list", () => {
+  const values = ["one", "two"] as const;
+  assert.equal(isOneOf("one", values), true);
+  assert.equal(isOneOf("three", values), false);
+  assert.equal(isOneOf(1, values), false);
 });
 
 test("errorMessage reads Errors and safely stringifies other thrown values", () => {

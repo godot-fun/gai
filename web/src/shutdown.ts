@@ -8,10 +8,6 @@ export function registerShutdownHandler(handler: ShutdownHandler): void {
   handlers.push(handler);
 }
 
-export function isShuttingDown(): boolean {
-  return shutdownTask !== undefined;
-}
-
 /** Runs every registered handler once; concurrent and repeated callers share the same task. */
 export function runShutdown(): Promise<void> {
   shutdownTask ??= drainHandlers();
@@ -20,7 +16,7 @@ export function runShutdown(): Promise<void> {
 
 /** Starts a graceful shutdown and returns immediately; repeated calls are ignored (signal handlers and /stop). */
 export function shutdown(reason: string): void {
-  if (isShuttingDown()) return;
+  if (shutdownTask !== undefined) return;
   console.log(`Received ${reason}; shutting down...`);
   void runShutdown().catch((error: unknown) => {
     console.error("Shutdown failed", error);

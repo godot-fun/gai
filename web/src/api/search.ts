@@ -4,7 +4,7 @@ import { isProxyEnabled } from "../config";
 import { HttpError, HttpStatus, optionalString, readJsonBody, requireObject, requireString, sendOk } from "../http";
 import { browserService, pageFailure } from "../services/browser-service";
 import { captureScreenshot, validateScreenshotPath } from "../services/screenshot-service";
-import { isBlank, parseHttpUrl } from "../utils";
+import { isBlank, isOneOf, parseHttpUrl } from "../utils";
 import { registerApi, type ApiRoute } from "./route";
 
 /** Search engines the API can drive; a const object instead of an enum, like `HttpStatus`. */
@@ -144,13 +144,8 @@ function readCount(value: unknown): number {
 /** `engine` is optional, but a wrong type is the caller's mistake, not a search failure. */
 function readEngine(value: unknown): SearchEngine | undefined {
   if (value === undefined) return undefined;
-  if (!isSearchEngine(value)) throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "engine must be bing or google");
+  if (!isOneOf(value, Object.values(SearchEngine))) throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", "engine must be bing or google");
   return value;
-}
-
-/** A new engine means a new value in [constant SearchEngine] and a new line here. */
-function isSearchEngine(value: unknown): value is SearchEngine {
-  return value === SearchEngine.Bing || value === SearchEngine.Google;
 }
 
 registerApi(new SearchApi());

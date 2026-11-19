@@ -29,6 +29,11 @@ export function isBlank(value: string | undefined): boolean {
   return trimOrEmpty(value) === "";
 }
 
+/** Narrows an unknown value to one of the strings in a readonly list. */
+export function isOneOf<T extends string>(value: unknown, values: readonly T[]): value is T {
+  return typeof value === "string" && values.includes(value as T);
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Errors
 

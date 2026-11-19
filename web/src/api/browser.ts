@@ -2,7 +2,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { HttpError, HttpStatus, optionalString, readJsonBody, requireObject, requireString, sendOk } from "../http";
 import { BROWSER_OBSERVE_MODES, BROWSER_STEP_ACTIONS, browserSession, type BrowserObserveMode, type BrowserStep, type BrowserStepAction } from "../services/browser-session";
 import { validateScreenshotPath } from "../services/screenshot-service";
-import { isBlank } from "../utils";
+import { isBlank, isOneOf } from "../utils";
 import { registerApi, type ApiRoute } from "./route";
 
 /** String fields copied from an incoming step. */
@@ -69,10 +69,10 @@ export class BrowserObserveApi implements ApiRoute {
 }
 
 function readObserveMode(value: unknown): BrowserObserveMode {
-  if (typeof value !== "string" || !BROWSER_OBSERVE_MODES.includes(value as BrowserObserveMode)) {
+  if (!isOneOf(value, BROWSER_OBSERVE_MODES)) {
     throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `mode must be one of: ${BROWSER_OBSERVE_MODES.join(", ")}`);
   }
-  return value as BrowserObserveMode;
+  return value;
 }
 
 function readSteps(value: unknown): BrowserStep[] {
@@ -85,7 +85,7 @@ function readSteps(value: unknown): BrowserStep[] {
 function readStep(value: unknown, index: number): BrowserStep {
   const step = requireObject(value);
   const action = step.action;
-  if (typeof action !== "string" || !isStepAction(action)) {
+  if (!isOneOf(action, BROWSER_STEP_ACTIONS)) {
     throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_ACTION", `steps[${index}].action must be one of: ${BROWSER_STEP_ACTIONS.join(", ")}`);
   }
   const parsed: BrowserStep = { action };
@@ -107,10 +107,6 @@ function readStep(value: unknown, index: number): BrowserStep {
     throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `steps[${index}] ${action} needs a ref from the last snapshot, or a selector`);
   }
   return parsed;
-}
-
-function isStepAction(value: string): value is BrowserStepAction {
-  return BROWSER_STEP_ACTIONS.includes(value as BrowserStepAction);
 }
 
 registerApi(new BrowserActionApi());
