@@ -225,7 +225,7 @@ func apply_theme() -> void:
 
 
 func style_text_edit() -> void:
-	var style := StyleBoxHelper.create_style_box_flat(Colors.surface, 0, Margin.ma_4, Margin.ma_3)
+	var style := StyleBoxHelper.create_style_box_flat(Colors.surface, 0, Margin.ma_4, 0)
 	text_edit.add_theme_stylebox_override("normal", style)
 	text_edit.add_theme_stylebox_override("focus", style.duplicate())
 	text_edit.add_theme_stylebox_override("read_only", style.duplicate())
@@ -242,7 +242,7 @@ func style_text_edit() -> void:
 
 
 func style_preview() -> void:
-	var style := StyleBoxHelper.create_style_box_flat(Colors.surface, 0, Margin.ma_4, Margin.ma_3)
+	var style := StyleBoxHelper.create_style_box_flat(Colors.surface, 0, Margin.ma_4, 0)
 	if view_mode == ViewMode.SPLIT and is_markdown():
 		style.border_color = Colors.outline_variant
 		style.set_border_width(SIDE_LEFT, ControlSize.border_xs)

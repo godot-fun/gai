@@ -229,6 +229,8 @@ func PopupWindow_theme_test() -> void:
 	assert((window.get_theme_stylebox("embedded_unfocused_border") as StyleBoxFlat).bg_color == ThemeColor.accent_surface)
 	assert((window.text_edit.get_theme_stylebox("read_only") as StyleBoxFlat).bg_color == ThemeColor.inset_surface)
 	assert((window.text_edit.get_theme_stylebox("read_only") as StyleBoxFlat).content_margin_left == Margin.ma_4)
+	assert((window.text_edit.get_theme_stylebox("read_only") as StyleBoxFlat).content_margin_top == 0)
+	assert((window.text_edit.get_theme_stylebox("read_only") as StyleBoxFlat).content_margin_bottom == 0)
 	assert(window.text_edit.get_theme_color("font_readonly_color") == ThemeColor.title_color)
 	assert(window.text_edit.get_theme_color("caret_color") == ThemeColor.accent_theme_color())
 	assert(window.text_edit.get_theme_font("font") == Fonts.regular())

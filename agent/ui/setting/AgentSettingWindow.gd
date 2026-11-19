@@ -81,9 +81,7 @@ func build_window() -> void:
 	content_margin = MarginContainer.new()
 	content_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	content_margin.add_theme_constant_override("margin_top", Margin.ma_3)
 	content_margin.add_theme_constant_override("margin_right", 0)
-	content_margin.add_theme_constant_override("margin_bottom", Margin.ma_3)
 	body.add_child(content_margin)
 
 	settings_scroll = ScrollContainer.new()
@@ -96,7 +94,9 @@ func build_window() -> void:
 	settings_pad = MarginContainer.new()
 	settings_pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	settings_pad.add_theme_constant_override("margin_left", Margin.ma_4)
+	settings_pad.add_theme_constant_override("margin_top", Margin.ma_3)
 	settings_pad.add_theme_constant_override("margin_right", Margin.ma_4)
+	settings_pad.add_theme_constant_override("margin_bottom", Margin.ma_3)
 	settings_scroll.add_child(settings_pad)
 	settings_fields = VBoxContainer.new()
 	settings_fields.size_flags_horizontal = Control.SIZE_EXPAND_FILL

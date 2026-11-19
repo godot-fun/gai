@@ -258,7 +258,7 @@ static func style_path_option(option: OptionButton) -> void:
 ## A lightly lifted, misty version of the inset surface separates the lists without the stark
 ## pure-white card effect, while retaining the active theme hue.
 static func make_file_list_style() -> StyleBoxFlat:
-	return StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_sm, Margin.ma_1, Margin.ma_1,
+	return StyleBoxHelper.create_style_box_flat(ThemeColor.card_surface, ControlSize.radius_sm, Margin.ma_1, 0,
 		Colors.outline_variant, ControlSize.border_xs)
 
 
