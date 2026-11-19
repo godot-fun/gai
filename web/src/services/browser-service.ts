@@ -1,17 +1,19 @@
-import type { BrowserContext, Page } from "playwright-core";
-import { Defuddle, type DefuddleResponse } from "defuddle/node";
-import { config, NAVIGATION_TIMEOUT_MS } from "../config";
 import { Camoufox } from "camoufox";
-import { isErrorNamed } from "../utils";
+import { Defuddle, type DefuddleResponse } from "defuddle/node";
+import type { BrowserContext, Page } from "playwright-core";
+
+import { config, NAVIGATION_TIMEOUT_MS } from "../config";
 import { HttpError, HttpStatus } from "../http";
+import { isErrorNamed } from "../utils";
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Page reading
 
 /** How long a page handed out here may keep loading before the caller reads it anyway. */
 export const PAGE_SETTLE_TIMEOUT_MS = 5_000;
 
-/** Extracts readable Markdown and metadata from the page's current state. */
-export async function extractPageMarkdown(page: Page): Promise<DefuddleResponse> {
-  return Defuddle(await page.content(), page.url(), { markdown: true, useAsync: false });
-}
+// ---------------------------------------------------------------------------------------------------------------------
+// Errors
 
 /**
  * Turns a failed page operation into the error the agent sees: a Playwright timeout blames the
@@ -23,9 +25,14 @@ export function pageFailure(error: unknown, what: string, code: string): HttpErr
   return new HttpError(HttpStatus.BAD_GATEWAY, code, `${what} failed`);
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Browser lifecycle
+
 export class BrowserService {
   private context: BrowserContext | null = null;
   private launching: Promise<BrowserContext> | null = null;
+
+  // Public lifecycle
 
   async start(): Promise<void> {
     await this.getContext();
@@ -43,6 +50,11 @@ export class BrowserService {
     return page;
   }
 
+  /** Extracts readable Markdown and metadata from the page's current state. */
+  async extractPageMarkdown(page: Page): Promise<DefuddleResponse> {
+    return Defuddle(await page.content(), page.url(), { markdown: true, useAsync: false });
+  }
+
   async close(): Promise<void> {
     if (this.launching !== null) await this.launching.catch(() => undefined);
     const context = this.context;
@@ -54,6 +66,8 @@ export class BrowserService {
       console.error("Camoufox close failed", error);
     }
   }
+
+  // Context management
 
   private async getContext(): Promise<BrowserContext> {
     if (this.context !== null) return this.context;

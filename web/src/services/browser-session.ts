@@ -1,7 +1,7 @@
 import type { ElementHandle, Frame, Locator, Page } from "playwright-core";
 import { NAVIGATION_TIMEOUT_MS, REQUEST_TIMEOUT_MS } from "../config";
 import { errorMessage, isBlank, isErrorNamed, requireHttpUrl, trimOrEmpty } from "../utils";
-import { browserService, extractPageMarkdown, PAGE_SETTLE_TIMEOUT_MS } from "./browser-service";
+import { browserService, PAGE_SETTLE_TIMEOUT_MS } from "./browser-service";
 import { collectInteractiveCandidates, elementForRef, refFrame, refIndex, selectCandidates, type InteractiveCandidate } from "./interactive";
 import { captureScreenshot } from "./screenshot-service";
 import { formatSnapshot } from "./snapshot";
@@ -127,7 +127,7 @@ export class BrowserSession {
   observe(mode: BrowserObserveMode, screenshotPath?: string): Promise<BrowserResult> {
     return this.enqueue(async (page) => {
       const snapshot = mode === "elements" ? await this.takeSnapshot(page) : "";
-      const markdown = mode === "markdown" ? (await extractPageMarkdown(page)).content : "";
+      const markdown = mode === "markdown" ? (await browserService.extractPageMarkdown(page)).content : "";
       const screenshot = await captureScreenshot(page, screenshotPath);
       return this.result(page, "", snapshot, markdown, screenshot);
     });
