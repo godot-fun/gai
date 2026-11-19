@@ -41,6 +41,7 @@ Do not copy sample brands, characters, wording, or hard-coded layouts from refer
 ## Output Quality
 
 - Return complete implementation rather than pseudocode or omitted sections.
+- Default to automatic playback. Unless requested, omit play, pause, replay, progress, and debugging controls.
 - Use responsive scaling while preserving the intended composition and aspect ratio.
 - Avoid horizontal overflow, clipped text, unreadable contrast, accidental scrollbars, and animation that begins before fonts or layout are ready.
 - Keep labels, legends, and body text outside high-frequency detail and intense highlights.

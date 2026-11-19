@@ -98,7 +98,7 @@ Fields not produced by the selected operation are empty strings.
 
 ## HTML animation packages
 
-`POST /animation/packages` renders a self-contained HTML animation into PNG frames in the
+`POST /animation/create` renders a self-contained HTML animation into PNG frames in the
 background. The request supplies the HTML file and the parent output directory:
 
 ```json
@@ -120,6 +120,21 @@ resolution reported by the host's displays. The HTML must set `window.__ANIMATIO
 `true` and expose `window.__ANIMATION__` with a positive `durationMs` and a deterministic
 `seek(timeMs)` function. An existing package directory is never overwritten; the endpoint returns
 HTTP 409 instead.
+
+`POST /animation/query` reads the current render status:
+
+```json
+{
+  "animation": "product-intro",
+  "outputDirectory": "C:/output/animations"
+}
+```
+
+It returns `rendering`, `completed`, or `failed`; `error` is populated only for a failed render:
+
+```json
+{ "status": "completed", "error": "" }
+```
 
 ## MCP
 
