@@ -29,6 +29,7 @@ interface AnimationManifest {
 export interface CreateAnimationRequest {
   htmlPath: string;
   outputDirectory: string;
+  duration?: number;
 }
 
 export interface AnimationStatus {
@@ -36,12 +37,12 @@ export interface AnimationStatus {
   error: string;
 }
 
-/** Renders a self-contained HTML animation into deterministic PNG frames. */
+/** Plays a self-contained HTML animation once and captures PNG frames in real time. */
 export class AnimationService {
   private readonly tasks = new Map<string, Promise<void>>();
 
   async create(request: CreateAnimationRequest): Promise<string> {
-    const { htmlPath, outputDirectory } = request;
+    const { htmlPath, outputDirectory, duration } = request;
     const animation = path.parse(htmlPath).name;
     const animationDirectory = path.join(outputDirectory, animation);
     await mkdir(outputDirectory, { recursive: true });
@@ -55,7 +56,7 @@ export class AnimationService {
     }
 
     const taskKey = path.normalize(animationDirectory).toLowerCase();
-    const task = this.render(htmlPath, animationDirectory, animation)
+    const task = this.render(htmlPath, animationDirectory, animation, duration)
       .catch((error: unknown) => console.error("Animation render failed", { animation, error }))
       .finally(() => this.tasks.delete(taskKey));
     this.tasks.set(taskKey, task);
@@ -79,7 +80,7 @@ export class AnimationService {
     await Promise.allSettled(this.tasks.values());
   }
 
-  private async render(htmlPath: string, animationDirectory: string, animation: string): Promise<void> {
+  private async render(htmlPath: string, animationDirectory: string, animation: string, duration?: number): Promise<void> {
     let page: Page | null = null;
     let manifest: AnimationManifest | null = null;
     try {
@@ -87,7 +88,7 @@ export class AnimationService {
       page = await browserService.openPage();
       await page.setViewportSize(display);
       await preparePage(page, htmlPath);
-      const durationMs = await readAnimationDuration(page);
+      const durationMs = await readAnimationDuration(page, duration);
       const totalFrames = Math.ceil(durationMs * FRAMES_PER_SECOND / 1_000);
       manifest = {
         status: "rendering",
@@ -101,15 +102,7 @@ export class AnimationService {
         error: "",
       };
       await writeManifest(animationDirectory, manifest);
-
-      for (let frame = 0; frame < totalFrames; frame += 1) {
-        const timeMs = frame * 1_000 / FRAMES_PER_SECOND;
-        await seekAnimation(page, timeMs);
-        const fileName = `${String(frame).padStart(6, "0")}.png`;
-        await page.screenshot({ path: path.join(animationDirectory, fileName), type: "png" });
-        manifest.renderedFrames = frame + 1;
-        if (manifest.renderedFrames % FRAMES_PER_SECOND === 0) await writeManifest(animationDirectory, manifest);
-      }
+      await captureFrames(page, animationDirectory, manifest);
       manifest.status = "completed";
       await writeManifest(animationDirectory, manifest);
     } catch (error) {
@@ -139,54 +132,49 @@ async function preparePage(page: Page, htmlPath: string): Promise<void> {
   // esbuild's keepNames transform references this helper inside callbacks serialized into the page.
   await page.addInitScript("globalThis.__name = globalThis.__name || ((target) => target)");
   await page.goto(pathToFileURL(htmlPath).href, { waitUntil: "load" });
-  await page.addScriptTag({ content: ANIMATION_BRIDGE });
-  await page.evaluate(() => document.fonts.ready);
-  await page.waitForFunction("document.documentElement.dataset.animationRenderReady === 'true'");
+  await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  // Let the first painted frames happen, so the capture clock starts on a laid-out, painted page.
+  await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
 }
 
-async function readAnimationDuration(page: Page): Promise<number> {
-  const durationMs = await page.evaluate(() => Number(document.documentElement.dataset.animationRenderDuration));
-  if (!Number.isFinite(durationMs) || durationMs <= 0) {
-    throw new Error("window.__ANIMATION__.durationMs must be a positive finite number");
+/** Plays the page in real time: every 1000/fps tick of wall-clock time is written as one frame. */
+async function captureFrames(page: Page, animationDirectory: string, manifest: AnimationManifest): Promise<void> {
+  const frameIntervalMs = 1_000 / manifest.fps;
+  const startedAt = performance.now();
+  for (let frame = 0; frame < manifest.totalFrames; frame += 1) {
+    await sleepUntil(startedAt + frame * frameIntervalMs);
+    const fileName = `${String(frame).padStart(6, "0")}.png`;
+    await page.screenshot({
+      path: path.join(animationDirectory, fileName),
+      type: "png",
+      animations: "allow",
+      caret: "hide",
+      scale: "device",
+      timeout: 10_000,
+    });
+    manifest.renderedFrames = frame + 1;
+    if (manifest.renderedFrames % manifest.fps === 0) await writeManifest(animationDirectory, manifest);
   }
-  const canSeek = await page.evaluate(() => document.documentElement.dataset.animationRenderCanSeek === "true");
-  if (!canSeek) throw new Error("window.__ANIMATION__.seek(timeMs) is required");
+}
+
+/** Resolves at the deadline; a deadline already in the past resolves immediately. */
+function sleepUntil(deadline: number): Promise<void> {
+  const remaining = deadline - performance.now();
+  if (remaining <= 0) return Promise.resolve();
+  return new Promise<void>((resolve) => setTimeout(resolve, remaining));
+}
+
+async function readAnimationDuration(page: Page, requestedDuration?: number): Promise<number> {
+  const durationSeconds = requestedDuration ?? await page.evaluate(() => {
+    const content = document.querySelector<HTMLMetaElement>('meta[name="animation-duration"]')?.content;
+    return Number(content);
+  });
+  const durationMs = durationSeconds * 1_000;
+  if (!Number.isFinite(durationMs) || durationMs <= 0) {
+    throw new Error('duration or <meta name="animation-duration"> must be a positive finite number of seconds');
+  }
   return durationMs;
 }
-
-async function seekAnimation(page: Page, timeMs: number): Promise<void> {
-  const token = `${timeMs}`;
-  await page.evaluate(({ time, requestToken }) => {
-    document.documentElement.dataset.animationRenderSeekTime = String(time);
-    document.documentElement.dataset.animationRenderSeekToken = requestToken;
-    document.dispatchEvent(new Event("animation-render-seek"));
-  }, { time: timeMs, requestToken: token });
-  await page.waitForFunction(`document.documentElement.dataset.animationRenderSeekDone === ${JSON.stringify(token)}`);
-}
-
-const ANIMATION_BRIDGE = `
-    (() => {
-      const root = document.documentElement;
-      const publish = () => {
-        const animation = globalThis.__ANIMATION__;
-        if (globalThis.__ANIMATION_READY__ !== true || !animation) return false;
-        root.dataset.animationRenderReady = "true";
-        root.dataset.animationRenderDuration = String(animation.durationMs);
-        root.dataset.animationRenderCanSeek = String(typeof animation.seek === "function");
-        return true;
-      };
-      if (!publish()) {
-        const timer = setInterval(() => { if (publish()) clearInterval(timer); }, 10);
-      }
-      document.addEventListener("animation-render-seek", async () => {
-        const token = root.dataset.animationRenderSeekToken || "";
-        const time = Number(root.dataset.animationRenderSeekTime);
-        await globalThis.__ANIMATION__.seek(time);
-        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-        root.dataset.animationRenderSeekDone = token;
-      });
-    })();
-`;
 
 async function writeManifest(animationDirectory: string, manifest: AnimationManifest): Promise<void> {
   const temporary = path.join(animationDirectory, "manifest.json.tmp");

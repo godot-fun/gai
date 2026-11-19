@@ -104,9 +104,14 @@ background. The request supplies the HTML file and the parent output directory:
 ```json
 {
   "htmlPath": "C:/input/product-intro.html",
-  "outputDirectory": "C:/output/animations"
+  "outputDirectory": "C:/output/animations",
+  "duration": 15
 }
 ```
+
+`duration` is optional and expressed in seconds. When omitted, the renderer reads
+`<meta name="animation-duration" content="15">` from the HTML. A request value takes precedence
+over the HTML value.
 
 The response contains only the animation name, derived from the HTML filename:
 
@@ -116,10 +121,11 @@ The response contains only the animation name, derived from the HTML filename:
 
 Frames and `manifest.json` are written under
 `C:/output/animations/product-intro/`. Rendering is always 60 FPS at the largest physical
-resolution reported by the host's displays. The HTML must set `window.__ANIMATION_READY__` to
-`true` and expose `window.__ANIMATION__` with a positive `durationMs` and a deterministic
-`seek(timeMs)` function. An existing package directory is never overwritten; the endpoint returns
-HTTP 409 instead.
+resolution reported by the host's displays. The renderer loads the page, waits for it to load
+and lay out, then captures the live animation in real time — the HTML must autoplay on load and
+never waits for a seek call. The duration comes only from the request `duration` or the
+`animation-duration` meta tag. An existing package directory is never overwritten; the endpoint
+returns HTTP 409 instead.
 
 `POST /animation/query` reads the current render status:
 

@@ -59,8 +59,8 @@ class RenderTest(unittest.TestCase):
 
     @patch("render.post_json")
     def test_failed_render_raises_service_error(self, post_json) -> None:
-        post_json.return_value = {"status": "failed", "error": "seek failed"}
-        with self.assertRaisesRegex(render.RenderError, "seek failed"):
+        post_json.return_value = {"status": "failed", "error": "page error"}
+        with self.assertRaisesRegex(render.RenderError, "page error"):
             render.wait_for_animation("demo", "C:/output")
 
     def test_verify_completed_output(self) -> None:

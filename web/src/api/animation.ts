@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { readJsonBody, requireObject, requireString, sendOk } from "../http";
+import { optionalPositiveNumber, readJsonBody, requireObject, requireString, sendOk } from "../http";
 import { animationService } from "../services/animation-service";
 import { registerApi } from "./route";
 
@@ -11,6 +11,7 @@ registerApi({
     const animation = await animationService.create({
       htmlPath: requireString(body.htmlPath, "htmlPath"),
       outputDirectory: requireString(body.outputDirectory, "outputDirectory"),
+      duration: optionalPositiveNumber(body.duration, "duration"),
     });
     sendOk(response, { animation });
   },

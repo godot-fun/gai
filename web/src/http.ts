@@ -83,3 +83,11 @@ export function optionalString(value: unknown, name: string): string | undefined
   if (typeof value !== "string") throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `${name} must be a string`);
   return value;
 }
+
+export function optionalPositiveNumber(value: unknown, name: string): number | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+    throw new HttpError(HttpStatus.BAD_REQUEST, "INVALID_REQUEST", `${name} must be a positive finite number`);
+  }
+  return value;
+}
