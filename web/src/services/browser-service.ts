@@ -1,4 +1,5 @@
 import type { BrowserContext, Page } from "playwright-core";
+import { Defuddle, type DefuddleResponse } from "defuddle/node";
 import { config, NAVIGATION_TIMEOUT_MS } from "../config";
 import { Camoufox } from "camoufox";
 import { isErrorNamed } from "../utils";
@@ -6,6 +7,11 @@ import { HttpError, HttpStatus } from "../http";
 
 /** How long a page handed out here may keep loading before the caller reads it anyway. */
 export const PAGE_SETTLE_TIMEOUT_MS = 5_000;
+
+/** Extracts readable Markdown and metadata from the page's current state. */
+export async function extractPageMarkdown(page: Page): Promise<DefuddleResponse> {
+  return Defuddle(await page.content(), page.url(), { markdown: true, useAsync: false });
+}
 
 /**
  * Turns a failed page operation into the error the agent sees: a Playwright timeout blames the

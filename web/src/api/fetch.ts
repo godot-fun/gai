@@ -1,7 +1,6 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { HttpError, HttpStatus, optionalString, readJsonBody, requireObject, requireString, sendOk } from "../http";
-import { browserService, pageFailure, PAGE_SETTLE_TIMEOUT_MS } from "../services/browser-service";
-import { extractPageMarkdown } from "../services/page-markdown";
+import { browserService, extractPageMarkdown, pageFailure, PAGE_SETTLE_TIMEOUT_MS } from "../services/browser-service";
 import { captureScreenshot, validateScreenshotPath } from "../services/screenshot-service";
 import { parseHttpUrl } from "../utils";
 import { registerApi, type ApiRoute } from "./route";

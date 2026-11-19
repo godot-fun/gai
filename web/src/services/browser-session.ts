@@ -1,9 +1,8 @@
 import type { ElementHandle, Frame, Locator, Page } from "playwright-core";
 import { NAVIGATION_TIMEOUT_MS, REQUEST_TIMEOUT_MS } from "../config";
 import { errorMessage, isBlank, isErrorNamed, requireHttpUrl, trimOrEmpty } from "../utils";
-import { browserService, PAGE_SETTLE_TIMEOUT_MS } from "./browser-service";
+import { browserService, extractPageMarkdown, PAGE_SETTLE_TIMEOUT_MS } from "./browser-service";
 import { collectInteractiveCandidates, elementForRef, refFrame, refIndex, selectCandidates, type InteractiveCandidate } from "./interactive";
-import { extractPageMarkdown } from "./page-markdown";
 import { captureScreenshot } from "./screenshot-service";
 import { formatSnapshot } from "./snapshot";
 
