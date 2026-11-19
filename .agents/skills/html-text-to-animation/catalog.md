@@ -2,7 +2,7 @@
 
 Choose a style by meaning, medium, and motion behavior. Open only the references relevant to the current animation.
 
-Total styles: 512.
+Total styles: 600.
 
 All style files are stored in `references/`. After choosing a style, search that directory for its exact name, then read only the matching file.
 
@@ -711,3 +711,21 @@ All style files are stored in `references/`. After choosing a style, search that
 | Circuit-Board Signal Journey | power and data cross traces, vias, planes, packages, and functional blocks |
 | Packaging Die-Line Fold | a flat net distinguishes cuts, creases, glue, and print before feasible folding |
 | Elevator Control Logic | cars group calls, dwell, reverse, and recover from conflicts across floors |
+
+
+## Economics, Markets and Business Systems (12)
+
+| Style | Best for |
+|---|---|
+| Supply-and-Demand Theatre | supply, demand, shortages, surpluses, equilibrium, and price formation |
+| Cash-Flow River System | revenue, expenses, liquidity, runway, and the movement of money |
+| Unit-Economics Machine | acquisition cost, margin, payback, retention, and per-customer economics |
+| Market-Segment Landscape | audience groups, market sizing, positioning, and underserved opportunities |
+| Competitive Strategy Board | competitors, differentiation, strategic moves, and market response |
+| Customer-Funnel Journey | awareness, conversion, retention, churn, and lifecycle optimization |
+| Network-Effect Growth | platforms, marketplaces, adoption loops, and compounding participation |
+| Portfolio Risk Constellation | allocation, correlation, volatility, diversification, and return |
+| Inflation Basket Chronicle | prices, purchasing power, household costs, and change over time |
+| Auction and Price Discovery | bids, asks, matching, scarcity, and emergent market prices |
+| Business Flywheel System | reinforcing loops, operational momentum, growth, and compounding advantage |
+| Scenario Forecast Branches | forecasts, assumptions, uncertainty, alternative futures, and decision making |
