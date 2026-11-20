@@ -47,8 +47,10 @@ class BuildJobsTest(unittest.TestCase):
             clips = Path(tmp) / "Video"
             (root / "Chinese").mkdir(parents=True)
             (root / "English").mkdir()
-            clips.mkdir()
-            (clips / "01.mp4").write_bytes(b"v")
+            (clips / "Chinese").mkdir(parents=True)
+            (clips / "English").mkdir()
+            (clips / "Chinese" / "01.mp4").write_bytes(b"zh-video")
+            (clips / "English" / "01.mp4").write_bytes(b"en-video")
             (root / "Chinese" / "01.wav").write_bytes(b"a")
             (root / "English" / "01.wav").write_bytes(b"a")
 
@@ -56,7 +58,13 @@ class BuildJobsTest(unittest.TestCase):
             self.assertEqual(len(jobs), 2)
             langs = {job.lang for job in jobs}
             self.assertEqual(langs, {"chinese", "english"})
-            self.assertEqual(jobs[0].output.parent.name, "Video-Chinese")
+            by_lang = {job.lang: job for job in jobs}
+            self.assertEqual(by_lang["chinese"].video.parent.name, "Chinese")
+            self.assertEqual(by_lang["english"].video.parent.name, "English")
+            self.assertEqual(
+                by_lang["chinese"].output.parent,
+                (root / "Video" / "Chinese").resolve(),
+            )
             pass
 
     def test_single_language_builds_only_that_language(self) -> None:
@@ -65,14 +73,70 @@ class BuildJobsTest(unittest.TestCase):
             clips = Path(tmp) / "Video"
             (root / "Chinese").mkdir(parents=True)
             (root / "English").mkdir()
-            clips.mkdir()
-            (clips / "01.mp4").write_bytes(b"v")
+            (clips / "Chinese").mkdir(parents=True)
+            (clips / "English").mkdir()
+            (clips / "Chinese" / "01.mp4").write_bytes(b"v")
+            (clips / "English" / "01.mp4").write_bytes(b"v")
             (root / "Chinese" / "01.wav").write_bytes(b"a")
             (root / "English" / "01.wav").write_bytes(b"a")
 
             jobs = mix.build_jobs(root, "english", clips)
             self.assertEqual([job.lang for job in jobs], ["english"])
             pass
+
+    def test_custom_output_root(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "Audio"
+            clips = Path(tmp) / "Video"
+            output = Path(tmp) / "Output"
+            (root / "Chinese").mkdir(parents=True)
+            (root / "Chinese" / "01.wav").write_bytes(b"a")
+            (clips / "Chinese").mkdir(parents=True)
+            (clips / "Chinese" / "01.mp4").write_bytes(b"v")
+
+            jobs = mix.build_jobs(root, "chinese", clips, output)
+            self.assertEqual(jobs[0].output, output.resolve() / "Chinese" / "01.mp4")
+
+    def test_legacy_flat_video_layout_is_supported(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "Audio"
+            clips = Path(tmp) / "Video"
+            (root / "Chinese").mkdir(parents=True)
+            (root / "English").mkdir()
+            clips.mkdir()
+            (clips / "01.mp4").write_bytes(b"v")
+            (root / "Chinese" / "01.wav").write_bytes(b"a")
+            (root / "English" / "01.wav").write_bytes(b"a")
+
+            jobs = mix.build_jobs(root, "both", clips)
+            self.assertEqual(len(jobs), 2)
+            self.assertEqual({job.video for job in jobs}, {(clips / "01.mp4").resolve()})
+
+    def test_language_layout_does_not_cross_fallback(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "Audio"
+            clips = Path(tmp) / "Video"
+            (root / "Chinese").mkdir(parents=True)
+            (root / "English").mkdir()
+            (root / "Chinese" / "01.wav").write_bytes(b"a")
+            (root / "English" / "01.wav").write_bytes(b"a")
+            (clips / "Chinese").mkdir(parents=True)
+            (clips / "Chinese" / "01.mp4").write_bytes(b"v")
+
+            jobs = mix.build_jobs(root, "both", clips)
+            self.assertEqual([job.lang for job in jobs], ["chinese"])
+
+    def test_rejects_output_that_overwrites_input(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "Audio"
+            clips = root / "Video"
+            (root / "Chinese").mkdir(parents=True)
+            (root / "Chinese" / "01.wav").write_bytes(b"a")
+            (clips / "Chinese").mkdir(parents=True)
+            (clips / "Chinese" / "01.mp4").write_bytes(b"v")
+
+            with self.assertRaises(mix.MixError):
+                mix.build_jobs(root, "chinese", clips)
 
     def test_missing_clip_folder_raises(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -183,6 +247,7 @@ class MixCliTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         self.assertIn("--audio AUDIO", result.stdout)
         self.assertIn("--video VIDEO", result.stdout)
+        self.assertIn("--output OUTPUT", result.stdout)
         self.assertIn("--lang", result.stdout)
         self.assertNotIn("Legacy", result.stdout)
         pass

@@ -1,32 +1,40 @@
 # storyboard-av-mix
 
-Both paths are required on every run — no positional path, no auto-detection:
+Inputs are separated by language:
 
-- `--audio <dir>` — VO work dir containing `Chinese/` and `English/`.
-- `--video <dir>` — per-shot clips (`01.mp4`, `02.mp4`, …), matched by filename stem.
+- `--audio <dir>` — VO root containing `Chinese/` and `English/`.
+- `--video <dir>` — video root containing `Chinese/` and `English/`.
+- `--output <dir>` — optional output root; default `<audio>/Video/`.
 
-Outputs are written to `<audio>/Video-Chinese/` and `<audio>/Video-English/`.
+Outputs are `<output>/Chinese/` and `<output>/English/`.
 
 ```bash
-.dependency/python/python .ai/storyboard-av-mix/mix.py --audio path/to/<vo-dir> --video path/to/Video
+.dependency/python/python .ai/storyboard-av-mix/mix.py --audio path/to/Audio --video path/to/Video --output path/to/Output
 ```
 
-unit tests:
+Default output:
+
+```bash
+.dependency/python/python .ai/storyboard-av-mix/mix.py --audio path/to/Audio --video path/to/Video
+```
+
+Chinese only:
+
+```bash
+.dependency/python/python .ai/storyboard-av-mix/mix.py --audio path/to/Audio --video path/to/Video --lang chinese
+```
+
+English only:
+
+```bash
+.dependency/python/python .ai/storyboard-av-mix/mix.py --audio path/to/Audio --video path/to/Video --lang english
+```
+
+Legacy flat `Video/01.mp4` is accepted only when neither language subfolder
+exists. The script never falls back from one language folder to the other.
+
+Unit tests:
 
 ```bash
 .dependency/python/python .ai/storyboard-av-mix/test_mix.py
 ```
-
-Chinese VO only:
-
-```bash
-.dependency/python/python .ai/storyboard-av-mix/mix.py --audio path/to/<vo-dir> --video path/to/Video --lang chinese
-```
-
-English VO only:
-
-```bash
-.dependency/python/python .ai/storyboard-av-mix/mix.py --audio path/to/<vo-dir> --video path/to/Video --lang english
-```
-
-Missing either flag → argparse stops with `the following arguments are required: --audio, --video`. Existing path that is not a directory → `Audio dir not found: …` / `Video dir not found: …`, exit code 1.
