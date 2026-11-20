@@ -2,10 +2,11 @@
 name: storyboard
 description: >-
   Generates narration or voice-over lines from user-provided materials, with
-  all Chinese lines first and all English lines second by default. Use when the
-  user asks for narration, dialogue, a VO script, spoken copy, or lines for a
-  video. Honor explicit single-language requests and write the full script to
-  a requested output file.
+  all Chinese lines first and all English lines second by default. Bilingual
+  output is sentence-per-line, and line breaks pair one-to-one across
+  languages. Use when the user asks for narration, dialogue, a VO script,
+  spoken copy, or lines for a video. Honor explicit single-language requests
+  and write the full script to a requested output file.
 ---
 
 # Narration Script
@@ -16,29 +17,22 @@ requests them.
 
 ## Content
 
-- Use only facts supported by the user's materials. Do not invent product
-  facts, prices, logos, claims, or quotations.
-- Write natural spoken language rather than literal translation.
-- Keep the Chinese and English versions meaning-aligned, but let each sound
-  native in its own language.
+- Use only facts supported by the user's materials. Do not invent facts, claims, or quotations.
+- Write natural spoken language rather than literal translation. Keep the versions meaning-aligned, but let each sound native.
 - Preserve user-provided wording when the user asks to keep it verbatim.
-- Infer a reasonable tone and length from the materials. State one short
-  assumption only when it materially affects the result.
-- Estimate the spoken duration of every numbered segment and include the
-  approximate number of seconds in its heading.
+- Infer a reasonable tone and length from the materials. State one short assumption only when it materially affects the result.
+- Put the estimated spoken duration in every segment heading.
 - If the user requests one language, output only that language section.
 
 ## Language order
 
 For bilingual output:
 
-1. Write the complete Chinese section.
-2. Then write the complete English section.
-3. Never alternate Chinese and English line by line.
-4. Use matching numeric IDs so corresponding lines remain easy to pair.
-5. The two languages may use different sentence boundaries; keep the IDs
-   aligned by meaning.
-6. Use the same estimated duration for matching Chinese and English IDs.
+1. Write the complete Chinese section, then the complete English section. Never alternate Chinese and English line by line.
+2. Use matching numeric IDs and the same estimated duration for matching IDs.
+3. One line is one complete sentence. Never break a sentence across lines or join several sentences into one line.
+4. Line breaks pair one-to-one: a segment has the same number of lines in every language, and line N says the same thing in each. If a clause deserves its own line, it gets its own line in every language.
+5. No blank lines inside a segment; blank lines only separate segments.
 
 ## Delivery
 
@@ -58,30 +52,34 @@ For bilingual output:
 ## Chinese
 
 ### 01 — 约 15 秒
-[完整中文台词]
+[一句话]
+[一句话]
 
 ### 02 — 约 20 秒
-[完整中文台词]
+[一句话]
 
 ## English
 
 ### 01 — About 15 seconds
-[Complete English narration]
+[One sentence]
+[One sentence]
 
 ### 02 — About 20 seconds
-[Complete English narration]
+[One sentence]
 ```
 
-Optional short labels may follow the duration.
-Do not add empty language sections.
+Segment `01` has two lines here, so both languages need two. Optional short
+labels may follow the duration. Do not add empty language sections.
 
 ## Check
 
 - The output contains spoken lines only.
 - All Chinese lines appear before the English section.
-- IDs are unique, ordered, and meaning-aligned across languages.
-- Every numbered segment includes an estimated duration in seconds, and
-  matching bilingual IDs use the same estimate.
+- IDs are unique and ordered, with matching durations across languages.
+- Each segment has the same number of lines in every language, paired by index.
+- Every line is exactly one complete sentence, and no segment contains a blank line.
 - The wording is natural when read aloud.
 - Every factual statement traces to the supplied materials.
 - A requested output path received the full script.
+
+Count the lines per segment before delivering and fix any mismatch.
