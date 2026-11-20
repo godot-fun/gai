@@ -12,7 +12,7 @@ description: >-
 
 # Storyboard TTS
 
-Take a **[storyboard](../storyboard/SKILL.md)** deliverable and batch-synthesize **Chinese + English** voice-over with IndexTTS2 (shared setup with **[ai-text-to-speech](../ai-text-to-speech/SKILL.md)**).
+Take a **[narration script](../storyboard/SKILL.md)** deliverable and batch-synthesize **Chinese + English** voice-over with IndexTTS2 (shared setup with **[ai-text-to-speech](../ai-text-to-speech/SKILL.md)**).
 
 | Output | Path |
 |--------|------|
@@ -22,7 +22,7 @@ Take a **[storyboard](../storyboard/SKILL.md)** deliverable and batch-synthesize
 | Chinese subs | `<storyboard-dir>/<voice-stem>/Chinese.srt` |
 | English subs | `<storyboard-dir>/<voice-stem>/English.srt` |
 
-Shot id from headers (`### Shot 01 — …` → `01.wav`).
+Line IDs are paired across the separate `## Chinese` and `## English` sections (`### 01` → `01.wav`). Legacy per-shot bilingual files remain supported.
 
 Subtitles: **one SRT per language**. Shots are laid end-to-end on the VO timeline (shot N starts when N−1 ends). Inside a shot, text is split on sentence punctuation (`.!?;…` and CJK equivalents) into multiple cues; cue lengths share that shot’s WAV duration by **non-whitespace character weight**. Skip `(no VO)` / missing audio.
 
@@ -43,7 +43,7 @@ When this skill applies, read and follow [dependency-manager](../dependency-mana
 
 | Required | Notes |
 |----------|--------|
-| Storyboard `.md` | `### Shot NN — title` with `- **Chinese:**` / `- **English:**` |
+| Narration `.md` | Separate `## Chinese` and `## English` sections with matching `### NN` line IDs. Legacy per-shot bilingual format is also accepted. |
 | Reference voice | WAV/MP3 for IndexTTS (`--voice`, or `--voice-zh` / `--voice-en`) |
 
 | Optional | Default |

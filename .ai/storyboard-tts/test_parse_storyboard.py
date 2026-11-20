@@ -38,8 +38,51 @@ SAMPLE_STORYBOARD = """\
 - **Duration:** 5s
 """
 
+SAMPLE_NARRATION = """\
+# Narration Script — Product Demo
+
+## Chinese
+
+### 01 — 开场
+世界，你好。
+
+### 02
+(no VO)
+
+## English
+
+### 01 — Opening
+Hello, world.
+
+### 02
+This is the second line.
+"""
+
 
 class ParseLogicTest(unittest.TestCase):
+    def test_parses_language_sections(self) -> None:
+        data = parse_storyboard.parse_storyboard(SAMPLE_NARRATION)
+        self.assertEqual(data["title"], "Product Demo")
+        self.assertEqual(data["shot_count"], 2)
+        self.assertEqual(data["shots"][0]["title"], "开场")
+        self.assertEqual(data["shots"][0]["chinese"], "世界，你好。")
+        self.assertEqual(data["shots"][0]["english"], "Hello, world.")
+        self.assertTrue(data["shots"][1]["chinese_skip"])
+        self.assertEqual(data["shots"][1]["english"], "This is the second line.")
+
+    def test_parses_text_fields_in_language_sections(self) -> None:
+        markdown = """# Narration Script — Fields
+## Chinese
+### 01
+- **Text:** 中文台词
+## English
+### 01
+- **Text:** English line
+"""
+        data = parse_storyboard.parse_storyboard(markdown)
+        self.assertEqual(data["shots"][0]["chinese"], "中文台词")
+        self.assertEqual(data["shots"][0]["english"], "English line")
+
     def test_parses_title_and_shots(self) -> None:
         data = parse_storyboard.parse_storyboard(SAMPLE_STORYBOARD)
         self.assertEqual(data["title"], "Demo Title")

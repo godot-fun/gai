@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Parse storyboard markdown into per-shot Chinese / English VO lines.
+Parse narration markdown into paired Chinese / English VO lines.
 
 Run through default python from .dependency/manifest.json.
 Never use host python/py.
@@ -27,12 +27,20 @@ SHOT_HEADER_RE = re.compile(
     r"^###\s+Shot\s+(\d+)\s*[—–\-]\s*(.+?)\s*$",
     re.IGNORECASE | re.MULTILINE,
 )
+LANGUAGE_SECTION_RE = re.compile(
+    r"^##\s+(Chinese|English)\s*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+LINE_HEADER_RE = re.compile(
+    r"^###\s+(?:Shot\s+)?(\d+)(?:[ \t]*[—–\-:][ \t]*(.*?))?[ \t]*$",
+    re.IGNORECASE | re.MULTILINE,
+)
 FIELD_RE = re.compile(
     r"^\s*[-*]\s+\*\*(?P<key>[^*]+)\*\*\s*:?\s*(?P<value>.*)\s*$",
     re.MULTILINE,
 )
 TITLE_RE = re.compile(
-    r"^#\s+Storyboard\s*(?:[—–\-]|:)\s*(.+?)\s*$",
+    r"^#\s+(?:Storyboard|Narration\s+Script)\s*(?:[—–\-]|:)\s*(.+?)\s*$",
     re.IGNORECASE | re.MULTILINE,
 )
 NO_VO_MARKERS = {
@@ -67,9 +75,70 @@ def extract_fields(block: str) -> dict[str, str]:
     return fields
 
 
+def extract_line_text(block: str) -> str:
+    fields = extract_fields(block)
+    if "text" in fields:
+        return fields["text"].strip()
+    lines = [line.strip() for line in block.strip().splitlines()]
+    return "\n".join(line for line in lines if line).strip()
+
+
+def parse_language_sections(markdown: str) -> dict | None:
+    sections = list(LANGUAGE_SECTION_RE.finditer(markdown))
+    if not sections:
+        return None
+
+    entries: dict[str, dict[str, dict[str, str]]] = {"chinese": {}, "english": {}}
+    order: list[str] = []
+    for index, section in enumerate(sections):
+        language = section.group(1).lower()
+        start = section.end()
+        end = sections[index + 1].start() if index + 1 < len(sections) else len(markdown)
+        body = markdown[start:end]
+        headers = list(LINE_HEADER_RE.finditer(body))
+        for line_index, header in enumerate(headers):
+            raw_id = header.group(1)
+            line_id = f"{int(raw_id):02d}"
+            title = (header.group(2) or "").strip()
+            text_start = header.end()
+            text_end = headers[line_index + 1].start() if line_index + 1 < len(headers) else len(body)
+            text = extract_line_text(body[text_start:text_end])
+            entries[language][line_id] = {"title": title, "text": text}
+            if line_id not in order:
+                order.append(line_id)
+
+    shots: list[dict] = []
+    for line_id in order:
+        chinese_entry = entries["chinese"].get(line_id, {})
+        english_entry = entries["english"].get(line_id, {})
+        chinese = chinese_entry.get("text", "")
+        english = english_entry.get("text", "")
+        shots.append(
+            {
+                "id": line_id,
+                "title": chinese_entry.get("title") or english_entry.get("title") or "",
+                "duration_hint": "",
+                "chinese": chinese,
+                "english": english,
+                "chinese_skip": is_no_vo(chinese),
+                "english_skip": is_no_vo(english),
+            }
+        )
+
+    return {"shot_count": len(shots), "shots": shots}
+
+
 def parse_storyboard(markdown: str) -> dict:
     title_match = TITLE_RE.search(markdown)
     title = title_match.group(1).strip() if title_match else "Untitled"
+
+    section_data = parse_language_sections(markdown)
+    if section_data is not None:
+        return {
+            "title": title,
+            "shot_count": section_data["shot_count"],
+            "shots": section_data["shots"],
+        }
 
     headers = list(SHOT_HEADER_RE.finditer(markdown))
     shots: list[dict] = []
@@ -130,7 +199,7 @@ def main(argv: list[str] | None = None) -> int:
     data = parse_storyboard(path.read_text(encoding="utf-8-sig"))
     if data["shot_count"] == 0:
         print(
-            f"No shots found in {path}. Expected headers like: ### Shot 01 — Title",
+            f"No lines found in {path}. Expected ## Chinese / ## English sections with ### 01 headings",
             file=sys.stderr,
         )
         return 1

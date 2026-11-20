@@ -1,14 +1,15 @@
 # storyboard
 
-Agent-only skill — write bilingual storyboard markdown. No bundled script under `.ai/`.
+Agent-only skill — write narration with the complete Chinese section first and
+the complete English section second. No bundled script under `.ai/`.
 
 Delivery:
 
 | Mode | Behavior |
 |------|----------|
-| User gives a file path | Write the full storyboard markdown to that path |
-| User names a directory only | Create `storyboard.md` in that directory |
-| No path | Deliver the full storyboard in chat only |
+| User explicitly gives an output file | Write the full narration markdown to that path |
+| User explicitly gives an output directory | Create `narration-script.md` there |
+| No output destination | Deliver the full narration in chat only |
 
 Downstream CLI (after storyboard exists):
 
