@@ -62,6 +62,12 @@ DETECTION_LEAD_SECONDS = 0.2
 # recording scores 0 while even a small overlay popping scores well above 0.05.
 DETECTION_PIXEL_DIFFERENCE = 8
 DETECTION_MIN_MOVEMENT = 0.05
+# A page may open quietly: thin rules darkening, digits ticking — motion too fine to survive the
+# thumbnail, so the first frame that clears the threshold can come a second after the key. The paused
+# page and the animation's first frame are the same image, so such a start belongs on the press: the
+# cut then keeps the whole declared timeline instead of dropping that opening and holding the last
+# frame for as long as the detection was late. The limit is what the capture can still cover.
+DETECTION_MAX_LEAD_SECONDS = TAIL_SECONDS - 0.15
 # The analysis runs on a thumbnail: 4.6x faster at 4K, and independent of the capture resolution.
 DETECTION_SCALE_WIDTH = 480
 FULLSCREEN_SETTLE_SECONDS = 0.8
@@ -76,7 +82,9 @@ PROGRESS_PIPE = "pipe:1"
 
 FRAME_PATTERN = re.compile(r"^frame=\s*(\d+)\s*$")
 PTS_TIME_PATTERN = re.compile(r"pts_time:([0-9.]+)")
-FRAME_DIFFERENCE_PATTERN = re.compile(r"lavfi\.signalstats\.YAVG=([0-9.]+)")
+# `signalstats` prints a mean below 1e-4 in scientific notation, so the exponent has to be part of
+# the value: cutting its tail turns a handful of changed pixels into a level far above the limit.
+FRAME_DIFFERENCE_PATTERN = re.compile(r"lavfi\.signalstats\.YAVG=([0-9.eE+-]+)")
 
 VK_F11 = 0x7A
 WM_KEYDOWN = 0x0100
@@ -861,7 +869,9 @@ def find_animation_start(ffmpeg: Path, raw_path: Path, pressed_seconds: float) -
 
     The paused page is still until Space arrives, so the first frame that differs from the frame
     before it is the animation starting on screen. Its own timestamp is used instead of the press,
-    which the compositor and the capture pipeline delay by an unpredictable amount.
+    which the compositor and the capture pipeline delay by an unpredictable amount. A start too
+    late to leave the whole timeline inside the capture falls back to the press: that opening is
+    the animation itself, only too fine for the thumbnail to see.
     """
     detected = detect_animation_start(
         ffmpeg,
@@ -871,6 +881,13 @@ def find_animation_start(ffmpeg: Path, raw_path: Path, pressed_seconds: float) -
     )
     if detected is None:
         print("[warn] Could not find the first moving frame; cutting at the Space press instead", file=sys.stderr)
+        return pressed_seconds
+    lead_seconds = detected - pressed_seconds
+    if lead_seconds > DETECTION_MAX_LEAD_SECONDS:
+        print(
+            f"[warn] The page first moves {lead_seconds:.2f}s after the key; cutting at the press to keep the timeline",
+            file=sys.stderr,
+        )
         return pressed_seconds
     return detected
 

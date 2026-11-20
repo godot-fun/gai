@@ -59,6 +59,11 @@ The MP4 is written to `<output>/<html stem>.mp4`, next to the HTML file when `--
    analysis, not a second per second), so a quiet recording scores zero and even a small overlay
    popping registers; it cuts there and keeps exactly the declared duration, which also absorbs the
    compositor lag between the key and the first visible frame.
+   A page may open too quietly for that test: thin rules darkening or digits ticking under the
+   thumbnail stay below the threshold, so the first detected frame can come a second after the key.
+   The paused page and the animation's first frame are the same image, so the script then cuts on the
+   key press instead — that keeps the whole declared timeline rather than dropping the quiet opening
+   and holding the last frame for as long as the detection was late.
 
 A browser needs a few hundred milliseconds to present its first frame after an idle screen; the
 cut lands on that first visible frame, so the opening of the animation is never lost and no previous

@@ -275,6 +275,18 @@ class DetectTest(unittest.TestCase):
         found = record.find_first_movement(differences)
         self.assertAlmostEqual(found, 20 * 0.0166667)
 
+    def test_reads_a_mean_in_scientific_notation(self) -> None:
+        # A handful of changed pixels prints as an exponent; reading it as 1.9 would fake movement.
+        text = (
+            "frame:0    pts:0       pts_time:0\n"
+            "lavfi.signalstats.YAVG=1.97531e-05\n"
+            "frame:1    pts:256     pts_time:0.0166667\n"
+            "lavfi.signalstats.YAVG=0\n"
+        )
+        differences = record.parse_frame_differences(text)
+        self.assertAlmostEqual(differences[0][1], 1.97531e-05)
+        self.assertIsNone(record.find_first_movement(differences))
+
     def test_noise_alone_is_not_movement(self) -> None:
         differences = [(index * 0.0166667, 0.04) for index in range(30)]
         self.assertIsNone(record.find_first_movement(differences))
@@ -311,10 +323,35 @@ class DetectTest(unittest.TestCase):
             command,
         )
 
+
     @patch("record.subprocess.run")
     def test_detection_failure_returns_none(self, run) -> None:
         run.return_value = subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="no decoder")
         self.assertIsNone(record.detect_animation_start(Path("ffmpeg.exe"), Path("raw.mp4"), 0.0, 3.0))
+
+
+class AnimationStartTest(unittest.TestCase):
+    @patch("record.detect_animation_start")
+    def test_uses_the_detected_frame(self, detect) -> None:
+        detect.return_value = 0.42
+        self.assertAlmostEqual(record.find_animation_start(Path("ffmpeg.exe"), Path("raw.mp4"), 0.3), 0.42)
+
+    @patch("record.detect_animation_start")
+    def test_a_quiet_opening_cuts_on_the_press(self, detect) -> None:
+        # Thin rules darkening and digits ticking stay under the thumbnail threshold, so the first
+        # detected frame arrives a second late; the press keeps the whole declared timeline.
+        detect.return_value = 1.083
+        self.assertAlmostEqual(record.find_animation_start(Path("ffmpeg.exe"), Path("raw.mp4"), 0.015), 0.015)
+
+    @patch("record.detect_animation_start")
+    def test_a_start_past_the_capture_margin_cuts_on_the_press(self, detect) -> None:
+        detect.return_value = record.DETECTION_MAX_LEAD_SECONDS + 0.5
+        self.assertAlmostEqual(record.find_animation_start(Path("ffmpeg.exe"), Path("raw.mp4"), 0.0), 0.0)
+
+    @patch("record.detect_animation_start")
+    def test_no_detection_cuts_on_the_press(self, detect) -> None:
+        detect.return_value = None
+        self.assertAlmostEqual(record.find_animation_start(Path("ffmpeg.exe"), Path("raw.mp4"), 0.02), 0.02)
 
 
 class VerifyTest(unittest.TestCase):
