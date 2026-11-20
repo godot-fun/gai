@@ -96,51 +96,53 @@ All browser endpoints use the common response shape:
 
 Fields not produced by the selected operation are empty strings.
 
-## HTML animation packages
+## HTML animation playback
 
-`POST /animation/create` renders a self-contained HTML animation into PNG frames in the
-background. The request supplies the HTML file and the parent output directory:
+Two endpoints drive one self-contained HTML animation in the browser window, and both answer only
+when their step is done, so a recorder can time its capture around them instead of guessing:
 
-```json
-{
-  "htmlPath": "C:/input/product-intro.html",
-  "outputDirectory": "C:/output/animations",
-  "duration": 15
-}
-```
-
-`duration` is optional and expressed in seconds. When omitted, the renderer reads
-`<meta name="animation-duration" content="15">` from the HTML. A request value takes precedence
-over the HTML value.
-
-The response contains only the animation name, derived from the HTML filename:
+- `POST /animation/open` navigates the shared tab and answers once the page's **paused first frame**
+  is on screen.
+- `POST /animation/play` presses **Space** in that page and answers with the wall clock of the press.
 
 ```json
-{ "animation": "product-intro" }
+{ "htmlPath": "C:/input/product-intro.html", "duration": 15 }
 ```
 
-Frames and `manifest.json` are written under
-`C:/output/animations/product-intro/`. Rendering is always 60 FPS at the largest physical
-resolution reported by the host's displays. The renderer loads the page, waits for it to load
-and lay out, then captures the live animation in real time — the HTML must autoplay on load and
-never waits for a seek call. The duration comes only from the request `duration` or the
-`animation-duration` meta tag. An existing package directory is never overwritten; the endpoint
-returns HTTP 409 instead.
-
-`POST /animation/query` reads the current render status:
+`duration` is optional and, when present, overrides the page's own declaration.
 
 ```json
 {
   "animation": "product-intro",
-  "outputDirectory": "C:/output/animations"
+  "title": "Product intro",
+  "durationMs": 15000,
+  "requestedWallClockMs": 1795094051070,
+  "openedWallClockMs": 1795094051180
 }
 ```
 
-It returns `rendering`, `completed`, or `failed`; `error` is populated only for a failed render:
+`title` is the loaded page's `document.title`, and `durationMs` comes from
+`<meta name="animation-duration" content="15">` read after load, so a caller never has to parse the
+HTML itself. A page that declares neither and a request without `duration` answers `400` with code
+`INVALID_ANIMATION_DURATION`.
 
-```json
-{ "status": "completed", "error": "" }
-```
+The page stays paused after `open`, so browser startup, page load, font loading, window placement and
+fullscreen all finish before recording begins; only the Space press has to fit inside the video. The
+animation must start on `Space` and stay still until then.
+
+`POST /animation/play` takes no body and replies with `{ animation, requestedWallClockMs,
+playedWallClockMs }`, where `playedWallClockMs` is the system wall clock (epoch ms) of the key press,
+for correlating recorder logs.
+
+`POST /animation/close` takes no body, closes the playback tab and replies with
+`{ "status": "closed" }`. The next `open` starts from a fresh page.
+
+One page is reused and nothing queues: a second `open` navigates the tab away from the previous
+animation, so record one animation at a time. `/animation/play` before any open answers `409` with
+code `ANIMATION_NOT_OPEN`. Playback requires a visible window: when the service runs
+with `BROWSER_HEADLESS=true` both endpoints answer `412` with code `HEADLESS_BROWSER`, because there
+is nothing to capture. The endpoints never screenshot the page — capture belongs to the recorder,
+which uses FFmpeg's Desktop Duplication API (`ddagrab`) plus NVENC.
 
 ## MCP
 

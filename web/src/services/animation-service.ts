@@ -1,219 +1,135 @@
-import { execFile } from "node:child_process";
-import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Page } from "playwright-core";
 import { HttpError, HttpStatus } from "../http";
 import { browserService } from "./browser-service";
 
-const FRAMES_PER_SECOND = 60;
+/** The key that starts an animation page; every generated page stays paused until it arrives. */
+const START_KEY = "Space";
+/** Two frames after the open prove the page has painted the frame the start key will move. */
+const FRAME_TIMEOUT_MS = 10_000;
 
-interface DisplaySize {
-  width: number;
-  height: number;
-}
-
-interface AnimationManifest {
-  status: "rendering" | "completed" | "failed";
+export interface AnimationInfo {
   animation: string;
-  width: number;
-  height: number;
-  fps: number;
+  /** System wall clock (epoch ms) of the operation, for correlating recorder logs. */
+  requestedWallClockMs: number;
+}
+
+export interface OpenResult extends AnimationInfo {
+  /** `document.title` of the loaded page, used to find its window on screen. */
+  title: string;
+  /** Declared animation duration, so callers never parse the HTML themselves. */
   durationMs: number;
-  totalFrames: number;
-  renderedFrames: number;
-  filePattern: string;
-  error: string;
+  /** Wall clock of the moment the paused first frame was on screen and ready for the start key. */
+  openedWallClockMs: number;
 }
 
-export interface CreateAnimationRequest {
-  htmlPath: string;
-  outputDirectory: string;
-  duration?: number;
+export interface PlayResult extends AnimationInfo {
+  /** Wall clock of the key press that started the timeline — where a recorder cuts its video. */
+  playedWallClockMs: number;
 }
 
-export interface AnimationStatus {
-  status: AnimationManifest["status"];
-  error: string;
-}
-
-/** Plays a self-contained HTML animation once and captures PNG frames in real time. */
+/**
+ * Drives one self-contained HTML animation in the shared browser tab.
+ *
+ * The animation is opened first and stays paused on its first frame, so a recorder can maximize the
+ * window and start capturing before anything moves. `play` then presses Space and answers at once:
+ * browser startup, page load and window placement no longer have to fit inside the recording.
+ * The tab is reused, so a second `open` navigates away from the previous animation: record one
+ * animation at a time.
+ */
 export class AnimationService {
-  private readonly tasks = new Map<string, Promise<void>>();
+  private page: Page | null = null;
 
-  async create(request: CreateAnimationRequest): Promise<string> {
-    const { htmlPath, outputDirectory, duration } = request;
-    const animation = path.parse(htmlPath).name;
-    const animationDirectory = path.join(outputDirectory, animation);
-    await mkdir(outputDirectory, { recursive: true });
-    try {
-      await mkdir(animationDirectory);
-    } catch (error) {
-      if (isNodeError(error, "EEXIST")) {
-        throw new HttpError(HttpStatus.CONFLICT, "ANIMATION_ALREADY_EXISTS", `Animation already exists: ${animation}`);
-      }
-      throw error;
-    }
-
-    const taskKey = path.normalize(animationDirectory).toLowerCase();
-    const task = this.render(htmlPath, animationDirectory, animation, duration)
-      .catch((error: unknown) => console.error("Animation render failed", { animation, error }))
-      .finally(() => this.tasks.delete(taskKey));
-    this.tasks.set(taskKey, task);
-    return animation;
+  /** Loads the page and returns once its paused first frame is on screen. */
+  async open(htmlPath: string, durationSeconds?: number): Promise<OpenResult> {
+    const requestedWallClockMs = Date.now();
+    const page = await this.browserPage();
+    await page.bringToFront();
+    // The query marker makes every navigation a fresh URL, so the wait below never matches the
+    // lifecycle of the document the tab served before.
+    await page.goto(`${pathToFileURL(htmlPath).href}?gai=${requestedWallClockMs}`, { waitUntil: "load" });
+    await waitForFirstFrame(page);
+    return {
+      animation: path.parse(htmlPath).name,
+      requestedWallClockMs,
+      title: await readTitle(page),
+      durationMs: await readDurationMs(page, durationSeconds),
+      openedWallClockMs: Date.now(),
+    };
   }
 
-  async query(animation: string, outputDirectory: string): Promise<AnimationStatus> {
-    const animationDirectory = path.join(outputDirectory, animation);
-    const taskKey = path.normalize(animationDirectory).toLowerCase();
-    if (this.tasks.has(taskKey)) return { status: "rendering", error: "" };
-    try {
-      const manifest = JSON.parse(await readFile(path.join(animationDirectory, "manifest.json"), "utf8")) as AnimationManifest;
-      return { status: manifest.status, error: manifest.error };
-    } catch (error) {
-      if (isNodeError(error, "ENOENT")) throw new HttpError(HttpStatus.NOT_FOUND, "ANIMATION_NOT_FOUND", `Animation not found: ${animation}`);
-      throw error;
+  /** Presses Space in the loaded page: the timeline starts on that key and never before it. */
+  async play(): Promise<PlayResult> {
+    const page = this.page;
+    if (page === null || page.isClosed()) {
+      throw new HttpError(
+        HttpStatus.CONFLICT,
+        "ANIMATION_NOT_OPEN",
+        "No animation is open: call /animation/open before /animation/play",
+      );
     }
+    const requestedWallClockMs = Date.now();
+    await page.keyboard.press(START_KEY);
+    return {
+      animation: path.parse(new URL(page.url()).pathname).name,
+      requestedWallClockMs,
+      playedWallClockMs: Date.now(),
+    };
   }
 
+  /** Closes the playback tab; the next `open` starts from a new page. */
   async close(): Promise<void> {
-    await Promise.allSettled(this.tasks.values());
+    const page = this.page;
+    this.page = null;
+    await page?.close().catch(() => undefined);
   }
 
-  private async render(htmlPath: string, animationDirectory: string, animation: string, duration?: number): Promise<void> {
-    let page: Page | null = null;
-    let manifest: AnimationManifest | null = null;
-    try {
-      const display = await detectLargestPhysicalDisplay();
-      page = await browserService.openPage();
-      await page.setViewportSize(display);
-      await preparePage(page, htmlPath);
-      const durationMs = await readAnimationDuration(page, duration);
-      const totalFrames = Math.ceil(durationMs * FRAMES_PER_SECOND / 1_000);
-      manifest = {
-        status: "rendering",
-        animation,
-        ...display,
-        fps: FRAMES_PER_SECOND,
-        durationMs,
-        totalFrames,
-        renderedFrames: 0,
-        filePattern: "%06d.png",
-        error: "",
-      };
-      await writeManifest(animationDirectory, manifest);
-      await captureFrames(page, animationDirectory, manifest);
-      manifest.status = "completed";
-      await writeManifest(animationDirectory, manifest);
-    } catch (error) {
-      const failed = manifest ?? {
-        status: "failed" as const,
-        animation,
-        width: 0,
-        height: 0,
-        fps: FRAMES_PER_SECOND,
-        durationMs: 0,
-        totalFrames: 0,
-        renderedFrames: 0,
-        filePattern: "%06d.png",
-        error: "",
-      };
-      failed.status = "failed";
-      failed.error = error instanceof Error ? error.message : String(error);
-      await writeManifest(animationDirectory, failed).catch(() => undefined);
-      throw error;
-    } finally {
-      await page?.close().catch(() => undefined);
-    }
+  /** One reused page keeps the animation in a single tab instead of a new tab per animation. */
+  private async browserPage(): Promise<Page> {
+    const existing = this.page;
+    if (existing !== null && !existing.isClosed()) return existing;
+    this.page = await browserService.openPage();
+    return this.page;
   }
 }
 
-async function preparePage(page: Page, htmlPath: string): Promise<void> {
-  // esbuild's keepNames transform references this helper inside callbacks serialized into the page.
-  await page.addInitScript("globalThis.__name = globalThis.__name || ((target) => target)");
-  await page.goto(pathToFileURL(htmlPath).href, { waitUntil: "load" });
-  await page.evaluate(() => document.fonts.ready.then(() => undefined));
-  // Let the first painted frames happen, so the capture clock starts on a laid-out, painted page.
-  await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+async function readTitle(page: Page): Promise<string> {
+  return await page.evaluate(() => document.title);
 }
 
-/** Plays the page in real time: every 1000/fps tick of wall-clock time is written as one frame. */
-async function captureFrames(page: Page, animationDirectory: string, manifest: AnimationManifest): Promise<void> {
-  const frameIntervalMs = 1_000 / manifest.fps;
-  const startedAt = performance.now();
-  for (let frame = 0; frame < manifest.totalFrames; frame += 1) {
-    await sleepUntil(startedAt + frame * frameIntervalMs);
-    const fileName = `${String(frame).padStart(6, "0")}.png`;
-    await page.screenshot({
-      path: path.join(animationDirectory, fileName),
-      type: "png",
-      animations: "allow",
-      caret: "hide",
-      scale: "device",
-      timeout: 10_000,
-    });
-    manifest.renderedFrames = frame + 1;
-    if (manifest.renderedFrames % manifest.fps === 0) await writeManifest(animationDirectory, manifest);
-  }
-}
-
-/** Resolves at the deadline; a deadline already in the past resolves immediately. */
-function sleepUntil(deadline: number): Promise<void> {
-  const remaining = deadline - performance.now();
-  if (remaining <= 0) return Promise.resolve();
-  return new Promise<void>((resolve) => setTimeout(resolve, remaining));
-}
-
-async function readAnimationDuration(page: Page, requestedDuration?: number): Promise<number> {
-  const durationSeconds = requestedDuration ?? await page.evaluate(() => {
+/** Reads the declaration from the loaded page, so callers do not have to parse the HTML themselves. */
+async function readDurationMs(page: Page, durationSeconds?: number): Promise<number> {
+  const declared = durationSeconds ?? await page.evaluate(() => {
     const content = document.querySelector<HTMLMetaElement>('meta[name="animation-duration"]')?.content;
     return Number(content);
   });
-  const durationMs = durationSeconds * 1_000;
+  const durationMs = declared * 1_000;
   if (!Number.isFinite(durationMs) || durationMs <= 0) {
-    throw new Error('duration or <meta name="animation-duration"> must be a positive finite number of seconds');
+    throw new HttpError(
+      HttpStatus.BAD_REQUEST,
+      "INVALID_ANIMATION_DURATION",
+      'The page must declare <meta name="animation-duration" content="15"> or the request must send duration in seconds',
+    );
   }
   return durationMs;
 }
 
-async function writeManifest(animationDirectory: string, manifest: AnimationManifest): Promise<void> {
-  const temporary = path.join(animationDirectory, "manifest.json.tmp");
-  const target = path.join(animationDirectory, "manifest.json");
-  await writeFile(temporary, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
-  await rm(target, { force: true });
-  await rename(temporary, target);
-}
-
-/** Windows reports physical pixels after making this helper process DPI-aware. */
-async function detectLargestPhysicalDisplay(): Promise<DisplaySize> {
-  if (process.platform !== "win32") throw new Error("Physical display detection is currently supported only on Windows");
-  const script = [
-    "Add-Type -MemberDefinition '[System.Runtime.InteropServices.DllImport(\"user32.dll\")] public static extern bool SetProcessDPIAware();' -Name Dpi -Namespace Native",
-    "[Native.Dpi]::SetProcessDPIAware() | Out-Null",
-    "Add-Type -AssemblyName System.Windows.Forms",
-    "$screens = [System.Windows.Forms.Screen]::AllScreens | ForEach-Object { @{ width = $_.Bounds.Width; height = $_.Bounds.Height } }",
-    "$screens | ConvertTo-Json -Compress",
-  ].join("; ");
-  const stdout = await new Promise<string>((resolve, reject) => {
-    execFile("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], { windowsHide: true }, (error, output) => {
-      if (error) reject(error);
-      else resolve(output);
-    });
-  });
-  const parsed: unknown = JSON.parse(stdout.trim());
-  const displays = (Array.isArray(parsed) ? parsed : [parsed]).filter(isDisplaySize);
-  if (displays.length === 0) throw new Error("No physical display resolution is available");
-  return displays.reduce((largest, display) => display.width * display.height > largest.width * largest.height ? display : largest);
-}
-
-function isDisplaySize(value: unknown): value is DisplaySize {
-  if (typeof value !== "object" || value === null) return false;
-  const candidate = value as Record<string, unknown>;
-  return Number.isSafeInteger(candidate.width) && Number(candidate.width) > 0 && Number.isSafeInteger(candidate.height) && Number(candidate.height) > 0;
-}
-
-function isNodeError(error: unknown, code: string): boolean {
-  return error instanceof Error && "code" in error && error.code === code;
+/** Waits until the page has drawn its paused first frame, so the recording starts on real content. */
+async function waitForFirstFrame(page: Page): Promise<void> {
+  await page.evaluate(
+    (timeoutMs) =>
+      new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, timeoutMs);
+        requestAnimationFrame(() =>
+          requestAnimationFrame(() => {
+            clearTimeout(timer);
+            resolve();
+          }),
+        );
+      }),
+    FRAME_TIMEOUT_MS,
+  );
 }
 
 export const animationService = new AnimationService();

@@ -34,7 +34,7 @@ Do not copy sample brands, characters, wording, or hard-coded layouts from refer
 - Establish a clear hierarchy among headline, supporting text, visual subject, and background detail.
 - Keep each text block on screen long enough to read. Split dense text into beats instead of shrinking it.
 - Base the scene on elapsed time so playback remains stable across refresh rates and so real-time frame capture stays faithful.
-- Never expose or rely on seek, pause, or frame-stepping hooks; the capture tool plays the page once and samples it live.
+- Never expose seek, pause, or frame-stepping hooks. `Space` starts the timeline once and the capture tool records live from there.
 - Use deterministic variation when random-looking marks, particles, grain, or jitter must reproduce consistently.
 - Respect `prefers-reduced-motion` by providing a readable reduced-motion state.
 - Avoid external dependencies unless they substantially improve the requested result or the user explicitly permits them.
@@ -43,8 +43,11 @@ Do not copy sample brands, characters, wording, or hard-coded layouts from refer
 
 - Return complete implementation rather than pseudocode or omitted sections.
 - Declare the total duration in seconds in `<head>` with `<meta name="animation-duration" content="15">`, replacing `15` with the actual duration. This meta tag or an explicit API duration is the only duration source the capture tool reads.
-- Start playing on load and finish on schedule; the capture tool loads the page, waits for fonts and the first painted frames, then samples the running animation in real time.
-- Default to automatic playback. Unless requested, omit play, pause, replay, progress, and debugging controls.
+- Open paused on the animation's first frame and start on `Space`, then finish on schedule. The capture tool opens the page, waits for fonts and the first painted frame, starts recording, and only then presses `Space`, so no part of the opening is lost to page loading.
+- Start the timeline on the first frame painted after `Space` (set the clock inside `requestAnimationFrame`), never on the key event itself or on load.
+- Keep the paused state visually still until `Space` — no motion, no blinking caret, no running ambience — and keep redrawing the paused frame from a `requestAnimationFrame` loop so the browser keeps presenting. The recorder cuts the video at the first frame that changes.
+- A start hint is allowed while paused because the recording begins after it disappears.
+- Unless requested, omit play buttons, pause, replay, progress, and debugging controls.
 - Use responsive scaling while preserving the intended composition and aspect ratio.
 - Avoid horizontal overflow, clipped text, unreadable contrast, accidental scrollbars, and animation that begins before fonts or layout are ready.
 - Keep labels, legends, and body text outside high-frequency detail and intense highlights.
