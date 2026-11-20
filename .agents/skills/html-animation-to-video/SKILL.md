@@ -1,6 +1,6 @@
 ---
 name: html-animation-to-video
-description: Records one self-contained HTML animation into an MP4 by screen-capturing the browser window with FFmpeg Desktop Duplication and NVENC. Use when the user wants to export, capture, record, or convert an HTML animation into a video file, including HTML produced by html-text-to-animation or storyboard-shot-to-html.
+description: Records one self-contained HTML animation into an MP4 by screen-capturing the browser window with FFmpeg Desktop Duplication and NVENC. Use when the user wants to export, capture, record, or convert an HTML animation into a video file, including HTML produced by html-text-to-animation.
 ---
 
 # HTML Animation to Video
