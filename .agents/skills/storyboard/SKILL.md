@@ -43,8 +43,8 @@ For bilingual output:
   script there as UTF-8. Replace it only when it is clearly an output or draft.
 - Treat briefs, scripts, transcripts, and reference documents as input unless
   the user explicitly asks to overwrite them.
-- If the user explicitly gives an output directory, create
-  `narration-script.md` in it.
+- Use `storyboard.md` as the default output filename.
+- If the user explicitly gives an output directory, create `storyboard.md` in it.
 - If no output destination is requested, return the full script in chat.
 
 ## Output format
