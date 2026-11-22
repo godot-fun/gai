@@ -20,6 +20,10 @@ static func is_explorer_tool(tool_name: String) -> bool:
 	)
 
 
+static func is_bash_tool(tool_name: String) -> bool:
+	return tool_name == BashTool.NAME or tool_name == BashProcessTool.NAME
+
+
 static func is_web_tool(tool_name: String) -> bool:
 	return (
 		tool_name == WebSearchTool.NAME

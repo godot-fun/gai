@@ -13,6 +13,7 @@ static var bubble_types: Dictionary[String, Script] = {
 	ChatEntry.KIND_THINKING: ThinkingBubble,
 	ChatEntry.KIND_AGENT: AgentBubble,
 	ChatEntry.KIND_TOOL: ToolBubble,
+	ChatEntry.KIND_BASH_TOOL: BashToolBubble,
 	ChatEntry.KIND_WEB_TOOL: WebToolBubble,
 	ChatEntry.KIND_FILE_TOOL: FileBubble,
 	ChatEntry.KIND_EXPLORER_TOOL: ExplorerBubble,

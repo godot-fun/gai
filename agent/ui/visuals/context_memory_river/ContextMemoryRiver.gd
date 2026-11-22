@@ -761,7 +761,7 @@ static func stream_type_for_entry(entry: ChatEntry) -> int:
 	match entry.kind:
 		ChatEntry.KIND_USER:
 			return StreamType.USER
-		ChatEntry.KIND_FILE_TOOL, ChatEntry.KIND_WEB_TOOL, ChatEntry.KIND_TOOL:
+		ChatEntry.KIND_FILE_TOOL, ChatEntry.KIND_WEB_TOOL, ChatEntry.KIND_BASH_TOOL, ChatEntry.KIND_TOOL:
 			return stream_type_for_tool_name(entry.title)
 		ChatEntry.KIND_WEB_RESULT:
 			return StreamType.WEB

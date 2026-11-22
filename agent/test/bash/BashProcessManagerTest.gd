@@ -1,6 +1,13 @@
 extends RefCounted
 
 
+static func bash_tools_are_bash_tools_test() -> void:
+	assert(ToolHelper.is_bash_tool(BashTool.NAME))
+	assert(ToolHelper.is_bash_tool(BashProcessTool.NAME))
+	assert(not ToolHelper.is_bash_tool(ReadTool.NAME))
+	pass
+
+
 static func poll_completed_process_test() -> void:
 	var process_id := BashProcessManager.start("printf process-ok")
 	assert(process_id.begins_with("bash_"))
@@ -50,6 +57,6 @@ static func running_tool_result_includes_process_id_test() -> void:
 
 
 static func bash_process_bubble_uses_compact_title_test() -> void:
-	var entry := ChatEntry.new(ChatEntry.KIND_TOOL, BashProcessTool.NAME, "poll bash_26")
-	assert(ToolBubble.compact_title(entry) == "bash_process  poll bash_26")
+	var entry := ChatEntry.new(ChatEntry.KIND_BASH_TOOL, BashProcessTool.NAME, "poll bash_26")
+	assert(BashToolBubble.compact_title(entry) == "bash_process  poll bash_26")
 	pass
