@@ -10,7 +10,7 @@ enum AudioBusType {
 }
 
 static var audio_map: Dictionary[AudioBusType, AudioStreamPlayer] = {}
-static var stream_fade_map: Dictionary[AudioBusType, bool] = {}
+static var stream_tween_map: Dictionary[AudioBusType, Tween] = {}
 
 static func init() -> void:
 	for bus_name in AudioBusType.keys():
@@ -52,6 +52,7 @@ static func play_stream(bus: AudioBusType, path: String, volume_linear: float = 
 	var resource := await ResourceHelper.async_load(path) as AudioStream
 	if resource == null:
 		return
+	cancel_stream_tween(bus)
 	var player: AudioStreamPlayer = audio_map[bus]
 	player.volume_linear = clampf(volume_linear, 0.0, 1.0)
 	player.stream = resource
@@ -59,54 +60,62 @@ static func play_stream(bus: AudioBusType, path: String, volume_linear: float = 
 	pass
 
 static func stop_stream(bus: AudioBusType) -> void:
+	cancel_stream_tween(bus)
 	var player: AudioStreamPlayer = audio_map[bus]
 	player.stop()
 	pass
 
-static func begin_stream_fade(bus: AudioBusType, method: String) -> bool:
-	if stream_fade_map.get(bus, false):
-		Log.error("stream fade already in progress on bus:[{}], skip [{}]", AudioBusType.keys()[bus], method)
-		return false
-	stream_fade_map[bus] = true
-	return true
-
-static func end_stream_fade(bus: AudioBusType) -> void:
-	stream_fade_map[bus] = false
+## Cancel the previous fade on this bus. Emitting [signal Tween.finished] releases its awaiting
+## coroutine; that coroutine sees it is no longer the current tween and exits without applying its
+## stale final state.
+static func cancel_stream_tween(bus: AudioBusType) -> void:
+	var tween: Tween = stream_tween_map.get(bus)
+	if tween == null:
+		return
+	stream_tween_map.erase(bus)
+	if tween.is_valid():
+		tween.kill()
+		tween.finished.emit()
 	pass
+
+static func fade_stream(bus: AudioBusType, player: AudioStreamPlayer, volume_linear: float, duration: float) -> bool:
+	cancel_stream_tween(bus)
+	var tween := player.create_tween()
+	stream_tween_map[bus] = tween
+	tween.tween_property(player, "volume_linear", volume_linear, duration)
+	await tween.finished
+	if stream_tween_map.get(bus) != tween:
+		return false
+	stream_tween_map.erase(bus)
+	return true
 
 static func play_stream_fade(bus: AudioBusType, path: String, volume_linear: float = 1.0, duration: float = 1.0) -> void:
 	var resource := await ResourceHelper.async_load(path) as AudioStream
 	if resource == null:
 		return
-	if !begin_stream_fade(bus, "play_stream_fade"):
-		return
 	var target_volume := clampf(volume_linear, 0.0, 1.0)
 	var audio: AudioStreamPlayer = audio_map[bus]
 	if audio.playing:
-		var tween := audio.create_tween()
-		tween.tween_property(audio, "volume_linear", 0, duration)
-		await tween.finished
+		var faded_out := await fade_stream(bus, audio, 0.0, duration)
+		if not faded_out:
+			return
 	else:
-		audio.volume_linear = 0
+		cancel_stream_tween(bus)
+		audio.volume_linear = 0.0
 	audio.stream = resource
 	audio.play()
-	var fade_in := audio.create_tween()
-	fade_in.tween_property(audio, "volume_linear", target_volume, duration)
-	await fade_in.finished
-	end_stream_fade(bus)
+	await fade_stream(bus, audio, target_volume, duration)
 	pass
 
 static func stop_stream_fade(bus: AudioBusType, duration: float = 1.0) -> void:
 	var audio: AudioStreamPlayer = audio_map[bus]
 	if !audio.playing:
+		cancel_stream_tween(bus)
 		return
-	if !begin_stream_fade(bus, "stop_stream_fade"):
+	var faded_out := await fade_stream(bus, audio, 0.0, duration)
+	if not faded_out:
 		return
-	var tween := audio.create_tween()
-	tween.tween_property(audio, "volume_linear", 0, duration)
-	await tween.finished
 	audio.stop()
-	end_stream_fade(bus)
 	pass
 ####################################################################################################
 # music
@@ -205,28 +214,21 @@ static func play_music_next(duration: float = 3.0) -> void:
 static func pause_musics(duration: float = 1.0) -> void:
 	var player: AudioStreamPlayer = audio_map[AudioBusType.Music]
 	if !player.playing or player.stream_paused:
+		cancel_stream_tween(AudioBusType.Music)
 		return
-	if !begin_stream_fade(AudioBusType.Music, "pause_music"):
+	var faded_out := await fade_stream(AudioBusType.Music, player, 0.0, duration)
+	if not faded_out:
 		return
-	var tween := player.create_tween()
-	tween.tween_property(player, "volume_linear", 0, duration)
-	await tween.finished
 	player.stream_paused = true
-	end_stream_fade(AudioBusType.Music)
 	pass
 
 static func resume_musics(duration: float = 1.0, volume_linear: float = 1.0) -> void:
 	var player: AudioStreamPlayer = audio_map[AudioBusType.Music]
 	if !player.stream_paused:
 		return
-	if !begin_stream_fade(AudioBusType.Music, "resume_music"):
-		return
 	var target_volume := clampf(volume_linear, 0.0, 1.0)
 	musics_volume_linear = target_volume
-	player.volume_linear = 0
+	player.volume_linear = 0.0
 	player.stream_paused = false
-	var tween := player.create_tween()
-	tween.tween_property(player, "volume_linear", target_volume, duration)
-	await tween.finished
-	end_stream_fade(AudioBusType.Music)
+	await fade_stream(AudioBusType.Music, player, target_volume, duration)
 	pass
