@@ -23,11 +23,11 @@ static func poll_and_kill_running_process_test() -> void:
 
 
 static func unread_output_is_bounded_test() -> void:
-	var command := "head -c 1100000 /dev/zero | tr '\\0' x"
+	var command := "head -c 200000 /dev/zero | tr '\\0' x"
 	var process_id := BashProcessManager.start(command)
 	var result := await BashProcessManager.async_poll(process_id, TimeUtils.MILLIS_PER_SECOND * 5)
 	assert(result.status == BashProcessResult.STATUS_EXITED)
-	assert(result.output.length() <= FileUtils.BYTES_PER_MB)
+	assert(result.output.to_utf8_buffer().size() <= BashProcessManager.MAX_BUFFERED_OUTPUT_BYTES)
 	pass
 
 

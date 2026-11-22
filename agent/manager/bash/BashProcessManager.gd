@@ -1,6 +1,8 @@
 class_name BashProcessManager
 extends RefCounted
 
+const MAX_BUFFERED_OUTPUT_BYTES: int = FileUtils.BYTES_PER_KB * 128
+
 ## Owns Bash processes that may outlive one tool call.
 ## The worker thread continuously drains stdout/stderr to prevent pipe backpressure, while
 ## [method async_poll] returns and clears only the output accumulated since the previous poll.
@@ -64,7 +66,7 @@ static func async_poll(process_id: String, wait_millis: int = TimeUtils.MILLIS_P
 	process.mutex.lock()
 	var chunks := process.output_chunks.duplicate()
 	process.output_chunks.clear()
-	process.output_chars = 0
+	process.output_bytes = 0
 	var running := process.running
 	var exit_code := process.exit_code
 	process.mutex.unlock()
@@ -160,10 +162,10 @@ static func append_output(process: BashProcess, text: String) -> void:
 		return
 	process.mutex.lock()
 	process.output_chunks.append(text)
-	process.output_chars += text.length()
-	while process.output_chars > FileUtils.BYTES_PER_MB and process.output_chunks.size() > 1:
+	process.output_bytes += text.to_utf8_buffer().size()
+	while process.output_bytes > MAX_BUFFERED_OUTPUT_BYTES and process.output_chunks.size() > 1:
 		var removed: String = process.output_chunks.pop_front()
-		process.output_chars -= removed.length()
+		process.output_bytes -= removed.to_utf8_buffer().size()
 	process.mutex.unlock()
 	pass
 

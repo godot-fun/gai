@@ -11,5 +11,5 @@ var stop_requested: bool = false
 # Output waiting for the next async_poll call. Access is guarded by mutex because the worker
 # appends while the main thread may copy and clear the chunks.
 var output_chunks: Array[String] = []
-var output_chars: int = 0
+var output_bytes: int = 0
 var mutex := Mutex.new()
