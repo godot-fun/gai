@@ -18,10 +18,13 @@ func apply(_session_id: int, entry: ChatEntry) -> void:
 	add_child(vbox)
 
 	var title_label := Label.new()
-	title_label.text = entry.title
+	var compact := entry.title == BashProcessTool.NAME
+	title_label.text = compact_title(entry) if compact else entry.title
 	title_label.add_theme_color_override("font_color", Colors.success)
 	title_label.add_theme_font_size_override("font_size", Typography.label_medium)
 	vbox.add_child(title_label)
+	if compact:
+		return
 
 	markdown_label = MarkdownHelper.create_plain_rich_text_label(Colors.success)
 	vbox.add_child(markdown_label)
@@ -35,3 +38,8 @@ func refresh(entry: ChatEntry) -> void:
 	markdown_label.visible = StringUtils.is_not_blank(entry.body)
 	MarkdownHelper.update_rich_text_label_text(markdown_label, entry.body, false)
 	pass
+
+
+static func compact_title(entry: ChatEntry) -> String:
+	var body := entry.body.strip_edges()
+	return entry.title if body.is_empty() else StringUtils.format("{}  {}", entry.title, body)

@@ -47,3 +47,9 @@ static func running_tool_result_includes_process_id_test() -> void:
 	assert(tool_result.content == "process is still running\nprocess_id: bash_2\nworking")
 	assert(not tool_result.is_error)
 	pass
+
+
+static func bash_process_bubble_uses_compact_title_test() -> void:
+	var entry := ChatEntry.new(ChatEntry.KIND_TOOL, BashProcessTool.NAME, "poll bash_26")
+	assert(ToolBubble.compact_title(entry) == "bash_process  poll bash_26")
+	pass
