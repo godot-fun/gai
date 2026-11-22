@@ -41,6 +41,8 @@ static func get_tool_call_summary(tool_name: String, args: Dictionary[String, Va
 			body = str(args.get(ListDirTool.ARG_PATH, ""))
 		BashTool.NAME:
 			body = str(args.get(BashTool.ARG_COMMAND, ""))
+		BashProcessTool.NAME:
+			body = str(args.get(BashProcessTool.ARG_ACTION, "")) + " " + str(args.get(BashProcessTool.ARG_PROCESS_ID, ""))
 		AudioToTextTool.NAME:
 			body = str(args.get(AudioToTextTool.ARG_PATH, ""))
 		WebSearchTool.NAME:

@@ -68,13 +68,21 @@ static func stop_all() -> void:
 	pass
 
 
-## Kills pid and returns the OS.kill error code, logged when the kill fails; a finished or unknown pid is a no-op.
+## Kills pid and returns the platform kill error code, logged when the kill fails; a finished or unknown pid is a no-op.
 ## wait_millis is the grace period for the process to exit, so the pipe tail can still be read after the kill;
 ## pass 0 from the main thread (stop_last/stop_all) to stay non blocking. Returns FAILED when the process survives it.
 static func kill_process(pid: int, wait_millis: int = 1000) -> int:
 	if pid <= 0 or not OS.is_process_running(pid):
 		return OK
-	var err := OS.kill(pid)
+	var err := OK
+	if is_windows():
+		# OS.kill may leave descendants running, so taskkill handles the whole tree first.
+		err = OS.execute("taskkill.exe", PackedStringArray(["/PID", str(pid), "/T", "/F"]), [], true)
+		# Fall back to the Godot API only when taskkill did not terminate the target process.
+		if OS.is_process_running(pid):
+			err = OS.kill(pid)
+	else:
+		err = OS.kill(pid)
 	if err != OK:
 		Log.error("kill process failed pid:[{}] err:[{}]", pid, err)
 		return err

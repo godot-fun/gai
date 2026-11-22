@@ -28,6 +28,7 @@ static func reload_tools() -> void:
 	schemas.clear()
 	# core tools
 	register(BashTool.new())
+	register(BashProcessTool.new())
 	register(ReadTool.new())
 	register(WriteTool.new())
 	register(EditTool.new())
