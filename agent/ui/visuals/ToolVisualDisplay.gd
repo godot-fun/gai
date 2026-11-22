@@ -6,7 +6,8 @@ extends RefCounted
 
 
 static func readable_name(tool_name: String) -> String:
-	return tool_name.replace("_", " ").replace("-", " ").strip_edges()
+	var words := tool_name.replace("_", " ").replace("-", " ").split(" ", false)
+	return " ".join(words)
 
 
 static func title_name(tool_name: String, empty_default: String = "Tool") -> String:
@@ -36,6 +37,14 @@ static func glyph(tool_name: String) -> String:
 			return "E"
 		BashTool.NAME:
 			return ">_"
+		BashProcessTool.NAME:
+			return "BP"
+		BrowserOpenTool.NAME:
+			return "BO"
+		BrowserObserveTool.NAME:
+			return "BV"
+		BrowserActTool.NAME:
+			return "BA"
 		ReadImageTool.NAME:
 			return "IM"
 		AudioToTextTool.NAME:
@@ -53,11 +62,21 @@ static func glyph(tool_name: String) -> String:
 		WebSearchTool.NAME:
 			return "#"
 		_:
+			if tool_name.begins_with("mcp__"):
+				return "MC"
 			return title_name(tool_name).left(2).to_upper()
 
 
 static func glyph_emoji(tool_name: String) -> String:
 	match tool_name:
+		BashProcessTool.NAME:
+			return "⏳"
+		BrowserOpenTool.NAME:
+			return "🌍"
+		BrowserObserveTool.NAME:
+			return "👁️"
+		BrowserActTool.NAME:
+			return "🖱️"
 		ReadTool.NAME:
 			return "📚"
 		WriteTool.NAME:
@@ -83,4 +102,6 @@ static func glyph_emoji(tool_name: String) -> String:
 		WebSearchTool.NAME:
 			return "🌐"
 		_:
+			if tool_name.begins_with("mcp__"):
+				return "🔌"
 			return "🤖"

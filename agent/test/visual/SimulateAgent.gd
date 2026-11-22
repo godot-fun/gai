@@ -5,12 +5,14 @@ extends RefCounted
 
 const SMALL_TURNS := 16
 const LARGE_TURNS := 64
+const MCP_FIXTURE_NAME := "mcp__demo__echo"
 
 const TOOL_CATALOG: Array[Dictionary] = [
 	{"name": ReadTool.NAME, "args": {"path": "res://project.godot"}},
 	{"name": WriteTool.NAME, "args": {"path": "res://agent/tmp_preview.gd", "content": "extends Node\n"}},
 	{"name": EditTool.NAME, "args": {"path": "res://agent/tmp_preview.gd", "old_string": "extends Node", "new_string": "extends Control"}},
 	{"name": BashTool.NAME, "args": {"command": "echo visual-preview"}},
+	{"name": BashProcessTool.NAME, "args": {"process_id": "bash_preview", "action": BashProcessTool.ACTION_POLL}},
 	{"name": GrepTool.NAME, "args": {"pattern": "class_name", "glob": "*.gd"}},
 	{"name": GlobTool.NAME, "args": {"pattern": "**/*.tscn"}},
 	{"name": ListDirTool.NAME, "args": {"path": "res://agent/ui/visuals", "recursive": false}},
@@ -19,6 +21,10 @@ const TOOL_CATALOG: Array[Dictionary] = [
 	{"name": AudioToTextTool.NAME, "args": {"path": "res://audio/sample.wav"}},
 	{"name": WebFetchTool.NAME, "args": {"url": "https://docs.godotengine.org", "max_chars": 2000}},
 	{"name": WebSearchTool.NAME, "args": {"query": "godot visual effects"}},
+	{"name": BrowserOpenTool.NAME, "args": {"url": "https://docs.godotengine.org"}},
+	{"name": BrowserObserveTool.NAME, "args": {"mode": BrowserStepHelper.MODE_ELEMENTS}},
+	{"name": BrowserActTool.NAME, "args": {"steps": [{"action": "click", "ref": "e3"}, {"action": "press", "key": "Enter"}]}},
+	{"name": MCP_FIXTURE_NAME, "args": {"message": "visual preview"}},
 ]
 
 var active_session_ids: Array[int] = []
@@ -189,8 +195,9 @@ static func build_tool_calls(turn_index: int, turn_count: int, large: bool, cata
 		return calls
 	if large:
 		var count := 1 + (turn_index % 3)
+		var catalog_start := large_catalog_start(turn_index, catalog_offset)
 		for offset in range(count):
-			var catalog: Dictionary = TOOL_CATALOG[(turn_index * 2 + offset + catalog_offset) % TOOL_CATALOG.size()]
+			var catalog: Dictionary = TOOL_CATALOG[(catalog_start + offset) % TOOL_CATALOG.size()]
 			var call := catalog.duplicate(true)
 			call["failed"] = (turn_index + offset + catalog_offset) % 7 == 0
 			calls.append(call)
@@ -202,6 +209,15 @@ static func build_tool_calls(turn_index: int, turn_count: int, large: bool, cata
 	small_call["failed"] = (turn_index + catalog_offset) % 5 == 4
 	calls.append(small_call)
 	return calls
+
+
+## Returns the number of calls emitted before this large-payload turn. Advancing by the
+## actual batch sizes (1, 2, 3) guarantees one session walks every catalog entry.
+static func large_catalog_start(turn_index: int, catalog_offset: int) -> int:
+	var complete_cycles := turn_index / 3
+	var cycle_turn := turn_index % 3
+	var calls_before_turn := complete_cycles * 6 + cycle_turn * (cycle_turn + 1) / 2
+	return calls_before_turn + catalog_offset
 
 
 static func build_reasoning_chunks(turn_index: int, large: bool, session_tag: String, visual_label: String) -> PackedStringArray:
