@@ -14,6 +14,13 @@ func visual_type_is_registered_test() -> void:
 func display_text_for_chip_test() -> void:
 	assert(CircuitBoard.display_text_for_chip("Alpha.") == "Alpha.")
 	assert(CircuitBoard.display_text_for_chip("A".repeat(40)) == "A".repeat(40).right(34))
+	assert(CircuitBoard.is_informative_chip_text("Alpha."))
+	assert(CircuitBoard.is_informative_chip_text("正在分析"))
+	assert(not CircuitBoard.is_informative_chip_text("**/?."))
+	assert(CircuitBoard.display_tool_status("read_file") == "EXEC · READ FILE")
+	assert(CircuitBoard.tool_flow_mode("read_file") == "inward")
+	assert(CircuitBoard.tool_flow_mode("http_request") == "bidirectional")
+	assert(CircuitBoard.tool_flow_mode("write_file") == "outward")
 	pass
 
 
@@ -35,4 +42,3 @@ func translations_exist_test() -> void:
 		var text := FileAccess.get_file_as_string(locale_path)
 		assert(text.contains("\"visual_circuit_board\""))
 	pass
-

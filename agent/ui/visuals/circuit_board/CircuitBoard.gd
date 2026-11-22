@@ -11,9 +11,10 @@ const AMBER := Color("e7c368")
 const AMBER_HOT := Color("ffe9ae")
 const MAX_PULSES := 96
 ## Tune separately: dark app surfaces need more see-through board art than light ones.
-const LIGHT_THEME_EFFECT_OPACITY := 0.90
+const LIGHT_THEME_EFFECT_OPACITY := 0.82
 const DARK_THEME_EFFECT_OPACITY := 0.65
-const BOARD_OPACITY := 0.92
+const BOARD_OPACITY := 0.24
+const REFERENCE_AREA := 1920.0 * 1080.0
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1), Vector2i(-1, 1), Vector2i(-1, 0), Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1)]
 
 var cell := 24.0
@@ -31,18 +32,47 @@ var failed := false
 var built_size := Vector2.ZERO
 var rng := RandomNumberGenerator.new()
 var chip_text := ""
+var chip_status := "STANDBY"
+var redraw_elapsed := 0.0
+var completion_wave := -1.0
 
 
 func _ready() -> void:
 	super._ready()
 	apply_theme_opacity()
+	gdf.events.theme_changed.connect(apply_theme_opacity)
 	rng.seed = 7
 	pass
 
 
 func apply_theme_opacity() -> void:
 	self_modulate.a = DARK_THEME_EFFECT_OPACITY if ThemeColor.is_dark_theme() else LIGHT_THEME_EFFECT_OPACITY
+	queue_redraw()
 	pass
+
+
+func board_green() -> Color:
+	return GREEN if ThemeColor.is_dark_theme() else Color("176b45")
+
+
+func board_hot_green() -> Color:
+	return GREEN_HOT if ThemeColor.is_dark_theme() else Color("008f52")
+
+
+func board_amber() -> Color:
+	return AMBER if ThemeColor.is_dark_theme() else Color("9a6500")
+
+
+func board_hot_amber() -> Color:
+	return AMBER_HOT if ThemeColor.is_dark_theme() else Color("b26d00")
+
+
+func board_surface(alpha: float = 1.0) -> Color:
+	return Color("030a06", alpha) if ThemeColor.is_dark_theme() else Color("edf4ef", alpha)
+
+
+func board_ink(alpha: float = 1.0) -> Color:
+	return Color("c8ebd7", alpha) if ThemeColor.is_dark_theme() else Color("174d35", alpha)
 
 
 func on_agent_start(_session_id: int) -> void:
@@ -50,31 +80,37 @@ func on_agent_start(_session_id: int) -> void:
 	thinking = false
 	failed = false
 	chip_text = ""
+	chip_status = "BOOTING"
+	completion_wave = -1.0
 	ensure_board()
 	pulses.clear()
 	for index in range(7):
-		spawn_pulse(index, false, GREEN, float(index) * 0.06)
+		spawn_pulse(index, false, board_green(), float(index) * 0.06)
 	pass
 
 
 func on_agent_end(_session_id: int, error_message: String) -> void:
 	failed = StringUtils.is_not_blank(error_message)
+	chip_status = "ERROR" if failed else "COMPLETE"
+	completion_wave = 0.0
 	activity = 0.58
 	for index in range(14):
-		spawn_pulse(index + 19, false, Colors.error if failed else GREEN_HOT, float(index) * 0.035)
+		spawn_pulse(index + 19, false, Colors.error if failed else board_hot_green(), float(index) * 0.035)
 	pass
 
 
 func on_turn_start(_session_id: int) -> void:
 	thinking = true
 	activity = 1.0
+	chip_status = "REASONING"
 	for index in range(10):
-		spawn_pulse(index + 5, false, GREEN_HOT, float(index) * 0.04)
+		spawn_pulse(index + 5, false, board_hot_green(), float(index) * 0.04)
 	pass
 
 
 func on_turn_end(_session_id: int) -> void:
 	thinking = false
+	chip_status = "RESPONDING"
 	pass
 
 
@@ -82,21 +118,27 @@ func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> 
 	if chunk.is_empty():
 		return
 	activity = 1.0
+	chip_status = "REASONING" if stream_kind == OpenAiClient.STREAM_KIND_REASONING else "RESPONDING"
 	var count := clampi(ceili(float(chunk.length()) / 28.0), 1, 5)
-	var color := GREEN_HOT if stream_kind == OpenAiClient.STREAM_KIND_REASONING else Color("7dffc0")
+	var color := board_hot_green() if stream_kind == OpenAiClient.STREAM_KIND_REASONING else board_green()
 	for index in range(count):
 		spawn_pulse(chunk.hash() + index * 31, false, color, float(index) * 0.045)
 	pass
 
 
-func on_tool_execution_start(_session_id: int, tool_call_id: String, _tool_name: String, _args: Dictionary[String, Variant]) -> void:
+func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: String, _args: Dictionary[String, Variant]) -> void:
 	activity = 1.0
-	spawn_pulse(tool_call_id.hash(), false, AMBER_HOT, 0.0)
+	chip_status = display_tool_status(tool_name)
+	var flow_mode := tool_flow_mode(tool_name)
+	spawn_pulse(tool_call_id.hash(), flow_mode == "inward", board_hot_amber(), 0.0)
+	if flow_mode == "bidirectional":
+		spawn_pulse(tool_call_id.hash() + 17, true, board_hot_amber(), 0.08)
 	pass
 
 
 func on_tool_execution_end(_session_id: int, tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
-	spawn_pulse(tool_call_id.hash() + 23, false, Colors.error if result.is_error else GREEN_HOT, 0.0)
+	chip_status = "TOOL FAILED" if result.is_error else "TOOL COMPLETE"
+	spawn_pulse(tool_call_id.hash() + 23, true, Colors.error if result.is_error else board_hot_green(), 0.0)
 	pass
 
 
@@ -106,23 +148,54 @@ func _process(delta: float) -> void:
 	ensure_board()
 	elapsed += delta
 	var sentence := ChatEntryCursor.take_next_sentence()
-	if not sentence.is_empty():
+	if not sentence.is_empty() and is_informative_chip_text(sentence.text):
 		chip_text = display_text_for_chip(sentence.text)
 	activity = move_toward(activity, 0.2, delta * 0.38)
 	var spawn_chance := (0.05 + activity * 0.85) * delta * 3.0
 	if rng.randf() < spawn_chance:
-		spawn_pulse(rng.randi(), false, GREEN if rng.randf() > 0.13 else AMBER, 0.0)
+		spawn_pulse(rng.randi(), false, board_green() if rng.randf() > 0.13 else board_amber(), 0.0)
 	advance_pulses(delta)
 	for component: Dictionary in components:
 		component["glow"] = move_toward(float(component["glow"]), 0.0, delta * 1.9)
 	chip["glow"] = move_toward(float(chip.get("glow", 0.0)), 0.0, delta * 1.4)
-	queue_redraw()
+	if completion_wave >= 0.0:
+		completion_wave += delta
+		if completion_wave > 1.35:
+			completion_wave = -1.0
+	redraw_elapsed += delta
+	var redraw_interval := 1.0 / (60.0 if activity > 0.3 or not pulses.is_empty() else 30.0)
+	if redraw_elapsed >= redraw_interval:
+		redraw_elapsed = 0.0
+		queue_redraw()
 	pass
 
 
 static func display_text_for_chip(text: String) -> String:
 	var normalized := text.strip_edges().replace("\n", " ")
 	return normalized.right(34) if normalized.length() > 34 else normalized
+
+
+static func is_informative_chip_text(text: String) -> bool:
+	var meaningful := text.strip_edges()
+	for symbol in [" ", "\t", "\n", ".", ",", ":", ";", "!", "?", "*", "#", "$", "%", "/", "\\", "-", "_", "=", "+", "`", "~", "'", "\""]:
+		meaningful = meaningful.replace(symbol, "")
+	return meaningful.length() >= 3
+
+
+static func display_tool_status(tool_name: String) -> String:
+	var normalized := tool_name.replace("_", " ").strip_edges().to_upper()
+	return "EXEC · %s" % (normalized.left(20) if normalized.length() > 20 else normalized)
+
+
+static func tool_flow_mode(tool_name: String) -> String:
+	var normalized := tool_name.to_lower()
+	for token in ["read", "get", "list", "find", "search", "open", "fetch", "load"]:
+		if normalized.contains(token):
+			return "inward"
+	for token in ["request", "http", "network", "sync", "upload", "download"]:
+		if normalized.contains(token):
+			return "bidirectional"
+	return "outward"
 
 
 func ensure_board() -> void:
@@ -211,7 +284,7 @@ func build_board() -> void:
 	pulses.clear()
 	rng.seed = 7
 	var chip_width := minf(view.x * 0.235, 620.0)
-	var chip_height := roundf(chip_width * 0.30)
+	var chip_height := roundf(chip_width * 0.345)
 	chip = {"rect": Rect2(view * 0.5 - Vector2(chip_width, chip_height) * 0.5, Vector2(chip_width, chip_height)), "glow": 0.0, "pins": []}
 	var rect: Rect2 = chip["rect"]
 	var chip_x0 := floori(rect.position.x / cell) - 1
@@ -221,7 +294,9 @@ func build_board() -> void:
 	for x in range(chip_x0, chip_x1 + 1):
 		for y in range(chip_y0, chip_y1 + 1):
 			reserve(x, y)
-	for _index in range(34):
+	var area_scale := clampf(view.x * view.y / REFERENCE_AREA, 0.65, 1.65)
+	var component_count := roundi(34.0 * area_scale)
+	for _index in range(component_count):
 		var roll := rng.randf()
 		var kind := "ic" if roll < 0.42 else "res" if roll < 0.78 else "cap"
 		var width_cells := rng.randi_range(4, 6) if kind == "ic" else 1 if kind == "res" else 2
@@ -231,13 +306,14 @@ func build_board() -> void:
 			continue
 		components.append({"kind": kind, "gx": spot.x, "gy": spot.y, "wc": width_cells, "hc": height_cells,
 			"rect": Rect2(Vector2(float(spot.x) * cell, float(spot.y) * cell), Vector2(float(width_cells) * cell, float(height_cells) * cell)),
-			"amber": rng.randf() < 0.18, "glow": 0.0, "out": []})
+			"amber": false, "glow": 0.0, "out": []})
 	var pins_per_side := maxi(6, roundi(chip_height / cell) + 2)
 	add_chip_traces(0, pins_per_side, chip_x0, chip_y0, chip_x1, chip_y1)
 	add_chip_traces(1, pins_per_side, chip_x0, chip_y0, chip_x1, chip_y1)
 	add_chip_traces(2, 6, chip_x0, chip_y0, chip_x1, chip_y1)
 	add_chip_traces(3, 6, chip_x0, chip_y0, chip_x1, chip_y1)
-	for _index in range(130):
+	var trace_attempts := roundi(130.0 * area_scale)
+	for _index in range(trace_attempts):
 		var x := rng.randi_range(1, cols - 2)
 		var y := rng.randi_range(1, rows - 2)
 		if is_occupied(x, y):
@@ -246,7 +322,7 @@ func build_board() -> void:
 		var trace := route(x, y, [0, 2, 4, 6][rng.randi_range(0, 3)])
 		if not trace.is_empty():
 			trace["chip"] = false
-			trace["amber"] = rng.randf() < 0.18
+			trace["amber"] = false
 			traces.append(trace)
 	bind_components()
 	pass
@@ -296,7 +372,7 @@ func add_chip_traces(side: int, count: int, chip_x0: int, chip_y0: int, chip_x1:
 		if trace.is_empty():
 			continue
 		trace["chip"] = true
-		trace["amber"] = rng.randf() < 0.15
+		trace["amber"] = false
 		traces.append(trace)
 		var pins: Array = chip["pins"]
 		pins.append({"side": side, "x": x, "y": y})
@@ -334,7 +410,7 @@ func spawn_pulse(seed: int, inward: bool, color: Color, delay: float) -> void:
 		return
 	var candidates: Array[int] = []
 	for index in range(traces.size()):
-		if bool(traces[index]["chip"]) == not inward:
+		if bool(traces[index]["chip"]):
 			candidates.append(index)
 	if candidates.is_empty():
 		return
@@ -381,6 +457,7 @@ func _draw() -> void:
 	for component: Dictionary in components:
 		draw_component(component)
 	draw_chip()
+	draw_completion_wave()
 	for pulse: Dictionary in pulses:
 		draw_pulse(pulse)
 	draw_hud(view)
@@ -388,34 +465,38 @@ func _draw() -> void:
 
 
 func draw_background(view: Vector2) -> void:
-	draw_rect(Rect2(Vector2.ZERO, view), Color("020705", BOARD_OPACITY))
+	var dark_theme := ThemeColor.is_dark_theme()
+	if dark_theme:
+		draw_rect(Rect2(Vector2.ZERO, view), Color("020705", BOARD_OPACITY))
 	var grid_step := maxi(5, roundi(cell * 0.3))
+	var grid_color := Color("beffdc", 0.012) if dark_theme else Color("164a33", 0.018)
 	for x in range(0, int(view.x), grid_step):
-		draw_line(Vector2(x, 0.0), Vector2(x, view.y), Color("beffdc", 0.012), 1.0)
+		draw_line(Vector2(x, 0.0), Vector2(x, view.y), grid_color, 1.0)
 	for y in range(0, int(view.y), grid_step):
-		draw_line(Vector2(0.0, y), Vector2(view.x, y), Color("beffdc", 0.012), 1.0)
+		draw_line(Vector2(0.0, y), Vector2(view.x, y), grid_color, 1.0)
 	for x in range(roundi(cell * 2.0), int(view.x), roundi(cell * 4.0)):
 		for y in range(roundi(cell * 2.0), int(view.y), roundi(cell * 4.0)):
-			draw_rect(Rect2(Vector2(x - 1, y - 1), Vector2(2, 2)), Color(GREEN, 0.045))
+			draw_rect(Rect2(Vector2(x - 1, y - 1), Vector2(2, 2)), Color(board_green(), 0.045))
 	pass
 
 
 func draw_trace(trace: Dictionary) -> void:
 	var points: PackedVector2Array = trace["points"]
-	var color := AMBER if bool(trace["amber"]) else GREEN
-	draw_polyline(points, Color(Color.BLACK, 0.30), maxf(1.4, cell * 0.09) + 0.7, true)
-	draw_polyline(points, Color(color, 0.17), maxf(1.4, cell * 0.09), true)
+	var color := board_amber() if bool(trace["amber"]) else board_green()
+	var trace_alpha := 0.11 if ThemeColor.is_dark_theme() else 0.24
+	draw_polyline(points, Color(Color.BLACK, 0.30 if ThemeColor.is_dark_theme() else 0.06), maxf(1.4, cell * 0.09) + 0.7, true)
+	draw_polyline(points, Color(color, trace_alpha), maxf(1.4, cell * 0.09), true)
 	for point: Vector2 in [points[0], points[points.size() - 1]]:
 		var radius := maxf(2.6, cell * 0.14)
-		draw_circle(point, radius, Color("010403", 0.95))
-		draw_arc(point, radius, 0.0, TAU, 12, Color(color, 0.27), 1.1, true)
-		draw_circle(point, maxf(1.1, cell * 0.06), Color("07150d", 0.95))
+		draw_circle(point, radius, board_surface(0.95))
+		draw_arc(point, radius, 0.0, TAU, 12, Color(color, 0.24 if not ThemeColor.is_dark_theme() else 0.19), 1.1, true)
+		draw_circle(point, maxf(1.1, cell * 0.06), Color(color, 0.78))
 	pass
 
 
 func draw_component(component: Dictionary) -> void:
 	var rect: Rect2 = component["rect"]
-	var color := AMBER if bool(component["amber"]) else GREEN
+	var color := board_amber() if bool(component["amber"]) else board_green()
 	var glow := float(component["glow"])
 	if glow > 0.01:
 		for layer in range(5, 0, -1):
@@ -424,25 +505,33 @@ func draw_component(component: Dictionary) -> void:
 	if kind == "cap":
 		var center := rect.get_center()
 		var radius := rect.size.x * 0.34
-		draw_circle(center, radius, Color("061008", 0.96))
+		draw_circle(center, radius, board_surface(0.96))
 		draw_arc(center, radius, 0.0, TAU, 18, Color(color, 0.28 + glow * 0.65), 1.3, true)
 		draw_arc(center - Vector2(radius * 0.22, radius * 0.22), radius * 0.42, PI, PI * 1.55, 8, Color("b6ffd8", 0.18), 1.0, true)
+		if glow > 0.01:
+			var wave_radius := radius * (1.0 + (1.0 - glow) * 1.8)
+			draw_arc(center, wave_radius, 0.0, TAU, 24, Color(color, glow * 0.34), 1.2, true)
 		return
 	if kind == "res":
 		for row in range(int(component["hc"])):
 			var resistor := Rect2(rect.position + Vector2(cell * 0.12, float(row) * cell + cell * 0.22), Vector2(rect.size.x - cell * 0.24, cell * 0.56))
-			draw_rect(resistor, Color("040a06", 0.96))
-			draw_rect(resistor, Color(color, 0.20 + glow * 0.58), false, 1.0)
+			draw_rect(resistor, board_surface(0.96))
+			var row_phase := fmod(elapsed * 5.0 + float(row) * 0.34, 1.0)
+			var row_glow := glow * (0.55 + 0.45 * sin(row_phase * TAU))
+			draw_rect(resistor, Color(color, 0.20 + row_glow * 0.66), false, 1.0 + row_glow)
 		return
 	var body := rect.grow(-cell * 0.3)
 	var pins := maxi(3, int(component["wc"]) * 2 - 2)
 	for pin in range(pins):
 		var x := rect.position.x + cell * 0.5 + (rect.size.x - cell) * float(pin) / float(pins - 1)
-		draw_line(Vector2(x, rect.position.y), Vector2(x, body.position.y), Color("b6e6ce", 0.23), 1.0)
-		draw_line(Vector2(x, body.end.y), Vector2(x, rect.end.y), Color("b6e6ce", 0.23), 1.0)
-	draw_rect(body, Color("050c08", 0.97))
+		draw_line(Vector2(x, rect.position.y), Vector2(x, body.position.y), board_ink(0.23), 1.0)
+		draw_line(Vector2(x, body.end.y), Vector2(x, rect.end.y), board_ink(0.23), 1.0)
+	draw_rect(body, board_surface(0.97))
 	draw_rect(body, Color(color, 0.25 + glow * 0.65), false, 1.0)
-	draw_circle(body.position + Vector2(cell * 0.32, cell * 0.32), maxf(1.0, cell * 0.09), Color("78dca8", 0.20))
+	draw_circle(body.position + Vector2(cell * 0.32, cell * 0.32), maxf(1.0, cell * 0.09), Color(color, 0.30))
+	if glow > 0.01:
+		var scan_x := lerpf(body.position.x, body.end.x, fmod(elapsed * 1.8, 1.0))
+		draw_line(Vector2(scan_x, body.position.y + 2.0), Vector2(scan_x, body.end.y - 2.0), Color(color, glow * 0.42), 1.0)
 	pass
 
 
@@ -450,19 +539,44 @@ func draw_chip() -> void:
 	var rect: Rect2 = chip["rect"]
 	var glow := float(chip["glow"])
 	var beat := 0.5 + 0.5 * sin(elapsed * (4.5 if thinking else 1.8))
-	var color := Colors.error if failed else GREEN_HOT
+	var color := Colors.error if failed else board_hot_green()
+	var pin_step := floori(elapsed * (14.0 if thinking else 6.0))
 	for layer in range(11, 0, -1):
 		draw_rect(rect.grow(float(layer) * 8.0), Color(color, (0.003 + glow * 0.007) * float(12 - layer) * (0.5 + beat * 0.5)), true)
 	for pin in range(12):
 		var x := rect.position.x + rect.size.x * (0.08 + 0.84 * float(pin) / 11.0)
-		draw_line(Vector2(x, rect.position.y - cell * 0.34), Vector2(x, rect.position.y), Color("c8ebd7", 0.30), 2.0)
-		draw_line(Vector2(x, rect.end.y), Vector2(x, rect.end.y + cell * 0.34), Color("c8ebd7", 0.30), 2.0)
-	draw_rect(rect, Color("030a06", 0.96))
-	draw_rect(rect, Color("1e3a2b", 0.90), false, 2.0)
-	draw_rect(rect.grow(-5.0), Color(GREEN, 0.23 + glow * 0.55), false, 1.0)
-	draw_circle(rect.position + Vector2(14.0, 14.0), 3.5, Color(GREEN, 0.45))
-	var display_text := chip_text if not chip_text.is_empty() else "? Q $ 4 1 V Q 9 % Z ? #"
-	draw_centered_text(rect.get_center() + Vector2(0.0, 7.0), display_text, Fonts.semibold(), Typography.title_medium, Color(color, 0.72 + beat * 0.23))
+		var pin_alpha := 0.72 if posmod(pin_step, 12) == pin else 0.30
+		draw_line(Vector2(x, rect.position.y - cell * 0.34), Vector2(x, rect.position.y), Color(color, pin_alpha), 2.0)
+		draw_line(Vector2(x, rect.end.y), Vector2(x, rect.end.y + cell * 0.34), Color(color, pin_alpha), 2.0)
+	for pin in range(6):
+		var y := rect.position.y + rect.size.y * (0.12 + 0.76 * float(pin) / 5.0)
+		var pin_alpha := 0.72 if posmod(pin_step, 6) == pin else 0.30
+		draw_line(Vector2(rect.position.x - cell * 0.34, y), Vector2(rect.position.x, y), Color(color, pin_alpha), 2.0)
+		draw_line(Vector2(rect.end.x, y), Vector2(rect.end.x + cell * 0.34, y), Color(color, pin_alpha), 2.0)
+	draw_rect(rect, board_surface(0.96))
+	for layer in range(5):
+		var inset := 3.0 + float(layer) * 4.0
+		draw_rect(rect.grow(-inset), Color(color, 0.012 * float(5 - layer)), true)
+	draw_rect(rect, Color(board_green(), 0.90), false, 2.0)
+	draw_rect(rect.grow(-5.0), Color(board_green(), 0.23 + glow * 0.55), false, 1.0)
+	draw_circle(rect.position + Vector2(14.0, 14.0), 3.5, Color(board_green(), 0.45))
+	var scan_y := rect.position.y + fmod(elapsed * (34.0 if thinking else 16.0), rect.size.y)
+	draw_line(Vector2(rect.position.x + 7.0, scan_y), Vector2(rect.end.x - 7.0, scan_y), Color(color, 0.035 + glow * 0.06), 1.0)
+	draw_centered_text(rect.get_center() - Vector2(0.0, 5.0), chip_status, Fonts.semibold(), Typography.title_medium, Color(color, 0.76 + beat * 0.20))
+	if not chip_text.is_empty():
+		draw_centered_text(rect.get_center() + Vector2(0.0, 22.0), chip_text, Fonts.regular(), Typography.label_small, Color(color, 0.46))
+	pass
+
+
+func draw_completion_wave() -> void:
+	if completion_wave < 0.0:
+		return
+	var rect: Rect2 = chip["rect"]
+	var progress := clampf(completion_wave / 1.35, 0.0, 1.0)
+	var max_radius := view_size().length() * 0.46
+	var radius := lerpf(rect.size.x * 0.28, max_radius, ease(progress, -1.7))
+	var color := Colors.error if failed else board_hot_green()
+	draw_arc(rect.get_center(), radius, 0.0, TAU, 96, Color(color, (1.0 - progress) * 0.30), 2.0, true)
 	pass
 
 
@@ -474,27 +588,40 @@ func draw_pulse(pulse: Dictionary) -> void:
 	var color: Color = pulse["color"]
 	var tail_length := minf(view_size().x, view_size().y) * (0.10 + activity * 0.13)
 	var start_distance := maxf(0.0, distance - tail_length)
-	draw_trace_segment(trace, start_distance, distance, color)
-	var position := trace_position(trace, distance)
+	var inward := bool(pulse["inward"])
+	var trace_length := float(trace["length"])
+	var segment_from := trace_length - distance if inward else start_distance
+	var segment_to := trace_length - start_distance if inward else distance
+	var head_distance := trace_length - distance if inward else distance
+	draw_trace_segment(trace, segment_from, segment_to, head_distance, color)
+	var position := trace_position(trace, head_distance)
 	for radius in [16.0, 9.0, 4.0]:
 		draw_circle(position, radius, Color(color, 0.035 * (17.0 / radius)))
 	draw_circle(position, maxf(1.5, cell * 0.07), Color(color, 0.98))
 	pass
 
 
-func draw_trace_segment(trace: Dictionary, from_distance: float, to_distance: float, color: Color) -> void:
+func draw_trace_segment(trace: Dictionary, from_distance: float, to_distance: float, head_distance: float, color: Color) -> void:
 	var cumulative: PackedFloat32Array = trace["cumulative"]
 	var points: PackedVector2Array = trace["points"]
+	var visible_length := maxf(to_distance - from_distance, 0.001)
 	for index in range(1, cumulative.size()):
 		var segment_start := maxf(cumulative[index - 1], from_distance)
 		var segment_end := minf(cumulative[index], to_distance)
 		if segment_end <= segment_start:
 			continue
 		var full_length := maxf(cumulative[index] - cumulative[index - 1], 0.001)
-		var a := points[index - 1].lerp(points[index], (segment_start - cumulative[index - 1]) / full_length)
-		var b := points[index - 1].lerp(points[index], (segment_end - cumulative[index - 1]) / full_length)
-		var alpha := 0.44 + 0.42 * activity
-		draw_line(a, b, Color(color, alpha), maxf(1.5, cell * 0.11), true)
+		var slice_count := clampi(ceili((segment_end - segment_start) / maxf(8.0, cell * 0.55)), 1, 16)
+		for slice in range(slice_count):
+			var slice_start := lerpf(segment_start, segment_end, float(slice) / float(slice_count))
+			var slice_end := lerpf(segment_start, segment_end, float(slice + 1) / float(slice_count))
+			var a := points[index - 1].lerp(points[index], (slice_start - cumulative[index - 1]) / full_length)
+			var b := points[index - 1].lerp(points[index], (slice_end - cumulative[index - 1]) / full_length)
+			var midpoint := (slice_start + slice_end) * 0.5
+			var tail_progress := clampf(1.0 - absf(head_distance - midpoint) / visible_length, 0.0, 1.0)
+			var alpha := (0.06 + 0.82 * tail_progress * tail_progress) * (0.72 + activity * 0.28)
+			var width := lerpf(maxf(1.0, cell * 0.065), maxf(1.8, cell * 0.13), tail_progress)
+			draw_line(a, b, Color(color, alpha), width, true)
 	pass
 
 
@@ -509,5 +636,6 @@ func trace_position(trace: Dictionary, distance: float) -> Vector2:
 
 
 func draw_hud(view: Vector2) -> void:
-	draw_string(Fonts.regular(), Vector2(43.0, view.y - 30.0), "> run system diagnostics", HORIZONTAL_ALIGNMENT_LEFT, -1.0, Typography.label_small, Color("8fc4a8", 0.58))
+	var hud_text := "> %s · SIGNALS %02d" % [chip_status, pulses.size()]
+	draw_string(Fonts.regular(), Vector2(43.0, view.y - 30.0), hud_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, Typography.label_small, Color(board_green(), 0.58))
 	pass
