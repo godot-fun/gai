@@ -9,10 +9,8 @@ static func visual_type_test() -> void:
 
 
 static func node_and_labels_test() -> void:
-	var node := ToolConstellation.make_node("call-1", "web_search", {"query": "Godot"}, 0, 2)
+	var node := ToolConstellation.make_node("call-1", "web_search", {"query": "Godot"}, 0)
 	assert(node.id == "call-1")
-	assert(node.arg_count == 1)
-	assert(node.turn == 2)
 	assert(node.orbit == 0.0)
 	assert(node.family == ToolConstellation.ToolFamily.WEB)
 	assert(ToolConstellation.tool_family("audio_to_text") == ToolConstellation.ToolFamily.AUDIO)
@@ -69,7 +67,6 @@ func retro_terminal_stream_and_command_test() -> void:
 	assert(effect.stream_buffer == "streamed terminal content")
 	assert(effect.stream_kind == OpenAiClient.STREAM_KIND_REASONING)
 	effect.on_tool_execution_start(1, "shell-1", "exec_command", {"cmd": "godot --headless"})
-	assert(effect.current_command_line().begins_with("exec_command --cmd="))
 	assert(effect.current_tool_name() == "EXEC_COMMAND")
 	assert(effect.current_tool_status() == "RUN")
 	assert(effect.current_command_arguments().begins_with("cmd: godot --headless"))
@@ -153,7 +150,7 @@ func rings_expand_one_layer_at_a_time_test() -> void:
 func tool_nodes_retract_with_their_orbits_test() -> void:
 	var effect := ToolConstellation.new()
 	effect.size = Vector2(1200.0, 800.0)
-	effect.nodes.append(ToolConstellation.make_node("read-1", "read", {}, 0, 1))
+	effect.nodes.append(ToolConstellation.make_node("read-1", "read", {}, 0))
 	effect.nodes[0].orbit = 2.0
 	var center := effect.field_center()
 	var expanded_distance := effect.node_position(0, 1, center).distance_to(center)
@@ -164,6 +161,20 @@ func tool_nodes_retract_with_their_orbits_test() -> void:
 	var collapsed_distance := effect.node_position(0, 1, center).distance_to(center)
 	assert(retracting_distance < expanded_distance)
 	assert(is_zero_approx(collapsed_distance))
+	effect.free()
+	pass
+
+
+func responsive_composition_scale_test() -> void:
+	var effect := ToolConstellation.new()
+	effect.size = Vector2(640.0, 480.0)
+	assert(is_equal_approx(effect.display_scale(), ToolConstellation.MIN_DISPLAY_SCALE))
+	assert(effect.terminal_size() == ToolConstellation.TERMINAL_SIZE)
+	var compact_inner := effect.orbit_radius(0.0)
+	effect.size = Vector2(2048.0, 1200.0)
+	assert(is_equal_approx(effect.display_scale(), ToolConstellation.MAX_DISPLAY_SCALE))
+	assert(effect.terminal_size().x > ToolConstellation.TERMINAL_SIZE.x)
+	assert(effect.orbit_radius(0.0) > compact_inner)
 	effect.free()
 	pass
 
