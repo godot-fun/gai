@@ -15,9 +15,10 @@ func _init() -> void:
 
 
 func get_parameters() -> ToolParameters.Parameters:
-	return ToolParameters.Parameters.new() \
-		.string_prop(ARG_PROCESS_ID, "Process ID returned by bash", true) \
-		.enum_prop(ARG_ACTION, [ACTION_POLL, ACTION_KILL], "Action to perform", true)
+	var params := ToolParameters.Parameters.new()
+	params.string_prop(ARG_PROCESS_ID, "Process ID returned by bash", true)
+	params.enum_prop(ARG_ACTION, [ACTION_POLL, ACTION_KILL], "Action to perform", true)
+	return params
 
 
 func async_execute(args: Dictionary[String, Variant], _cancel_scope: CancelScope) -> AgentToolResult:

@@ -8,7 +8,7 @@ const ARG_COMMAND := "command"
 func _init() -> void:
 	name = NAME
 	description = """
-		Run a Bash command in the project root (Git Bash on Windows). Waits up to 30 seconds. If it is still running, returns a process_id without stopping it; use bash_process to poll or kill it.
+		Run a Bash command in the project root (Git Bash on Windows). Waits up to 30 seconds. If it is still running, returns a process_id without stopping it; use bash_process tool to poll or kill it.
 	"""
 	pass
 
