@@ -109,7 +109,7 @@ func text_note_uses_source_entry_color_test() -> void:
 	note.kind = effect.NoteKind.ANSWER
 	note.entry_kind = ChatEntry.KIND_THINKING
 	assert(effect.note_color_for_note(note) == ChatEntryCursor.color_for_entry_kind(note.entry_kind))
-	note.entry_kind = ChatEntry.KIND_WEB
+	note.entry_kind = ChatEntry.KIND_WEB_RESULT
 	assert(effect.note_color_for_note(note) == ChatEntryCursor.color_for_entry_kind(note.entry_kind))
 	effect.free()
 	pass

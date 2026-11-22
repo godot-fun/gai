@@ -763,7 +763,7 @@ static func stream_type_for_entry(entry: ChatEntry) -> int:
 			return StreamType.USER
 		ChatEntry.KIND_FILE_TOOL, ChatEntry.KIND_WEB_TOOL, ChatEntry.KIND_TOOL:
 			return stream_type_for_tool_name(entry.title)
-		ChatEntry.KIND_WEB:
+		ChatEntry.KIND_WEB_RESULT:
 			return StreamType.WEB
 		ChatEntry.KIND_RESULT:
 			return StreamType.TOOL
