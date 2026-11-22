@@ -35,6 +35,14 @@ var chip_text := ""
 var chip_status := "STANDBY"
 var redraw_elapsed := 0.0
 var completion_wave := -1.0
+var streamed_chars := 0
+var turn_count := 0
+var boot_progress := 1.0
+var focus_position := Vector2.ZERO
+var focus_strength := 0.0
+var completion_delay := -1.0
+var response_burst := -1.0
+var response_burst_released := false
 
 
 func _ready() -> void:
@@ -82,20 +90,27 @@ func on_agent_start(_session_id: int) -> void:
 	chip_text = ""
 	chip_status = "BOOTING"
 	completion_wave = -1.0
+	completion_delay = -1.0
+	response_burst = -1.0
+	response_burst_released = false
+	streamed_chars = 0
+	turn_count = 0
+	boot_progress = 0.0
 	ensure_board()
 	pulses.clear()
 	for index in range(7):
-		spawn_pulse(index, false, board_green(), float(index) * 0.06)
+		spawn_pulse(index, false, board_green(), float(index) * 0.06, true)
 	pass
 
 
 func on_agent_end(_session_id: int, error_message: String) -> void:
 	failed = StringUtils.is_not_blank(error_message)
 	chip_status = "ERROR" if failed else "COMPLETE"
-	completion_wave = 0.0
+	completion_wave = -1.0
+	completion_delay = 0.46
 	activity = 0.58
 	for index in range(14):
-		spawn_pulse(index + 19, false, Colors.error if failed else board_hot_green(), float(index) * 0.035)
+		spawn_pulse(index + 19, true, Colors.error if failed else board_hot_green(), float(index) * 0.025, true)
 	pass
 
 
@@ -103,14 +118,19 @@ func on_turn_start(_session_id: int) -> void:
 	thinking = true
 	activity = 1.0
 	chip_status = "REASONING"
+	turn_count += 1
 	for index in range(10):
-		spawn_pulse(index + 5, false, board_hot_green(), float(index) * 0.04)
+		spawn_pulse(index + 5, false, board_hot_green(), float(index) * 0.04, true)
 	pass
 
 
 func on_turn_end(_session_id: int) -> void:
 	thinking = false
 	chip_status = "RESPONDING"
+	response_burst = 0.0
+	response_burst_released = false
+	for index in range(9):
+		spawn_pulse(index + 71, true, board_hot_green(), float(index) * 0.025, true)
 	pass
 
 
@@ -118,11 +138,12 @@ func on_message_update(_session_id: int, chunk: String, stream_kind: String) -> 
 	if chunk.is_empty():
 		return
 	activity = 1.0
+	streamed_chars += chunk.length()
 	chip_status = "REASONING" if stream_kind == OpenAiClient.STREAM_KIND_REASONING else "RESPONDING"
 	var count := clampi(ceili(float(chunk.length()) / 28.0), 1, 5)
 	var color := board_hot_green() if stream_kind == OpenAiClient.STREAM_KIND_REASONING else board_green()
 	for index in range(count):
-		spawn_pulse(chunk.hash() + index * 31, false, color, float(index) * 0.045)
+		spawn_pulse(chunk.hash() + index * 31, false, color, float(index) * 0.045, true)
 	pass
 
 
@@ -130,15 +151,15 @@ func on_tool_execution_start(_session_id: int, tool_call_id: String, tool_name: 
 	activity = 1.0
 	chip_status = display_tool_status(tool_name)
 	var flow_mode := tool_flow_mode(tool_name)
-	spawn_pulse(tool_call_id.hash(), flow_mode == "inward", board_hot_amber(), 0.0)
+	spawn_pulse(tool_call_id.hash(), flow_mode == "inward", board_hot_amber(), 0.0, true)
 	if flow_mode == "bidirectional":
-		spawn_pulse(tool_call_id.hash() + 17, true, board_hot_amber(), 0.08)
+		spawn_pulse(tool_call_id.hash() + 17, true, board_hot_amber(), 0.08, true)
 	pass
 
 
 func on_tool_execution_end(_session_id: int, tool_call_id: String, _tool_name: String, result: AgentToolResult) -> void:
 	chip_status = "TOOL FAILED" if result.is_error else "TOOL COMPLETE"
-	spawn_pulse(tool_call_id.hash() + 23, true, Colors.error if result.is_error else board_hot_green(), 0.0)
+	spawn_pulse(tool_call_id.hash() + 23, true, Colors.error if result.is_error else board_hot_green(), 0.0, true)
 	pass
 
 
@@ -147,26 +168,89 @@ func _process(delta: float) -> void:
 		return
 	ensure_board()
 	elapsed += delta
+	boot_progress = minf(1.0, boot_progress + delta / 0.85)
 	var sentence := ChatEntryCursor.take_next_sentence()
 	if not sentence.is_empty() and is_informative_chip_text(sentence.text):
 		chip_text = display_text_for_chip(sentence.text)
 	activity = move_toward(activity, 0.2, delta * 0.38)
-	var spawn_chance := (0.05 + activity * 0.85) * delta * 3.0
+	var spawn_chance := (0.05 + activity * 0.85) * delta * 3.0 * phase_spawn_multiplier()
 	if rng.randf() < spawn_chance:
 		spawn_pulse(rng.randi(), false, board_green() if rng.randf() > 0.13 else board_amber(), 0.0)
 	advance_pulses(delta)
+	update_focus(delta)
+	advance_response_burst(delta)
 	for component: Dictionary in components:
 		component["glow"] = move_toward(float(component["glow"]), 0.0, delta * 1.9)
+	for trace: Dictionary in traces:
+		trace["heat"] = move_toward(float(trace.get("heat", 0.0)), 0.0, delta * 0.28)
 	chip["glow"] = move_toward(float(chip.get("glow", 0.0)), 0.0, delta * 1.4)
 	if completion_wave >= 0.0:
 		completion_wave += delta
 		if completion_wave > 1.35:
 			completion_wave = -1.0
+	if completion_delay >= 0.0:
+		completion_delay -= delta
+		if completion_delay <= 0.0:
+			completion_delay = -1.0
+			completion_wave = 0.0
 	redraw_elapsed += delta
 	var redraw_interval := 1.0 / (60.0 if activity > 0.3 or not pulses.is_empty() else 30.0)
 	if redraw_elapsed >= redraw_interval:
 		redraw_elapsed = 0.0
 		queue_redraw()
+	pass
+
+
+func advance_response_burst(delta: float) -> void:
+	if response_burst < 0.0:
+		return
+	response_burst += delta
+	if response_burst >= 0.36 and not response_burst_released:
+		response_burst_released = true
+		chip["glow"] = 1.0
+		for index in range(12):
+			spawn_pulse(index + 131, false, board_hot_green(), float(index) * 0.018, true)
+	if response_burst > 0.86:
+		response_burst = -1.0
+	pass
+
+
+func phase_speed_multiplier() -> float:
+	if chip_status.begins_with("EXEC") or chip_status.begins_with("TOOL"):
+		return 0.46
+	if thinking:
+		return 1.12
+	if chip_status == "RESPONDING":
+		return 0.82
+	if chip_status == "COMPLETE" or chip_status == "ERROR":
+		return 0.55
+	return 0.72
+
+
+func phase_spawn_multiplier() -> float:
+	if chip_status.begins_with("EXEC"):
+		return 1.45
+	if thinking:
+		return 1.20
+	if chip_status == "RESPONDING":
+		return 0.78
+	if chip_status == "COMPLETE" or chip_status == "ERROR":
+		return 0.0
+	return 0.52
+
+
+func update_focus(delta: float) -> void:
+	var target_strength := 0.0
+	for pulse: Dictionary in pulses:
+		var distance := float(pulse["distance"])
+		var trace: Dictionary = traces[int(pulse["trace"])]
+		if distance < 0.0 or distance > float(trace["length"]):
+			continue
+		var trace_distance := float(trace["length"]) - distance if bool(pulse["inward"]) else distance
+		focus_position = trace_position(trace, trace_distance)
+		target_strength = 1.0
+		break
+	focus_strength = move_toward(focus_strength, target_strength, delta * 3.5)
 	pass
 
 
@@ -179,7 +263,7 @@ static func is_informative_chip_text(text: String) -> bool:
 	var meaningful := text.strip_edges()
 	for symbol in [" ", "\t", "\n", ".", ",", ":", ";", "!", "?", "*", "#", "$", "%", "/", "\\", "-", "_", "=", "+", "`", "~", "'", "\""]:
 		meaningful = meaningful.replace(symbol, "")
-	return meaningful.length() >= 3
+	return meaningful.length() >= 5
 
 
 static func display_tool_status(tool_name: String) -> String:
@@ -196,6 +280,16 @@ static func tool_flow_mode(tool_name: String) -> String:
 		if normalized.contains(token):
 			return "bidirectional"
 	return "outward"
+
+
+func chip_detail_text() -> String:
+	if chip_status.begins_with("EXEC") or chip_status.begins_with("TOOL"):
+		return "TURN %02d · BUS ACTIVE" % turn_count
+	if chip_status == "COMPLETE" or chip_status == "ERROR":
+		return "TURN %02d · STREAM %04d" % [turn_count, streamed_chars]
+	if thinking or chip_status == "RESPONDING":
+		return "TURN %02d · STREAM %04d" % [turn_count, streamed_chars]
+	return "SYSTEM BUS · READY"
 
 
 func ensure_board() -> void:
@@ -296,7 +390,7 @@ func build_board() -> void:
 			reserve(x, y)
 	var area_scale := clampf(view.x * view.y / REFERENCE_AREA, 0.65, 1.65)
 	var component_count := roundi(34.0 * area_scale)
-	for _index in range(component_count):
+	for component_index in range(component_count):
 		var roll := rng.randf()
 		var kind := "ic" if roll < 0.42 else "res" if roll < 0.78 else "cap"
 		var width_cells := rng.randi_range(4, 6) if kind == "ic" else 1 if kind == "res" else 2
@@ -304,9 +398,11 @@ func build_board() -> void:
 		var spot := place_component(width_cells, height_cells)
 		if spot.x < 0:
 			continue
+		var prefix := "U" if kind == "ic" else "R" if kind == "res" else "C"
 		components.append({"kind": kind, "gx": spot.x, "gy": spot.y, "wc": width_cells, "hc": height_cells,
 			"rect": Rect2(Vector2(float(spot.x) * cell, float(spot.y) * cell), Vector2(float(width_cells) * cell, float(height_cells) * cell)),
-			"amber": false, "glow": 0.0, "out": []})
+			"amber": false, "glow": 0.0, "out": [], "label": "%s%02d" % [prefix, component_index + 1], "show_label": component_index % 5 == 0,
+			"reveal": rng.randf_range(0.30, 0.92)})
 	var pins_per_side := maxi(6, roundi(chip_height / cell) + 2)
 	add_chip_traces(0, pins_per_side, chip_x0, chip_y0, chip_x1, chip_y1)
 	add_chip_traces(1, pins_per_side, chip_x0, chip_y0, chip_x1, chip_y1)
@@ -323,6 +419,7 @@ func build_board() -> void:
 		if not trace.is_empty():
 			trace["chip"] = false
 			trace["amber"] = false
+			trace["reveal"] = rng.randf_range(0.18, 0.96)
 			traces.append(trace)
 	bind_components()
 	pass
@@ -373,6 +470,7 @@ func add_chip_traces(side: int, count: int, chip_x0: int, chip_y0: int, chip_x1:
 			continue
 		trace["chip"] = true
 		trace["amber"] = false
+		trace["reveal"] = rng.randf_range(0.05, 0.48)
 		traces.append(trace)
 		var pins: Array = chip["pins"]
 		pins.append({"side": side, "x": x, "y": y})
@@ -405,7 +503,7 @@ func bind_components() -> void:
 	pass
 
 
-func spawn_pulse(seed: int, inward: bool, color: Color, delay: float) -> void:
+func spawn_pulse(seed: int, inward: bool, color: Color, delay: float, key_event: bool = false) -> void:
 	if traces.is_empty() or pulses.size() >= MAX_PULSES:
 		return
 	var candidates: Array[int] = []
@@ -415,16 +513,18 @@ func spawn_pulse(seed: int, inward: bool, color: Color, delay: float) -> void:
 	if candidates.is_empty():
 		return
 	var trace_index := candidates[posmod(seed, candidates.size())]
-	pulses.append({"trace": trace_index, "distance": -delay * 290.0, "inward": inward, "color": color})
+	pulses.append({"trace": trace_index, "distance": -delay * 290.0, "inward": inward, "color": color, "key_event": key_event})
 	pass
 
 
 func advance_pulses(delta: float) -> void:
-	var speed := lerpf(72.0, 720.0, activity)
+	var speed := lerpf(72.0, 720.0, activity) * phase_speed_multiplier()
 	for index in range(pulses.size() - 1, -1, -1):
 		var pulse: Dictionary = pulses[index]
-		pulse["distance"] = float(pulse["distance"]) + delta * speed
+		var event_speed := 2.85 if bool(pulse.get("key_event", false)) and (chip_status.begins_with("EXEC") or chip_status.begins_with("TOOL")) else 1.0
+		pulse["distance"] = float(pulse["distance"]) + delta * speed * event_speed
 		var trace: Dictionary = traces[int(pulse["trace"])]
+		trace["heat"] = 1.0
 		if float(pulse["distance"]) < float(trace["length"]) + cell * 7.0:
 			continue
 		if bool(pulse["inward"]):
@@ -434,17 +534,20 @@ func advance_pulses(delta: float) -> void:
 			if component_index >= 0:
 				var component: Dictionary = components[component_index]
 				component["glow"] = 1.0
+				var branch_index := 0
 				for outgoing_index: int in component["out"]:
-					if rng.randf() < 0.4:
-						spawn_trace_pulse(outgoing_index, Color(pulse["color"]))
+					var branch_chance := 0.78 if bool(pulse.get("key_event", false)) else 0.4
+					if rng.randf() < branch_chance:
+						spawn_trace_pulse(outgoing_index, Color(pulse["color"]), 0.08 + float(branch_index) * 0.055, bool(pulse.get("key_event", false)))
+						branch_index += 1
 		pulses.remove_at(index)
 	pass
 
 
-func spawn_trace_pulse(trace_index: int, color: Color) -> void:
+func spawn_trace_pulse(trace_index: int, color: Color, delay: float = 0.0, key_event: bool = false) -> void:
 	if pulses.size() >= MAX_PULSES:
 		return
-	pulses.append({"trace": trace_index, "distance": 0.0, "inward": false, "color": color})
+	pulses.append({"trace": trace_index, "distance": -delay * 290.0, "inward": false, "color": color, "key_event": key_event})
 	pass
 
 
@@ -452,16 +555,27 @@ func _draw() -> void:
 	ensure_board()
 	var view := view_size()
 	draw_background(view)
+	var parallax := parallax_offset(view)
+	draw_set_transform(parallax * 0.42)
 	for trace: Dictionary in traces:
 		draw_trace(trace)
 	for component: Dictionary in components:
 		draw_component(component)
+	draw_set_transform(parallax)
 	draw_chip()
+	draw_response_burst()
 	draw_completion_wave()
 	for pulse: Dictionary in pulses:
 		draw_pulse(pulse)
-	draw_hud(view)
+	draw_set_transform(Vector2.ZERO)
 	pass
+
+
+func parallax_offset(view: Vector2) -> Vector2:
+	if view.x <= 1.0 or view.y <= 1.0:
+		return Vector2.ZERO
+	var normalized := (get_local_mouse_position() - view * 0.5) / (view * 0.5)
+	return Vector2(clampf(normalized.x, -1.0, 1.0), clampf(normalized.y, -1.0, 1.0)) * 3.2
 
 
 func draw_background(view: Vector2) -> void:
@@ -483,10 +597,26 @@ func draw_background(view: Vector2) -> void:
 func draw_trace(trace: Dictionary) -> void:
 	var points: PackedVector2Array = trace["points"]
 	var color := board_amber() if bool(trace["amber"]) else board_green()
-	var trace_alpha := 0.11 if ThemeColor.is_dark_theme() else 0.24
-	draw_polyline(points, Color(Color.BLACK, 0.30 if ThemeColor.is_dark_theme() else 0.06), maxf(1.4, cell * 0.09) + 0.7, true)
-	draw_polyline(points, Color(color, trace_alpha), maxf(1.4, cell * 0.09), true)
-	for point: Vector2 in [points[0], points[points.size() - 1]]:
+	var main_bus := bool(trace["chip"])
+	var reveal_start := float(trace.get("reveal", 0.0))
+	var growth := smoothstep(reveal_start, minf(1.0, reveal_start + 0.28), boot_progress)
+	if growth <= 0.001:
+		return
+	var visible_points := partial_trace_points(trace, growth)
+	var midpoint := (points[0] + points[points.size() - 1]) * 0.5
+	var focus_distance := midpoint.distance_to(focus_position) / maxf(view_size().length() * 0.42, 1.0)
+	var focus_alpha := lerpf(1.0, lerpf(1.12, 0.74, clampf(focus_distance, 0.0, 1.0)), focus_strength)
+	var chip_rect: Rect2 = chip["rect"]
+	var tide_progress := fmod(elapsed, 6.5) / 6.5
+	var tide_radius := tide_progress * view_size().length() * 0.58
+	var tide_band := 1.0 - clampf(absf(midpoint.distance_to(chip_rect.get_center()) - tide_radius) / maxf(cell * 5.0, 1.0), 0.0, 1.0)
+	var heat := float(trace.get("heat", 0.0))
+	var trace_alpha := ((0.18 if ThemeColor.is_dark_theme() else 0.32) if main_bus else (0.09 if ThemeColor.is_dark_theme() else 0.19)) * focus_alpha
+	trace_alpha += tide_band * (0.025 if ThemeColor.is_dark_theme() else 0.018) + heat * (0.075 if main_bus else 0.045)
+	var trace_width := maxf(1.7, cell * 0.12) if main_bus else maxf(1.2, cell * 0.075)
+	draw_polyline(visible_points, Color(Color.BLACK, 0.30 if ThemeColor.is_dark_theme() else 0.05), trace_width + 0.7, true)
+	draw_polyline(visible_points, Color(color, trace_alpha), trace_width, true)
+	for point: Vector2 in [visible_points[0], visible_points[visible_points.size() - 1]]:
 		var radius := maxf(2.6, cell * 0.14)
 		draw_circle(point, radius, board_surface(0.95))
 		draw_arc(point, radius, 0.0, TAU, 12, Color(color, 0.24 if not ThemeColor.is_dark_theme() else 0.19), 1.1, true)
@@ -494,7 +624,25 @@ func draw_trace(trace: Dictionary) -> void:
 	pass
 
 
+func partial_trace_points(trace: Dictionary, progress: float) -> PackedVector2Array:
+	var points: PackedVector2Array = trace["points"]
+	var cumulative: PackedFloat32Array = trace["cumulative"]
+	var target_distance := float(trace["length"]) * clampf(progress, 0.0, 1.0)
+	var visible := PackedVector2Array([points[0]])
+	for index in range(1, points.size()):
+		if cumulative[index] <= target_distance:
+			visible.append(points[index])
+			continue
+		var segment_length := maxf(cumulative[index] - cumulative[index - 1], 0.001)
+		var ratio := (target_distance - cumulative[index - 1]) / segment_length
+		visible.append(points[index - 1].lerp(points[index], clampf(ratio, 0.0, 1.0)))
+		break
+	return visible
+
+
 func draw_component(component: Dictionary) -> void:
+	if boot_progress < float(component.get("reveal", 0.0)):
+		return
 	var rect: Rect2 = component["rect"]
 	var color := board_amber() if bool(component["amber"]) else board_green()
 	var glow := float(component["glow"])
@@ -502,6 +650,8 @@ func draw_component(component: Dictionary) -> void:
 		for layer in range(5, 0, -1):
 			draw_rect(rect.grow(float(layer) * cell * 0.32), Color(color, glow * 0.008 * float(6 - layer)), true)
 	var kind: String = component["kind"]
+	if bool(component["show_label"]):
+		draw_string(Fonts.regular(), rect.position - Vector2(0.0, 4.0), String(component["label"]), HORIZONTAL_ALIGNMENT_LEFT, -1.0, Typography.label_small, Color(board_green(), 0.30))
 	if kind == "cap":
 		var center := rect.get_center()
 		var radius := rect.size.x * 0.34
@@ -560,11 +710,42 @@ func draw_chip() -> void:
 	draw_rect(rect, Color(board_green(), 0.90), false, 2.0)
 	draw_rect(rect.grow(-5.0), Color(board_green(), 0.23 + glow * 0.55), false, 1.0)
 	draw_circle(rect.position + Vector2(14.0, 14.0), 3.5, Color(board_green(), 0.45))
+	draw_holographic_core(rect, color, glow)
 	var scan_y := rect.position.y + fmod(elapsed * (34.0 if thinking else 16.0), rect.size.y)
 	draw_line(Vector2(rect.position.x + 7.0, scan_y), Vector2(rect.end.x - 7.0, scan_y), Color(color, 0.035 + glow * 0.06), 1.0)
 	draw_centered_text(rect.get_center() - Vector2(0.0, 5.0), chip_status, Fonts.semibold(), Typography.title_medium, Color(color, 0.76 + beat * 0.20))
-	if not chip_text.is_empty():
-		draw_centered_text(rect.get_center() + Vector2(0.0, 22.0), chip_text, Fonts.regular(), Typography.label_small, Color(color, 0.46))
+	draw_centered_text(rect.get_center() + Vector2(0.0, 22.0), chip_detail_text(), Fonts.regular(), Typography.label_small, Color(color, 0.46))
+	pass
+
+
+func draw_holographic_core(rect: Rect2, color: Color, glow: float) -> void:
+	var speed := 1.8 if thinking else 0.75
+	var radius := minf(24.0, rect.size.y * 0.19)
+	var core_center := rect.get_center()
+	var core_radius := minf(34.0, rect.size.y * 0.26)
+	for ring in range(3):
+		var ring_radius := core_radius * (0.46 + float(ring) * 0.24)
+		var start_angle := elapsed * speed * (1.0 if ring % 2 == 0 else -1.0) + float(ring)
+		draw_arc(core_center, ring_radius, start_angle, start_angle + PI * (0.72 + float(ring) * 0.12), 24, Color(color, 0.055 + glow * 0.055), 1.0, true)
+	var neural_points := PackedVector2Array()
+	for index in range(5):
+		var angle := elapsed * speed * (0.42 + float(index) * 0.06) + float(index) * TAU / 5.0
+		var point := core_center + Vector2.from_angle(angle) * core_radius * (0.30 + float(index % 2) * 0.25)
+		neural_points.append(point)
+		draw_circle(point, 1.3 + glow * 0.8, Color(color, 0.20 + glow * 0.20))
+	for index in range(neural_points.size()):
+		draw_line(neural_points[index], neural_points[(index + 2) % neural_points.size()], Color(color, 0.035 + glow * 0.05), 0.8, true)
+	for side: float in [-1.0, 1.0]:
+		var center := rect.get_center() + Vector2(rect.size.x * 0.34 * side, 0.0)
+		var rotation: float = elapsed * speed * side
+		var outer := polygon_points(center, radius, 6, rotation)
+		outer.append(outer[0])
+		var inner := polygon_points(center, radius * 0.56, 6, -rotation * 1.45)
+		inner.append(inner[0])
+		draw_polyline(outer, Color(color, 0.14 + glow * 0.18), 1.0, true)
+		draw_polyline(inner, Color(color, 0.20 + glow * 0.22), 1.0, true)
+		var orbit_position := center + Vector2.from_angle(rotation * 1.7) * radius * 0.78
+		draw_circle(orbit_position, 1.7 + glow, Color(color, 0.46 + glow * 0.30))
 	pass
 
 
@@ -577,6 +758,31 @@ func draw_completion_wave() -> void:
 	var radius := lerpf(rect.size.x * 0.28, max_radius, ease(progress, -1.7))
 	var color := Colors.error if failed else board_hot_green()
 	draw_arc(rect.get_center(), radius, 0.0, TAU, 96, Color(color, (1.0 - progress) * 0.30), 2.0, true)
+	pass
+
+
+func draw_response_burst() -> void:
+	if response_burst < 0.0:
+		return
+	var rect: Rect2 = chip["rect"]
+	var center := rect.get_center()
+	var color := board_hot_green()
+	if response_burst < 0.36:
+		var gather := clampf(response_burst / 0.36, 0.0, 1.0)
+		for ring in range(3):
+			var start_radius := rect.size.x * (0.62 + float(ring) * 0.18)
+			var radius := lerpf(start_radius, rect.size.y * 0.16, ease(gather, 2.2))
+			draw_arc(center, radius, 0.0, TAU, 72, Color(color, 0.08 + gather * 0.16), 1.2, true)
+		draw_circle(center, lerpf(3.0, 8.0, gather), Color(color, gather * 0.42))
+		return
+	var release := clampf((response_burst - 0.36) / 0.50, 0.0, 1.0)
+	var radius := lerpf(rect.size.y * 0.12, view_size().length() * 0.32, ease(release, -1.8))
+	draw_arc(center, radius, 0.0, TAU, 96, Color(color, (1.0 - release) * 0.34), 2.4 - release, true)
+	for ray in range(8):
+		var angle := float(ray) * TAU / 8.0
+		var inner := center + Vector2.from_angle(angle) * rect.size.y * 0.16
+		var outer := center + Vector2.from_angle(angle) * minf(radius, rect.size.x * 0.72)
+		draw_line(inner, outer, Color(color, (1.0 - release) * 0.16), 1.0, true)
 	pass
 
 
@@ -595,9 +801,19 @@ func draw_pulse(pulse: Dictionary) -> void:
 	var head_distance := trace_length - distance if inward else distance
 	draw_trace_segment(trace, segment_from, segment_to, head_distance, color)
 	var position := trace_position(trace, head_distance)
+	for radius in [44.0, 32.0, 22.0]:
+		draw_circle(position, radius, Color(color, 0.006 * (46.0 / radius)))
 	for radius in [16.0, 9.0, 4.0]:
 		draw_circle(position, radius, Color(color, 0.035 * (17.0 / radius)))
 	draw_circle(position, maxf(1.5, cell * 0.07), Color(color, 0.98))
+	for packet_index in range(1, 4):
+		var packet_travel := distance - float(packet_index) * cell * 0.58
+		if packet_travel < 0.0:
+			continue
+		var packet_distance := trace_length - packet_travel if inward else packet_travel
+		var packet_position := trace_position(trace, clampf(packet_distance, 0.0, trace_length))
+		var packet_alpha := 0.62 - float(packet_index) * 0.12
+		draw_circle(packet_position, maxf(1.0, cell * (0.060 - float(packet_index) * 0.008)), Color(color, packet_alpha))
 	pass
 
 
@@ -633,9 +849,3 @@ func trace_position(trace: Dictionary, distance: float) -> Vector2:
 			var ratio := (distance - cumulative[index - 1]) / maxf(cumulative[index] - cumulative[index - 1], 0.001)
 			return points[index - 1].lerp(points[index], ratio)
 	return points[points.size() - 1]
-
-
-func draw_hud(view: Vector2) -> void:
-	var hud_text := "> %s · SIGNALS %02d" % [chip_status, pulses.size()]
-	draw_string(Fonts.regular(), Vector2(43.0, view.y - 30.0), hud_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, Typography.label_small, Color(board_green(), 0.58))
-	pass

@@ -15,7 +15,8 @@ func display_text_for_chip_test() -> void:
 	assert(CircuitBoard.display_text_for_chip("Alpha.") == "Alpha.")
 	assert(CircuitBoard.display_text_for_chip("A".repeat(40)) == "A".repeat(40).right(34))
 	assert(CircuitBoard.is_informative_chip_text("Alpha."))
-	assert(CircuitBoard.is_informative_chip_text("正在分析"))
+	assert(CircuitBoard.is_informative_chip_text("正在分析当前任务"))
+	assert(not CircuitBoard.is_informative_chip_text("短句。"))
 	assert(not CircuitBoard.is_informative_chip_text("**/?."))
 	assert(CircuitBoard.display_tool_status("read_file") == "EXEC · READ FILE")
 	assert(CircuitBoard.tool_flow_mode("read_file") == "inward")
@@ -33,6 +34,10 @@ func stream_and_tool_events_create_pulses_test() -> void:
 	assert(not effect.pulses.is_empty())
 	effect.on_tool_execution_start(1, "call-1", "read_file", {})
 	assert(effect.pulses.size() >= 2)
+	effect.on_turn_end(1)
+	assert(effect.response_burst == 0.0)
+	effect.advance_response_burst(0.37)
+	assert(effect.response_burst_released)
 	effect.free()
 	pass
 
