@@ -39,19 +39,19 @@ func async_execute(args: Dictionary[String, Variant], _cancel_scope: CancelScope
 static func build_result(result: BashProcessResult) -> AgentToolResult:
 	var output := StringUtils.truncate_last(result.output, AgentTool.MAX_OUTPUT, AgentTool.TRUNCATED_SUFFIX + FileUtils.NEWLINE_LF)
 	match result.status:
-		BashProcessManager.STATUS_RUNNING:
+		BashProcessResult.STATUS_RUNNING:
 			var build := StringBuilder.new()
 			build.append_line("process is still running")
 			build.append_line("process_id: " + result.process_id)
 			build.append(output)
 			return AgentToolResult.ok(build.build_string(), AgentToolResult.ui_details("running", output))
-		BashProcessManager.STATUS_EXITED:
+		BashProcessResult.STATUS_EXITED:
 			var exit_code := StringUtils.format("exit_code: {}", result.exit_code)
 			var build := StringBuilder.new()
 			build.append_line(exit_code)
 			build.append(output)
 			return AgentToolResult.new(build.build_string(), result.exit_code != 0, AgentToolResult.ui_details(exit_code, output))
-		BashProcessManager.STATUS_NOT_FOUND:
+		BashProcessResult.STATUS_NOT_FOUND:
 			return AgentToolResult.error("error: process not found: " + result.process_id)
 		_:
 			return AgentToolResult.error("error: unknown process status: " + result.status)

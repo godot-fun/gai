@@ -1,6 +1,10 @@
 class_name BashProcessResult
 extends RefCounted
 
+const STATUS_RUNNING := "running"
+const STATUS_EXITED := "exited"
+const STATUS_NOT_FOUND := "not_found"
+
 var status: String
 var process_id: String
 var exit_code: int

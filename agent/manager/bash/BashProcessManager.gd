@@ -5,10 +5,6 @@ extends RefCounted
 ## The worker thread continuously drains stdout/stderr to prevent pipe backpressure, while
 ## [method async_poll] returns and clears only the output accumulated since the previous poll.
 
-const STATUS_RUNNING := "running"
-const STATUS_EXITED := "exited"
-const STATUS_NOT_FOUND := "not_found"
-
 static var processes: Dictionary[String, BashProcess] = {}
 
 
@@ -60,7 +56,7 @@ static func async_poll(process_id: String, wait_millis: int = TimeUtils.MILLIS_P
 		await Engine.get_main_loop().process_frame
 	var process: BashProcess = processes.get(process_id)
 	if process == null:
-		return BashProcessResult.new(STATUS_NOT_FOUND, process_id, OSUtils.EXIT_CODE_NOT_STARTED, "")
+		return BashProcessResult.new(BashProcessResult.STATUS_NOT_FOUND, process_id, OSUtils.EXIT_CODE_NOT_STARTED, "")
 	# Join a finished worker so its thread handle is released before returning the final result.
 	if process.thread.is_started() and not is_running(process_id):
 		process.thread.wait_to_finish()
@@ -76,7 +72,7 @@ static func async_poll(process_id: String, wait_millis: int = TimeUtils.MILLIS_P
 	# Keep a running process for later polls; remove a finished one after returning its final output.
 	if not running:
 		processes.erase(process_id)
-	return BashProcessResult.new(STATUS_RUNNING if running else STATUS_EXITED, process_id, exit_code, output)
+	return BashProcessResult.new(BashProcessResult.STATUS_RUNNING if running else BashProcessResult.STATUS_EXITED, process_id, exit_code, output)
 
 
 static func kill(process_id: String) -> bool:
