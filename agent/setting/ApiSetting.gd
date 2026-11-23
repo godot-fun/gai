@@ -42,13 +42,12 @@ static func get_proxy_address() -> String:
 	return Setting.get_string(PROXY_ADDRESS_KEY).strip_edges()
 
 
-## Adds one complete model profile and makes it active.
+## Adds one complete model profile without changing the default model.
 static func add_model(model: String, api_url: String, api_token: String) -> bool:
 	var profile := ApiModelProfile.new(model, api_url, api_token)
 	if not profile.is_valid() or find_profile_index(profile.model) >= 0:
 		return false
 	config.profiles.append(profile)
-	config.active_model = profile.model
 	save_config()
 	AgentEvents.events.api_models_changed.emit()
 	return true

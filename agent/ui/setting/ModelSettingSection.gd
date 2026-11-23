@@ -2,6 +2,8 @@ class_name ModelSettingSection
 extends SettingSection
 
 var models_label: Label
+var default_model_label: Label
+var default_model_select: OptionButton
 var model_label: Label
 var api_url_label: Label
 var api_token_label: Label
@@ -20,9 +22,23 @@ var api_token_help_label: Label
 func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> void:
 	super.set_up(p_ui, parent, window)
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.models"))
+	set_up_default_model(parent)
 	set_up_models(parent)
 	set_up_add_form(parent)
 	AgentEvents.events.api_models_changed.connect(refresh_models)
+	pass
+
+
+func set_up_default_model(parent: VBoxContainer) -> void:
+	var group := ui.make_field_group(parent)
+	var parts := ui.make_setting_row(group)
+	default_model_label = ui.make_label(I18n.t("agent.settings.default_model"))
+	parts[0].add_child(default_model_label)
+	default_model_select = OptionButton.new()
+	default_model_select.custom_minimum_size.y = ControlSize.md
+	default_model_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	default_model_select.item_selected.connect(on_default_model_selected)
+	parts[1].add_child(default_model_select)
 	pass
 
 
@@ -157,21 +173,25 @@ func refresh_models() -> void:
 		child.queue_free()
 	var active_model := ApiSetting.get_model()
 	var profiles := ApiSetting.get_profiles()
+	default_model_select.clear()
+	for index in range(profiles.size()):
+		default_model_select.add_item(profiles[index].model)
+		default_model_select.set_item_metadata(index, profiles[index].model)
+		if profiles[index].model == active_model:
+			default_model_select.select(index)
 	for profile in profiles:
 		var row := PanelContainer.new()
 		model_list.add_child(row)
 		var content := HBoxContainer.new()
 		content.add_theme_constant_override("separation", Margin.ma_1)
 		row.add_child(content)
-		var select_button := Button.new()
-		select_button.text = profile.model
-		select_button.tooltip_text = profile.api_url
-		select_button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		select_button.focus_mode = Control.FOCUS_NONE
-		select_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		select_button.custom_minimum_size.y = ControlSize.sm
-		select_button.pressed.connect(ApiSetting.set_active_model.bind(profile.model))
-		content.add_child(select_button)
+		var model_name := Label.new()
+		model_name.text = profile.model
+		model_name.tooltip_text = profile.api_url
+		model_name.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		model_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		model_name.custom_minimum_size.y = ControlSize.sm
+		content.add_child(model_name)
 		var delete_button := Button.new()
 		delete_button.text = "×"
 		delete_button.tooltip_text = (I18n.t("agent.settings.keep_one_model")
@@ -181,14 +201,22 @@ func refresh_models() -> void:
 		delete_button.custom_minimum_size = Vector2(ControlSize.sm, ControlSize.sm)
 		delete_button.pressed.connect(ApiSetting.remove_model.bind(profile.model))
 		content.add_child(delete_button)
-		style_model_row(row, profile.model == active_model)
-		style_model_button(select_button)
+		style_model_row(row)
+		style_model_name(model_name)
 		style_delete_button(delete_button)
+	pass
+
+
+func on_default_model_selected(index: int) -> void:
+	if index < 0 or index >= default_model_select.item_count:
+		return
+	ApiSetting.set_active_model(str(default_model_select.get_item_metadata(index)))
 	pass
 
 
 func apply_locale() -> void:
 	heading_label.text = I18n.t("agent.settings.models")
+	default_model_label.text = I18n.t("agent.settings.default_model")
 	models_label.text = I18n.t("agent.settings.added_models")
 	model_label.text = I18n.t("agent.settings.model_id")
 	api_url_label.text = I18n.t("agent.settings.api_url")
@@ -205,8 +233,12 @@ func apply_locale() -> void:
 
 func apply_theme() -> void:
 	super.apply_theme()
-	for label in [models_label, model_label, api_url_label, api_token_label]:
+	for label in [default_model_label, models_label, model_label, api_url_label, api_token_label]:
 		ui.style_field_label(label)
+	ButtonStyle.apply_option_button(default_model_select)
+	default_model_select.get_popup().add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(
+		ThemeColor.card_surface, ControlSize.radius_lg, Margin.ma_1, Margin.ma_1,
+		Colors.outline_variant, ControlSize.border_xs))
 	ui.style_help_label(api_url_help_label)
 	ui.style_help_label(api_token_help_label)
 	for edit in [model_edit, api_url_edit, api_token_edit]:
@@ -216,22 +248,22 @@ func apply_theme() -> void:
 	ButtonStyle.apply_action_button(cancel_add_button)
 	for row: PanelContainer in model_list.get_children():
 		var content := row.get_child(0) as HBoxContainer
-		style_model_row(row, (content.get_child(0) as Button).text == ApiSetting.get_model())
-		style_model_button(content.get_child(0) as Button)
+		style_model_row(row)
+		style_model_name(content.get_child(0) as Label)
 		style_delete_button(content.get_child(1) as Button)
 	pass
 
 
-func style_model_row(row: PanelContainer, selected: bool) -> void:
-	var color := ThemeColor.selected_surface if selected else Colors.surface_container_high
-	row.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(color, ControlSize.radius_md))
+func style_model_row(row: PanelContainer) -> void:
+	row.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(
+		Colors.surface_container_high, ControlSize.radius_md, Margin.ma_2, Margin.ma_1))
 	pass
 
 
-func style_model_button(button: Button) -> void:
-	ButtonStyle.apply_font_colors(button, Colors.primary_text, Colors.primary_text, Colors.primary_text)
-	var empty := StyleBoxHelper.create_style_box_flat(Color.TRANSPARENT, ControlSize.radius_md, Margin.ma_2, Margin.ma_2)
-	ButtonStyle.apply_style(button, empty, empty.duplicate() as StyleBoxFlat, empty.duplicate() as StyleBoxFlat)
+func style_model_name(label: Label) -> void:
+	label.add_theme_color_override("font_color", Colors.primary_text)
+	label.add_theme_font_override("font", Fonts.regular())
+	label.add_theme_font_size_override("font_size", Typography.body_medium)
 	pass
 
 

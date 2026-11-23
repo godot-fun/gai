@@ -385,6 +385,7 @@
       "invalid_api_url": "Enter a valid HTTP or HTTPS API URL",
       "invalid_proxy": "Enter a valid HTTP or HTTPS proxy URL",
       "models": "Models",
+      "default_model": "Default model for new chats",
       "added_models": "Added models",
       "model_id": "Model ID",
       "model_placeholder": "Enter a model ID",
