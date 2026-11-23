@@ -1,4 +1,4 @@
-class_name ConnectionSettingSection
+class_name ModelSettingSection
 extends SettingSection
 
 var models_label: Label
@@ -19,7 +19,7 @@ var api_token_help_label: Label
 
 func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> void:
 	super.set_up(p_ui, parent, window)
-	heading_label = ui.add_heading(parent, I18n.t("agent.settings.connection"))
+	heading_label = ui.add_heading(parent, I18n.t("agent.settings.models"))
 	set_up_models(parent)
 	set_up_add_form(parent)
 	AgentEvents.events.api_models_changed.connect(refresh_models)
@@ -29,7 +29,7 @@ func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> 
 func set_up_models(parent: VBoxContainer) -> void:
 	var group := ui.make_field_group(parent)
 	var parts := ui.make_setting_row(group)
-	models_label = ui.make_label(I18n.t("agent.settings.models"))
+	models_label = ui.make_label(I18n.t("agent.settings.added_models"))
 	# Align the section label with the first model row instead of centering it across
 	# the combined height of the model list and the add button below.
 	models_label.custom_minimum_size.y = ControlSize.sm
@@ -188,8 +188,8 @@ func refresh_models() -> void:
 
 
 func apply_locale() -> void:
-	heading_label.text = I18n.t("agent.settings.connection")
-	models_label.text = I18n.t("agent.settings.models")
+	heading_label.text = I18n.t("agent.settings.models")
+	models_label.text = I18n.t("agent.settings.added_models")
 	model_label.text = I18n.t("agent.settings.model_id")
 	api_url_label.text = I18n.t("agent.settings.api_url")
 	api_token_label.text = I18n.t("agent.settings.api_token")
