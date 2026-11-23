@@ -3,7 +3,6 @@ extends RefCounted
 
 static func config_deserialization_test() -> void:
 	var stored := ApiSetting.ApiConfig.new()
-	stored.profiles.clear()
 	stored.profiles.append(ApiSetting.ApiModelProfile.new("model-a", "https://a.example.com/chat", "token-a"))
 	stored.profiles.append(ApiSetting.ApiModelProfile.new("model-b", "https://b.example.com/chat", "token-b"))
 	stored.active_model = "model-b"
@@ -15,8 +14,8 @@ static func config_deserialization_test() -> void:
 	pass
 
 
-static func new_config_has_default_model_test() -> void:
-	var created := ApiSetting.ApiConfig.new()
+static func default_config_has_default_model_test() -> void:
+	var created := ApiSetting.ApiConfig.default()
 	assert(created.profiles.size() == 1)
 	assert(created.profiles[0].model == ApiSetting.DEFAULT_MODEL)
 	assert(created.profiles[0].api_url == ApiSetting.DEFAULT_API_URL)

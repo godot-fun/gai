@@ -110,17 +110,17 @@ static func find_profile_index(model: String) -> int:
 
 static func load_config() -> ApiConfig:
 	if not FileAccess.file_exists(CONFIG_FILE_PATH):
-		return ApiConfig.new()
+		return ApiConfig.default()
 	var file := FileAccess.open_encrypted_with_pass(CONFIG_FILE_PATH, FileAccess.READ, "zfoo")
 	if file == null:
 		Log.error("load encrypted API config failed path:[{}] error:[{}]", CONFIG_FILE_PATH, FileAccess.get_open_error())
-		return ApiConfig.new()
+		return ApiConfig.default()
 	var json_text := file.get_as_text()
 	file.close()
 	var loaded: ApiConfig = JsonUtils.json_to_object(json_text, ApiConfig)
 	if loaded == null:
 		Log.error("load encrypted API config failed path:[{}] invalid JSON structure", CONFIG_FILE_PATH)
-		return ApiConfig.new()
+		return ApiConfig.default()
 	return loaded
 
 
@@ -137,8 +137,15 @@ static func save_config() -> void:
 class ApiConfig:
 	extends RefCounted
 
-	var profiles: Array[ApiModelProfile] = [ApiModelProfile.new(DEFAULT_MODEL, DEFAULT_API_URL, "")]
-	var active_model: String = DEFAULT_MODEL
+	var profiles: Array[ApiModelProfile] = []
+	var active_model: String = ""
+
+
+	static func default() -> ApiConfig:
+		var result := ApiConfig.new()
+		result.profiles.append(ApiModelProfile.new(DEFAULT_MODEL, DEFAULT_API_URL, ""))
+		result.active_model = DEFAULT_MODEL
+		return result
 
 
 class ApiModelProfile:
