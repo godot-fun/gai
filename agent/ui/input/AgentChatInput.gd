@@ -671,7 +671,7 @@ func collapse_after_send() -> void:
 
 
 func on_global_input(event: InputEvent) -> void:
-	if not expanded or chat_input_attachment.is_drop_focus_guarded():
+	if not expanded or chat_input_attachment.is_drop_focus_guarded() or model_button.get_popup().visible:
 		return
 	if event is InputEventMouseButton:
 		var mouse: InputEventMouseButton = event as InputEventMouseButton
@@ -818,7 +818,7 @@ func on_field_focus_entered() -> void:
 
 
 func on_field_focus_exited() -> void:
-	if chat_input_attachment.is_drop_focus_guarded():
+	if chat_input_attachment.is_drop_focus_guarded() or model_button.get_popup().visible:
 		return
 	# A blurred field cannot draw the list, so drop it instead of keeping the panel tall.
 	chat_completion.cancel()
@@ -877,7 +877,7 @@ func try_collapse() -> void:
 
 
 func can_collapse() -> bool:
-	if force_expanded:
+	if force_expanded or model_button.get_popup().visible:
 		return false
 	if input_field.text.strip_edges().length() > 0:
 		return false
