@@ -7,7 +7,6 @@ const DEFAULT_API_URL := "https://api.deepseek.com/chat/completions"
 const DEFAULT_MODEL := "deepseek-flash"
 const API_KEY_ENV := "OPENAI_API_KEY"
 const CONFIG_FILE_PATH := "user://api.dat"
-const PROXY_ADDRESS_KEY := "proxy_address"
 
 static var config: ApiConfig = load_config()
 
@@ -36,10 +35,6 @@ static func get_profiles() -> Array[ApiModelProfile]:
 	var result: Array[ApiModelProfile] = []
 	result.assign(config.profiles)
 	return result
-
-
-static func get_proxy_address() -> String:
-	return Setting.get_string(PROXY_ADDRESS_KEY).strip_edges()
 
 
 ## Adds one complete model profile without changing the default model.
@@ -74,15 +69,6 @@ static func set_active_model(model: String) -> bool:
 	save_config()
 	AgentEvents.events.api_models_changed.emit()
 	return true
-
-
-static func save_proxy_address(proxy_address: String) -> void:
-	var normalized_proxy_address := proxy_address.strip_edges()
-	if normalized_proxy_address != get_proxy_address():
-		Setting.set_string(PROXY_ADDRESS_KEY, normalized_proxy_address)
-		Setting.save()
-		AgentEvents.events.proxy_address_changed.emit()
-	pass
 
 
 static func get_client(model: String = "") -> OpenAiClient:

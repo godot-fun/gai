@@ -13,7 +13,7 @@ static func run(ai_client: OpenAiClient, session: AgentSession) -> void:
 		
 		AgentEvents.events.turn_start.emit(session.id)
 		var on_chunk := func(chunk: String, stream_kind: String) -> void: AgentEvents.events.message_update.emit(session.id, chunk, stream_kind)
-		var completion := await ai_client.async_chat_messages_stream(session.messages, AgentToolRegistry.schemas, ApiSetting.get_proxy_address(), on_chunk)
+		var completion := await ai_client.async_chat_messages_stream(session.messages, AgentToolRegistry.schemas, NetworkSetting.get_proxy_address(), on_chunk)
 		AgentEvents.events.message_complete.emit(session.id, completion.usage)
 
 		if RuntimeManager.should_stop(session.id):

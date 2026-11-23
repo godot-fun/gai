@@ -85,7 +85,7 @@ class Events:
 
 	## Markdown bubble rendering switched (see [method AgentSetting.set_markdown_enabled]).
 	signal markdown_changed(enabled: bool)
-	## Proxy address changed (see [method ApiSetting.save_proxy_address]).
+	## Proxy address changed (see [method NetworkSetting.save_proxy_address]).
 	signal proxy_address_changed
 	## Available API models or the active model changed.
 	signal api_models_changed

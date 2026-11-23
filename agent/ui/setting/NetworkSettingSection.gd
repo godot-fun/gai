@@ -20,7 +20,7 @@ func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> 
 
 
 func refresh() -> void:
-	proxy_address_edit.text = ApiSetting.get_proxy_address()
+	proxy_address_edit.text = NetworkSetting.get_proxy_address()
 	pass
 
 
@@ -30,7 +30,7 @@ func save() -> void:
 		Alert.alert(I18n.t("agent.settings.invalid_proxy"), Colors.error)
 		refresh()
 		return
-	ApiSetting.save_proxy_address(proxy_address)
+	NetworkSetting.save_proxy_address(proxy_address)
 	pass
 
 

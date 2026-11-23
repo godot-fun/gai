@@ -10,7 +10,7 @@ extends RefCounted
 
 static func run(ai_client: OpenAiClient, messages: Array[ChatMessage]) -> OpenAiCompletion:
 	for _turn in range(32): # Stop after 32 turns.
-		var completion := await ai_client.async_chat_messages_stream(messages, AgentToolRegistry.schemas, ApiSetting.get_proxy_address(), func(_chunk: String, _stream_kind: String) -> void: pass)
+		var completion := await ai_client.async_chat_messages_stream(messages, AgentToolRegistry.schemas, NetworkSetting.get_proxy_address(), func(_chunk: String, _stream_kind: String) -> void: pass)
 		if completion.has_error() or completion.tool_calls.is_empty():
 			return completion
 

@@ -120,7 +120,7 @@ static func async_ensure_server_running() -> int:
 	var args := PackedStringArray([npm_cli, "--prefix", web_path, "start"])
 	args.append("--")
 	args.append("--browser-headless={}".format([str(AgentSetting.get_browser_headless()).to_lower()], "{}"))
-	var proxy_address := ApiSetting.get_proxy_address()
+	var proxy_address := NetworkSetting.get_proxy_address()
 	if StringUtils.is_not_blank(proxy_address):
 		args.append("--proxy-address={}".format([proxy_address], "{}"))
 	process_id = OS.create_process(node, args, false)
