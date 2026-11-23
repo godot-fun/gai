@@ -5,121 +5,19 @@ extends RefCounted
 
 const DEFAULT_API_URL := "https://api.deepseek.com/chat/completions"
 const DEFAULT_MODEL := "deepseek-flash"
-const API_KEY_ENV := "OPENAI_API_KEY"
 const CONFIG_FILE_PATH := "user://api.dat"
 
 static var config: ApiConfig = load_config()
 
-
-static func get_models() -> Array[String]:
-	var result: Array[String] = []
-	for profile in config.profiles:
-		result.append(profile.model)
-	return result
-
-
-static func get_profiles() -> Array[ApiModelProfile]:
-	var result: Array[ApiModelProfile] = []
-	result.assign(config.profiles)
-	return result
-
-
-## Adds one complete model profile without changing the default model.
-static func add_model(model: String, api_url: String, api_token: String) -> bool:
-	var profile := ApiModelProfile.new(model, api_url, api_token)
-	if not profile.is_valid() or find_profile_index(profile.model) >= 0:
-		return false
-	config.profiles.append(profile)
-	save_config()
-	AgentEvents.events.api_models_changed.emit()
-	return true
-
-
-static func remove_model(model: String) -> bool:
-	if config.profiles.size() <= 1:
-		return false
-	var index := find_profile_index(model)
-	if index < 0:
-		return false
-	config.profiles.remove_at(index)
-	if config.active_model == model:
-		config.active_model = config.profiles[min(index, config.profiles.size() - 1)].model
-	save_config()
-	AgentEvents.events.api_models_changed.emit()
-	return true
-
-
-static func set_active_model(model: String) -> bool:
-	if find_profile_index(model) < 0 or config.active_model == model:
-		return false
-	config.active_model = model
-	save_config()
-	AgentEvents.events.api_models_changed.emit()
-	return true
-
-
-static func get_client(model: String = "") -> OpenAiClient:
-	var index := find_profile_index(model)
-	var profile := config.profiles[index] if index >= 0 else get_active_profile()
-	var token := profile.api_token if not profile.api_token.is_empty() else OS.get_environment(API_KEY_ENV)
-	return OpenAiClient.new(token, profile.api_url, profile.model)
-
-
-static func get_active_profile() -> ApiModelProfile:
-	var index := find_profile_index(config.active_model)
-	return config.profiles[index]
-
-
-static func find_profile_index(model: String) -> int:
-	var normalized := model.strip_edges()
-	for index in range(config.profiles.size()):
-		if config.profiles[index].model == normalized:
-			return index
-	return -1
-
-
 # ----------------------------------------------------------------------------------------------------------------------
-# Encrypted storage
-
-static func load_config() -> ApiConfig:
-	if not FileAccess.file_exists(CONFIG_FILE_PATH):
-		return ApiConfig.default()
-	var file := FileAccess.open_encrypted_with_pass(CONFIG_FILE_PATH, FileAccess.READ, "zfoo")
-	if file == null:
-		Log.error("load encrypted API config failed path:[{}] error:[{}]", CONFIG_FILE_PATH, FileAccess.get_open_error())
-		return ApiConfig.default()
-	var json_text := file.get_as_text()
-	file.close()
-	var loaded: ApiConfig = JsonUtils.json_to_object(json_text, ApiConfig)
-	if loaded == null:
-		Log.error("load encrypted API config failed path:[{}] invalid JSON structure", CONFIG_FILE_PATH)
-		return ApiConfig.default()
-	return loaded
-
-
-static func save_config() -> void:
-	var file := FileAccess.open_encrypted_with_pass(CONFIG_FILE_PATH, FileAccess.WRITE, "zfoo")
-	if file == null:
-		Log.error("save encrypted API config failed path:[{}] error:[{}]", CONFIG_FILE_PATH, FileAccess.get_open_error())
-		return
-	file.store_string(JsonUtils.object_to_json(config))
-	file.close()
-	pass
-
+# Data models
 
 class ApiConfig:
 	extends RefCounted
 
 	var profiles: Array[ApiModelProfile] = []
 	var active_model: String = ""
-
-
-	static func default() -> ApiConfig:
-		var result := ApiConfig.new()
-		result.profiles.append(ApiModelProfile.new(DEFAULT_MODEL, DEFAULT_API_URL, ""))
-		result.active_model = DEFAULT_MODEL
-		return result
-
+	pass
 
 class ApiModelProfile:
 	extends RefCounted
@@ -138,3 +36,130 @@ class ApiModelProfile:
 
 	func is_valid() -> bool:
 		return not model.is_empty() and HttpUtils.is_valid_http_url(api_url)
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Model queries
+
+static func get_models() -> Array[String]:
+	var result: Array[String] = []
+	for profile in config.profiles:
+		result.append(profile.model)
+	return result
+
+
+static func get_profiles() -> Array[ApiModelProfile]:
+	var result: Array[ApiModelProfile] = []
+	result.assign(config.profiles)
+	return result
+
+
+static func get_active_profile() -> ApiModelProfile:
+	var index := find_profile_index(config.active_model)
+	return config.profiles[index]
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Model mutations
+
+## Adds one complete model profile without changing the default model.
+static func add_model(model: String, api_url: String, api_token: String) -> bool:
+	var profile := ApiModelProfile.new(model, api_url, api_token)
+	if not profile.is_valid() or find_profile_index(profile.model) >= 0:
+		return false
+	config.profiles.append(profile)
+	save_config()
+	return true
+
+
+static func remove_model(model: String) -> bool:
+	if config.profiles.size() <= 1:
+		return false
+	var index := find_profile_index(model)
+	if index < 0:
+		return false
+	config.profiles.remove_at(index)
+	if config.active_model == model:
+		config.active_model = config.profiles[min(index, config.profiles.size() - 1)].model
+	save_config()
+	return true
+
+
+static func set_active_model(model: String) -> bool:
+	if find_profile_index(model) < 0 or config.active_model == model:
+		return false
+	config.active_model = model
+	save_config()
+	return true
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Client
+
+static func get_client(model: String = "") -> OpenAiClient:
+	var index := find_profile_index(model)
+	var profile := config.profiles[index] if index >= 0 else get_active_profile()
+	return OpenAiClient.new(profile.api_token, profile.api_url, profile.model)
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Internal lookup
+
+static func find_profile_index(model: String) -> int:
+	var normalized := model.strip_edges()
+	for index in range(config.profiles.size()):
+		if config.profiles[index].model == normalized:
+			return index
+	return -1
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Encrypted storage
+
+static func load_config() -> ApiConfig:
+	if not FileAccess.file_exists(CONFIG_FILE_PATH):
+		return create_default_config()
+	var file := FileAccess.open_encrypted_with_pass(CONFIG_FILE_PATH, FileAccess.READ, "zfoo")
+	if file == null:
+		Log.error("load encrypted API config failed path:[{}] error:[{}]", CONFIG_FILE_PATH, FileAccess.get_open_error())
+		return create_default_config()
+	var json_text := file.get_as_text()
+	file.close()
+	var loaded: ApiConfig = JsonUtils.json_to_object(json_text, ApiConfig)
+	if loaded == null:
+		Log.error("load encrypted API config failed path:[{}] invalid JSON structure", CONFIG_FILE_PATH)
+		return create_default_config()
+	return loaded
+
+
+static func save_config() -> void:
+	var file := FileAccess.open_encrypted_with_pass(CONFIG_FILE_PATH, FileAccess.WRITE, "zfoo")
+	if file == null:
+		Log.error("save encrypted API config failed path:[{}] error:[{}]", CONFIG_FILE_PATH, FileAccess.get_open_error())
+		return
+	file.store_string(JsonUtils.object_to_json(config))
+	file.close()
+	AgentEvents.events.api_models_changed.emit()
+	pass
+
+
+
+# ----------------------------------------------------------------------------------------------------------------------
+# Default config
+
+## Builds the first-run config and imports credentials from common OpenAI-compatible providers.
+static func create_default_config() -> ApiConfig:
+	var result := ApiConfig.new()
+	result.profiles.append(ApiModelProfile.new(DEFAULT_MODEL, DEFAULT_API_URL, OS.get_environment("DEEPSEEK_API_KEY")))
+	append_environment_profile(result, "gpt-5", "https://api.openai.com/v1/chat/completions", "OPENAI_API_KEY")
+	append_environment_profile(result, "gemini-2.5-flash", "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", "GEMINI_API_KEY")
+	append_environment_profile(result, "openrouter/auto", "https://openrouter.ai/api/v1/chat/completions", "OPENROUTER_API_KEY")
+	append_environment_profile(result, "qwen-plus", "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", "DASHSCOPE_API_KEY")
+	result.active_model = DEFAULT_MODEL
+	return result
+
+
+static func append_environment_profile(result: ApiConfig, model: String, api_url: String, environment_name: String) -> void:
+	var api_token := OS.get_environment(environment_name).strip_edges()
+	if not api_token.is_empty():
+		result.profiles.append(ApiModelProfile.new(model, api_url, api_token))
+	pass

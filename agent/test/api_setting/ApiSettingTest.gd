@@ -15,9 +15,27 @@ static func config_deserialization_test() -> void:
 
 
 static func default_config_has_default_model_test() -> void:
-	var created := ApiSetting.ApiConfig.default()
-	assert(created.profiles.size() == 1)
+	var created := ApiSetting.create_default_config()
+	assert(not created.profiles.is_empty())
 	assert(created.profiles[0].model == ApiSetting.DEFAULT_MODEL)
 	assert(created.profiles[0].api_url == ApiSetting.DEFAULT_API_URL)
 	assert(created.active_model == ApiSetting.DEFAULT_MODEL)
+	pass
+
+
+static func default_config_imports_environment_profiles_test() -> void:
+	var previous_token := OS.get_environment("DASHSCOPE_API_KEY")
+	OS.set_environment("DASHSCOPE_API_KEY", "dashscope-test-token")
+	var created := ApiSetting.create_default_config()
+	if previous_token.is_empty():
+		OS.unset_environment("DASHSCOPE_API_KEY")
+	else:
+		OS.set_environment("DASHSCOPE_API_KEY", previous_token)
+	var qwen_profile: ApiSetting.ApiModelProfile = null
+	for profile in created.profiles:
+		if profile.model == "qwen-plus":
+			qwen_profile = profile
+			break
+	assert(qwen_profile != null)
+	assert(qwen_profile.api_token == "dashscope-test-token")
 	pass
