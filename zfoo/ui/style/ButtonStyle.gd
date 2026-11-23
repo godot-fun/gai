@@ -182,16 +182,16 @@ static func create_icon_button(icon_path: String, tooltip: String, size: int = C
 	return button
 
 
-## Filled action [Button] shared by settings rows and window toolbars: raised surface fill with no
-## outline, and hover / pressed states shaded from that same surface.
+## Filled action [Button] shared by settings rows and window toolbars: a neutral blue-grey fill
+## distinguishes actions from passive containers without borrowing success, warning, or error colors.
 ##
 ## Pass [param icon_only] for a glyph button that must stay square: the wide text padding would
 ## otherwise push its minimum width past the square footprint. Equal margins keep it square.
 static func apply_action_button(button: Button, icon_only: bool = false) -> void:
 	apply_font_colors(button, Colors.primary_text, Colors.primary_text, Colors.primary_text)
 	var margin_x := Margin.ma_1 if icon_only else Margin.ma_3
-	var normal := StyleBoxHelper.create_style_box_flat(Colors.surface_container_high, ControlSize.radius_lg, margin_x, Margin.ma_1)
-	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, Colors.hover(Colors.surface_container_high))
-	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(Colors.surface_container_high, Weights.w_2))
+	var normal := StyleBoxHelper.create_style_box_flat(Colors.blue_grey_surface, ControlSize.radius_lg, margin_x, Margin.ma_1)
+	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, Colors.hover(Colors.blue_grey_surface))
+	var pressed := StyleBoxHelper.duplicate_with_bg_color(normal, ThemeColor.promote(Colors.blue_grey_surface, Weights.w_2))
 	apply_style(button, normal, hover, pressed)
 	pass
