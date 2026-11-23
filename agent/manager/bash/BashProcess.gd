@@ -8,6 +8,7 @@ var thread := Thread.new()
 var exit_code: int = OSUtils.EXIT_CODE_NOT_STARTED
 var running: bool = true
 var stop_requested: bool = false
+var finish_time: int = 0
 # Output waiting for the next async_poll call. Access is guarded by mutex because the worker
 # appends while the main thread may copy and clear the chunks.
 var output_chunks: Array[String] = []

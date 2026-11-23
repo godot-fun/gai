@@ -2,6 +2,7 @@ class_name BashProcessManager
 extends RefCounted
 
 const MAX_BUFFERED_OUTPUT_BYTES: int = FileUtils.BYTES_PER_KB * 128
+const FINISH_TIMEOUT: int = TimeUtils.MILLIS_PER_MINUTE * 5
 
 ## Owns Bash processes that may outlive one tool call.
 ## The worker thread continuously drains stdout/stderr to prevent pipe backpressure, while
@@ -27,6 +28,7 @@ static func build_argv(command: String) -> PackedStringArray:
 
 
 static func start(command: String, cancel_scope: CancelScope = null) -> String:
+	cleanup_finished_processes()
 	var process := BashProcess.new()
 	process.id = StringUtils.format("bash_{}", IdUtils.local_id())
 	process.argv = build_argv(command)
@@ -170,5 +172,24 @@ static func finish(process: BashProcess, exit_code: int) -> void:
 	process.mutex.lock()
 	process.exit_code = exit_code
 	process.running = false
+	process.finish_time = TimeUtils.current_time_millis()
 	process.mutex.unlock()
+	pass
+
+
+static func cleanup_finished_processes() -> void:
+	var now := TimeUtils.current_time_millis()
+	for process_id: String in processes.keys():
+		var process: BashProcess = processes.get(process_id)
+		if process == null:
+			continue
+		process.mutex.lock()
+		var running := process.running
+		var finish_time := process.finish_time
+		process.mutex.unlock()
+		if running or finish_time <= 0 or now - finish_time < FINISH_TIMEOUT:
+			continue
+		if process.thread.is_started():
+			process.thread.wait_to_finish()
+		processes.erase(process_id)
 	pass

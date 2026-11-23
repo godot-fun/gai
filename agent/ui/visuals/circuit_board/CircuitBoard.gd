@@ -34,15 +34,11 @@ var rng := RandomNumberGenerator.new()
 var chip_text := ""
 var chip_status := "STANDBY"
 var redraw_elapsed := 0.0
-var completion_wave := -1.0
 var streamed_chars := 0
 var turn_count := 0
 var boot_progress := 1.0
 var focus_position := Vector2.ZERO
 var focus_strength := 0.0
-var completion_delay := -1.0
-var response_burst := -1.0
-var response_burst_released := false
 
 
 func _ready() -> void:
@@ -89,10 +85,6 @@ func on_agent_start(_session_id: int) -> void:
 	failed = false
 	chip_text = ""
 	chip_status = "BOOTING"
-	completion_wave = -1.0
-	completion_delay = -1.0
-	response_burst = -1.0
-	response_burst_released = false
 	streamed_chars = 0
 	turn_count = 0
 	boot_progress = 0.0
@@ -106,8 +98,6 @@ func on_agent_start(_session_id: int) -> void:
 func on_agent_end(_session_id: int, error_message: String) -> void:
 	failed = StringUtils.is_not_blank(error_message)
 	chip_status = "ERROR" if failed else "COMPLETE"
-	completion_wave = -1.0
-	completion_delay = 0.46
 	activity = 0.58
 	for index in range(14):
 		spawn_pulse(index + 19, true, Colors.error if failed else board_hot_green(), float(index) * 0.025, true)
@@ -127,8 +117,6 @@ func on_turn_start(_session_id: int) -> void:
 func on_turn_end(_session_id: int) -> void:
 	thinking = false
 	chip_status = "RESPONDING"
-	response_burst = 0.0
-	response_burst_released = false
 	for index in range(9):
 		spawn_pulse(index + 71, true, board_hot_green(), float(index) * 0.025, true)
 	pass
@@ -178,40 +166,16 @@ func _process(delta: float) -> void:
 		spawn_pulse(rng.randi(), false, board_green() if rng.randf() > 0.13 else board_amber(), 0.0)
 	advance_pulses(delta)
 	update_focus(delta)
-	advance_response_burst(delta)
 	for component: Dictionary in components:
 		component["glow"] = move_toward(float(component["glow"]), 0.0, delta * 1.9)
 	for trace: Dictionary in traces:
 		trace["heat"] = move_toward(float(trace.get("heat", 0.0)), 0.0, delta * 0.28)
 	chip["glow"] = move_toward(float(chip.get("glow", 0.0)), 0.0, delta * 1.4)
-	if completion_wave >= 0.0:
-		completion_wave += delta
-		if completion_wave > 1.35:
-			completion_wave = -1.0
-	if completion_delay >= 0.0:
-		completion_delay -= delta
-		if completion_delay <= 0.0:
-			completion_delay = -1.0
-			completion_wave = 0.0
 	redraw_elapsed += delta
 	var redraw_interval := 1.0 / (60.0 if activity > 0.3 or not pulses.is_empty() else 30.0)
 	if redraw_elapsed >= redraw_interval:
 		redraw_elapsed = 0.0
 		queue_redraw()
-	pass
-
-
-func advance_response_burst(delta: float) -> void:
-	if response_burst < 0.0:
-		return
-	response_burst += delta
-	if response_burst >= 0.36 and not response_burst_released:
-		response_burst_released = true
-		chip["glow"] = 1.0
-		for index in range(12):
-			spawn_pulse(index + 131, false, board_hot_green(), float(index) * 0.018, true)
-	if response_burst > 0.86:
-		response_burst = -1.0
 	pass
 
 
@@ -563,8 +527,6 @@ func _draw() -> void:
 		draw_component(component)
 	draw_set_transform(parallax)
 	draw_chip()
-	draw_response_burst()
-	draw_completion_wave()
 	for pulse: Dictionary in pulses:
 		draw_pulse(pulse)
 	draw_set_transform(Vector2.ZERO)
@@ -746,43 +708,6 @@ func draw_holographic_core(rect: Rect2, color: Color, glow: float) -> void:
 		draw_polyline(inner, Color(color, 0.20 + glow * 0.22), 1.0, true)
 		var orbit_position := center + Vector2.from_angle(rotation * 1.7) * radius * 0.78
 		draw_circle(orbit_position, 1.7 + glow, Color(color, 0.46 + glow * 0.30))
-	pass
-
-
-func draw_completion_wave() -> void:
-	if completion_wave < 0.0:
-		return
-	var rect: Rect2 = chip["rect"]
-	var progress := clampf(completion_wave / 1.35, 0.0, 1.0)
-	var max_radius := view_size().length() * 0.46
-	var radius := lerpf(rect.size.x * 0.28, max_radius, ease(progress, -1.7))
-	var color := Colors.error if failed else board_hot_green()
-	draw_arc(rect.get_center(), radius, 0.0, TAU, 96, Color(color, (1.0 - progress) * 0.30), 2.0, true)
-	pass
-
-
-func draw_response_burst() -> void:
-	if response_burst < 0.0:
-		return
-	var rect: Rect2 = chip["rect"]
-	var center := rect.get_center()
-	var color := board_hot_green()
-	if response_burst < 0.36:
-		var gather := clampf(response_burst / 0.36, 0.0, 1.0)
-		for ring in range(3):
-			var start_radius := rect.size.x * (0.62 + float(ring) * 0.18)
-			var radius := lerpf(start_radius, rect.size.y * 0.16, ease(gather, 2.2))
-			draw_arc(center, radius, 0.0, TAU, 72, Color(color, 0.08 + gather * 0.16), 1.2, true)
-		draw_circle(center, lerpf(3.0, 8.0, gather), Color(color, gather * 0.42))
-		return
-	var release := clampf((response_burst - 0.36) / 0.50, 0.0, 1.0)
-	var radius := lerpf(rect.size.y * 0.12, view_size().length() * 0.32, ease(release, -1.8))
-	draw_arc(center, radius, 0.0, TAU, 96, Color(color, (1.0 - release) * 0.34), 2.4 - release, true)
-	for ray in range(8):
-		var angle := float(ray) * TAU / 8.0
-		var inner := center + Vector2.from_angle(angle) * rect.size.y * 0.16
-		var outer := center + Vector2.from_angle(angle) * minf(radius, rect.size.x * 0.72)
-		draw_line(inner, outer, Color(color, (1.0 - release) * 0.16), 1.0, true)
 	pass
 
 

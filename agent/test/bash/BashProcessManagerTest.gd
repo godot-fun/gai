@@ -40,6 +40,25 @@ static func unread_output_is_bounded_test() -> void:
 	pass
 
 
+static func start_cleans_up_expired_finished_processes_test() -> void:
+	var expired_process_id := BashProcessManager.start("printf expired")
+	var deadline := Time.get_ticks_msec() + TimeUtils.MILLIS_PER_SECOND * 5
+	while BashProcessManager.is_running(expired_process_id) and Time.get_ticks_msec() < deadline:
+		await Engine.get_main_loop().process_frame
+	var expired_process: BashProcess = BashProcessManager.processes.get(expired_process_id)
+	assert(expired_process != null)
+	expired_process.mutex.lock()
+	expired_process.finish_time = TimeUtils.current_time_millis() - BashProcessManager.FINISH_TIMEOUT
+	expired_process.mutex.unlock()
+
+	var next_process_id := BashProcessManager.start("printf next")
+	assert(not BashProcessManager.processes.has(expired_process_id))
+	var result := await BashProcessManager.async_poll(next_process_id, TimeUtils.MILLIS_PER_SECOND * 5)
+	assert(result.status == BashProcessResult.STATUS_EXITED)
+	assert(result.output == "next")
+	pass
+
+
 static func exited_tool_result_omits_process_metadata_test() -> void:
 	var result := BashProcessResult.new(BashProcessResult.STATUS_EXITED, "bash_1", 0, "done")
 	var tool_result := BashProcessTool.build_result(result)

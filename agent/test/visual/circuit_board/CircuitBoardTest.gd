@@ -35,9 +35,7 @@ func stream_and_tool_events_create_pulses_test() -> void:
 	effect.on_tool_execution_start(1, "call-1", "read_file", {})
 	assert(effect.pulses.size() >= 2)
 	effect.on_turn_end(1)
-	assert(effect.response_burst == 0.0)
-	effect.advance_response_burst(0.37)
-	assert(effect.response_burst_released)
+	assert(effect.chip_status == "RESPONDING")
 	effect.free()
 	pass
 
