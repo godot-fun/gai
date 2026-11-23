@@ -5,7 +5,7 @@ extends RefCounted
 
 var id: int = -1
 ## Model selected for this conversation. New sessions copy the current default model.
-var model: String = ApiSetting.get_model()
+var model: String
 var messages: Array[ChatMessage] = []
 var chat_entries: Array[ChatEntry] = []
 ## Per-session composer text, restored when the user switches back to this chat.

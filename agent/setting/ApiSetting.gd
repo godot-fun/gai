@@ -110,72 +110,18 @@ static func find_profile_index(model: String) -> int:
 
 static func load_config() -> ApiConfig:
 	if not FileAccess.file_exists(CONFIG_FILE_PATH):
-		return default_config()
+		return ApiConfig.new()
 	var file := FileAccess.open_encrypted_with_pass(CONFIG_FILE_PATH, FileAccess.READ, "zfoo")
 	if file == null:
 		Log.error("load encrypted API config failed path:[{}] error:[{}]", CONFIG_FILE_PATH, FileAccess.get_open_error())
-		return default_config()
+		return ApiConfig.new()
 	var json_text := file.get_as_text()
 	file.close()
-	var parsed: Variant = JSON.parse_string(json_text)
-	var loaded := config_from_json(parsed)
+	var loaded: ApiConfig = JsonUtils.json_to_object(json_text, ApiConfig)
 	if loaded == null:
 		Log.error("load encrypted API config failed path:[{}] invalid JSON structure", CONFIG_FILE_PATH)
-		return default_config()
-	ensure_valid_config(loaded)
+		return ApiConfig.new()
 	return loaded
-
-
-static func config_from_json(parsed: Variant) -> ApiConfig:
-	if typeof(parsed) != TYPE_DICTIONARY:
-		return null
-	var data := parsed as Dictionary
-	var loaded := ApiConfig.new()
-	loaded.active_model = str(data.get("active_model", "")).strip_edges()
-	var profile_values: Variant = data.get("profiles", [])
-	if typeof(profile_values) == TYPE_ARRAY:
-		for value: Variant in profile_values:
-			var profile := profile_from_dict(value)
-			if profile != null and find_profile_in(loaded.profiles, profile.model) < 0:
-				loaded.profiles.append(profile)
-	return loaded
-
-
-static func profile_from_dict(value: Variant) -> ApiModelProfile:
-	if typeof(value) != TYPE_DICTIONARY:
-		return null
-	var data := value as Dictionary
-	var profile := ApiModelProfile.new(str(data.get("model", "")), str(data.get("api_url", "")),
-		str(data.get("api_token", "")))
-	return profile if profile.is_valid() else null
-
-
-static func ensure_valid_config(value: ApiConfig) -> void:
-	var valid_profiles: Array[ApiModelProfile] = []
-	for profile in value.profiles:
-		if profile != null and profile.is_valid() and find_profile_in(valid_profiles, profile.model) < 0:
-			valid_profiles.append(profile)
-	value.profiles = valid_profiles
-	if value.profiles.is_empty():
-		value.profiles.append(ApiModelProfile.new(DEFAULT_MODEL, DEFAULT_API_URL, ""))
-	if find_profile_in(value.profiles, value.active_model) < 0:
-		value.active_model = value.profiles[0].model
-	pass
-
-
-static func find_profile_in(profiles: Array[ApiModelProfile], model: String) -> int:
-	var normalized := model.strip_edges()
-	for index in range(profiles.size()):
-		if profiles[index].model == normalized:
-			return index
-	return -1
-
-
-static func default_config() -> ApiConfig:
-	var result := ApiConfig.new()
-	result.profiles.append(ApiModelProfile.new(DEFAULT_MODEL, DEFAULT_API_URL, ""))
-	result.active_model = DEFAULT_MODEL
-	return result
 
 
 static func save_config() -> void:
@@ -183,21 +129,16 @@ static func save_config() -> void:
 	if file == null:
 		Log.error("save encrypted API config failed path:[{}] error:[{}]", CONFIG_FILE_PATH, FileAccess.get_open_error())
 		return
-	var profiles: Array[Dictionary] = []
-	for profile in config.profiles:
-		profiles.append({"model": profile.model, "api_url": profile.api_url, "api_token": profile.api_token})
-	file.store_string(JsonUtils.object_to_json({
-		"profiles": profiles,
-		"active_model": config.active_model,
-	}))
+	file.store_string(JsonUtils.object_to_json(config))
+	file.close()
 	pass
 
 
 class ApiConfig:
 	extends RefCounted
 
-	var profiles: Array[ApiModelProfile] = []
-	var active_model: String = ""
+	var profiles: Array[ApiModelProfile] = [ApiModelProfile.new(DEFAULT_MODEL, DEFAULT_API_URL, "")]
+	var active_model: String = DEFAULT_MODEL
 
 
 class ApiModelProfile:
