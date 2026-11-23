@@ -113,16 +113,11 @@ func refresh() -> void:
 	pass
 
 
-func save() -> void:
-	pass
-
-
 func show_add_form() -> void:
 	var active := ApiSetting.get_active_profile()
 	model_edit.clear()
 	api_url_edit.text = active.api_url
 	api_token_edit.text = active.api_token
-	api_token_edit.secret = true
 	add_form.visible = true
 	add_model_button.visible = false
 	model_edit.grab_focus()

@@ -55,7 +55,6 @@ static func add_model(model: String, api_url: String, api_token: String) -> bool
 
 
 static func remove_model(model: String) -> bool:
-	ensure_valid_config(config)
 	if config.profiles.size() <= 1:
 		return false
 	var index := find_profile_index(model)
@@ -88,18 +87,20 @@ static func save_proxy_address(proxy_address: String) -> void:
 
 
 static func get_client() -> OpenAiClient:
-	return OpenAiClient.new(get_api_token(), get_api_url(), get_model())
+	var profile := get_active_profile()
+	var token := profile.api_token if not profile.api_token.is_empty() else OS.get_environment(API_KEY_ENV)
+	return OpenAiClient.new(token, profile.api_url, profile.model)
 
 
 static func get_active_profile() -> ApiModelProfile:
-	ensure_valid_config(config)
 	var index := find_profile_index(config.active_model)
-	return config.profiles[index if index >= 0 else 0]
+	return config.profiles[index]
 
 
 static func find_profile_index(model: String) -> int:
+	var normalized := model.strip_edges()
 	for index in range(config.profiles.size()):
-		if config.profiles[index].model == model.strip_edges():
+		if config.profiles[index].model == normalized:
 			return index
 	return -1
 
@@ -163,8 +164,9 @@ static func ensure_valid_config(value: ApiConfig) -> void:
 
 
 static func find_profile_in(profiles: Array[ApiModelProfile], model: String) -> int:
+	var normalized := model.strip_edges()
 	for index in range(profiles.size()):
-		if profiles[index].model == model.strip_edges():
+		if profiles[index].model == normalized:
 			return index
 	return -1
 
@@ -177,22 +179,16 @@ static func default_config() -> ApiConfig:
 
 
 static func save_config() -> void:
-	ensure_valid_config(config)
-	save_config_value(config)
-	pass
-
-
-static func save_config_value(value: ApiConfig) -> void:
 	var file := FileAccess.open_encrypted_with_pass(CONFIG_FILE_PATH, FileAccess.WRITE, "zfoo")
 	if file == null:
 		Log.error("save encrypted API config failed path:[{}] error:[{}]", CONFIG_FILE_PATH, FileAccess.get_open_error())
 		return
 	var profiles: Array[Dictionary] = []
-	for profile in value.profiles:
+	for profile in config.profiles:
 		profiles.append({"model": profile.model, "api_url": profile.api_url, "api_token": profile.api_token})
 	file.store_string(JsonUtils.object_to_json({
 		"profiles": profiles,
-		"active_model": value.active_model,
+		"active_model": config.active_model,
 	}))
 	pass
 
