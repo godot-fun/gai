@@ -125,7 +125,7 @@ static func run_agent(session: AgentSession) -> void:
 	if not AgentSessionManager.has_index(session.id):
 		return
 	var runtime := get_or_create_runtime(session.id)
-	var ai_client := ApiSetting.get_client()
+	var ai_client := ApiSetting.get_client(session.model)
 	ai_client.cancel_scope = runtime.cancel_scope
 	await AgentLoop.run(ai_client, session)
 	pass

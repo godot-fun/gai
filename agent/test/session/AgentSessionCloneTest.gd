@@ -9,6 +9,7 @@ static func agent_session_deep_clone_is_independent_test() -> void:
 	var message := ChatMessage.assistant_tool_calls([tool_call], "answer", "reasoning")
 	var entry := ChatEntry.new(ChatEntry.KIND_AGENT, ChatEntry.TITLE_AGENT, "body", {"key": "before"})
 	var session := AgentSession.new(42)
+	session.model = "deepseek-chat"
 	session.messages.append(message)
 	session.chat_entries.append(entry)
 	session.pending_messages.append("pending")
@@ -25,6 +26,7 @@ static func agent_session_deep_clone_is_independent_test() -> void:
 	session.usage.prompt_tokens = 200
 
 	assert(cloned != session)
+	assert(cloned.model == "deepseek-chat")
 	assert(cloned.messages[0] != session.messages[0])
 	assert((cloned.messages[0] as AssistantChatMessage).text == "answer")
 	assert((cloned.messages[0] as AssistantChatMessage).tool_calls[0] != (session.messages[0] as AssistantChatMessage).tool_calls[0])

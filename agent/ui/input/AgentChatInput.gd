@@ -124,14 +124,14 @@ func refresh_model_selector() -> void:
 	if model_button == null:
 		return
 	var models := ApiSetting.get_models()
-	var active_model := ApiSetting.get_model()
-	model_button.text = active_model + "  ▾"
-	model_button.tooltip_text = I18n.t("agent.input.select_model") + ": " + active_model
+	var session_model := get_session_model()
+	model_button.text = session_model + "  ▾"
+	model_button.tooltip_text = I18n.t("agent.input.select_model") + ": " + session_model
 	var popup := model_button.get_popup()
 	popup.clear()
 	for index in range(models.size()):
 		popup.add_radio_check_item(models[index], index)
-		popup.set_item_checked(index, models[index] == active_model)
+		popup.set_item_checked(index, models[index] == session_model)
 	apply_model_selector_theme()
 	pass
 
@@ -140,7 +140,25 @@ func on_model_selected(index: int) -> void:
 	var models := ApiSetting.get_models()
 	if index < 0 or index >= models.size():
 		return
-	ApiSetting.set_active_model(models[index])
+	var session := AgentSessionStore.load_session(AgentSessionManager.active_session_id)
+	if session == null or session.model == models[index]:
+		return
+	session.model = models[index]
+	AgentSessionManager.persist_session(session.id)
+	refresh_model_selector()
+	pass
+
+
+func get_session_model() -> String:
+	var session := AgentSessionStore.load_session(AgentSessionManager.active_session_id)
+	var models := ApiSetting.get_models()
+	if session == null:
+		return ApiSetting.get_model()
+	if session.model in models:
+		return session.model
+	session.model = ApiSetting.get_model()
+	AgentSessionManager.persist_session(session.id)
+	return session.model
 	pass
 
 
@@ -206,8 +224,7 @@ func on_locale_changed() -> void:
 func apply_locale() -> void:
 	input_field.placeholder_text = I18n.t("agent.input.placeholder")
 	input_wrap.tooltip_text = "" if expanded else I18n.t("agent.input.click_to_ask")
-	if model_button != null:
-		model_button.tooltip_text = I18n.t("agent.input.select_model") + ": " + ApiSetting.get_model()
+	refresh_model_selector()
 	pass
 
 
@@ -330,6 +347,7 @@ func refresh_from_active_session() -> void:
 	input_field.text = session.draft_text if session != null else ""
 	chat_completion.cancel()
 	refresh_state(running, no_history)
+	refresh_model_selector()
 	refresh_queue()
 	relayout_if_height_changed()
 	pass

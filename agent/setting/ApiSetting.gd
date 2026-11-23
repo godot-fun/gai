@@ -86,8 +86,9 @@ static func save_proxy_address(proxy_address: String) -> void:
 	pass
 
 
-static func get_client() -> OpenAiClient:
-	var profile := get_active_profile()
+static func get_client(model: String = "") -> OpenAiClient:
+	var index := find_profile_index(model)
+	var profile := config.profiles[index] if index >= 0 else get_active_profile()
 	var token := profile.api_token if not profile.api_token.is_empty() else OS.get_environment(API_KEY_ENV)
 	return OpenAiClient.new(token, profile.api_url, profile.model)
 

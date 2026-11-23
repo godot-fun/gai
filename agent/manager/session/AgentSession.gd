@@ -4,6 +4,8 @@ extends RefCounted
 ## Single conversation session — LLM history and UI chat entries.
 
 var id: int = -1
+## Model selected for this conversation. New sessions copy the current default model.
+var model: String = ApiSetting.get_model()
 var messages: Array[ChatMessage] = []
 var chat_entries: Array[ChatEntry] = []
 ## Per-session composer text, restored when the user switches back to this chat.
@@ -27,6 +29,7 @@ func _init(_id: int = -1) -> void:
 ## Strings are immutable copy-on-write values, so assigning them is both safe and cheap.
 func deep_clone() -> AgentSession:
 	var cloned := AgentSession.new(id)
+	cloned.model = model
 	cloned.messages.resize(messages.size())
 	for index in messages.size():
 		if messages[index] == null:
