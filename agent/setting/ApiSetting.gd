@@ -11,19 +11,6 @@ const CONFIG_FILE_PATH := "user://api.dat"
 static var config: ApiConfig = load_config()
 
 
-static func get_api_url() -> String:
-	return get_active_profile().api_url
-
-
-static func get_api_token() -> String:
-	var token := get_active_profile().api_token
-	return token if not token.is_empty() else OS.get_environment(API_KEY_ENV)
-
-
-static func get_model() -> String:
-	return get_active_profile().model
-
-
 static func get_models() -> Array[String]:
 	var result: Array[String] = []
 	for profile in config.profiles:

@@ -171,7 +171,7 @@ func refresh_models() -> void:
 	for child in model_list.get_children():
 		model_list.remove_child(child)
 		child.queue_free()
-	var active_model := ApiSetting.get_model()
+	var active_model := ApiSetting.get_active_profile().model
 	var profiles := ApiSetting.get_profiles()
 	default_model_select.clear()
 	for index in range(profiles.size()):

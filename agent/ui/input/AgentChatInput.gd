@@ -153,10 +153,10 @@ func get_session_model() -> String:
 	var session := AgentSessionStore.load_session(AgentSessionManager.active_session_id)
 	var models := ApiSetting.get_models()
 	if session == null:
-		return ApiSetting.get_model()
+		return ApiSetting.get_active_profile().model
 	if session.model in models:
 		return session.model
-	session.model = ApiSetting.get_model()
+	session.model = ApiSetting.get_active_profile().model
 	AgentSessionManager.persist_session(session.id)
 	return session.model
 	pass
