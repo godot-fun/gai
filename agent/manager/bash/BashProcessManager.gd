@@ -180,14 +180,11 @@ static func finish(process: BashProcess, exit_code: int) -> void:
 static func cleanup_finished_processes() -> void:
 	var now := TimeUtils.current_time_millis()
 	for process_id: String in processes.keys():
-		var process: BashProcess = processes.get(process_id)
-		if process == null:
-			continue
+		var process: BashProcess = processes[process_id]
 		process.mutex.lock()
-		var running := process.running
-		var finish_time := process.finish_time
+		var expired := process.finish_time > 0 and now - process.finish_time >= FINISH_TIMEOUT
 		process.mutex.unlock()
-		if running or finish_time <= 0 or now - finish_time < FINISH_TIMEOUT:
+		if not expired:
 			continue
 		if process.thread.is_started():
 			process.thread.wait_to_finish()
