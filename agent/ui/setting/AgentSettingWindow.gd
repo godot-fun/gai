@@ -8,6 +8,7 @@ const FIELD_CONTROL_RATIO: float = 5.0
 const NAV_LOCALE_KEYS: Array[String] = [
 	"agent.settings.appearance",
 	"agent.settings.connection",
+	"agent.settings.network",
 	"common.agent",
 	"agent.settings.notification",
 	"agent.settings.shortcut",
@@ -106,6 +107,7 @@ func build_window() -> void:
 	sections = [
 		AppearanceSettingSection.new(),
 		ConnectionSettingSection.new(),
+		NetworkSettingSection.new(),
 		AgentSettingSection.new(),
 		NotificationSettingSection.new(),
 		ShortcutSettingSection.new(),

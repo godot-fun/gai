@@ -21,6 +21,7 @@ var input_wrap: PanelContainer
 var input_inner: Control
 var input_field: CodeEdit
 var send_button: Button
+var model_button: MenuButton
 var send_effect: ColorRect
 var queue_badge: Label
 var queue_panel: PanelContainer
@@ -66,6 +67,7 @@ func setup(
 	setup_send_effect()
 	setup_queue_badge()
 	setup_queue_controls()
+	setup_model_selector()
 
 	input_wrap.set_anchor(SIDE_LEFT, 0.0)
 	input_wrap.set_anchor(SIDE_TOP, 0.0)
@@ -94,6 +96,7 @@ func setup(
 	AgentEvents.events.session_selected.connect(on_session_selected)
 	AgentEvents.events.session_queue_changed.connect(on_session_queue_changed)
 	AgentEvents.events.chat_input_prefill.connect(on_chat_input_prefill)
+	AgentEvents.events.api_models_changed.connect(refresh_model_selector)
 	setup_moving_border()
 	AgentEvents.events.agent_start.connect(on_agent_start)
 	AgentEvents.events.session_stop.connect(on_session_stop)
@@ -102,6 +105,42 @@ func setup(
 	apply_locale()
 	apply_theme()
 	refresh_from_active_session()
+	pass
+
+
+func setup_model_selector() -> void:
+	model_button = MenuButton.new()
+	model_button.name = "ModelSelector"
+	model_button.focus_mode = Control.FOCUS_NONE
+	model_button.clip_text = true
+	model_button.tooltip_text = I18n.t("agent.input.select_model")
+	model_button.get_popup().id_pressed.connect(on_model_selected)
+	input_inner.add_child(model_button)
+	refresh_model_selector()
+	pass
+
+
+func refresh_model_selector() -> void:
+	if model_button == null:
+		return
+	var models := ApiSetting.get_models()
+	var active_model := ApiSetting.get_model()
+	model_button.text = active_model + "  ▾"
+	model_button.tooltip_text = I18n.t("agent.input.select_model") + ": " + active_model
+	var popup := model_button.get_popup()
+	popup.clear()
+	for index in range(models.size()):
+		popup.add_radio_check_item(models[index], index)
+		popup.set_item_checked(index, models[index] == active_model)
+	apply_model_selector_theme()
+	pass
+
+
+func on_model_selected(index: int) -> void:
+	var models := ApiSetting.get_models()
+	if index < 0 or index >= models.size():
+		return
+	ApiSetting.set_active_model(models[index])
 	pass
 
 
@@ -167,6 +206,8 @@ func on_locale_changed() -> void:
 func apply_locale() -> void:
 	input_field.placeholder_text = I18n.t("agent.input.placeholder")
 	input_wrap.tooltip_text = "" if expanded else I18n.t("agent.input.click_to_ask")
+	if model_button != null:
+		model_button.tooltip_text = I18n.t("agent.input.select_model") + ": " + ApiSetting.get_model()
 	pass
 
 
@@ -299,7 +340,20 @@ func apply_theme() -> void:
 	ChatInputTheme.apply_field(input_field)
 	ChatInputTheme.apply_completion(input_field)
 	refresh_send_button()
+	apply_model_selector_theme()
 	apply_queue_theme()
+	pass
+
+
+func apply_model_selector_theme() -> void:
+	if model_button == null:
+		return
+	ButtonStyle.apply_font_colors(model_button, Colors.secondary_text, Colors.primary_text, Colors.primary_text)
+	var normal := StyleBoxHelper.create_style_box_flat(Colors.surface_container_high,
+		ControlSize.radius_md, Margin.ma_2, Margin.ma_1)
+	var hover := StyleBoxHelper.duplicate_with_bg_color(normal, Colors.hover(Colors.surface_container_high))
+	ButtonStyle.apply_style(model_button, normal, hover, normal.duplicate() as StyleBoxFlat)
+	PopupMenuStyle.apply(model_button.get_popup())
 	pass
 
 
@@ -908,6 +962,7 @@ func layout_bar() -> void:
 		input_field.scroll_fit_content_height = true
 	apply_locale()
 	layout_send_button()
+	layout_model_button()
 	sync_queue_panel_visibility()
 	layout_queue_panel()
 	ChatInputTheme.apply_wrap(input_wrap, expanded)
@@ -933,6 +988,23 @@ func layout_send_button() -> void:
 	send_button.offset_bottom = -inset
 	send_button.z_index = 2
 	refresh_send_button()
+	pass
+
+
+func layout_model_button() -> void:
+	model_button.visible = expanded
+	if not expanded:
+		return
+	model_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	model_button.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	model_button.grow_vertical = Control.GROW_DIRECTION_BOTH
+	model_button.custom_minimum_size = Vector2(ControlSize.xl * 3.0, ControlSize.md)
+	var inset := float(Margin.ma_1)
+	model_button.offset_left = -ControlSize.xl * 3.0 - ControlSize.md - Margin.ma_2 - inset
+	model_button.offset_top = -ControlSize.md - inset
+	model_button.offset_right = -ControlSize.md - Margin.ma_2 - inset
+	model_button.offset_bottom = -inset
+	model_button.z_index = 2
 	pass
 
 

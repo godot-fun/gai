@@ -1,44 +1,84 @@
 class_name ApiSetting
 extends RefCounted
 
-## Encrypted OpenAI-compatible connection history and its active connection.
+## Encrypted OpenAI-compatible model profiles. Each model owns its endpoint and credential.
 
 const DEFAULT_API_URL := "https://api.deepseek.com/chat/completions"
 const DEFAULT_MODEL := "deepseek-flash"
 const API_KEY_ENV := "OPENAI_API_KEY"
-const CONNECTION_HISTORY_FILE_PATH := "user://api.dat"
-const MAX_CONNECTION_HISTORY := 10
+const CONFIG_FILE_PATH := "user://api.dat"
 const PROXY_ADDRESS_KEY := "proxy_address"
 
-static var connection_history: Array[ApiModelConfig] = load_connection_history()
+static var config: ApiConfig = load_config()
 
 
-# ----------------------------------------------------------------------------------------------------------------------
-# Active connection
-
-## Returns the endpoint currently used by the OpenAI-compatible client.
 static func get_api_url() -> String:
-	var connection := get_active_connection()
-	return connection.api_url if connection != null else DEFAULT_API_URL
+	return get_active_profile().api_url
 
 
 static func get_api_token() -> String:
-	var connection := get_active_connection()
-	return connection.api_token if connection != null else OS.get_environment(API_KEY_ENV)
+	var token := get_active_profile().api_token
+	return token if not token.is_empty() else OS.get_environment(API_KEY_ENV)
 
 
 static func get_model() -> String:
-	var connection := get_active_connection()
-	return connection.model if connection != null else DEFAULT_MODEL
+	return get_active_profile().model
+
+
+static func get_models() -> Array[String]:
+	var result: Array[String] = []
+	for profile in config.profiles:
+		result.append(profile.model)
+	return result
+
+
+static func get_profiles() -> Array[ApiModelProfile]:
+	var result: Array[ApiModelProfile] = []
+	result.assign(config.profiles)
+	return result
 
 
 static func get_proxy_address() -> String:
 	return Setting.get_string(PROXY_ADDRESS_KEY).strip_edges()
 
 
-## Persists the edited connection as the active history entry and saves the non-secret proxy setting.
-static func save(api_url: String, model: String, api_token: String, proxy_address: String) -> void:
-	set_active_connection(ApiModelConfig.new(api_url, model, api_token))
+## Adds one complete model profile and makes it active.
+static func add_model(model: String, api_url: String, api_token: String) -> bool:
+	var profile := ApiModelProfile.new(model, api_url, api_token)
+	if not profile.is_valid() or find_profile_index(profile.model) >= 0:
+		return false
+	config.profiles.append(profile)
+	config.active_model = profile.model
+	save_config()
+	AgentEvents.events.api_models_changed.emit()
+	return true
+
+
+static func remove_model(model: String) -> bool:
+	ensure_valid_config(config)
+	if config.profiles.size() <= 1:
+		return false
+	var index := find_profile_index(model)
+	if index < 0:
+		return false
+	config.profiles.remove_at(index)
+	if config.active_model == model:
+		config.active_model = config.profiles[min(index, config.profiles.size() - 1)].model
+	save_config()
+	AgentEvents.events.api_models_changed.emit()
+	return true
+
+
+static func set_active_model(model: String) -> bool:
+	if find_profile_index(model) < 0 or config.active_model == model:
+		return false
+	config.active_model = model
+	save_config()
+	AgentEvents.events.api_models_changed.emit()
+	return true
+
+
+static func save_proxy_address(proxy_address: String) -> void:
 	var normalized_proxy_address := proxy_address.strip_edges()
 	if normalized_proxy_address != get_proxy_address():
 		Setting.set_string(PROXY_ADDRESS_KEY, normalized_proxy_address)
@@ -47,129 +87,137 @@ static func save(api_url: String, model: String, api_token: String, proxy_addres
 	pass
 
 
-## Creates a client from the active connection; request callers apply the proxy separately.
 static func get_client() -> OpenAiClient:
 	return OpenAiClient.new(get_api_token(), get_api_url(), get_model())
 
 
-static func get_active_connection() -> ApiModelConfig:
-	return connection_history.front() if not connection_history.is_empty() else null
+static func get_active_profile() -> ApiModelProfile:
+	ensure_valid_config(config)
+	var index := find_profile_index(config.active_model)
+	return config.profiles[index if index >= 0 else 0]
 
 
-static func set_active_connection(connection: ApiModelConfig) -> void:
-	if not connection.is_valid():
-		return
-	if connection_history.is_empty():
-		connection_history.append(connection)
-	else:
-		connection_history[0] = connection
-	remove_duplicate_connections(connection, 1)
-	trim_and_save_connection_history()
-	pass
+static func find_profile_index(model: String) -> int:
+	for index in range(config.profiles.size()):
+		if config.profiles[index].model == model.strip_edges():
+			return index
+	return -1
 
 
 # ----------------------------------------------------------------------------------------------------------------------
-# Connection history
+# Encrypted storage
 
-## Returns a shallow copy of the most-recent-first connection history cached in memory.
-static func get_connection_history() -> Array[ApiModelConfig]:
-	var result: Array[ApiModelConfig] = []
-	result.assign(connection_history)
+static func load_config() -> ApiConfig:
+	if not FileAccess.file_exists(CONFIG_FILE_PATH):
+		return default_config()
+	var file := FileAccess.open_encrypted_with_pass(CONFIG_FILE_PATH, FileAccess.READ, "zfoo")
+	if file == null:
+		Log.error("load encrypted API config failed path:[{}] error:[{}]", CONFIG_FILE_PATH, FileAccess.get_open_error())
+		return default_config()
+	var json_text := file.get_as_text()
+	file.close()
+	var parsed: Variant = JSON.parse_string(json_text)
+	var loaded := config_from_json(parsed)
+	if loaded == null:
+		Log.error("load encrypted API config failed path:[{}] invalid JSON structure", CONFIG_FILE_PATH)
+		return default_config()
+	ensure_valid_config(loaded)
+	return loaded
+
+
+static func config_from_json(parsed: Variant) -> ApiConfig:
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return null
+	var data := parsed as Dictionary
+	var loaded := ApiConfig.new()
+	loaded.active_model = str(data.get("active_model", "")).strip_edges()
+	var profile_values: Variant = data.get("profiles", [])
+	if typeof(profile_values) == TYPE_ARRAY:
+		for value: Variant in profile_values:
+			var profile := profile_from_dict(value)
+			if profile != null and find_profile_in(loaded.profiles, profile.model) < 0:
+				loaded.profiles.append(profile)
+	return loaded
+
+
+static func profile_from_dict(value: Variant) -> ApiModelProfile:
+	if typeof(value) != TYPE_DICTIONARY:
+		return null
+	var data := value as Dictionary
+	var profile := ApiModelProfile.new(str(data.get("model", "")), str(data.get("api_url", "")),
+		str(data.get("api_token", "")))
+	return profile if profile.is_valid() else null
+
+
+static func ensure_valid_config(value: ApiConfig) -> void:
+	var valid_profiles: Array[ApiModelProfile] = []
+	for profile in value.profiles:
+		if profile != null and profile.is_valid() and find_profile_in(valid_profiles, profile.model) < 0:
+			valid_profiles.append(profile)
+	value.profiles = valid_profiles
+	if value.profiles.is_empty():
+		value.profiles.append(ApiModelProfile.new(DEFAULT_MODEL, DEFAULT_API_URL, ""))
+	if find_profile_in(value.profiles, value.active_model) < 0:
+		value.active_model = value.profiles[0].model
+	pass
+
+
+static func find_profile_in(profiles: Array[ApiModelProfile], model: String) -> int:
+	for index in range(profiles.size()):
+		if profiles[index].model == model.strip_edges():
+			return index
+	return -1
+
+
+static func default_config() -> ApiConfig:
+	var result := ApiConfig.new()
+	result.profiles.append(ApiModelProfile.new(DEFAULT_MODEL, DEFAULT_API_URL, ""))
+	result.active_model = DEFAULT_MODEL
 	return result
 
 
-## Moves an equal connection to the front or inserts it as the active connection.
-static func remember_connection(api_url: String, api_token: String, model: String) -> void:
-	var connection := ApiModelConfig.new(api_url, model, api_token)
-	if not connection.is_valid():
-		return
-	remove_duplicate_connections(connection)
-	connection_history.push_front(connection)
-	trim_and_save_connection_history()
+static func save_config() -> void:
+	ensure_valid_config(config)
+	save_config_value(config)
 	pass
 
 
-## Makes an existing history entry active without duplicating it.
-static func activate_connection(connection: ApiModelConfig) -> void:
-	remember_connection(connection.api_url, connection.api_token, connection.model)
-	pass
-
-
-## Removes one entry; the next entry becomes active when the first entry is removed.
-static func remove_connection_at(index: int) -> void:
-	if index < 0 or index >= connection_history.size():
-		return
-	connection_history.remove_at(index)
-	save_connection_history()
-	pass
-
-
-static func remove_duplicate_connections(connection: ApiModelConfig, minimum_index: int = 0) -> void:
-	for index in range(connection_history.size() - 1, minimum_index - 1, -1):
-		if connection_history[index].matches_connection(connection):
-			connection_history.remove_at(index)
-	pass
-
-
-# ----------------------------------------------------------------------------------------------------------------------
-# Encrypted history storage
-
-static func load_connection_history() -> Array[ApiModelConfig]:
-	var result: Array[ApiModelConfig] = []
-	if not FileAccess.file_exists(CONNECTION_HISTORY_FILE_PATH):
-		return result
-	var file := FileAccess.open_encrypted_with_pass(CONNECTION_HISTORY_FILE_PATH, FileAccess.READ, "zfoo")
+static func save_config_value(value: ApiConfig) -> void:
+	var file := FileAccess.open_encrypted_with_pass(CONFIG_FILE_PATH, FileAccess.WRITE, "zfoo")
 	if file == null:
-		Log.error("load encrypted API connection history failed path:[{}] error:[{}]", CONNECTION_HISTORY_FILE_PATH, FileAccess.get_open_error())
-		return result
-	var parsed := JsonUtils.json_to_object_array(file.get_as_text(), ApiModelConfig)
-	for value: Variant in parsed:
-		var connection := value as ApiModelConfig
-		if connection != null and connection.is_valid():
-			result.append(connection)
-	if result.size() > MAX_CONNECTION_HISTORY:
-		result.resize(MAX_CONNECTION_HISTORY)
-	return result
-
-
-static func trim_and_save_connection_history() -> void:
-	if connection_history.size() > MAX_CONNECTION_HISTORY:
-		connection_history.resize(MAX_CONNECTION_HISTORY)
-	save_connection_history()
-	pass
-
-
-static func save_connection_history() -> void:
-	var file := FileAccess.open_encrypted_with_pass(CONNECTION_HISTORY_FILE_PATH, FileAccess.WRITE, "zfoo")
-	if file == null:
-		Log.error("save encrypted API connection history failed path:[{}] error:[{}]", CONNECTION_HISTORY_FILE_PATH, FileAccess.get_open_error())
+		Log.error("save encrypted API config failed path:[{}] error:[{}]", CONFIG_FILE_PATH, FileAccess.get_open_error())
 		return
-	file.store_string(JsonUtils.object_to_json(connection_history))
+	var profiles: Array[Dictionary] = []
+	for profile in value.profiles:
+		profiles.append({"model": profile.model, "api_url": profile.api_url, "api_token": profile.api_token})
+	file.store_string(JsonUtils.object_to_json({
+		"profiles": profiles,
+		"active_model": value.active_model,
+	}))
 	pass
 
 
-# ----------------------------------------------------------------------------------------------------------------------
-# Stored connection model
-
-## Serializable API endpoint, model, and credential combination.
-class ApiModelConfig:
+class ApiConfig:
 	extends RefCounted
 
-	var api_url: String = ""
+	var profiles: Array[ApiModelProfile] = []
+	var active_model: String = ""
+
+
+class ApiModelProfile:
+	extends RefCounted
+
 	var model: String = ""
+	var api_url: String = ""
 	var api_token: String = ""
 
 
-	func _init(p_api_url: String = "", p_model: String = "", p_api_token: String = "") -> void:
-		api_url = p_api_url.strip_edges()
+	func _init(p_model: String = "", p_api_url: String = "", p_api_token: String = "") -> void:
 		model = p_model.strip_edges()
+		api_url = p_api_url.strip_edges()
 		api_token = p_api_token.strip_edges()
 		pass
 
 
 	func is_valid() -> bool:
-		return not api_url.is_empty() and not model.is_empty()
-
-
-	func matches_connection(other: ApiModelConfig) -> bool:
-		return api_url == other.api_url and model == other.model and api_token == other.api_token
+		return not model.is_empty() and HttpUtils.is_valid_http_url(api_url)
