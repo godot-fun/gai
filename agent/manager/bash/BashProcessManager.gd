@@ -117,8 +117,6 @@ static func run_process(process: BashProcess) -> void:
 	process.pid = pid
 	var stop_requested := process.stop_requested
 	process.mutex.unlock()
-	if pid > 0:
-		OSUtils.process_pids.add(pid)
 	if stop_requested:
 		OSUtils.kill_process(pid)
 
@@ -133,8 +131,6 @@ static func run_process(process: BashProcess) -> void:
 	OSUtils.close_pipe(stdio)
 	OSUtils.close_pipe(stderr_pipe)
 	var exit_code := OS.get_process_exit_code(pid) if pid > 0 else OSUtils.EXIT_CODE_NOT_STARTED
-	if pid > 0:
-		OSUtils.process_pids.remove_value(pid)
 	finish(process, exit_code)
 	pass
 
