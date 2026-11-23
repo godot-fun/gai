@@ -162,7 +162,9 @@ func apply_scroll_to_section(index: int) -> void:
 	var vbar: VScrollBar = settings_scroll.get_v_scroll_bar()
 	if vbar == null:
 		return
-	var entry_y := settings_pad.position.y + settings_fields.position.y + anchor.position.y
+	# settings_pad.position includes the current negative scroll offset. The anchor is a direct
+	# child of settings_fields, so its stable content-space position only needs the field offset.
+	var entry_y := settings_fields.position.y + anchor.position.y
 	var max_scroll := maxf(vbar.min_value, vbar.max_value - vbar.page)
 	vbar.value = clampf(entry_y - Margin.ma_5, vbar.min_value, max_scroll)
 	pass
