@@ -255,8 +255,9 @@ func apply_theme() -> void:
 
 
 func style_model_row(row: PanelContainer) -> void:
+	var background := Color(Colors.disabled_text, 0.16)
 	row.add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(
-		Colors.surface_container_high, ControlSize.radius_md, Margin.ma_2, Margin.ma_1))
+		background, ControlSize.radius_md, Margin.ma_2, Margin.ma_1))
 	pass
 
 
