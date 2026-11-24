@@ -107,11 +107,15 @@ static func apply_queue_scroll(scroll: ScrollContainer) -> void:
 
 
 static func apply_queue_row(row: PanelContainer, title: Label, header: bool, hovered: bool) -> void:
-	var guide_color := Colors.outline_variant
 	var fill := Colors.hover(Color.TRANSPARENT) if hovered else Color.TRANSPARENT
 	var row_style := StyleBoxHelper.create_style_box_flat(fill, ControlSize.radius_md, Margin.ma_3, Margin.ma_1)
-	row_style.border_color = guide_color
-	row_style.set_border_width(SIDE_BOTTOM, ControlSize.border_xs)
+	if header:
+		# One separator, under the header. Square bottom corners keep the bottom border straight: a
+		# rounded corner drags it up at both ends.
+		row_style.border_color = Colors.outline_variant
+		row_style.set_border_width(SIDE_BOTTOM, ControlSize.border_xs)
+		row_style.corner_radius_bottom_left = 0
+		row_style.corner_radius_bottom_right = 0
 	row.add_theme_stylebox_override("panel", row_style)
 	title.add_theme_font_override("font", Fonts.semibold() if header else Fonts.regular())
 	title.add_theme_color_override("font_color",
