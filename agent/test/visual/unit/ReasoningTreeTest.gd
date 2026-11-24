@@ -311,7 +311,8 @@ func reasoning_chunks_do_not_accumulate_tree_height_test() -> void:
 	for index in range(100):
 		tree.on_message_update(1, "chunk %d" % index, OpenAiClient.STREAM_KIND_REASONING)
 	assert(tree.target_trunk_growth == turn_height)
-	assert(is_equal_approx(tree.target_trunk_growth, ReasoningTree.trunk_growth_for_turn(1)))
+	# The tree maps turns with the configured limit, not the default one.
+	assert(is_equal_approx(tree.target_trunk_growth, ReasoningTree.trunk_growth_for_turn(1, AgentSetting.get_max_turns())))
 	tree.free()
 	pass
 
@@ -328,10 +329,13 @@ func turns_ease_out_across_trunk_test() -> void:
 	assert(early_step > late_step)
 	var tree := ReasoningTree.new()
 	tree.on_agent_start(1)
+	var previous_growth := 0.0
 	for expected_turn in range(1, 5):
 		tree.on_turn_start(1)
-		assert(is_equal_approx(tree.target_trunk_growth, ReasoningTree.trunk_growth_for_turn(expected_turn)))
-		assert(tree.target_trunk_growth < float(expected_turn))
+		assert(is_equal_approx(tree.target_trunk_growth, ReasoningTree.trunk_growth_for_turn(expected_turn, AgentSetting.get_max_turns())))
+		assert(tree.target_trunk_growth > previous_growth)
+		assert(tree.target_trunk_growth <= float(ReasoningTree.MAX_TRUNK_SEGMENTS))
+		previous_growth = tree.target_trunk_growth
 	tree.free()
 	pass
 

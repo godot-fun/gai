@@ -63,19 +63,22 @@ func tools_reserve_and_release_columns_test() -> void:
 	effect.ensure_columns()
 	effect.on_agent_start(1)
 	effect.on_tool_execution_start(1, "tool-1", "read_file", {})
-	assert(effect.active_tools.has("tool-1"))
-	var column_index: int = effect.active_tools["tool-1"]
+	var column_index := effect.find_active_tool_column("tool-1")
+	assert(column_index >= 0)
 	assert(effect.columns[column_index].tool_state == MatrixRain.ToolState.RUNNING)
 	effect.on_tool_execution_end(1, "tool-1", "read_file", AgentToolResult.ok("done"))
-	assert(not effect.active_tools.has("tool-1"))
 	assert(effect.columns[column_index].tool_state == MatrixRain.ToolState.SUCCESS)
 	assert(effect.columns[column_index].release_pending)
 	var column := effect.columns[column_index]
 	column.head_y = effect.size.y + float(column.length) * column.step_y + 1.0
+	# Columns only wrap and drop their tool back to idle while a run is active.
+	RuntimeManager.get_or_create_runtime(21)
 	effect.visible = true
 	effect._process(0.01)
 	assert(column.tool_state == MatrixRain.ToolState.NONE)
+	assert(column.tool_id.is_empty())
 	effect.free()
+	RuntimeManager.runtimes.erase(21)
 	pass
 
 
@@ -85,7 +88,6 @@ func agent_end_accelerates_rain_offscreen_test() -> void:
 	effect.ensure_columns()
 	effect.ingest_sentence("Finish with a fast falling rain animation.")
 	effect.on_agent_end(1, "")
-	assert(effect.active_session_id == 0)
 	for column: MatrixRain.RainColumn in effect.columns:
 		assert(column.speed >= MatrixRain.END_DROP_MIN_SPEED)
 	for reply_glyph: MatrixRain.ReplyGlyph in effect.reply_glyphs:

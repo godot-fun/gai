@@ -52,7 +52,10 @@ func graph_nodes_sources_test() -> void:
 		assert(def is SourceDef, "missing source:[%s]" % source_def.id)
 
 	var audio := GraphNodesConfig.get_def("input-audio") as SourceDef
-	assert(audio.display_label() == "input-audio")
+	# Node identity comes from catalog_id; display_label() is the localized title, which falls
+	# back to the id only until the locale translation is loaded.
+	assert(audio.catalog_id() == "input-audio")
+	assert(StringUtils.is_not_blank(audio.display_label()))
 	assert(audio.outputs.size() == 1)
 	assert(audio.outputs[0].id == GraphNodesConfig.PORT_OUTPUT)
 	assert(audio.outputs[0].type == PortDef.TYPE_NAME_AUDIO)
@@ -63,7 +66,8 @@ func graph_nodes_controls_test() -> void:
 	var batch := GraphNodesConfig.get_def(GraphNodesConfig.CONTROL_BATCH_FOR_EACH)
 	assert(batch is ControlDef)
 	var control := batch as ControlDef
-	assert(control.display_label() == GraphNodesConfig.CONTROL_BATCH_FOR_EACH)
+	assert(control.catalog_id() == GraphNodesConfig.CONTROL_BATCH_FOR_EACH)
+	assert(StringUtils.is_not_blank(control.display_label()))
 	assert(control.is_batch())
 	assert(control.inputs[0].id == GraphNodesConfig.CONTROL_PORT_FOLDER)
 	assert(control.outputs[0].id == GraphNodesConfig.CONTROL_PORT_ITEM)
