@@ -49,7 +49,7 @@ func to_json() -> String:
 ## Converts messages to their API shape. Qwen chat templates reject multiple system messages or
 ## a system message after a conversation turn, so their system messages become one leading entry.
 func build_wire_messages() -> Array:
-	if not model.to_lower().contains("qwen"):
+	if model.to_lower().contains("deepseek") || model.to_lower().contains("openai"):
 		return messages.map(func(message: ChatMessage) -> Dictionary: return message.to_api_dict())
 	var wire_messages: Array = []
 	var system_parts := PackedStringArray()
