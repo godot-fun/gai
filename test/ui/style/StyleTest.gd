@@ -299,6 +299,22 @@ func ButtonStyle_theme_style_test() -> void:
 	pass
 
 
+func ButtonStyle_apply_action_button_test() -> void:
+	var button := Button.new()
+	ButtonStyle.apply_action_button(button)
+	var normal := button.get_theme_stylebox("normal") as StyleBoxFlat
+	var hover := button.get_theme_stylebox("hover") as StyleBoxFlat
+	var pressed := button.get_theme_stylebox("pressed") as StyleBoxFlat
+	assert(normal.bg_color == Colors.blue_grey_surface)
+	assert(hover.bg_color == Colors.hover(Colors.blue_grey_surface))
+	assert(pressed.bg_color == ThemeColor.promote(Colors.blue_grey_surface, Weights.w_2))
+	assert(button.get_theme_color("font_color") == Colors.primary_text)
+	assert(button.get_theme_color("font_hover_color") == Colors.primary_text)
+	assert(button.get_theme_color("font_pressed_color") == Colors.primary_text)
+	button.free()
+	pass
+
+
 func RangeStyle_apply_spin_box_test() -> void:
 	var spin := SpinBox.new()
 	RangeStyle.apply_spin_box(spin)

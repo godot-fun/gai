@@ -40,7 +40,9 @@ static func first_sentence_test() -> void:
 
 ## Every shipped skill must survive parsing, otherwise the popup would silently lose summaries.
 static func shipped_skills_load_test() -> void:
-	var summaries := SkillManager.get_summaries()
+	var project_root := FileUtils.get_project_root_path()
+	SkillManager.load_summaries(project_root.path_join(SkillManager.SKILL_DIR))
+	var summaries := SkillManager.summaries
 	assert(summaries.size() > 0)
 	for summary: SkillSummary in summaries:
 		assert(StringUtils.is_not_blank(summary.name))

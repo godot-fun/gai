@@ -78,10 +78,22 @@ static func skill_context_message_matches_system_text_test() -> void:
 
 static func context_messages_follow_system_agent_skill_memory_order_test() -> void:
 	var session := AgentSessionStore.create_session()
-	ContextInjectionManager.initialize(session.id)
-	assert(session.messages.size() >= 4)
+	var previous_agent_context := AgentPrompt.agent_context
+	var previous_skill_context := SkillPrompt.skill_context
+	var previous_memory_context := MemoryPrompt.memory_context
+	AgentPrompt.agent_context = "agents context"
+	SkillPrompt.skill_context = "skills context"
+	MemoryPrompt.memory_context = "memory context"
+	ContextInjectionManager.append_system_prompt(session.id)
+	ContextInjectionManager.append_agent_prompt(session.id)
+	ContextInjectionManager.append_skill(session.id)
+	ContextInjectionManager.append_memory(session.id)
+	assert(session.messages.size() == 4)
 	assert(session.messages[0] is SystemChatMessage)
 	assert(AgentPrompt.is_agent_context_message(session.messages[1]))
 	assert(SkillPrompt.is_skill_context_message(session.messages[2]))
 	assert(MemoryPrompt.is_memory_context_message(session.messages[3]))
+	AgentPrompt.agent_context = previous_agent_context
+	SkillPrompt.skill_context = previous_skill_context
+	MemoryPrompt.memory_context = previous_memory_context
 	pass

@@ -351,6 +351,8 @@ func path_markdown_kind_test() -> void:
 ## Such a destination is a local path, not a domain, so it must resolve against the workspace
 ## root instead of falling into the `https://` guess that opened the browser.
 func local_link_resolution_test() -> void:
+	var previous_root := AgentWorkspace.get_root()
+	assert(AgentWorkspace.set_root(FileUtils.get_project_root_path()))
 	var relative := "agent/ui/input/AgentChatInput.gd"
 	var expected := AgentWorkspace.resolve_path(relative)
 	assert(relative in MarkdownParser.inline_to_bbcode("[AgentChatInput.gd:671](" + relative + "#L671)"))
@@ -360,6 +362,7 @@ func local_link_resolution_test() -> void:
 	assert(MarkdownHelper.resolve_local_link("file:///" + expected.trim_prefix("/")) == expected)
 	assert(MarkdownHelper.resolve_local_link("missing/folder/nothing.gd#L3") == StringUtils.EMPTY)
 	assert(MarkdownHelper.resolve_local_link("https://example.com/" + relative) == StringUtils.EMPTY)
+	assert(AgentWorkspace.set_root(previous_root))
 	pass
 
 
@@ -367,6 +370,8 @@ func local_link_resolution_test() -> void:
 ## sits nowhere near the workspace root — the click used to fall into the `https://` guess and open the
 ## browser. The search places it, and same-named files are told apart by their content.
 func workspace_link_search_test() -> void:
+	var previous_root := AgentWorkspace.get_root()
+	assert(AgentWorkspace.set_root(FileUtils.get_project_root_path()))
 	var reply_markdown := MarkdownHelper.create_rich_text_label(Color.WHITE, "focus.md 记录了当前任务", true)
 	# Bare name, only present in a subfolder, found by searching the whole workspace.
 	var focus_path := AgentWorkspace.resolve_path(".memory/focus.md")
@@ -393,6 +398,7 @@ func workspace_link_search_test() -> void:
 	reply_markdown.free()
 	workflow_markdown.free()
 	root_markdown.free()
+	assert(AgentWorkspace.set_root(previous_root))
 	pass
 
 

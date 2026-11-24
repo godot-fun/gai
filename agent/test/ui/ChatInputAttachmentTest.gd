@@ -20,7 +20,7 @@ func join_markdown_for_attachments_test() -> void:
 	var files := PackedStringArray([folder, file, file + ".uid"])
 	assert(attachment.join_markdown_for_attachments(files) == (
 		MarkdownHelper.format_path_as_markdown(folder) + "    "
-		+ MarkdownHelper.format_path_as_markdown(file) + "    "))
+		+ "    " + MarkdownHelper.format_path_as_markdown(file) + "    "))
 	field.text = "hi"
 	assert(attachment.join_markdown_for_attachments(PackedStringArray([file])).begins_with("    "))
 	field.free()

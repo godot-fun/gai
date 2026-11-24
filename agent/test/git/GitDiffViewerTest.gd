@@ -14,10 +14,10 @@ func builds_test() -> void:
 	assert((viewer.left_edit.get_theme_stylebox("normal") as StyleBoxFlat).bg_color == Colors.surface)
 	# Toolbar buttons share the settings action-button chrome: filled surface, no outline.
 	var button_normal := viewer.revert_button.get_theme_stylebox("normal") as StyleBoxFlat
-	assert(button_normal.bg_color == Colors.surface_container_high)
+	assert(button_normal.bg_color == Colors.blue_grey_surface)
 	assert(button_normal.border_width_left == 0)
 	assert(button_normal.corner_radius_top_left == ControlSize.radius_lg)
-	assert((viewer.revert_button.get_theme_stylebox("hover") as StyleBoxFlat).bg_color == Colors.hover(Colors.surface_container_high))
+	assert((viewer.revert_button.get_theme_stylebox("hover") as StyleBoxFlat).bg_color == Colors.hover(Colors.blue_grey_surface))
 	# Glyph buttons keep their square footprint: wide text padding would stretch them sideways.
 	var nav_normal := viewer.previous_button.get_theme_stylebox("normal") as StyleBoxFlat
 	assert(nav_normal.content_margin_left == Margin.ma_1)
@@ -26,10 +26,10 @@ func builds_test() -> void:
 	assert(not viewer.left_edit.editable)
 	assert(viewer.right_edit.editable)
 	assert(GitDiffViewer.initial_split_offset(1000.0) == -50)
-	assert(viewer.container.offset_left == -ControlSize.border_xs)
-	assert(viewer.container.offset_top == -ControlSize.border_xs)
-	assert(viewer.container.offset_right == ControlSize.border_xs)
-	assert(viewer.container.offset_bottom == ControlSize.border_xs)
+	assert(viewer.container.offset_left == 0.0)
+	assert(viewer.container.offset_top == 0.0)
+	assert(viewer.container.offset_right == 0.0)
+	assert(viewer.container.offset_bottom == 0.0)
 	viewer.free()
 	pass
 

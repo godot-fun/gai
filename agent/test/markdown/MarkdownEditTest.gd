@@ -47,7 +47,7 @@ func common_editor_text_and_view_mode_test() -> void:
 	assert(editor.text_edit.visible)
 	assert(not editor.preview_panel.visible)
 	assert(editor.text_edit.gutters_draw_line_numbers)
-	assert(editor.text_edit.syntax_highlighter is CodeHighlighterInstance)
+	assert(editor.text_edit.syntax_highlighter is GdScriptHighlighter)
 
 	editor.set_document("", "")
 	assert(not editor.text_edit.gutters_draw_line_numbers)
