@@ -9,24 +9,23 @@ var expanded: bool = false
 
 
 func setup(parent: Control) -> void:
-	model_button = MenuButton.new()
-	model_button.name = "ModelSelector"
-	model_button.focus_mode = Control.FOCUS_NONE
-	model_button.clip_text = false
-	model_button.get_popup().id_pressed.connect(on_model_selected)
-	parent.add_child(model_button)
-
-	reasoning_effort_button = MenuButton.new()
-	reasoning_effort_button.name = "ReasoningEffortSelector"
-	reasoning_effort_button.focus_mode = Control.FOCUS_NONE
-	reasoning_effort_button.clip_text = false
-	reasoning_effort_button.get_popup().id_pressed.connect(on_reasoning_effort_selected)
-	parent.add_child(reasoning_effort_button)
-
+	model_button = create_button(parent, "ModelSelector", on_model_selected)
+	reasoning_effort_button = create_button(parent, "ReasoningEffortSelector", on_reasoning_effort_selected)
 	AgentEvents.events.api_models_changed.connect(refresh)
 	refresh()
+	apply_theme()
 	layout(false)
 	pass
+
+
+func create_button(parent: Control, button_name: String, on_selected: Callable) -> MenuButton:
+	var button := MenuButton.new()
+	button.name = button_name
+	button.focus_mode = Control.FOCUS_NONE
+	button.clip_text = false
+	button.get_popup().id_pressed.connect(on_selected)
+	parent.add_child(button)
+	return button
 
 
 func refresh() -> void:
@@ -34,7 +33,6 @@ func refresh() -> void:
 		return
 	refresh_model()
 	refresh_reasoning_effort()
-	apply_theme()
 	if expanded:
 		layout(true)
 	pass
@@ -106,12 +104,7 @@ func get_session_model() -> String:
 
 func get_session_reasoning_effort() -> String:
 	var session := AgentSessionStore.load_session(AgentSessionManager.active_session_id)
-	if session == null:
-		return ApiSetting.get_reasoning_effort()
-	if session.reasoning_effort not in ApiSetting.REASONING_EFFORTS:
-		session.reasoning_effort = ApiSetting.get_reasoning_effort()
-		AgentSessionManager.persist_session(session.id)
-	return session.reasoning_effort
+	return session.reasoning_effort if session != null else ApiSetting.get_reasoning_effort()
 
 
 func apply_theme() -> void:
@@ -138,10 +131,9 @@ func layout(is_expanded: bool) -> void:
 	reasoning_effort_button.visible = expanded
 	if not expanded:
 		return
-	var inset := float(Margin.ma_1)
-	place_button(reasoning_effort_button, ControlSize.md + Margin.ma_1 + inset)
+	place_button(reasoning_effort_button, ControlSize.md + Margin.ma_2)
 	var effort_width := reasoning_effort_button.get_combined_minimum_size().x
-	place_button(model_button, effort_width + ControlSize.md + Margin.ma_2 + inset)
+	place_button(model_button, effort_width + ControlSize.md + Margin.ma_3)
 	pass
 
 

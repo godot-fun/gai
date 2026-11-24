@@ -199,12 +199,11 @@ func refresh_models() -> void:
 	var profiles := ApiSetting.get_profiles()
 	default_model_select.clear()
 	reasoning_effort_select.clear()
+	var active_effort := ApiSetting.get_reasoning_effort()
 	for effort: String in ApiSetting.REASONING_EFFORTS:
-		var effort_index := reasoning_effort_select.item_count
 		reasoning_effort_select.add_item(I18n.t("agent.reasoning_effort." + effort))
-		reasoning_effort_select.set_item_metadata(effort_index, effort)
-		if effort == ApiSetting.get_reasoning_effort():
-			reasoning_effort_select.select(effort_index)
+		if effort == active_effort:
+			reasoning_effort_select.select(reasoning_effort_select.item_count - 1)
 	for index in range(profiles.size()):
 		var profile := profiles[index]
 		default_model_select.add_item(profile.model)
@@ -251,9 +250,9 @@ func on_default_model_selected(index: int) -> void:
 
 
 func on_reasoning_effort_selected(index: int) -> void:
-	if index < 0 or index >= reasoning_effort_select.item_count:
+	if index < 0 or index >= ApiSetting.REASONING_EFFORTS.size():
 		return
-	ApiSetting.set_reasoning_effort(str(reasoning_effort_select.get_item_metadata(index)))
+	ApiSetting.set_reasoning_effort(ApiSetting.REASONING_EFFORTS[index])
 	pass
 
 

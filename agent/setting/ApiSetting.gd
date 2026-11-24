@@ -65,7 +65,7 @@ static func get_active_profile() -> ApiModelProfile:
 
 
 static func get_reasoning_effort() -> String:
-	return config.reasoning_effort if config.reasoning_effort in REASONING_EFFORTS else DEFAULT_REASONING_EFFORT
+	return config.reasoning_effort
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -103,7 +103,7 @@ static func set_active_model(model: String) -> bool:
 
 
 static func set_reasoning_effort(reasoning_effort: String) -> bool:
-	if reasoning_effort not in REASONING_EFFORTS or config.reasoning_effort == reasoning_effort:
+	if config.reasoning_effort == reasoning_effort:
 		return false
 	config.reasoning_effort = reasoning_effort
 	save_config()
@@ -173,7 +173,6 @@ static func create_default_config() -> ApiConfig:
 	append_environment_profile(result, "openrouter/auto", "https://openrouter.ai/api/v1/chat/completions", "OPENROUTER_API_KEY")
 	append_environment_profile(result, "qwen-plus", "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", "DASHSCOPE_API_KEY")
 	result.active_model = DEFAULT_MODEL
-	result.reasoning_effort = DEFAULT_REASONING_EFFORT
 	return result
 
 
