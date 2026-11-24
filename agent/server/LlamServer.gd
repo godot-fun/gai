@@ -1,7 +1,7 @@
 class_name LlamServer
 extends Object
 
-## Manages the local llama.cpp Qwen3.8-27B HTTP server for vision and text chat.
+## Manages the built-in llama.cpp HTTP service used for local model capabilities.
 
 const SERVER_HOST: String = "127.0.0.1"
 const IDLE_TIMEOUT_SECONDS: int = 5 * 60
@@ -33,9 +33,9 @@ static func _static_init() -> void:
 	SchedulerBus.schedule_at_fixed_rate(check_idle_timeout, TimeUtils.MILLIS_PER_SECOND, "llam_server_idle")
 	pass
 
-## Releases the model after five minutes without a chat request renewing the idle lease.
+## Releases the model after five minutes without a request renewing the idle lease.
 static func check_idle_timeout() -> void:
-	if is_running() and last_access_millis > 0 and Time.get_ticks_msec() - last_access_millis >= IDLE_TIMEOUT_MILLIS:
+	if is_running() and last_access_millis > 0 and TimeUtils.current_time_millis() - last_access_millis >= IDLE_TIMEOUT_MILLIS:
 		stop()
 	pass
 
@@ -55,11 +55,11 @@ static func async_chat(prompt: String, system_prompt: String = "", max_tokens: i
 static func async_image_to_text(image_path: String, prompt: String) -> String:
 	var image_bytes := FileUtils.read_file_to_byte_array(image_path)
 	if image_bytes.is_empty():
-		Log.error("vision language model image read failed path:[{}]", image_path)
+		Log.error("local model image read failed path:[{}]", image_path)
 		return StringUtils.EMPTY
 	var image_format := ImageHelper.detect_image_format(image_bytes)
 	if image_format.is_empty():
-		Log.error("vision language model image format is unsupported path:[{}]", image_path)
+		Log.error("local model image format is unsupported path:[{}]", image_path)
 		return StringUtils.EMPTY
 	var mime_subtype := "jpeg" if image_format == ImageHelper.jpg else image_format
 	var image_data_url := "data:image/{};base64,{}".format([mime_subtype, Marshalls.raw_to_base64(image_bytes)], "{}")
@@ -76,9 +76,9 @@ static func async_image_to_text(image_path: String, prompt: String) -> String:
 ## Posts a non-streaming chat completion after ensuring the local server is ready.
 static func async_chat_completion(messages: Array, max_tokens: int = 2048) -> String:
 	if messages.is_empty():
-		Log.error("vision language model messages is empty")
+		Log.error("local model messages is empty")
 		return StringUtils.EMPTY
-	last_access_millis = Time.get_ticks_msec()
+	last_access_millis = TimeUtils.current_time_millis()
 	var error: int = await async_ensure_server_running()
 	if error != OK:
 		return StringUtils.EMPTY
@@ -91,29 +91,34 @@ static func async_chat_completion(messages: Array, max_tokens: int = 2048) -> St
 	}
 	var response := await HttpHelper.async_post(server_url() + "/v1/chat/completions", JSON.stringify(payload), PackedStringArray())
 	if not response.is_ok():
-		Log.error("vision language model request failed code:[{}] body:[{}]", response.code, response.get_body_string())
+		Log.error("local model request failed code:[{}] body:[{}]", response.code, response.get_body_string())
 		return StringUtils.EMPTY
 	var data: Variant = response.get_body_json()
 	if typeof(data) != TYPE_DICTIONARY:
-		Log.error("vision language model returned invalid JSON")
+		Log.error("local model returned invalid JSON")
 		return StringUtils.EMPTY
 	var choices: Array = data.get("choices", [])
 	if choices.is_empty():
-		Log.error("vision language model response has no choices body:[{}]", response.get_body_string())
+		Log.error("local model response has no choices body:[{}]", response.get_body_string())
 		return StringUtils.EMPTY
 	var content := str(choices[0].get("message", {}).get("content", "")).strip_edges()
 	if content.is_empty():
-		Log.error("vision language model response has no content body:[{}]", response.get_body_string())
+		Log.error("local model response has no content body:[{}]", response.get_body_string())
 	Log.info("------------------------------------------------------------------------------------------------------")
 	Log.info(content)
 	Log.info("------------------------------------------------------------------------------------------------------")
 	return content
 
 
-## Starts one server and waits for its TCP endpoint. Concurrent callers share the same cold start
-## through the PROCESS_ID_STARTING sentinel instead of spawning duplicate model processes.
+## Explicit service-control entry point used by settings and other user-initiated actions.
+static func async_start() -> int:
+	return await async_ensure_server_running()
+
+
+## Ensures one service is running and waits for its HTTP endpoint. Concurrent callers share the
+## same cold start through the PROCESS_ID_STARTING sentinel instead of spawning duplicate processes.
 static func async_ensure_server_running() -> int:
-	last_access_millis = Time.get_ticks_msec()
+	last_access_millis = TimeUtils.current_time_millis()
 	if is_running() and await LlamaHelper.async_health(server_url()):
 		return OK
 	while process_id == PROCESS_ID_STARTING:
@@ -123,7 +128,7 @@ static func async_ensure_server_running() -> int:
 	process_id = PROCESS_ID_STARTING
 	var available_port := NetUtils.find_available_port(server_port)
 	if available_port < 0:
-		Log.error("no available port found for vision language model server")
+		Log.error("no available port found for local model service")
 		process_id = PROCESS_ID_STOPPED
 		return ERR_CANT_CREATE
 	server_port = available_port
@@ -133,28 +138,28 @@ static func async_ensure_server_running() -> int:
 	var mmproj := FileUtils.globalize_writable_path(MMPROJ_PATH)
 	for required in [executable, model, mmproj]:
 		if not FileAccess.file_exists(required):
-			Log.error("vision language model dependency is missing:[{}]", required)
+			Log.error("local model service dependency is missing:[{}]", required)
 			process_id = PROCESS_ID_STOPPED
 			return ERR_FILE_NOT_FOUND
 
 	var args := build_server_args(model, mmproj, executable.contains("llama-cpp-gpu"))
 	process_id = OS.create_process(executable, args, false)
 	if process_id <= 0:
-		Log.error("failed to start vision language model server:[{}]", executable)
+		Log.error("failed to start local model service:[{}]", executable)
 		process_id = PROCESS_ID_STOPPED
 		return ERR_CANT_FORK
 
-	var deadline := Time.get_ticks_msec() + START_TIMEOUT_MILLIS
-	while Time.get_ticks_msec() < deadline:
+	var deadline := TimeUtils.current_time_millis() + START_TIMEOUT_MILLIS
+	while TimeUtils.current_time_millis() < deadline:
 		if not OS.is_process_running(process_id):
-			Log.error("vision language model server exited during startup")
+			Log.error("local model service exited during startup")
 			process_id = PROCESS_ID_STOPPED
 			return FAILED
 		if await LlamaHelper.async_health(server_url()):
-			Log.info("vision language model server started pid:[{}] url:[{}]", process_id, server_url())
+			Log.info("local model service started pid:[{}] url:[{}]", process_id, server_url())
 			return OK
 		await ThreadUtils.async_sleep(500)
-	Log.error("vision language model server startup timed out")
+	Log.error("local model service startup timed out")
 	stop()
 	return ERR_TIMEOUT
 
@@ -166,7 +171,7 @@ static func stop() -> void:
 	process_id = PROCESS_ID_STOPPED
 	if pid > 0:
 		OSUtils.kill_process(pid, 0)
-		Log.info("vision language model server stopped pid:[{}]", pid)
+		Log.info("local model service stopped pid:[{}]", pid)
 	pass
 
 

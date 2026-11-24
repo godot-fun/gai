@@ -199,7 +199,7 @@ func on_local_model_service_pressed() -> void:
 
 
 func start_local_model_service() -> void:
-	var error := await LlamServer.async_ensure_server_running()
+	var error := await LlamServer.async_start()
 	local_model_service_button.disabled = false
 	refresh_local_model_service_button()
 	if error == OK:
