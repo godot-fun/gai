@@ -112,7 +112,7 @@ func setup_model_selector() -> void:
 	model_button = MenuButton.new()
 	model_button.name = "ModelSelector"
 	model_button.focus_mode = Control.FOCUS_NONE
-	model_button.clip_text = true
+	model_button.clip_text = false
 	model_button.tooltip_text = I18n.t("agent.input.select_model")
 	model_button.get_popup().id_pressed.connect(on_model_selected)
 	input_inner.add_child(model_button)
@@ -133,6 +133,8 @@ func refresh_model_selector() -> void:
 		popup.add_radio_check_item(models[index], index)
 		popup.set_item_checked(index, models[index] == session_model)
 	apply_model_selector_theme()
+	if expanded:
+		layout_model_button()
 	pass
 
 
@@ -1016,9 +1018,10 @@ func layout_model_button() -> void:
 	model_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	model_button.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	model_button.grow_vertical = Control.GROW_DIRECTION_BOTH
-	model_button.custom_minimum_size = Vector2(ControlSize.xl * 3.0, ControlSize.md)
 	var inset := float(Margin.ma_1)
-	model_button.offset_left = -ControlSize.xl * 3.0 - ControlSize.md - Margin.ma_2 - inset
+	model_button.custom_minimum_size = Vector2(ControlSize.xl * 3.0, ControlSize.md)
+	var button_width := model_button.get_combined_minimum_size().x
+	model_button.offset_left = -button_width - ControlSize.md - Margin.ma_2 - inset
 	model_button.offset_top = -ControlSize.md - inset
 	model_button.offset_right = -ControlSize.md - Margin.ma_2 - inset
 	model_button.offset_bottom = -inset

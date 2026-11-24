@@ -175,14 +175,19 @@ func refresh_models() -> void:
 	var profiles := ApiSetting.get_profiles()
 	default_model_select.clear()
 	for index in range(profiles.size()):
-		default_model_select.add_item(profiles[index].model)
-		default_model_select.set_item_metadata(index, profiles[index].model)
-		if profiles[index].model == active_model:
+		var profile := profiles[index]
+		default_model_select.add_item(profile.model)
+		default_model_select.set_item_metadata(index, profile.model)
+		default_model_select.get_popup().set_item_tooltip(index, profile.api_url)
+		if profile.model == active_model:
 			default_model_select.select(index)
+			default_model_select.tooltip_text = profile.api_url
 	for profile in profiles:
 		var row := PanelContainer.new()
+		row.tooltip_text = profile.api_url
 		model_list.add_child(row)
 		var content := HBoxContainer.new()
+		content.tooltip_text = profile.api_url
 		content.add_theme_constant_override("separation", Margin.ma_1)
 		row.add_child(content)
 		var model_name := Label.new()
