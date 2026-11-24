@@ -1,4 +1,4 @@
-"""Describe one image with MiniCPM-V 4.6 GGUF, preferring an available GPU.
+"""Describe one image with Qwen3.8-27B GGUF, preferring an available GPU.
 
 Run through default python from .dependency/manifest.json.
 Never use host python/py.
@@ -24,16 +24,16 @@ from common.output_utils import configure_utf8_stdio, format_default_output_help
 
 CPU_RUNTIME_TOOL = "llama-cpp-cpu"
 GPU_RUNTIME_TOOL = "llama-cpp-gpu"
-MODEL_TOOL = "minicpm-v-4.6"
-MODEL_NAME = "MiniCPM-V-4_6-Q4_K_M.gguf"
-MMPROJ_NAME = "mmproj-model-f16.gguf"
+MODEL_TOOL = "qwen3.8-27b"
+MODEL_NAME = "Qwen3.8-27B-Q4_K_M.gguf"
+MMPROJ_NAME = "mmproj-Qwen3.8-27B-BF16.gguf"
 DEFAULT_PROMPT = ("Describe the image accurately and comprehensively. Include visible subjects, actions, "
                   "setting, composition, notable colors, and legible text. Clearly mark uncertainty and "
                   "do not invent details that are not visible.")
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Convert one image to text with MiniCPM-V 4.6 locally.")
+    parser = argparse.ArgumentParser(description="Convert one image to text with Qwen3.8-27B locally.")
     parser.add_argument("--image", required=True, help="Path to one input image.")
     parser.add_argument("--prompt", default=DEFAULT_PROMPT, help="Instruction sent with the images.")
     parser.add_argument("--output", default="", help="Optional UTF-8 output text file; default: stdout only. "
@@ -72,14 +72,14 @@ def describe_image(executable: Path, model: Path, mmproj: Path, prompt: str,
     command = [str(executable), "-m", str(model), "--mmproj", str(mmproj), "--image",
                str(image_path), "-p", prompt]
     command.extend(acceleration_args(use_gpu))
-    command.extend(["-c", "4096", "-n", "1024", "--temp", "0"])
+    command.extend(["-c", "262144", "-n", "1024", "--temp", "0", "--reasoning", "off"])
     result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace")
     if result.returncode != 0:
         detail = result.stderr.strip() or result.stdout.strip()
-        raise RuntimeError(f"MiniCPM-V inference failed{': ' + detail if detail else ''}")
+        raise RuntimeError(f"Qwen3.8-27B inference failed{': ' + detail if detail else ''}")
     output = clean_model_output(result.stdout)
     if not output:
-        raise RuntimeError("MiniCPM-V returned no text")
+        raise RuntimeError("Qwen3.8-27B returned no text")
     return output
 
 
@@ -98,7 +98,7 @@ def infer_with_fallback(cpu_runtime: Path, gpu_runtime: Path, model: Path, mmpro
         return describe_image(cpu_runtime, model, mmproj, prompt, image_path, False)
     except (OSError, RuntimeError) as exc:
         if gpu_error is not None:
-            raise RuntimeError(f"MiniCPM-V inference failed (GPU: {gpu_error}; CPU: {exc})") from exc
+            raise RuntimeError(f"Qwen3.8-27B inference failed (GPU: {gpu_error}; CPU: {exc})") from exc
         raise
 
 

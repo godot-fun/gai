@@ -3,7 +3,7 @@ extends Object
 
 ## Remote LLM prompts for sense input (screen OCR, one-shot compose JSON, diverge).
 ## Rich instructions are fine for remote models with large context.
-## Local MiniCPM-V uses [SensePromptLocal] instead (short prompts + sequential steps).
+## Local Qwen3.8-27B uses [SensePromptLocal] instead (short prompts + sequential steps).
 ## Picks Chinese or English from the app locale ([method I18n.get_locale]).
 
 const SCREEN_PROMPT_EN := """Extract all information visible on this screenshot.

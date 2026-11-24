@@ -399,7 +399,7 @@
       "max_turns": "Maximum turns",
       "max_turns_help": "Maximum number of model and tool rounds allowed in one agent run (up to 256).",
       "read_image_remotely": "Remote image recognition",
-      "read_image_remotely_help": "Attach images to the next request so the configured OpenAI-compatible model reads them directly. Turn off to use the local MiniCPM-V model.",
+      "read_image_remotely_help": "Attach images to the next request so the configured OpenAI-compatible model reads them directly. Turn off to use the local Qwen3.8-27B model.",
       "browser_headless": "Headless browser",
       "browser_headless_help": "Run browser automation without showing a browser window. Restart the browser service to apply changes.",
       "browser_service": "Browser service",

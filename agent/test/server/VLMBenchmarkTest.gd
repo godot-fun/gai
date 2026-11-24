@@ -1,6 +1,6 @@
 extends Control
 
-## Interactive benchmark for CLI vision, HTTP vision, and HTTP text-only LLM on the managed MiniCPM-V server.
+## Interactive benchmark for CLI vision, HTTP vision, and HTTP text-only LLM on the managed Qwen3.8-27B server.
 ## Run this scene directly; vision paths share the same model, image, prompt, and generation settings.
 
 const IMAGE_PATH: String = "res://.ai/test/image/tank1.jpg"
@@ -65,11 +65,11 @@ func on_cli_pressed() -> void:
 	set_running(true)
 	cli_time_label.text = "Running..."
 	result_text.text = StringUtils.EMPTY
-	VLMServer.stop()
+	LlamServer.stop()
 	var watch := StopWatch.new()
-	var executable := VLMServer.select_server_executable().replace("llama-server.exe", "llama-mtmd-cli.exe")
-	var model := FileUtils.globalize_writable_path(VLMServer.MODEL_PATH)
-	var mmproj := FileUtils.globalize_writable_path(VLMServer.MMPROJ_PATH)
+	var executable := LlamServer.select_server_executable().replace("llama-server.exe", "llama-mtmd-cli.exe")
+	var model := FileUtils.globalize_writable_path(LlamServer.MODEL_PATH)
+	var mmproj := FileUtils.globalize_writable_path(LlamServer.MMPROJ_PATH)
 	var image := ProjectSettings.globalize_path(IMAGE_PATH)
 	var use_gpu := executable.contains("llama-cpp-gpu")
 	var args := PackedStringArray([executable, "--model", model, "--mmproj", mmproj, "--image", image,
@@ -93,7 +93,7 @@ func on_http_pressed() -> void:
 	result_text.text = StringUtils.EMPTY
 	var watch := StopWatch.new()
 	var image_path := ProjectSettings.globalize_path(IMAGE_PATH)
-	var result := await VLMServer.async_image_to_text(image_path, PROMPT)
+	var result := await LlamServer.async_image_to_text(image_path, PROMPT)
 	http_time_label.text = format_elapsed(watch.cost(), not result.is_empty())
 	result_text.text = result if not result.is_empty() else "Image-to-text request failed. Check the application log for details."
 	set_running(false)
@@ -107,7 +107,7 @@ func on_llm_pressed() -> void:
 	llm_time_label.text = "Running..."
 	result_text.text = StringUtils.EMPTY
 	var watch := StopWatch.new()
-	var result := await VLMServer.async_chat(LLM_PROMPT, LLM_SYSTEM_PROMPT)
+	var result := await LlamServer.async_chat(LLM_PROMPT, LLM_SYSTEM_PROMPT)
 	llm_time_label.text = format_elapsed(watch.cost(), not result.is_empty())
 	result_text.text = result if not result.is_empty() else "LLM chat request failed. Check the application log for details."
 	set_running(false)
@@ -120,7 +120,7 @@ func on_llm_zh_pressed() -> void:
 	llm_zh_time_label.text = "运行中..."
 	result_text.text = StringUtils.EMPTY
 	var watch := StopWatch.new()
-	var result := await VLMServer.async_chat(LLM_ZH_PROMPT, LLM_ZH_SYSTEM_PROMPT)
+	var result := await LlamServer.async_chat(LLM_ZH_PROMPT, LLM_ZH_SYSTEM_PROMPT)
 	llm_zh_time_label.text = format_elapsed(watch.cost(), not result.is_empty())
 	result_text.text = result if not result.is_empty() else "中文 LLM 请求失败，请检查应用日志。"
 	set_running(false)
@@ -134,8 +134,8 @@ func on_english_tokenize_pressed() -> void:
 	result_text.text = StringUtils.EMPTY
 	var watch := StopWatch.new()
 	var result := LlamaHelper.TokenizeResult.new()
-	if await VLMServer.async_ensure_server_running() == OK:
-		result = await LlamaHelper.async_tokenize(VLMServer.server_url(), LLM_PROMPT)
+	if await LlamServer.async_ensure_server_running() == OK:
+		result = await LlamaHelper.async_tokenize(LlamServer.server_url(), LLM_PROMPT)
 	var success := result.total_tokens > 0
 	english_tokenize_time_label.text = format_elapsed(watch.cost(), success)
 	result_text.text = format_tokenize_result(result) if success else "English prompt tokenization failed. Check the application log for details."
@@ -150,8 +150,8 @@ func on_chinese_tokenize_pressed() -> void:
 	result_text.text = StringUtils.EMPTY
 	var watch := StopWatch.new()
 	var result := LlamaHelper.TokenizeResult.new()
-	if await VLMServer.async_ensure_server_running() == OK:
-		result = await LlamaHelper.async_tokenize(VLMServer.server_url(), LLM_ZH_PROMPT)
+	if await LlamServer.async_ensure_server_running() == OK:
+		result = await LlamaHelper.async_tokenize(LlamServer.server_url(), LLM_ZH_PROMPT)
 	var success := result.total_tokens > 0
 	chinese_tokenize_time_label.text = format_elapsed(watch.cost(), success)
 	result_text.text = format_tokenize_result(result) if success else "Chinese prompt tokenization failed. Check the application log for details."
@@ -165,10 +165,10 @@ func on_health_pressed() -> void:
 	health_time_label.text = "Running..."
 	result_text.text = StringUtils.EMPTY
 	var watch := StopWatch.new()
-	var url := VLMServer.server_url()
+	var url := LlamServer.server_url()
 	var healthy := false
-	if await VLMServer.async_ensure_server_running() == OK:
-		url = VLMServer.server_url()
+	if await LlamServer.async_ensure_server_running() == OK:
+		url = LlamServer.server_url()
 		healthy = await LlamaHelper.async_health(url)
 	health_time_label.text = format_elapsed(watch.cost(), healthy)
 	result_text.text = "Server URL: {}\nHealthy: {}".format([url, healthy], "{}")

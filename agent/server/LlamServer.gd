@@ -1,20 +1,21 @@
-class_name VLMServer
+class_name LlamServer
 extends Object
 
-## Manages the local llama.cpp MiniCPM-V HTTP server for vision and text chat.
+## Manages the local llama.cpp Qwen3.8-27B HTTP server for vision and text chat.
 
 const SERVER_HOST: String = "127.0.0.1"
 const IDLE_TIMEOUT_SECONDS: int = 5 * 60
 const IDLE_TIMEOUT_MILLIS: int = IDLE_TIMEOUT_SECONDS * TimeUtils.MILLIS_PER_SECOND
 const START_TIMEOUT_MILLIS: int = 2 * TimeUtils.MILLIS_PER_MINUTE
-const MIN_GPU_FREE_MEMORY_MIB: int = 3072
-const MODEL_NAME: String = "MiniCPM-V-4_6-Q4_K_M.gguf"
+const MIN_GPU_FREE_MEMORY_MIB: int = 22 * 1024
+const CONTEXT_SIZE: int = 262144
+const MODEL_NAME: String = "Qwen3.8-27B-Q4_K_M.gguf"
 const PROCESS_ID_STOPPED: int = -1
 const PROCESS_ID_STARTING: int = -2
 
 ## Local dependency paths are resolved from the project root for a consistent runtime layout.
-const MODEL_PATH := ".dependency/minicpm-v-4.6/model/MiniCPM-V-4_6-Q4_K_M.gguf"
-const MMPROJ_PATH := ".dependency/minicpm-v-4.6/model/mmproj-model-f16.gguf"
+const MODEL_PATH := ".dependency/qwen3.8-27b/model/Qwen3.8-27B-Q4_K_M.gguf"
+const MMPROJ_PATH := ".dependency/qwen3.8-27b/model/mmproj-Qwen3.8-27B-BF16.gguf"
 const GPU_SERVER_PATH := ".dependency/llama-cpp-gpu/llama-server.exe"
 const CPU_SERVER_PATH := ".dependency/llama-cpp-cpu/llama-server.exe"
 
@@ -28,7 +29,7 @@ static var last_access_millis: int = 0
 static func _static_init() -> void:
 	await ThreadUtils.async_sleep(TimeUtils.MILLIS_PER_SECOND)
 	gdf.events.application_end.connect(stop)
-	SchedulerBus.schedule_at_fixed_rate(check_idle_timeout, TimeUtils.MILLIS_PER_SECOND, "vlm_idle")
+	SchedulerBus.schedule_at_fixed_rate(check_idle_timeout, TimeUtils.MILLIS_PER_SECOND, "llam_server_idle")
 	pass
 
 ## Releases the model after five minutes without a chat request renewing the idle lease.
@@ -38,7 +39,7 @@ static func check_idle_timeout() -> void:
 	pass
 
 
-## Text-only chat through the same OpenAI-compatible endpoint (MiniCPM-V works as a local LLM).
+## Text-only chat through the same OpenAI-compatible endpoint.
 ## Returns an empty string when startup fails or inference fails.
 static func async_chat(prompt: String, system_prompt: String = "", max_tokens: int = 2048) -> String:
 	var messages: Array = []
@@ -185,7 +186,7 @@ static func build_server_args(model: String, mmproj: String, use_gpu: bool) -> P
 		"--model", model,
 		"--mmproj", mmproj,
 		"--load-mode", "mmap",
-		"--ctx-size", "8096",
+		"--ctx-size", str(CONTEXT_SIZE),
 		"--parallel", "1",
 		# Sense compose / OCR need short answers; thinking burns the token budget with empty content.
 		"--reasoning", "off",

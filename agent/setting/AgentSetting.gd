@@ -166,7 +166,7 @@ static func set_browser_headless(enabled: bool) -> void:
 const READ_IMAGE_WITH_API_KEY := "agent_read_image_with_api"
 
 
-## Uses the configured OpenAI-compatible API for image understanding; disable for local MiniCPM-V.
+## Uses the configured OpenAI-compatible API for image understanding; disable for local Qwen3.8-27B.
 static func get_read_image_with_api() -> bool:
 	return Setting.get_bool(READ_IMAGE_WITH_API_KEY, true)
 

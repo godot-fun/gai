@@ -150,7 +150,7 @@ func tokenize_text_never_returns_empty_for_visible_prompt_test() -> void:
 	assert(not tokens.is_empty())
 	assert(TokenizerEffect.select_complete_sentence(tokens).size() >= TokenizerEffect.MIN_TOKEN_COUNT)
 	# Without a running llama server the offline splitter reproduces the prompt piece by piece.
-	if not VLMServer.is_running():
+	if not LlamServer.is_running():
 		assert(LocalTokenizer.restore_text(tokens) == text)
 	pass
 

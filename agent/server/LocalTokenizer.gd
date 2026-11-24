@@ -6,7 +6,7 @@ extends Object
 ## without the gguf dependencies). Splits on visible word boundaries only: CJK per
 ## character, latin/digit runs kept as whole words, punctuation alone.
 
-## Qwen2/MiniCPM-V vocabulary size; IDs stay inside it so downstream id-based colors and
+## Qwen vocabulary size; IDs stay inside it so downstream id-based colors and
 ## embedding positions look the same as real model tokens.
 const VOCAB_SIZE: int = 151936
 const MAX_TOKENS: int = 128

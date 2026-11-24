@@ -399,7 +399,7 @@
       "max_turns": "最大轮次",
       "max_turns_help": "单次智能体运行允许的最大模型与工具调用轮次，最多 256 轮。",
       "read_image_remotely": "远程大模型识图",
-      "read_image_remotely_help": "将图片附加到下一轮请求，由当前配置的 OpenAI 兼容模型直接读取；关闭后使用本地 MiniCPM-V 模型。",
+      "read_image_remotely_help": "将图片附加到下一轮请求，由当前配置的 OpenAI 兼容模型直接读取；关闭后使用本地 Qwen3.8-27B 模型。",
       "browser_headless": "浏览器无头模式",
       "browser_headless_help": "运行浏览器自动化时不显示浏览器窗口。更改后需重启浏览器服务才能生效。",
       "browser_service": "浏览器服务",

@@ -184,7 +184,7 @@ When a skill does **not** specify a Node.js version, assume **Node.js v24.22.0**
 
 When a skill depends on a portable upstream binary (e.g. FFmpeg), follow this order:
 
-When one CLI has separate CPU and GPU builds, register each build as its own dependency. Use matching directory and manifest names such as `.dependency/llama-cpp-cpu/` → `llama-cpp-cpu` and `.dependency/llama-cpp-gpu/` → `llama-cpp-gpu`. Do not place both builds under a model-specific directory or combine them into custom fields such as `gpu_bin`. Keep reusable runtimes separate from model weights; for example, store MiniCPM weights under `.dependency/minicpm-v-4.6/model/` while both llama.cpp builds remain independently reusable.
+When one CLI has separate CPU and GPU builds, register each build as its own dependency. Use matching directory and manifest names such as `.dependency/llama-cpp-cpu/` → `llama-cpp-cpu` and `.dependency/llama-cpp-gpu/` → `llama-cpp-gpu`. Do not place both builds under a model-specific directory or combine them into custom fields such as `gpu_bin`. Keep reusable runtimes separate from model weights; for example, store Qwen weights under `.dependency/qwen3.8-27b/model/` while both llama.cpp builds remain independently reusable.
 
 ```json
 "llama-cpp-cpu": {
@@ -195,9 +195,9 @@ When one CLI has separate CPU and GPU builds, register each build as its own dep
   "populated": true,
   "bin": ".dependency/llama-cpp-gpu/llama-mtmd-cli.exe"
 },
-"minicpm-v-4.6": {
+"qwen3.8-27b": {
   "populated": true,
-  "model": ".dependency/minicpm-v-4.6/model"
+  "model": ".dependency/qwen3.8-27b/model"
 }
 ```
 

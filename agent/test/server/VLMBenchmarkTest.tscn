@@ -34,7 +34,7 @@ text = "Vision Language Model Benchmark（视觉大模型耗时测试）"
 
 [node name="Description" type="Label" parent="Margin/Content"]
 layout_mode = 2
-text = "Compare end-to-end CLI vision, HTTP vision, and HTTP text-only LLM request times on the same MiniCPM-V server. The first HTTP request includes server startup; subsequent requests reuse the resident model."
+text = "Compare end-to-end CLI vision, HTTP vision, and HTTP text-only LLM request times on the same Qwen3.8-27B server. The first HTTP request includes server startup; subsequent requests reuse the resident model."
 autowrap_mode = 3
 
 [node name="CliRow" type="HBoxContainer" parent="Margin/Content"]

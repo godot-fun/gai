@@ -4,7 +4,7 @@ Global push-to-talk sense input for the agent app. **Hold Alt+Z** to record — 
 
 ## Flow
 
-1. **Hold Alt+Z** → start microphone capture (`AudioRecorder`), show the volume sine wave (`SenseWave`), and quietly kick off a monitor screenshot (`NativeOS.capture_screen`) + VLM OCR (`VLMServer.async_image_to_text`) in parallel
+1. **Hold Alt+Z** → start microphone capture (`AudioRecorder`), show the volume sine wave (`SenseWave`), and quietly kick off a monitor screenshot (`NativeOS.capture_screen`) + local OCR (`LlamServer.async_image_to_text`) in parallel
 2. As soon as screen OCR is ready: **remote** fires an early diverge chat from the UI alone; **local** marks OCR ready (compose later overwrites diverge after expand; empty ASR falls back to OCR text)
 3. **Release** → keep the wave fixed, stop capture (if mic started), soft-fail ASR into logs only — **no error toasts**
 4. Always dismiss the wave and open `SensePicker` on the **same pin** as the wave (`fixed_anchor`), with the **same logical width** (`SenseWave.WAVE_WIDTH`) and the same top-left (picker grows downward). Voice fills immediately; compose + diverge fill in parallel. Compose waits up to **3 s** for screen context.
@@ -15,11 +15,11 @@ Global push-to-talk sense input for the agent app. **Hold Alt+Z** to record — 
 
 | | Local (`use_local_llm = true`, default) | Remote (`use_local_llm = false`) |
 |--|--|--|
-| Chat | `VLMServer` (MiniCPM-V) | `OpenAiClient` via `ApiSetting` |
+| Chat | `LlamServer` (Qwen3.8-27B) | `OpenAiClient` via `ApiSetting` |
 | Prompts | `SensePromptLocal` (short, clamped) | `SensePrompt` (rich) |
 | Compose | Sequential: correct → optimize → expand → diverge | One-shot JSON with correct/optimize/expand |
 | Diverge | Last compose step (expand + screen); OCR fallback if no voice | Early screen-only chat (parallel with compose) |
-| Screen OCR | Always `VLMServer` (vision) | Always `VLMServer` (vision) |
+| Screen OCR | Always `LlamServer` (vision) | Always `LlamServer` (vision) |
 
 ## Input beacon
 
@@ -42,7 +42,7 @@ Clicks pass through (`mouse_passthrough`). During transcription / compose the wa
 | `SensePicker` | Five-candidate selection sheet (focusable for ↑↓/Enter/Esc; restore foreground then paste) |
 | `AudioRecorder` | Microphone → PCM16 WAV |
 | `AudioToTextTool` | Local SenseVoice transcription |
-| `VLMServer` | Local MiniCPM-V: screenshot OCR; local compose + diverge when `use_local_llm` |
+| `LlamServer` | Local Qwen3.8-27B: screenshot OCR; local compose + diverge when `use_local_llm` |
 | `ApiSetting` / `OpenAiClient` | Remote compose + diverge when not `use_local_llm` |
 | `SensePromptLocal` | Short local prompts + input clamps (zh / en by app locale) |
 | `SensePrompt` | Rich remote prompts / one-shot compose JSON (zh / en) |

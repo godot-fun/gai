@@ -156,8 +156,8 @@ func latest_run_text(session_id: int, kind: String) -> String:
 func tokenize_text(text: String) -> Array[LlamaHelper.Token]:
 	if StringUtils.is_blank(text):
 		return []
-	if VLMServer.is_running() and await LlamaHelper.async_health(VLMServer.server_url()):
-		var result := await LlamaHelper.async_tokenize(VLMServer.server_url(), text)
+	if LlamServer.is_running() and await LlamaHelper.async_health(LlamServer.server_url()):
+		var result := await LlamaHelper.async_tokenize(LlamServer.server_url(), text)
 		if not result.tokens.is_empty():
 			return result.tokens
 	return LocalTokenizer.tokenize(text)

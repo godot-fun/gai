@@ -90,7 +90,7 @@ Source image (AI art / sprite sheet)
 | [image-region-remove-key-color-app](.agents/skills/image-region-remove-key-color-app/SKILL.md) | Manual Gradio app: paint a region, remove key-color only inside that selection |
 | [image-trim](.agents/skills/image-trim/SKILL.md) | Trim transparent or solid-color borders (preserve aspect ratio by default) |
 | [image-resize](.agents/skills/image-resize/SKILL.md) | Resize to explicit width × height (fit / fill / exact; ImageMagick) |
-| [image-to-text](.agents/skills/image-to-text/SKILL.md) | Local image description / OCR with MiniCPM-V 4.6; automatically prefers Vulkan GPU and falls back to CPU |
+| [image-to-text](.agents/skills/image-to-text/SKILL.md) | Local image description / OCR with Qwen3.8-27B; automatically prefers Vulkan GPU and falls back to CPU |
 
 ## Video
 

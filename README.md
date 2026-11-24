@@ -63,7 +63,7 @@ Hand [`agent/Dependency.md`](agent/Dependency.md) to a coding agent — it provi
 - 🖥️ **An editor, not a bystander.** File tree, tabs, images, Markdown preview, and a Git Bash window, one click from the chat.
 - 🎙️ **Talk instead of typing.** Hold `Alt+Z` in any window — screen context, dictation, and a rewrite land in the field you were already looking at.
 - 🎆 **Scenes, not a spinner.** Tool calls drive live visuals over the transcript — matrix rain, a reasoning tree, a memory river — and you pick which.
-- 📷 **Images are first-class.** Drop a screenshot into the chat and MiniCPM-V reads it on your machine — no upload, no second vision API.
+- 📷 **Images are first-class.** Drop a screenshot into the chat and Qwen3.8-27B reads it on your machine — no upload, no second vision API.
 - 🔒 **Safety mode.** When it is on, file tools stay inside the workspace and shell commands meet a heuristic guard, so a wrong step cannot wander off.
 - 🧱 **A framework, not just an app.** The agent runs on `zfoo/`, a standalone Godot framework you can [sync](sync-godot-framework.ps1) into your own project.
 
@@ -128,7 +128,7 @@ Full API surface: the framework reference in [`AGENTS.md`](AGENTS.md).
 | Service | Role |
 | --- | --- |
 | [`web/`](web/) | Node.js + Playwright: web search, page fetch with screenshots, MCP gateway (`GET /mcp/tools`, `POST /mcp/call`) |
-| [`VLMServer`](agent/server/VLMServer.gd) | MiniCPM-V via llama.cpp: local image reading and descriptions (idle-released) |
+| [`LlamServer`](agent/server/LlamServer.gd) | Qwen3.8-27B via llama.cpp: local image reading and text chat (idle-released) |
 
 ## 🧩 MCP
 
