@@ -8,7 +8,8 @@ const IDLE_TIMEOUT_SECONDS: int = 5 * 60
 const IDLE_TIMEOUT_MILLIS: int = IDLE_TIMEOUT_SECONDS * TimeUtils.MILLIS_PER_SECOND
 const START_TIMEOUT_MILLIS: int = 2 * TimeUtils.MILLIS_PER_MINUTE
 const MIN_GPU_FREE_MEMORY_MIB: int = 22 * 1024
-const CONTEXT_SIZE: int = 262144
+## Qwen3.8 supports 256K natively, but a 24GB desktop GPU needs a smaller resident context.
+const CONTEXT_SIZE: int = 32768
 const MODEL_NAME: String = "Qwen3.8-27B-Q4_K_M.gguf"
 const PROCESS_ID_STOPPED: int = -1
 const PROCESS_ID_STARTING: int = -2
@@ -113,7 +114,7 @@ static func async_chat_completion(messages: Array, max_tokens: int = 2048) -> St
 ## through the PROCESS_ID_STARTING sentinel instead of spawning duplicate model processes.
 static func async_ensure_server_running() -> int:
 	last_access_millis = Time.get_ticks_msec()
-	if await LlamaHelper.async_health(server_url()):
+	if is_running() and await LlamaHelper.async_health(server_url()):
 		return OK
 	while process_id == PROCESS_ID_STARTING:
 		await ThreadUtils.async_sleep(TimeUtils.MILLIS_PER_SECOND)
@@ -188,8 +189,10 @@ static func build_server_args(model: String, mmproj: String, use_gpu: bool) -> P
 		"--load-mode", "mmap",
 		"--ctx-size", str(CONTEXT_SIZE),
 		"--parallel", "1",
+		"--image-min-tokens", "1024",
 		# Sense compose / OCR need short answers; thinking burns the token budget with empty content.
 		"--reasoning", "off",
+		"--no-reasoning-preserve",
 		"--sleep-idle-seconds", str(IDLE_TIMEOUT_SECONDS),
 		"--host", SERVER_HOST,
 		"--port", str(server_port),

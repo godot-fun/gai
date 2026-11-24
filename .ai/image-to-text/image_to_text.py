@@ -72,7 +72,7 @@ def describe_image(executable: Path, model: Path, mmproj: Path, prompt: str,
     command = [str(executable), "-m", str(model), "--mmproj", str(mmproj), "--image",
                str(image_path), "-p", prompt]
     command.extend(acceleration_args(use_gpu))
-    command.extend(["-c", "262144", "-n", "1024", "--temp", "0", "--reasoning", "off"])
+    command.extend(["-c", "32768", "-n", "1024", "--temp", "0", "--image-min-tokens", "1024"])
     result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace")
     if result.returncode != 0:
         detail = result.stderr.strip() or result.stdout.strip()

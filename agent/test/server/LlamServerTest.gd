@@ -11,10 +11,12 @@ static func qwen_server_args_test() -> void:
 	assert(args.has("model.gguf"))
 	assert(args.has("--mmproj"))
 	assert(args.has("mmproj.gguf"))
-	assert(LlamServer.CONTEXT_SIZE == 262144)
-	assert(args.has("262144"))
+	assert(LlamServer.CONTEXT_SIZE == 32768)
+	assert(args.has("32768"))
+	assert(args.has("--image-min-tokens"))
 	assert(args.has("--reasoning"))
 	assert(args.has("off"))
+	assert(args.has("--no-reasoning-preserve"))
 	assert(args.has("all"))
 	pass
 
