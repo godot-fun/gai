@@ -36,37 +36,41 @@ func open_ai_request_empty_messages_test() -> void:
 	pass
 
 
-func open_ai_request_preserves_system_messages_for_regular_models_test() -> void:
+func open_ai_request_preserves_system_messages_for_deepseek_and_openai_test() -> void:
 	var messages: Array[ChatMessage] = [
 		ChatMessage.user("first turn"),
 		ChatMessage.system("agent context"),
 		ChatMessage.assistant("reply"),
 		ChatMessage.system("memory context"),
 	]
-	var body: Dictionary = JSON.parse_string(OpenAiRequest.new("test-model", messages, false).to_json())
-	var wire_messages: Array = body.messages
-	assert(wire_messages.size() == 4)
-	assert(wire_messages[0].role == ChatMessage.ROLE_USER)
-	assert(wire_messages[1].role == ChatMessage.ROLE_SYSTEM)
-	assert(wire_messages[2].role == ChatMessage.ROLE_ASSISTANT)
-	assert(wire_messages[3].role == ChatMessage.ROLE_SYSTEM)
+	for model: String in ["deepseek-v4-flash", "gpt-5", "openai/gpt-4o"]:
+		var body: Dictionary = JSON.parse_string(OpenAiRequest.new(model, messages, false).to_json())
+		var wire_messages: Array = body.messages
+		assert(wire_messages.size() == 4)
+		assert(wire_messages[0].role == ChatMessage.ROLE_USER)
+		assert(wire_messages[1].role == ChatMessage.ROLE_SYSTEM)
+		assert(wire_messages[1].content == "agent context")
+		assert(wire_messages[2].role == ChatMessage.ROLE_ASSISTANT)
+		assert(wire_messages[3].role == ChatMessage.ROLE_SYSTEM)
+		assert(wire_messages[3].content == "memory context")
 	pass
 
 
-func open_ai_request_merges_system_messages_for_qwen_test() -> void:
+func open_ai_request_merges_system_messages_for_other_models_test() -> void:
 	var messages: Array[ChatMessage] = [
 		ChatMessage.user("first turn"),
 		ChatMessage.system("agent context"),
 		ChatMessage.assistant("reply"),
 		ChatMessage.system("memory context"),
 	]
-	var body: Dictionary = JSON.parse_string(OpenAiRequest.new("Qwen3.8-27B", messages, false).to_json())
-	var wire_messages: Array = body.messages
-	assert(wire_messages.size() == 3)
-	assert(wire_messages[0].role == ChatMessage.ROLE_SYSTEM)
-	assert(wire_messages[0].content == "agent context\n\nmemory context")
-	assert(wire_messages[1].role == ChatMessage.ROLE_USER)
-	assert(wire_messages[2].role == ChatMessage.ROLE_ASSISTANT)
+	for model: String in ["Qwen3.8-27B", "test-model", "local-llama"]:
+		var body: Dictionary = JSON.parse_string(OpenAiRequest.new(model, messages, false).to_json())
+		var wire_messages: Array = body.messages
+		assert(wire_messages.size() == 3)
+		assert(wire_messages[0].role == ChatMessage.ROLE_SYSTEM)
+		assert(wire_messages[0].content == "agent context\n\nmemory context")
+		assert(wire_messages[1].role == ChatMessage.ROLE_USER)
+		assert(wire_messages[2].role == ChatMessage.ROLE_ASSISTANT)
 	pass
 
 

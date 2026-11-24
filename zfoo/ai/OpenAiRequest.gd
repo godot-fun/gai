@@ -8,6 +8,9 @@ const THINKING_ENABLED := "enabled"
 const THINKING_DISABLED := "disabled"
 ## Chat Completions `response_format.type`. Empty omits the field (API default = text).
 const RESPONSE_FORMAT_JSON_OBJECT := "json_object"
+## Model name fragments whose APIs keep system messages in their original positions. Model names
+## carry the vendor (`deepseek-flash`, `openai/gpt-4o`) or only the model (`gpt-5`).
+const SYSTEM_MESSAGE_ORDER_MODEL_KEYS := ["deepseek", "openai", "gpt-"]
 
 var model: String = ""
 var messages: Array[ChatMessage] = []
@@ -46,10 +49,11 @@ func to_json() -> String:
 	return JsonUtils.object_to_json(body)
 
 
-## Converts messages to their API shape. Qwen chat templates reject multiple system messages or
-## a system message after a conversation turn, so their system messages become one leading entry.
+## Converts messages to their API shape. DeepSeek and OpenAI accept system messages in their original
+## positions; Qwen chat templates reject multiple system messages or a system message after a
+## conversation turn, so their system messages become one leading entry.
 func build_wire_messages() -> Array:
-	if model.to_lower().contains("deepseek") || model.to_lower().contains("openai"):
+	if keeps_system_message_order():
 		return messages.map(func(message: ChatMessage) -> Dictionary: return message.to_api_dict())
 	var wire_messages: Array = []
 	var system_parts := PackedStringArray()
@@ -63,3 +67,11 @@ func build_wire_messages() -> Array:
 	if not system_parts.is_empty():
 		wire_messages.push_front({"role": ChatMessage.ROLE_SYSTEM, "content": "\n\n".join(system_parts)})
 	return wire_messages
+
+
+func keeps_system_message_order() -> bool:
+	var model_lower := model.to_lower()
+	for key: String in SYSTEM_MESSAGE_ORDER_MODEL_KEYS:
+		if model_lower.contains(key):
+			return true
+	return false
