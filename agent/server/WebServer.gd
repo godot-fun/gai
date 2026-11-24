@@ -123,7 +123,9 @@ static func async_ensure_server_running() -> int:
 	var proxy_address := NetworkSetting.get_proxy_address()
 	if StringUtils.is_not_blank(proxy_address):
 		args.append("--proxy-address={}".format([proxy_address], "{}"))
-	process_id = OS.create_process(node, args, false)
+	var argv := PackedStringArray([node])
+	argv.append_array(args)
+	process_id = OSUtils.execute_background(argv)
 	if process_id <= 0:
 		Log.error("failed to start web server node:[{}]", node)
 		process_id = 0

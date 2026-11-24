@@ -2,16 +2,18 @@ class_name PipelineRunner
 extends Object
 
 var stop_requested: bool = false
+var cancel_scope := CancelScope.new()
 
 
 func request_stop() -> void:
 	stop_requested = true
-	OSUtils.stop_last()
+	cancel_scope.cancel()
 	pass
 
 
 func run(document: WorkflowDocument) -> void:
 	stop_requested = false
+	cancel_scope = CancelScope.new()
 	var order: Array[WorkflowNodeData] = topological_sort(document)
 	if order.is_empty():
 		WorkflowEvents.events.pipeline_finished.emit(false, "Workflow is empty or contains a cycle")
@@ -101,7 +103,7 @@ func run_nodes(nodes: Array[WorkflowNodeData], document: WorkflowDocument, outpu
 		WorkflowEvents.events.step_started.emit(node_data.id, node_def.display_label())
 		Log.info("command:{}", JSON.stringify(argv))
 
-		var exec_result := await OSUtils.async_execute(argv, false)
+		var exec_result := await OSUtils.async_execute(argv, false, TimeUtils.MILLIS_PER_HOUR, cancel_scope)
 		if stop_requested:
 			WorkflowEvents.events.pipeline_stopped.emit()
 			return false

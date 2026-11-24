@@ -12,8 +12,6 @@ extends Object
 const EXIT_CODE_NOT_STARTED: int = -1
 const EXIT_CODE_TIMEOUT: int = -2
 
-static var process_pids: RingListInt = RingListInt.new(32)
-
 # ----------------------------------------------------------------------------------------------------------------------
 # Execution result
 class ExecResult:
@@ -54,23 +52,48 @@ static func async_execute(argv: PackedStringArray, log: bool = true, timeout_mil
 	return result
 
 
+## Starts a long-running process and returns its pid immediately. The shared worker pool continuously
+## drains stdout and stderr, printing the captured output only when the process exits with an error.
+static func execute_background(argv: PackedStringArray) -> int:
+	if argv.is_empty():
+		Log.error("failed to start background process: command is empty")
+		return 0
+	var process := OS.execute_with_pipe(argv[0], argv.slice(1), false)
+	if process.is_empty():
+		Log.error("failed to start background process command:{}", JSON.stringify(argv))
+		return 0
+	var pid: int = int(process.get("pid", 0))
+	var stdio: FileAccess = process.get("stdio")
+	var stderr_pipe: FileAccess = process.get("stderr")
+	if pid <= 0:
+		close_pipe(stdio)
+		close_pipe(stderr_pipe)
+		Log.error("failed to start background process command:{}", JSON.stringify(argv))
+		return 0
+	ExecutorHelper.execute_pooled(func() -> void:
+		var result := ExecResult.new()
+		var stdout_decoder := Utf8StreamDecoder.new()
+		var stderr_decoder := Utf8StreamDecoder.new()
+		while OS.is_process_running(pid):
+			drain_pipe(result, stdio, false, stdout_decoder)
+			drain_pipe(result, stderr_pipe, false, stderr_decoder)
+			OS.delay_msec(16)
+		drain_pipe(result, stdio, true, stdout_decoder)
+		drain_pipe(result, stderr_pipe, true, stderr_decoder)
+		close_pipe(stdio)
+		close_pipe(stderr_pipe)
+		result.exit_code = OS.get_process_exit_code(pid)
+		if result.exit_code != 0:
+			log_result(argv, result, true)
+	)
+	return pid
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Process lifecycle and async worker
-static func stop_last() -> void:
-	kill_process(process_pids.latest(), 0)
-	pass
-
-
-static func stop_all() -> void:
-	for pid in process_pids.to_array():
-		kill_process(pid, 0)
-	process_pids.clear()
-	pass
-
-
 ## Kills pid and returns the platform kill error code, logged when the kill fails; a finished or unknown pid is a no-op.
 ## wait_millis is the grace period for the process to exit, so the pipe tail can still be read after the kill;
-## pass 0 from the main thread (stop_last/stop_all) to stay non blocking. Returns FAILED when the process survives it.
+## pass 0 when the caller must stay non-blocking. Returns FAILED when the process survives it.
 static func kill_process(pid: int, wait_millis: int = 1000) -> int:
 	if pid <= 0 or not OS.is_process_running(pid):
 		return OK
@@ -104,8 +127,6 @@ static func run_process(argv: PackedStringArray, result: ExecResult, timeout_mil
 		return
 
 	var pid: int = int(proc.get("pid", -1))
-	if pid > 0:
-		process_pids.add(pid)
 	# Registered from this worker thread; CancelScope.track is thread-safe.
 	if cancel_scope != null:
 		cancel_scope.track(func() -> void: kill_process(pid, 0))
@@ -139,8 +160,6 @@ static func run_process(argv: PackedStringArray, result: ExecResult, timeout_mil
 		result.exit_code = OS.get_process_exit_code(pid)
 	else:
 		result.exit_code = EXIT_CODE_NOT_STARTED
-	if pid > 0:
-		process_pids.remove_value(pid)
 	pass
 
 

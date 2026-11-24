@@ -20,11 +20,9 @@ static func poll_completed_process_test() -> void:
 
 
 static func poll_and_kill_running_process_test() -> void:
-	var os_utils_process_pids := OSUtils.process_pids.to_array()
 	var process_id := BashProcessManager.start("sleep 10")
 	var running := await BashProcessManager.async_poll(process_id, 100)
 	assert(running.status == BashProcessResult.STATUS_RUNNING)
-	assert(OSUtils.process_pids.to_array() == os_utils_process_pids)
 	assert(BashProcessManager.kill(process_id))
 	var killed := await BashProcessManager.async_poll(process_id, TimeUtils.MILLIS_PER_SECOND * 5)
 	assert(killed.status == BashProcessResult.STATUS_EXITED)
