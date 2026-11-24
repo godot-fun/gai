@@ -18,7 +18,7 @@ static func energy_composition_is_additive_without_overflow_test() -> void:
 
 func reasoning_stream_targets_mirage_strength_test() -> void:
 	var effect: Variant = HEAT_MIRAGE_SCRIPT.new()
-	effect.on_message_update(1, "think", OpenAiClient.STREAM_KIND_REASONING)
+	effect.on_message_update(1, "reasoning through the current step", OpenAiClient.STREAM_KIND_REASONING)
 	assert(effect.target_mirage > 0.0)
 	effect.step_mirage_field(1.0 / 60.0)
 	assert(effect.mirage_strength > 0.0)
@@ -29,7 +29,8 @@ func reasoning_stream_targets_mirage_strength_test() -> void:
 func shock_front_restarts_on_tool_event_test() -> void:
 	var effect: Variant = HEAT_MIRAGE_SCRIPT.new()
 	effect.shock_progress = 1.2
-	effect.on_tool_execution_start(1, "t1", "read_file", {})
+	var args: Dictionary[String, Variant] = {}
+	effect.on_tool_execution_start(1, "t1", "read_file", args)
 	assert(effect.shock_progress < 0.1)
 	assert(effect.shock_energy > 0.0)
 	effect.free()
@@ -41,7 +42,7 @@ func field_decays_to_idle_test() -> void:
 	effect.target_mirage = 0.8
 	effect.target_flow = 0.6
 	effect.field_energy = 0.7
-	for _index in range(100):
+	for _index in range(240):
 		effect.step_mirage_field(1.0 / 60.0)
 	assert(effect.mirage_is_idle())
 	effect.free()

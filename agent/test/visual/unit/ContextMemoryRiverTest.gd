@@ -101,7 +101,10 @@ static func output_trail_length_follows_input_width_test() -> void:
 	assert(is_equal_approx(effect.output_motes[0].speed, 0.84))
 	assert(is_equal_approx(effect.output_motes[1].speed, 1.16))
 	effect.spawn_output_mote(1000.0)
-	assert(is_equal_approx(effect.output_motes[2].trail_length, 498.0))
+	# A wide phrase keeps its trace only as long as the visible output channel allows.
+	var channel_length: float = effect.output_channel_length(effect.size * 0.5)
+	assert(is_equal_approx(effect.output_motes[2].trail_length, channel_length))
+	assert(effect.output_motes[2].trail_length < 1000.0)
 	effect.free()
 	pass
 
@@ -115,6 +118,9 @@ static func long_text_crosses_center_before_expiring_test() -> void:
 	for _frame in range(400):
 		if item.absorption_triggered:
 			break
+		# Ambient decorative motes ripple on their own when they cross the center, and their
+		# speeds are random. Drop them each frame so the count below can only come from this phrase.
+		effect.decorative_motes.clear()
 		effect._process(0.05)
 	assert(item.absorption_triggered)
 	assert(effect.items.has(item))

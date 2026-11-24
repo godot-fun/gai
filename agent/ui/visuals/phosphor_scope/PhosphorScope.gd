@@ -6,9 +6,9 @@ extends VisualEffect
 
 const SCOPE_SHADER: Shader = preload("res://agent/ui/visuals/phosphor_scope/PhosphorScope.gdshader")
 const MAX_OFFSET_PX := 50.0
-const TARGET_DECAY_PER_SECOND := 0.38
-const BEAM_DECAY_PER_SECOND := 0.44
-const DRIVE_FOLLOW_RATE := 3.4
+const TARGET_DECAY_PER_SECOND := 0.70
+const BEAM_DECAY_PER_SECOND := 0.55
+const DRIVE_FOLLOW_RATE := 18.0
 const PHOSPHOR_BURST_DECAY_PER_SECOND := 2.6
 const FAILURE_DECAY_PER_SECOND := 3.4
 const IDLE_EPSILON := 0.001
@@ -167,15 +167,17 @@ func scope_is_idle() -> bool:
 	return reasoning_drive <= IDLE_EPSILON and content_drive <= IDLE_EPSILON and target_reasoning_drive <= IDLE_EPSILON and target_content_drive <= IDLE_EPSILON and beam_energy <= IDLE_EPSILON and phosphor_burst <= IDLE_EPSILON and failure_tint <= IDLE_EPSILON
 
 
+## Drives snap to zero only once their target has run dry, so a small incoming chunk still
+## lifts the drive instead of being erased by the idle threshold on the very next step.
 func snap_idle_scalars() -> void:
-	if reasoning_drive < IDLE_EPSILON:
-		reasoning_drive = 0.0
-	if content_drive < IDLE_EPSILON:
-		content_drive = 0.0
 	if target_reasoning_drive < IDLE_EPSILON:
 		target_reasoning_drive = 0.0
+		if reasoning_drive < IDLE_EPSILON:
+			reasoning_drive = 0.0
 	if target_content_drive < IDLE_EPSILON:
 		target_content_drive = 0.0
+		if content_drive < IDLE_EPSILON:
+			content_drive = 0.0
 	if beam_energy < IDLE_EPSILON:
 		beam_energy = 0.0
 	pass

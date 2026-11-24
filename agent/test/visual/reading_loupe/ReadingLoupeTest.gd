@@ -24,10 +24,13 @@ static func rest_sample_is_the_original_pixel_test() -> void:
 
 
 static func zoom_grows_only_with_approach_test() -> void:
-	assert(is_equal_approx(READING_LOUPE_SCRIPT.zoom_for_approach(0.0, 1.8), 1.0))
-	assert(READING_LOUPE_SCRIPT.zoom_for_approach(0.4, 1.8) > 1.0)
-	assert(READING_LOUPE_SCRIPT.zoom_for_approach(0.8, 1.8) > READING_LOUPE_SCRIPT.zoom_for_approach(0.4, 1.8))
-	assert(is_equal_approx(READING_LOUPE_SCRIPT.zoom_for_approach(1.0, 1.8), 1.8))
+	# The pass-through sample has to stay under the cap; anything above MAX_ZOOM clamps to it.
+	var requested_zoom: float = lerpf(READING_LOUPE_SCRIPT.MIN_FRAME_ZOOM, READING_LOUPE_SCRIPT.MAX_ZOOM, 0.5)
+	assert(requested_zoom < READING_LOUPE_SCRIPT.MAX_ZOOM)
+	assert(is_equal_approx(READING_LOUPE_SCRIPT.zoom_for_approach(0.0, requested_zoom), 1.0))
+	assert(READING_LOUPE_SCRIPT.zoom_for_approach(0.4, requested_zoom) > 1.0)
+	assert(READING_LOUPE_SCRIPT.zoom_for_approach(0.8, requested_zoom) > READING_LOUPE_SCRIPT.zoom_for_approach(0.4, requested_zoom))
+	assert(is_equal_approx(READING_LOUPE_SCRIPT.zoom_for_approach(1.0, requested_zoom), requested_zoom))
 	assert(is_equal_approx(READING_LOUPE_SCRIPT.zoom_for_approach(1.0, 8.0), READING_LOUPE_SCRIPT.MAX_ZOOM))
 	pass
 

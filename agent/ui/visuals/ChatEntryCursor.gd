@@ -5,6 +5,10 @@ extends RefCounted
 ## is one shared overlay, but each session owns a cursor so interleaved runs do not reread
 ## or skip each other's transcript text. Sentences may still be displayed interleaved.
 
+## How far an effect entry color leans from its bubble panel toward the theme accent. Tuned
+## for light-theme contrast, so the effects stay readable without washing the panel out.
+const ENTRY_THEME_MIX_WEIGHT := Weights.w_4
+
 
 # ---------------------------------------------------------------------------
 # Value objects
@@ -135,7 +139,7 @@ static func latest_entry_text(session_id: int, start_index: int, kind: String) -
 ## Derives an effect-ready entry color from its chat bubble panel and the active theme accent.
 static func color_for_entry_kind(entry_kind: String) -> Color:
 	var panel_color := ChatBubbleFactory.panel_color_for_kind(entry_kind)
-	return VisualColor.appearance_color(ThemeColor.mix_with_theme_color(panel_color, Weights.w_4))
+	return VisualColor.appearance_color(ThemeColor.mix_with_theme_color(panel_color, ENTRY_THEME_MIX_WEIGHT))
 
 
 static func remove_session(session_id: int) -> void:

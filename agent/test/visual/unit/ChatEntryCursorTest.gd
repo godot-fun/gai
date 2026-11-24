@@ -26,8 +26,10 @@ static func parse_sentence_test() -> void:
 
 static func entry_color_mixes_bubble_panel_with_theme_test() -> void:
 	var panel_color := ChatBubbleFactory.panel_color_for_kind(ChatEntry.KIND_THINKING)
-	var expected := VisualColor.appearance_color(ThemeColor.mix_with_theme_color(panel_color, Weights.w_7))
+	var expected := VisualColor.appearance_color(ThemeColor.mix_with_theme_color(panel_color, ChatEntryCursor.ENTRY_THEME_MIX_WEIGHT))
 	assert(ChatEntryCursor.color_for_entry_kind(ChatEntry.KIND_THINKING) == expected)
+	# The mix has to actually pull the panel toward the theme accent, not return the raw panel.
+	assert(expected != VisualColor.appearance_color(panel_color))
 	pass
 
 

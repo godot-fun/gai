@@ -10,11 +10,10 @@ extends RefCounted
 ## background while the cursor already sat on another row: one stale highlight per click.
 
 
-## The row covers the whole window, so the cursor is inside its rect whatever the platform reports.
+## Invoke the same exit signal path directly. Headless runners do not guarantee that the global
+## mouse position belongs to the test window, so cursor coordinates are not part of this regression.
 func exit_inside_the_row_still_drops_the_hover_test() -> void:
 	var row := await build_row()
-	assert(row.get_global_rect().has_point(row.get_global_mouse_position()))
-
 	row.on_mouse_entered()
 	assert(row.hovered)
 	# The drop described above: the exit arrives while the cursor is still on the row.
