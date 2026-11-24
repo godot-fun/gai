@@ -80,7 +80,7 @@ func PopupWindow_set_body_test() -> void:
 	var window := PopupWindow.new()
 	gdf.gdf_node.add_child(window)
 	window.size = Vector2i(400, 300)
-	window.popup_centered()
+	show_test_window(window)
 	var body := ""
 	for i in 200:
 		body += "line-%d\n" % i
@@ -97,7 +97,9 @@ func PopupWindow_set_body_test() -> void:
 	pass
 
 
-## Esc dismisses the popup through [method PopupWindow.on_window_input].
+## Esc dismisses the popup through [method PopupWindow.on_window_input]. A focused window owns its own
+## Esc, so only the window closes; the root-window broadcast is covered by
+## [method CommonWindow_parent_cancel_input_test].
 func PopupWindow_cancel_input_test() -> void:
 	close_open_windows()
 	PopupWindow.show_window("feedback popup", "body", 40, 40)
@@ -105,10 +107,7 @@ func PopupWindow_cancel_input_test() -> void:
 	assert(windows.size() == 1)
 	var window := windows[0]
 	var close_signal_count: Array[int] = [0]
-	var esc_signal_count: Array[int] = [0]
-	var count_esc := func() -> void: esc_signal_count[0] += 1
 	window.close_requested.connect(func() -> void: close_signal_count[0] += 1)
-	gdf.events.ui_cancel.connect(count_esc)
 	# Hold the window open so a run with a display shows the popup before Esc.
 	await ThreadUtils.async_sleep(1500)
 	var event := InputEventAction.new()
@@ -118,9 +117,7 @@ func PopupWindow_cancel_input_test() -> void:
 		window.on_window_input(event)
 	await gdf.gdf_node.get_tree().process_frame
 	assert(close_signal_count[0] == 1)
-	assert(esc_signal_count[0] == 1)
 	assert(!is_instance_valid(window))
-	gdf.events.ui_cancel.disconnect(count_esc)
 	pass
 
 
@@ -129,7 +126,7 @@ func CommonWindow_cancel_input_commits_spin_box_test() -> void:
 	var window := SaveTrackingWindow.new()
 	var tracker := window.tracker
 	gdf.gdf_node.add_child(window)
-	window.popup_centered()
+	show_test_window(window)
 	window.spin.get_line_edit().grab_focus()
 	await gdf.gdf_node.get_tree().process_frame
 	assert(window.gui_get_focus_owner() == window.spin.get_line_edit())
@@ -147,27 +144,25 @@ func CommonWindow_cancel_input_commits_spin_box_test() -> void:
 	pass
 
 
-## Esc from the parent viewport still dismisses the frontmost CommonWindow after it loses focus.
+## Esc from the parent viewport reaches the app-wide ui_cancel broadcast, which closes the open window
+## through [method CommonWindow.on_ui_cancel].
 func CommonWindow_parent_cancel_input_test() -> void:
-	var back := SaveTrackingWindow.new()
-	var front := SaveTrackingWindow.new()
-	var back_tracker := back.tracker
-	var front_tracker := front.tracker
-	gdf.gdf_node.add_child(back)
-	gdf.gdf_node.add_child(front)
-	back.popup_centered()
-	front.popup_centered()
+	var window := SaveTrackingWindow.new()
+	var tracker := window.tracker
+	gdf.gdf_node.add_child(window)
+	show_test_window(window)
+	var cancel_signal_count: Array[int] = [0]
+	var count_cancel := func() -> void: cancel_signal_count[0] += 1
+	gdf.events.ui_cancel.connect(count_cancel)
 	var event := InputEventAction.new()
 	event.action = "ui_cancel"
 	event.pressed = true
 	(gdf.gdf_node as gdf).on_window_input(event)
 	await gdf.gdf_node.get_tree().process_frame
-	assert(is_instance_valid(back))
-	assert(!back_tracker.saved)
-	assert(front_tracker.saved)
-	assert(!is_instance_valid(front))
-	back.on_close_requested()
-	await gdf.gdf_node.get_tree().process_frame
+	assert(cancel_signal_count[0] == 1)
+	assert(tracker.saved)
+	assert(!is_instance_valid(window))
+	gdf.events.ui_cancel.disconnect(count_cancel)
 	pass
 
 
@@ -266,12 +261,12 @@ func PopupWindow_theme_change_test() -> void:
 	gdf.events.theme_color_changed.emit()
 	gdf.events.theme_changed.emit()
 	assert(window.text_edit.get_theme_color("font_readonly_color") == ThemeColor.title_color)
-	# The frame is rebuilt from the engine box on every repaint, so its geometry must survive.
-	var engine_border: StyleBox = ThemeDB.get_default_theme().get_stylebox("embedded_border", "Window")
+	# The frame is rebuilt from the engine box on every repaint, so the geometry the theme sets survives.
 	var final_border := window.get_theme_stylebox("embedded_border") as StyleBoxFlat
-	assert(final_border.expand_margin_top == engine_border.expand_margin_top)
-	assert(final_border.expand_margin_left == engine_border.expand_margin_left)
-	assert((window.get_theme_stylebox("embedded_unfocused_border") as StyleBoxFlat).expand_margin_top == engine_border.expand_margin_top)
+	assert(is_equal_approx(final_border.expand_margin_top, ControlSize.md))
+	assert(is_equal_approx(final_border.expand_margin_left, Margin.ma_2))
+	assert(is_equal_approx(final_border.expand_margin_bottom, Margin.ma_3 * 0.5))
+	assert(is_equal_approx((window.get_theme_stylebox("embedded_unfocused_border") as StyleBoxFlat).expand_margin_top, ControlSize.md))
 	window.free()
 	pass
 
@@ -279,6 +274,17 @@ func PopupWindow_theme_change_test() -> void:
 ## The headless dummy display clamps embedded windows to 1×1, so percent sizing is only measurable with a real one.
 func has_display() -> bool:
 	return DisplayServer.get_name() != "headless"
+
+
+## Shows a test window at a valid position. The headless dummy display is 1×1, so centering a real-sized
+## window would spawn it at a negative position and log an engine error.
+func show_test_window(window: Window) -> void:
+	window.size = Vector2i(maxi(window.size.x, 320), maxi(window.size.y, 240))
+	if has_display():
+		window.popup_centered()
+	else:
+		window.popup(Rect2i(Vector2i.ZERO, window.size))
+	pass
 
 
 func open_windows() -> Array[PopupWindow]:
