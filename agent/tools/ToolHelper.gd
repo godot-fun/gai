@@ -44,7 +44,10 @@ static func get_tool_call_summary(tool_name: String, args: Dictionary[String, Va
 		ListDirTool.NAME:
 			body = str(args.get(ListDirTool.ARG_PATH, ""))
 		BashTool.NAME:
-			body = str(args.get(BashTool.ARG_COMMAND, ""))
+			# Bash already runs in the workspace root, so a leading `cd ... &&` is only noise here.
+			var command := str(args.get(BashTool.ARG_COMMAND, ""))
+			var tail := StringUtils.substring_after(command, "&&")
+			body = tail.strip_edges() if command.strip_edges().begins_with("cd") and StringUtils.is_not_blank(tail) else command
 		BashProcessTool.NAME:
 			body = str(args.get(BashProcessTool.ARG_ACTION, "")) + " " + str(args.get(BashProcessTool.ARG_PROCESS_ID, ""))
 		AudioToTextTool.NAME:

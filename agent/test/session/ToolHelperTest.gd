@@ -34,3 +34,14 @@ static func browser_tool_classification_test() -> void:
 	var empty_args: Dictionary[String, Variant] = {"steps": []}
 	assert(StringUtils.is_blank(ToolHelper.get_tool_call_summary(BrowserActTool.NAME, empty_args)))
 	pass
+
+
+## Bash already runs in the workspace root, so the summary drops a leading `cd ... &&`.
+static func workspace_cd_prefix_is_hidden_in_summary_test() -> void:
+	var prefixed: Dictionary[String, Variant] = {BashTool.ARG_COMMAND: "cd /c/github/gai && git status --porcelain && git log --oneline -5"}
+	assert(ToolHelper.get_tool_call_summary(BashTool.NAME, prefixed) == "git status --porcelain && git log --oneline -5")
+	var plain: Dictionary[String, Variant] = {BashTool.ARG_COMMAND: "git status --porcelain"}
+	assert(ToolHelper.get_tool_call_summary(BashTool.NAME, plain) == "git status --porcelain")
+	var no_separator: Dictionary[String, Variant] = {BashTool.ARG_COMMAND: "cd /tmp"}
+	assert(ToolHelper.get_tool_call_summary(BashTool.NAME, no_separator) == "cd /tmp")
+	pass
