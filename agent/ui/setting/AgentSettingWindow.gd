@@ -20,7 +20,6 @@ var nav_buttons: Array[Button] = []
 var nav_button_group: ButtonGroup
 var nav_panel: PanelContainer
 var nav_column: VBoxContainer
-var nav_divider: VSeparator
 var content_margin: MarginContainer
 var settings_fields: VBoxContainer
 var settings_pad: MarginContainer
@@ -74,10 +73,6 @@ func build_window() -> void:
 	nav_column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	nav_column.add_theme_constant_override("separation", Margin.ma_1)
 	nav_pad.add_child(nav_column)
-
-	nav_divider = VSeparator.new()
-	nav_divider.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	body.add_child(nav_divider)
 
 	content_margin = MarginContainer.new()
 	content_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -340,15 +335,14 @@ func style_content() -> void:
 	separator_style.thickness = ControlSize.border_xs
 	for separator in separators:
 		separator.add_theme_stylebox_override("separator", separator_style)
-	style_nav_rail()
+	style_nav_panel()
 	pass
 
 
-func style_nav_rail() -> void:
+## The rail's own right outline is the only hairline against the content surface, matching [AgentSessionSidebar].
+func style_nav_panel() -> void:
 	if nav_panel != null:
 		nav_panel.add_theme_stylebox_override("panel", SettingNavTheme.nav_panel())
-	if nav_divider != null:
-		nav_divider.add_theme_stylebox_override("separator", SettingNavTheme.nav_divider())
 	pass
 
 

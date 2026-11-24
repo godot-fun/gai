@@ -169,7 +169,6 @@ func on_locale_changed() -> void:
 func apply_locale() -> void:
 	input_field.placeholder_text = I18n.t("agent.input.placeholder")
 	input_wrap.tooltip_text = "" if expanded else I18n.t("agent.input.click_to_ask")
-	model_selector.refresh()
 	pass
 
 

@@ -11,15 +11,6 @@ static func nav_panel() -> StyleBoxFlat:
 	return style
 
 
-static func nav_divider() -> StyleBoxLine:
-	var line := StyleBoxLine.new()
-	line.color = ThemeColor.alpha_theme_color(0.42 if ThemeColor.is_dark_theme() else 0.32)
-	line.grow_begin = ControlSize.radius_xs
-	line.grow_end = ControlSize.radius_xs
-	line.thickness = ControlSize.border_xs
-	return line
-
-
 static func apply_nav_button(button: Button) -> void:
 	button.focus_mode = Control.FOCUS_NONE
 	button.add_theme_font_size_override("font_size", Typography.label_large)

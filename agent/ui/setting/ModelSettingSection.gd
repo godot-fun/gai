@@ -27,7 +27,7 @@ func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> 
 	set_up_default_model(parent)
 	set_up_models(parent)
 	set_up_add_form(parent)
-	AgentEvents.events.api_models_changed.connect(refresh_models)
+	AgentEvents.events.model_settings_changed.connect(refresh_models)
 	pass
 
 

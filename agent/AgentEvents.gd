@@ -87,8 +87,8 @@ class Events:
 	signal markdown_changed(enabled: bool)
 	## Proxy address changed (see [method NetworkSetting.save_proxy_address]).
 	signal proxy_address_changed
-	## Available API models or the active model changed.
-	signal api_models_changed
+	## API model profiles, active model, or default reasoning effort changed.
+	signal model_settings_changed
 
 	# ---------------------------------------------------------------------------
 

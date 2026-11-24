@@ -156,7 +156,7 @@ static func save_config() -> void:
 		return
 	file.store_string(JsonUtils.object_to_json(config))
 	file.close()
-	AgentEvents.events.api_models_changed.emit()
+	AgentEvents.events.model_settings_changed.emit()
 	pass
 
 

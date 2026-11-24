@@ -11,7 +11,7 @@ var expanded: bool = false
 func setup(parent: Control) -> void:
 	model_button = create_button(parent, "ModelSelector", on_model_selected)
 	reasoning_effort_button = create_button(parent, "ReasoningEffortSelector", on_reasoning_effort_selected)
-	AgentEvents.events.api_models_changed.connect(refresh)
+	AgentEvents.events.model_settings_changed.connect(refresh)
 	refresh()
 	apply_theme()
 	layout(false)
