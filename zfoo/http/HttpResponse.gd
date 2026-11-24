@@ -2,7 +2,6 @@ class_name HttpResponse
 extends RefCounted
 
 
-var success: bool = false
 ## HTTP status code (200, 404, 500, ...); 0 when the request never reached the server, and the code the
 ## server reported when a failure happened after it answered (a stalled or truncated body).
 var code: int = 0
@@ -30,18 +29,9 @@ func is_redirect() -> bool:
 		or code == HTTPClient.RESPONSE_TEMPORARY_REDIRECT or code == HTTPClient.RESPONSE_PERMANENT_REDIRECT
 
 
-## True when the server answered 2xx. [member success] only says the exchange completed, so a 4xx/5xx
-## error payload arrives with [member success] set and only this method calls it a failure.
+## True when the server answered 2xx.
 func is_ok() -> bool:
-	return success and code >= HTTPClient.RESPONSE_OK and code < HTTPClient.RESPONSE_MULTIPLE_CHOICES
-
-
-## True when the server answered 2xx with a body, no matter how [member success] ended up.
-## A server that sends `Connection: close` makes the client report the peer close as a transport
-## error after the body already arrived, so [method is_ok] rejects a payload that is in fact complete;
-## callers that only need the data read this instead.
-func is_ok_with_body() -> bool:
-	return code >= HTTPClient.RESPONSE_OK and code < HTTPClient.RESPONSE_MULTIPLE_CHOICES and not body.is_empty()
+	return code >= HTTPClient.RESPONSE_OK and code < HTTPClient.RESPONSE_MULTIPLE_CHOICES
 
 
 func get_header(name: String) -> String:
@@ -56,13 +46,11 @@ func get_header(name: String) -> String:
 ## received, because that body may be a large, truncated stream. Otherwise use the server's error
 ## payload, then the stored transport reason. Never blank.
 func get_error_string() -> String:
-	if not success and StringUtils.is_not_blank(error):
+	if StringUtils.is_not_blank(error):
 		return error
 	var body_text := get_body_string().strip_edges()
 	if StringUtils.is_not_blank(body_text):
 		return body_text
-	if StringUtils.is_not_blank(error):
-		return error
 	return "no response"
 
 

@@ -36,6 +36,23 @@ func open_ai_request_empty_messages_test() -> void:
 	pass
 
 
+func open_ai_request_merges_system_messages_at_beginning_test() -> void:
+	var messages: Array[ChatMessage] = [
+		ChatMessage.user("first turn"),
+		ChatMessage.system("agent context"),
+		ChatMessage.assistant("reply"),
+		ChatMessage.system("memory context"),
+	]
+	var body: Dictionary = JSON.parse_string(OpenAiRequest.new("test-model", messages, false).to_json())
+	var wire_messages: Array = body.messages
+	assert(wire_messages.size() == 3)
+	assert(wire_messages[0].role == ChatMessage.ROLE_SYSTEM)
+	assert(wire_messages[0].content == "agent context\n\nmemory context")
+	assert(wire_messages[1].role == ChatMessage.ROLE_USER)
+	assert(wire_messages[2].role == ChatMessage.ROLE_ASSISTANT)
+	pass
+
+
 func open_ai_request_number_tool_parameter_to_json_test() -> void:
 	var request := OpenAiRequest.new("test-model", [ChatMessage.user("hello")], false)
 	var tool := FunctionToolDef.new()

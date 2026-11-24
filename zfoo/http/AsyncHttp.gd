@@ -134,7 +134,6 @@ func complete(task: HttpTask) -> void:
 	# read complete
 	response.code = client.get_response_code()
 	response.headers = client.get_response_headers_as_dictionary()
-	response.success = true
 	task.done = true
 	client.close()
 	Log.info("HTTP request successful url:[{}] code:[{}] body length:[{}]", task.url, response.code, response.body.size())

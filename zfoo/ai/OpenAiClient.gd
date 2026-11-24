@@ -27,9 +27,6 @@ func build_headers(stream: bool = false) -> PackedStringArray:
 ## Empty when the request can be sent; otherwise why it cannot, so the failure names its real cause.
 ## Without this the user sees a generic "invalid messages" while a blank API key is only in the log.
 func check_request(messages: Array[ChatMessage]) -> String:
-	if StringUtils.is_blank(api_key):
-		Log.error("OpenAI api_key is empty")
-		return "OpenAI api key is empty"
 	if messages.is_empty():
 		Log.error("OpenAI messages is empty")
 		return "OpenAI messages is empty"

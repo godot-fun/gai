@@ -13,14 +13,13 @@ static func async_get(url: String, timeout_millis: int = AsyncHttp.DEFAULT_TIMEO
 	for _request_count in 18:
 		response = await http.async_request(HTTPClient.METHOD_GET, request_url, "", extra_headers, timeout_millis, proxy, Callable(), cancel_scope)
 		# A redirect is a 3xx, so this asks whether the exchange completed, not whether it answered 2xx.
-		if not response.success or not response.is_redirect():
+		if not response.is_redirect():
 			return response
 		var location := response.get_header("Location")
 		var redirect_url := HttpUtils.resolve_redirect_url(request_url, location)
 		if not HttpUtils.is_valid_http_url(redirect_url):
 			return response
 		request_url = redirect_url
-	response.success = false
 	response.error = StringUtils.format("Http redirect limit reached url:[{}]", url)
 	return response
 

@@ -28,9 +28,7 @@ func _init(_model: String = "", _messages: Array[ChatMessage] = [], _stream: boo
 
 
 func to_json() -> String:
-	var wire_messages: Array = []
-	for message: ChatMessage in messages:
-		wire_messages.append(message.to_api_dict())
+	var wire_messages := build_wire_messages()
 	var body := {
 		"model": model,
 		"messages": wire_messages,
@@ -46,3 +44,20 @@ func to_json() -> String:
 	if StringUtils.is_not_blank(response_format):
 		body["response_format"] = {"type": response_format}
 	return JsonUtils.object_to_json(body)
+
+
+## Emits one leading system message. Some OpenAI-compatible chat templates (including Qwen3.8)
+## reject multiple system messages or a system message that appears after a conversation turn.
+func build_wire_messages() -> Array:
+	var wire_messages: Array = []
+	var system_parts := PackedStringArray()
+	for message: ChatMessage in messages:
+		if message is SystemChatMessage:
+			var text := (message as SystemChatMessage).text.strip_edges()
+			if StringUtils.is_not_blank(text):
+				system_parts.append(text)
+			continue
+		wire_messages.append(message.to_api_dict())
+	if not system_parts.is_empty():
+		wire_messages.push_front({"role": ChatMessage.ROLE_SYSTEM, "content": "\n\n".join(system_parts)})
+	return wire_messages

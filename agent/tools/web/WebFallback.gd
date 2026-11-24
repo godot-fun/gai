@@ -27,7 +27,7 @@ static func async_fetch(url: String, cancel_scope: CancelScope) -> HtmlHelper.Ar
 	if not enabled:
 		return null
 	var response := await HttpHelper.async_get(url, DEFAULT_TIMEOUT_MILLIS, NetworkSetting.get_proxy_address(), build_headers(), cancel_scope)
-	if not response.is_ok_with_body():
+	if not response.is_ok() or response.body.is_empty():
 		Log.info("web fallback fetch failed url:[{}] code:[{}] error:[{}]", url, response.code, response.error)
 		return null
 	var content_type := response.get_header("Content-Type")
@@ -56,7 +56,7 @@ static func async_search(query: String, count: int, cancel_scope: CancelScope) -
 		return []
 	var url := "%s?format=rss&q=%s" % [BING_RSS_URL, query.strip_edges().uri_encode()]
 	var response := await HttpHelper.async_get(url, DEFAULT_TIMEOUT_MILLIS, NetworkSetting.get_proxy_address(), build_headers(), cancel_scope)
-	if not response.is_ok_with_body():
+	if not response.is_ok() or response.body.is_empty():
 		Log.info("web fallback search failed query:[{}] code:[{}] error:[{}]", query, response.code, response.error)
 		return []
 	# Same deal as [method async_fetch]: parsing stays off the main thread so a huge feed cannot stall it.
