@@ -19,6 +19,8 @@ var tools: Array[ToolDef] = []
 var max_tokens: int = 0
 ## `enabled` / `disabled`, or empty to omit (provider default).
 var thinking: String = ""
+## `low` / `high` / `max`, or empty to omit (provider default).
+var reasoning_effort: String = ""
 ## `json_object`, or empty to omit (provider default text).
 var response_format: String = ""
 
@@ -44,6 +46,8 @@ func to_json() -> String:
 		body["tool_choice"] = "auto"
 	if StringUtils.is_not_blank(thinking):
 		body["thinking"] = {"type": thinking}
+	if StringUtils.is_not_blank(reasoning_effort):
+		body["reasoning_effort"] = reasoning_effort
 	if StringUtils.is_not_blank(response_format):
 		body["response_format"] = {"type": response_format}
 	return JsonUtils.object_to_json(body)

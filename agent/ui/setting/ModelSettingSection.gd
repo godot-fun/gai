@@ -4,6 +4,8 @@ extends SettingSection
 var models_label: Label
 var default_model_label: Label
 var default_model_select: OptionButton
+var reasoning_effort_label: Label
+var reasoning_effort_select: OptionButton
 var model_label: Label
 var api_url_label: Label
 var api_token_label: Label
@@ -31,14 +33,36 @@ func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> 
 
 func set_up_default_model(parent: VBoxContainer) -> void:
 	var group := ui.make_field_group(parent)
-	var parts := ui.make_setting_row(group)
+	var parts := ui.make_setting_row(group, 6)
+	# Match the Appearance section's two-field grid exactly.
+	parts[1].size_flags_stretch_ratio = 2.0
+	parts[2].size_flags_stretch_ratio = 0.0
+	parts[3].size_flags_stretch_ratio = 1.0
+	parts[4].size_flags_stretch_ratio = 2.0
+	parts[5].size_flags_stretch_ratio = 0.0
 	default_model_label = ui.make_label(I18n.t("agent.settings.default_model"))
+	style_default_grid_label(default_model_label)
 	parts[0].add_child(default_model_label)
 	default_model_select = OptionButton.new()
-	default_model_select.custom_minimum_size.y = ControlSize.md
+	default_model_select.custom_minimum_size = Vector2(0, ControlSize.md)
 	default_model_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	default_model_select.item_selected.connect(on_default_model_selected)
 	parts[1].add_child(default_model_select)
+	reasoning_effort_label = ui.make_label(I18n.t("agent.settings.reasoning_effort"))
+	style_default_grid_label(reasoning_effort_label)
+	parts[3].add_child(reasoning_effort_label)
+	reasoning_effort_select = OptionButton.new()
+	reasoning_effort_select.custom_minimum_size = Vector2(0, ControlSize.md)
+	reasoning_effort_select.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	reasoning_effort_select.item_selected.connect(on_reasoning_effort_selected)
+	parts[4].add_child(reasoning_effort_select)
+	pass
+
+
+func style_default_grid_label(label: Label) -> void:
+	label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	label.clip_text = true
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	pass
 
 
@@ -174,6 +198,13 @@ func refresh_models() -> void:
 	var active_model := ApiSetting.get_active_profile().model
 	var profiles := ApiSetting.get_profiles()
 	default_model_select.clear()
+	reasoning_effort_select.clear()
+	for effort: String in ApiSetting.REASONING_EFFORTS:
+		var effort_index := reasoning_effort_select.item_count
+		reasoning_effort_select.add_item(I18n.t("agent.reasoning_effort." + effort))
+		reasoning_effort_select.set_item_metadata(effort_index, effort)
+		if effort == ApiSetting.get_reasoning_effort():
+			reasoning_effort_select.select(effort_index)
 	for index in range(profiles.size()):
 		var profile := profiles[index]
 		default_model_select.add_item(profile.model)
@@ -219,9 +250,17 @@ func on_default_model_selected(index: int) -> void:
 	pass
 
 
+func on_reasoning_effort_selected(index: int) -> void:
+	if index < 0 or index >= reasoning_effort_select.item_count:
+		return
+	ApiSetting.set_reasoning_effort(str(reasoning_effort_select.get_item_metadata(index)))
+	pass
+
+
 func apply_locale() -> void:
 	heading_label.text = I18n.t("agent.settings.models")
 	default_model_label.text = I18n.t("agent.settings.default_model")
+	reasoning_effort_label.text = I18n.t("agent.settings.reasoning_effort")
 	models_label.text = I18n.t("agent.settings.added_models")
 	model_label.text = I18n.t("agent.settings.model_id")
 	api_url_label.text = I18n.t("agent.settings.api_url")
@@ -238,10 +277,14 @@ func apply_locale() -> void:
 
 func apply_theme() -> void:
 	super.apply_theme()
-	for label in [default_model_label, models_label, model_label, api_url_label, api_token_label]:
+	for label in [default_model_label, reasoning_effort_label, models_label, model_label, api_url_label, api_token_label]:
 		ui.style_field_label(label)
 	ButtonStyle.apply_option_button(default_model_select)
+	ButtonStyle.apply_option_button(reasoning_effort_select)
 	default_model_select.get_popup().add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(
+		ThemeColor.card_surface, ControlSize.radius_lg, Margin.ma_1, Margin.ma_1,
+		Colors.outline_variant, ControlSize.border_xs))
+	reasoning_effort_select.get_popup().add_theme_stylebox_override("panel", StyleBoxHelper.create_style_box_flat(
 		ThemeColor.card_surface, ControlSize.radius_lg, Margin.ma_1, Margin.ma_1,
 		Colors.outline_variant, ControlSize.border_xs))
 	ui.style_help_label(api_url_help_label)

@@ -154,6 +154,14 @@ func open_ai_request_to_json_thinking_disabled_test() -> void:
 	pass
 
 
+func open_ai_request_to_json_reasoning_effort_test() -> void:
+	var request := OpenAiRequest.new("deepseek-flash", [ChatMessage.user("hello")], true)
+	request.reasoning_effort = "max"
+	var body: Dictionary = JSON.parse_string(request.to_json())
+	assert(body["reasoning_effort"] == "max")
+	pass
+
+
 func open_ai_request_to_json_response_format_json_object_test() -> void:
 	var request := OpenAiRequest.new("test-model", [ChatMessage.user("hello")], false)
 	request.response_format = OpenAiRequest.RESPONSE_FORMAT_JSON_OBJECT

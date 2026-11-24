@@ -6,6 +6,8 @@ extends RefCounted
 var id: int = -1
 ## Model selected for this conversation. New sessions copy the current default model.
 var model: String
+## Reasoning effort selected for this conversation (`low`, `high`, or `max`).
+var reasoning_effort: String
 var messages: Array[ChatMessage] = []
 var chat_entries: Array[ChatEntry] = []
 ## Per-session composer text, restored when the user switches back to this chat.
@@ -30,6 +32,7 @@ func _init(_id: int = -1) -> void:
 func deep_clone() -> AgentSession:
 	var cloned := AgentSession.new(id)
 	cloned.model = model
+	cloned.reasoning_effort = reasoning_effort
 	cloned.messages.resize(messages.size())
 	for index in messages.size():
 		if messages[index] == null:

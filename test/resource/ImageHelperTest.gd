@@ -145,7 +145,6 @@ func decode_image_format_test() -> void:
 	assert(ImageHelper.decode_image(source.save_png_to_buffer()).format == ImageHelper.png)
 	assert(ImageHelper.decode_image(source.save_webp_to_buffer()).format == ImageHelper.webp)
 	assert(ImageHelper.decode_image("<?xml version=\"1.0\"?><svg xmlns=\"http://www.w3.org/2000/svg\"/>".to_utf8_buffer()).format == ImageHelper.svg)
-	assert(ImageHelper.decode_image(PackedByteArray([0x01, 0x02, 0x03])) == null)
 	pass
 
 

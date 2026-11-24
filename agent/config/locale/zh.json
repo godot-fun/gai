@@ -330,11 +330,17 @@
       "choose": "点击选择工作区文件夹",
       "dialog_title": "打开文件夹"
     },
+    "reasoning_effort": {
+      "low": "低",
+      "high": "高",
+      "max": "最大"
+    },
     "input": {
       "placeholder": "让 gai Code Agent 读取、编辑文件或运行命令…（Enter 发送，Shift+Enter 换行，/ 调用技能，@ 引用文件）",
       "click_to_ask": "点击询问 gai Code Agent…",
       "send": "发送（Enter）",
       "select_model": "选择模型",
+      "reasoning_effort": "推理强度",
       "queued": "排队中（{}）",
       "continue_queue": "继续",
       "delete_queued": "删除排队消息"
@@ -386,6 +392,7 @@
       "invalid_proxy": "请输入合法的 HTTP 或 HTTPS 代理地址",
       "models": "模型",
       "default_model": "新会话默认模型",
+      "reasoning_effort": "推理强度",
       "added_models": "已添加模型",
       "model_id": "模型 ID",
       "model_placeholder": "输入模型 ID",

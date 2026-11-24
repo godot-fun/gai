@@ -5,6 +5,11 @@ extends RefCounted
 
 const DEFAULT_API_URL := "https://api.deepseek.com/chat/completions"
 const DEFAULT_MODEL := "deepseek-flash"
+const REASONING_EFFORT_LOW := "low"
+const REASONING_EFFORT_HIGH := "high"
+const REASONING_EFFORT_MAX := "max"
+const DEFAULT_REASONING_EFFORT := REASONING_EFFORT_HIGH
+const REASONING_EFFORTS: Array[String] = [REASONING_EFFORT_LOW, REASONING_EFFORT_HIGH, REASONING_EFFORT_MAX]
 const CONFIG_FILE_PATH := "user://api.dat"
 
 static var config: ApiConfig = load_config()
@@ -17,6 +22,7 @@ class ApiConfig:
 
 	var profiles: Array[ApiModelProfile] = []
 	var active_model: String = ""
+	var reasoning_effort: String = DEFAULT_REASONING_EFFORT
 	pass
 
 class ApiModelProfile:
@@ -58,6 +64,10 @@ static func get_active_profile() -> ApiModelProfile:
 	return config.profiles[index]
 
 
+static func get_reasoning_effort() -> String:
+	return config.reasoning_effort if config.reasoning_effort in REASONING_EFFORTS else DEFAULT_REASONING_EFFORT
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Model mutations
 
@@ -88,6 +98,14 @@ static func set_active_model(model: String) -> bool:
 	if find_profile_index(model) < 0 or config.active_model == model:
 		return false
 	config.active_model = model
+	save_config()
+	return true
+
+
+static func set_reasoning_effort(reasoning_effort: String) -> bool:
+	if reasoning_effort not in REASONING_EFFORTS or config.reasoning_effort == reasoning_effort:
+		return false
+	config.reasoning_effort = reasoning_effort
 	save_config()
 	return true
 
@@ -155,6 +173,7 @@ static func create_default_config() -> ApiConfig:
 	append_environment_profile(result, "openrouter/auto", "https://openrouter.ai/api/v1/chat/completions", "OPENROUTER_API_KEY")
 	append_environment_profile(result, "qwen-plus", "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", "DASHSCOPE_API_KEY")
 	result.active_model = DEFAULT_MODEL
+	result.reasoning_effort = DEFAULT_REASONING_EFFORT
 	return result
 
 

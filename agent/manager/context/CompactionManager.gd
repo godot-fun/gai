@@ -50,6 +50,7 @@ static func compact_session(session_id: int) -> void:
 	var original_messages: Array[ChatMessage] = []
 	original_messages.assign(session.messages)
 	var client := ApiSetting.get_client(session.model)
+	client.reasoning_effort = session.reasoning_effort
 	client.cancel_scope = CancelScope.new()
 
 	# Build the summary request again from the original conversation. The memory prompt,

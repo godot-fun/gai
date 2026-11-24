@@ -25,6 +25,8 @@ static func get_session_path(session_id: int) -> String:
 static func create_session() -> AgentSession:
 	var session_id := IdUtils.short_uuid()
 	var session := AgentSession.new(session_id)
+	session.model = ApiSetting.get_active_profile().model
+	session.reasoning_effort = ApiSetting.get_reasoning_effort()
 	sessions.put(session.id, session)
 	return session
 

@@ -464,8 +464,13 @@ func ButtonStyle_apply_icon_button_test() -> void:
 	var button := Button.new()
 	ButtonStyle.apply_icon_button(button)
 	assert(button.custom_minimum_size == ControlSize.square(ControlSize.sm))
-	assert(button.get_theme_constant("icon_max_width") == ControlSize.icon_md)
-	assert(button.get_theme_constant("icon_max_height") == ControlSize.icon_md)
+	# The glyph takes the room left after the ma_1 padding, which lands on the matching icon token at
+	# 100% (sm → icon_md). Other presets round the tier and the padding independently, so derive the
+	# expectation from the live tokens and allow the one-pixel rounding drift.
+	var icon_size := ControlSize.sm - 2 * Margin.ma_1
+	assert(button.get_theme_constant("icon_max_width") == icon_size)
+	assert(button.get_theme_constant("icon_max_height") == icon_size)
+	assert(absi(icon_size - ControlSize.icon_md) <= 1)
 	assert(button.mouse_default_cursor_shape == Control.CURSOR_POINTING_HAND)
 	var normal := button.get_theme_stylebox("normal") as StyleBoxFlat
 	assert(normal.bg_color.a == 0.0)
@@ -521,8 +526,10 @@ func FileDialogStyle_apply_test() -> void:
 	assert(dialog.get_theme_color("file_disabled_color") == Colors.disabled_text)
 	assert(dialog.get_theme_color("title_color") == ThemeColor.title_color)
 	assert(dialog.transient)
-	assert(dialog.popup_window)
-	assert(not dialog.exclusive)
+	# Exclusive dialogs block the parent window; Godot only sends outside-click close requests for
+	# non-exclusive popups, so the title-bar close button and Esc remain the dismissal paths.
+	assert(dialog.exclusive)
+	assert(not dialog.popup_window)
 	assert(dialog.close_requested.is_connected(FileDialogStyle.hide_dialog.bind(dialog)))
 	assert(dialog.window_input.is_connected(FileDialogStyle.on_dialog_window_input.bind(dialog)))
 	assert(dialog.get_theme_font("title_font") == Fonts.semibold())

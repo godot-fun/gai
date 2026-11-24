@@ -6,6 +6,8 @@ const REQUEST_TIMEOUT_MILLIS := 5 * TimeUtils.MILLIS_PER_MINUTE
 var api_key: String
 var base_url: String
 var model: String
+## Optional OpenAI-compatible reasoning effort (`low`, `high`, or `max`).
+var reasoning_effort: String = ""
 ## Optional cancellation scope; cancelling it aborts the in-flight request (see CancelScope).
 var cancel_scope: CancelScope = CancelScope.new()
 
@@ -106,6 +108,7 @@ func async_chat_messages_stream(messages: Array[ChatMessage], tools: Array[ToolD
 		return OpenAiCompletion.failure(request_error)
 	var request := OpenAiRequest.new(model, messages, true)
 	request.tools = tools
+	request.reasoning_effort = reasoning_effort
 	var request_body: String = await ExecutorHelper.async_execute_pooled(request.to_json)
 	var pending_build := StringBuilder.new()
 	var utf8_decoder := Utf8StreamDecoder.new()

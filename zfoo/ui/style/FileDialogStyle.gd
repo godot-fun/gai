@@ -23,7 +23,9 @@ static func apply(dialog: FileDialog, label_texts: Dictionary[String, String] = 
 		dialog.ready.connect(func() -> void: apply_control_styles(dialog, label_texts), CONNECT_ONE_SHOT)
 	pass
 ## FileDialog is reused by settings and workspace selection, so dismiss it by hiding rather than
-## freeing it. `popup_window` makes an outside click emit `close_requested`, matching CommonWindow.
+## freeing it. `exclusive` keeps the picker on top of and blocking its transient parent, so the
+## title-bar close button and Esc are the only dismissal paths (a popup would close on any outside
+## click, which loses in-progress navigation).
 static func apply_close(dialog: FileDialog) -> void:
 	dialog.exclusive = true
 	var close_callable := hide_dialog.bind(dialog)

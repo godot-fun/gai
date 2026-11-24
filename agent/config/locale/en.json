@@ -330,11 +330,17 @@
       "choose": "Click to choose workspace folder",
       "dialog_title": "Open a Directory"
     },
+    "reasoning_effort": {
+      "low": "Low",
+      "high": "High",
+      "max": "Max"
+    },
     "input": {
       "placeholder": "Ask gai Code Agent to read, edit, or run commands…  (Enter to send, Shift+Enter for newline, / for skills, @ for files)",
       "click_to_ask": "Click to ask gai Code Agent…",
       "send": "Send (Enter)",
       "select_model": "Select model",
+      "reasoning_effort": "Reasoning effort",
       "queued": "Queued ({})",
       "continue_queue": "Continue",
       "delete_queued": "Delete queued message"
@@ -386,6 +392,7 @@
       "invalid_proxy": "Enter a valid HTTP or HTTPS proxy URL",
       "models": "Models",
       "default_model": "Default model for new chats",
+      "reasoning_effort": "Reasoning effort",
       "added_models": "Added models",
       "model_id": "Model ID",
       "model_placeholder": "Enter a model ID",
