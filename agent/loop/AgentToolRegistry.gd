@@ -35,10 +35,7 @@ static func reload_tools() -> void:
 	register(AudioToTextTool.new())
 	
 	# image tools
-	if AgentSetting.get_read_image_with_api():
-		register(ReadImageRemoteTool.new())
-	else:
-		register(ReadImageLocalTool.new())
+	register(ReadImageLocalTool.new())
 
 	# enhance tools
 	register(DeleteTool.new())

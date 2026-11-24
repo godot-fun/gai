@@ -9,8 +9,8 @@ var external_editor_label: Label
 var external_editor_edit: LineEdit
 var external_editor_dialog: FileDialog
 var editor_field_typing: bool = false
-var read_image_with_api_label: Label
-var read_image_with_api_toggle_button: CheckButton
+var local_model_service_label: Label
+var local_model_service_button: Button
 var browser_headless_label: Label
 var browser_headless_toggle_button: CheckButton
 var restart_web_server_label: Label
@@ -39,13 +39,19 @@ func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> 
 	max_turns_spin.value = AgentSetting.get_max_turns()
 	max_turns_spin.value_changed.connect(on_max_turns_changed)
 	sandbox_parts[3].add_child(max_turns_spin)
-	var read_image_parts := ui.make_setting_row(parent)
-	read_image_with_api_label = ui.make_label(I18n.t("agent.settings.read_image_remotely"))
-	read_image_with_api_label.tooltip_text = I18n.t("agent.settings.read_image_remotely_help")
-	read_image_parts[0].add_child(read_image_with_api_label)
-	read_image_with_api_toggle_button = ui.add_check_button(read_image_parts[1], "", AgentSetting.get_read_image_with_api())
-	read_image_with_api_toggle_button.tooltip_text = I18n.t("agent.settings.read_image_remotely_help")
-	read_image_with_api_toggle_button.toggled.connect(on_read_image_with_api_toggled)
+	var local_model_parts := ui.make_setting_row(parent, 6)
+	local_model_service_label = ui.make_label(I18n.t("agent.settings.local_model_service"))
+	style_browser_row_label(local_model_service_label)
+	local_model_service_label.tooltip_text = I18n.t("agent.settings.local_model_service_help")
+	local_model_parts[0].add_child(local_model_service_label)
+	local_model_service_button = Button.new()
+	local_model_service_button.focus_mode = Control.FOCUS_NONE
+	local_model_service_button.custom_minimum_size.y = ControlSize.sm
+	local_model_service_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	local_model_service_button.tooltip_text = I18n.t("agent.settings.local_model_service_help")
+	local_model_service_button.pressed.connect(on_local_model_service_pressed)
+	local_model_parts[1].add_child(local_model_service_button)
+	refresh_local_model_service_button()
 	var browser_parts := ui.make_setting_row(parent, 6)
 	# Column 1 — browser headless label (label band).
 	browser_headless_label = ui.make_label(I18n.t("agent.settings.browser_headless"))
@@ -115,7 +121,7 @@ func refresh() -> void:
 	max_turns_spin.set_value_no_signal(AgentSetting.get_max_turns())
 	external_editor_edit.text = AgentSetting.get_custom_editor_path()
 	editor_field_typing = false
-	ui.refresh_check_button(read_image_with_api_toggle_button, AgentSetting.get_read_image_with_api())
+	refresh_local_model_service_button()
 	ui.refresh_check_button(browser_headless_toggle_button, AgentSetting.get_browser_headless())
 	pass
 
@@ -178,9 +184,35 @@ func on_external_editor_selected(path: String) -> void:
 	pass
 
 
-func on_read_image_with_api_toggled(enabled: bool) -> void:
-	AgentSetting.set_read_image_with_api(enabled)
-	AgentToolRegistry.reload_tools()
+func on_local_model_service_pressed() -> void:
+	if local_model_service_button.disabled:
+		return
+	if LlamServer.is_running():
+		LlamServer.stop()
+		refresh_local_model_service_button()
+		Alert.alert(I18n.t("agent.settings.local_model_service_stopped"), Colors.success)
+		return
+	local_model_service_button.disabled = true
+	local_model_service_button.text = I18n.t("agent.settings.starting_local_model_service")
+	start_local_model_service.call_deferred()
+	pass
+
+
+func start_local_model_service() -> void:
+	var error := await LlamServer.async_ensure_server_running()
+	local_model_service_button.disabled = false
+	refresh_local_model_service_button()
+	if error == OK:
+		Alert.alert(I18n.t("agent.settings.local_model_service_started"), Colors.success)
+	else:
+		Alert.alert(I18n.t("agent.settings.local_model_service_start_failed"), Colors.error)
+	pass
+
+
+func refresh_local_model_service_button() -> void:
+	if local_model_service_button == null or local_model_service_button.disabled:
+		return
+	local_model_service_button.text = I18n.t("agent.settings.stop_local_model_service" if LlamServer.is_running() else "agent.settings.start_local_model_service")
 	pass
 
 
@@ -226,9 +258,13 @@ func apply_locale() -> void:
 	external_editor_dialog.ok_button_text = I18n.t("common.select")
 	external_editor_dialog.get_cancel_button().text = I18n.t("common.cancel")
 	FileDialogStyle.apply(external_editor_dialog, I18nHelper.file_dialog_label_texts())
-	read_image_with_api_label.text = I18n.t("agent.settings.read_image_remotely")
-	read_image_with_api_label.tooltip_text = I18n.t("agent.settings.read_image_remotely_help")
-	read_image_with_api_toggle_button.tooltip_text = I18n.t("agent.settings.read_image_remotely_help")
+	local_model_service_label.text = I18n.t("agent.settings.local_model_service")
+	local_model_service_label.tooltip_text = I18n.t("agent.settings.local_model_service_help")
+	local_model_service_button.tooltip_text = I18n.t("agent.settings.local_model_service_help")
+	if local_model_service_button.disabled:
+		local_model_service_button.text = I18n.t("agent.settings.starting_local_model_service")
+	else:
+		refresh_local_model_service_button()
 	browser_headless_label.text = I18n.t("agent.settings.browser_headless")
 	browser_headless_label.tooltip_text = I18n.t("agent.settings.browser_headless_help")
 	browser_headless_toggle_button.tooltip_text = I18n.t("agent.settings.browser_headless_help")
@@ -251,8 +287,8 @@ func apply_theme() -> void:
 	ui.style_field_label(external_editor_label)
 	LineEditStyle.apply(external_editor_edit)
 	FileDialogStyle.apply(external_editor_dialog, I18nHelper.file_dialog_label_texts())
-	ui.style_field_label(read_image_with_api_label)
-	CheckButtonStyle.apply(read_image_with_api_toggle_button)
+	ui.style_field_label(local_model_service_label)
+	ButtonStyle.apply_action_button(local_model_service_button)
 	ui.style_field_label(browser_headless_label)
 	CheckButtonStyle.apply(browser_headless_toggle_button)
 	ui.style_field_label(restart_web_server_label)

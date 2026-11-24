@@ -161,22 +161,6 @@ static func set_browser_headless(enabled: bool) -> void:
 	pass
 
 
-# --------------------------------------------- Remote image recognition ----------------------------------------------
-
-const READ_IMAGE_WITH_API_KEY := "agent_read_image_with_api"
-
-
-## Uses the configured OpenAI-compatible API for image understanding; disable for local Qwen3.8-27B.
-static func get_read_image_with_api() -> bool:
-	return Setting.get_bool(READ_IMAGE_WITH_API_KEY, true)
-
-
-static func set_read_image_with_api(enabled: bool) -> void:
-	Setting.set_bool(READ_IMAGE_WITH_API_KEY, enabled)
-	Setting.save()
-	pass
-
-
 # ----------------------------------------------- Maximum agent turns -------------------------------------------------
 
 const MAX_TURNS_KEY := "agent_max_turns"
