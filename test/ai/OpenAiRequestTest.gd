@@ -36,7 +36,7 @@ func open_ai_request_empty_messages_test() -> void:
 	pass
 
 
-func open_ai_request_merges_system_messages_at_beginning_test() -> void:
+func open_ai_request_preserves_system_messages_for_regular_models_test() -> void:
 	var messages: Array[ChatMessage] = [
 		ChatMessage.user("first turn"),
 		ChatMessage.system("agent context"),
@@ -44,6 +44,23 @@ func open_ai_request_merges_system_messages_at_beginning_test() -> void:
 		ChatMessage.system("memory context"),
 	]
 	var body: Dictionary = JSON.parse_string(OpenAiRequest.new("test-model", messages, false).to_json())
+	var wire_messages: Array = body.messages
+	assert(wire_messages.size() == 4)
+	assert(wire_messages[0].role == ChatMessage.ROLE_USER)
+	assert(wire_messages[1].role == ChatMessage.ROLE_SYSTEM)
+	assert(wire_messages[2].role == ChatMessage.ROLE_ASSISTANT)
+	assert(wire_messages[3].role == ChatMessage.ROLE_SYSTEM)
+	pass
+
+
+func open_ai_request_merges_system_messages_for_qwen_test() -> void:
+	var messages: Array[ChatMessage] = [
+		ChatMessage.user("first turn"),
+		ChatMessage.system("agent context"),
+		ChatMessage.assistant("reply"),
+		ChatMessage.system("memory context"),
+	]
+	var body: Dictionary = JSON.parse_string(OpenAiRequest.new("Qwen3.8-27B", messages, false).to_json())
 	var wire_messages: Array = body.messages
 	assert(wire_messages.size() == 3)
 	assert(wire_messages[0].role == ChatMessage.ROLE_SYSTEM)

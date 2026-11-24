@@ -46,9 +46,11 @@ func to_json() -> String:
 	return JsonUtils.object_to_json(body)
 
 
-## Emits one leading system message. Some OpenAI-compatible chat templates (including Qwen3.8)
-## reject multiple system messages or a system message that appears after a conversation turn.
+## Converts messages to their API shape. Qwen chat templates reject multiple system messages or
+## a system message after a conversation turn, so their system messages become one leading entry.
 func build_wire_messages() -> Array:
+	if not model.to_lower().contains("qwen"):
+		return messages.map(func(message: ChatMessage) -> Dictionary: return message.to_api_dict())
 	var wire_messages: Array = []
 	var system_parts := PackedStringArray()
 	for message: ChatMessage in messages:
