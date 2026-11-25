@@ -66,6 +66,7 @@ var setting_button: SettingButton = SettingButton.new()
 var agent_session_sidebar: AgentSessionSidebar = AgentSessionSidebar.new()
 var agent_chat_view: AgentChatView = AgentChatView.new()
 var agent_notification: AgentNotification = AgentNotification.new()
+var agent_logger: AgentLogger = AgentLogger.new()
 var sense_input: SenseInput = SenseInput.new()
 var window_state: WindowState = WindowState.new()
 
@@ -83,6 +84,7 @@ func _ready() -> void:
 	gdf.events.ui_scale_changed.connect(on_ui_scale_changed)
 	
 	agent_toolbar.setup(toolbar_panel, toolbar_logo, workspace_button_node)
+	agent_logger.setup()
 	agent_notification.setup()
 	agent_session_sidebar.setup(pinned_header, pinned_list, pinned_separator,
 			unpinned_header, unpinned_list, session_list_scroll, new_session_button, sidebar_panel)
