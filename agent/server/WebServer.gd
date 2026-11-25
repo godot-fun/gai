@@ -134,7 +134,7 @@ static func async_ensure_server_running() -> int:
 
 
 static func async_wait_for_startup(pid: int) -> int:
-	var deadline := Time.get_ticks_msec() + TimeUtils.MILLIS_PER_SECOND_10
+	var deadline := Time.get_ticks_msec() + TimeUtils.MILLIS_PER_SECOND_30
 	while Time.get_ticks_msec() < deadline:
 		await ThreadUtils.async_sleep(TimeUtils.MILLIS_PER_SECOND)
 		if process_id != pid:
