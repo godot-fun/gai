@@ -36,6 +36,9 @@ func refresh() -> void:
 
 
 func on_button_pressed() -> void:
+	if RuntimeManager.has_running_sessions():
+		Alert.alert(I18n.t("agent.workspace.running"), Colors.error)
+		return
 	WorkspaceWindow.show_workspace()
 	pass
 

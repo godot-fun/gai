@@ -45,6 +45,10 @@ static func is_running(session_id: int) -> bool:
 	return runtimes.has(session_id)
 
 
+static func has_running_sessions() -> bool:
+	return not runtimes.is_empty()
+
+
 static func request_stop(session_id: int) -> void:
 	var runtime := get_runtime(session_id)
 	if runtime == null or runtime.stop_requested:

@@ -328,7 +328,8 @@
     },
     "workspace": {
       "choose": "Click to choose workspace folder",
-      "dialog_title": "Open a Directory"
+      "dialog_title": "Open a Directory",
+      "running": "A session is running. The workspace cannot be changed."
     },
     "reasoning_effort": {
       "low": "Low",

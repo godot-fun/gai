@@ -328,7 +328,8 @@
     },
     "workspace": {
       "choose": "点击选择工作区文件夹",
-      "dialog_title": "打开文件夹"
+      "dialog_title": "打开文件夹",
+      "running": "有会话正在运行，无法切换工作区"
     },
     "reasoning_effort": {
       "low": "低",
