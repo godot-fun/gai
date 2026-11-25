@@ -1,10 +1,10 @@
 class_name StopWatch
 extends RefCounted
 
-var startTime: int = TimeUtils.current_time_millis()
+var startTime: int = Time.get_ticks_msec()
 
 func cost() -> int:
-	return TimeUtils.current_time_millis() - startTime
+	return Time.get_ticks_msec() - startTime
 
 func cost_seconds() -> float:
 	var costSeconds: float = cost() / (TimeUtils.MILLIS_PER_SECOND as float)

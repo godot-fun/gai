@@ -23,7 +23,7 @@ static func now() -> int:
 
 ## Returns the current system timestamp in milliseconds, and refreshes the now() cache.
 static func current_time_millis() -> int:
-	_timestamp = (Time.get_unix_time_from_system() * MILLIS_PER_SECOND) as int
+	_timestamp = int(Time.get_unix_time_from_system() * MILLIS_PER_SECOND)
 	return _timestamp
 
 ## Returns local datetime string "YYYY-MM-DD HH:MM:SS" for timestamp (ms since Unix epoch).

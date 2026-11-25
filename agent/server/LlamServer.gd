@@ -35,7 +35,7 @@ static func _static_init() -> void:
 
 ## Releases the model after five minutes without a request renewing the idle lease.
 static func check_idle_timeout() -> void:
-	if is_running() and last_access_millis > 0 and TimeUtils.current_time_millis() - last_access_millis >= IDLE_TIMEOUT_MILLIS:
+	if is_running() and last_access_millis > 0 and Time.get_ticks_msec() - last_access_millis >= IDLE_TIMEOUT_MILLIS:
 		stop()
 	pass
 
@@ -78,7 +78,7 @@ static func async_chat_completion(messages: Array, max_tokens: int = 2048) -> St
 	if messages.is_empty():
 		Log.error("local model messages is empty")
 		return StringUtils.EMPTY
-	last_access_millis = TimeUtils.current_time_millis()
+	last_access_millis = Time.get_ticks_msec()
 	var error: int = await async_ensure_server_running()
 	if error != OK:
 		return StringUtils.EMPTY
@@ -118,7 +118,7 @@ static func async_start() -> int:
 ## Ensures one service is running and waits for its HTTP endpoint. Concurrent callers share the
 ## same cold start through the PROCESS_ID_STARTING sentinel instead of spawning duplicate processes.
 static func async_ensure_server_running() -> int:
-	last_access_millis = TimeUtils.current_time_millis()
+	last_access_millis = Time.get_ticks_msec()
 	if is_running() and await LlamaHelper.async_health(server_url()):
 		return OK
 	while process_id == PROCESS_ID_STARTING:
@@ -149,8 +149,8 @@ static func async_ensure_server_running() -> int:
 		process_id = PROCESS_ID_STOPPED
 		return ERR_CANT_FORK
 
-	var deadline := TimeUtils.current_time_millis() + START_TIMEOUT_MILLIS
-	while TimeUtils.current_time_millis() < deadline:
+	var deadline := Time.get_ticks_msec() + START_TIMEOUT_MILLIS
+	while Time.get_ticks_msec() < deadline:
 		if not OS.is_process_running(process_id):
 			Log.error("local model service exited during startup")
 			process_id = PROCESS_ID_STOPPED

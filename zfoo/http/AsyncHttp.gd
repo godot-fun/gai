@@ -37,7 +37,7 @@ func _poll_task(task: HttpTask) -> void:
 	var client := task.client
 	client.poll()
 	
-	var now := TimeUtils.current_time_millis()
+	var now := Time.get_ticks_msec()
 	if (now - task.startTime) > task.timeout_millis:
 		fail(task, StringUtils.format("HTTP Request timeout url:[{}] timeout:[{}]", task.url, task.timeout_millis))
 		return
@@ -218,5 +218,5 @@ class HttpTask:
 		self.headers = _headers
 		self.body = _body
 		self.timeout_millis = _timeout_millis
-		self.startTime = TimeUtils.current_time_millis()
+		self.startTime = Time.get_ticks_msec()
 		pass

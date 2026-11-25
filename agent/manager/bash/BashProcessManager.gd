@@ -172,13 +172,13 @@ static func finish(process: BashProcess, exit_code: int) -> void:
 	process.mutex.lock()
 	process.exit_code = exit_code
 	process.running = false
-	process.finish_time = TimeUtils.current_time_millis()
+	process.finish_time = Time.get_ticks_msec()
 	process.mutex.unlock()
 	pass
 
 
 static func cleanup_finished_processes() -> void:
-	var now := TimeUtils.current_time_millis()
+	var now := Time.get_ticks_msec()
 	for process_id: String in processes.keys():
 		var process: BashProcess = processes[process_id]
 		process.mutex.lock()

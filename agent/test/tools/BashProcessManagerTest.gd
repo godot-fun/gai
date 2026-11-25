@@ -46,7 +46,7 @@ static func start_cleans_up_expired_finished_processes_test() -> void:
 	var expired_process: BashProcess = BashProcessManager.processes.get(expired_process_id)
 	assert(expired_process != null)
 	expired_process.mutex.lock()
-	expired_process.finish_time = TimeUtils.current_time_millis() - BashProcessManager.FINISH_TIMEOUT
+	expired_process.finish_time = Time.get_ticks_msec() - BashProcessManager.FINISH_TIMEOUT
 	expired_process.mutex.unlock()
 
 	var next_process_id := BashProcessManager.start("printf next")
