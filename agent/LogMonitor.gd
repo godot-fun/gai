@@ -1,4 +1,4 @@
-class_name AgentLogger
+class_name LogMonitor
 extends RefCounted
 
 ## Logs agent runtime events that are useful for diagnosing tool execution.
