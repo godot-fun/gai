@@ -140,14 +140,14 @@ func update_energy(level: float, delta: float) -> void:
 	var target := pow(clampf(level, 0.0, 1.0), VISUAL_ENERGY_POWER)
 	var previous := energy
 	var speed := ENERGY_ATTACK_SPEED if target > energy else ENERGY_RELEASE_SPEED
-	var blend := 1.0 - exp(-speed * maxf(delta, 0.0))
+	var blend := 1.0 - exp(-speed * delta)
 	energy = lerpf(energy, target, blend)
-	fast_energy = lerpf(fast_energy, target, 1.0 - exp(-FAST_ENERGY_SPEED * maxf(delta, 0.0)))
-	slow_energy = lerpf(slow_energy, target, 1.0 - exp(-SLOW_ENERGY_SPEED * maxf(delta, 0.0)))
+	fast_energy = lerpf(fast_energy, target, 1.0 - exp(-FAST_ENERGY_SPEED * delta))
+	slow_energy = lerpf(slow_energy, target, 1.0 - exp(-SLOW_ENERGY_SPEED * delta))
 	var modulation := clampf(absf(fast_energy - slow_energy) * 3.8, 0.0, 1.0)
 	syllable = maxf(modulation, move_toward(syllable, 0.0, SYLLABLE_DECAY_SPEED * delta))
 	var activity_target := smoothstep(0.08, 0.34, target)
-	activity = lerpf(activity, activity_target, 1.0 - exp(-ACTIVITY_SPEED * maxf(delta, 0.0)))
+	activity = lerpf(activity, activity_target, 1.0 - exp(-ACTIVITY_SPEED * delta))
 	var onset := clampf((energy - previous) * 9.0, 0.0, 1.0)
 	attack = maxf(onset, move_toward(attack, 0.0, ATTACK_DECAY_SPEED * delta))
 	peak = maxf(attack, move_toward(peak, 0.0, PEAK_DECAY_SPEED * delta))
@@ -156,9 +156,6 @@ func update_energy(level: float, delta: float) -> void:
 
 
 func push_ripple_history(value: float, delta: float) -> void:
-	if ripple_history.size() != RIPPLE_HISTORY_SIZE:
-		ripple_history.resize(RIPPLE_HISTORY_SIZE)
-		ripple_history.fill(0.0)
 	ripple_accumulator += RIPPLE_SAMPLE_RATE * delta
 	var steps := mini(int(ripple_accumulator), RIPPLE_HISTORY_SIZE)
 	if steps <= 0:
