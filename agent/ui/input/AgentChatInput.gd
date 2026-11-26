@@ -1032,15 +1032,12 @@ func sync_expanded_height_after_layout() -> void:
 # Chat history avoidance
 # ---------------------------------------------------------------------------
 
-## Bottom padding needed to let the final reply scroll completely above the floating controls.
-## A collapsed action button deliberately stays floating so it does not waste chat space.
+## Bottom padding needed to let the final reply scroll completely above the floating composer.
+## The pending-message queue deliberately stays floating so it does not move chat history.
 func get_chat_input_height() -> float:
 	if not expanded and layout_tween == null:
 		return Margin.ma_2
-	var top: float = input_wrap.offset_top
-	if queue_panel.visible:
-		top = minf(top, queue_panel.position.y)
-	return maxf(float(Margin.ma_2), input_bar.size.y - top + Margin.ma_2)
+	return maxf(float(Margin.ma_2), input_bar.size.y - input_wrap.offset_top + Margin.ma_2)
 
 
 func emit_chat_input_height(height: float = -1.0) -> void:
