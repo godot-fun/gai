@@ -2,6 +2,14 @@ class_name ToolHelper
 extends Object
 
 
+## Effective id of [param tool_call]. Providers that omit ids make the agent answer with the
+## function name, so history sanitizing has to apply the same fallback.
+static func resolve_tool_call_id(tool_call: ToolCall) -> String:
+	if tool_call == null:
+		return StringUtils.EMPTY
+	return tool_call.id if StringUtils.is_not_blank(tool_call.id) else tool_call.function.name
+
+
 static func is_file_tool(tool_name: String) -> bool:
 	return (
 		tool_name == ReadTool.NAME

@@ -35,10 +35,11 @@ static func run(ai_client: OpenAiClient, session: AgentSession) -> void:
 		var deferred_messages: Array[ChatMessage] = []
 		for tool_call: ToolCall in tool_calls:
 			if RuntimeManager.should_stop(session.id):
+				ChatHelper.sanitize(session.messages)
 				AgentEvents.events.agent_end.emit(session.id, "Stop...")
 				return
 			var tool_name := tool_call.function.name
-			var tool_call_id := tool_call.id if StringUtils.is_not_blank(tool_call.id) else tool_name
+			var tool_call_id := ToolHelper.resolve_tool_call_id(tool_call)
 			var tool: AgentTool = AgentToolRegistry.tools.get(tool_name)
 			if tool == null:
 				var unknown_tool_result := AgentToolResult.error(StringUtils.format("unknown tool '{}'", tool_name))

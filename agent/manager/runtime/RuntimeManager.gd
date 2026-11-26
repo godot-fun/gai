@@ -128,6 +128,7 @@ static func on_session_queue_changed(session_id: int) -> void:
 static func run_agent(session: AgentSession) -> void:
 	if not AgentSessionManager.has_index(session.id):
 		return
+	ChatHelper.sanitize(session.messages)
 	var runtime := get_or_create_runtime(session.id)
 	var ai_client := ApiSetting.get_client(session.model)
 	ai_client.reasoning_effort = session.reasoning_effort
