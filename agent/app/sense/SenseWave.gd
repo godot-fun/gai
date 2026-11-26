@@ -7,26 +7,23 @@ extends Window
 
 enum Phase { RECORDING, TRANSCRIBING }
 
-const FADE_IN_SECONDS := 0.16
-const FADE_OUT_SECONDS := 0.20
-const EFFECT_SIZE := 280
-const WAVE_WIDTH := EFFECT_SIZE
-const WAVE_HEIGHT := EFFECT_SIZE
-const TRANSCRIBE_VOLUME := 0.18
-const ENERGY_ATTACK_SPEED := 14.0
-const ENERGY_RELEASE_SPEED := 3.2
-const FAST_ENERGY_SPEED := 28.0
-const SLOW_ENERGY_SPEED := 2.1
-const SYLLABLE_DECAY_SPEED := 4.8
-const ACTIVITY_SPEED := 7.0
-const RIPPLE_HISTORY_SIZE := 32
-const RIPPLE_SAMPLE_RATE := 45.0
+const FADE_IN_SECONDS: float = 0.16
+const FADE_OUT_SECONDS: float = 0.20
+const TRANSCRIBE_VOLUME: float = 0.18
+const ENERGY_ATTACK_SPEED: float = 14.0
+const ENERGY_RELEASE_SPEED: float = 3.2
+const FAST_ENERGY_SPEED: float = 28.0
+const SLOW_ENERGY_SPEED: float = 2.1
+const SYLLABLE_DECAY_SPEED: float = 4.8
+const ACTIVITY_SPEED: float = 7.0
+const RIPPLE_HISTORY_SIZE: int = 32
+const RIPPLE_SAMPLE_RATE: float = 45.0
 ## Microphone meters usually occupy only the quiet end of 0..1; expand that useful range visually.
-const VISUAL_ENERGY_POWER := 0.42
-const ATTACK_DECAY_SPEED := 5.5
-const PEAK_DECAY_SPEED := 1.35
+const VISUAL_ENERGY_POWER: float = 0.42
+const ATTACK_DECAY_SPEED: float = 5.5
+const PEAK_DECAY_SPEED: float = 1.35
 ## The opening pulse should feel spacious rather than explode across the whole window.
-const IMPACT_SECONDS := 0.62
+const IMPACT_SECONDS: float = 0.62
 const SINGULARITY_SHADER: Shader = preload("res://agent/app/sense/SenseWave.gdshader")
 
 static var instance: SenseWave = null
@@ -106,7 +103,7 @@ func _ready() -> void:
 	closing = false
 	var anchor := active_screen_center()
 	screen_scale = DisplayScale.compute_screen_scale(anchor)
-	var effect_size := maxi(1, roundi(float(EFFECT_SIZE) * screen_scale))
+	var effect_size := maxi(1, roundi(float(ControlSize.IMAGE_LG) * screen_scale))
 	size = Vector2i(effect_size, effect_size)
 	position = window_position_for_anchor(anchor, size)
 	get_viewport().transparent_bg = true

@@ -8,15 +8,15 @@ extends RefCounted
 ## pasted with [method NativeOS.paste_clipboard]. Soft failures are logged and leave the target input
 ## unchanged; this flow never opens a selection panel.
 
-const HOTKEY_ID := 1
-const CACHE_DIR := "user://sense"
-const MAX_CACHE_BYTES := 128 * FileUtils.BYTES_PER_MB
-const VOICE_INPUT_FILE := "voice_input_{}.wav"
-const TRANSCRIBE_SCRIPT_REL_PATH := ".ai/audio-to-text/transcribe.py"
-const TRANSCRIBE_TIMEOUT_MILLIS := TimeUtils.MILLIS_PER_MINUTE * 10
+const HOTKEY_ID: int = 1
+const CACHE_DIR: String = "user://sense"
+const MAX_CACHE_BYTES: int = 128 * FileUtils.BYTES_PER_MB
+const VOICE_INPUT_FILE: String = "voice_input_{}.wav"
+const TRANSCRIBE_SCRIPT_REL_PATH: String = ".ai/audio-to-text/transcribe.py"
+const TRANSCRIBE_TIMEOUT_MILLIS: int = TimeUtils.MILLIS_PER_MINUTE * 10
 ## Let other Windows processes observe the new clipboard contents before Ctrl+V arrives.
-const PASTE_DELAY_MILLIS := 50
-const LOG_BODY_MAX := 120
+const PASTE_DELAY_MILLIS: int = 50
+const LOG_BODY_MAX: int = 120
 
 ## True while the current recording is being transcribed and pasted.
 var busy: bool = false
