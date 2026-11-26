@@ -3,7 +3,8 @@
 ## [method SenseWave.window_position_for_anchor] centers the wave window on the anchor.
 func wave_window_position_for_anchor_test() -> void:
 	var anchor := Vector2i(200, 300)
-	var window_size := Vector2i(SenseWave.WAVE_WIDTH, SenseWave.WAVE_HEIGHT)
+	# The wave window is square and sized from the shared large-image token.
+	var window_size := Vector2i(ControlSize.IMAGE_LG, ControlSize.IMAGE_LG)
 	var pos := SenseWave.window_position_for_anchor(anchor, window_size)
 	assert(pos == anchor - Vector2i(window_size.x / 2, window_size.y / 2))
 	pass

@@ -60,6 +60,8 @@ func _init() -> void:
 	unfocusable = true
 	mouse_passthrough = true
 	sharp_corners = true
+	ripple_history.resize(RIPPLE_HISTORY_SIZE)
+	ripple_history.fill(0.0)
 	pass
 
 
@@ -169,8 +171,6 @@ func push_ripple_history(value: float, delta: float) -> void:
 
 
 func setup_shader() -> void:
-	ripple_history.resize(RIPPLE_HISTORY_SIZE)
-	ripple_history.fill(0.0)
 	ripple_image = Image.create(RIPPLE_HISTORY_SIZE, 1, false, Image.FORMAT_RF)
 	ripple_texture = ImageTexture.create_from_image(ripple_image)
 	singularity_material = ShaderMaterial.new()
