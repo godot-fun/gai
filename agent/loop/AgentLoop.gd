@@ -57,6 +57,6 @@ static func run(ai_client: OpenAiClient, session: AgentSession) -> void:
 			session.messages.append(ChatMessage.tool_result(tool_call_id, agent_tool_result.content))
 			deferred_messages.append_array(agent_tool_result.deferred_messages)
 		session.messages.append_array(deferred_messages)
-		AgentEvents.events.turn_end.emit(session.id)
+		AgentEvents.events.turn_end.emit(session.id, turn)
 	AgentEvents.events.agent_end.emit(session.id, "max turns exceeded")
 	pass

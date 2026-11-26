@@ -33,7 +33,8 @@ class Events:
 
 	# Turn lifecycle — one LLM call + tool executions
 	signal turn_start(session_id: int)
-	signal turn_end(session_id: int)
+	## [param turn] is the 1-based index of the finished turn within the current run.
+	signal turn_end(session_id: int, turn: int)
 
 	# Message lifecycle
 	signal message_update(session_id: int, chunk: String, stream_kind: String)

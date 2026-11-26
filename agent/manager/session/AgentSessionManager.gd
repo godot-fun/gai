@@ -15,6 +15,8 @@ static var active_session_id: int = 0
 static func _static_init() -> void:
 	# Session persistence — auto-save when title changes
 	AgentEvents.events.session_title_changed.connect(on_persist_session)
+	# Session persistence — auto-save after each finished turn so tool progress survives a crash
+	AgentEvents.events.turn_end.connect(on_turn_end)
 	# Turn & streaming
 	AgentEvents.events.message_complete.connect(on_message_complete)
 	pass
@@ -366,6 +368,16 @@ static func message_index_for_chat_entry(session: AgentSession, entry_idx: int) 
 # ---------------------------------------------------------------------------
 # Event handlers
 # ---------------------------------------------------------------------------
+
+## Tool progress is persisted mid-run, so a crash or a kill loses at most the last few turns
+## instead of the whole run. Every fifth turn keeps the rewrite rate down — a large session costs
+## hundreds of milliseconds per save — and the index is untouched, so no index write is needed.
+static func on_turn_end(session_id: int, turn: int) -> void:
+	if turn % 5 != 0 or not has_index(session_id):
+		return
+	AgentSessionStore.save_session(session_id)
+	pass
+
 
 static func on_message_complete(session_id: int, usage: OpenAiUsage) -> void:
 	if not usage.has_data():

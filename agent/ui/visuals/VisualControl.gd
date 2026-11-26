@@ -273,7 +273,7 @@ func on_turn_start(session_id: int) -> void:
 	pass
 
 
-func on_turn_end(session_id: int) -> void:
+func on_turn_end(session_id: int, _turn: int) -> void:
 	var effect := get_running_effect(session_id)
 	if effect != null:
 		effect.on_turn_end(session_id)

@@ -158,7 +158,7 @@ func play_turn(
 
 	if tool_specs.is_empty():
 		return true
-	AgentEvents.events.turn_end.emit(session_id)
+	AgentEvents.events.turn_end.emit(session_id, turn_index + 1)
 	return await wait_step(host, pace(0.16, 0.06, large), is_active)
 
 
