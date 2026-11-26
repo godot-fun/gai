@@ -34,7 +34,6 @@ const SUBTITLE: String = "GAI Code Agent"
 @onready var send_button: Button = $Root/Body/ChatArea/InputBar/InputWrap/InputInner/SendButton
 @onready var workspace_button_node: Button = $Root/Toolbar/ToolbarRow/WorkspaceButton
 @onready var workflow_button_node: Button = $Root/Toolbar/ToolbarRow/WorkflowButton
-@onready var sense_button_node: Button = $Root/Toolbar/ToolbarRow/SenseButton
 @onready var editor_button_node: Button = $Root/Toolbar/ToolbarRow/EditorButtonWrap/EditorButton
 @onready var editor_select_button_node: Button = $Root/Toolbar/ToolbarRow/EditorButtonWrap/EditorSelectButton
 @onready var note_button_node: Button = $Root/Toolbar/ToolbarRow/NoteButton
@@ -48,7 +47,6 @@ const SUBTITLE: String = "GAI Code Agent"
 var agent_toolbar: AgentToolbar = AgentToolbar.new()
 var workspace_button: WorkspaceButton = WorkspaceButton.new()
 var workflow_button: WorkflowButton = WorkflowButton.new()
-var sense_button: SenseButton = SenseButton.new()
 var editor_button: EditorButton = EditorButton.new()
 var note_button: NoteButton = NoteButton.new()
 var search_button: SearchButton = SearchButton.new()
@@ -102,7 +100,6 @@ func _ready() -> void:
 	setting_button.setup(setting_button_node)
 	workspace_button.setup(workspace_button_node)
 	workflow_button.setup(workflow_button_node)
-	sense_button.setup(sense_button_node, sense_input)
 	editor_button.setup(editor_button_node, editor_select_button_node, workspace_button_node)
 	note_button.setup(note_button_node)
 	search_button.setup(search_button_node)

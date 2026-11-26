@@ -338,46 +338,6 @@ func sense_prompt_local_parse_step_reply_test() -> void:
 	pass
 
 
-func sense_custom_system_prompt_test() -> void:
-	var previous := SenseSetting.get_system_prompt()
-	SenseSetting.set_system_prompt("")
-	assert(SenseSetting.append_system_prompt("base") == "base")
-	SenseSetting.set_system_prompt("Write concise answers.")
-	var combined := SenseSetting.append_system_prompt("base")
-	assert(combined.begins_with("base\n\n<user_system_prompt>"))
-	assert(combined.contains("Write concise answers."))
-	SenseSetting.set_system_prompt(previous)
-	pass
-
-
-## The leading library templates fill the results list before the user searches; typing searches the whole library.
-func sense_prompt_default_template_test() -> void:
-	var previous_locale := Setting.get_string(I18n.LOCALE_SETTING_KEY)
-	var sense_window := SenseWindow.new(null)
-	assert(sense_window.search_edit.keep_editing_on_text_submit)
-	for locale: String in [I18n.ZH, I18n.EN]:
-		Setting.set_string(I18n.LOCALE_SETTING_KEY, locale)
-		sense_window.load_prompt_entries()
-		assert(sense_window.prompt_entries.size() > SenseWindow.DEFAULT_TEMPLATE_COUNT)
-		sense_window.refresh_results("")
-		assert(sense_window.results.item_count == SenseWindow.DEFAULT_TEMPLATE_COUNT)
-		var template_title := sense_window.results.get_item_text(0)
-		assert(not template_title.is_empty())
-		assert(str(sense_window.results.get_item_metadata(0)) == sense_window.prompt_entries.get_value(template_title))
-		sense_window.refresh_results(template_title)
-		assert(sense_window.results.item_count > 0 and sense_window.results.item_count <= SenseWindow.MAX_RESULTS)
-	sense_window.free()
-	Setting.set_string(I18n.LOCALE_SETTING_KEY, previous_locale)
-	pass
-
-
-func sense_hotkey_text_test() -> void:
-	assert(SenseSetting.hotkey_text(SenseSetting.DEFAULT_HOTKEY_KEY, SenseSetting.DEFAULT_HOTKEY_MODIFIERS) == "Alt+Z")
-	assert(SenseSetting.hotkey_text(KEY_Z, KEY_MASK_CTRL | KEY_MASK_ALT) == "Ctrl+Alt+Z")
-	assert(SenseSetting.hotkey_text(KEY_F9, KEY_MASK_CTRL | KEY_MASK_SHIFT) == "Ctrl+Shift+F9")
-	pass
-
-
 ## Voice history keeps at most six corrected (or ASR fallback) strings in memory (oldest dropped first).
 func voice_history_capacity_test() -> void:
 	var sense := SenseInput.new()

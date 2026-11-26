@@ -11,15 +11,7 @@ Global push-to-talk sense input for the agent app. **Hold Alt+Z** to record — 
 5. Picker briefly steals focus for keyboard nav (`↑`/`↓` among ready rows + cancel, `Enter` confirm, `1`–`5` / keypad jump to a ready slot, `Esc` cancel). Click a ready row also works. On close it `NativeOS.restore_foreground_window()`, then clipboard + `NativeOS.paste_clipboard()` (Ctrl+V into the target field). Cancel / Esc dismisses without pasting.
 6. A desktop toast reports the pasted preview (success only). Busy-in-progress may warn; ASR / mic / save failures never toast — diverge prediction guarantees a result.
 
-### Local vs remote (`SenseInput.use_local_llm`)
-
-| | Local (`use_local_llm = true`, default) | Remote (`use_local_llm = false`) |
-|--|--|--|
-| Chat | `LlamServer` (Qwen3.8-27B) | `OpenAiClient` via `ApiSetting` |
-| Prompts | `SensePromptLocal` (short, clamped) | `SensePrompt` (rich) |
-| Compose | Sequential: correct → optimize → expand → diverge | One-shot JSON with correct/optimize/expand |
-| Diverge | Last compose step (expand + screen); OCR fallback if no voice | Early screen-only chat (parallel with compose) |
-| Screen OCR | Always `LlamServer` (vision) | Always `LlamServer` (vision) |
+The global shortcut is configured in the shared **Settings → Shortcuts** section. Sense is always enabled and uses the local `LlamServer` pipeline.
 
 ## Input beacon
 
@@ -43,9 +35,7 @@ Clicks pass through (`mouse_passthrough`). During transcription / compose the wa
 | `AudioRecorder` | Microphone → PCM16 WAV |
 | Sense local transcription | Local SenseVoice transcription |
 | `LlamServer` | Local Qwen3.8-27B: screenshot OCR; local compose + diverge when `use_local_llm` |
-| `ApiSetting` / `OpenAiClient` | Remote compose + diverge when not `use_local_llm` |
 | `SensePromptLocal` | Short local prompts + input clamps (zh / en by app locale) |
-| `SensePrompt` | Rich remote prompts / one-shot compose JSON (zh / en) |
 
 ## Files
 

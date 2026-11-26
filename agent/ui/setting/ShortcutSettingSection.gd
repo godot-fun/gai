@@ -3,8 +3,10 @@ extends SettingSection
 
 ## Settings category for rebinding in-app shortcuts. Search opens with Ctrl+F by default.
 
-enum CaptureTarget { NONE, SEARCH, PREV_USER_MESSAGE, NEXT_USER_MESSAGE, PREV_REPLY, NEXT_REPLY }
+enum CaptureTarget { NONE, SENSE, SEARCH, PREV_USER_MESSAGE, NEXT_USER_MESSAGE, PREV_REPLY, NEXT_REPLY }
 
+var sense_label: Label
+var sense_button: Button
 var search_label: Label
 var search_button: Button
 var prev_user_message_label: Label
@@ -21,6 +23,10 @@ var capture_target: CaptureTarget = CaptureTarget.NONE
 func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, _window: Window) -> void:
 	super.set_up(p_ui, parent, _window)
 	heading_label = ui.add_heading(parent, I18n.t("agent.settings.shortcut"))
+	sense_label = ui.make_label(I18n.t("agent.settings.sense_shortcut"))
+	sense_label.tooltip_text = I18n.t("agent.settings.sense_shortcut_help")
+	sense_button = add_shortcut_button(parent, sense_label, I18n.t("agent.settings.sense_shortcut_help"))
+	sense_button.pressed.connect(on_sense_capture_started)
 	search_label = ui.make_label(I18n.t("agent.settings.open_search"))
 	search_label.tooltip_text = I18n.t("agent.settings.shortcut_help")
 	search_button = add_shortcut_button(parent, search_label, I18n.t("agent.settings.shortcut_help"))
@@ -97,6 +103,11 @@ func refresh() -> void:
 	pass
 
 
+func on_sense_capture_started() -> void:
+	begin_capture(CaptureTarget.SENSE, sense_button)
+	pass
+
+
 func on_search_capture_started() -> void:
 	begin_capture(CaptureTarget.SEARCH, search_button)
 	pass
@@ -152,9 +163,15 @@ func on_shortcut_input(event: InputEvent) -> void:
 		button.text = I18n.t("agent.settings.shortcut_invalid")
 		button.accept_event()
 		return
+	if capture_target == CaptureTarget.SENSE and Engine.has_singleton("GlobalHotkey") and not GlobalHotkey.is_key_supported(key_event.keycode):
+		button.text = I18n.t("agent.settings.shortcut_invalid")
+		button.accept_event()
+		return
 	var target := capture_target
 	capture_target = CaptureTarget.NONE
 	match target:
+		CaptureTarget.SENSE:
+			ShortcutSetting.set_sense_shortcut(key)
 		CaptureTarget.SEARCH:
 			ShortcutSetting.set_search_shortcut(key)
 		CaptureTarget.PREV_USER_MESSAGE:
@@ -172,6 +189,8 @@ func on_shortcut_input(event: InputEvent) -> void:
 
 func capture_button() -> Button:
 	match capture_target:
+		CaptureTarget.SENSE:
+			return sense_button
 		CaptureTarget.SEARCH:
 			return search_button
 		CaptureTarget.PREV_USER_MESSAGE:
@@ -187,6 +206,9 @@ func capture_button() -> Button:
 
 func apply_locale() -> void:
 	heading_label.text = I18n.t("agent.settings.shortcut")
+	sense_label.text = I18n.t("agent.settings.sense_shortcut")
+	sense_label.tooltip_text = I18n.t("agent.settings.sense_shortcut_help")
+	sense_button.tooltip_text = I18n.t("agent.settings.sense_shortcut_help")
 	search_label.text = I18n.t("agent.settings.open_search")
 	search_label.tooltip_text = I18n.t("agent.settings.shortcut_help")
 	search_button.tooltip_text = I18n.t("agent.settings.shortcut_help")
@@ -210,6 +232,7 @@ func apply_locale() -> void:
 
 
 func show_bindings() -> void:
+	sense_button.text = OS.get_keycode_string(ShortcutSetting.get_sense_shortcut())
 	search_button.text = OS.get_keycode_string(ShortcutSetting.get_search_shortcut())
 	prev_user_message_button.text = OS.get_keycode_string(ShortcutSetting.get_prev_user_message_shortcut())
 	next_user_message_button.text = OS.get_keycode_string(ShortcutSetting.get_next_user_message_shortcut())
@@ -220,11 +243,13 @@ func show_bindings() -> void:
 
 func apply_theme() -> void:
 	super.apply_theme()
+	ui.style_field_label(sense_label)
 	ui.style_field_label(search_label)
 	ui.style_field_label(prev_user_message_label)
 	ui.style_field_label(next_user_message_label)
 	ui.style_field_label(prev_reply_label)
 	ui.style_field_label(next_reply_label)
+	ButtonStyle.apply_action_button(sense_button)
 	ButtonStyle.apply_action_button(search_button)
 	ButtonStyle.apply_action_button(prev_user_message_button)
 	ButtonStyle.apply_action_button(next_user_message_button)

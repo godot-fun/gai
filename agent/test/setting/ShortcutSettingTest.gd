@@ -13,6 +13,8 @@ static func default_search_shortcut_test() -> void:
 	var ctrl_shift_page_down: Key = KEY_PAGEDOWN | KEY_MASK_SHIFT | KEY_MASK_CTRL
 	assert(ShortcutSetting.DEFAULT_PREV_REPLY_SHORTCUT == ctrl_shift_page_up)
 	assert(ShortcutSetting.DEFAULT_NEXT_REPLY_SHORTCUT == ctrl_shift_page_down)
+	assert(ShortcutSetting.DEFAULT_SENSE_SHORTCUT == (KEY_Z | KEY_MASK_ALT))
+	assert(OS.get_keycode_string(ShortcutSetting.DEFAULT_SENSE_SHORTCUT) == "Alt+Z")
 	pass
 
 
@@ -139,4 +141,19 @@ static func set_next_reply_shortcut_test() -> void:
 	ShortcutSetting.set_next_reply_shortcut(previous)
 	assert(emit_count[0] == 2)
 	AgentEvents.events.next_reply_shortcut_changed.disconnect(on_changed)
+	pass
+
+
+static func set_sense_shortcut_test() -> void:
+	var previous: Key = ShortcutSetting.get_sense_shortcut()
+	var new_key: Key = KEY_F9 | KEY_MASK_CTRL | KEY_MASK_SHIFT
+	var emit_count: Array[int] = [0]
+	var on_changed := func() -> void: emit_count[0] += 1
+	AgentEvents.events.sense_shortcut_changed.connect(on_changed)
+	ShortcutSetting.set_sense_shortcut(new_key)
+	assert(ShortcutSetting.get_sense_shortcut() == new_key)
+	assert(emit_count[0] == 1)
+	ShortcutSetting.set_sense_shortcut(previous)
+	assert(emit_count[0] == 2)
+	AgentEvents.events.sense_shortcut_changed.disconnect(on_changed)
 	pass

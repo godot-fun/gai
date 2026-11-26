@@ -6,9 +6,7 @@ extends RefCounted
 ## screenshot → local model context (up to 3 s), build five candidates (voice / correct / optimize / expand / diverge),
 ## then let [SensePicker] choose (↑↓ / Enter / click); it restores the target app before
 ## clipboard + Ctrl+V via [method NativeOS.paste_clipboard].
-## Two LLM backends (selected by [method SenseSetting.use_local_model]):
-## - Local: [LlamServer] + [SensePromptLocal] — sequential correct → optimize → expand → diverge.
-## - Remote: [OpenAiClient] + [SensePrompt] — one-shot compose JSON; diverge early from screen alone.
+## [LlamServer] + [SensePromptLocal] compose sequential correct → optimize → expand → diverge.
 ## Screen OCR always uses local [LlamServer] (vision).
 ## Never shows error toasts: every press opens the picker; ASR soft-fails use screen-driven candidates.
 
@@ -43,6 +41,7 @@ class SenseSession extends RefCounted:
 
 
 func setup() -> void:
+	AgentEvents.events.sense_shortcut_changed.connect(apply_settings)
 	apply_settings()
 	cleanup_caches()
 	SchedulerBus.schedule_at_fixed_rate(cleanup_caches, TimeUtils.MILLIS_PER_HOUR, "sense_clean")
@@ -51,13 +50,12 @@ func setup() -> void:
 
 func apply_settings() -> void:
 	unregister_hotkey()
-	if not SenseSetting.is_enabled():
-		return
 	if not Engine.has_singleton("GlobalHotkey"):
 		Log.error("SenseInput: GlobalHotkey singleton missing (GDExtension not loaded)")
 		return
-	var hotkey_key := SenseSetting.get_hotkey_key()
-	var modifiers := SenseSetting.get_hotkey_modifiers()
+	var shortcut := ShortcutSetting.get_sense_shortcut()
+	var hotkey_key := (shortcut & KEY_CODE_MASK) as Key
+	var modifiers := shortcut & (KEY_MASK_CTRL | KEY_MASK_ALT | KEY_MASK_SHIFT | KEY_MASK_META)
 	if not GlobalHotkey.is_key_supported(hotkey_key):
 		Log.error("SenseInput: configured key is not supported as a global hotkey")
 		return
@@ -67,9 +65,9 @@ func apply_settings() -> void:
 		GlobalHotkey.hotkey_released.connect(on_hotkey_released)
 	var registered := GlobalHotkey.register_hotkey(HOTKEY_ID, hotkey_key, modifiers)
 	if not registered:
-		Log.error("SenseInput: failed to register {} (combo may already be taken)", SenseSetting.hotkey_text())
+		Log.error("SenseInput: failed to register {} (combo may already be taken)", OS.get_keycode_string(shortcut))
 		return
-	Log.info("SenseInput: registered push-to-talk {}", SenseSetting.hotkey_text())
+	Log.info("SenseInput: registered push-to-talk {}", OS.get_keycode_string(shortcut))
 	pass
 
 
@@ -80,6 +78,8 @@ func unregister_hotkey() -> void:
 
 
 func shutdown() -> void:
+	if AgentEvents.events.sense_shortcut_changed.is_connected(apply_settings):
+		AgentEvents.events.sense_shortcut_changed.disconnect(apply_settings)
 	SenseWave.dismiss()
 	SensePicker.dismiss()
 	if AudioRecorder.is_active():
@@ -146,8 +146,6 @@ func on_hotkey_released(id: int) -> void:
 	else:
 		picker.skip_voice_slot()
 		async_fill_compose_from_screen(picker)
-	if not SenseSetting.use_local_model():
-		async_fill_diverge(picker)
 	var chosen := str(await picker.finished)
 	busy = false
 	if StringUtils.is_blank(chosen):
@@ -206,12 +204,9 @@ static func async_audio_to_text(audio_path: String) -> AgentToolResult:
 
 
 
-## Dispatch compose to local (sequential) or remote (one-shot JSON).
+## Dispatch the local sequential compose pipeline.
 func async_fill_compose(picker: SensePicker, voice_text: String, remember_correct: bool = true) -> void:
-	if SenseSetting.use_local_model():
-		await async_fill_compose_local(picker, voice_text, remember_correct)
-	else:
-		await async_fill_compose_remote(picker, voice_text, remember_correct)
+	await async_fill_compose_local(picker, voice_text, remember_correct)
 	pass
 
 
@@ -225,12 +220,7 @@ func async_fill_compose_from_screen(picker: SensePicker) -> void:
 		picker.skip_entry(SensePicker.SLOT_OPTIMIZE)
 		picker.skip_entry(SensePicker.SLOT_EXPAND)
 		return
-	var use_local_model := SenseSetting.use_local_model()
-	var seed: String
-	if use_local_model:
-		seed = await LlamServer.async_chat(SensePromptLocal.screen_seed_user_prompt(), SenseSetting.append_system_prompt(SensePromptLocal.screen_seed_system(screen_context)), SensePromptLocal.MAX_TOKENS_CORRECT)
-	else:
-		seed = await async_remote_chat(screen_context, SenseSetting.append_system_prompt(SensePrompt.screen_seed_system()))
+	var seed := await LlamServer.async_chat(SensePromptLocal.screen_seed_user_prompt(), SensePromptLocal.screen_seed_system(screen_context), SensePromptLocal.MAX_TOKENS_CORRECT)
 	seed = strip_guess_text(seed)
 	if not is_picker_alive(picker):
 		return
@@ -239,10 +229,7 @@ func async_fill_compose_from_screen(picker: SensePicker) -> void:
 		picker.skip_entry(SensePicker.SLOT_OPTIMIZE)
 		picker.skip_entry(SensePicker.SLOT_EXPAND)
 		return
-	if use_local_model:
-		await async_fill_compose_local(picker, seed, false)
-	else:
-		await async_fill_compose_remote(picker, seed, false)
+	await async_fill_compose_local(picker, seed, false)
 	pass
 
 
@@ -256,7 +243,7 @@ func async_fill_compose_remote(picker: SensePicker, voice_text: String, remember
 	if remember_correct:
 		history_lines = voice_history.to_array()
 	var prompt := SensePrompt.compose_user_prompt(voice_text, screen_context, history_lines)
-	var raw := await async_remote_chat(prompt, SenseSetting.append_system_prompt(SensePrompt.compose_system()))
+	var raw := await async_remote_chat(prompt, SensePrompt.compose_system())
 	if not is_picker_alive(picker):
 		return
 	var parsed := parse_compose_json(raw)
@@ -378,23 +365,13 @@ func async_ocr_screen_and_diverge(session: SenseSession) -> void:
 		session.screen_ready = true
 		session.diverge_ready = true
 		return
-	var use_local_model := SenseSetting.use_local_model()
-	var screen_prompt := SenseSetting.append_system_prompt(SensePromptLocal.screen_prompt() if use_local_model else SensePrompt.screen_prompt())
+	var screen_prompt := SensePromptLocal.screen_prompt()
 	var text := (await LlamServer.async_image_to_text(absolute, screen_prompt)).strip_edges()
 	session.screen_text = text
 	session.screen_ready = true
 	if session != sense_session:
 		return
-	# Local compose fills diverge after expand; only the remote path uses the early result.
-	if use_local_model:
-		return
-	if StringUtils.is_blank(text):
-		session.diverge_ready = true
-		return
-	var prompt := SensePrompt.diverge_user_prompt(text)
-	var raw := await async_remote_chat(prompt, SenseSetting.append_system_prompt(SensePrompt.diverge_system()))
-	session.diverge_text = strip_guess_text(raw)
-	session.diverge_ready = true
+	# Local compose fills diverge after expand.
 	pass
 
 
@@ -416,13 +393,13 @@ func async_fill_compose_local(picker: SensePicker, voice_text: String, remember_
 	var screen_context := await async_wait_screen_context()
 	if not is_picker_alive(picker):
 		return
-	var correct_raw := await LlamServer.async_chat(SensePromptLocal.correct_user_prompt(voice_text), SenseSetting.append_system_prompt(SensePromptLocal.correct_screen_system(screen_context)), SensePromptLocal.MAX_TOKENS_CORRECT)
+	var correct_raw := await LlamServer.async_chat(SensePromptLocal.correct_user_prompt(voice_text), SensePromptLocal.correct_screen_system(screen_context), SensePromptLocal.MAX_TOKENS_CORRECT)
 	if not is_picker_alive(picker):
 		return
 	var correct := SensePromptLocal.parse_step_reply(correct_raw)
 	if SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_CORRECT, voice_text, correct):
 		Log.info("SenseInput: correct output drift; retry with ASR only source:[{}] result:[{}]", voice_text.length(), correct.length())
-		correct_raw = await LlamServer.async_chat(SensePromptLocal.correct_user_prompt(voice_text), SenseSetting.append_system_prompt(SensePromptLocal.correct_system()), SensePromptLocal.MAX_TOKENS_CORRECT)
+		correct_raw = await LlamServer.async_chat(SensePromptLocal.correct_user_prompt(voice_text), SensePromptLocal.correct_system(), SensePromptLocal.MAX_TOKENS_CORRECT)
 		if not is_picker_alive(picker):
 			return
 		correct = SensePromptLocal.parse_step_reply(correct_raw)
@@ -432,13 +409,13 @@ func async_fill_compose_local(picker: SensePicker, voice_text: String, remember_
 	if remember_correct:
 		voice_history.add(correct)
 	picker.set_entry(SensePicker.SLOT_CORRECT, correct)
-	var optimize_raw := await LlamServer.async_chat(SensePromptLocal.optimize_user_prompt(correct), SenseSetting.append_system_prompt(SensePromptLocal.optimize_screen_system(screen_context)), SensePromptLocal.MAX_TOKENS_OPTIMIZE)
+	var optimize_raw := await LlamServer.async_chat(SensePromptLocal.optimize_user_prompt(correct), SensePromptLocal.optimize_screen_system(screen_context), SensePromptLocal.MAX_TOKENS_OPTIMIZE)
 	if not is_picker_alive(picker):
 		return
 	var optimize := SensePromptLocal.parse_step_reply(optimize_raw)
 	if SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_OPTIMIZE, correct, optimize):
 		Log.info("SenseInput: optimize output drift; retry without screen source:[{}] result:[{}]", correct.length(), optimize.length())
-		optimize_raw = await LlamServer.async_chat(SensePromptLocal.optimize_user_prompt(correct), SenseSetting.append_system_prompt(SensePromptLocal.optimize_system()), SensePromptLocal.MAX_TOKENS_OPTIMIZE)
+		optimize_raw = await LlamServer.async_chat(SensePromptLocal.optimize_user_prompt(correct), SensePromptLocal.optimize_system(), SensePromptLocal.MAX_TOKENS_OPTIMIZE)
 		if not is_picker_alive(picker):
 			return
 		optimize = SensePromptLocal.parse_step_reply(optimize_raw)
@@ -446,13 +423,13 @@ func async_fill_compose_local(picker: SensePicker, voice_text: String, remember_
 		Log.info("SenseInput: optimize output drift after retry; use correct source:[{}] result:[{}]", correct.length(), optimize.length())
 		optimize = correct
 	picker.set_entry(SensePicker.SLOT_OPTIMIZE, optimize)
-	var expand_raw := await LlamServer.async_chat(SensePromptLocal.expand_user_prompt(optimize), SenseSetting.append_system_prompt(SensePromptLocal.expand_screen_system(screen_context)), SensePromptLocal.MAX_TOKENS_EXPAND)
+	var expand_raw := await LlamServer.async_chat(SensePromptLocal.expand_user_prompt(optimize), SensePromptLocal.expand_screen_system(screen_context), SensePromptLocal.MAX_TOKENS_EXPAND)
 	if not is_picker_alive(picker):
 		return
 	var expand := SensePromptLocal.parse_step_reply(expand_raw)
 	if SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_EXPAND, optimize, expand):
 		Log.info("SenseInput: expand output drift; retry without screen source:[{}] result:[{}]", optimize.length(), expand.length())
-		expand_raw = await LlamServer.async_chat(SensePromptLocal.expand_user_prompt(optimize), SenseSetting.append_system_prompt(SensePromptLocal.expand_system()), SensePromptLocal.MAX_TOKENS_EXPAND)
+		expand_raw = await LlamServer.async_chat(SensePromptLocal.expand_user_prompt(optimize), SensePromptLocal.expand_system(), SensePromptLocal.MAX_TOKENS_EXPAND)
 		if not is_picker_alive(picker):
 			return
 		expand = SensePromptLocal.parse_step_reply(expand_raw)
@@ -460,13 +437,13 @@ func async_fill_compose_local(picker: SensePicker, voice_text: String, remember_
 		Log.info("SenseInput: expand output drift after retry; use optimize source:[{}] result:[{}]", optimize.length(), expand.length())
 		expand = optimize
 	picker.set_entry(SensePicker.SLOT_EXPAND, expand)
-	var diverge_raw := await LlamServer.async_chat(SensePromptLocal.diverge_simple_user_prompt(expand), SenseSetting.append_system_prompt(SensePromptLocal.diverge_system(screen_context)), SensePromptLocal.MAX_TOKENS_DIVERGE)
+	var diverge_raw := await LlamServer.async_chat(SensePromptLocal.diverge_simple_user_prompt(expand), SensePromptLocal.diverge_system(screen_context), SensePromptLocal.MAX_TOKENS_DIVERGE)
 	if not is_picker_alive(picker):
 		return
 	var diverge := SensePromptLocal.parse_step_reply(diverge_raw)
 	if SensePromptLocal.is_output_deviated(SensePromptLocal.KEY_DIVERGE, expand, diverge):
 		Log.info("SenseInput: diverge output drift; retry without screen source:[{}] result:[{}]", expand.length(), diverge.length())
-		diverge_raw = await LlamServer.async_chat(SensePromptLocal.diverge_simple_user_prompt(expand), SenseSetting.append_system_prompt(SensePromptLocal.diverge_simple_system()), SensePromptLocal.MAX_TOKENS_DIVERGE)
+		diverge_raw = await LlamServer.async_chat(SensePromptLocal.diverge_simple_user_prompt(expand), SensePromptLocal.diverge_simple_system(), SensePromptLocal.MAX_TOKENS_DIVERGE)
 		if not is_picker_alive(picker):
 			return
 		diverge = SensePromptLocal.parse_step_reply(diverge_raw)

@@ -102,6 +102,8 @@ class Events:
 	signal prev_reply_shortcut_changed
 	## Next agent-reply shortcut changed (see [method ShortcutSetting.set_next_reply_shortcut]).
 	signal next_reply_shortcut_changed
+	## Sense push-to-talk shortcut changed (see [method ShortcutSetting.set_sense_shortcut]).
+	signal sense_shortcut_changed
 
 	# ===========================================================================
 	# UI-ONLY COORDINATION — UI -> UI; managers must never subscribe below
