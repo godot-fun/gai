@@ -162,27 +162,18 @@ Native OS helpers for the foreground app while Godot is unfocused:
 | Method | Role |
 | --- | --- |
 | `paste_clipboard()` | Synthesize Ctrl+V into the foreground window (after clipboard set) |
-| `remember_foreground_window()` | Store the current foreground HWND; returns `bool` |
-| `restore_foreground_window()` | Activate the remembered HWND and clear it; returns `bool` |
-| `capture_screen(path)` | Capture the full physical monitor under the mouse to a PNG file; returns `bool` |
 | `apply_title_bar_dark_mode(window_id, dark_mode)` | Windows DWM immersive dark title bar; returns `bool` |
 | `drag_files(paths)` | Start a native OLE `CF_HDROP` file drag and block until drop/cancel; returns whether copied |
 
 ```gdscript
-NativeOS.remember_foreground_window()
-# … briefly focus a Godot Window for keyboard input …
-NativeOS.restore_foreground_window()
 DisplayServer.clipboard_set("hello")
 NativeOS.paste_clipboard()
-var ok: bool = NativeOS.capture_screen("user://sense/screen.png")
 ```
 
 Notes:
 
-- `remember_foreground_window` / `restore_foreground_window` pair a brief Godot focus steal (e.g. sense candidate picker) with returning activation to the typing target before `paste_clipboard`. Restore uses `AttachThreadInput` + `SetForegroundWindow`.
 - `paste_clipboard` uses Win32 `SendInput` (Ctrl+V). Put text on the clipboard first (`DisplayServer.clipboard_set`).
-- `capture_screen` uses GDI `BitBlt` of `MonitorFromPoint` / `rcMonitor` (full physical screen under the cursor, including taskbar). Does not hide Godot overlays (beacon / toast may appear). Path is written via Godot `Image.save_png` (`user://`, absolute, etc.).
-- **Linux / macOS:** not implemented yet; `paste_clipboard` / remember-restore / `capture_screen` return no-op / `false` / `false`.
+- **Linux / macOS:** `paste_clipboard` is not implemented yet and returns a no-op.
 
 ## Test
 

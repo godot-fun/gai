@@ -20,8 +20,9 @@ const DEFAULT_PREV_REPLY_SHORTCUT: Key = KEY_PAGEUP | KEY_MASK_SHIFT | KEY_MASK_
 ## Jumps to the next agent reply in the chat history. Default is Ctrl+Shift+Page Down.
 const DEFAULT_NEXT_REPLY_SHORTCUT: Key = KEY_PAGEDOWN | KEY_MASK_SHIFT | KEY_MASK_CTRL
 const SENSE_SHORTCUT_KEY := "agent_sense_shortcut"
-## Starts and stops the global Sense push-to-talk input. Default is Alt+Z.
-const DEFAULT_SENSE_SHORTCUT: Key = KEY_Z | KEY_MASK_ALT
+## Starts and stops the global Sense push-to-talk input. Default is Win+Z.
+const DEFAULT_SENSE_SHORTCUT: Key = KEY_Z | KEY_MASK_META
+const LEGACY_SENSE_SHORTCUT: Key = KEY_Z | KEY_MASK_ALT
 
 
 static func get_search_shortcut() -> Key:
@@ -75,7 +76,11 @@ static func set_next_reply_shortcut(key: Key) -> void:
 
 
 static func get_sense_shortcut() -> Key:
-	return Setting.get_int(SENSE_SHORTCUT_KEY, DEFAULT_SENSE_SHORTCUT) as Key
+	var shortcut := Setting.get_int(SENSE_SHORTCUT_KEY, DEFAULT_SENSE_SHORTCUT) as Key
+	if shortcut == LEGACY_SENSE_SHORTCUT:
+		save_shortcut(SENSE_SHORTCUT_KEY, DEFAULT_SENSE_SHORTCUT)
+		return DEFAULT_SENSE_SHORTCUT
+	return shortcut
 
 
 static func set_sense_shortcut(key: Key) -> void:

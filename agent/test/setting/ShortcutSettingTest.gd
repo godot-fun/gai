@@ -13,8 +13,8 @@ static func default_search_shortcut_test() -> void:
 	var ctrl_shift_page_down: Key = KEY_PAGEDOWN | KEY_MASK_SHIFT | KEY_MASK_CTRL
 	assert(ShortcutSetting.DEFAULT_PREV_REPLY_SHORTCUT == ctrl_shift_page_up)
 	assert(ShortcutSetting.DEFAULT_NEXT_REPLY_SHORTCUT == ctrl_shift_page_down)
-	assert(ShortcutSetting.DEFAULT_SENSE_SHORTCUT == (KEY_Z | KEY_MASK_ALT))
-	assert(OS.get_keycode_string(ShortcutSetting.DEFAULT_SENSE_SHORTCUT) == "Alt+Z")
+	assert(ShortcutSetting.DEFAULT_SENSE_SHORTCUT == (KEY_Z | KEY_MASK_META))
+	assert(ShortcutSetting.LEGACY_SENSE_SHORTCUT == (KEY_Z | KEY_MASK_ALT))
 	pass
 
 

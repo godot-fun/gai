@@ -1,24 +1,9 @@
-## Unit tests for NativeOS paste / screen-capture helpers.
+## Unit tests for NativeOS paste and window helpers.
 extends RefCounted
 
 
 static func native_file_drag_rejects_empty_paths_test() -> void:
 	assert(not NativeOS.drag_files(PackedStringArray()))
-	pass
-
-
-func native_os_foreground_remember_restore_smoke_test() -> void:
-	var remembered := NativeOS.remember_foreground_window()
-	var restored := NativeOS.restore_foreground_window()
-	if OS.get_name() != "Windows":
-		assert(not remembered)
-		assert(not restored)
-		return
-	# Headless may lack a usable foreground HWND; both paths must stay bool-safe.
-	assert(typeof(remembered) == TYPE_BOOL)
-	assert(typeof(restored) == TYPE_BOOL)
-	# Restore with nothing remembered must fail cleanly.
-	assert(not NativeOS.restore_foreground_window())
 	pass
 
 
@@ -28,17 +13,4 @@ func native_os_apply_title_bar_dark_mode_smoke_test() -> void:
 		assert(not ok)
 		return
 	assert(typeof(ok) == TYPE_BOOL)
-	pass
-
-
-func native_os_capture_screen_test() -> void:
-	var path := OS.get_user_data_dir().path_join("native_os_capture_smoke.png")
-	var ok := NativeOS.capture_screen(path)
-	if OS.get_name() != "Windows":
-		assert(not ok)
-		return
-	assert(ok)
-	var img := Image.load_from_file(path)
-	assert(img != null and not img.is_empty())
-	assert(img.get_width() > 0 and img.get_height() > 0)
 	pass

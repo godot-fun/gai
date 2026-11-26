@@ -2,7 +2,6 @@
 
 #include <godot_cpp/classes/display_server.hpp>
 #include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/memory.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -257,9 +256,6 @@ void NativeOS::destroy_singleton() {
 
 void NativeOS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("paste_clipboard"), &NativeOS::paste_clipboard);
-	ClassDB::bind_method(D_METHOD("remember_foreground_window"), &NativeOS::remember_foreground_window);
-	ClassDB::bind_method(D_METHOD("restore_foreground_window"), &NativeOS::restore_foreground_window);
-	ClassDB::bind_method(D_METHOD("capture_screen", "path"), &NativeOS::capture_screen);
 	ClassDB::bind_method(D_METHOD("apply_title_bar_dark_mode", "window_id", "dark_mode"), &NativeOS::apply_title_bar_dark_mode);
 	ClassDB::bind_method(D_METHOD("drag_files", "paths"), &NativeOS::drag_files);
 }
@@ -336,156 +332,5 @@ void NativeOS::paste_clipboard() {
 	}
 #else
 	UtilityFunctions::printerr("NativeOS.paste_clipboard: only implemented on Windows");
-#endif
-}
-
-bool NativeOS::remember_foreground_window() {
-#ifdef _WIN32
-	HWND foreground = GetForegroundWindow();
-	if (foreground == nullptr || !IsWindow(foreground)) {
-		remembered_foreground = nullptr;
-		return false;
-	}
-	remembered_foreground = foreground;
-	return true;
-#else
-	return false;
-#endif
-}
-
-bool NativeOS::restore_foreground_window() {
-#ifdef _WIN32
-	HWND target = static_cast<HWND>(remembered_foreground);
-	remembered_foreground = nullptr;
-	if (target == nullptr || !IsWindow(target)) {
-		return false;
-	}
-	// AttachThreadInput lets SetForegroundWindow succeed when this process currently owns focus
-	// (e.g. after a Godot Window briefly stole activation for keyboard candidate picking).
-	HWND current = GetForegroundWindow();
-	const DWORD this_thread = GetCurrentThreadId();
-	const DWORD current_thread = current != nullptr ? GetWindowThreadProcessId(current, nullptr) : 0;
-	const DWORD target_thread = GetWindowThreadProcessId(target, nullptr);
-	bool attached_current = false;
-	bool attached_target = false;
-	if (current != nullptr && current_thread != 0 && current_thread != this_thread) {
-		attached_current = AttachThreadInput(this_thread, current_thread, TRUE) != 0;
-	}
-	if (target_thread != 0 && target_thread != this_thread && target_thread != current_thread) {
-		attached_target = AttachThreadInput(this_thread, target_thread, TRUE) != 0;
-	}
-	BringWindowToTop(target);
-	const BOOL ok = SetForegroundWindow(target);
-	if (attached_target) {
-		AttachThreadInput(this_thread, target_thread, FALSE);
-	}
-	if (attached_current) {
-		AttachThreadInput(this_thread, current_thread, FALSE);
-	}
-	return ok != 0;
-#else
-	return false;
-#endif
-}
-
-bool NativeOS::capture_screen(const String &path) const {
-#ifdef _WIN32
-	if (path.is_empty()) {
-		UtilityFunctions::printerr("NativeOS.capture_screen: path is empty");
-		return false;
-	}
-
-	POINT cursor = {};
-	if (!GetCursorPos(&cursor)) {
-		UtilityFunctions::printerr("NativeOS.capture_screen: GetCursorPos failed");
-		return false;
-	}
-
-	HMONITOR monitor = MonitorFromPoint(cursor, MONITOR_DEFAULTTONEAREST);
-	MONITORINFO info = {};
-	info.cbSize = sizeof(info);
-	if (!GetMonitorInfoW(monitor, &info)) {
-		UtilityFunctions::printerr("NativeOS.capture_screen: GetMonitorInfo failed");
-		return false;
-	}
-
-	const RECT &screen = info.rcMonitor;
-	const int width = screen.right - screen.left;
-	const int height = screen.bottom - screen.top;
-	if (width <= 0 || height <= 0) {
-		UtilityFunctions::printerr("NativeOS.capture_screen: invalid monitor size");
-		return false;
-	}
-
-	HDC screen_dc = GetDC(nullptr);
-	if (screen_dc == nullptr) {
-		UtilityFunctions::printerr("NativeOS.capture_screen: GetDC failed");
-		return false;
-	}
-	HDC mem_dc = CreateCompatibleDC(screen_dc);
-	HBITMAP bitmap = CreateCompatibleBitmap(screen_dc, width, height);
-	if (mem_dc == nullptr || bitmap == nullptr) {
-		if (bitmap != nullptr) {
-			DeleteObject(bitmap);
-		}
-		if (mem_dc != nullptr) {
-			DeleteDC(mem_dc);
-		}
-		ReleaseDC(nullptr, screen_dc);
-		UtilityFunctions::printerr("NativeOS.capture_screen: CreateCompatibleDC/Bitmap failed");
-		return false;
-	}
-
-	HGDIOBJ old_obj = SelectObject(mem_dc, bitmap);
-	const BOOL blitted = BitBlt(mem_dc, 0, 0, width, height, screen_dc, screen.left, screen.top, SRCCOPY | CAPTUREBLT);
-
-	BITMAPINFOHEADER header = {};
-	header.biSize = sizeof(header);
-	header.biWidth = width;
-	header.biHeight = -height; // top-down
-	header.biPlanes = 1;
-	header.biBitCount = 32;
-	header.biCompression = BI_RGB;
-
-	PackedByteArray pixels;
-	pixels.resize(width * height * 4);
-	const int got = blitted ? GetDIBits(mem_dc, bitmap, 0, height, pixels.ptrw(), reinterpret_cast<BITMAPINFO *>(&header), DIB_RGB_COLORS) : 0;
-
-	SelectObject(mem_dc, old_obj);
-	DeleteObject(bitmap);
-	DeleteDC(mem_dc);
-	ReleaseDC(nullptr, screen_dc);
-
-	if (got == 0) {
-		UtilityFunctions::printerr("NativeOS.capture_screen: BitBlt/GetDIBits failed");
-		return false;
-	}
-
-	// GDI returns BGRA with alpha often 0 — convert to opaque RGBA for Image.
-	uint8_t *bytes = pixels.ptrw();
-	const int pixel_count = width * height;
-	for (int i = 0; i < pixel_count; i++) {
-		const int o = i * 4;
-		const uint8_t b = bytes[o];
-		const uint8_t r = bytes[o + 2];
-		bytes[o] = r;
-		bytes[o + 2] = b;
-		bytes[o + 3] = 255;
-	}
-
-	const Ref<Image> image = Image::create_from_data(width, height, false, Image::FORMAT_RGBA8, pixels);
-	if (image.is_null() || image->is_empty()) {
-		UtilityFunctions::printerr("NativeOS.capture_screen: Image.create_from_data failed");
-		return false;
-	}
-	const Error err = image->save_png(path);
-	if (err != OK) {
-		UtilityFunctions::printerr("NativeOS.capture_screen: save_png failed (", static_cast<int64_t>(err), ") path=[", path, "]");
-		return false;
-	}
-	return true;
-#else
-	UtilityFunctions::printerr("NativeOS.capture_screen: only implemented on Windows");
-	return false;
 #endif
 }

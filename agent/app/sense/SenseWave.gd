@@ -16,8 +16,6 @@ static var instance: SenseWave = null
 var phase: Phase = Phase.RECORDING
 var fade: float = 0.0
 var closing: bool = false
-## Screen point captured when recording starts; the window stays here until dismiss.
-var fixed_anchor: Vector2i = Vector2i.ZERO
 ## Pixel scale vs 2K ([constant DisplayScale.REF_SCREEN_WIDTH]) for the pinned screen.
 var screen_scale: float = 1.0
 var canvas: FxCanvas
@@ -78,14 +76,14 @@ static func window_position_for_anchor(anchor: Vector2i, window_size: Vector2i) 
 func _ready() -> void:
 	phase = Phase.RECORDING
 	closing = false
-	fixed_anchor = active_screen_center()
-	screen_scale = DisplayScale.compute_screen_scale(fixed_anchor)
+	var anchor := active_screen_center()
+	screen_scale = DisplayScale.compute_screen_scale(anchor)
 	volume = 0.0
 	reset_volume_history()
 	var w := maxi(1, roundi(float(WAVE_WIDTH) * screen_scale))
 	var h := maxi(1, roundi(float(WAVE_HEIGHT) * screen_scale))
 	size = Vector2i(w, h)
-	position = window_position_for_anchor(fixed_anchor, size)
+	position = window_position_for_anchor(anchor, size)
 	get_viewport().transparent_bg = true
 	canvas = FxCanvas.new()
 	canvas.owner_fx = self
@@ -134,7 +132,7 @@ func _process(delta: float) -> void:
 ## it too far makes the meter feel delayed even though this filter itself has no temporal state.
 
 ## Pixel size at 2K ([constant DisplayScale.REF_SCREEN_WIDTH]); scaled by [member screen_scale] on other screens.
-## [constant WAVE_WIDTH] is also the sense picker card width so both overlays share one band.
+## The logical wave width is scaled to the active screen before the native window is shown.
 const WAVE_WIDTH := 512
 const WAVE_HEIGHT := 64
 ## Full sine periods across [constant WAVE_WIDTH].
