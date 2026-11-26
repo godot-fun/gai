@@ -1,25 +1,55 @@
 class_name SenseWave
 extends Window
 
-## Recording / transcribing volume sine wave. Uses the same native-window tricks as
-## [DesktopToast] so it stays visible while the agent is in the background.
-## It never takes focus or mouse input from the target application. On show, it is pinned once to
-## the center of the active screen's usable area and does not follow the pointer.
-## Wave drawing and volume history live in the section at the bottom of this file.
+## A compact voice singularity shown at the active screen center. Microphone input drives a
+## living aurora membrane rather than a literal waveform. The native window stays click-through
+## and unfocusable so recording never interrupts the foreground input control.
 
 enum Phase { RECORDING, TRANSCRIBING }
 
-const FADE_IN_SECONDS := 0.12
-const FADE_OUT_SECONDS := 0.18
+const FADE_IN_SECONDS := 0.16
+const FADE_OUT_SECONDS := 0.20
+const EFFECT_SIZE := 280
+const WAVE_WIDTH := EFFECT_SIZE
+const WAVE_HEIGHT := EFFECT_SIZE
+const TRANSCRIBE_VOLUME := 0.18
+const ENERGY_ATTACK_SPEED := 14.0
+const ENERGY_RELEASE_SPEED := 3.2
+const FAST_ENERGY_SPEED := 28.0
+const SLOW_ENERGY_SPEED := 2.1
+const SYLLABLE_DECAY_SPEED := 4.8
+const ACTIVITY_SPEED := 7.0
+const RIPPLE_HISTORY_SIZE := 32
+const RIPPLE_SAMPLE_RATE := 45.0
+## Microphone meters usually occupy only the quiet end of 0..1; expand that useful range visually.
+const VISUAL_ENERGY_POWER := 0.42
+const ATTACK_DECAY_SPEED := 5.5
+const PEAK_DECAY_SPEED := 1.35
+const IMPACT_SECONDS := 0.42
+const SINGULARITY_SHADER: Shader = preload("res://agent/app/sense/SenseWave.gdshader")
 
 static var instance: SenseWave = null
 
 var phase: Phase = Phase.RECORDING
 var fade: float = 0.0
 var closing: bool = false
-## Pixel scale vs 2K ([constant DisplayScale.REF_SCREEN_WIDTH]) for the pinned screen.
+var elapsed: float = 0.0
+var phase_time: float = 0.0
 var screen_scale: float = 1.0
+var volume: float = 0.0
+var energy: float = 0.0
+var fast_energy: float = 0.0
+var slow_energy: float = 0.0
+var syllable: float = 0.0
+var activity: float = 0.0
+var attack: float = 0.0
+var peak: float = 0.0
+var ripple_history: PackedFloat32Array = PackedFloat32Array()
+var ripple_accumulator: float = 0.0
 var canvas: FxCanvas
+var singularity_material: ShaderMaterial
+var ripple_image: Image
+var ripple_texture: ImageTexture
 
 
 func _init() -> void:
@@ -30,13 +60,11 @@ func _init() -> void:
 	unresizable = true
 	always_on_top = true
 	unfocusable = true
-	# Clicks pass through so the foreground app keeps receiving input under the wave.
 	mouse_passthrough = true
 	sharp_corners = true
 	pass
 
 
-## Create the wave once, pinned to the active screen center. No-op if one is already showing.
 static func show_recording() -> void:
 	if instance != null and is_instance_valid(instance):
 		return
@@ -47,29 +75,27 @@ static func show_recording() -> void:
 	pass
 
 
-## Switch the live wave to a slower transcribing scroll; position stays fixed.
 static func show_transcribing() -> void:
 	if instance != null and is_instance_valid(instance):
 		instance.closing = false
 		instance.phase = Phase.TRANSCRIBING
-		instance.volume = TRANSCRIBE_VOLUME
+		instance.phase_time = 0.0
+		instance.attack = 1.0
+		instance.peak = 1.0
 	pass
 
 
-## Fade out and free the wave if one is showing.
 static func dismiss() -> void:
 	if instance != null and is_instance_valid(instance):
 		instance.closing = true
 	pass
 
 
-## Center of the active screen's usable area, falling back to the pointer in headless mode.
 static func active_screen_center() -> Vector2i:
 	var rect := ScreenUtils.usable_rect()
 	return rect.position + rect.size / 2 if rect.size.x > 0 and rect.size.y > 0 else DisplayServer.mouse_get_position()
 
 
-## Screen-space top-left for a window centered on [param anchor].
 static func window_position_for_anchor(anchor: Vector2i, window_size: Vector2i) -> Vector2i:
 	return anchor - Vector2i(window_size.x / 2, window_size.y / 2)
 
@@ -79,23 +105,22 @@ func _ready() -> void:
 	closing = false
 	var anchor := active_screen_center()
 	screen_scale = DisplayScale.compute_screen_scale(anchor)
-	volume = 0.0
-	reset_volume_history()
-	var w := maxi(1, roundi(float(WAVE_WIDTH) * screen_scale))
-	var h := maxi(1, roundi(float(WAVE_HEIGHT) * screen_scale))
-	size = Vector2i(w, h)
+	var effect_size := maxi(1, roundi(float(EFFECT_SIZE) * screen_scale))
+	size = Vector2i(effect_size, effect_size)
 	position = window_position_for_anchor(anchor, size)
 	get_viewport().transparent_bg = true
 	canvas = FxCanvas.new()
-	canvas.owner_fx = self
 	canvas.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	canvas.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(canvas)
+	setup_shader()
 	visible = true
 	pass
 
 
 func _process(delta: float) -> void:
+	elapsed += delta
+	phase_time += delta
 	if closing:
 		fade = maxf(0.0, fade - delta / FADE_OUT_SECONDS)
 		if fade <= 0.0:
@@ -105,142 +130,83 @@ func _process(delta: float) -> void:
 			return
 	else:
 		fade = minf(1.0, fade + delta / FADE_IN_SECONDS)
-	if phase == Phase.RECORDING and not closing:
-		volume = AudioRecorder.poll_volume()
-	elif phase == Phase.TRANSCRIBING:
-		volume = TRANSCRIBE_VOLUME
-	var rate := HISTORY_RATE_RECORDING if phase == Phase.RECORDING else HISTORY_RATE_TRANSCRIBING
-	push_volume_history(volume, delta, rate)
-	if canvas != null:
-		canvas.queue_redraw()
+	volume = AudioRecorder.poll_volume() if phase == Phase.RECORDING and not closing else TRANSCRIBE_VOLUME
+	update_energy(volume, delta)
+	update_shader()
 	pass
 
 
-# ----------------------------------------------------------------------------------------------------------------------
-# Volume sine wave (history scroll + paint)
-# ----------------------------------------------------------------------------------------------------------------------
-
-## Rendering pipeline and smoothing notes:
-## 1. The microphone meter is sampled into [member volume_history] at a fixed logical rate.
-## 2. When a slow frame advances several columns, [method push_volume_history] interpolates
-##    the missing values. Filling every skipped column with the newest value would create an
-##    abrupt amplitude wall, which appears as a spike when the sine points are connected.
-## 3. [method smoothed_history_level] applies a centered bell filter only while painting.
-##    Keeping the raw history intact avoids accumulating blur as samples scroll left.
-## 4. The filter is intentionally wider than one line segment but much narrower than a full
-##    sine period, so it removes isolated jagged edges without flattening speech dynamics.
-## If the wave still looks sharp, widen [constant HISTORY_SMOOTH_WEIGHTS] gradually. Increasing
-## it too far makes the meter feel delayed even though this filter itself has no temporal state.
-
-## Pixel size at 2K ([constant DisplayScale.REF_SCREEN_WIDTH]); scaled by [member screen_scale] on other screens.
-## The logical wave width is scaled to the active screen before the native window is shown.
-const WAVE_WIDTH := 512
-const WAVE_HEIGHT := 64
-## Full sine periods across [constant WAVE_WIDTH].
-const WAVE_CYCLES := 16
-## History columns pushed per second (right = newest → left = oldest).
-const HISTORY_RATE_RECORDING := 96.0
-const HISTORY_RATE_TRANSCRIBING := 48.0
-## Fixed meter during transcription (mic is off).
-const TRANSCRIBE_VOLUME := 0.22
-## Nine-point bell filter used while painting. The center remains dominant while the
-## wider shoulders remove the last small high-frequency changes between history columns.
-const HISTORY_SMOOTH_WEIGHTS := [1.0, 4.0, 10.0, 16.0, 19.0, 16.0, 10.0, 4.0, 1.0]
-const HISTORY_SMOOTH_RADIUS := 4
-
-## Latest 0..1 meter (from [method AudioRecorder.poll_volume] while recording).
-var volume: float = 0.0
-## Per-column amplitude history: index 0 = oldest (left), last = newest (right).
-var volume_history: PackedFloat32Array = PackedFloat32Array()
-## Fractional accumulator for [method push_volume_history].
-var history_accum: float = 0.0
-
-
-func reset_volume_history() -> void:
-	volume_history.resize(WAVE_WIDTH)
-	# Start flat; amplitude appears only as live volume is pushed from the right.
-	volume_history.fill(0.0)
-	history_accum = 0.0
+## Three envelope speeds separate overall loudness from syllabic motion. The medium envelope drives
+## size, fast-vs-slow divergence drives membrane ripples, and upward motion drives local impacts.
+func update_energy(level: float, delta: float) -> void:
+	var target := pow(clampf(level, 0.0, 1.0), VISUAL_ENERGY_POWER)
+	var previous := energy
+	var speed := ENERGY_ATTACK_SPEED if target > energy else ENERGY_RELEASE_SPEED
+	var blend := 1.0 - exp(-speed * maxf(delta, 0.0))
+	energy = lerpf(energy, target, blend)
+	fast_energy = lerpf(fast_energy, target, 1.0 - exp(-FAST_ENERGY_SPEED * maxf(delta, 0.0)))
+	slow_energy = lerpf(slow_energy, target, 1.0 - exp(-SLOW_ENERGY_SPEED * maxf(delta, 0.0)))
+	var modulation := clampf(absf(fast_energy - slow_energy) * 3.8, 0.0, 1.0)
+	syllable = maxf(modulation, move_toward(syllable, 0.0, SYLLABLE_DECAY_SPEED * delta))
+	var activity_target := smoothstep(0.08, 0.34, target)
+	activity = lerpf(activity, activity_target, 1.0 - exp(-ACTIVITY_SPEED * maxf(delta, 0.0)))
+	var onset := clampf((energy - previous) * 9.0, 0.0, 1.0)
+	attack = maxf(onset, move_toward(attack, 0.0, ATTACK_DECAY_SPEED * delta))
+	peak = maxf(attack, move_toward(peak, 0.0, PEAK_DECAY_SPEED * delta))
+	push_ripple_history(clampf(syllable + attack * 0.55, 0.0, 1.0), delta)
 	pass
 
 
-## Inserts the newest volume on the right and shifts older samples toward the left.
-## [member history_accum] converts frame time into an integer number of history columns,
-## while retaining the fractional remainder for the next frame. If more than one column
-## is due, the new gap is filled by linear interpolation from the previous newest sample
-## to [param level], rather than repeating [param level] across the whole gap.
-func push_volume_history(level: float, delta: float, rate: float) -> void:
-	if volume_history.size() != WAVE_WIDTH:
-		reset_volume_history()
-	var sample := clampf(level, 0.0, 1.0)
-	history_accum += rate * delta
-	var steps := int(history_accum)
+func push_ripple_history(value: float, delta: float) -> void:
+	if ripple_history.size() != RIPPLE_HISTORY_SIZE:
+		ripple_history.resize(RIPPLE_HISTORY_SIZE)
+		ripple_history.fill(0.0)
+	ripple_accumulator += RIPPLE_SAMPLE_RATE * delta
+	var steps := mini(int(ripple_accumulator), RIPPLE_HISTORY_SIZE)
 	if steps <= 0:
 		return
-	history_accum -= float(steps)
-	steps = mini(steps, WAVE_WIDTH)
-	# Capture the interpolation start before shifting; after the shift this slot belongs
-	# to the new gap and can no longer represent the last value from the previous frame.
-	var previous_sample := volume_history[WAVE_WIDTH - 1]
-	# Shift left in one pass. Interpolate skipped columns so a slow frame cannot create
-	# a block of identical samples followed by one abrupt amplitude edge.
-	for j in range(WAVE_WIDTH - steps):
-		volume_history[j] = volume_history[j + steps]
-	for j in range(WAVE_WIDTH - steps, WAVE_WIDTH):
-		# The first inserted column uses 1 / steps and the last uses 1.0. This places
-		# evenly spaced values strictly after previous_sample and guarantees that the
-		# rightmost (newest) column exactly matches the current microphone sample.
-		var blend := float(j - (WAVE_WIDTH - steps) + 1) / float(steps)
-		volume_history[j] = lerpf(previous_sample, sample, blend)
+	ripple_accumulator -= float(steps)
+	for i in range(RIPPLE_HISTORY_SIZE - steps):
+		ripple_history[i] = ripple_history[i + steps]
+	for i in range(RIPPLE_HISTORY_SIZE - steps, RIPPLE_HISTORY_SIZE):
+		ripple_history[i] = value
 	pass
 
 
-## Returns a locally smoothed history sample for rendering. Edge weights are
-## renormalized so the start and end of the wave do not get artificially quieter.
-func smoothed_history_level(index: int) -> float:
-	var weighted_sum := 0.0
-	var weight_sum := 0.0
-	for offset in range(-HISTORY_SMOOTH_RADIUS, HISTORY_SMOOTH_RADIUS + 1):
-		var sample_index := index + offset
-		if sample_index < 0 or sample_index >= volume_history.size():
-			continue
-		var weight: float = HISTORY_SMOOTH_WEIGHTS[offset + HISTORY_SMOOTH_RADIUS]
-		weighted_sum += volume_history[sample_index] * weight
-		weight_sum += weight
-	return weighted_sum / weight_sum if weight_sum > 0.0 else 0.0
+func setup_shader() -> void:
+	ripple_history.resize(RIPPLE_HISTORY_SIZE)
+	ripple_history.fill(0.0)
+	ripple_image = Image.create(RIPPLE_HISTORY_SIZE, 1, false, Image.FORMAT_RF)
+	ripple_texture = ImageTexture.create_from_image(ripple_image)
+	singularity_material = ShaderMaterial.new()
+	singularity_material.shader = SINGULARITY_SHADER
+	singularity_material.set_shader_parameter("ripple_texture", ripple_texture)
+	canvas.material = singularity_material
+	update_shader()
+	pass
 
 
-## Volume-history sine: [constant WAVE_CYCLES] periods; each x uses its own past amplitude
-## (left = older, right = newest), so loud spikes appear on the right and drift left.
-func paint_canvas(node: Control) -> void:
-	if volume_history.size() != WAVE_WIDTH:
-		reset_volume_history()
-	var s := screen_scale
-	var w := float(WAVE_WIDTH) * s
-	var h := float(WAVE_HEIGHT) * s
-	var mid_y := h * 0.5
-	var max_amp := h * 0.5 - 2.0 * s
+func update_shader() -> void:
+	if singularity_material == null:
+		return
+	for i in range(RIPPLE_HISTORY_SIZE):
+		ripple_image.set_pixel(i, 0, Color(ripple_history[i], 0.0, 0.0, 1.0))
+	ripple_texture.update(ripple_image)
 	var accent := ThemeColor.accent_theme_color() if phase == Phase.RECORDING else Colors.info
-	var a := fade
-	var k := TAU * float(WAVE_CYCLES) / w
-	var points := PackedVector2Array()
-	points.resize(WAVE_WIDTH)
-	for i in range(WAVE_WIDTH):
-		var x := float(i) * s
-		var amp := max_amp * smoothed_history_level(i)
-		var y := mid_y + amp * sin(k * x)
-		points[i] = Vector2(x, y)
-	# Soft under-glow, then a crisp stroke. Minimum widths keep both passes antialiased
-	# on displays whose screen scale would otherwise make the lines thinner than one pixel.
-	node.draw_polyline(points, Color(accent, 0.22 * a), maxf(2.0, 4.0 * s), true)
-	node.draw_polyline(points, Color(accent, 0.85 * a), maxf(1.0, 1.75 * s), true)
+	singularity_material.set_shader_parameter("accent_color", accent)
+	singularity_material.set_shader_parameter("elapsed", elapsed)
+	singularity_material.set_shader_parameter("fade_alpha", fade)
+	singularity_material.set_shader_parameter("energy", energy)
+	singularity_material.set_shader_parameter("syllable", syllable)
+	singularity_material.set_shader_parameter("activity", activity)
+	singularity_material.set_shader_parameter("attack", attack)
+	singularity_material.set_shader_parameter("peak", peak)
+	singularity_material.set_shader_parameter("phase_mode", float(phase))
+	singularity_material.set_shader_parameter("impact_progress", clampf(phase_time / IMPACT_SECONDS, 0.0, 1.0))
 	pass
 
 
 class FxCanvas extends Control:
-	var owner_fx: SenseWave
-
 	func _draw() -> void:
-		if owner_fx != null:
-			owner_fx.paint_canvas(self)
+		draw_rect(Rect2(Vector2.ZERO, size), Color.WHITE)
 		pass

@@ -9,27 +9,46 @@ func wave_window_position_for_anchor_test() -> void:
 	pass
 
 
-## Slow frames interpolate skipped history columns instead of creating a sharp amplitude wall.
-func sense_wave_history_interpolation_test() -> void:
+## Loud input rises quickly, while release remains smooth and preserves a short-lived peak.
+func sense_wave_energy_response_test() -> void:
 	var wave := SenseWave.new()
-	wave.reset_volume_history()
-	wave.push_volume_history(1.0, 4.0, 1.0)
-	assert(is_equal_approx(wave.volume_history[SenseWave.WAVE_WIDTH - 4], 0.25))
-	assert(is_equal_approx(wave.volume_history[SenseWave.WAVE_WIDTH - 3], 0.5))
-	assert(is_equal_approx(wave.volume_history[SenseWave.WAVE_WIDTH - 2], 0.75))
-	assert(is_equal_approx(wave.volume_history[SenseWave.WAVE_WIDTH - 1], 1.0))
+	wave.update_energy(1.0, 0.1)
+	var raised_energy := wave.energy
+	assert(raised_energy > 0.7)
+	assert(wave.attack > 0.0)
+	assert(wave.peak >= wave.attack)
+	wave.update_energy(0.0, 0.1)
+	assert(wave.energy > 0.0)
+	assert(wave.energy < raised_energy)
 	wave.free()
 	pass
 
 
-## Painting uses neighboring history values to suppress isolated one-column spikes.
-func sense_wave_history_smoothing_test() -> void:
+## Input is clamped before it reaches the visual state.
+func sense_wave_energy_clamps_input_test() -> void:
 	var wave := SenseWave.new()
-	wave.reset_volume_history()
-	var center := SenseWave.WAVE_WIDTH / 2
-	wave.volume_history[center] = 1.0
-	assert(is_equal_approx(wave.smoothed_history_level(center), 19.0 / 81.0))
-	assert(is_equal_approx(wave.smoothed_history_level(center - 1), 16.0 / 81.0))
+	wave.update_energy(4.0, 1.0)
+	assert(wave.energy <= 1.0)
+	wave.free()
+	pass
+
+
+func sense_wave_quiet_voice_is_visually_amplified_test() -> void:
+	var wave := SenseWave.new()
+	wave.update_energy(0.05, 1.0)
+	assert(wave.energy > 0.25)
+	wave.free()
+	pass
+
+
+func sense_wave_continuous_speech_creates_syllable_motion_test() -> void:
+	var wave := SenseWave.new()
+	for i in range(12):
+		wave.update_energy(0.08, 0.03)
+	wave.update_energy(0.22, 0.03)
+	assert(wave.syllable > 0.1)
+	assert(wave.activity > 0.0)
+	assert(wave.ripple_history[SenseWave.RIPPLE_HISTORY_SIZE - 1] > 0.0)
 	wave.free()
 	pass
 
