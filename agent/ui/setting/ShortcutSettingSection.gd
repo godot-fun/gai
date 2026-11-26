@@ -83,7 +83,7 @@ func add_shortcut_pair_row(parent: VBoxContainer, prev_label: Label, prev_button
 
 func make_shortcut_button(tooltip: String) -> Button:
 	var button := Button.new()
-	button.custom_minimum_size.y = ControlSize.sm
+	button.custom_minimum_size.y = ControlSize.md
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.tooltip_text = tooltip
 	button.gui_input.connect(on_shortcut_input)

@@ -46,8 +46,9 @@ func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> 
 	local_model_parts[0].add_child(local_model_service_label)
 	local_model_service_button = Button.new()
 	local_model_service_button.focus_mode = Control.FOCUS_NONE
-	local_model_service_button.custom_minimum_size.y = ControlSize.sm
+	local_model_service_button.custom_minimum_size.y = ControlSize.md
 	local_model_service_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	local_model_service_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	local_model_service_button.tooltip_text = I18n.t("agent.settings.local_model_service_help")
 	local_model_service_button.pressed.connect(on_local_model_service_pressed)
 	local_model_parts[1].add_child(local_model_service_button)
@@ -73,8 +74,9 @@ func set_up(p_ui: AgentSettingWindow, parent: VBoxContainer, window: Window) -> 
 	restart_web_server_button.text = I18n.t("agent.settings.restart_browser_service")
 	restart_web_server_button.tooltip_text = I18n.t("agent.settings.restart_browser_service_help")
 	restart_web_server_button.focus_mode = Control.FOCUS_NONE
-	restart_web_server_button.custom_minimum_size.y = ControlSize.sm
+	restart_web_server_button.custom_minimum_size.y = ControlSize.md
 	restart_web_server_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	restart_web_server_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	restart_web_server_button.pressed.connect(on_restart_web_server_pressed)
 	browser_parts[3].add_child(restart_web_server_button)
 	# Columns 5–6 stay empty so the row keeps the 6-column shape used around it.
