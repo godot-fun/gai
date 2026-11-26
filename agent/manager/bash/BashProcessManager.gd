@@ -182,7 +182,8 @@ static func cleanup_finished_processes() -> void:
 	for process_id: String in processes.keys():
 		var process: BashProcess = processes[process_id]
 		process.mutex.lock()
-		var expired := process.finish_time > 0 and now - process.finish_time >= FINISH_TIMEOUT
+		# A finished worker always has a finish_time, so running is the only sentinel needed.
+		var expired := not process.running and now - process.finish_time >= FINISH_TIMEOUT
 		process.mutex.unlock()
 		if not expired:
 			continue
