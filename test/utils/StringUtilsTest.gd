@@ -65,6 +65,7 @@ func substring_after_last_test() -> void:
 	pass
 
 func truncate_test() -> void:
+	assert(StringUtils.truncate("a".repeat(33)) == "a".repeat(29) + "...")
 	assert(StringUtils.truncate("abcdef", 10) == "abcdef")
 	assert(StringUtils.truncate("abcdef", 6) == "abcdef")
 	assert(StringUtils.truncate("abcdef", 5) == "ab...")

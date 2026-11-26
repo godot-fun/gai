@@ -139,7 +139,7 @@ static func substring_after_last(s: String, delimiter: String) -> String:
 
 ## Returns s truncated to max_length, appending suffix when longer. Total length never exceeds max_length; returns s when empty or already short enough.
 ## Example: truncate("abcdef", 5) -> "ab..."; truncate("abcdef", 6) -> "abcdef"
-static func truncate(s: String, max_length: int, suffix: String = ELLIPSIS) -> String:
+static func truncate(s: String, max_length: int = 32, suffix: String = ELLIPSIS) -> String:
 	if is_empty(s) or s.length() <= max_length:
 		return s
 	if max_length < suffix.length():
