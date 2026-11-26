@@ -30,6 +30,7 @@ func finish_setup() -> void:
 	window.size_changed.connect(on_window_changed)
 	window.nonclient_window_input.connect(on_window_input)
 	gdf.events.application_exit.connect(on_application_exit)
+	await ensure_on_screen()
 	pass
 
 
@@ -91,6 +92,21 @@ func restore() -> void:
 		window.size = Vector2i(state.width, state.height)
 		var position := Vector2i(state.position_x, state.position_y)
 		window.position = ScreenUtils.clamp_rect_to_usable(position, window.size, 0, state.screen)
+	pass
+
+
+## The restore is only a request — a scaled desktop or a grown minimum content size can still leave the
+## window outside its screen. One frame later, read the geometry actually applied and pull it back in.
+func ensure_on_screen() -> void:
+	await (Engine.get_main_loop() as SceneTree).process_frame
+	if window.mode != Window.MODE_WINDOWED:
+		return
+	var usable := ScreenUtils.usable_rect(window.current_screen)
+	if not usable.has_area() or usable.encloses(Rect2i(window.position, window.size)):
+		return
+	var size := Vector2i(mini(window.size.x, usable.size.x), mini(window.size.y, usable.size.y))
+	window.size = size
+	window.position = ScreenUtils.clamp_rect_to_usable(window.position, size, 0, window.current_screen)
 	pass
 
 
