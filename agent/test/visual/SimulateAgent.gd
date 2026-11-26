@@ -18,7 +18,6 @@ const TOOL_CATALOG: Array[Dictionary] = [
 	{"name": ListDirTool.NAME, "args": {"path": "res://agent/ui/visuals", "recursive": false}},
 	{"name": DeleteTool.NAME, "args": {"path": "res://agent/tmp_preview.gd"}},
 	{"name": ReadImageTool.NAME, "args": {"path": "res://icon.svg", "prompt": "Describe this icon briefly."}},
-	{"name": AudioToTextTool.NAME, "args": {"path": "res://audio/sample.wav"}},
 	{"name": WebFetchTool.NAME, "args": {"url": "https://docs.godotengine.org", "max_chars": 2000}},
 	{"name": WebSearchTool.NAME, "args": {"query": "godot visual effects"}},
 	{"name": BrowserOpenTool.NAME, "args": {"url": "https://docs.godotengine.org"}},

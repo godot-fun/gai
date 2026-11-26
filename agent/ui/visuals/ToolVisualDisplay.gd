@@ -47,8 +47,6 @@ static func glyph(tool_name: String) -> String:
 			return "BA"
 		ReadImageTool.NAME:
 			return "IM"
-		AudioToTextTool.NAME:
-			return "AU"
 		DeleteTool.NAME:
 			return "X"
 		GrepTool.NAME:
@@ -87,8 +85,6 @@ static func glyph_emoji(tool_name: String) -> String:
 			return "🐚"
 		ReadImageTool.NAME:
 			return "📸"
-		AudioToTextTool.NAME:
-			return "🎙️"
 		DeleteTool.NAME:
 			return "❌"
 		GrepTool.NAME:

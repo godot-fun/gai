@@ -50,8 +50,6 @@ static func get_tool_call_summary(tool_name: String, args: Dictionary[String, Va
 			body = tail.strip_edges() if command.strip_edges().begins_with("cd") and StringUtils.is_not_blank(tail) else command
 		BashProcessTool.NAME:
 			body = str(args.get(BashProcessTool.ARG_ACTION, "")) + " " + str(args.get(BashProcessTool.ARG_PROCESS_ID, ""))
-		AudioToTextTool.NAME:
-			body = str(args.get(AudioToTextTool.ARG_PATH, ""))
 		WebSearchTool.NAME:
 			body = str(args.get(WebSearchTool.ARG_QUERY, ""))
 		WebFetchTool.NAME:

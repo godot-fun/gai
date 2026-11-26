@@ -41,7 +41,7 @@ Clicks pass through (`mouse_passthrough`). During transcription / compose the wa
 | `SenseWave` | Volume sine wave, pinned once via `SenseCaretLocator.resolve_anchor` |
 | `SensePicker` | Five-candidate selection sheet (focusable for ↑↓/Enter/Esc; restore foreground then paste) |
 | `AudioRecorder` | Microphone → PCM16 WAV |
-| `AudioToTextTool` | Local SenseVoice transcription |
+| Sense local transcription | Local SenseVoice transcription |
 | `LlamServer` | Local Qwen3.8-27B: screenshot OCR; local compose + diverge when `use_local_llm` |
 | `ApiSetting` / `OpenAiClient` | Remote compose + diverge when not `use_local_llm` |
 | `SensePromptLocal` | Short local prompts + input clamps (zh / en by app locale) |

@@ -2,7 +2,7 @@ class_name SenseInput
 extends RefCounted
 
 ## Global push-to-talk sense input method. Hold Alt+Z to record (works in the background via
-## [GlobalHotkey]); release to stop, transcribe with [AudioToTextTool], wait for the parallel
+## [GlobalHotkey]); release to stop, transcribe locally, wait for the parallel
 ## screenshot → local model context (up to 3 s), build five candidates (voice / correct / optimize / expand / diverge),
 ## then let [SensePicker] choose (↑↓ / Enter / click); it restores the target app before
 ## clipboard + Ctrl+V via [method NativeOS.paste_clipboard].
@@ -19,6 +19,8 @@ const VOICE_INPUT_FILE := "voice_input_{}.wav"
 const SCREEN_INPUT_FILE := "screen_input_{}.png"
 
 const SCREEN_WAIT_MILLIS := 3 * TimeUtils.MILLIS_PER_SECOND
+const TRANSCRIBE_SCRIPT_REL_PATH := ".ai/audio-to-text/transcribe.py"
+const TRANSCRIBE_TIMEOUT_MILLIS := TimeUtils.MILLIS_PER_MINUTE * 10
 const VOICE_HISTORY_SIZE := 6
 const LOG_BODY_MAX := 120
 
@@ -175,7 +177,7 @@ func async_transcribe_recording() -> String:
 	if StringUtils.is_blank(absolute):
 		Log.info("SenseInput: voice path failed — diverge-only picker")
 		return StringUtils.EMPTY
-	var result := await AudioToTextTool.async_audio_to_text(absolute)
+	var result := await async_audio_to_text(absolute)
 	if result.is_error:
 		Log.info("SenseInput: ASR soft-fail:[{}] — diverge-only picker", StringUtils.truncate(result.content, LOG_BODY_MAX))
 		return StringUtils.EMPTY
@@ -184,6 +186,23 @@ func async_transcribe_recording() -> String:
 		Log.info("SenseInput: empty ASR text — diverge-only picker")
 		return StringUtils.EMPTY
 	return voice_text
+
+
+## Transcribe a PCM16 WAV file via the local SenseVoice script.
+static func async_audio_to_text(audio_path: String) -> AgentToolResult:
+	if not FileAccess.file_exists(audio_path):
+		return AgentToolResult.error(StringUtils.format("error: audio not found: {}", audio_path))
+	if not DependencyManifest.has_populated_runtime(DependencyManifest.PYTHON_PATH):
+		return AgentToolResult.error(DependencyManifest.PYTHON_INSTALL_PROMPT)
+	var argv := PackedStringArray([DependencyManifest.PYTHON_PATH, TRANSCRIBE_SCRIPT_REL_PATH, "--audio", audio_path])
+	var exec_result := await OSUtils.async_execute(argv, false, TRANSCRIBE_TIMEOUT_MILLIS)
+	var output := exec_result.output.build_string().strip_edges()
+	if exec_result.exit_code != 0:
+		var message := output if StringUtils.is_not_blank(output) else StringUtils.format("error: audio-to-text failed (exit {})", exec_result.exit_code)
+		return AgentToolResult.error(message)
+	if StringUtils.is_blank(output):
+		return AgentToolResult.error("error: audio-to-text returned no text")
+	return AgentToolResult.ok(output)
 
 
 

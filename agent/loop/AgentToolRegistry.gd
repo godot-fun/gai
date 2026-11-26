@@ -32,7 +32,6 @@ static func reload_tools() -> void:
 	register(ReadTool.new())
 	register(WriteTool.new())
 	register(EditTool.new())
-	register(AudioToTextTool.new())
 	
 	# image tools
 	register(ReadImageLocalTool.new())
