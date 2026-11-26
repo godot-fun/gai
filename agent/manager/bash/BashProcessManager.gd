@@ -30,7 +30,7 @@ static func build_argv(command: String) -> PackedStringArray:
 static func start(command: String, cancel_scope: CancelScope = null) -> String:
 	cleanup_finished_processes()
 	var process := BashProcess.new()
-	process.id = StringUtils.format("bash_{}", IdUtils.local_id())
+	process.id = StringUtils.format("p_{}", IdUtils.local_id())
 	process.argv = build_argv(command)
 	processes[process.id] = process
 	if cancel_scope != null:

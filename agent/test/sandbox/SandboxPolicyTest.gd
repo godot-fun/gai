@@ -1,7 +1,5 @@
 extends RefCounted
 
-const SandboxBashPolicyClass := preload("res://agent/sandbox/SandboxBashPolicy.gd")
-
 
 static func path_boundary_test() -> void:
 	var was_enabled := SandboxPolicy.is_enabled()
@@ -197,9 +195,9 @@ static func bash_policy_blocks_common_dangerous_commands_test() -> void:
 		"cat \"C:\\Users\\me\\.ssh\\id_rsa\"",
 	]
 	for command: String in blocked_commands:
-		assert(not SandboxBashPolicyClass.check_bash(command).is_empty(), command)
+		assert(not SandboxBashPolicy.check_bash(command).is_empty(), command)
 	SandboxPolicy.set_enabled(false)
-	assert(SandboxBashPolicyClass.check_bash("sudo apt update").is_empty())
+	assert(SandboxBashPolicy.check_bash("sudo apt update").is_empty())
 	SandboxPolicy.set_enabled(was_enabled)
 	pass
 
@@ -258,7 +256,7 @@ static func bash_policy_allows_normal_development_commands_test() -> void:
 		"timeout 30 godot --headless --version",
 	]
 	for command: String in allowed_commands:
-		assert(SandboxBashPolicyClass.check_bash(command).is_empty(), command)
+		assert(SandboxBashPolicy.check_bash(command).is_empty(), command)
 	SandboxPolicy.set_enabled(was_enabled)
 	pass
 
@@ -269,7 +267,7 @@ static func bash_tool_rejects_dangerous_commands_when_sandbox_enabled_test() -> 
 	var result := await BashTool.new().async_execute({BashTool.ARG_COMMAND: "sudo apt update"}, CancelScope.new())
 	assert(result.is_error)
 	assert(result.content.contains("sandbox denied"))
-	assert(result.content.contains(SandboxBashPolicyClass.REASON_PRIVILEGE_ESCALATION))
+	assert(result.content.contains(SandboxBashPolicy.REASON_PRIVILEGE_ESCALATION))
 
 	SandboxPolicy.set_enabled(false)
 	var allowed := await BashTool.new().async_execute({BashTool.ARG_COMMAND: "echo sandbox-ok"}, CancelScope.new())
@@ -280,11 +278,11 @@ static func bash_tool_rejects_dangerous_commands_when_sandbox_enabled_test() -> 
 
 
 static func bash_policy_normalizes_obfuscated_commands_test() -> void:
-	assert(SandboxBashPolicyClass.normalize_command("r\"\"m -rf /etc") == "rm -rf /etc")
-	assert(SandboxBashPolicyClass.normalize_command("r\\m -rf /etc") == "rm -rf /etc")
-	assert(SandboxBashPolicyClass.normalize_command("rm$IFS-rf /etc") == "rm -rf /etc")
-	assert(SandboxBashPolicyClass.normalize_command("\"/bin/rm\" -rf /etc") == "/bin/rm -rf /etc")
-	assert(SandboxBashPolicyClass.normalize_command("rg -n 'rm -rf' .") == "rg -n 'rm -rf' .")
+	assert(SandboxBashPolicy.normalize_command("r\"\"m -rf /etc") == "rm -rf /etc")
+	assert(SandboxBashPolicy.normalize_command("r\\m -rf /etc") == "rm -rf /etc")
+	assert(SandboxBashPolicy.normalize_command("rm$IFS-rf /etc") == "rm -rf /etc")
+	assert(SandboxBashPolicy.normalize_command("\"/bin/rm\" -rf /etc") == "/bin/rm -rf /etc")
+	assert(SandboxBashPolicy.normalize_command("rg -n 'rm -rf' .") == "rg -n 'rm -rf' .")
 	pass
 
 
@@ -292,11 +290,11 @@ static func bash_policy_unquote_mark_chars_test() -> void:
 	# Marks only count as obfuscation in front of a word or path character, so this set is part of
 	# the policy contract: pin it instead of leaving it to a hand-written character range.
 	for mark: String in ["a", "z", "0", "9", "_", "-", "/"]:
-		assert(SandboxBashPolicyClass.is_unquote_char(mark.unicode_at(0)), mark)
+		assert(SandboxBashPolicy.is_unquote_char(mark.unicode_at(0)), mark)
 	for mark: String in [" ", "\t", "\n", "\"", "'", "\\", "$", "*", ".", "=", "&", "|", ";", "~", "@", ":"]:
-		assert(not SandboxBashPolicyClass.is_unquote_char(mark.unicode_at(0)), mark)
-	assert(SandboxBashPolicyClass.normalize_command("echo a\\ b") == "echo a\\ b")
-	assert(SandboxBashPolicyClass.normalize_command("echo a\\tb") == "echo atb")
+		assert(not SandboxBashPolicy.is_unquote_char(mark.unicode_at(0)), mark)
+	assert(SandboxBashPolicy.normalize_command("echo a\\ b") == "echo a\\ b")
+	assert(SandboxBashPolicy.normalize_command("echo a\\tb") == "echo atb")
 	pass
 
 
@@ -325,7 +323,7 @@ static func bash_policy_blocks_system_path_and_wrapper_commands_test() -> void:
 		"r\"m\" -rf ../outside",
 	]
 	for command: String in blocked_commands:
-		assert(not SandboxBashPolicyClass.check_bash(command).is_empty(), command)
+		assert(not SandboxBashPolicy.check_bash(command).is_empty(), command)
 	SandboxPolicy.set_enabled(was_enabled)
 	pass
 
@@ -333,21 +331,21 @@ static func bash_policy_blocks_system_path_and_wrapper_commands_test() -> void:
 static func bash_policy_handles_degenerate_input_test() -> void:
 	var was_enabled := SandboxPolicy.is_enabled()
 	SandboxPolicy.set_enabled(true)
-	assert(SandboxBashPolicyClass.check_bash(StringUtils.EMPTY) == "command is required")
-	assert(SandboxBashPolicyClass.check_bash("   ") == "command is required")
-	assert(SandboxBashPolicyClass.check_bash("''").is_empty())
-	assert(SandboxBashPolicyClass.check_bash("echo ''").is_empty())
-	assert(SandboxBashPolicyClass.check_bash("git status").is_empty())
+	assert(SandboxBashPolicy.check_bash(StringUtils.EMPTY) == "command is required")
+	assert(SandboxBashPolicy.check_bash("   ") == "command is required")
+	assert(SandboxBashPolicy.check_bash("''").is_empty())
+	assert(SandboxBashPolicy.check_bash("echo ''").is_empty())
+	assert(SandboxBashPolicy.check_bash("git status").is_empty())
 	SandboxPolicy.set_enabled(was_enabled)
 	pass
 
 
 static func bash_policy_detects_obfuscation_marks_test() -> void:
-	assert(not SandboxBashPolicyClass.has_obfuscation("git status"))
-	assert(SandboxBashPolicyClass.has_obfuscation("git commit -m 'x'"))
-	assert(SandboxBashPolicyClass.has_obfuscation("echo \"x\""))
-	assert(SandboxBashPolicyClass.has_obfuscation("r\\m -rf /etc"))
-	assert(SandboxBashPolicyClass.has_obfuscation("rm$IFS-rf /etc"))
-	assert(SandboxBashPolicyClass.normalize_command("git status") == "git status")
-	assert(not SandboxBashPolicyClass.has_obfuscation(SandboxBashPolicyClass.normalize_command("r\\m -rf /etc")))
+	assert(not SandboxBashPolicy.has_obfuscation("git status"))
+	assert(SandboxBashPolicy.has_obfuscation("git commit -m 'x'"))
+	assert(SandboxBashPolicy.has_obfuscation("echo \"x\""))
+	assert(SandboxBashPolicy.has_obfuscation("r\\m -rf /etc"))
+	assert(SandboxBashPolicy.has_obfuscation("rm$IFS-rf /etc"))
+	assert(SandboxBashPolicy.normalize_command("git status") == "git status")
+	assert(not SandboxBashPolicy.has_obfuscation(SandboxBashPolicy.normalize_command("r\\m -rf /etc")))
 	pass
