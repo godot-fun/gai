@@ -1,7 +1,5 @@
 extends RefCounted
 
-const BuildingProfile = preload("res://agent/ui/visuals/pixel_city/PixelBuildingProfile.gd")
-
 
 static func visual_type_test() -> void:
 	var effect := VisualControl.create_effect(VisualControl.Type.PIXEL_CITY)
@@ -120,29 +118,29 @@ static func window_breathing_is_sparse_and_bounded_test() -> void:
 static func building_shapes_are_varied_and_deterministic_test() -> void:
 	var shapes: Dictionary[int, bool] = {}
 	for index in range(80):
-		var first := BuildingProfile.new(index, false)
-		var second := BuildingProfile.new(index, false)
+		var first := PixelBuildingProfile.new(index, false)
+		var second := PixelBuildingProfile.new(index, false)
 		assert(first.signature == second.signature)
 		assert(first.shape == second.shape)
 		shapes[first.shape] = true
-	assert(shapes.size() == BuildingProfile.Shape.size())
+	assert(shapes.size() == PixelBuildingProfile.Shape.size())
 	pass
 
 
 static func building_profiles_do_not_repeat_within_cycle_test() -> void:
 	var signatures: Dictionary[int, bool] = {}
-	for index in range(BuildingProfile.PROFILE_CYCLE):
-		var profile := BuildingProfile.new(index, false)
+	for index in range(PixelBuildingProfile.PROFILE_CYCLE):
+		var profile := PixelBuildingProfile.new(index, false)
 		assert(not signatures.has(profile.signature))
 		signatures[profile.signature] = true
-	assert(signatures.size() == BuildingProfile.PROFILE_CYCLE)
+	assert(signatures.size() == PixelBuildingProfile.PROFILE_CYCLE)
 	pass
 
 
 static func adjacent_buildings_use_different_shapes_test() -> void:
 	for index in range(-100, 100):
-		var current := BuildingProfile.new(index, false)
-		var next := BuildingProfile.new(index + 1, false)
+		var current := PixelBuildingProfile.new(index, false)
+		var next := PixelBuildingProfile.new(index + 1, false)
 		assert(current.shape != next.shape)
 	pass
 
@@ -164,11 +162,11 @@ func dark_theme_has_no_facade_highlight_and_distant_city_recedes_test() -> void:
 	var original := ThemeColor.current_theme
 	ThemeColor.current_theme = ThemeColor.ThemeEnum.DARK
 	var near_building := PixelBuilding.new()
-	near_building.profile = BuildingProfile.new(1, false)
+	near_building.profile = PixelBuildingProfile.new(1, false)
 	near_building.distant = false
 	near_building.daylight = 0.0
 	var far_building := PixelBuilding.new()
-	far_building.profile = BuildingProfile.new(1, true)
+	far_building.profile = PixelBuildingProfile.new(1, true)
 	far_building.distant = true
 	far_building.daylight = 0.0
 	assert(near_building.facade_edge_color(near_building.building_body_color()).a == 0.0)

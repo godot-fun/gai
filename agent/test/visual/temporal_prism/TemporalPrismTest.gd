@@ -1,24 +1,21 @@
-const TEMPORAL_PRISM_SCRIPT := preload("res://agent/ui/visuals/temporal_prism/TemporalPrism.gd")
-
-
 static func visual_script_instantiates_test() -> void:
-	var effect: Variant = TEMPORAL_PRISM_SCRIPT.new()
-	assert(effect.get_script() == TEMPORAL_PRISM_SCRIPT)
+	var effect: Variant = TemporalPrism.new()
+	assert(effect.get_script() == TemporalPrism)
 	effect.free()
 	pass
 
 
 static func energy_composition_is_additive_without_overflow_test() -> void:
-	assert(is_equal_approx(TEMPORAL_PRISM_SCRIPT.combine_energy(0.0, 0.4), 0.4))
-	assert(TEMPORAL_PRISM_SCRIPT.combine_energy(0.6, 0.5) > 0.6)
-	assert(TEMPORAL_PRISM_SCRIPT.combine_energy(0.6, 0.5) < 1.0)
-	assert(TEMPORAL_PRISM_SCRIPT.combine_energy(1.0, 1.0) == 1.0)
+	assert(is_equal_approx(TemporalPrism.combine_energy(0.0, 0.4), 0.4))
+	assert(TemporalPrism.combine_energy(0.6, 0.5) > 0.6)
+	assert(TemporalPrism.combine_energy(0.6, 0.5) < 1.0)
+	assert(TemporalPrism.combine_energy(1.0, 1.0) == 1.0)
 	pass
 
 
 static func streamed_chunks_have_restrained_energy_test() -> void:
-	var short_energy: float = TEMPORAL_PRISM_SCRIPT.stream_energy_for_length(1)
-	var long_energy: float = TEMPORAL_PRISM_SCRIPT.stream_energy_for_length(1000)
+	var short_energy: float = TemporalPrism.stream_energy_for_length(1)
+	var long_energy: float = TemporalPrism.stream_energy_for_length(1000)
 	assert(short_energy > 0.0)
 	assert(long_energy > short_energy)
 	assert(is_equal_approx(long_energy, 0.045))
@@ -26,16 +23,16 @@ static func streamed_chunks_have_restrained_energy_test() -> void:
 
 
 static func slice_count_adapts_to_viewport_width_test() -> void:
-	assert(TEMPORAL_PRISM_SCRIPT.slice_count_for_width(0.0) == 28.0)
-	assert(TEMPORAL_PRISM_SCRIPT.slice_count_for_width(800.0) == 28.0)
-	assert(TEMPORAL_PRISM_SCRIPT.slice_count_for_width(1920.0) == 51.0)
-	assert(TEMPORAL_PRISM_SCRIPT.slice_count_for_width(2560.0) == 67.0)
-	assert(TEMPORAL_PRISM_SCRIPT.slice_count_for_width(3840.0) == 96.0)
+	assert(TemporalPrism.slice_count_for_width(0.0) == 28.0)
+	assert(TemporalPrism.slice_count_for_width(800.0) == 28.0)
+	assert(TemporalPrism.slice_count_for_width(1920.0) == 51.0)
+	assert(TemporalPrism.slice_count_for_width(2560.0) == 67.0)
+	assert(TemporalPrism.slice_count_for_width(3840.0) == 96.0)
 	pass
 
 
 func active_events_add_energy_without_replacing_phase_test() -> void:
-	var effect: Variant = TEMPORAL_PRISM_SCRIPT.new()
+	var effect: Variant = TemporalPrism.new()
 	effect.temporal_energy = 0.5
 	effect.temporal_phase = 2.4
 	effect.temporal_direction = -1.0
@@ -48,7 +45,7 @@ func active_events_add_energy_without_replacing_phase_test() -> void:
 
 
 func temporal_field_decays_to_original_frame_test() -> void:
-	var effect: Variant = TEMPORAL_PRISM_SCRIPT.new()
+	var effect: Variant = TemporalPrism.new()
 	effect.temporal_energy = 0.8
 	effect.step_temporal_field(1.0 / 60.0)
 	assert(effect.temporal_energy < 0.8)
@@ -61,7 +58,7 @@ func temporal_field_decays_to_original_frame_test() -> void:
 
 
 func shader_surface_enters_tree_test() -> void:
-	var effect: Variant = TEMPORAL_PRISM_SCRIPT.new()
+	var effect: Variant = TemporalPrism.new()
 	var scene_tree := Engine.get_main_loop() as SceneTree
 	scene_tree.root.add_child.call_deferred(effect)
 	await scene_tree.process_frame

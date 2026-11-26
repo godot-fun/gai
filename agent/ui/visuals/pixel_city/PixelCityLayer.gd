@@ -1,7 +1,6 @@
 class_name PixelCityLayer
 extends Node2D
 
-const BuildingProfile = preload("res://agent/ui/visuals/pixel_city/PixelBuildingProfile.gd")
 const CLUSTER_SIZE := 6
 
 @export var parallax_factor: float = 0.24
@@ -27,7 +26,7 @@ func update_visual(viewport_size: Vector2, pixel: float, camera_x: float, elapse
 		var min_height := 0.055 if distant else 0.09
 		var max_height := 0.16 if distant else 0.29
 		var height := viewport_size.y * lerpf(min_height, max_height, cluster_height_mix(world_index, distant))
-		var profile := building.profile if building.world_index == world_index and building.profile != null else BuildingProfile.new(world_index, distant)
+		var profile := building.profile if building.world_index == world_index and building.profile != null else PixelBuildingProfile.new(world_index, distant)
 		var group_gap := pixel * 3.0 if posmod(world_index, CLUSTER_SIZE) == CLUSTER_SIZE - 1 else 0.0
 		var width_variation := pixel * float(profile.width_steps)
 		var width := spacing - pixel * 2.0 - width_variation * 0.5 if distant else spacing - pixel - width_variation * 0.35

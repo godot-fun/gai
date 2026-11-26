@@ -1,18 +1,15 @@
 extends RefCounted
 
-const PIANO_RHYTHM_SCRIPT := preload("res://agent/ui/visuals/piano_rhythm/PianoRhythm.gd")
-const PIANO_ENERGY_BURST_SCRIPT := preload("res://agent/ui/visuals/piano_rhythm/PianoEnergyBurst.gd")
-
 
 static func visual_type_test() -> void:
 	var effect := VisualControl.create_effect(VisualControl.Type.PIANO_RHYTHM)
-	assert(effect.get_script() == PIANO_RHYTHM_SCRIPT)
+	assert(effect.get_script() == PianoRhythm)
 	effect.free()
 	pass
 
 
 func impact_builds_harmonic_ribbons_test() -> void:
-	var burst := PIANO_ENERGY_BURST_SCRIPT.new()
+	var burst := PianoEnergyBurst.new()
 	burst.setup(Vector2(200.0, 120.0), Color(0.12, 0.96, 0.78), 0.42, 0.85)
 	assert(burst.ribbons.size() >= 2)
 	assert(burst.particles.size() >= 10)
@@ -27,7 +24,7 @@ func process_consumes_transcript_sentence_test() -> void:
 	session.chat_entries.append(ChatEntry.new(ChatEntry.KIND_AGENT, ChatEntry.TITLE_AGENT, "A complete answer."))
 	ChatEntryCursor.remove_session(session.id)
 	RuntimeManager.get_or_create_runtime(session.id)
-	var effect := PIANO_RHYTHM_SCRIPT.new()
+	var effect := PianoRhythm.new()
 	effect.size = Vector2(1280.0, 720.0)
 	effect.visible = true
 	effect._process(0.0)
@@ -42,7 +39,7 @@ func process_consumes_transcript_sentence_test() -> void:
 
 
 func tool_events_generate_one_note_test() -> void:
-	var effect := PIANO_RHYTHM_SCRIPT.new()
+	var effect := PianoRhythm.new()
 	effect.size = Vector2(1280.0, 720.0)
 	effect.on_tool_execution_start(1, "tool-piano", "read_file", {})
 	assert(effect.notes.size() == 1)
@@ -52,7 +49,7 @@ func tool_events_generate_one_note_test() -> void:
 
 
 func white_key_lanes_are_one_to_one_test() -> void:
-	var effect := PIANO_RHYTHM_SCRIPT.new()
+	var effect := PianoRhythm.new()
 	effect.size = Vector2(1280.0, 720.0)
 	effect.ensure_layout()
 	var key_width := effect.size.x / float(PianoRhythm.WHITE_KEY_COUNT)
@@ -63,7 +60,7 @@ func white_key_lanes_are_one_to_one_test() -> void:
 
 
 func keyboard_covers_toolbar_test() -> void:
-	var effect := PIANO_RHYTHM_SCRIPT.new()
+	var effect := PianoRhythm.new()
 	effect.size = Vector2(1280.0, 720.0)
 	assert(is_zero_approx(effect.keyboard_rect().position.y))
 	effect.free()
@@ -71,7 +68,7 @@ func keyboard_covers_toolbar_test() -> void:
 
 
 func rising_note_hits_top_keyboard_test() -> void:
-	var effect := PIANO_RHYTHM_SCRIPT.new()
+	var effect := PianoRhythm.new()
 	effect.size = Vector2(1280.0, 720.0)
 	effect.spawn_note(2, effect.NoteKind.ANSWER)
 	effect.notes[0].y = effect.hit_y() + 1.0
@@ -84,7 +81,7 @@ func rising_note_hits_top_keyboard_test() -> void:
 
 
 func failed_tool_uses_error_note_test() -> void:
-	var effect := PIANO_RHYTHM_SCRIPT.new()
+	var effect := PianoRhythm.new()
 	effect.size = Vector2(1280.0, 720.0)
 	effect.on_tool_execution_end(1, "tool-piano", "read_file", AgentToolResult.error("no access"))
 	assert(effect.notes.size() == 1)
@@ -95,7 +92,7 @@ func failed_tool_uses_error_note_test() -> void:
 
 
 func successful_tool_uses_success_color_test() -> void:
-	var effect := PIANO_RHYTHM_SCRIPT.new()
+	var effect := PianoRhythm.new()
 	var note := effect.PianoNote.new()
 	note.kind = effect.NoteKind.TOOL_SUCCESS
 	assert(effect.note_color_for_note(note) == VisualColor.appearance_color(Colors.success))
@@ -104,7 +101,7 @@ func successful_tool_uses_success_color_test() -> void:
 
 
 func text_note_uses_source_entry_color_test() -> void:
-	var effect := PIANO_RHYTHM_SCRIPT.new()
+	var effect := PianoRhythm.new()
 	var note := effect.PianoNote.new()
 	note.kind = effect.NoteKind.ANSWER
 	note.entry_kind = ChatEntry.KIND_THINKING
@@ -116,7 +113,7 @@ func text_note_uses_source_entry_color_test() -> void:
 
 
 func floating_line_rises_and_fades_test() -> void:
-	var effect := PIANO_RHYTHM_SCRIPT.new()
+	var effect := PianoRhythm.new()
 	effect.size = Vector2(1280.0, 720.0)
 	var note := effect.PianoNote.new()
 	note.lane = 2
@@ -136,7 +133,7 @@ func floating_line_rises_and_fades_test() -> void:
 
 
 func floating_line_fades_before_leaving_the_top_test() -> void:
-	var effect := PIANO_RHYTHM_SCRIPT.new()
+	var effect := PianoRhythm.new()
 	effect.size = Vector2(1280.0, 720.0)
 	effect.spawn_floating_line("Rising melody text.", Vector2(200.0, effect.hit_y()), Color.WHITE)
 	var line: PianoRhythm.FloatingLine = effect.floating_lines[0]
@@ -148,7 +145,7 @@ func floating_line_fades_before_leaving_the_top_test() -> void:
 
 
 func sentence_weight_drives_speed_and_font_band_test() -> void:
-	var effect := PIANO_RHYTHM_SCRIPT.new()
+	var effect := PianoRhythm.new()
 	effect.size = Vector2(1280.0, 720.0)
 	var short_text := "短。"
 	var long_text := "A longer sentence gives the note more weight across speed, particles, and floating text."
@@ -169,7 +166,7 @@ func sentence_weight_drives_speed_and_font_band_test() -> void:
 
 
 func rest_note_impact_skips_floating_line_test() -> void:
-	var effect := PIANO_RHYTHM_SCRIPT.new()
+	var effect := PianoRhythm.new()
 	effect.size = Vector2(1280.0, 720.0)
 	var note := effect.PianoNote.new()
 	note.is_rest = true
@@ -180,7 +177,7 @@ func rest_note_impact_skips_floating_line_test() -> void:
 
 
 func full_note_capacity_keeps_visible_notes_test() -> void:
-	var effect := PIANO_RHYTHM_SCRIPT.new()
+	var effect := PianoRhythm.new()
 	effect.size = Vector2(1280.0, 720.0)
 	for index in range(PianoRhythm.MAX_NOTES):
 		effect.spawn_note(index % PianoRhythm.WHITE_KEY_COUNT, effect.NoteKind.ANSWER)

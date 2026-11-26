@@ -1,23 +1,20 @@
-const HEAT_MIRAGE_SCRIPT := preload("res://agent/ui/visuals/heat_mirage/HeatMirage.gd")
-
-
 static func visual_type_is_registered_test() -> void:
 	var effect := VisualControl.create_effect(VisualControl.Type.HEAT_MIRAGE)
 	assert(effect != null)
-	assert(effect.get_script() == HEAT_MIRAGE_SCRIPT)
+	assert(effect.get_script() == HeatMirage)
 	effect.free()
 	pass
 
 
 static func energy_composition_is_additive_without_overflow_test() -> void:
-	assert(is_equal_approx(HEAT_MIRAGE_SCRIPT.combine_energy(0.0, 0.4), 0.4))
-	assert(HEAT_MIRAGE_SCRIPT.combine_energy(0.6, 0.5) > 0.6)
-	assert(HEAT_MIRAGE_SCRIPT.combine_energy(1.0, 1.0) == 1.0)
+	assert(is_equal_approx(HeatMirage.combine_energy(0.0, 0.4), 0.4))
+	assert(HeatMirage.combine_energy(0.6, 0.5) > 0.6)
+	assert(HeatMirage.combine_energy(1.0, 1.0) == 1.0)
 	pass
 
 
 func reasoning_stream_targets_mirage_strength_test() -> void:
-	var effect: Variant = HEAT_MIRAGE_SCRIPT.new()
+	var effect: Variant = HeatMirage.new()
 	effect.on_message_update(1, "reasoning through the current step", OpenAiClient.STREAM_KIND_REASONING)
 	assert(effect.target_mirage > 0.0)
 	effect.step_mirage_field(1.0 / 60.0)
@@ -27,7 +24,7 @@ func reasoning_stream_targets_mirage_strength_test() -> void:
 
 
 func shock_front_restarts_on_tool_event_test() -> void:
-	var effect: Variant = HEAT_MIRAGE_SCRIPT.new()
+	var effect: Variant = HeatMirage.new()
 	effect.shock_progress = 1.2
 	var args: Dictionary[String, Variant] = {}
 	effect.on_tool_execution_start(1, "t1", "read_file", args)
@@ -38,7 +35,7 @@ func shock_front_restarts_on_tool_event_test() -> void:
 
 
 func field_decays_to_idle_test() -> void:
-	var effect: Variant = HEAT_MIRAGE_SCRIPT.new()
+	var effect: Variant = HeatMirage.new()
 	effect.target_mirage = 0.8
 	effect.target_flow = 0.6
 	effect.field_energy = 0.7
@@ -50,7 +47,7 @@ func field_decays_to_idle_test() -> void:
 
 
 func flow_phase_rest_when_flow_is_idle_test() -> void:
-	var effect: Variant = HEAT_MIRAGE_SCRIPT.new()
+	var effect: Variant = HeatMirage.new()
 	effect.flow_phase = 1.1
 	effect.flow_strength = 0.0
 	effect.step_mirage_field(1.0 / 60.0)
@@ -63,7 +60,7 @@ func flow_phase_rest_when_flow_is_idle_test() -> void:
 
 
 func shader_surface_enters_tree_test() -> void:
-	var effect: Variant = HEAT_MIRAGE_SCRIPT.new()
+	var effect: Variant = HeatMirage.new()
 	var scene_tree := Engine.get_main_loop() as SceneTree
 	scene_tree.root.add_child.call_deferred(effect)
 	await scene_tree.process_frame

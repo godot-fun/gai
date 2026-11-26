@@ -1,8 +1,6 @@
 class_name PixelBridgeBay
 extends Node2D
 
-const PIER_LIGHTS_SCRIPT: Script = preload("res://agent/ui/visuals/pixel_city/PixelBridgePierLights.gd")
-
 var bay_index: int = 0
 var pixel: float = 4.0
 var bay_width: float = 80.0
@@ -59,7 +57,7 @@ func ensure_nodes() -> void:
 	truss_frame.z_index = 1
 	pillar = make_rect("Pillar")
 	pillar.z_index = 0
-	pier_lights = PIER_LIGHTS_SCRIPT.new()
+	pier_lights = PixelBridgePierLights.new()
 	pier_lights.name = "PierLights"
 	pier_lights.z_index = 5
 	add_child(pillar)
