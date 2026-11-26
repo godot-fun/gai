@@ -3,7 +3,8 @@ extends Window
 
 ## Recording / transcribing volume sine wave. Uses the same native-window tricks as
 ## [DesktopToast] so it stays visible while the agent is in the background.
-## On show, pinned once to the active screen center. Does not follow.
+## It never takes focus or mouse input from the target application. On show, it is pinned once to
+## the center of the active screen's usable area and does not follow the pointer.
 ## Wave drawing and volume history live in the section at the bottom of this file.
 
 enum Phase { RECORDING, TRANSCRIBING }

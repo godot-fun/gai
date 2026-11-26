@@ -3,6 +3,10 @@ extends RefCounted
 
 ## Global push-to-talk voice input. Hold the configured shortcut to record; release to transcribe
 ## locally, copy the result, and paste it directly into the foreground input control.
+## The shortcut is configured under Settings → Shortcuts and works while the app is unfocused via
+## [GlobalHotkey]. Recording is saved as PCM16 WAV, transcribed by the local SenseVoice script, then
+## pasted with [method NativeOS.paste_clipboard]. Soft failures are logged and leave the target input
+## unchanged; this flow never opens a selection panel.
 
 const HOTKEY_ID := 1
 const CACHE_DIR := "user://sense"
