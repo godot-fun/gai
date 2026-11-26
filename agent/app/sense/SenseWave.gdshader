@@ -93,7 +93,8 @@ void fragment() {
 	float orbit_arc = soft_line(abs(radius - orbit_radius), 0.0015, 0.004) *
 		(0.5 + 0.5 * sin(angle * 3.0 - elapsed)) * (0.025 + phase_mode * 0.055);
 
-	float impact_radius = mix(0.08, 0.62, impact_progress);
+	// p is normalized to the effect's half-height; 1.0 reaches one screen half-height from center.
+	float impact_radius = mix(0.08, 1.0, impact_progress);
 	float impact_ring = soft_line(abs(radius - impact_radius), 0.002, 0.007) *
 		(1.0 - impact_progress) * 0.42;
 

@@ -25,7 +25,8 @@ const RIPPLE_SAMPLE_RATE := 45.0
 const VISUAL_ENERGY_POWER := 0.42
 const ATTACK_DECAY_SPEED := 5.5
 const PEAK_DECAY_SPEED := 1.35
-const IMPACT_SECONDS := 0.42
+## The opening pulse should feel spacious rather than explode across the whole window.
+const IMPACT_SECONDS := 0.62
 const SINGULARITY_SHADER: Shader = preload("res://agent/app/sense/SenseWave.gdshader")
 
 static var instance: SenseWave = null
