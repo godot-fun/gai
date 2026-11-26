@@ -164,7 +164,6 @@ Native OS helpers for the foreground app while Godot is unfocused:
 | `paste_clipboard()` | Synthesize Ctrl+V into the foreground window (after clipboard set) |
 | `remember_foreground_window()` | Store the current foreground HWND; returns `bool` |
 | `restore_foreground_window()` | Activate the remembered HWND and clear it; returns `bool` |
-| `get_caret_screen_position()` | Foreground text caret in DisplayServer space, or `null` if unavailable |
 | `capture_screen(path)` | Capture the full physical monitor under the mouse to a PNG file; returns `bool` |
 | `apply_title_bar_dark_mode(window_id, dark_mode)` | Windows DWM immersive dark title bar; returns `bool` |
 | `drag_files(paths)` | Start a native OLE `CF_HDROP` file drag and block until drop/cancel; returns whether copied |
@@ -175,17 +174,15 @@ NativeOS.remember_foreground_window()
 NativeOS.restore_foreground_window()
 DisplayServer.clipboard_set("hello")
 NativeOS.paste_clipboard()
-var caret: Variant = NativeOS.get_caret_screen_position()
 var ok: bool = NativeOS.capture_screen("user://sense/screen.png")
 ```
 
 Notes:
 
 - `remember_foreground_window` / `restore_foreground_window` pair a brief Godot focus steal (e.g. sense candidate picker) with returning activation to the typing target before `paste_clipboard`. Restore uses `AttachThreadInput` + `SetForegroundWindow`.
-- `get_caret_screen_position` tries Win32 `GetGUIThreadInfo` first, then UI Automation (`TextPattern2.GetCaretRange` / text selection). Classic desktop controls usually hit the first path; Chrome/Electron/WPF often need UIA. Some apps never expose a caret.
 - `paste_clipboard` uses Win32 `SendInput` (Ctrl+V). Put text on the clipboard first (`DisplayServer.clipboard_set`).
 - `capture_screen` uses GDI `BitBlt` of `MonitorFromPoint` / `rcMonitor` (full physical screen under the cursor, including taskbar). Does not hide Godot overlays (beacon / toast may appear). Path is written via Godot `Image.save_png` (`user://`, absolute, etc.).
-- **Linux / macOS:** not implemented yet; `paste_clipboard` / remember-restore / caret query / `capture_screen` return no-op / `false` / `null` / `false`.
+- **Linux / macOS:** not implemented yet; `paste_clipboard` / remember-restore / `capture_screen` return no-op / `false` / `false`.
 
 ## Test
 

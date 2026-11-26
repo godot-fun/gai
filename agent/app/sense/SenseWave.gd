@@ -3,13 +3,11 @@ extends Window
 
 ## Recording / transcribing volume sine wave. Uses the same native-window tricks as
 ## [DesktopToast] so it stays visible while the agent is in the background.
-## On show, pinned once via [method SenseCaretLocator.resolve_anchor]. Does not follow.
+## On show, pinned once to the active screen center. Does not follow.
 ## Wave drawing and volume history live in the section at the bottom of this file.
 
 enum Phase { RECORDING, TRANSCRIBING }
 
-## Slight offset so the wave sits just below-right of the pointer.
-const CURSOR_OFFSET := Vector2i(14, 18)
 const FADE_IN_SECONDS := 0.12
 const FADE_OUT_SECONDS := 0.18
 
@@ -39,7 +37,7 @@ func _init() -> void:
 	pass
 
 
-## Create the wave once, pinned to caret or screen center. No-op if one is already showing.
+## Create the wave once, pinned to the active screen center. No-op if one is already showing.
 static func show_recording() -> void:
 	if instance != null and is_instance_valid(instance):
 		return
@@ -66,22 +64,28 @@ static func dismiss() -> void:
 	pass
 
 
-## Screen-space top-left for a window of [param window_size] anchored near [param anchor].
-static func window_position_for_cursor(anchor: Vector2i, window_size: Vector2i) -> Vector2i:
-	return anchor + CURSOR_OFFSET - Vector2i(window_size.x / 2, window_size.y / 2)
+## Center of the active screen's usable area, falling back to the pointer in headless mode.
+static func active_screen_center() -> Vector2i:
+	var rect := ScreenUtils.usable_rect()
+	return rect.position + rect.size / 2 if rect.size.x > 0 and rect.size.y > 0 else DisplayServer.mouse_get_position()
+
+
+## Screen-space top-left for a window centered on [param anchor].
+static func window_position_for_anchor(anchor: Vector2i, window_size: Vector2i) -> Vector2i:
+	return anchor - Vector2i(window_size.x / 2, window_size.y / 2)
 
 
 func _ready() -> void:
 	phase = Phase.RECORDING
 	closing = false
-	fixed_anchor = SenseCaretLocator.resolve_anchor()
+	fixed_anchor = active_screen_center()
 	screen_scale = DisplayScale.compute_screen_scale(fixed_anchor)
 	volume = 0.0
 	reset_volume_history()
 	var w := maxi(1, roundi(float(WAVE_WIDTH) * screen_scale))
 	var h := maxi(1, roundi(float(WAVE_HEIGHT) * screen_scale))
 	size = Vector2i(w, h)
-	position = window_position_for_cursor(fixed_anchor, size)
+	position = window_position_for_anchor(fixed_anchor, size)
 	get_viewport().transparent_bg = true
 	canvas = FxCanvas.new()
 	canvas.owner_fx = self

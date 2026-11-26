@@ -14,7 +14,6 @@
 #include <vector>
 
 #ifdef _WIN32
-#include <UIAutomation.h>
 #include <dwmapi.h>
 #include <objbase.h>
 #include <shellapi.h>
@@ -232,139 +231,6 @@ struct TitleBarThemeApi {
 	}
 };
 
-Vector2i win32_point_to_godot_screen(POINT pt) {
-	POINT mouse_pt = {};
-	GetCursorPos(&mouse_pt);
-	const Vector2i godot_mouse = DisplayServer::get_singleton()->mouse_get_position();
-	return godot_mouse + Vector2i(pt.x - mouse_pt.x, pt.y - mouse_pt.y);
-}
-
-bool try_win32_gui_caret(Vector2i &r_pos) {
-	HWND foreground = GetForegroundWindow();
-	if (foreground == nullptr) {
-		return false;
-	}
-	DWORD thread_id = GetWindowThreadProcessId(foreground, nullptr);
-	if (thread_id == 0) {
-		return false;
-	}
-	GUITHREADINFO info = {};
-	info.cbSize = sizeof(info);
-	if (!GetGUIThreadInfo(thread_id, &info) || info.hwndCaret == nullptr) {
-		return false;
-	}
-	const RECT &rc = info.rcCaret;
-	POINT caret_pt = {};
-	caret_pt.x = rc.left;
-	caret_pt.y = rc.top == rc.bottom ? rc.top : (rc.top + rc.bottom) / 2;
-	if (!ClientToScreen(info.hwndCaret, &caret_pt)) {
-		return false;
-	}
-	r_pos = win32_point_to_godot_screen(caret_pt);
-	return true;
-}
-
-bool uia_first_rect_anchor(IUIAutomationTextRange *range, POINT &r_pt) {
-	if (range == nullptr) {
-		return false;
-	}
-	SAFEARRAY *rects = nullptr;
-	if (FAILED(range->GetBoundingRectangles(&rects)) || rects == nullptr) {
-		return false;
-	}
-	LONG lower = 0;
-	LONG upper = -1;
-	SafeArrayGetLBound(rects, 1, &lower);
-	SafeArrayGetUBound(rects, 1, &upper);
-	const LONG count = upper - lower + 1;
-	if (count < 4) {
-		SafeArrayDestroy(rects);
-		return false;
-	}
-	double left = 0.0;
-	double top = 0.0;
-	double width = 0.0;
-	double height = 0.0;
-	LONG idx = lower;
-	SafeArrayGetElement(rects, &idx, &left);
-	idx += 1;
-	SafeArrayGetElement(rects, &idx, &top);
-	idx += 1;
-	SafeArrayGetElement(rects, &idx, &width);
-	idx += 1;
-	SafeArrayGetElement(rects, &idx, &height);
-	SafeArrayDestroy(rects);
-	// Caret ranges are often a thin vertical strip — pin to the left edge, mid height.
-	r_pt.x = static_cast<LONG>(left);
-	r_pt.y = static_cast<LONG>(top + (height > 0.0 ? height * 0.5 : 0.0));
-	return true;
-}
-
-bool try_uia_caret(Vector2i &r_pos) {
-	const HRESULT init_hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-	if (FAILED(init_hr) && init_hr != RPC_E_CHANGED_MODE) {
-		return false;
-	}
-
-	IUIAutomation *automation = nullptr;
-	HRESULT hr = CoCreateInstance(CLSID_CUIAutomation, nullptr, CLSCTX_INPROC_SERVER, IID_IUIAutomation, reinterpret_cast<void **>(&automation));
-	if (FAILED(hr) || automation == nullptr) {
-		return false;
-	}
-
-	IUIAutomationElement *focused = nullptr;
-	hr = automation->GetFocusedElement(&focused);
-	if (FAILED(hr) || focused == nullptr) {
-		automation->Release();
-		return false;
-	}
-
-	bool ok = false;
-	POINT pt = {};
-
-	IUIAutomationTextPattern2 *text2 = nullptr;
-	hr = focused->GetCurrentPatternAs(UIA_TextPattern2Id, IID_IUIAutomationTextPattern2, reinterpret_cast<void **>(&text2));
-	if (SUCCEEDED(hr) && text2 != nullptr) {
-		BOOL is_active = FALSE;
-		IUIAutomationTextRange *caret_range = nullptr;
-		hr = text2->GetCaretRange(&is_active, &caret_range);
-		if (SUCCEEDED(hr) && caret_range != nullptr) {
-			ok = uia_first_rect_anchor(caret_range, pt);
-			caret_range->Release();
-		}
-		text2->Release();
-	}
-
-	if (!ok) {
-		IUIAutomationTextPattern *text = nullptr;
-		hr = focused->GetCurrentPatternAs(UIA_TextPatternId, IID_IUIAutomationTextPattern, reinterpret_cast<void **>(&text));
-		if (SUCCEEDED(hr) && text != nullptr) {
-			IUIAutomationTextRangeArray *ranges = nullptr;
-			hr = text->GetSelection(&ranges);
-			if (SUCCEEDED(hr) && ranges != nullptr) {
-				int length = 0;
-				ranges->get_Length(&length);
-				if (length > 0) {
-					IUIAutomationTextRange *range = nullptr;
-					if (SUCCEEDED(ranges->GetElement(0, &range)) && range != nullptr) {
-						ok = uia_first_rect_anchor(range, pt);
-						range->Release();
-					}
-				}
-				ranges->Release();
-			}
-			text->Release();
-		}
-	}
-
-	focused->Release();
-	automation->Release();
-	if (!ok) {
-		return false;
-	}
-	r_pos = win32_point_to_godot_screen(pt);
-	return true;
-}
 #endif
 } // namespace
 
@@ -393,7 +259,6 @@ void NativeOS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("paste_clipboard"), &NativeOS::paste_clipboard);
 	ClassDB::bind_method(D_METHOD("remember_foreground_window"), &NativeOS::remember_foreground_window);
 	ClassDB::bind_method(D_METHOD("restore_foreground_window"), &NativeOS::restore_foreground_window);
-	ClassDB::bind_method(D_METHOD("get_caret_screen_position"), &NativeOS::get_caret_screen_position);
 	ClassDB::bind_method(D_METHOD("capture_screen", "path"), &NativeOS::capture_screen);
 	ClassDB::bind_method(D_METHOD("apply_title_bar_dark_mode", "window_id", "dark_mode"), &NativeOS::apply_title_bar_dark_mode);
 	ClassDB::bind_method(D_METHOD("drag_files", "paths"), &NativeOS::drag_files);
@@ -520,23 +385,6 @@ bool NativeOS::restore_foreground_window() {
 	return ok != 0;
 #else
 	return false;
-#endif
-}
-
-Variant NativeOS::get_caret_screen_position() const {
-#ifdef _WIN32
-	Vector2i pos;
-	// Native Win32 carets (Notepad, Explorer, many desktop apps).
-	if (try_win32_gui_caret(pos)) {
-		return pos;
-	}
-	// Chrome / Edge / Electron / WPF / etc. often only expose caret via UI Automation.
-	if (try_uia_caret(pos)) {
-		return pos;
-	}
-	return Variant();
-#else
-	return Variant();
 #endif
 }
 

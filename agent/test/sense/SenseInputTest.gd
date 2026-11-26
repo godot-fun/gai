@@ -1,11 +1,11 @@
 ## Unit tests for Sense input helpers. Loaded by [code]SenseInputTest.tscn[/code] ([UnitTest]).
 
-## [method SenseWave.window_position_for_cursor] centers the wave window just below-right of the anchor.
-func window_position_for_cursor_test() -> void:
-	var cursor := Vector2i(200, 300)
+## [method SenseWave.window_position_for_anchor] centers the wave window on the anchor.
+func wave_window_position_for_anchor_test() -> void:
+	var anchor := Vector2i(200, 300)
 	var window_size := Vector2i(SenseWave.WAVE_WIDTH, SenseWave.WAVE_HEIGHT)
-	var pos := SenseWave.window_position_for_cursor(cursor, window_size)
-	assert(pos == cursor + SenseWave.CURSOR_OFFSET - Vector2i(window_size.x / 2, window_size.y / 2))
+	var pos := SenseWave.window_position_for_anchor(anchor, window_size)
+	assert(pos == anchor - Vector2i(window_size.x / 2, window_size.y / 2))
 	pass
 
 
@@ -41,7 +41,7 @@ func window_position_for_anchor_test() -> void:
 	var window_size := Vector2i(roundi(float(SenseWave.WAVE_WIDTH) * scale), 400)
 	var pos := SensePicker.window_position_for_anchor(anchor, window_size, scale)
 	var wave_size := Vector2i(window_size.x, roundi(float(SenseWave.WAVE_HEIGHT) * scale))
-	assert(pos == SenseWave.window_position_for_cursor(anchor, wave_size))
+	assert(pos == SenseWave.window_position_for_anchor(anchor, wave_size))
 	pass
 
 
@@ -365,44 +365,13 @@ func sense_session_replace_test() -> void:
 	pass
 
 
-## [method SenseCaretLocator.resolve_anchor] always returns a finite screen point (TextEdit, OS caret, or screen center).
-func resolve_anchor_test() -> void:
-	var anchor := SenseCaretLocator.resolve_anchor()
-	assert(anchor.x > -1000000 and anchor.x < 1000000)
-	assert(anchor.y > -1000000 and anchor.y < 1000000)
-	pass
-
-
-## [method SenseCaretLocator.focused_screen_center] is the usable-rect midpoint of the screen under the mouse.
-func focused_screen_center_test() -> void:
+## [method SenseWave.active_screen_center] is the active screen's usable-rect midpoint.
+func active_screen_center_test() -> void:
 	var mouse := DisplayServer.mouse_get_position()
-	var screen := DisplayServer.get_screen_from_rect(Rect2(Vector2(mouse), Vector2.ONE))
-	var rect: Rect2i = DisplayServer.screen_get_usable_rect(screen)
-	var center := SenseCaretLocator.focused_screen_center()
+	var rect := ScreenUtils.usable_rect()
+	var center := SenseWave.active_screen_center()
 	if rect.size.x <= 0 or rect.size.y <= 0:
 		assert(center == mouse)
 		return
 	assert(center == rect.position + rect.size / 2)
-	pass
-
-
-## [method SenseCaretLocator.godot_focus_anchor] is null when no Godot window is focused; otherwise caret or mouse.
-func godot_focus_anchor_test() -> void:
-	var anchor: Variant = SenseCaretLocator.godot_focus_anchor()
-	var window := Window.get_focused_window()
-	if window == null:
-		assert(anchor == null)
-		return
-	assert(anchor is Vector2i)
-	var focus: Control = window.gui_get_focus_owner()
-	if focus is TextEdit:
-		var text_edit := focus as TextEdit
-		var viewport: Viewport = text_edit.get_viewport()
-		assert(viewport != null)
-		var canvas_pos: Vector2 = text_edit.get_global_transform_with_canvas() * text_edit.get_caret_draw_pos()
-		var window_pos: Vector2 = viewport.get_final_transform() * canvas_pos
-		var origin := DisplayServer.window_get_position(viewport.get_window_id())
-		assert(anchor == origin + Vector2i(roundi(window_pos.x), roundi(window_pos.y)))
-	else:
-		assert(anchor == DisplayServer.mouse_get_position())
 	pass

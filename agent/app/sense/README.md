@@ -17,9 +17,7 @@ The global shortcut is configured in the shared **Settings → Shortcuts** secti
 
 `SenseWave` is a transparent, always-on-top, unfocusable native `Window` (same pattern as `DesktopToast`). Design size is **512×64 at 2K**; other screens use `DisplayScale.compute_screen_scale` (usable width / 2560). Newest mic level enters on the **right**; older amplitudes drift **left**.
 
-On show it calls `SenseCaretLocator.resolve_anchor()` **once** and stays there:
-- **Godot focused** (`godot_focus_anchor`: focused window → `TextEdit` caret in screen space, else mouse). OS caret is skipped so UIA cannot pin the wave to the wrong screen.
-- **Background** → `query_os_caret` (plausibility-filtered), else center of the screen under the mouse.
+On show it takes the center of the active screen's usable area **once** and stays there.
 
 Clicks pass through (`mouse_passthrough`). During transcription / compose the wave keeps a gentle fixed amplitude and slower scroll. Size uses `DisplayScale.compute_screen_scale`, not `DisplayScale.compute_ui_scale`.
 
@@ -28,9 +26,8 @@ Clicks pass through (`mouse_passthrough`). During transcription / compose the wa
 | Piece | Role |
 |-------|------|
 | `GlobalHotkey` (GDExtension) | OS-level Alt+Z press + release while unfocused — see [`cpp/README.md`](../../../cpp/README.md) |
-| `NativeOS` (GDExtension) | Foreground remember/restore, Ctrl+V paste, caret screen position, monitor screenshot — see [`cpp/README.md`](../../../cpp/README.md) |
-| `SenseCaretLocator` | Locate pin point (Godot caret / OS caret / screen center) |
-| `SenseWave` | Volume sine wave, pinned once via `SenseCaretLocator.resolve_anchor` |
+| `NativeOS` (GDExtension) | Foreground remember/restore, Ctrl+V paste, monitor screenshot — see [`cpp/README.md`](../../../cpp/README.md) |
+| `SenseWave` | Volume sine wave, centered once on the active screen |
 | `SensePicker` | Five-candidate selection sheet (focusable for ↑↓/Enter/Esc; restore foreground then paste) |
 | `AudioRecorder` | Microphone → PCM16 WAV |
 | Sense local transcription | Local SenseVoice transcription |
@@ -44,7 +41,6 @@ agent/app/sense/
 ├── SenseInput.gd           # Push-to-talk + screen sense + compose + paste
 ├── SensePromptLocal.gd     # Local VLM prompts (short / sequential)
 ├── SensePrompt.gd          # Remote LLM prompts (rich / one-shot JSON)
-├── SenseCaretLocator.gd    # Locate caret / OS caret / screen-center pin point
 ├── SenseWave.gd            # Input-anchor volume sine-wave overlay
 ├── SensePicker.gd          # Candidate selection sheet (keyboard + mouse)
 ├── test/                   # Unit tests for anchor + beacon + compose helpers

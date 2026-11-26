@@ -11,7 +11,6 @@ using namespace godot;
 ///
 /// Windows covers synthesizing Ctrl+V into the foreground app (`SendInput`),
 /// remembering / restoring the foreground window (for brief Godot focus steals),
-/// querying the foreground text caret (`GetGUIThreadInfo`, then UI Automation),
 /// and capturing the physical monitor under the mouse cursor to a PNG file.
 ///
 /// GDScript example
@@ -22,7 +21,6 @@ using namespace godot;
 /// NativeOS.restore_foreground_window()
 /// DisplayServer.clipboard_set("hello")
 /// NativeOS.paste_clipboard()
-/// var caret: Variant = NativeOS.get_caret_screen_position()
 /// var ok: bool = NativeOS.capture_screen("user://sense/screen.png")
 /// ```
 class NativeOS : public Object {
@@ -46,12 +44,6 @@ public:
 	/// steals activation) so paste / typing returns to the target app.
 	/// Returns [code]true[/code] when restore succeeded. Windows only.
 	bool restore_foreground_window();
-	/// Screen position of the foreground text caret, in the same space as
-	/// [code]DisplayServer.mouse_get_position()[/code]. Tries Win32
-	/// [code]GetGUIThreadInfo[/code] first, then UI Automation
-	/// ([code]TextPattern2.GetCaretRange[/code] / selection). Returns [code]null[/code]
-	/// when unavailable (some apps never expose a caret).
-	Variant get_caret_screen_position() const;
 	/// Capture the full physical monitor under the mouse cursor and save it as PNG at
 	/// [param path] ([code]user://[/code] / absolute / etc. via [code]FileAccess[/code]).
 	/// Does not hide Godot overlays. Returns [code]true[/code] on success.

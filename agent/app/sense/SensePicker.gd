@@ -108,12 +108,12 @@ static func is_open() -> bool:
 	return instance != null and is_instance_valid(instance)
 
 
-## Screen-space top-left aligned with the wave overlay: same width / offset / top edge.
+## Screen-space top-left aligned with the centered wave overlay: same width and top edge.
 ## [param window_size].y is ignored for placement — vertical pin uses scaled wave height so the
 ## picker grows downward from where the sine wave sat.
 static func window_position_for_anchor(screen_anchor: Vector2i, window_size: Vector2i, scale: float = 1.0) -> Vector2i:
 	var wave_h := maxi(1, roundi(float(SenseWave.WAVE_HEIGHT) * scale))
-	return SenseWave.window_position_for_cursor(screen_anchor, Vector2i(window_size.x, wave_h))
+	return SenseWave.window_position_for_anchor(screen_anchor, Vector2i(window_size.x, wave_h))
 
 
 ## Fill or replace slot [param index] once that candidate is ready. No-op after close.
