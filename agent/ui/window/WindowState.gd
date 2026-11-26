@@ -72,6 +72,9 @@ func on_application_exit() -> void:
 	pass
 
 
+## Saved geometry belongs to the monitors of that session: with the second screen gone, a window
+## saved on it would be restored outside every monitor - created, but unreachable. The saved screen
+## index is clamped into the screens that exist and the saved corner into its usable area.
 func restore() -> void:
 	if window == null or not FileAccess.file_exists(FILE_PATH):
 		return
@@ -79,14 +82,15 @@ func restore() -> void:
 	if restored is not State:
 		return
 	state = restored as State
-	state.screen = clampi(state.screen, 0, DisplayServer.get_screen_count() - 1)
+	state.screen = clampi(state.screen, 0, maxi(0, DisplayServer.get_screen_count() - 1))
 	window.mode = Window.MODE_WINDOWED
 	window.current_screen = state.screen
 	if state.mode == Window.MODE_MAXIMIZED or state.mode == Window.MODE_FULLSCREEN:
 		window.mode = state.mode as Window.Mode
 	else:
 		window.size = Vector2i(state.width, state.height)
-		window.position = Vector2i(state.position_x, state.position_y)
+		var position := Vector2i(state.position_x, state.position_y)
+		window.position = ScreenUtils.clamp_rect_to_usable(position, window.size, 0, state.screen)
 	pass
 
 
