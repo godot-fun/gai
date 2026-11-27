@@ -154,7 +154,7 @@ const EXTENSIONS: Dictionary[String, String] = {
 }
 
 static var present: Dictionary[String, bool] = {}
-static var textures: Dictionary = {}
+static var textures: Dictionary[String, Texture2D] = {}
 
 
 ## Resource path of the SVG for [param file_path]; always loadable, [code]file.svg[/code] when nothing matches.
@@ -199,11 +199,15 @@ static func icon_file(stem: String) -> String:
 	return ICON_DIRECTORY + stem + ".svg"
 
 
+## Whether the set has a glyph for [param stem]. [method ResourceLoader.exists] instead of
+## [method FileAccess.file_exists] because the sheet ships as imported [code].svg[/code]: an exported
+## build packs the imported texture plus a remap, not the source file, and only the loader API follows
+## the remap. Asked once per stem, so the heavier call does not repeat.
 static func has_icon(stem: String) -> bool:
 	if stem.is_empty():
 		return false
 	if present.has(stem):
 		return present[stem]
-	var found := FileAccess.file_exists(icon_file(stem))
+	var found := ResourceLoader.exists(icon_file(stem))
 	present[stem] = found
 	return found
