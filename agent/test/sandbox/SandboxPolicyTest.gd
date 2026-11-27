@@ -27,7 +27,7 @@ static func file_tools_reject_outside_workspace_test() -> void:
 		[ListDirTool.new(), {ListDirTool.ARG_PATH: outside_path}],
 		[GlobTool.new(), {GlobTool.ARG_PATTERN: "*", GlobTool.ARG_PATH: outside_path}],
 		[GrepTool.new(), {GrepTool.ARG_PATTERN: ".", GrepTool.ARG_PATH: outside_path}],
-		[ReadImageRemoteTool.new(), {ReadImageTool.ARG_PATH: outside_path}],
+		[ReadImageTool.new(), {ReadImageTool.ARG_PATH: outside_path}],
 	]
 	for entry: Array in tool_args:
 		var tool: AgentTool = entry[0]
@@ -65,7 +65,7 @@ static func required_file_tools_reject_missing_path_test() -> void:
 		[WriteTool.new(), {WriteTool.ARG_CONTENT: "must not be written"}],
 		[EditTool.new(), {EditTool.ARG_OLD_STRING: "old", EditTool.ARG_NEW_STRING: "new"}],
 		[DeleteTool.new(), {}],
-		[ReadImageRemoteTool.new(), {}],
+		[ReadImageTool.new(), {}],
 	]
 	for entry: Array in tool_args:
 		var tool: AgentTool = entry[0]
