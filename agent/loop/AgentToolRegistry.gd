@@ -34,7 +34,7 @@ static func reload_tools() -> void:
 	register(EditTool.new())
 	
 	# image tools
-	register(ReadImageLocalTool.new())
+	register(ReadImageRemoteTool.new())
 
 	# enhance tools
 	register(DeleteTool.new())

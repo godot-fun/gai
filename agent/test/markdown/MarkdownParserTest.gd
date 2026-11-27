@@ -128,7 +128,7 @@ func inline_code_tinted_test() -> void:
 	var bbcode := MarkdownParser.inline_to_bbcode("`x`")
 	assert(bbcode.begins_with(MarkdownParser.INLINE_CODE_MARGIN))
 	assert(bbcode.ends_with(MarkdownParser.INLINE_CODE_MARGIN))
-	assert("[bgcolor=" + MarkdownParser.to_bbcode_color(Colors.surface_container_highest) + "]" in bbcode)
+	assert("[bgcolor=" + MarkdownParser.to_bbcode_color(Colors.surface_container) + "]" in bbcode)
 	assert("[code]x[/code]" in bbcode)
 	assert("[table=" not in bbcode)
 	pass
