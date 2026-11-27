@@ -15,6 +15,10 @@ func common_editor_text_and_view_mode_test() -> void:
 	assert(editor.preview_panel.visible)
 	assert(editor.markdown_label.clip_contents)
 	assert(editor.preview_panel.clip_contents)
+	# The body keeps its own inset so a table border is not drawn on the label's clip edge.
+	var body_style := editor.markdown_label.get_theme_stylebox("normal")
+	assert(body_style.get_margin(SIDE_LEFT) > 0)
+	assert(body_style.get_margin(SIDE_RIGHT) > 0)
 	assert(editor.text_edit.get_theme_font_size("font_size") == Typography.body_large)
 	assert(editor.text_edit.get_theme_font_size("font_size") == editor.markdown_label.get_theme_font_size("normal_font_size"))
 	assert(editor.markdown_label.get_theme_font_size("bold_font_size") == Typography.body_large)

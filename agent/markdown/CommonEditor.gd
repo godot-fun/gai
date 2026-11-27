@@ -242,11 +242,17 @@ func style_text_edit() -> void:
 
 
 func style_preview() -> void:
-	var style := StyleBoxHelper.create_style_box_flat(Colors.surface, 0, Margin.ma_4, 0)
+	var style := StyleBoxHelper.create_style_box_flat(Colors.surface, 0, Margin.ma_4, Margin.ma_2)
 	if view_mode == ViewMode.SPLIT and is_markdown():
 		style.border_color = Colors.outline_variant
 		style.set_border_width(SIDE_LEFT, ControlSize.border_xs)
 	preview_panel.add_theme_stylebox_override("panel", style)
+	# The label clips its own drawing, so a table cell border landing on the clip edge loses its
+	# outer pixel column and the table's left line disappears. The body therefore keeps its own
+	# inset, which also sets the table away from the pane edge.
+	var body_style := StyleBoxEmpty.new()
+	StyleBoxHelper.apply_margin(body_style, Margin.ma_2, Margin.ma_2, Margin.ma_2, Margin.ma_2)
+	markdown_label.add_theme_stylebox_override("normal", body_style)
 	markdown_label.add_theme_color_override("default_color", Colors.primary_text)
 	MarkdownHelper.apply_selection_theme(markdown_label)
 	ScrollBarStyle.apply(markdown_label.get_v_scroll_bar(), ScrollBarStyle.Thickness.LG)
