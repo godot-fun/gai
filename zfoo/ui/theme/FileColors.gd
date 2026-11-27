@@ -23,7 +23,7 @@ const LIGHT_FOLDER := Color(0.49, 0.38, 0.15)
 ## Audio / image / video extensions come from [ResourceHelper], [ImageHelper], and [VideoHelper]; [member CONFIG_EXTENSIONS]
 ## and [member TEXT_DOCUMENT_EXTENSIONS] cover the rest. Installers, binaries, and shell scripts are not config — they
 ## fall through to [constant Category.GENERIC]. [method category_for_path] and [method color_for_path] are shared by
-## [MarkdownHighlighter] (CodeEdit) and [MarkdownParser] (BBCode prefix).
+## [MarkdownHighlighter] (CodeEdit) and [MarkdownParser] (folder detection and its emoji fallback).
 const CONFIG_EXTENSIONS: PackedStringArray = [
 	"cfg", "cnf", "conf", "config", "env", "gdextension", "godot", "import", "ini", "json", "json5", "jsonc",
 	"lock", "plist", "properties", "toml", "tres", "tscn", "xml", "yaml", "yml",
@@ -35,7 +35,8 @@ const TEXT_DOCUMENT_EXTENSIONS: PackedStringArray = [
 	"tsx", "tsv", "txt", "vue", "zsh",
 ]
 
-## One [Category] per [code]*_color[/code] static below ([MarkdownParser.get_link_prefix] picks emoji per case).
+## One [Category] per [code]*_color[/code] static below ([MarkdownParser.get_link_prefix] takes the folder test
+## and the color of the emoji it falls back to from here; a known file shows its [FileIcon] instead).
 enum Category { GENERIC, FOLDER, AUDIO, IMAGE, VIDEO, CONFIG, TEXT }
 
 static var generic_color: Color = DARK_GENERIC

@@ -486,9 +486,9 @@ func apply_icon(item: TreeItem) -> void:
 	var path := str(item.get_metadata(0))
 	var icon: Texture2D
 	if DirAccess.dir_exists_absolute(path):
-		icon = EditorFileIcon.folder_texture(not item.collapsed)
+		icon = FileIcon.folder_texture(not item.collapsed)
 	else:
-		icon = EditorFileIcon.texture(path)
+		icon = FileIcon.texture(path)
 	if icon != null:
 		item.set_icon(0, icon)
 	pass

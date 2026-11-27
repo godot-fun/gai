@@ -66,8 +66,10 @@ const NBSP := "\u00A0"
 ## though its text wrapped. Inside the text the gutter is wrapped and measured with the glyphs, so
 ## the table always ends on the label box.
 const TABLE_CELL_GUTTER := NBSP + NBSP
-## Colored emoji markers before link labels for local paths in RichText BBCode (see [method get_link_prefix]).
-## Category and color follow [FileColors.category_for_path]; image / video use dedicated icons instead of [member FILE_PREFIX].
+## Link markers before link labels in RichText BBCode (see [method get_link_prefix]). A file link draws its
+## [FileIcon] glyph when the icon set has one and only falls back to the emoji below when it does not, so an
+## unusual extension still reads as audio / image / document instead of a blank page. Folder, web, and
+## mailto links have no entry in the icon set and always use their emoji, colored by [FileColors].
 const FOLDER_PREFIX := "📁 "
 const FILE_PREFIX := "📄 "
 const IMAGE_PREFIX := "📷 "
@@ -77,6 +79,18 @@ const WEB_PREFIX := "🔗 "
 const EMAIL_PREFIX := "✉ "
 const CONFIG_PREFIX := "⚙ "
 const TEXT_DOCUMENT_PREFIX := "📝 "
+## Emoji marker per [FileColors.Category]: a folder always shows its own, and a file shows the one its
+## category implies when the icon set has no glyph for it.
+const CATEGORY_PREFIXES := {
+	FileColors.Category.FOLDER: FOLDER_PREFIX,
+	FileColors.Category.AUDIO: AUDIO_PREFIX,
+	FileColors.Category.IMAGE: IMAGE_PREFIX,
+	FileColors.Category.VIDEO: VIDEO_PREFIX,
+	FileColors.Category.CONFIG: CONFIG_PREFIX,
+	FileColors.Category.TEXT: TEXT_DOCUMENT_PREFIX,
+}
+## Language label at the top of a fenced block. It stays a text glyph: the fence is one colored cell,
+## and a file icon there would say nothing about the language.
 const CODE_LANGUAGE_PREFIX := "⌨ "
 const TABLE_CELL_PADDING := "0,4,0,4"
 const CODE_BLOCK_PADDING := "6,6,6,6"
@@ -759,10 +773,9 @@ static func replace_inline_match(
 # ---------------------------------------------------------------------------
 # Link and file markers
 # ---------------------------------------------------------------------------
-## Local `[text](file)` chips: emoji + [FileColors] by file category (composer [MarkdownHighlighter] uses the
-## same classification for `(file)` paint only — no emoji in CodeEdit). Web and mailto use info color below.
-
-## Adds a theme-colored visual marker based on the link destination type.
+## Marker before a link label: a file link shows the same [FileIcon] glyph as the editor row that opens it,
+## and the emoji table covers what the icon set does not know plus folder / web / mailto. The composer
+## [MarkdownHighlighter] paints `(file)` only, since a CodeEdit can draw text but not images.
 static func get_link_prefix(path: String) -> String:
 	if HttpUtils.is_valid_http_url(path):
 		return format_link_prefix(WEB_PREFIX, Colors.info)
@@ -770,25 +783,27 @@ static func get_link_prefix(path: String) -> String:
 		return format_link_prefix(EMAIL_PREFIX, Colors.info)
 	if not (path.is_absolute_path() or path.begins_with("res://") or path.begins_with("user://")):
 		return StringUtils.EMPTY
-	match FileColors.category_for_path(path):
-		FileColors.Category.GENERIC:
-			return format_link_prefix(FILE_PREFIX, FileColors.generic_color)
-		FileColors.Category.FOLDER:
-			return format_link_prefix(FOLDER_PREFIX, FileColors.folder_color)
-		FileColors.Category.AUDIO:
-			return format_link_prefix(AUDIO_PREFIX, FileColors.audio_color)
-		FileColors.Category.IMAGE:
-			return format_link_prefix(IMAGE_PREFIX, FileColors.image_color)
-		FileColors.Category.VIDEO:
-			return format_link_prefix(VIDEO_PREFIX, FileColors.video_color)
-		FileColors.Category.CONFIG:
-			return format_link_prefix(CONFIG_PREFIX, FileColors.config_color)
-		FileColors.Category.TEXT:
-			return format_link_prefix(TEXT_DOCUMENT_PREFIX, FileColors.text_color)
-	return format_link_prefix(FILE_PREFIX, FileColors.generic_color)
+	var category := FileColors.category_for_path(path)
+	# A folder never takes an icon, and a file only when the set knows its type.
+	if category != FileColors.Category.FOLDER:
+		var stem := FileIcon.icon_stem(path)
+		if stem != FileIcon.GENERIC_STEM:
+			return format_link_icon(FileIcon.icon_file(stem))
+	# Everything else keeps the emoji marker and the color of its category.
+	var marker: String = CATEGORY_PREFIXES.get(category, FILE_PREFIX)
+	return format_link_prefix(marker, FileColors.color_for_category(category))
 	pass
 
 
+## `[img]` sits on the baseline and keeps its own fill, so the icon prefix carries no `[color]`; the body
+## size keeps the glyph level with the label's capitals, and the trailing space separates it from the text.
+static func format_link_icon(icon_path: String) -> String:
+	var size := Typography.body_large
+	return StringUtils.format("[img={}x{}]{}[/img] ", size, size, icon_path)
+
+
+## Emoji marker in its category color: what folder / web / mailto links show, and what a file the icon set
+## does not know falls back to.
 static func format_link_prefix(prefix: String, color: Color) -> String:
 	return StringUtils.format("[color={}]{}[/color]", to_bbcode_color(color), prefix)
 

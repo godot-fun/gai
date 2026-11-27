@@ -1,14 +1,19 @@
-class_name EditorFileIcon
+class_name FileIcon
 extends RefCounted
 
 ## Resolves a workspace path to a Material icon in [code]res://agent/asset/image/file[/code].
 ## Names are matched in lowercase. [code].gd[/code] uses [code]godot.svg[/code], not a file named [code]gd.svg[/code].
 ## Directories reuse the colorless Material Symbols folders from [code]res://agent/asset/image/ui[/code],
 ## tinted with the accent color so they follow the theme like the toolbar app icons.
+##
+## Shared by the editor file tree, the editor tabs, and the markdown link prefix
+## ([method MarkdownParser.get_link_prefix]), so one path reads the same everywhere.
 
 const ICON_DIRECTORY := "res://agent/asset/image/file/"
 const FOLDER_ICON := "res://agent/asset/image/ui/folder.svg"
 const FOLDER_OPEN_ICON := "res://agent/asset/image/ui/folder_open.svg"
+## Glyph for a path the icon set does not know, and the answer of [method icon_stem] for it.
+const GENERIC_STEM := "file"
 
 const FILE_NAMES: Dictionary[String, String] = {
 	"dockerfile": "docker",
@@ -152,8 +157,14 @@ static var present: Dictionary[String, bool] = {}
 static var textures: Dictionary = {}
 
 
-## Resource path of the SVG for [param file_path].
+## Resource path of the SVG for [param file_path]; always loadable, [code]file.svg[/code] when nothing matches.
 static func icon_path(file_path: String) -> String:
+	return icon_file(icon_stem(file_path))
+
+
+## Stem of the SVG this path maps to, or [constant GENERIC_STEM] when the set has no glyph for it — the
+## answer a caller needs to fall back to its own marker instead of drawing a blank page icon.
+static func icon_stem(file_path: String) -> String:
 	var file_name := file_path.get_file().to_lower()
 	var stem: String = FILE_NAMES.get(file_name, "")
 	if stem.is_empty():
@@ -164,9 +175,7 @@ static func icon_path(file_path: String) -> String:
 			stem = EXTENSIONS.get(extension, "")
 			if stem.is_empty() and has_icon(extension):
 				stem = extension
-	if not has_icon(stem):
-		stem = "file"
-	return icon_file(stem)
+	return stem if has_icon(stem) else GENERIC_STEM
 
 
 ## Texture for a file row, loaded once per icon.

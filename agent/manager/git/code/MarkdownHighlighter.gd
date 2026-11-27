@@ -5,7 +5,7 @@ extends SyntaxHighlighter
 ##
 ## Inline links: `[label](https://…)` / `mailto:` keep [CodeColors.link] on the `(destination)` span;
 ## `[label](local file)` uses [FileColors.color_for_path] from the path extension (same rules as rendered
-## link chips in [MarkdownParser], without the emoji prefix). Label text `[…]` stays generic link color.
+## link chips in [MarkdownParser], which draw a [FileIcon] image or a category emoji instead). Label text `[…]` stays generic link color.
 ##
 ## Composer: line-leading `/skill` → [CodeColors.member]; `@path` → [FileColors] (same bounds as completion; skip `` ` ``).
 ##

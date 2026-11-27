@@ -225,8 +225,10 @@ func url_with_parens_test() -> void:
 
 func link_label_blue_test() -> void:
 	var bbcode := MarkdownParser.inline_to_bbcode("[hi](https://a.com)")
+	# A site keeps its emoji marker in link blue; only a file link draws a [FileIcon] glyph.
 	assert("🔗 " in bbcode)
 	assert("[color=%s]🔗 [/color]" % MarkdownParser.to_bbcode_color(Colors.info) in bbcode)
+	assert("[img=" not in bbcode)
 	assert("[color=%s]" % MarkdownParser.to_bbcode_color(Colors.info) in bbcode)
 	var bold_label := MarkdownParser.inline_to_bbcode("[**hi**](https://a.com)")
 	assert("[b]hi[/b]" in bold_label)
@@ -413,21 +415,40 @@ func local_file_link_prefix_test() -> void:
 	var email_bbcode := MarkdownParser.inline_to_bbcode("[email](mailto:user@example.com)")
 	var image_bbcode := MarkdownParser.inline_to_bbcode("[sprite.png](<C:/assets/sprite.png>)")
 	var video_bbcode := MarkdownParser.inline_to_bbcode("[clip.mp4](<C:/clips/clip.mp4>)")
-	assert("📄 " in file_bbcode and "notes.bin" in file_bbcode)
-	assert("📷 " in image_bbcode and "sprite.png" in image_bbcode)
-	assert("🎬 " in video_bbcode and "clip.mp4" in video_bbcode)
-	assert("🎵 " in audio_bbcode and "voice.WAV" in audio_bbcode)
-	assert("📁 " in folder_bbcode and "markdown" in folder_bbcode)
-	assert("⚙ " in config_bbcode and "settings.json" in config_bbcode)
-	assert("📝 " in document_bbcode and "README.md" in document_bbcode)
-	assert("🔗 " in website_bbcode and "website" in website_bbcode)
-	assert("✉ " in email_bbcode and "email" in email_bbcode)
-	assert("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.audio_color) in audio_bbcode)
-	assert("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.folder_color) in folder_bbcode)
-	assert("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.text_color) in document_bbcode)
-	assert("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.image_color) in image_bbcode)
-	assert("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.video_color) in video_bbcode)
-	assert("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.config_color) in config_bbcode)
+	# A file link draws the same [FileIcon] glyph as the editor row: known type, own fill, body size.
+	assert(FileIcon.icon_file("image") in image_bbcode and "sprite.png" in image_bbcode)
+	assert(FileIcon.icon_file("video") in video_bbcode and "clip.mp4" in video_bbcode)
+	assert(FileIcon.icon_file("audio") in audio_bbcode and "voice.WAV" in audio_bbcode)
+	assert(FileIcon.icon_file("json") in config_bbcode and "settings.json" in config_bbcode)
+	assert(FileIcon.icon_file("markdown") in document_bbcode and "README.md" in document_bbcode)
+	assert(("[img=%dx%d]" % [Typography.body_large, Typography.body_large]) in audio_bbcode)
+	assert(("[color=%s]" % MarkdownParser.to_bbcode_color(FileColors.audio_color)) not in audio_bbcode)
+	# `.bin` has no glyph in the set, so it keeps the generic file emoji in its category color.
+	assert("[color=%s]📄 [/color]" % MarkdownParser.to_bbcode_color(FileColors.generic_color) in file_bbcode)
+	# Folder, web, and mailto have no icon in the set and keep their emoji in the category color.
+	assert("[color=%s]📁 [/color]" % MarkdownParser.to_bbcode_color(FileColors.folder_color) in folder_bbcode)
+	assert("[color=%s]🔗 [/color]" % MarkdownParser.to_bbcode_color(Colors.info) in website_bbcode)
+	assert("[color=%s]✉ [/color]" % MarkdownParser.to_bbcode_color(Colors.info) in email_bbcode)
+	pass
+
+
+## The icon set covers the common extensions only, so a file it does not know keeps the emoji marker its
+## [FileColors] category implies instead of a blank-page glyph. [method FileIcon.icon_stem] is the answer
+## that decides between the two.
+func unknown_file_emoji_fallback_test() -> void:
+	assert(FileIcon.icon_stem("C:/game/main.gd") == "godot")
+	assert(FileIcon.icon_stem("Dockerfile") == "docker")
+	assert(FileIcon.icon_stem("C:/tmp/notes.bin") == FileIcon.GENERIC_STEM)
+	assert(FileIcon.icon_path("C:/tmp/notes.bin") == FileIcon.icon_file(FileIcon.GENERIC_STEM))
+	var document_bbcode := MarkdownParser.inline_to_bbcode("[spec.docx](<C:/docs/spec.docx>)")
+	var config_bbcode := MarkdownParser.inline_to_bbcode("[app.config](<C:/cfg/app.config>)")
+	assert("[color=%s]📝 [/color]" % MarkdownParser.to_bbcode_color(FileColors.text_color) in document_bbcode)
+	assert("[color=%s]⚙ [/color]" % MarkdownParser.to_bbcode_color(FileColors.config_color) in config_bbcode)
+	assert("[img=" not in document_bbcode and "[img=" not in config_bbcode)
+	# A known extension still takes the icon even though [FileColors] has a category color for it.
+	var script_bbcode := MarkdownParser.inline_to_bbcode("[main.gd](<C:/game/main.gd>)")
+	assert(FileIcon.icon_file("godot") in script_bbcode and "[img=" in script_bbcode)
+	assert("📝 " not in script_bbcode)
 	pass
 
 
