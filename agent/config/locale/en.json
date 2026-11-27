@@ -337,8 +337,8 @@
       "max": "Max"
     },
     "input": {
-      "placeholder": "Ask gai Code Agent to read, edit, or run commands…  (Enter to send, Shift+Enter for newline, / for skills, @ for files)",
-      "click_to_ask": "Click to ask gai Code Agent…",
+      "placeholder": "Ask gai Code Agent to read, edit, or run commands…  (Enter to send, Shift+Enter for newline, / for skills, @ for files, or drag files and folders in)",
+      "click_to_ask": "Click to ask gai Code Agent…  (or drag files and folders in)",
       "send": "Send (Enter)",
       "select_model": "Select model",
       "reasoning_effort": "Reasoning effort",

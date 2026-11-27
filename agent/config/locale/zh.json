@@ -337,8 +337,8 @@
       "max": "最大"
     },
     "input": {
-      "placeholder": "让 gai Code Agent 读取、编辑文件或运行命令…（Enter 发送，Shift+Enter 换行，/ 调用技能，@ 引用文件）",
-      "click_to_ask": "点击询问 gai Code Agent…",
+      "placeholder": "让 gai Code Agent 读取、编辑文件或运行命令…（Enter 发送，Shift+Enter 换行，/ 调用技能，@ 引用文件，也可以把文件或文件夹直接拖进来）",
+      "click_to_ask": "点击询问 gai Code Agent…（也可以把文件或文件夹直接拖进来）",
       "send": "发送（Enter）",
       "select_model": "选择模型",
       "reasoning_effort": "推理强度",
