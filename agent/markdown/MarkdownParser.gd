@@ -371,7 +371,7 @@ static func add_code_background(code: String) -> String:
 	return StringUtils.format(
 			"{}[bgcolor={}]{}[/bgcolor]{}",
 			INLINE_CODE_MARGIN,
-			to_bbcode_color(Colors.surface_container_highest),
+			to_bbcode_color(Colors.surface_container),
 			wrap_code(code),
 			INLINE_CODE_MARGIN
 	)
