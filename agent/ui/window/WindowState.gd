@@ -1,7 +1,10 @@
 class_name WindowState
 extends RefCounted
 
-const FILE_PATH := "user://window_state.json"
+## Saved window geometry belongs to this machine (its monitors), so it lives in the data folder
+## shared by every workspace ([method Workspace.get_shared_data_dir]) — switching project must not
+## move the window, and the folder is not Steam Cloud synced where another machine would read it.
+const FILE_NAME := "window_state.json"
 
 
 class State extends RefCounted:
@@ -77,9 +80,10 @@ func on_application_exit() -> void:
 ## saved on it would be restored outside every monitor - created, but unreachable. The saved screen
 ## index is clamped into the screens that exist and the saved corner into its usable area.
 func restore() -> void:
-	if window == null or not FileAccess.file_exists(FILE_PATH):
+	var path := Workspace.get_shared_data_dir(FILE_NAME)
+	if window == null or not FileAccess.file_exists(path):
 		return
-	var restored: Variant = JsonUtils.json_to_object(FileUtils.read_file_to_string(FILE_PATH), State)
+	var restored: Variant = JsonUtils.json_to_object(FileUtils.read_file_to_string(path), State)
 	if restored is not State:
 		return
 	state = restored as State
@@ -113,7 +117,8 @@ func ensure_on_screen() -> void:
 func save() -> void:
 	if window == null:
 		return
-	var error := FileUtils.write_string_to_file(FILE_PATH, JsonUtils.object_to_json(state))
+	var path := Workspace.get_shared_data_dir(FILE_NAME)
+	var error := FileUtils.write_string_to_file(path, JsonUtils.object_to_json(state))
 	if error != OK:
-		Log.error("window state save failed path:[{}] err:[{}]", FILE_PATH, error)
+		Log.error("window state save failed path:[{}] err:[{}]", path, error)
 	pass
