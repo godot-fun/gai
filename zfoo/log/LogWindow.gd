@@ -1,4 +1,5 @@
-## Tails `{user_data}/logs/godot.log` via PopupWindow.
+## Tails this process's log file — `LoggerHelper.LOG_FILE_PATH`: the `-- --log-file <path>` user arg when a
+## launcher passed one, otherwise `{user_data}/logs/godot.log` — via PopupWindow.
 class_name LogWindow
 extends Object
 

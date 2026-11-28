@@ -156,13 +156,20 @@ Write-StepDone "done" "exit 0"
 # open. Release the console first, then start the app.
 # Everything after `--` reaches the app through OS.get_cmdline_user_args():
 #   --data-dir <path>   agent data folder, workspace-relative (default here: .gai2)
+#
+# The app logs to user://logs/gai.log instead of the default godot.log, which every Godot process started
+# with this APPDATA shares — a command-line test run would rotate the running app's log away. The engine
+# consumes its own --log-file and its value, so the same path is repeated after `--` for LoggerHelper.
+
+$LogFile = "user://logs/gai.log"
 
 $UserArgs = @($Rest | Where-Object { $null -ne $_ })
 if (-not ($UserArgs -match '^--data-dir(=.*)?$')) {
 	$UserArgs = @("--data-dir", ".gai2") + $UserArgs
 }
+$UserArgs = @("--log-file", $LogFile) + $UserArgs
 
-$ArgumentList = @("--path", $Root, "res://agent/Agent.tscn", "--") + $UserArgs
+$ArgumentList = @("--path", $Root, "--log-file", $LogFile, "res://agent/Agent.tscn", "--") + $UserArgs
 
 Write-Step ("Start agent (res://agent/Agent.tscn {0})" -f ($UserArgs -join " "))
 Write-StepDone "started" "new window"

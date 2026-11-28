@@ -1,6 +1,8 @@
-﻿class_name LoggerHelper
+class_name LoggerHelper
 extends Object
 
+## Absolute path of the log file this process writes: Godot's default `{user_data}/logs/godot.log`, or the
+## `-- --log-file <path>` user arg resolved once in [method init].
 static var LOG_FILE_PATH: String = OS.get_user_data_dir() + "/logs/godot.log"
 
 static func init() -> void:
@@ -8,6 +10,10 @@ static func init() -> void:
 		OS.add_logger(ConsoleLogger.new())
 	else:
 		OS.add_logger(FileLogger.new())
+		
+	var configured_log_file := FileUtils.globalize_writable_path(OSUtils.parse_cmdline_arg_value(OS.get_cmdline_user_args(), "--log-file"))
+	if !StringUtils.is_blank(configured_log_file):
+		LOG_FILE_PATH = configured_log_file
 	# Reported in both builds so the resolved location is visible at startup.
 	Log.info("log file:[{}]", LOG_FILE_PATH)
 	pass

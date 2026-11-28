@@ -158,7 +158,7 @@ if response.success:
 
 ## Log
 
-- Logs are written to `{user_data}/logs/godot.log`.
+- Logs are written to `{user_data}/logs/godot.log`. A launcher that redirects the engine log with `--log-file <path>` must repeat the same path after `--`, because the engine consumes its own `--log-file` and its value before scripts can read the command line (`agent.ps1` passes `--log-file user://logs/gai.log` before `--` and again after it, so the app log does not share `godot.log` with command-line test runs). `LoggerHelper.LOG_FILE_PATH` follows that user arg.
 
 ```gdscript
 Log.info("player login uid:[{}]", user_id)
