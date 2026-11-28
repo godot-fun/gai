@@ -137,7 +137,7 @@ static func find_profile_index(model: String) -> int:
 # Encrypted storage
 
 static func load_config() -> ApiConfig:
-	var path := AgentDataDir.get_dir_path(CONFIG_FILE_PATH, AgentDataDir.Scope.CLOUD)
+	var path := AppDataDir.get_dir_path(CONFIG_FILE_PATH, AppDataDir.Scope.CLOUD)
 	if not FileAccess.file_exists(path):
 		return create_default_config()
 	var file := FileAccess.open_encrypted_with_pass(path, FileAccess.READ, "gai_godot_zfoo")
@@ -154,7 +154,7 @@ static func load_config() -> ApiConfig:
 
 
 static func save_config() -> void:
-	var path := AgentDataDir.get_dir_path(CONFIG_FILE_PATH, AgentDataDir.Scope.CLOUD)
+	var path := AppDataDir.get_dir_path(CONFIG_FILE_PATH, AppDataDir.Scope.CLOUD)
 	var file := FileAccess.open_encrypted_with_pass(path, FileAccess.WRITE, "gai_godot_zfoo")
 	if file == null:
 		Log.error("save encrypted API config failed path:[{}] error:[{}]", path, FileAccess.get_open_error())

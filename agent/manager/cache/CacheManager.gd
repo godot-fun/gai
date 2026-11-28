@@ -1,7 +1,7 @@
 class_name CacheManager
 extends Object
 
-## Caches live in the app-wide data folder ([constant AgentDataDir.Scope.APP]), not in the workspace:
+## Caches live in the app-wide data folder ([constant AppDataDir.Scope.APP]), not in the workspace:
 ## every entry is either content-addressed (markdown images by URL) or a UUID-named artifact
 ## (clipboard, screenshots, diff bundles), so one shared folder avoids re-downloading per project and
 ## keeps the caps below meaningful — [method cleanup_caches] only ever sees this one folder.
@@ -24,19 +24,19 @@ static func _static_init() -> void:
 
 
 static func get_diff_cache_dir() -> String:
-	return AgentDataDir.get_dir_path(DIFF_CACHE_SUBDIR, AgentDataDir.Scope.APP)
+	return AppDataDir.get_dir_path(DIFF_CACHE_SUBDIR, AppDataDir.Scope.APP)
 
 
 static func get_web_screenshot_cache_dir() -> String:
-	return AgentDataDir.get_dir_path(WEB_SCREENSHOT_SUBDIR, AgentDataDir.Scope.APP)
+	return AppDataDir.get_dir_path(WEB_SCREENSHOT_SUBDIR, AppDataDir.Scope.APP)
 
 
 static func get_clipboard_cache_dir() -> String:
-	return AgentDataDir.get_dir_path(CLIPBOARD_SUBDIR, AgentDataDir.Scope.APP)
+	return AppDataDir.get_dir_path(CLIPBOARD_SUBDIR, AppDataDir.Scope.APP)
 
 
 static func get_markdown_image_cache_dir() -> String:
-	return AgentDataDir.get_dir_path(MARKDOWN_IMAGE_SUBDIR, AgentDataDir.Scope.APP)
+	return AppDataDir.get_dir_path(MARKDOWN_IMAGE_SUBDIR, AppDataDir.Scope.APP)
 
 
 static func get_markdown_remote_image_cache_path(image_url: String) -> String:

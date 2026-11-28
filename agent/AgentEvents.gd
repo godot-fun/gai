@@ -5,6 +5,8 @@ extends RefCounted
 ## Managers and runtime code emit completed state changes; UI code may observe them.
 ## UI actions must call a manager's public command method directly. Managers must not
 ## subscribe to UI-originated events through this event bus.
+##
+## Workspace root switches are not here — [Workspace] owns its own bus in the framework layer.
 
 ## Pi agent-core event names. Multi-session: agent/turn signals include session_id.
 
@@ -71,10 +73,10 @@ class Events:
 	## entry after it were removed; otherwise only the selected entry was removed.
 	signal chat_entry_delete(session_id: int, entry_idx: int, delete_from_here: bool)
 
-	# Workspace
-	## Workspace root switched (see [method Workspace.set_root]) — sessions and file
-	## paths now resolve under the new root, so listeners reload their state.
-	signal workspace_changed(path: String)
+	# ===========================================================================
+	# LOCAL SERVICES — manager -> UI
+	# ===========================================================================
+
 	## Local TypeScript service started and is ready to accept requests.
 	signal web_server_started
 	## MCP tool discovery completed and the aggregate tool registry should refresh.

@@ -59,7 +59,7 @@ func setup(
 	AgentEvents.events.session_stop.connect(on_session_stop)
 	AgentEvents.events.compaction_start.connect(on_compaction_start)
 	AgentEvents.events.compaction_end.connect(on_compaction_end)
-	AgentEvents.events.workspace_changed.connect(on_workspace_changed)
+	Workspace.events.changed.connect(on_workspace_changed)
 
 	# Lists and headers are drop targets — the padding between rows has to accept a drop too.
 	pinned_header.mouse_filter = Control.MOUSE_FILTER_PASS

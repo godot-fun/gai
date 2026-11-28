@@ -1,17 +1,17 @@
-class_name AgentDataDir
+class_name AppDataDir
 extends RefCounted
 
-## Agent data folder — sessions, checkpoints, caches, and editor state all live inside it.
+## Application data folder — one root for sessions, checkpoints, caches, and editor state.
 ##
 ## Three scopes share the same folder name so all stay discoverable:
 ## [constant Scope.WORKSPACE] sits under the workspace root (see [method Workspace.get_root])
-## and holds state that belongs to one project; [constant Scope.APP] sits next to the agent
-## application (see [method FileUtils.get_project_root_path]) and holds caches, so switching
-## workspace never duplicates them; [constant Scope.CLOUD] is the app-wide subfolder that Steam
-## Cloud syncs, so it only ever holds small, machine-independent state.
+## and holds state that belongs to one project; [constant Scope.APP] sits next to the application
+## (see [method FileUtils.get_project_root_path]) and holds caches, so switching workspace never
+## duplicates them; [constant Scope.CLOUD] is the app-wide subfolder that Steam Cloud syncs, so it
+## only ever holds small, machine-independent state.
 ##
-## This is the only script naming the folder: consumers call [method get_dir_path], and
-## [method GitIgnore.refresh_ignore_rules] uses [method get_dir_name] for its skip rule.
+## This is the only script naming the folder: consumers call [method get_dir_path], and the
+## application derives its ignore rules from [method get_dir_name].
 
 enum Scope {
 	## Per-workspace state: checkpoints, editor tabs.
@@ -22,7 +22,8 @@ enum Scope {
 	CLOUD,
 }
 
-## Folder name used when no [constant CLI_DIR_ARG] is given.
+## Folder name used when no [constant CLI_DIR_ARG] is given. An application chooses it by passing
+## `--data-dir`; the value here is this application's editor-mode default.
 const DEFAULT_DIR_NAME := ".gai_temp"
 
 ## Subfolder of [constant Scope.APP] that Steam Cloud syncs. Keep it small and machine independent —

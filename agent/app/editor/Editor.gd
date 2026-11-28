@@ -46,7 +46,7 @@ func _ready() -> void:
 	resized.connect(align_tabs)
 	AgentEvents.events.editor_file_selected.connect(on_file_selected)
 	AgentEvents.events.editor_file_deleted.connect(on_file_deleted)
-	AgentEvents.events.workspace_changed.connect(on_workspace_changed)
+	Workspace.events.changed.connect(on_workspace_changed)
 	gdf.events.theme_changed.connect(apply_theme)
 	gdf.events.theme_color_changed.connect(apply_theme)
 	gdf.events.locale_changed.connect(apply_locale)

@@ -168,7 +168,13 @@ static var ignore_rules: Array[String] = []
 
 static func _static_init() -> void:
 	# Rules follow the workspace root, so rebuild them whenever it is switched.
-	AgentEvents.events.workspace_changed.connect(func(_path: String) -> void: refresh_ignore_rules())
+	Workspace.events.changed.connect(on_workspace_changed)
+	refresh_ignore_rules()
+	pass
+
+
+## Reloads the rule list after a workspace switch.
+static func on_workspace_changed(_path: String) -> void:
 	refresh_ignore_rules()
 	pass
 
@@ -182,8 +188,8 @@ static func refresh_ignore_rules() -> void:
 	for file_name in WORKSPACE_IGNORE_FILES:
 		append_rule_lines(rules, FileUtils.read_file_to_string(Workspace.resolve_path(file_name)))
 	# The active data folder plus the default one, so a folder written by another launch mode is skipped too.
-	append_rule_lines(rules, AgentDataDir.get_dir_name() + "/")
-	append_rule_lines(rules, AgentDataDir.DEFAULT_DIR_NAME + "/")
+	append_rule_lines(rules, AppDataDir.get_dir_name() + "/")
+	append_rule_lines(rules, AppDataDir.DEFAULT_DIR_NAME + "/")
 	ignore_rules = rules
 	pass
 

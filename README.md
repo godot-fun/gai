@@ -153,8 +153,9 @@ cli/    skill command examples               zfoo/  reusable Godot framework
 .agents/skills/  skill definitions           .memory/      durable agent memory
 SKILLS.md        skill index                 MEMORY.md     memory index
 test/   zfoo tests                           agent/test/   app tests
-.gai/        launcher data dir: .gai/cloud/ holds the Steam-Cloud-synced sessions and index,
-             .gai/cache/ the app-level caches, plus Godot's user:// tree under .gai/Godot/
+.gai/        launcher data dir: cloud/ holds the Steam-Cloud-synced sessions, note, and model
+             profiles; cache/ the app-level caches; checkpoints/ shadow git repos; Godot/ the
+             user:// tree (settings, logs)
 .gai_temp/   same, when the app is started from the Godot editor instead (agent.bat passes --data-dir .gai)
 ```
 
