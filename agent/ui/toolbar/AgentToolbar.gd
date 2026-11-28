@@ -17,6 +17,7 @@ func setup(
 	logo_label = p_logo_label
 	workspace_button = p_workspace_button
 	gdf.events.theme_changed.connect(apply_theme)
+	gdf.events.theme_color_changed.connect(apply_theme)
 	apply_theme()
 	pass
 
