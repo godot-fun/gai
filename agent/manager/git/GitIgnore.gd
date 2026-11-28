@@ -168,7 +168,7 @@ static var ignore_rules: Array[String] = []
 
 static func _static_init() -> void:
 	# Rules follow the workspace root, so rebuild them whenever it is switched.
-	Workspace.events.changed.connect(on_workspace_changed)
+	gdf.events.workspace_changed.connect(on_workspace_changed)
 	refresh_ignore_rules()
 	pass
 

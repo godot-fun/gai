@@ -121,6 +121,9 @@ class Events:
 	signal locale_changed
 	## User interface scale preset changed (see [method DisplayScale.set_ui_scale]).
 	signal ui_scale_changed(scale: float)
+	## Workspace root switched (see [method Workspace.set_root]); paths and sessions now resolve
+	## under the new root, so listeners reload their state.
+	signal workspace_changed(path: String)
 	## Emitted whenever the root window or a focused CommonWindow receives the ui_cancel action.
 	signal ui_cancel
 	pass

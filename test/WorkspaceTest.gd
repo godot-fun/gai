@@ -23,7 +23,8 @@ static func resolve_path_test() -> void:
 	pass
 
 
-static func events_bus_is_class_owned_test() -> void:
-	# The bus sits on the class, not on the autoload node, so listeners can connect from static init.
-	assert(Workspace.events != null)
+static func event_lives_on_the_framework_bus_test() -> void:
+	# The switch is a framework lifecycle event, so it is declared on gdf.events and stays
+	# available to static-init listeners.
+	assert(gdf.events.has_signal("workspace_changed"))
 	pass

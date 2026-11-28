@@ -2,19 +2,11 @@ class_name Workspace
 extends RefCounted
 
 ## The workspace root — the project folder tools, editor, and sessions work against.
-## Persisted through [Setting]; the switch is announced on [signal Workspace.events.changed]
+## Persisted through [Setting]; the switch is announced on [signal gdf.events.workspace_changed]
 ## so listeners can reload. Confinement policies live in the application, not here.
 
 ## Key in [Setting] holding the last chosen root; missing or gone falls back to the project root.
 const SETTING_KEY := "workspace_root"
-
-## Switch announcements for [method set_root]. A plain RefCounted bus, not [gdf.events]: connecting a
-## static callback to the autoload-owned bus crashes the process on exit.
-static var events := Events.new()
-
-
-class Events:
-	signal changed(path: String)
 
 
 static func get_root() -> String:
@@ -25,7 +17,7 @@ static func get_root() -> String:
 
 
 ## Applies [param path] as workspace root; announces the switch on
-## [signal Workspace.events.changed] so listeners can reload.
+## [signal gdf.events.workspace_changed] so listeners can reload.
 static func set_root(path: String) -> bool:
 	var normalized := FileUtils.normalize_path(path)
 	if normalized.is_empty():
@@ -34,7 +26,7 @@ static func set_root(path: String) -> bool:
 		return false
 	Setting.set_string(SETTING_KEY, normalized)
 	Setting.save()
-	Workspace.events.changed.emit(normalized)
+	gdf.events.workspace_changed.emit(normalized)
 	return true
 
 

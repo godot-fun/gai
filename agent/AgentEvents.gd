@@ -6,7 +6,8 @@ extends RefCounted
 ## UI actions must call a manager's public command method directly. Managers must not
 ## subscribe to UI-originated events through this event bus.
 ##
-## Workspace root switches are not here — [Workspace] owns its own bus in the framework layer.
+## Workspace root switches are not here either — they are framework lifecycle events, so
+## [signal gdf.events.workspace_changed] carries them.
 
 ## Pi agent-core event names. Multi-session: agent/turn signals include session_id.
 

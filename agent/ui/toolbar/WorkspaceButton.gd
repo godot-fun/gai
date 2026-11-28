@@ -3,7 +3,7 @@ extends RefCounted
 
 ## Toolbar workspace button — shows the agent workspace root and opens the folder picker.
 ## A confirmed folder goes through [method Workspace.set_root], which announces the
-## switch on [signal Workspace.events.changed].
+## switch on [signal gdf.events.workspace_changed].
 
 var button: Button
 
@@ -15,7 +15,7 @@ func setup(p_button: Button) -> void:
 	button.tooltip_text = workspace_tooltip()
 	button.pressed.connect(on_button_pressed)
 	gdf.events.locale_changed.connect(apply_locale)
-	Workspace.events.changed.connect(on_workspace_changed)
+	gdf.events.workspace_changed.connect(on_workspace_changed)
 	refresh()
 	pass
 
