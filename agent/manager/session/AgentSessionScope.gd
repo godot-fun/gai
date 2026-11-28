@@ -1,11 +1,11 @@
 class_name AgentSessionScope
 extends RefCounted
 
-## Which folder this workspace's chat sessions live in — [method get_dir] is the only entry point.
+## Which folder this workspace's chat sessions live in — `get_dir` is what session paths ask for.
 ##
 ## [Workspace] supplies the roots and [GitHelper] answers which repository the workspace belongs to,
-## so the same repository cloned as `gai-agent` or `tmp-a` resolves to one folder and Steam Cloud
-## keeps a single history.
+## so the same repository cloned as `gai` or `tmp-a` resolves to one folder and Steam Cloud keeps a
+## single history.
 ##
 ## The folder name is a label, not the identity: `workspace.json` records the identity and the last
 ## known root, and an existing folder that already owns the identity is adopted — that is what keeps
@@ -14,15 +14,9 @@ extends RefCounted
 ## after a restart; the folder never moves under the user.
 
 
-## Sessions folder under the cloud dir. Named here because this resolver owns the whole layout; the
-## store constant delegates to it.
+## Sessions folder under the cloud dir.
 const SESSIONS_SUBDIR := "sessions"
 const MANIFEST_FILE := "workspace.json"
-const HASH_LENGTH := 8
-const SLUG_MAX_LENGTH := 40
-
-## Identity of a workspace outside any repository — the absolute path is all that is left.
-const PATH_PREFIX := "path:"
 
 ## The folder of the current workspace, the result of [method resolve_dir]. Written once at load and
 ## again after every switch, so a session path lookup is a plain field read.
@@ -64,17 +58,16 @@ static func resolve_dir() -> String:
 	var repository_root := repo.toplevel if StringUtils.is_not_blank(repo.toplevel) else root
 	var remote_key := get_remote_identity(repo.remote_url)
 	var base := remote_key if StringUtils.is_not_blank(remote_key) else repository_root.get_file().to_lower()
-	var identity := PATH_PREFIX + root.to_lower()
+	# Outside a repository the absolute path is all that is left as an identity.
+	var identity := root.to_lower()
 	if StringUtils.is_not_blank(repo.toplevel):
 		identity = base + "/" + repo.prefix.to_lower().trim_suffix("/")
 
-	# The slug comes from the name, the hash from the whole identity: two workspaces of one repository
-	# keep the same readable prefix and stay apart by the hash alone.
+	# The slug keeps the folder readable and the whole identity hash keeps it unique — two workspaces of
+	# one repository share the prefix and stay apart by the hash alone.
 	var slug := FileUtils.sanitize_filename(base).to_lower()
-	if slug.is_empty() or slug == "unnamed":
-		slug = "workspace"
 	var sessions_root := Workspace.get_cloud_data_dir(SESSIONS_SUBDIR)
-	var dir := sessions_root.path_join(slug.left(SLUG_MAX_LENGTH).trim_suffix("_") + "-" + identity.md5_text().left(HASH_LENGTH))
+	var dir := sessions_root.path_join(slug + "-" + identity.md5_text())
 
 	# A folder that already owns this identity wins over the computed name: adoption is what keeps a
 	# workspace's history when the identity changes under it.
@@ -97,9 +90,9 @@ static func resolve_dir() -> String:
 # ---------------------------------------------------------------------------
 
 ## What a remote URL denotes, as the repository identity `host/path`. Every spelling of one remote —
-## `git@GitHub.com:zfoo/gai-agent.git`, `ssh://git@github.com:22/zfoo/gai-agent`,
-## `https://token@github.com/zfoo/gai-agent.git/` — answers the same `github.com/zfoo/gai-agent`, so a
-## folder key built from it is stable across machines and accounts.
+## `git@GitHub.com:zfoo/gai.git`, `ssh://git@github.com:22/zfoo/gai` and
+## `https://token@github.com/zfoo/gai.git/` all answer `github.com/zfoo/gai`, so a folder key built
+## from it is stable across machines and accounts.
 ##
 ## It is an identity, not a normalized URL: the scheme, port and credentials are dropped on purpose (a
 ## token must never reach a file name or a log line) and the result cannot be fetched. Local path
@@ -136,14 +129,15 @@ static func get_remote_identity(url: String) -> String:
 # Manifest
 # ---------------------------------------------------------------------------
 
-## What a session folder records about itself. The folder name is a truncated slug plus a hash, so it
-## cannot be read back; this file is what makes a folder recognizable to a human and adoptable by
-## [method resolve_dir] when the identity changes under it.
+## What a session folder records about itself — the folder name is a slug plus the identity hash, which
+## cannot be read back; this file is what adoption in [method resolve_dir] matches against.
+##
+## `{"name": "gai", "root": "C:/github/gai", "identity": "github.com/godot-fun/gai/", "aliases": [], "created": 1795866226887}`
+## `{"name": "gai", "root": "C:/github/gai", "identity": "c:/github/gai", "aliases": ["github.com/godot-fun/gai/"], "created": 1795866226887}`
 class Manifest:
 	var name := StringUtils.EMPTY
 	var root := StringUtils.EMPTY
 	var identity := StringUtils.EMPTY
-	## Identities this folder had before, so a later resolution still finds it.
 	var aliases: Array[String] = []
 	var created := 0
 

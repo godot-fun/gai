@@ -1,11 +1,9 @@
 class_name AgentSessionStore
 extends RefCounted
 
-## Persists agent chat sessions as JSON files under
-## `Workspace.get_cloud_data_dir(AgentSessionScope.SESSIONS_SUBDIR)/<workspace key>/` — the synced
-## cloud folder, one subfolder per workspace (see [method AgentSessionScope.get_dir]).
+## Persists agent chat sessions as JSON files inside the workspace's session folder
+## (see [method AgentSessionScope.get_dir]) — the synced cloud folder, one subfolder per workspace.
 
-const SESSIONS_SUBDIR := AgentSessionScope.SESSIONS_SUBDIR
 const FILE_SUFFIX := ".gai"
 
 # Dictionary[int, AgentSession]

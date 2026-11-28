@@ -25,26 +25,26 @@ const PLAIN_DIR_NAME := "gai_scope_plain"
 # ---------------------------------------------------------------------------
 
 static func get_remote_identity_spellings_match_test() -> void:
-	assert(AgentSessionScope.get_remote_identity("git@GitHub.com:zfoo/gai-agent.git") == "github.com/zfoo/gai-agent")
-	assert(AgentSessionScope.get_remote_identity("https://github.com/zfoo/gai-agent.git") == "github.com/zfoo/gai-agent")
-	assert(AgentSessionScope.get_remote_identity("ssh://git@github.com:22/zfoo/gai-agent") == "github.com/zfoo/gai-agent")
-	assert(AgentSessionScope.get_remote_identity("git://github.com/zfoo/gai-agent.git") == "github.com/zfoo/gai-agent")
-	assert(AgentSessionScope.get_remote_identity("https://github.com/zfoo/gai-agent/") == "github.com/zfoo/gai-agent")
+	assert(AgentSessionScope.get_remote_identity("git@GitHub.com:zfoo/gai.git") == "github.com/zfoo/gai")
+	assert(AgentSessionScope.get_remote_identity("https://github.com/zfoo/gai.git") == "github.com/zfoo/gai")
+	assert(AgentSessionScope.get_remote_identity("ssh://git@github.com:22/zfoo/gai") == "github.com/zfoo/gai")
+	assert(AgentSessionScope.get_remote_identity("git://github.com/zfoo/gai.git") == "github.com/zfoo/gai")
+	assert(AgentSessionScope.get_remote_identity("https://github.com/zfoo/gai/") == "github.com/zfoo/gai")
 	pass
 
 
 static func get_remote_identity_drops_credentials_test() -> void:
-	var identity := AgentSessionScope.get_remote_identity("https://x-access-token:ghp_secret@github.com/zfoo/gai-agent.git")
-	assert(identity == "github.com/zfoo/gai-agent")
+	var identity := AgentSessionScope.get_remote_identity("https://x-access-token:ghp_secret@github.com/zfoo/gai.git")
+	assert(identity == "github.com/zfoo/gai")
 	assert(not identity.contains("secret"))
 	pass
 
 
 ## A local path remote is machine specific, so it must never become an identity shared through sync.
 static func get_remote_identity_rejects_local_paths_test() -> void:
-	assert(AgentSessionScope.get_remote_identity("C:/repos/gai-agent.git").is_empty())
-	assert(AgentSessionScope.get_remote_identity("../gai-agent.git").is_empty())
-	assert(AgentSessionScope.get_remote_identity("/repos/gai-agent.git").is_empty())
+	assert(AgentSessionScope.get_remote_identity("C:/repos/gai.git").is_empty())
+	assert(AgentSessionScope.get_remote_identity("../gai.git").is_empty())
+	assert(AgentSessionScope.get_remote_identity("/repos/gai.git").is_empty())
 	assert(AgentSessionScope.get_remote_identity(StringUtils.EMPTY).is_empty())
 	assert(AgentSessionScope.get_remote_identity("no-separator").is_empty())
 	pass
