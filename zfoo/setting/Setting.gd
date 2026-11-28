@@ -1,11 +1,13 @@
 class_name Setting
 extends Object
 
+const SECTION: String = "zfoo"
+
 ## Where the settings file lives — the synced cloud folder, so preferences follow the user across
 ## machines instead of staying in this machine. Resolved from the command line and the project
 ## root, so it is final before any script reads it.
 static var file_path := Workspace.get_cloud_data_dir("setting.config")
-const SECTION: String = "zfoo"
+
 static var configFile: ConfigFile = load_config_file()
 
 static func load_config_file() -> ConfigFile:

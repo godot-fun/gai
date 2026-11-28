@@ -11,7 +11,7 @@ extends RefCounted
 ## machine-independent state — [method get_cloud_data_dir].
 ##
 ## This is the only script naming the folder: consumers call [method get_data_dir] or one of its
-## qualified siblings, and the application derives its ignore rules from [method get_dir_name].
+## qualified siblings, and the application derives its ignore rules from [member data_dir].
 
 
 # ---------------------------------------------------------------------------
@@ -29,7 +29,7 @@ const CLI_DIR_ARG := "--data-dir"
 ## `--data-dir`; the value here is this application's editor-mode default.
 const DEFAULT_DIR_NAME := ".gai_temp"
 
-## Subfolder of the app-wide data folder that Steam Cloud syncs. Keep it small and machine
+## Subfolder of the shared data folder that Steam Cloud syncs. Keep it small and machine
 ## independent — sessions belong here, caches and checkpoints never do.
 const CLOUD_SUBDIR := "cloud"
 
@@ -38,12 +38,14 @@ const CLOUD_SUBDIR := "cloud"
 # State and init
 # ---------------------------------------------------------------------------
 
-static var _dir_name := ""
+## The data folder name from [constant CLI_DIR_ARG] (or [constant DEFAULT_DIR_NAME]); it may carry
+## extra segments, so it is a path relative to whichever root anchors it. Resolved once at startup.
+static var data_dir := ""
 
 
 static func _static_init() -> void:
 	var value := OSUtils.get_cmdline_arg_value(CLI_DIR_ARG)
-	_dir_name = value if StringUtils.is_not_blank(value) else DEFAULT_DIR_NAME
+	data_dir = value if StringUtils.is_not_blank(value) else DEFAULT_DIR_NAME
 	pass
 
 
@@ -89,15 +91,10 @@ static func resolve_path(raw: String) -> String:
 # Data folders
 # ---------------------------------------------------------------------------
 
-## Folder name relative to its anchor, so it follows a workspace switch on its own.
-static func get_dir_name() -> String:
-	return _dir_name
-
-
 ## This workspace's data folder — the unqualified scope, so it follows the workspace root;
 ## empty [param subdir] returns the folder.
 static func get_data_dir(subdir: String = "") -> String:
-	var dir := get_root().path_join(_dir_name)
+	var dir := get_root().path_join(data_dir)
 	var path := subdir.strip_edges()
 	return dir if path.is_empty() else dir.path_join(path)
 
@@ -105,7 +102,7 @@ static func get_data_dir(subdir: String = "") -> String:
 ## The data folder shared by every workspace — never follows a workspace switch;
 ## empty [param subdir] returns the folder.
 static func get_shared_data_dir(subdir: String = "") -> String:
-	var dir := FileUtils.get_project_root_path().path_join(_dir_name)
+	var dir := FileUtils.get_project_root_path().path_join(data_dir)
 	var path := subdir.strip_edges()
 	return dir if path.is_empty() else dir.path_join(path)
 

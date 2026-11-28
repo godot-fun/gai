@@ -26,12 +26,12 @@ static func resolve_path_test() -> void:
 static func data_dir_anchors_test() -> void:
 	# Per-project data follows the workspace root.
 	var data_dir := Workspace.get_data_dir()
-	assert(data_dir == Workspace.get_root().path_join(Workspace.get_dir_name()))
+	assert(data_dir == Workspace.get_root().path_join(Workspace.data_dir))
 	assert(Workspace.get_data_dir("checkpoints") == data_dir.path_join("checkpoints"))
 	# Shared data is anchored at the application root instead, so switching workspace cannot
 	# duplicate it.
 	var shared_dir := Workspace.get_shared_data_dir()
-	assert(shared_dir == FileUtils.get_project_root_path().path_join(Workspace.get_dir_name()))
+	assert(shared_dir == FileUtils.get_project_root_path().path_join(Workspace.data_dir))
 	assert(Workspace.get_shared_data_dir("cache/diff") == shared_dir.path_join("cache/diff"))
 	pass
 

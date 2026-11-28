@@ -3,7 +3,7 @@ extends RefCounted
 ## CacheManager — every cache sits in the folder shared by all workspaces, outside any project.
 
 
-static func cache_dirs_are_shared_scoped_test() -> void:
+static func cache_dirs_live_in_shared_data_test() -> void:
 	var shared_root := Workspace.get_shared_data_dir()
 	assert(CacheManager.get_diff_cache_dir().begins_with(shared_root))
 	assert(CacheManager.get_web_screenshot_cache_dir().begins_with(shared_root))
