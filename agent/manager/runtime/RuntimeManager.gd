@@ -103,9 +103,10 @@ static func try_run_next_message(session_id: int) -> void:
 		return
 	session.pending_messages.pop_front()
 	AgentEvents.events.session_queue_changed.emit(session_id)
-	ChatInputDependencyGuard.append_python_install_message(session)
-	if AgentSessionManager.has_default_title(session_id):
+	# Before the dependency prompt: it lands in the history as a user entry too.
+	if not AgentSessionManager.has_chat_history(session_id):
 		AgentSessionManager.set_title(session_id, queued)
+	ChatInputDependencyGuard.append_python_install_message(session)
 	session.messages.append(ChatMessage.user(queued))
 	var details: Dictionary[String, String] = {}
 	if StringUtils.is_not_blank(checkpoint):

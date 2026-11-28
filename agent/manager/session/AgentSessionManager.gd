@@ -208,10 +208,6 @@ static func get_default_title() -> String:
 	return I18n.t("agent.sidebar.default_title")
 
 
-static func has_default_title(session_id: int) -> bool:
-	return get_title(session_id) == get_default_title()
-
-
 static func get_title(session_id: int) -> String:
 	var session_index := get_session_index(session_id)
 	if session_index == null:
