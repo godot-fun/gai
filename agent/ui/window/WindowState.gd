@@ -4,7 +4,7 @@ extends RefCounted
 ## Saved window geometry belongs to this machine (its monitors), so it lives in the data folder
 ## shared by every workspace ([method Workspace.get_shared_data_dir]) — switching project must not
 ## move the window, and the folder is not Steam Cloud synced where another machine would read it.
-const FILE_NAME := "window_state.json"
+const FILE_NAME := "window_state.gai"
 
 
 class State extends RefCounted:
