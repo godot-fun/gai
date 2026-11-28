@@ -24,13 +24,13 @@ static func has_note() -> bool:
 
 
 static func get_note() -> String:
-	return FileUtils.read_file_to_string(AppDataDir.get_dir_path(NOTE_FILE, AppDataDir.Scope.CLOUD))
+	return FileUtils.read_file_to_string(Workspace.get_cloud_data_dir(NOTE_FILE))
 
 
 static func set_note(content: String) -> Error:
 	if content == get_note():
 		return OK
-	return FileUtils.write_string_to_file(AppDataDir.get_dir_path(NOTE_FILE, AppDataDir.Scope.CLOUD), content)
+	return FileUtils.write_string_to_file(Workspace.get_cloud_data_dir(NOTE_FILE), content)
 
 
 static func set_open_on_startup(enabled: bool) -> void:

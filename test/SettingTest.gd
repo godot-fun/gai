@@ -33,6 +33,6 @@ func Setting_test() -> void:
 	assert(stringValue == Setting.get_string(stringKey))
 	Setting.save()
 	await gdf.gdf_node.get_tree().create_timer(1).timeout
-	FileUtils.delete_file_or_directory(Setting.SETTING_FILE_PATH)
+	FileUtils.delete_file_or_directory(Setting.file_path)
 	pass
 

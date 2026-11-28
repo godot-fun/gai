@@ -188,8 +188,8 @@ static func refresh_ignore_rules() -> void:
 	for file_name in WORKSPACE_IGNORE_FILES:
 		append_rule_lines(rules, FileUtils.read_file_to_string(Workspace.resolve_path(file_name)))
 	# The active data folder plus the default one, so a folder written by another launch mode is skipped too.
-	append_rule_lines(rules, AppDataDir.get_dir_name() + "/")
-	append_rule_lines(rules, AppDataDir.DEFAULT_DIR_NAME + "/")
+	append_rule_lines(rules, Workspace.get_dir_name() + "/")
+	append_rule_lines(rules, Workspace.DEFAULT_DIR_NAME + "/")
 	ignore_rules = rules
 	pass
 
