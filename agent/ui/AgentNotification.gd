@@ -63,14 +63,16 @@ func play_sound_notifications() -> void:
 	pass
 
 
-## Once-per-second tick of the shared countdown above — the playlist is only ever stopped by the
-## last run that added seconds, and the timer stays idle the rest of the time.
+## Once-per-second tick of the shared countdown above. The pause is asked for again on every tick
+## after the countdown runs out instead of once, because a track starting in between cancels the
+## fade and would otherwise leave the playlist playing forever. Pausing an already paused playlist
+## is a no-op, so the extra ticks cost nothing.
 func check_sound_notifications() -> void:
-	if remaining_seconds <= 0:
-		return
-	remaining_seconds -= 1
-	if remaining_seconds <= 0:
-		stop_sound_notifications()
+	if remaining_seconds > 0:
+		remaining_seconds -= 1
+		if remaining_seconds > 0:
+			return
+	stop_sound_notifications()
 	pass
 
 
