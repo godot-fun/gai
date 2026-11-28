@@ -21,7 +21,7 @@ class TokenizeResult extends RefCounted:
 
 ## Returns whether the llama-server health endpoint reports a ready status.
 static func async_health(server_url: String) -> bool:
-	var response := await HttpHelper.async_get(server_url.trim_suffix("/") + "/health", TimeUtils.MILLIS_PER_SECOND)
+	var response := await HttpHelper.async_get(server_url.trim_suffix("/") + "/health", TimeUtils.MILLIS_PER_SECOND_5)
 	var data: Variant = response.get_body_json() if response.is_ok() else null
 	return typeof(data) == TYPE_DICTIONARY and data.get("status", "") == "ok"
 

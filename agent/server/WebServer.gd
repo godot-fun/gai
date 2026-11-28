@@ -190,7 +190,7 @@ static func load_server_config() -> void:
 ## Probes the HTTP endpoint only: a healthy server started by an earlier run is just as usable as one
 ## owned by this process, and ownership is what the stop path needs, not the request path.
 static func async_health() -> bool:
-	var response := await HttpHelper.async_get(server_url() + "/healthy", TimeUtils.MILLIS_PER_SECOND)
+	var response := await HttpHelper.async_get(server_url() + "/healthy", TimeUtils.MILLIS_PER_SECOND_5)
 	if not response.is_ok():
 		return false
 	var result: HealthyResponse = JsonUtils.json_to_object(response.get_body_string(), HealthyResponse)
