@@ -3,19 +3,24 @@ extends RefCounted
 
 ## Which folder this workspace's chat sessions live in — `get_dir` is what session paths ask for.
 ##
-## [Workspace] supplies the roots and [GitHelper] answers which repository the workspace belongs to,
-## so the same repository cloned as `gai` or `tmp-a` resolves to one folder and Steam Cloud keeps a
-## single history.
+## A folder is named after the workspace's identity — the remote, or the repository folder name, plus
+## the path inside the repository; the absolute path outside one. So one repository keeps one history
+## across machines and Steam Cloud syncs it once, and two workspaces of it stay apart.
 ##
-## The folder name is a label, not the identity: `workspace.json` records the identity and the last
-## known root, and an existing folder that already owns the identity is adopted — that is what keeps
-## a workspace's history when its repository gains a remote or moves to another path. The identity is
-## resolved once per workspace switch, so a remote changed inside a running session is picked up
-## after a restart; the folder never moves under the user.
+## Two clones of that repository on the *same* machine are two working trees though: one shared history
+## would let a chat continue in one clone while the tools run in the other, so [method resolve_dir]
+## gives the second one a folder of its own.
+##
+## `workspace.json` records which root filled a folder, and that record decides ownership: a folder
+## whose root is still on this machine is never given away. That is what keeps a workspace on the
+## folder it already filled when its remote changes, and keeps a surviving clone off a deleted
+## sibling's folder. The folder is resolved once per workspace switch, so a change made inside a
+## running session is picked up after a restart; it never moves under the user.
 
 
 ## Sessions folder under the cloud dir.
 const SESSIONS_SUBDIR := "sessions"
+## Records which root filled the folder — see [method resolve_dir].
 const MANIFEST_FILE := "workspace.json"
 
 ## The folder of the current workspace, the result of [method resolve_dir]. Written once at load and
@@ -45,15 +50,26 @@ static func on_workspace_changed(_path: String) -> void:
 ## [method _static_init] and [method on_workspace_changed] keep current.
 static func get_dir() -> String:
 	return resolved_dir
-	pass
 
 
 ## Resolves, and first time creates, the folder of the current workspace.
+##
+## A folder that already recorded this root answers the lookup, which is the whole cost once a
+## workspace has been opened before. Only a workspace without one needs its identity, and only then can
+## the folder it would take belong to another clone of the same repository on this machine.
 static func resolve_dir() -> String:
 	var root := Workspace.get_root()
+	var sessions_root := Workspace.get_cloud_data_dir(SESSIONS_SUBDIR)
+	# A folder that recorded this root is this workspace's folder, whatever its repository looks like
+	# now — a remote added or changed must not move it.
+	for existing: String in FileUtils.get_all_directories_in_folder(sessions_root):
+		var existing_manifest := read_manifest(existing)
+		if existing_manifest != null and existing_manifest.root == root:
+			Log.info("session scope root:[{}] dir:[{}]", root, existing)
+			return existing
 
-	# Identity: the remote identity (or the folder name) plus the path inside the repository, so two
-	# workspaces of one repository never share a folder.
+	# No folder yet, so name one after the repository identity — the remote, or the repository folder
+	# name, plus the path inside it, which keeps two workspaces of one repository apart.
 	var repo := GitHelper.read_repo_info(root)
 	var repository_root := repo.toplevel if StringUtils.is_not_blank(repo.toplevel) else root
 	var remote_key := get_remote_identity(repo.remote_url)
@@ -62,109 +78,85 @@ static func resolve_dir() -> String:
 	var identity := root.to_lower()
 	if StringUtils.is_not_blank(repo.toplevel):
 		identity = base + "/" + repo.prefix.to_lower().trim_suffix("/")
-
-	# The slug keeps the folder readable and the whole identity hash keeps it unique — two workspaces of
-	# one repository share the prefix and stay apart by the hash alone.
+	# A readable slug plus the whole identity hash: the slug says what the folder is, the hash keeps two
+	# workspaces of one repository apart.
 	var slug := FileUtils.sanitize_filename(base).to_lower()
-	var sessions_root := Workspace.get_cloud_data_dir(SESSIONS_SUBDIR)
-	var dir := sessions_root.path_join(slug + "-" + identity.md5_text())
-
-	# A folder that already owns this identity wins over the computed name: adoption is what keeps a
-	# workspace's history when the identity changes under it.
-	if not DirAccess.dir_exists_absolute(dir):
-		for existing: String in FileUtils.get_all_directories_in_folder(sessions_root):
-			var existing_manifest := read_manifest(existing)
-			if existing_manifest == null:
-				continue
-			if existing_manifest.identity == identity or existing_manifest.root == root or existing_manifest.aliases.has(identity):
-				dir = existing
-				break
-	write_manifest(dir, identity, root, base.get_file())
-	Log.info("session scope root:[{}] identity:[{}] dir:[{}]", root, identity, dir)
-	return dir
-	pass
+	var session_dir := sessions_root.path_join(slug + "-" + identity.md5_text())
+	# That folder can already belong to another clone of the same repository on this machine — a second
+	# working tree gets a folder of its own instead of continuing that clone's chat while the tools run
+	# here. A recorded root that is gone is a deleted clone, or another machine's path, so the folder is
+	# free to take over.
+	var owner_manifest := read_manifest(session_dir)
+	if owner_manifest != null and owner_manifest.root != root and DirAccess.dir_exists_absolute(owner_manifest.root):
+		identity = identity + "#" + root.to_lower().md5_text().left(8)
+		session_dir = sessions_root.path_join(slug + "-" + identity.md5_text())
+	write_manifest(session_dir, root, base.get_file())
+	Log.info("session scope root:[{}] identity:[{}] dir:[{}]", root, identity, session_dir)
+	return session_dir
 
 
 # ---------------------------------------------------------------------------
 # Remote identity
 # ---------------------------------------------------------------------------
 
-## What a remote URL denotes, as the repository identity `host/path`. Every spelling of one remote —
-## `git@GitHub.com:zfoo/gai.git`, `ssh://git@github.com:22/zfoo/gai` and
-## `https://token@github.com/zfoo/gai.git/` all answer `github.com/zfoo/gai`, so a folder key built
-## from it is stable across machines and accounts.
+## What a remote URL denotes, as the repository identity `host/path`. Credentials are dropped on
+## purpose — a token must never reach a file name or a log line — and so is the scheme, so one URL
+## answers one identity on every machine that cloned it.
 ##
-## It is an identity, not a normalized URL: the scheme, port and credentials are dropped on purpose (a
-## token must never reach a file name or a log line) and the result cannot be fetched. Local path
-## remotes answer an empty string — a path is machine specific, so the caller falls back to the
-## repository folder name instead.
+## The result is not a canonical form: `git@host:x/y` and `ssh://host:22/x/y` name the same remote but
+## keep their own identity, because a clone keeps using the URL it was cloned with. Local paths keep
+## theirs too, so a path remote stays on the machine that named it instead of colliding through sync.
 static func get_remote_identity(url: String) -> String:
 	var text := url.strip_edges().to_lower()
-	if text.is_empty() or text.begins_with("/") or text.begins_with(".") or text.substr(1, 1) == ":":
-		return StringUtils.EMPTY
-	for prefix: String in ["https://", "http://", "ssh://", "git://", "git+ssh://"]:
-		if text.begins_with(prefix):
-			text = text.trim_prefix(prefix)
-			break
-	# Strip the credentials before any `:` handling — a token can carry a colon too.
+	var scheme_end := text.find("://")
+	if scheme_end >= 0:
+		text = text.substr(scheme_end + 3)
+	# `user@host:path` and `user@host/path` both carry the host after the credentials.
 	text = text.substr(text.rfind("@") + 1)
-	# `host:path` is the scp form, `host:22/path` a port; both collapse to `host/path`, so two machines
-	# reaching one server over different ports match again.
-	var slash := text.find("/")
-	var colon := text.find(":")
-	if colon >= 0 and (slash < 0 or colon < slash):
-		var after := text.substr(colon + 1)
-		var digits := 0
-		while digits < after.length() and after[digits].is_valid_int():
-			digits += 1
-		if digits > 0 and after.substr(digits, 1) == "/":
-			after = after.substr(digits + 1)
-		text = text.left(colon) + "/" + after
 	text = text.trim_suffix("/").trim_suffix(".git").trim_suffix("/")
+	# `host:path` is the scp form — the path starts after the first colon, when it comes before any
+	# slash. A single character before the colon is a Windows drive, not a host.
+	var colon := text.find(":")
+	var slash := text.find("/")
+	if colon > 1 and (slash < 0 or colon < slash):
+		text = text.left(colon) + "/" + text.substr(colon + 1)
 	return text if text.contains("/") else StringUtils.EMPTY
-	pass
 
 
 # ---------------------------------------------------------------------------
 # Manifest
 # ---------------------------------------------------------------------------
 
-## What a session folder records about itself — the folder name is a slug plus the identity hash, which
-## cannot be read back; this file is what adoption in [method resolve_dir] matches against.
+## What a session folder records about itself — the folder name cannot be read back, so this file is
+## what [method resolve_dir] matches ownership against.
 ##
-## `{"name": "gai", "root": "C:/github/gai", "identity": "github.com/godot-fun/gai/", "aliases": [], "created": 1795866226887}`
-## `{"name": "gai", "root": "C:/github/gai", "identity": "c:/github/gai", "aliases": ["github.com/godot-fun/gai/"], "created": 1795866226887}`
+## `{"name": "gai", "root": "C:/github/gai", "created": 1795866226887}`
 class Manifest:
 	var name := StringUtils.EMPTY
+	## Absolute workspace root that filled this folder — a folder belongs to one workspace.
 	var root := StringUtils.EMPTY
-	var identity := StringUtils.EMPTY
-	var aliases: Array[String] = []
 	var created := 0
 
 
-## Reads the manifest of [param dir], or null when the folder has none.
-static func read_manifest(dir: String) -> Manifest:
-	var text := FileUtils.read_file_to_string(dir.path_join(MANIFEST_FILE))
+## Reads the manifest of [param session_dir], or null when the folder has none.
+static func read_manifest(session_dir: String) -> Manifest:
+	var text := FileUtils.read_file_to_string(session_dir.path_join(MANIFEST_FILE))
 	if StringUtils.is_blank(text):
 		return null
 	return JsonUtils.json_to_object(text, Manifest) as Manifest
-	pass
 
 
-## Records the identity owning [param dir]. A changed identity moves to `aliases` instead of being
-## replaced, and the creation time survives every rewrite.
-static func write_manifest(dir: String, identity: String, root: String, name: String) -> void:
-	var manifest := read_manifest(dir)
+## Records [param root] as the workspace owning [param session_dir]; the creation time survives every
+## rewrite.
+static func write_manifest(session_dir: String, root: String, name: String) -> void:
+	var manifest := read_manifest(session_dir)
 	if manifest == null:
 		manifest = Manifest.new()
-	if StringUtils.is_not_blank(manifest.identity) and manifest.identity != identity and not manifest.aliases.has(manifest.identity):
-		manifest.aliases.append(manifest.identity)
 	manifest.name = name
 	manifest.root = root
-	manifest.identity = identity
 	if manifest.created <= 0:
 		manifest.created = TimeUtils.now()
-	var write_error := FileUtils.write_string_to_file(dir.path_join(MANIFEST_FILE), JsonUtils.object_to_json(manifest))
+	var write_error := FileUtils.write_string_to_file(session_dir.path_join(MANIFEST_FILE), JsonUtils.object_to_json(manifest))
 	if write_error != OK:
-		Log.error("session scope manifest write failed dir:[{}] error:[{}]", dir, error_string(write_error))
+		Log.error("session scope manifest write failed dir:[{}] error:[{}]", session_dir, error_string(write_error))
 	pass

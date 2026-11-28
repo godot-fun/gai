@@ -1,8 +1,8 @@
 extends RefCounted
 
-## Session folder scope — the folder is chosen by the repository on disk, so one repository cloned
-## into differently named local folders has to resolve to one folder, and a workspace that gains a
-## remote has to keep the folder it already filled.
+## Session folder scope — the folder is chosen by the repository on disk: one repository keeps one
+## history across machines, a second local clone of it gets a folder of its own, and a workspace that
+## gains a remote has to keep the folder it already filled.
 ##
 ## Every test restores the workspace root before asserting, so a failing assertion cannot leak a
 ## temporary root into the tests that run after it.
@@ -11,7 +11,7 @@ const REPO_REMOTE_A := "user://scope_remote_a"
 const REPO_REMOTE_B := "user://scope_remote_b"
 const REPO_LOCAL := "user://scope_local"
 const REPO_SUBFOLDERS := "user://scope_subfolders"
-const REPO_ADOPT := "user://scope_adopt"
+const REPO_GAINS_REMOTE := "user://scope_gains_remote"
 const REPO_CACHE := "user://scope_cache"
 const REPO_CACHE_OTHER := "user://scope_cache_other"
 
@@ -21,15 +21,18 @@ const PLAIN_DIR_NAME := "gai_scope_plain"
 
 
 # ---------------------------------------------------------------------------
-# Remote identity — every spelling of one repository answers one string
+# Remote identity — one URL, one identity
 # ---------------------------------------------------------------------------
 
-static func get_remote_identity_spellings_match_test() -> void:
-	assert(AgentSessionScope.get_remote_identity("git@GitHub.com:zfoo/gai.git") == "github.com/zfoo/gai")
+## One URL, one identity — the scheme, the credentials and the `.git` suffix never reach the folder
+## name. Spellings of one remote deliberately stay apart: a clone keeps the URL it was cloned with.
+static func get_remote_identity_normalizes_the_url_test() -> void:
 	assert(AgentSessionScope.get_remote_identity("https://github.com/zfoo/gai.git") == "github.com/zfoo/gai")
-	assert(AgentSessionScope.get_remote_identity("ssh://git@github.com:22/zfoo/gai") == "github.com/zfoo/gai")
-	assert(AgentSessionScope.get_remote_identity("git://github.com/zfoo/gai.git") == "github.com/zfoo/gai")
 	assert(AgentSessionScope.get_remote_identity("https://github.com/zfoo/gai/") == "github.com/zfoo/gai")
+	assert(AgentSessionScope.get_remote_identity("git@github.com:zfoo/gai.git") == "github.com/zfoo/gai")
+	assert(AgentSessionScope.get_remote_identity("ssh://git@github.com/zfoo/gai") == "github.com/zfoo/gai")
+	assert(AgentSessionScope.get_remote_identity("no-separator").is_empty())
+	assert(AgentSessionScope.get_remote_identity(StringUtils.EMPTY).is_empty())
 	pass
 
 
@@ -40,13 +43,11 @@ static func get_remote_identity_drops_credentials_test() -> void:
 	pass
 
 
-## A local path remote is machine specific, so it must never become an identity shared through sync.
-static func get_remote_identity_rejects_local_paths_test() -> void:
-	assert(AgentSessionScope.get_remote_identity("C:/repos/gai.git").is_empty())
-	assert(AgentSessionScope.get_remote_identity("../gai.git").is_empty())
-	assert(AgentSessionScope.get_remote_identity("/repos/gai.git").is_empty())
-	assert(AgentSessionScope.get_remote_identity(StringUtils.EMPTY).is_empty())
-	assert(AgentSessionScope.get_remote_identity("no-separator").is_empty())
+## A path remote is not shared across machines: it keeps its own path, so each machine stays on the
+## folder it named instead of both claiming one identity.
+static func get_remote_identity_keeps_a_path_remote_local_test() -> void:
+	assert(AgentSessionScope.get_remote_identity("C:/repos/gai.git") == "c:/repos/gai")
+	assert(AgentSessionScope.get_remote_identity("../gai.git") == "../gai")
 	pass
 
 
@@ -54,8 +55,9 @@ static func get_remote_identity_rejects_local_paths_test() -> void:
 # Folder resolution — real repositories under user://
 # ---------------------------------------------------------------------------
 
-## One repository, two differently named clones: one folder, so both clones see the same history.
-static func session_scope_follows_the_remote_test() -> void:
+## One repository, two differently named clones on this machine: two folders, so a chat started in one
+## clone never continues while the tools run in the other.
+static func session_scope_separates_local_clones_test() -> void:
 	assert(GitHelper.is_git_installed())
 	var previous_root := Workspace.get_root()
 	var first := make_repo(REPO_REMOTE_A, "git@GitHub.com:zfoo/scope-fixture.git")
@@ -66,9 +68,57 @@ static func session_scope_follows_the_remote_test() -> void:
 	var second_dir := AgentSessionScope.get_dir()
 	assert(Workspace.set_root(previous_root))
 	assert(first_dir.get_file().begins_with("github_com_zfoo_scope-fixture-"))
+	assert(second_dir.get_file().begins_with("github_com_zfoo_scope-fixture-"))
+	assert(second_dir != first_dir)
+	remove_dir(first_dir)
+	remove_dir(second_dir)
+	remove_dir(first)
+	remove_dir(second)
+	pass
+
+
+## The same clone on the *other* machine: its root is a different path there, so the folder is matched
+## by name and both use it, and Steam Cloud still carries one history per repository.
+static func session_scope_shares_across_machines_test() -> void:
+	assert(GitHelper.is_git_installed())
+	var previous_root := Workspace.get_root()
+	var first := make_repo(REPO_REMOTE_A, "git@github.com:zfoo/scope-machine.git")
+	var second := make_repo(REPO_REMOTE_B, "git@github.com:zfoo/scope-machine.git")
+	assert(Workspace.set_root(first))
+	var first_dir := AgentSessionScope.get_dir()
+	# The other machine recorded its own root, and that path does not exist here.
+	AgentSessionScope.write_manifest(first_dir, "C:/github/gai_other_machine", "gai")
+	assert(Workspace.set_root(second))
+	var second_dir := AgentSessionScope.get_dir()
+	assert(Workspace.set_root(previous_root))
 	assert(second_dir == first_dir)
 	remove_dir(first_dir)
 	remove_dir(first)
+	remove_dir(second)
+	pass
+
+
+## Deleting one clone must not move the other one's history: a folder that recorded a root keeps
+## following that root instead of falling back to the folder named after the identity.
+static func session_scope_keeps_the_folder_when_a_sibling_clone_is_deleted_test() -> void:
+	assert(GitHelper.is_git_installed())
+	var previous_root := Workspace.get_root()
+	var first := make_repo(REPO_REMOTE_A, "git@github.com:zfoo/scope-sibling.git")
+	var second := make_repo(REPO_REMOTE_B, "git@github.com:zfoo/scope-sibling.git")
+	assert(Workspace.set_root(first))
+	var first_dir := AgentSessionScope.get_dir()
+	assert(Workspace.set_root(second))
+	var second_dir := AgentSessionScope.get_dir()
+	# Resolving again is what the next launch does.
+	AgentSessionScope.resolved_dir = AgentSessionScope.resolve_dir()
+	assert(AgentSessionScope.get_dir() == second_dir)
+	remove_dir(first)
+	AgentSessionScope.resolved_dir = AgentSessionScope.resolve_dir()
+	assert(AgentSessionScope.get_dir() == second_dir)
+	assert(second_dir != first_dir)
+	assert(Workspace.set_root(previous_root))
+	remove_dir(first_dir)
+	remove_dir(second_dir)
 	remove_dir(second)
 	pass
 
@@ -123,25 +173,24 @@ static func session_scope_falls_back_to_the_workspace_path_test() -> void:
 	pass
 
 
-## A repository that gains a remote keeps the folder it already filled, and the identity it used to
-## have stays in the manifest as an alias.
-static func session_scope_adopts_the_existing_folder_test() -> void:
+## A repository that gains a remote keeps the folder it already filled: the manifest records the
+## root, so the folder is found before the identity is ever consulted.
+static func session_scope_keeps_the_folder_when_a_remote_is_added_test() -> void:
 	assert(GitHelper.is_git_installed())
 	var previous_root := Workspace.get_root()
-	var repo := make_repo(REPO_ADOPT, StringUtils.EMPTY)
+	var repo := make_repo(REPO_GAINS_REMOTE, StringUtils.EMPTY)
 	assert(Workspace.set_root(repo))
 	var before := AgentSessionScope.get_dir()
-	assert(before.get_file().begins_with("scope_adopt-"))
+	assert(before.get_file().begins_with("scope_gains_remote-"))
 	OSUtils.execute(PackedStringArray(["git", "-C", repo, "remote", "add", "origin", "git@github.com:zfoo/scope-adopt.git"]), false)
-	# The identity is resolved once per workspace switch; resolving again simulates the next launch.
+	# Resolving again is what the next launch does.
 	AgentSessionScope.resolved_dir = AgentSessionScope.resolve_dir()
 	var after := AgentSessionScope.get_dir()
 	assert(Workspace.set_root(previous_root))
 	assert(after == before)
 	var manifest := AgentSessionScope.read_manifest(after)
 	assert(manifest != null)
-	assert(manifest.identity == "github.com/zfoo/scope-adopt/")
-	assert(manifest.aliases.has("scope_adopt/"))
+	assert(manifest.root == repo)
 	assert(manifest.created > 0)
 	assert(not manifest.root.contains("token"))
 	remove_dir(before)
@@ -150,7 +199,7 @@ static func session_scope_adopts_the_existing_folder_test() -> void:
 
 
 ## Switching workspace re-resolves eagerly: the cache holds the new workspace's folder right after the
-## event, so two workspaces never share a folder and the first lookup never pays for the Git calls.
+## event, so two workspaces never share a folder and the first session lookup never has to resolve one.
 static func workspace_switch_resolves_the_new_folder_test() -> void:
 	assert(GitHelper.is_git_installed())
 	var previous_root := Workspace.get_root()
