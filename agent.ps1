@@ -1,5 +1,5 @@
 # Launch the agent desktop app. Usage: .\agent.ps1  |  .\agent.ps1 --data-dir .gai3
-# The data folder defaults to <workspace>\.gai2; pass --data-dir <workspace-relative path> to change it.
+# The data folder defaults to <workspace>\.gai; pass --data-dir <workspace-relative path> to change it.
 # Every launch first pulls the latest code, then syncs the import cache (~4 s), then starts the app.
 
 param(
@@ -155,7 +155,7 @@ Write-StepDone "done" "exit 0"
 # Godot calls AttachConsole on its parent at startup and would keep this window
 # open. Release the console first, then start the app.
 # Everything after `--` reaches the app through OS.get_cmdline_user_args():
-#   --data-dir <path>   agent data folder, workspace-relative (default here: .gai2)
+#   --data-dir <path>   agent data folder, workspace-relative (default here: .gai)
 #
 # The app logs to user://logs/gai.log instead of the default godot.log, which every Godot process started
 # with this APPDATA shares — a command-line test run would rotate the running app's log away. The engine
@@ -165,7 +165,7 @@ $LogFile = "user://logs/gai.log"
 
 $UserArgs = @($Rest | Where-Object { $null -ne $_ })
 if (-not ($UserArgs -match '^--data-dir(=.*)?$')) {
-	$UserArgs = @("--data-dir", ".gai2") + $UserArgs
+	$UserArgs = @("--data-dir", ".gai") + $UserArgs
 }
 $UserArgs = @("--log-file", $LogFile) + $UserArgs
 

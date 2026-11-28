@@ -20,7 +20,7 @@ enum Scope {
 }
 
 ## Folder name used when no [constant CLI_DIR_ARG] is given.
-const DEFAULT_DIR_NAME := ".gai"
+const DEFAULT_DIR_NAME := ".gai_temp"
 
 ## Command-line argument that overrides the folder: `--data-dir <path>` or `--data-dir=<path>`.
 ## The value is workspace-relative; user args after `--` win over engine args.

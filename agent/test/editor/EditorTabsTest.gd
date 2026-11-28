@@ -196,7 +196,7 @@ static func editor_file_tree_lists_workspace_test() -> void:
 	var root_path := FileUtils.normalize_path(ProjectSettings.globalize_path(TREE_DIR))
 	DirAccess.make_dir_recursive_absolute(root_path)
 	DirAccess.make_dir_recursive_absolute(root_path.path_join(".git"))
-	DirAccess.make_dir_recursive_absolute(root_path.path_join(".gai"))
+	DirAccess.make_dir_recursive_absolute(root_path.path_join(AgentDataDir.DEFAULT_DIR_NAME))
 	DirAccess.make_dir_recursive_absolute(root_path.path_join("src/.godot"))
 	FileUtils.write_string_to_file(root_path.path_join("readme.md"), "r")
 	FileUtils.write_string_to_file(root_path.path_join("src/a.md"), "a")
@@ -210,7 +210,7 @@ static func editor_file_tree_lists_workspace_test() -> void:
 	assert(top[0] == "src")
 	assert(top[1] == "readme.md")
 	assert(not top.has(".git"))
-	assert(not top.has(".gai"))
+	assert(not top.has(AgentDataDir.DEFAULT_DIR_NAME))
 
 	var src := tree.get_root().get_first_child()
 	tree.ensure_loaded(src)

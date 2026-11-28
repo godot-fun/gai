@@ -4,7 +4,7 @@ extends RefCounted
 static func dir_name_test() -> void:
 	# No --data-dir on the command line during tests, so the plain folder name is kept.
 	assert(AgentDataDir.get_dir_name() == AgentDataDir.DEFAULT_DIR_NAME)
-	assert(AgentDataDir.get_dir_path("").get_file() == ".gai")
+	assert(AgentDataDir.get_dir_path("").get_file() == ".gai_temp")
 	pass
 
 
