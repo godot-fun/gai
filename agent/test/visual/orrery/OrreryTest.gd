@@ -27,6 +27,16 @@ func translations_exist_test() -> void:
 	pass
 
 
+## The end scan is parked on the top edge while `end_progress` is 0, so an ungated line draws a hard
+## white bar across the whole effect at rest. Asserted from source: shader code is not inspectable here.
+func scan_line_stays_off_at_rest_test() -> void:
+	var source := FileAccess.get_file_as_string("res://agent/ui/visuals/orrery/OrreryProcedural.gdshader")
+	assert(source.contains("float scan_active = smoothstep(0.0, 0.05, end_progress) * (1.0 - end_progress)"))
+	assert(source.contains("stroke(abs(pixel.y - scan_y), 1.0) * 0.8 * scan_active"))
+	assert(not source.contains("* 0.8 * (1.0 - end_progress)"))
+	pass
+
+
 func web_curves_run_rim_to_rim_inside_the_disc_test() -> void:
 	var effect := Orrery.new()
 	assert(effect.web_curves.size() == Orrery.WEB_CURVES * 3)

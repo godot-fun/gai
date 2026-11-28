@@ -64,9 +64,12 @@ void fragment() {
 	alpha = max(alpha, beam_alpha);
 
 	// The closing scan is another full-stage procedural mark, avoiding a CPU rect and line draw.
+	// It must draw nothing at rest: `end_progress == 0` parks the line on the top edge, where it
+	// reads as a hard white line across the whole effect instead of a scan.
+	float scan_active = smoothstep(0.0, 0.05, end_progress) * (1.0 - end_progress);
 	float scan_y = stage_size.y * end_progress;
 	float scan_fill = step(pixel.y, scan_y) * 0.55 * end_progress;
-	float scan_line = stroke(abs(pixel.y - scan_y), 1.0) * 0.8 * (1.0 - end_progress);
+	float scan_line = stroke(abs(pixel.y - scan_y), 1.0) * 0.8 * scan_active;
 	if (scan_fill > alpha) {
 		result = back_color.rgb;
 		alpha = scan_fill;
