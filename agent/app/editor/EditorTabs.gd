@@ -86,7 +86,7 @@ const EDITOR_GAI := "app/editor.gai"
 
 
 static func load() -> EditorTabs:
-	var path := AgentWorkspace.get_data_path(EDITOR_GAI)
+	var path := AgentDataDir.get_dir_path(EDITOR_GAI)
 	if not FileAccess.file_exists(path):
 		return EditorTabs.new()
 	var tabs: Variant = JsonUtils.json_to_object(FileUtils.read_file_to_string(path), EditorTabs)
@@ -103,7 +103,7 @@ static func load() -> EditorTabs:
 
 
 func save() -> void:
-	var path := AgentWorkspace.get_data_path(EDITOR_GAI)
+	var path := AgentDataDir.get_dir_path(EDITOR_GAI)
 	if files.is_empty() and not FileAccess.file_exists(path):
 		return
 	var error := FileUtils.write_string_to_file(path, JsonUtils.object_to_json(self))

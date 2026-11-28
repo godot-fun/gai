@@ -183,7 +183,7 @@ static func editor_tabs_gai_load_clamps_active_index_test() -> void:
 	var tabs := EditorTabs.new()
 	assert(tabs.open_file(note_path) != null)
 	tabs.save()
-	var gai_path := AgentWorkspace.get_data_path(EditorTabs.EDITOR_GAI)
+	var gai_path := AgentDataDir.get_dir_path(EditorTabs.EDITOR_GAI)
 	FileUtils.write_string_to_file(gai_path, FileUtils.read_file_to_string(gai_path).replace("\"active_index\": 0", "\"active_index\": 9"))
 	var loaded := EditorTabs.load()
 	assert(loaded.files.size() == 1)

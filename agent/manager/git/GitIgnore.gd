@@ -181,7 +181,7 @@ static func refresh_ignore_rules() -> void:
 	append_rule_lines(rules, MANDATORY_EXCLUDE_RULES)
 	for file_name in WORKSPACE_IGNORE_FILES:
 		append_rule_lines(rules, FileUtils.read_file_to_string(AgentWorkspace.resolve_path(file_name)))
-	append_rule_lines(rules, AgentWorkspace.data_dir + "/")
+	append_rule_lines(rules, AgentDataDir.get_dir_name() + "/")
 	ignore_rules = rules
 	pass
 

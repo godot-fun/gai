@@ -1,5 +1,10 @@
-﻿class_name CacheManager
+class_name CacheManager
 extends Object
+
+## Caches live in the app-wide data folder ([constant AgentDataDir.Scope.APP]), not in the workspace:
+## every entry is either content-addressed (markdown images by URL) or a UUID-named artifact
+## (clipboard, screenshots, diff bundles), so one shared folder avoids re-downloading per project and
+## keeps the caps below meaningful — [method cleanup_caches] only ever sees this one folder.
 
 const DIFF_CACHE_SUBDIR := "cache/diff"
 const MAX_DIFF_CACHE_BYTES := 128 * FileUtils.BYTES_PER_MB
@@ -12,24 +17,26 @@ const MAX_MARKDOWN_IMAGE_CACHE_BYTES := 512 * FileUtils.BYTES_PER_MB
 
 
 static func _static_init() -> void:
-	WorkerThreadPool.add_task(func() -> void: cleanup_caches())
+	# ExecutorHelper drains its queue on gdf.shutdown(); a raw worker pool task could still be running
+	# when the engine exits.
+	ExecutorHelper.execute(cleanup_caches)
 	pass
 
 
 static func get_diff_cache_dir() -> String:
-	return AgentWorkspace.get_data_path(DIFF_CACHE_SUBDIR)
+	return AgentDataDir.get_dir_path(DIFF_CACHE_SUBDIR, AgentDataDir.Scope.APP)
 
 
 static func get_web_screenshot_cache_dir() -> String:
-	return AgentWorkspace.get_data_path(WEB_SCREENSHOT_SUBDIR)
+	return AgentDataDir.get_dir_path(WEB_SCREENSHOT_SUBDIR, AgentDataDir.Scope.APP)
 
 
 static func get_clipboard_cache_dir() -> String:
-	return AgentWorkspace.get_data_path(CLIPBOARD_SUBDIR)
+	return AgentDataDir.get_dir_path(CLIPBOARD_SUBDIR, AgentDataDir.Scope.APP)
 
 
 static func get_markdown_image_cache_dir() -> String:
-	return AgentWorkspace.get_data_path(MARKDOWN_IMAGE_SUBDIR)
+	return AgentDataDir.get_dir_path(MARKDOWN_IMAGE_SUBDIR, AgentDataDir.Scope.APP)
 
 
 static func get_markdown_remote_image_cache_path(image_url: String) -> String:

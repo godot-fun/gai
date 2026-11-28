@@ -1,7 +1,7 @@
 class_name AgentSessionStore
 extends RefCounted
 
-## Persists agent chat sessions as JSON files under `AgentWorkspace.get_data_path(SESSIONS_SUBDIR)`.
+## Persists agent chat sessions as JSON files under `AgentDataDir.get_dir_path(SESSIONS_SUBDIR)`.
 
 const SESSIONS_SUBDIR := "sessions"
 const FILE_SUFFIX := ".gai"
@@ -15,7 +15,7 @@ static var sessions: ConcurrentMapInt = ConcurrentMapInt.new()
 # ---------------------------------------------------------------------------
 
 static func get_session_path(session_id: int) -> String:
-	return AgentWorkspace.get_data_path(SESSIONS_SUBDIR).path_join(str(session_id) + FILE_SUFFIX)
+	return AgentDataDir.get_dir_path(SESSIONS_SUBDIR).path_join(str(session_id) + FILE_SUFFIX)
 
 
 # ---------------------------------------------------------------------------

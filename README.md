@@ -153,7 +153,8 @@ cli/    skill command examples               zfoo/  reusable Godot framework
 .agents/skills/  skill definitions           .memory/      durable agent memory
 SKILLS.md        skill index                 MEMORY.md     memory index
 test/   zfoo tests                           agent/test/   app tests
-.gai/   sessions + checkpoints (agent.bat passes --data-dir .gai2)
+.gai/   app-level cache shared by every workspace + per-workspace sessions/checkpoints
+        (agent.bat passes --data-dir .gai2)
 ```
 
 ## 📄 License
