@@ -20,7 +20,7 @@ static func _static_init() -> void:
 
 static func reload_agent_context() -> String:
 	agent_context = ""
-	var path := AgentWorkspace.resolve_path(AGENTS_PATH)
+	var path := Workspace.resolve_path(AGENTS_PATH)
 	if FileAccess.file_exists(path):
 		agent_context = FileUtils.read_file_to_string(path)
 	return agent_context

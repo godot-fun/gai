@@ -20,7 +20,7 @@ static func _static_init() -> void:
 
 static func reload_skill_context() -> String:
 	skill_context = ""
-	var path := AgentWorkspace.resolve_path(SKILLS_PATH)
+	var path := Workspace.resolve_path(SKILLS_PATH)
 	if FileAccess.file_exists(path):
 		skill_context = FileUtils.read_file_to_string(path)
 	return skill_context

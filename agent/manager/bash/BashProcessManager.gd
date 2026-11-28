@@ -19,7 +19,7 @@ static func build_argv(command: String) -> PackedStringArray:
 	var bash := "/bin/bash"
 	if OSUtils.is_windows():
 		bash = GitHelper.find_windows_git_bash()
-	var working_directory := AgentWorkspace.get_root()
+	var working_directory := Workspace.get_root()
 	var bash_command := StringUtils.format("cd -- '{}' && {}", working_directory, command)
 	if OSUtils.is_windows():
 		var encoded_command := Marshalls.raw_to_base64(command.to_utf8_buffer())

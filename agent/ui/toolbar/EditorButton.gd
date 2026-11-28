@@ -47,16 +47,16 @@ func on_button_pressed() -> void:
 		EditorWindow.show_editor()
 		return
 	if editor.id == EditorDiscovery.FILE_EXPLORER_ID:
-		if not EditorDiscovery.open_in_file_explorer(AgentWorkspace.get_root()):
+		if not EditorDiscovery.open_in_file_explorer(Workspace.get_root()):
 			Alert.alert(StringUtils.format(I18n.t("editor.launch_failed"), editor.label), Colors.error)
 		return
 	if editor.id == EditorDiscovery.GIT_BASH_ID:
-		if not EditorDiscovery.open_in_git_bash(AgentWorkspace.get_root()):
+		if not EditorDiscovery.open_in_git_bash(Workspace.get_root()):
 			Alert.alert(StringUtils.format(I18n.t("editor.launch_failed"), editor.label), Colors.error)
 		return
 	var executable := str(editor.executable)
 	var arguments: PackedStringArray = editor.arguments.duplicate()
-	var workspace := AgentWorkspace.get_root()
+	var workspace := Workspace.get_root()
 	arguments.append(workspace)
 	if executable.get_extension().to_lower() == "cmd":
 		arguments = PackedStringArray(["/c", executable]) + arguments

@@ -31,7 +31,7 @@ static func system_prompt_falls_back_to_generated_prompt_test() -> void:
 	assert(not SystemPrompt.has_system_context())
 	var prompt := SystemPrompt.build()
 	assert(prompt.begins_with("You are a coding agent in a Godot project workspace."))
-	assert(prompt.contains("Project root: " + AgentWorkspace.get_root()))
+	assert(prompt.contains("Project root: " + Workspace.get_root()))
 	SystemPrompt.system_context = previous_context
 	pass
 

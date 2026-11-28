@@ -23,7 +23,7 @@ static func _static_init() -> void:
 # ---------------------------------------------------------------------------
 
 static func create_git_context(session_id: int) -> GitHelper.Git:
-	var workspace_root := AgentWorkspace.get_root()
+	var workspace_root := Workspace.get_root()
 	var repo_shard_index := posmod(session_id, CHECKPOINT_REPO_SHARD_COUNT)
 	var git_dir := AgentDataDir.get_dir_path(CHECKPOINTS_SUBDIR).path_join(str(repo_shard_index))
 	return GitHelper.Git.new(git_dir, workspace_root)
@@ -128,7 +128,7 @@ static func async_snapshot(session_id: int) -> String:
 
 ## At startup, trims every repository exceeding [constant MAX_CHECKPOINTS].
 static func async_cleanup() -> void:
-	var workspace_root := AgentWorkspace.get_root()
+	var workspace_root := Workspace.get_root()
 	for repo_shard_index in range(CHECKPOINT_REPO_SHARD_COUNT):
 		var git_dir := AgentDataDir.get_dir_path(CHECKPOINTS_SUBDIR).path_join(str(repo_shard_index))
 		var git := GitHelper.Git.new(git_dir, workspace_root)
@@ -187,7 +187,7 @@ static func async_restore(session_id: int, sha: String) -> Error:
 		Log.error("agent checkpoint restore checkout failed:[{}]", checkout.output.build_string())
 		return ERR_CANT_CREATE
 	for path in removed:
-		var absolute_path := AgentWorkspace.get_root().path_join(path)
+		var absolute_path := Workspace.get_root().path_join(path)
 		if not FileAccess.file_exists(absolute_path):
 			continue
 		var error := DirAccess.remove_absolute(absolute_path)

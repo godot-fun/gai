@@ -4,7 +4,7 @@ extends RefCounted
 static func path_boundary_test() -> void:
 	var was_enabled := SandboxPolicy.is_enabled()
 	SandboxPolicy.set_enabled(true)
-	var workspace_root := AgentWorkspace.get_root()
+	var workspace_root := Workspace.get_root()
 	assert(SandboxPolicy.check_path_access(workspace_root))
 	assert(SandboxPolicy.check_path_access(workspace_root.path_join("agent/tools/ReadTool.gd")))
 	assert(not SandboxPolicy.check_path_access(workspace_root.get_base_dir()))
@@ -18,7 +18,7 @@ static func path_boundary_test() -> void:
 static func file_tools_reject_outside_workspace_test() -> void:
 	var was_enabled := SandboxPolicy.is_enabled()
 	SandboxPolicy.set_enabled(true)
-	var outside_path := AgentWorkspace.get_root().path_join("../sandbox-outside.txt").simplify_path()
+	var outside_path := Workspace.get_root().path_join("../sandbox-outside.txt").simplify_path()
 	var tool_args: Array[Array] = [
 		[ReadTool.new(), {ReadTool.ARG_PATH: outside_path}],
 		[WriteTool.new(), {WriteTool.ARG_PATH: outside_path, WriteTool.ARG_CONTENT: "blocked"}],
@@ -42,7 +42,7 @@ static func file_tools_reject_outside_workspace_test() -> void:
 
 
 static func edit_tool_replace_all_test() -> void:
-	var path := AgentWorkspace.get_root().path_join("agent/test/sandbox/edit-tool-{}.tmp".format([Time.get_ticks_usec()]))
+	var path := Workspace.get_root().path_join("agent/test/sandbox/edit-tool-{}.tmp".format([Time.get_ticks_usec()]))
 	var original := "before middle before"
 	assert(FileUtils.write_string_to_file(path, original) == OK)
 	var tool := EditTool.new()

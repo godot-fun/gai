@@ -127,7 +127,7 @@ static func async_cache_diff(git: GitHelper.Git, reference: String, file_stats: 
 		var old_result := await git.async_get_file_at_reference(reference, relative_path) if not is_binary else null
 		var old_exists := old_result != null and old_result.exit_code == 0
 		var old_text := old_result.output.build_string() if old_exists else StringUtils.EMPTY
-		var absolute_path := AgentWorkspace.get_root().path_join(relative_path)
+		var absolute_path := Workspace.get_root().path_join(relative_path)
 		var new_exists := FileAccess.file_exists(absolute_path)
 		var new_bytes := FileUtils.read_file_to_byte_array(absolute_path) if new_exists else PackedByteArray()
 		is_binary = is_binary or new_bytes.find(0) >= 0
@@ -169,7 +169,7 @@ static func open_diff(patch_path: String) -> bool:
 	var files := load_diff_files(patch_path)
 	if files.is_empty():
 		return false
-	GitDiffViewer.show_files(files, AgentWorkspace.get_root())
+	GitDiffViewer.show_files(files, Workspace.get_root())
 	return true
 
 
@@ -188,7 +188,7 @@ static func open_file_diff(patch_path: String, relative_path: String) -> bool:
 			break
 	if not found:
 		return false
-	GitDiffViewer.show_files(files, AgentWorkspace.get_root(), normalized_path)
+	GitDiffViewer.show_files(files, Workspace.get_root(), normalized_path)
 	return true
 
 

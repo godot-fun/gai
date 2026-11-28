@@ -20,7 +20,7 @@ func _init() -> void:
 
 
 func open() -> void:
-	var workspace_root := AgentWorkspace.get_root()
+	var workspace_root := Workspace.get_root()
 	if DirAccess.dir_exists_absolute(workspace_root):
 		current_dir = workspace_root
 	FileDialogStyle.present_centered(self, 60, 70, I18nHelper.file_dialog_label_texts())
@@ -41,7 +41,7 @@ func apply_theme() -> void:
 
 
 func on_dir_selected(path: String) -> void:
-	AgentWorkspace.set_root(path)
+	Workspace.set_root(path)
 	pass
 
 

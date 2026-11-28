@@ -88,18 +88,18 @@ static func chat_list_cache_removes_entries_from_index_test() -> void:
 
 
 static func memory_prompt_reads_workspace_memory_test() -> void:
-	var previous_root := AgentWorkspace.get_root()
+	var previous_root := Workspace.get_root()
 	var root := ProjectSettings.globalize_path("user://memory_prompt_test")
 	FileUtils.delete_file_or_directory(root)
 	DirAccess.make_dir_recursive_absolute(root)
 	var expected := "workspace memory"
 	FileUtils.write_string_to_file(root.path_join(MemoryPrompt.MEMORY_PATH), expected)
-	assert(AgentWorkspace.set_root(root))
+	assert(Workspace.set_root(root))
 	MemoryPrompt.reload_memory_context()
 	assert(MemoryPrompt.MEMORY_PATH == "MEMORY.md")
 	assert(MemoryPrompt.has_memory_context())
 	assert(MemoryPrompt.get_memory_context() == expected)
-	assert(AgentWorkspace.set_root(previous_root))
+	assert(Workspace.set_root(previous_root))
 	MemoryPrompt.reload_memory_context()
 	FileUtils.delete_file_or_directory(root)
 	pass
@@ -165,13 +165,13 @@ static func compaction_extract_summary_test() -> void:
 
 
 static func compaction_refreshes_memory_before_notification_test() -> void:
-	var previous_root := AgentWorkspace.get_root()
+	var previous_root := Workspace.get_root()
 	var root := ProjectSettings.globalize_path("user://compaction_memory_refresh_test")
 	FileUtils.delete_file_or_directory(root)
 	DirAccess.make_dir_recursive_absolute(root)
 	var refreshed_context := "refreshed memory snapshot"
 	FileUtils.write_string_to_file(root.path_join(MemoryPrompt.MEMORY_PATH), refreshed_context)
-	assert(AgentWorkspace.set_root(root))
+	assert(Workspace.set_root(root))
 	var previous_context := "stale memory snapshot"
 	var session := AgentSession.new(42)
 	session.messages.append(ChatMessage.system(previous_context))
@@ -180,7 +180,7 @@ static func compaction_refreshes_memory_before_notification_test() -> void:
 	assert(MemoryPrompt.get_memory_context() == refreshed_context)
 	assert((session.messages[0] as SystemChatMessage).text == refreshed_context)
 	assert(session.chat_entries[0].body == refreshed_context)
-	assert(AgentWorkspace.set_root(previous_root))
+	assert(Workspace.set_root(previous_root))
 	MemoryPrompt.reload_memory_context()
 	FileUtils.delete_file_or_directory(root)
 	pass

@@ -107,8 +107,8 @@ func only_one_provider_claims_the_caret_test() -> void:
 
 
 func swap_workspace(root: String) -> String:
-	var prior_workspace := AgentWorkspace.get_root()
-	AgentWorkspace.set_root(root)
+	var prior_workspace := Workspace.get_root()
+	Workspace.set_root(root)
 	return prior_workspace
 
 

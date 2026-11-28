@@ -46,7 +46,7 @@ class MentionPath extends RefCounted:
 
 var entries: Array[MentionPath] = []
 ## Workspace root [member entries] were built for, and what tells [method async_refresh_index] the index is
-## current: a different [method AgentWorkspace.get_root] means the rows are stale, and the same one re-walks
+## current: a different [method Workspace.get_root] means the rows are stale, and the same one re-walks
 ## only when [method RateLimitUtils.limit_second_30] lets it. Set together with [member entries], so the
 ## pair never mixes two workspaces.
 var indexed_root: String = ""
@@ -189,9 +189,9 @@ static func entry_order_before(left: MentionPath, right: MentionPath) -> bool:
 ## aside and swapped in together with [member indexed_root], so a refresh never leaves an empty list — or
 ## a path pair from two different workspaces — behind while the walk is in flight.
 func async_refresh_index() -> void:
-	if RateLimitUtils.limit_second_30() and indexed_root == AgentWorkspace.get_root():
+	if RateLimitUtils.limit_second_30() and indexed_root == Workspace.get_root():
 		return
-	var root := AgentWorkspace.get_root()
+	var root := Workspace.get_root()
 	if root.is_empty():
 		entries = []
 		indexed_root = root
@@ -200,7 +200,7 @@ func async_refresh_index() -> void:
 	var paths: Array[String] = await ExecutorHelper.async_execute_pooled(func() -> Array[String]:
 		return GlobUtils.glob(root, StringUtils.EMPTY, true, 0, skip_rules, true, MAX_ENTRIES)
 	)
-	if AgentWorkspace.get_root() != root:
+	if Workspace.get_root() != root:
 		return
 	var root_prefix := root.replace("\\", "/")
 	root_prefix = root_prefix if root_prefix.ends_with(DIRECTORY_SUFFIX) else root_prefix + DIRECTORY_SUFFIX

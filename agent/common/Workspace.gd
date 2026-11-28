@@ -1,7 +1,9 @@
-class_name AgentWorkspace
+class_name Workspace
 extends RefCounted
 
-## Agent workspace root — read/write via Setting (user://setting.config).
+## The agent workspace root — the user project every tool, editor, and session works against.
+## Persisted through [Setting]; [SandboxPolicy] turns it into the file-tool boundary, so this class
+## holds the path and the sandbox folder holds the policy.
 
 const SETTING_KEY := "agent_workspace_root"
 
@@ -27,6 +29,8 @@ static func set_root(path: String) -> bool:
 	return true
 
 
+## Resolves [param raw] against the workspace root: empty returns the root itself, `res://` / `user://`
+## and absolute paths are only normalized, anything else is joined to the root.
 static func resolve_path(raw: String) -> String:
 	var path := raw.strip_edges()
 	if path.is_empty():

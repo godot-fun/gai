@@ -2,7 +2,7 @@ class_name WorkspaceButton
 extends RefCounted
 
 ## Toolbar workspace button — shows the agent workspace root and opens the folder picker.
-## A confirmed folder goes through [method AgentWorkspace.set_root], which announces the
+## A confirmed folder goes through [method Workspace.set_root], which announces the
 ## switch on [signal AgentEvents.events.workspace_changed].
 
 var button: Button
@@ -29,9 +29,9 @@ func workspace_tooltip() -> String:
 	return "Code Agent Workspace · " + I18n.t("agent.workspace.choose")
 
 
-## Sync the button label and the picker start folder with [method AgentWorkspace.get_root].
+## Sync the button label and the picker start folder with [method Workspace.get_root].
 func refresh() -> void:
-	button.text = AgentWorkspace.get_root()
+	button.text = Workspace.get_root()
 	pass
 
 

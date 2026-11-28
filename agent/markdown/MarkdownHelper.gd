@@ -191,7 +191,7 @@ static func resolve_local_link(destination: String) -> String:
 	# in the browser.
 	if path.is_absolute_path():
 		return FileUtils.normalize_path(path)
-	var workspace_path := AgentWorkspace.resolve_path(path)
+	var workspace_path := Workspace.resolve_path(path)
 	if FileUtils.exists(workspace_path):
 		return workspace_path
 	return StringUtils.EMPTY
@@ -229,7 +229,7 @@ static func async_search_link_file(destination: String, markdown_body: MarkdownR
 	if file_name != path and StringUtils.is_not_blank(local_path):
 		return local_path
 	var tail := path.simplify_path().trim_prefix("./")
-	var matches: Array[String] = await GlobUtils.async_glob(AgentWorkspace.get_root(), "**/" + tail, true, FileUtils.BYTES_PER_MB, GitIgnore.ignore_rules)
+	var matches: Array[String] = await GlobUtils.async_glob(Workspace.get_root(), "**/" + tail, true, FileUtils.BYTES_PER_MB, GitIgnore.ignore_rules)
 	if matches.size() == 1:
 		return matches[0]
 

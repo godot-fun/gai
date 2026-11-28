@@ -72,7 +72,7 @@ class Events:
 	signal chat_entry_delete(session_id: int, entry_idx: int, delete_from_here: bool)
 
 	# Workspace
-	## Workspace root switched (see [method AgentWorkspace.set_root]) — sessions and file
+	## Workspace root switched (see [method Workspace.set_root]) — sessions and file
 	## paths now resolve under the new root, so listeners reload their state.
 	signal workspace_changed(path: String)
 	## Local TypeScript service started and is ready to accept requests.

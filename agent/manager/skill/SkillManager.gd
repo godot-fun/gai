@@ -20,7 +20,7 @@ static var loaded_signature: String = ""
 ## changed, so a skill added, renamed, or edited while the app runs appears on the next completion
 ## request without any file-system watcher.
 static func get_summaries() -> Array[SkillSummary]:
-	var root := AgentWorkspace.resolve_path(SKILL_DIR)
+	var root := Workspace.resolve_path(SKILL_DIR)
 	if is_stale(root, FileUtils.get_all_directories_in_folder(root)):
 		load_summaries(root)
 	return summaries

@@ -34,7 +34,7 @@ static func _static_init() -> void:
 
 static func reload_system_context() -> String:
 	system_context = ""
-	var path := AgentWorkspace.resolve_path(SYSTEM_PATH)
+	var path := Workspace.resolve_path(SYSTEM_PATH)
 	if FileAccess.file_exists(path):
 		system_context = FileUtils.read_file_to_string(path)
 	return system_context
@@ -62,7 +62,7 @@ Project root: {}
 {}
 
 {}""",
-		AgentWorkspace.get_root(),
+		Workspace.get_root(),
 		build_godot_context(),
 		build_dependency_context(),
 		build_os_context()

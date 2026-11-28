@@ -149,8 +149,8 @@ static func editor_tabs_close_others_test() -> void:
 
 static func editor_tabs_gai_json_test() -> void:
 	var root := FileUtils.normalize_path(ProjectSettings.globalize_path(GAI_DIR))
-	var prior_root := AgentWorkspace.get_root()
-	AgentWorkspace.set_root(root)
+	var prior_root := Workspace.get_root()
+	Workspace.set_root(root)
 	var note_path := root.path_join("note.md")
 	var other_path := root.path_join("other.txt")
 	FileUtils.write_string_to_file(note_path, "one")
@@ -170,14 +170,14 @@ static func editor_tabs_gai_json_test() -> void:
 	assert(loaded.files[0].saved_text == "one")
 	assert(loaded.files[1].path == other_path)
 	assert(loaded.active_index == 1)
-	AgentWorkspace.set_root(prior_root)
+	Workspace.set_root(prior_root)
 	pass
 
 
 static func editor_tabs_gai_load_clamps_active_index_test() -> void:
 	var root := FileUtils.normalize_path(ProjectSettings.globalize_path(GAI_DIR + "_clamp"))
-	var prior_root := AgentWorkspace.get_root()
-	AgentWorkspace.set_root(root)
+	var prior_root := Workspace.get_root()
+	Workspace.set_root(root)
 	var note_path := root.path_join("note.md")
 	FileUtils.write_string_to_file(note_path, "one")
 	var tabs := EditorTabs.new()
@@ -188,7 +188,7 @@ static func editor_tabs_gai_load_clamps_active_index_test() -> void:
 	var loaded := EditorTabs.load()
 	assert(loaded.files.size() == 1)
 	assert(loaded.active_index == 0)
-	AgentWorkspace.set_root(prior_root)
+	Workspace.set_root(prior_root)
 	pass
 
 

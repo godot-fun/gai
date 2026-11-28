@@ -21,7 +21,7 @@ static func _static_init() -> void:
 
 static func reload_memory_context() -> String:
 	memory_context = ""
-	var path := AgentWorkspace.resolve_path(MEMORY_PATH)
+	var path := Workspace.resolve_path(MEMORY_PATH)
 	if FileAccess.file_exists(path):
 		memory_context = FileUtils.read_file_to_string(path)
 	return memory_context

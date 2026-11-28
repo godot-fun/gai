@@ -19,7 +19,7 @@ func async_execute(args: Dictionary[String, Variant], cancel_scope: CancelScope)
 	var raw_path := str(args.get(ARG_PATH, ""))
 	if StringUtils.is_blank(raw_path):
 		return AgentToolResult.error("error: path is required", AgentToolResult.ui_file_details("", "path is required"))
-	var path := AgentWorkspace.resolve_path(raw_path)
+	var path := Workspace.resolve_path(raw_path)
 	if not SandboxPolicy.check_path_access(path):
 		return AgentToolResult.error(StringUtils.format("error: sandbox denied path outside workspace: {}", path), AgentToolResult.ui_file_details(path, "path outside workspace"))
 	if DirAccess.dir_exists_absolute(path):

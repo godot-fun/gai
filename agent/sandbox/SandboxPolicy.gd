@@ -24,4 +24,4 @@ static func check_path_access(path: String) -> bool:
 		return true
 	if StringUtils.is_blank(path):
 		return false
-	return FileUtils.is_relative_to(AgentWorkspace.resolve_path(path), AgentWorkspace.get_root())
+	return FileUtils.is_relative_to(Workspace.resolve_path(path), Workspace.get_root())

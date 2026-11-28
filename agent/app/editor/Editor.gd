@@ -57,7 +57,7 @@ func _ready() -> void:
 	configure_layout()
 	apply_theme()
 	apply_locale()
-	file_tree.reload(AgentWorkspace.get_root())
+	file_tree.reload(Workspace.get_root())
 	tabs = EditorTabs.load()
 	show_active(true)
 	align_tabs.call_deferred()

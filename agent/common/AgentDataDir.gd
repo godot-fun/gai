@@ -4,7 +4,7 @@ extends RefCounted
 ## Agent data folder — sessions, checkpoints, caches, and editor state all live inside it.
 ##
 ## Three scopes share the same folder name so all stay discoverable:
-## [constant Scope.WORKSPACE] sits under the workspace root (see [method AgentWorkspace.get_root])
+## [constant Scope.WORKSPACE] sits under the workspace root (see [method Workspace.get_root])
 ## and holds state that belongs to one project; [constant Scope.APP] sits next to the agent
 ## application (see [method FileUtils.get_project_root_path]) and holds caches, so switching
 ## workspace never duplicates them; [constant Scope.CLOUD] is the app-wide subfolder that Steam
@@ -52,7 +52,7 @@ static func get_dir_path(subdir: String, scope: Scope = Scope.WORKSPACE) -> Stri
 	var dir := ""
 	match scope:
 		Scope.WORKSPACE:
-			dir = AgentWorkspace.get_root().path_join(_dir_name)
+			dir = Workspace.get_root().path_join(_dir_name)
 		Scope.APP:
 			dir = FileUtils.get_project_root_path().path_join(_dir_name)
 		Scope.CLOUD:

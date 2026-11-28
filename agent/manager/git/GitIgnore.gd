@@ -180,7 +180,7 @@ static func refresh_ignore_rules() -> void:
 	append_rule_lines(rules, LARGE_FILE_EXCLUDE_RULES)
 	append_rule_lines(rules, MANDATORY_EXCLUDE_RULES)
 	for file_name in WORKSPACE_IGNORE_FILES:
-		append_rule_lines(rules, FileUtils.read_file_to_string(AgentWorkspace.resolve_path(file_name)))
+		append_rule_lines(rules, FileUtils.read_file_to_string(Workspace.resolve_path(file_name)))
 	# The active data folder plus the default one, so a folder written by another launch mode is skipped too.
 	append_rule_lines(rules, AgentDataDir.get_dir_name() + "/")
 	append_rule_lines(rules, AgentDataDir.DEFAULT_DIR_NAME + "/")

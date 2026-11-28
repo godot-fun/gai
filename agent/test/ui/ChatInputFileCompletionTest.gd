@@ -126,21 +126,21 @@ func refresh_index_test() -> void:
 
 
 func refresh_index_empty_workspace_test() -> void:
-	var prior_workspace := AgentWorkspace.get_root()
+	var prior_workspace := Workspace.get_root()
 	var root := FileUtils.normalize_path("user://chat_input_file_completion/empty")
 	DirAccess.make_dir_recursive_absolute(root)
 	assert((await indexed_entries(root)).is_empty())
-	AgentWorkspace.set_root(prior_workspace)
+	Workspace.set_root(prior_workspace)
 	pass
 
 
 func indexed_entries(root: String) -> Array[MentionPath]:
-	var prior_workspace := AgentWorkspace.get_root()
-	assert(AgentWorkspace.set_root(root))
+	var prior_workspace := Workspace.get_root()
+	assert(Workspace.set_root(root))
 	var completion := ChatInputFileCompletion.new()
 	await completion.async_refresh_index()
 	var indexed := completion.entries
-	AgentWorkspace.set_root(prior_workspace)
+	Workspace.set_root(prior_workspace)
 	return indexed
 
 

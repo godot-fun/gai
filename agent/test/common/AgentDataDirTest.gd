@@ -10,7 +10,7 @@ static func dir_name_test() -> void:
 
 static func get_dir_path_test() -> void:
 	var data_dir := AgentDataDir.get_dir_path("")
-	assert(data_dir == AgentWorkspace.get_root().path_join(AgentDataDir.DEFAULT_DIR_NAME))
+	assert(data_dir == Workspace.get_root().path_join(AgentDataDir.DEFAULT_DIR_NAME))
 	assert(AgentDataDir.get_dir_path("sessions") == data_dir.path_join("sessions"))
 	assert(AgentDataDir.get_dir_path("cache/diff") == data_dir.path_join("cache/diff"))
 	pass
