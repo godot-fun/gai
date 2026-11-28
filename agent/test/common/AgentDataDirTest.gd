@@ -32,3 +32,11 @@ static func cache_dir_is_app_scoped_test() -> void:
 	assert(CacheManager.get_clipboard_cache_dir().begins_with(app_root))
 	assert(CacheManager.get_markdown_image_cache_dir().begins_with(app_root))
 	pass
+
+
+static func cloud_dir_is_synced_and_app_scoped_test() -> void:
+	var app_root := AgentDataDir.get_dir_path("", AgentDataDir.Scope.APP)
+	var cloud_dir := AgentDataDir.get_dir_path("", AgentDataDir.Scope.CLOUD)
+	assert(cloud_dir == app_root.path_join(AgentDataDir.CLOUD_SUBDIR))
+	assert(AgentDataDir.get_dir_path("sessions", AgentDataDir.Scope.CLOUD) == cloud_dir.path_join("sessions"))
+	pass
