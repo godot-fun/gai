@@ -191,7 +191,8 @@ static func session_scope_keeps_the_folder_when_a_remote_is_added_test() -> void
 	var manifest := AgentSessionScope.read_manifest(after)
 	assert(manifest != null)
 	assert(manifest.root == repo)
-	assert(manifest.created > 0)
+	assert(manifest.create_time > 0)
+	assert(manifest.update_time > 0)
 	assert(not manifest.root.contains("token"))
 	remove_dir(before)
 	remove_dir(repo)
@@ -221,6 +222,42 @@ static func workspace_switch_resolves_the_new_folder_test() -> void:
 
 
 # ---------------------------------------------------------------------------
+# Manifest & cleanup
+# ---------------------------------------------------------------------------
+
+## A folder no workspace has opened for half a year is deleted, while the folder of the current
+## workspace stays however long it sat — the age comes from the manifest.
+static func cleanup_deletes_only_stale_folders_test() -> void:
+	# Touching the class runs its startup cleanup; draining the executor after it keeps the fixtures
+	# below out of that background run.
+	AgentSessionScope.get_dir()
+	wait_startup_cleanup()
+	var sessions_root := Workspace.get_cloud_data_dir(AgentSessionScope.SESSIONS_SUBDIR)
+	var suffix := str(TimeUtils.current_time_millis())
+	var stale := sessions_root.path_join("scope_stale-" + suffix)
+	var fresh := sessions_root.path_join("scope_fresh-" + suffix)
+	assert(DirAccess.make_dir_recursive_absolute(stale) == OK)
+	assert(DirAccess.make_dir_recursive_absolute(fresh) == OK)
+	AgentSessionScope.write_manifest(stale, stale, "stale")
+	AgentSessionScope.write_manifest(fresh, fresh, "fresh")
+	# A year ago is well past the half year the cleanup keeps a folder for.
+	backdate_manifest(stale, TimeUtils.current_time_millis() - 365 * TimeUtils.MILLIS_PER_DAY)
+
+	# The folder of the current workspace always stays, however long it sat unopened.
+	var saved_dir := AgentSessionScope.resolved_dir
+	AgentSessionScope.resolved_dir = stale
+	AgentSessionScope.cleanup()
+	assert(DirAccess.dir_exists_absolute(stale))
+
+	AgentSessionScope.resolved_dir = saved_dir
+	AgentSessionScope.cleanup()
+	assert(not DirAccess.dir_exists_absolute(stale))
+	assert(DirAccess.dir_exists_absolute(fresh))
+	remove_dir(fresh)
+	pass
+
+
+# ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
@@ -234,6 +271,32 @@ static func make_repo(user_path: String, remote: String) -> String:
 	if StringUtils.is_not_blank(remote):
 		OSUtils.execute(PackedStringArray(["git", "-C", root, "remote", "add", "origin", remote]), false)
 	return FileUtils.normalize_path(root)
+	pass
+
+
+## Waits for the cleanup [method AgentSessionScope._static_init] queued on the single-thread executor.
+## The executor is FIFO, so a no-op queued behind it completes only after that background run is over.
+## Spinning the main thread is deliberate: an awaited frame would keep this suite from quitting.
+static func wait_startup_cleanup() -> void:
+	var done := Semaphore.new()
+	ExecutorHelper.execute(func() -> void: done.post())
+	var deadline := Time.get_ticks_msec() + 5000
+	while not done.try_wait():
+		if Time.get_ticks_msec() > deadline:
+			Log.error("startup session cleanup did not finish")
+			return
+		OS.delay_msec(5)
+	pass
+
+
+## Rewrites the manifest of [param session_dir] as if the workspace had last opened it at
+## [param update_time] — [method AgentSessionScope.write_manifest] always stamps the current time.
+static func backdate_manifest(session_dir: String, update_time: int) -> void:
+	var manifest := AgentSessionScope.read_manifest(session_dir)
+	assert(manifest != null)
+	manifest.update_time = update_time
+	var write_error := FileUtils.write_string_to_file(session_dir.path_join(AgentSessionScope.MANIFEST_FILE), JsonUtils.object_to_json(manifest))
+	assert(write_error == OK)
 	pass
 
 
