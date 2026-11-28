@@ -1,12 +1,15 @@
 class_name GitHelper
 extends Object
 
-## Ignores machine-level Git behavior and supplies a non-interactive local identity.
+## Ignores machine-level Git behavior and supplies a non-interactive local identity, and reads which
+## repository a workspace belongs to (see [method read_repo_info]).
 const GIT_CONFIG := "-c user.name=gai -c user.email=gai@gai.local -c commit.gpgsign=false -c core.autocrlf=false -c core.filemode=false -c core.quotepath=false"
 
 
 ## A Git command context bound to an optional repository and work tree.
 ## Commands use the same string form as the Git CLI and run without a shell.
+## Without a [member git_dir] the context runs *inside* [member work_tree], which is how
+## [method GitHelper.read_repo_info] finds out which repository a folder belongs to.
 class Git:
 	var git_dir: String
 	var work_tree: String
@@ -18,19 +21,35 @@ class Git:
 		config = p_config
 		pass
 
-	func async_execute(command: String, include_work_tree: bool = true) -> OSUtils.ExecResult:
-		return await async_execute_args(OSUtils.split_command_line(command), include_work_tree)
-
-	func async_execute_args(command_args: PackedStringArray, include_work_tree: bool = true) -> OSUtils.ExecResult:
+	## Builds the argument vector for one command. A bound repository names its work tree with
+	## `--work-tree`; without one the folder to query has to be the process directory, and only `-C`
+	## changes that — `--work-tree` alone would let `rev-parse` answer for the application's own cwd.
+	func build_argv(command_args: PackedStringArray, include_work_tree: bool = true) -> PackedStringArray:
 		var argv := PackedStringArray(["git"])
 		if StringUtils.is_not_blank(git_dir):
 			argv.append_array(PackedStringArray(["--git-dir", git_dir]))
 		if include_work_tree and StringUtils.is_not_blank(work_tree):
-			argv.append_array(PackedStringArray(["--work-tree", work_tree]))
+			if StringUtils.is_blank(git_dir):
+				argv.append_array(PackedStringArray(["-C", work_tree]))
+			else:
+				argv.append_array(PackedStringArray(["--work-tree", work_tree]))
 		if StringUtils.is_not_blank(config):
 			argv.append_array(OSUtils.split_command_line(config))
 		argv.append_array(command_args)
-		return await OSUtils.async_execute(argv, false)
+		return argv
+		pass
+
+	## Synchronous twin of [method async_execute_args] — for callers on a path that cannot await,
+	## such as resolving a session file path.
+	func execute_args(command_args: PackedStringArray, include_work_tree: bool = true) -> OSUtils.ExecResult:
+		return OSUtils.execute(build_argv(command_args, include_work_tree), false)
+		pass
+
+	func async_execute(command: String, include_work_tree: bool = true) -> OSUtils.ExecResult:
+		return await async_execute_args(OSUtils.split_command_line(command), include_work_tree)
+
+	func async_execute_args(command_args: PackedStringArray, include_work_tree: bool = true) -> OSUtils.ExecResult:
+		return await OSUtils.async_execute(build_argv(command_args, include_work_tree), false)
 
 	func async_init_bare() -> OSUtils.ExecResult:
 		return await GitHelper.async_execute(StringUtils.format('init --bare --quiet "{}"', git_dir))
@@ -108,6 +127,51 @@ static func async_diff_texts(old_text: String, new_text: String) -> OSUtils.Exec
 	DirAccess.remove_absolute(old_path)
 	DirAccess.remove_absolute(new_path)
 	return result
+
+
+## A workspace inside its repository: where the repository root is, how deep the workspace sits
+## inside it, and which remote it points at.
+class RepoInfo:
+	## Absolute repository root; empty outside a repository.
+	var toplevel := StringUtils.EMPTY
+	## The queried folder relative to [member toplevel]; empty at the repository root, `agent/` below it.
+	var prefix := StringUtils.EMPTY
+	## Raw `url` of `origin`, or of the first remote when there is no `origin`.
+	var remote_url := StringUtils.EMPTY
+
+
+## Reads the repository owning [param work_tree]. Two commands are enough: `rev-parse` answers both the
+## toplevel and the prefix, so worktrees, submodules and included configs stay Git's problem, and
+## `config --get-regexp` returns every remote url at once.
+static func read_repo_info(work_tree: String) -> RepoInfo:
+	var info := RepoInfo.new()
+	if not is_git_installed():
+		return info
+	# No bound repository and no commit identity flags: this context only asks where the folder sits.
+	var git := Git.new(StringUtils.EMPTY, work_tree, StringUtils.EMPTY)
+	var repo := git.execute_args(PackedStringArray(["rev-parse", "--show-toplevel", "--show-prefix"]))
+	if repo.exit_code != 0:
+		return info
+	var lines := repo.output.build_string().split(FileUtils.NEWLINE_LF, true)
+	info.toplevel = lines[0].strip_edges() if not lines.is_empty() else StringUtils.EMPTY
+	info.prefix = lines[1].strip_edges() if lines.size() > 1 else StringUtils.EMPTY
+
+	# `config --get` returns the *stored* url; `remote get-url` would apply this machine's `insteadOf`
+	# rewrites, and two machines that rewrite differently would end up with two identities.
+	var remotes := git.execute_args(PackedStringArray(["config", "--get-regexp", "^remote\\..*\\.url$"]))
+	if remotes.exit_code != 0:
+		return info
+	for line: String in remotes.output.build_string().split(FileUtils.NEWLINE_LF, false):
+		var parts := line.strip_edges().split(" ", false, 1)
+		if parts.size() < 2:
+			continue
+		if parts[0] == "remote.origin.url":
+			info.remote_url = parts[1]
+			return info
+		if StringUtils.is_blank(info.remote_url):
+			info.remote_url = parts[1]
+	return info
+	pass
 
 
 ## Cached positive probe — Git availability only changes across app restarts.

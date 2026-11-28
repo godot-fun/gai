@@ -145,7 +145,8 @@ func on_ui_scale_changed(_scale: float) -> void:
 # List rebuild & refresh
 # ---------------------------------------------------------------------------
 
-## Sessions are stored under the workspace root, so switching workspace swaps the whole set.
+## Every workspace keeps its own session folder (see [method AgentSessionScope.get_dir]), so switching
+## workspace swaps the whole set.
 func reload_sessions() -> void:
 	AgentSessionManager.load_from_disk()
 	RuntimeManager.clear()

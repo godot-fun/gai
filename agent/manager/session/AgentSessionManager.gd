@@ -26,7 +26,7 @@ static func _static_init() -> void:
 # Persistence
 # ---------------------------------------------------------------------------
 
-## Boot: reload the index of the current workspace, then select the first session (create one if the list is empty).
+## Boot: reload this workspace's index, then select the first session (create one if the list is empty).
 static func load_from_disk() -> void:
 	AgentSessionStore.sessions.clear()
 	session_indexes = AgentSessionIndexes.load_index()

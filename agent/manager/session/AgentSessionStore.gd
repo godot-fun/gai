@@ -2,10 +2,10 @@ class_name AgentSessionStore
 extends RefCounted
 
 ## Persists agent chat sessions as JSON files under
-## `Workspace.get_cloud_data_dir(SESSIONS_SUBDIR)`,
-## the app-wide folder Steam Cloud syncs — sessions follow the user, not the workspace.
+## `Workspace.get_cloud_data_dir(AgentSessionScope.SESSIONS_SUBDIR)/<workspace key>/` — the synced
+## cloud folder, one subfolder per workspace (see [method AgentSessionScope.get_dir]).
 
-const SESSIONS_SUBDIR := "sessions"
+const SESSIONS_SUBDIR := AgentSessionScope.SESSIONS_SUBDIR
 const FILE_SUFFIX := ".gai"
 
 # Dictionary[int, AgentSession]
@@ -17,7 +17,7 @@ static var sessions: ConcurrentMapInt = ConcurrentMapInt.new()
 # ---------------------------------------------------------------------------
 
 static func get_session_path(session_id: int) -> String:
-	return Workspace.get_cloud_data_dir(SESSIONS_SUBDIR).path_join(str(session_id) + FILE_SUFFIX)
+	return AgentSessionScope.get_dir().path_join(str(session_id) + FILE_SUFFIX)
 
 
 # ---------------------------------------------------------------------------

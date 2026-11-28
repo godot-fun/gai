@@ -1,8 +1,8 @@
 class_name AgentSessionIndexes
 extends RefCounted
 
-## Persists the session list as `index.gai` next to the session files, in the synced cloud folder
-## (see [method Workspace.get_cloud_data_dir]).
+## Persists the session list as `index.gai` inside the workspace's session folder
+## (see [method AgentSessionScope.get_dir]), so each workspace keeps its own order and pins.
 
 const INDEX_FILE := "index.gai"
 
@@ -71,7 +71,7 @@ func deep_clone() -> AgentSessionIndexes:
 # ---------------------------------------------------------------------------
 
 static func get_index_path() -> String:
-	return Workspace.get_cloud_data_dir(AgentSessionStore.SESSIONS_SUBDIR).path_join(INDEX_FILE)
+	return AgentSessionScope.get_dir().path_join(INDEX_FILE)
 
 
 static func load_index() -> AgentSessionIndexes:

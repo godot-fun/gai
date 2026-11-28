@@ -48,3 +48,46 @@ static func async_clear_stale_locks_test() -> void:
 	assert((await git.async_stage_all()).exit_code == 0)
 	assert(FileUtils.delete_file_or_directory(temp_root) == OK)
 	pass
+
+
+## The prefix is what keeps two folders of one repository apart, so it has to be read next to the
+## toplevel in the same call.
+static func read_repo_info_reports_toplevel_and_prefix_test() -> void:
+	if not GitHelper.is_git_installed():
+		return
+	var root := FileUtils.globalize_writable_path("user://git-repo-info-test-" + str(IdUtils.uuid()))
+	var nested := root.path_join("agent/tools")
+	assert(DirAccess.make_dir_recursive_absolute(nested) == OK)
+	assert(OSUtils.execute(PackedStringArray(["git", "-C", root, "init", "--quiet"]), false).exit_code == 0)
+	assert(OSUtils.execute(PackedStringArray(["git", "-C", root, "remote", "add", "origin", "git@github.com:zfoo/git-repo-info.git"]), false).exit_code == 0)
+
+	var root_info := GitHelper.read_repo_info(root)
+	assert(FileUtils.normalize_path(root_info.toplevel) == FileUtils.normalize_path(root))
+	assert(root_info.prefix.is_empty())
+	assert(root_info.remote_url == "git@github.com:zfoo/git-repo-info.git")
+
+	var nested_info := GitHelper.read_repo_info(nested)
+	assert(nested_info.prefix == "agent/tools/")
+
+	assert(GitHelper.read_repo_info(OS.get_temp_dir()).toplevel.is_empty())
+	remove_repo_dir(root)
+	pass
+
+
+## Recursive delete that also walks hidden entries — a repository lives under a hidden `.git`, which
+## [method FileUtils.delete_file_or_directory] skips.
+static func remove_repo_dir(path: String) -> void:
+	var dir := DirAccess.open(path)
+	if dir == null:
+		return
+	dir.include_hidden = true
+	var files := dir.get_files()
+	var directories := dir.get_directories()
+	dir = null
+	for file_name: String in files:
+		FileAccess.set_read_only_attribute(path.path_join(file_name), false)
+		DirAccess.remove_absolute(path.path_join(file_name))
+	for dir_name: String in directories:
+		remove_repo_dir(path.path_join(dir_name))
+	DirAccess.remove_absolute(path)
+	pass
