@@ -49,7 +49,7 @@ static func compact_session(session_id: int) -> void:
 	var checkpoint := await GitCheckpointManager.async_snapshot(session_id)
 	var original_messages: Array[ChatMessage] = []
 	original_messages.assign(session.messages)
-	var client := ApiSetting.get_client(session.model)
+	var client := ModelSetting.get_client(session.model)
 	client.reasoning_effort = session.reasoning_effort
 	client.cancel_scope = CancelScope.new()
 

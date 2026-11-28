@@ -1,7 +1,9 @@
-class_name ApiSetting
+class_name ModelSetting
 extends RefCounted
 
-## Encrypted OpenAI-compatible model profiles. Each model owns its endpoint and credential.
+## Encrypted OpenAI-compatible model profiles — the configured models, the active one, and the
+## reasoning effort. Each profile owns its endpoint and credential, so this is also the only place
+## credentials are stored (encrypted, in the synced cloud folder).
 
 const DEFAULT_API_URL := "https://api.deepseek.com/chat/completions"
 const DEFAULT_MODEL := "deepseek-flash"
@@ -10,7 +12,8 @@ const REASONING_EFFORT_HIGH := "high"
 const REASONING_EFFORT_MAX := "max"
 const DEFAULT_REASONING_EFFORT := REASONING_EFFORT_LOW
 const REASONING_EFFORTS: Array[String] = [REASONING_EFFORT_LOW, REASONING_EFFORT_HIGH, REASONING_EFFORT_MAX]
-const CONFIG_FILE_PATH := "user://api.dat"
+## File name inside the synced cloud folder, so models and credentials follow the user.
+const CONFIG_FILE_PATH := "model.dat"
 
 static var config: ApiConfig = load_config()
 
@@ -134,25 +137,27 @@ static func find_profile_index(model: String) -> int:
 # Encrypted storage
 
 static func load_config() -> ApiConfig:
-	if not FileAccess.file_exists(CONFIG_FILE_PATH):
+	var path := AgentDataDir.get_dir_path(CONFIG_FILE_PATH, AgentDataDir.Scope.CLOUD)
+	if not FileAccess.file_exists(path):
 		return create_default_config()
-	var file := FileAccess.open_encrypted_with_pass(CONFIG_FILE_PATH, FileAccess.READ, "zfoo")
+	var file := FileAccess.open_encrypted_with_pass(path, FileAccess.READ, "gai_godot_zfoo")
 	if file == null:
-		Log.error("load encrypted API config failed path:[{}] error:[{}]", CONFIG_FILE_PATH, FileAccess.get_open_error())
+		Log.error("load encrypted API config failed path:[{}] error:[{}]", path, FileAccess.get_open_error())
 		return create_default_config()
 	var json_text := file.get_as_text()
 	file.close()
 	var loaded: ApiConfig = JsonUtils.json_to_object(json_text, ApiConfig)
 	if loaded == null:
-		Log.error("load encrypted API config failed path:[{}] invalid JSON structure", CONFIG_FILE_PATH)
+		Log.error("load encrypted API config failed path:[{}] invalid JSON structure", path)
 		return create_default_config()
 	return loaded
 
 
 static func save_config() -> void:
-	var file := FileAccess.open_encrypted_with_pass(CONFIG_FILE_PATH, FileAccess.WRITE, "zfoo")
+	var path := AgentDataDir.get_dir_path(CONFIG_FILE_PATH, AgentDataDir.Scope.CLOUD)
+	var file := FileAccess.open_encrypted_with_pass(path, FileAccess.WRITE, "gai_godot_zfoo")
 	if file == null:
-		Log.error("save encrypted API config failed path:[{}] error:[{}]", CONFIG_FILE_PATH, FileAccess.get_open_error())
+		Log.error("save encrypted API config failed path:[{}] error:[{}]", path, FileAccess.get_open_error())
 		return
 	file.store_string(JsonUtils.object_to_json(config))
 	file.close()

@@ -14,7 +14,7 @@ func _ready() -> void:
 
 
 func on_chat_pressed() -> void:
-	var client := ApiSetting.get_client()
+	var client := ModelSetting.get_client()
 	var text := await client.async_chat_text(PROMPT)
 	if StringUtils.is_blank(text):
 		Log.error("OpenAI returned empty text")
@@ -24,7 +24,7 @@ func on_chat_pressed() -> void:
 
 
 func on_chat_stream_pressed() -> void:
-	var client := ApiSetting.get_client()
+	var client := ModelSetting.get_client()
 	var messages: Array[ChatMessage] = [ChatMessage.user(PROMPT)]
 	var completion := await client.async_chat_messages_stream(
 		messages,

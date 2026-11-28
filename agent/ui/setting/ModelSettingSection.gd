@@ -154,7 +154,7 @@ func refresh() -> void:
 
 
 func show_add_form() -> void:
-	var active := ApiSetting.get_active_profile()
+	var active := ModelSetting.get_active_profile()
 	model_edit.clear()
 	api_url_edit.text = active.api_url
 	api_token_edit.text = active.api_token
@@ -181,7 +181,7 @@ func confirm_add_model() -> void:
 		Alert.alert(I18n.t("agent.settings.invalid_api_url"), Colors.error)
 		api_url_edit.grab_focus()
 		return
-	if not ApiSetting.add_model(model, api_url, api_token_edit.text):
+	if not ModelSetting.add_model(model, api_url, api_token_edit.text):
 		Alert.alert(I18n.t("agent.settings.model_duplicate"), Colors.error)
 		model_edit.grab_focus()
 		return
@@ -195,12 +195,12 @@ func refresh_models() -> void:
 	for child in model_list.get_children():
 		model_list.remove_child(child)
 		child.queue_free()
-	var active_model := ApiSetting.get_active_profile().model
-	var profiles := ApiSetting.get_profiles()
+	var active_model := ModelSetting.get_active_profile().model
+	var profiles := ModelSetting.get_profiles()
 	default_model_select.clear()
 	reasoning_effort_select.clear()
-	var active_effort := ApiSetting.get_reasoning_effort()
-	for effort: String in ApiSetting.REASONING_EFFORTS:
+	var active_effort := ModelSetting.get_reasoning_effort()
+	for effort: String in ModelSetting.REASONING_EFFORTS:
 		reasoning_effort_select.add_item(I18n.t("agent.reasoning_effort." + effort))
 		if effort == active_effort:
 			reasoning_effort_select.select(reasoning_effort_select.item_count - 1)
@@ -234,7 +234,7 @@ func refresh_models() -> void:
 		delete_button.disabled = profiles.size() == 1
 		delete_button.focus_mode = Control.FOCUS_NONE
 		delete_button.custom_minimum_size = Vector2(ControlSize.sm, ControlSize.sm)
-		delete_button.pressed.connect(ApiSetting.remove_model.bind(profile.model))
+		delete_button.pressed.connect(ModelSetting.remove_model.bind(profile.model))
 		content.add_child(delete_button)
 		style_model_row(row)
 		style_model_name(model_name)
@@ -245,14 +245,14 @@ func refresh_models() -> void:
 func on_default_model_selected(index: int) -> void:
 	if index < 0 or index >= default_model_select.item_count:
 		return
-	ApiSetting.set_active_model(str(default_model_select.get_item_metadata(index)))
+	ModelSetting.set_active_model(str(default_model_select.get_item_metadata(index)))
 	pass
 
 
 func on_reasoning_effort_selected(index: int) -> void:
-	if index < 0 or index >= ApiSetting.REASONING_EFFORTS.size():
+	if index < 0 or index >= ModelSetting.REASONING_EFFORTS.size():
 		return
-	ApiSetting.set_reasoning_effort(ApiSetting.REASONING_EFFORTS[index])
+	ModelSetting.set_reasoning_effort(ModelSetting.REASONING_EFFORTS[index])
 	pass
 
 

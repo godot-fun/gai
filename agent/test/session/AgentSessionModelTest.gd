@@ -1,7 +1,7 @@
 static func session_model_round_trip_test() -> void:
 	var session := AgentSession.new(42)
 	assert(session.model.is_empty())
-	assert(session.reasoning_effort == ApiSetting.DEFAULT_REASONING_EFFORT)
+	assert(session.reasoning_effort == ModelSetting.DEFAULT_REASONING_EFFORT)
 	session.model = "deepseek-chat"
 	session.reasoning_effort = "max"
 	var json := JsonUtils.object_to_json(session)

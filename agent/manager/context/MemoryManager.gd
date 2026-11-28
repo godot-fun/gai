@@ -10,7 +10,7 @@ static func update_memory(session_id: int) -> void:
 	var session := AgentSessionStore.load_session(session_id)
 	if session == null:
 		return
-	var client := ApiSetting.get_client()
+	var client := ModelSetting.get_client()
 	client.cancel_scope = CancelScope.new()
 	var memory_messages := collect_memory_messages(session.messages)
 	memory_messages.append(ChatMessage.user(MemoryPrompt.MEMORY_UPDATE_REQUEST))

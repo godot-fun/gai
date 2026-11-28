@@ -39,7 +39,7 @@ func refresh() -> void:
 
 
 func refresh_model() -> void:
-	var models := ApiSetting.get_models()
+	var models := ModelSetting.get_models()
 	var session_model := get_session_model()
 	model_button.text = session_model + "  ▾"
 	model_button.tooltip_text = I18n.t("agent.input.select_model") + ": " + session_model
@@ -58,15 +58,15 @@ func refresh_reasoning_effort() -> void:
 	reasoning_effort_button.tooltip_text = I18n.t("agent.input.reasoning_effort") + ": " + effort_text
 	var popup := reasoning_effort_button.get_popup()
 	popup.clear()
-	for index in range(ApiSetting.REASONING_EFFORTS.size()):
-		var item_effort := ApiSetting.REASONING_EFFORTS[index]
+	for index in range(ModelSetting.REASONING_EFFORTS.size()):
+		var item_effort := ModelSetting.REASONING_EFFORTS[index]
 		popup.add_radio_check_item(I18n.t("agent.reasoning_effort." + item_effort), index)
 		popup.set_item_checked(index, item_effort == effort)
 	pass
 
 
 func on_model_selected(index: int) -> void:
-	var models := ApiSetting.get_models()
+	var models := ModelSetting.get_models()
 	if index < 0 or index >= models.size():
 		return
 	var session := AgentSessionStore.load_session(AgentSessionManager.active_session_id)
@@ -79,12 +79,12 @@ func on_model_selected(index: int) -> void:
 
 
 func on_reasoning_effort_selected(index: int) -> void:
-	if index < 0 or index >= ApiSetting.REASONING_EFFORTS.size():
+	if index < 0 or index >= ModelSetting.REASONING_EFFORTS.size():
 		return
 	var session := AgentSessionStore.load_session(AgentSessionManager.active_session_id)
-	if session == null or session.reasoning_effort == ApiSetting.REASONING_EFFORTS[index]:
+	if session == null or session.reasoning_effort == ModelSetting.REASONING_EFFORTS[index]:
 		return
-	session.reasoning_effort = ApiSetting.REASONING_EFFORTS[index]
+	session.reasoning_effort = ModelSetting.REASONING_EFFORTS[index]
 	AgentSessionManager.persist_session(session.id)
 	refresh()
 	pass
@@ -92,19 +92,19 @@ func on_reasoning_effort_selected(index: int) -> void:
 
 func get_session_model() -> String:
 	var session := AgentSessionStore.load_session(AgentSessionManager.active_session_id)
-	var models := ApiSetting.get_models()
+	var models := ModelSetting.get_models()
 	if session == null:
-		return ApiSetting.get_active_profile().model
+		return ModelSetting.get_active_profile().model
 	if session.model in models:
 		return session.model
-	session.model = ApiSetting.get_active_profile().model
+	session.model = ModelSetting.get_active_profile().model
 	AgentSessionManager.persist_session(session.id)
 	return session.model
 
 
 func get_session_reasoning_effort() -> String:
 	var session := AgentSessionStore.load_session(AgentSessionManager.active_session_id)
-	return session.reasoning_effort if session != null else ApiSetting.get_reasoning_effort()
+	return session.reasoning_effort if session != null else ModelSetting.get_reasoning_effort()
 
 
 func apply_theme() -> void:

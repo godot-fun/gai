@@ -4,7 +4,8 @@ extends RefCounted
 ## Persisted preferences for the Note app — open-on-startup, view mode, split ratio, and related toggles.
 ## View mode values match [enum CommonEditor.ViewMode].
 
-const NOTE_FILE := "user://note.md"
+## File name inside the synced cloud folder — the note follows the user across machines.
+const NOTE_FILE := "note.md"
 const OPEN_ON_STARTUP_KEY := "note_open_on_startup"
 const VIEW_MODE_KEY := "note_view_mode"
 const SPLIT_RATIO_KEY := "note_split_ratio"
@@ -23,13 +24,13 @@ static func has_note() -> bool:
 
 
 static func get_note() -> String:
-	return FileUtils.read_file_to_string(NOTE_FILE)
+	return FileUtils.read_file_to_string(AgentDataDir.get_dir_path(NOTE_FILE, AgentDataDir.Scope.CLOUD))
 
 
 static func set_note(content: String) -> Error:
 	if content == get_note():
 		return OK
-	return FileUtils.write_string_to_file(NOTE_FILE, content)
+	return FileUtils.write_string_to_file(AgentDataDir.get_dir_path(NOTE_FILE, AgentDataDir.Scope.CLOUD), content)
 
 
 static func set_open_on_startup(enabled: bool) -> void:
