@@ -50,14 +50,15 @@ function Write-StepDone([string]$Status = "done", [string]$Detail = "") {
 }
 
 # ---------------------------------------------------------------------------
-# Portable user:// under .godot
+# Portable user:// under the data folder
 # ---------------------------------------------------------------------------
 # Godot has no CLI flag for user://. Set APPDATA before start so user data stays
-# in the repo: .godot\Godot\app_userdata\<config/name>\ (see project.godot).
+# in the repo: <data folder>\Godot\app_userdata\<config/name>\ (see project.godot).
 # Opening Godot without this script uses the real OS %APPDATA% instead.
 
 $Root = $PSScriptRoot
-$env:APPDATA = Join-Path $Root ".godot"
+$DataDir = ".gai"
+$env:APPDATA = Join-Path $Root $DataDir
 
 # ---------------------------------------------------------------------------
 # Resolve Godot editor from dependency manifest
@@ -164,10 +165,9 @@ Write-StepDone "done" "exit 0"
 $LogFile = "user://logs/gai.log"
 
 $UserArgs = @($Rest | Where-Object { $null -ne $_ })
-if (-not ($UserArgs -match '^--data-dir(=.*)?$')) {
-	$UserArgs = @("--data-dir", ".gai") + $UserArgs
-}
-$UserArgs = @("--log-file", $LogFile) + $UserArgs
+# OSUtils.get_cmdline_arg_value takes the first match, so appending the default keeps a
+# --data-dir passed on the command line in charge.
+$UserArgs = @("--log-file", $LogFile) + $UserArgs + @("--data-dir", $DataDir)
 
 $ArgumentList = @("--path", $Root, "--log-file", $LogFile, "res://agent/Agent.tscn", "--") + $UserArgs
 

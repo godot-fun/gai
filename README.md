@@ -52,7 +52,7 @@ Hand [`agent/Dependency.md`](agent/Dependency.md) to a coding agent — it provi
 | Way | How | Difference |
 | --- | --- | --- |
 | **Editor** (simplest) | Open the project in Godot 4.6, open `agent/Agent.tscn`, run the scene | No auto pull or re-import; `user://` stays with your OS profile and data goes to `.gai_temp/` |
-| **Launcher** | `agent.bat` | Pulls, re-imports, starts; keeps `user://` inside the repo and data in `.gai/` |
+| **Launcher** | `agent.bat` | Pulls, re-imports, starts; keeps `user://` and data inside `.gai/` |
 
 ## ✨ Why it feels different
 
@@ -153,8 +153,9 @@ cli/    skill command examples               zfoo/  reusable Godot framework
 .agents/skills/  skill definitions           .memory/      durable agent memory
 SKILLS.md        skill index                 MEMORY.md     memory index
 test/   zfoo tests                           agent/test/   app tests
-.gai/        launcher data dir: app-level cache shared by every workspace + per-workspace sessions
-.gai_temp/   same, when the app is started from the Godot editor (agent.bat passes --data-dir .gai)
+.gai/        launcher data dir: app-level cache shared by every workspace + per-workspace sessions,
+             plus Godot's own user:// tree (settings, logs) under .gai/Godot/app_userdata/gai
+.gai_temp/   same, when the app is started from the Godot editor instead (agent.bat passes --data-dir .gai)
 ```
 
 ## 📄 License
