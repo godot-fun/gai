@@ -257,6 +257,18 @@ var name := Setting.get_string("nickname", "")
 ```
 
 
+## Workspace — root and data folders
+
+```gdscript
+Workspace.get_root()                      # project root; set_root() emits gdf.events.workspace_changed
+Workspace.get_data_dir("checkpoints")     # <workspace>/<data dir>/…  per project
+Workspace.get_shared_data_dir("cache")    # <app>/<data dir>/…        shared by all
+Workspace.get_cloud_data_dir("sessions")  # <app>/<data dir>/cloud/…  Steam Cloud synced
+```
+
+Never hard-code `.gai*` or `user://` paths — ask `Workspace`. Connect `workspace_changed` with a named method, never a lambda.
+
+
 ## I18n — localization
 
 Use `I18n.t()` to translate text:
